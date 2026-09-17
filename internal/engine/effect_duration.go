@@ -16,6 +16,18 @@ type ForDuration struct {
 	Effects  []Effect
 }
 
+// durationClause renders the standalone duration prefix a timed effect uses when
+// it is not folded into a ForDuration — "for the remainder of the turn" or "during
+// your opponent's next turn".
+func durationClause(d Duration) string {
+	switch d {
+	case OpponentNextTurn:
+		return "during your opponent's next turn"
+	default:
+		return "for the remainder of the turn"
+	}
+}
+
 // durationScoped is a timed effect that renders its body in two parts — the
 // subject it acts on and the predicate it applies — so a fold (ForDuration's
 // "for the remainder of the turn, ..." prefix, GainUntilNextTurn's "... until the

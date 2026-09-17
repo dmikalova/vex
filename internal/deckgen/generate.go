@@ -22,7 +22,8 @@ func Generate(set Set, seed int64) Deck {
 	}
 	deck := Deck{Set: set.Name, Seed: seed}
 	for i := 0; i < PodCount && i < len(plans); i++ {
-		deck.Pods[i] = g.expandPodClusters(g.fillPodPlan(plans[i]))
+		deck.Pods[i] = g.placeGiganticTutor(
+			g.placeGiganticArt(g.expandPodClusters(g.fillPodPlan(plans[i]))))
 	}
 	g.expandClusters(&deck)
 	g.expandFilteredClusters(&deck)
@@ -134,7 +135,8 @@ func (g *generator) fillPodPlan(plan podPlan) HousePod {
 func (g *generator) expandPodClusters(pod HousePod) HousePod {
 	for _, name := range g.clusterNames() {
 		ci := g.set.clusters[name]
-		if ci.strategy == OnePerHouse || !podClusterFires(pod, ci) {
+		if ci.strategy == OnePerHouse || ci.strategy == PerGigantic ||
+			!podClusterFires(pod, ci) {
 			continue
 		}
 		switch ci.strategy {
@@ -164,6 +166,84 @@ func (g *generator) expandPodClusters(pod HousePod) HousePod {
 		}
 	}
 	return pod
+}
+
+// placeGiganticArt places the art half of every gigantic base half in a pod into
+// a free slot of the same pod, so a pod that drew a gigantic's base half holds
+// both halves (ADR 0042). The base carries its synthetic art half on its
+// generation profile; deck generation is where the second physical card enters
+// the deck. Each base spends one ordinary (non-half) slot on its art, so a pod
+// with a gigantic holds one fewer other card.
+func (g *generator) placeGiganticArt(pod HousePod) HousePod {
+	for i := range pod.Slots {
+		if pod.Slots[i].Card.GiganticRole != engine.GiganticBase {
+			continue
+		}
+		art := g.set.byName[pod.Slots[i].Card.Name].Profile.GiganticArt
+		if art == nil {
+			continue
+		}
+		slot := freeGiganticSlot(&pod)
+		if slot < 0 {
+			continue
+		}
+		pod.Slots[slot] = Slot{Rarity: art.Rarity, Card: *art}
+	}
+	return pod
+}
+
+// freeGiganticSlot returns the first slot holding an ordinary card — one that is
+// not a half of a gigantic — so placing an art half never clobbers a base half or
+// an art half already placed. It returns -1 when every slot holds a gigantic half.
+func freeGiganticSlot(pod *HousePod) int {
+	for i := range pod.Slots {
+		if pod.Slots[i].Card.GiganticRole == engine.GiganticNone {
+			return i
+		}
+	}
+	return -1
+}
+
+// placeGiganticTutor pulls one tutor into the pod of every gigantic base, chosen
+// at random and stamped to the pod's House, so a deck that runs a gigantic also
+// runs a tutor that fetches its halves (ADR 0044). It runs after placeGiganticArt,
+// so each base has already spent one ordinary slot on its art; the tutor spends a
+// second, and a pod with a gigantic holds base, art, and tutor. It gathers the
+// free ordinary slots once, up front, so two gigantic bases in one pod each get a
+// distinct slot rather than the second tutor clobbering the first. The tutors are
+// a PerGigantic cluster read from the catalog pool, so any gigantic-bearing set
+// reaches them and a new tutor joins every such set's pull with no per-set change.
+func (g *generator) placeGiganticTutor(pod HousePod) HousePod {
+	tutors := g.giganticTutors()
+	if len(tutors) == 0 {
+		return pod
+	}
+	bases := 0
+	free := make([]int, 0, PodSize)
+	for i := range pod.Slots {
+		switch pod.Slots[i].Card.GiganticRole {
+		case engine.GiganticBase:
+			bases++
+		case engine.GiganticNone:
+			free = append(free, i)
+		}
+	}
+	for b := 0; b < bases && b < len(free); b++ {
+		tutor := tutors[g.r.Intn(len(tutors))]
+		ctx := SlotContext{House: pod.House, Rarity: tutor.Def.Rarity, Special: true}
+		pod.Slots[free[b]] = Slot{Rarity: tutor.Def.Rarity, Card: g.materialize(tutor, ctx)}
+	}
+	return pod
+}
+
+// giganticTutors gathers every member of the set's PerGigantic clusters into the
+// one pool each gigantic's tutor pull chooses from.
+func (g *generator) giganticTutors() []Card {
+	var out []Card
+	for _, ci := range g.set.perGiganticClusters() {
+		out = append(out, ci.members...)
+	}
+	return out
 }
 
 // clusterNames returns the set's cluster names in sorted order, so pod-local

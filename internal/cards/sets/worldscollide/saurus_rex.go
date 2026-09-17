@@ -25,7 +25,11 @@ var SaurusRex = set.New(
 			First: card.Exalt{Target: card.Target.This, Amount: 1},
 			Result: card.Sentences{
 				Effects: []card.Effect{
-					card.SearchDeck{House: card.Houses.Named(card.House.Self)},
+					card.Search{
+						Sources: []card.Zone{card.Deck},
+						House:   card.Houses.Named(card.House.Self),
+						Reveal:  true,
+					},
 					card.Shuffle{},
 				},
 			},

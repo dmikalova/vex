@@ -17,7 +17,7 @@ var bearFluteCluster = card.Cluster{
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Fully heal Ancient Bear. If there are no Ancient Bears in play, search your deck and discard pile and put each Ancient Bear from them into your hand -> shuffle your discard pile into your deck.
+//	Action: Fully heal Ancient Bear. If there are no Ancient Bears in play, search your deck and discard pile for any number of Ancient Bears, reveal them, and put them into your hand -> shuffle your discard pile into your deck.
 var BearFlute = set.New(
 	"Bear Flute",
 	card.House.Untamed,
@@ -40,7 +40,12 @@ var BearFlute = set.New(
 					None:   true,
 				},
 				Then: card.Then{
-					First:  card.SearchForName{Name: AncientBear.Name, All: true},
+					First: card.Search{
+						Sources: []card.Zone{card.Deck, card.Discard},
+						Filter:  card.Filter{Name: AncientBear.Name},
+						Any:     true,
+						Reveal:  true,
+					},
 					Result: card.Shuffle{Zones: []card.Zone{card.Discard}},
 				},
 			},

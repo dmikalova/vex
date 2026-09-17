@@ -1,20 +1,15 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MarkOfDis
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Mark of Dis
 //
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 2D to a creature. If it is not destroyed, its controller must choose that creature's house as their active house on their next turn.
+//	Play: Deal 2 damage to a creature. If it is not destroyed, its controller must choose that creature's house as their active house on their next turn.
 var MarkOfDis = set.New(
 	"Mark of Dis",
 	card.House.Dis,
@@ -22,5 +17,14 @@ var MarkOfDis = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.MM, "011"),
 	card.WithBonus(card.Bonus.Aember),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.DamageThen{
+			Amount: 2,
+			Target: card.Target.Creature,
+			After:  card.IfSurvives,
+			Then: card.MustChooseHouse{
+				Player:    card.ItsController,
+				Reference: card.ItActiveHouse,
+			},
+		}),
 )

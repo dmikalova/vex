@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BlossomDrake
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Blossom Drake
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Dragon
 //
-//	Blossom Drake gets +1 power for each artifact in play.
+//	Blossom Drake gains +1 power for each artifact in play.
 //	Each artifact's text box is considered blank (except for traits).
 var BlossomDrake = set.New(
 	"Blossom Drake",
@@ -25,5 +20,13 @@ var BlossomDrake = set.New(
 	card.Provenance(card.MM, "395"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dragon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target:     card.Target.This,
+		PowerBonus: 1,
+		Per:        card.ArtifactsInPlay{},
+	}),
+	card.WithConstant(card.ConstantAbility{
+		Target:    card.Target.EachArtifact,
+		BlankText: true,
+	}),
 )

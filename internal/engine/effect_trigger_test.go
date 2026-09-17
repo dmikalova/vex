@@ -44,12 +44,16 @@ func TestTriggerAbility(t *testing.T) {
 	if g.Exhausted(other) {
 		t.Error("the triggered creature should not exhaust")
 	}
+	if got := g.nameUsagesThisTurn(src); got != 0 {
+		t.Errorf("the use's first trigger should ride free, pool = %d, want 0", got)
+	}
 }
 
 func TestTriggerAbilityBoundedByRuleOfSix(t *testing.T) {
-	// Two Replicator-like creatures reach for each other's reap effect; the chain
-	// bounces until the Rule of Six stops it. Each pass gains 1 Æmber, so the pool
-	// counts the resolutions.
+	// Two Replicator-like creatures reach for each other's reap effect. The use
+	// fires the first pass free; each further trigger spends one from the pool of
+	// six the two share, and the pass whose trigger is finally blocked still gains
+	// its Æmber — so the chain yields RuleOfSix+2 gains.
 	replicate := Sequence{Effects: []Effect{
 		GainAember{Amount: 1, Player: Controller},
 		TriggerAbility{
@@ -65,12 +69,36 @@ func TestTriggerAbilityBoundedByRuleOfSix(t *testing.T) {
 
 	replicate.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: src})
 
-	if g.Aember(0) != RuleOfSix+1 {
-		t.Errorf("Æmber = %d, want %d (the first pass plus %d bounces)",
-			g.Aember(0), RuleOfSix+1, RuleOfSix)
+	if g.Aember(0) != RuleOfSix+2 {
+		t.Errorf(
+			"Æmber = %d, want %d (the free first pass, six charged bounces, plus the blocked pass's gain)",
+			g.Aember(0),
+			RuleOfSix+2,
+		)
 	}
-	if g.TriggerDepth() != 0 {
-		t.Errorf("trigger depth = %d, want 0 once resolution ends", g.TriggerDepth())
+}
+
+func TestTriggerAbilityChargesTheCascadeRoot(t *testing.T) {
+	// A Replicator and a differently-named creature reach for each other's reap
+	// effect. The whole chain charges the card that started it, so its name pool
+	// fills to six while the other name is never touched — not six each.
+	reachReap := TriggerAbility{
+		Trigger: TriggerAfterReap,
+		Target:  Target{Kind: TargetChosenCreature}.Other(),
+	}
+	g := started(t)
+	g.AddToBattleline(testCreature("Replicator", 2, WithAbility(TriggerAfterReap, reachReap)), 0)
+	g.AddToBattleline(testCreature("Doppelganger", 2, WithAbility(TriggerAfterReap, reachReap)), 0)
+	root := g.Battleline(0)[0]
+	other := g.Battleline(0)[1]
+
+	reachReap.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: root})
+
+	if got := g.nameUsagesThisTurn(root); got != RuleOfSix {
+		t.Errorf("root name pool = %d, want %d", got, RuleOfSix)
+	}
+	if got := g.nameUsagesThisTurn(other); got != 0 {
+		t.Errorf("other name pool = %d, want 0 (the chain charges the starter)", got)
 	}
 }
 

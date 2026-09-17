@@ -40,6 +40,11 @@ type StateReader interface {
 	// AllowedHouses returns the houses the player may legally choose as their active
 	// house right now; an empty result means they have no active house this turn.
 	AllowedHouses(player int) []House
+	// NameableCards returns one representative card id per distinct card name present
+	// in the match, ordered by name so a "name a card" choice is deterministic for
+	// replay. Every playable card is registered in the match, so this reaches every
+	// name a player could name (Etan's Jar).
+	NameableCards() []LocalID
 }
 
 // EconomyReader reads the scoring economy: Æmber pools and forged keys. It mirrors
@@ -84,6 +89,9 @@ type CreatureReader interface {
 	// CountersOn returns how many generic counters of a kind sit on a card — the
 	// card-placed markers a card reads (a doom counter for Wretched Doll).
 	CountersOn(id LocalID, kind CounterKind) int
+	// PowerCountersOn returns the net +1/-1 power counters on a creature — the tally
+	// Chonkers doubles.
+	PowerCountersOn(id LocalID) int
 	// AemberBonus returns the number of Æmber pips printed on a card.
 	AemberBonus(id LocalID) int
 	// Exhausted reports whether a creature is exhausted.
@@ -124,6 +132,9 @@ type CreatureReader interface {
 	IsCreature(id LocalID) bool
 	// TypeOf returns a card's type.
 	TypeOf(id LocalID) CardType
+	// GiganticRoleOf returns which half of a gigantic creature a card is, or
+	// GiganticNone when it is an ordinary card.
+	GiganticRoleOf(id LocalID) GiganticRole
 	// HasTrait reports whether a card has a trait.
 	HasTrait(id LocalID, trait Trait) bool
 	// TraitCount reports how many traits a card has.
@@ -134,6 +145,8 @@ type CreatureReader interface {
 	HasKeyword(id LocalID, k Keyword) bool
 	// HasBonusIcons reports whether a card prints at least one bonus icon.
 	HasBonusIcons(id LocalID) bool
+	// BonusIconCount reports how many bonus icons a card prints.
+	BonusIconCount(id LocalID) int
 	// HasTrigger reports whether a card has an ability under the trigger, whether
 	// printed on it, granted by an attached upgrade, or granted by a constant
 	// ability.
@@ -262,13 +275,16 @@ type CreatureResolver interface {
 	SetEnraged(id LocalID, enraged bool)
 	// SetWarded sets a creature's ward status.
 	SetWarded(id LocalID, warded bool)
-	// SetDamageImmune marks a creature unable to be dealt damage for the remainder
-	// of the turn.
-	SetDamageImmune(id LocalID)
+	// SetDamageImmune marks a creature unable to be dealt damage for the duration.
+	SetDamageImmune(id LocalID, d Duration)
 	// SetSideDamageImmune makes every creature player controls unable to be dealt
-	// damage for the remainder of the turn, read live so creatures gained after it
-	// resolves are covered too (Shield of Justice).
-	SetSideDamageImmune(player int)
+	// damage for the duration, read live so creatures gained after it resolves are
+	// covered too (Shield of Justice, Lucky Dice).
+	SetSideDamageImmune(player int, d Duration)
+	// SetStatOverride masks every creature's power and/or armor to a fixed value for
+	// the duration (The Pale Star), read live and revealing the real values again
+	// when it lifts.
+	SetStatOverride(power, armor int8, hasPower, hasArmor bool, d Duration)
 	// SetExhausted sets a creature's exhausted status.
 	SetExhausted(id LocalID, exhausted bool)
 	// AddAmberOn changes the Æmber sitting on a card.
@@ -301,6 +317,10 @@ type CreatureResolver interface {
 	// SetNamedHouse records the house a card named as it entered play, which its
 	// HouseLock then constrains for as long as the card stays in play.
 	SetNamedHouse(id LocalID, house House)
+	// SetNamedCard records the card a permanent named as it entered play, matched by
+	// name against every card attempted to be played while the permanent stays in
+	// play (Etan's Jar).
+	SetNamedCard(id, named LocalID)
 	// TakeControl moves a card into controller's play area — a creature into their
 	// battleline, an artifact into their artifact row — without changing ownership;
 	// when it later leaves play it still goes to its owner's zone. source is the
@@ -399,9 +419,18 @@ type CombatResolver interface {
 	// actor, without using the card: it does not exhaust and nothing watching for a
 	// card being used fires (Replicator triggers another creature's reap effect).
 	TriggerAbilityOf(actor int, id LocalID, trigger Trigger)
-	// TriggerDepth is how many TriggerAbilityOf resolutions are already open, which
-	// the Rule of Six bounds so a chain of them cannot run forever.
-	TriggerDepth() int
+	// TriggerAbilityOfRooted is TriggerAbilityOf carrying the Rule-of-Six cascade
+	// root, so every ability a chain of Replicator-style triggers resolves charges
+	// root's name pool rather than each resolving card's own — two Replicators
+	// reaching for each other spend one pool of six between them, not one each.
+	TriggerAbilityOfRooted(actor int, id LocalID, trigger Trigger, root LocalID)
+	// AtRuleOfSix reports whether the card name of id has already been used six times
+	// this turn by its owner, so no further usage of that name may resolve.
+	AtRuleOfSix(id LocalID) bool
+	// RecordUsage counts one usage of id toward its card name's Rule-of-Six pool —
+	// each extra loop of a repeat past the free first, and each chained
+	// Replicator-style trigger, records one against the card that started it.
+	RecordUsage(id LocalID)
 }
 
 // ZoneResolver moves cards between zones — drawing, and shuffling a card between
@@ -577,6 +606,9 @@ type ZoneResolver interface {
 	// MoveFromDiscardToTopOfDeck moves a card from its owner's discard to the top
 	// of their deck.
 	MoveFromDiscardToTopOfDeck(id LocalID)
+	// MoveFromDeckToTopOfDeck repositions a card already in its owner's deck to the
+	// top of that deck (a search that shuffles, then puts a found deck card on top).
+	MoveFromDeckToTopOfDeck(id LocalID)
 	// ShuffleFromDiscardIntoDeck moves a card from its owner's discard pile into
 	// their deck and shuffles, collected into a shuffle batch when one is open.
 	ShuffleFromDiscardIntoDeck(id LocalID)
@@ -628,10 +660,10 @@ type TurnResolver interface {
 	// reaching the creatures houses admits (an unset matcher bars all): Into the Night,
 	// Sow Salt.
 	CreaturesCannotUntilNextTurn(caster int, action UseKind, houses HouseMatcher, source LocalID)
-	// BlankEnemyText blanks the text box of every creature the given player controls
-	// until the card's controller's next turn — its printed keywords, abilities, and
+	// BlankEnemyText blanks the text box of every creature the caster's opponent
+	// controls until the caster's next turn — its printed keywords, abilities, and
 	// constant grants are ignored (Shadow of Dis). Its traits and stats remain.
-	BlankEnemyText(player int, source LocalID)
+	BlankEnemyText(caster int)
 	// SkipForgePhaseNextTurn makes a player skip their "forge a key" phase at the start
 	// of their next turn (Miasma).
 	SkipForgePhaseNextTurn(player int, source LocalID)

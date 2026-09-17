@@ -15,5 +15,5 @@ func (BlankEnemyText) Text() string {
 
 // Resolve blanks the opponent's creatures until the controller's next turn.
 func (BlankEnemyText) Resolve(ctx *EffectContext) {
-	ctx.Resolver.BlankEnemyText(ctx.Opponent(), ctx.Source)
+	ctx.Resolver.BlankEnemyText(ctx.Controller)
 }

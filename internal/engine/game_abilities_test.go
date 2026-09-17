@@ -8,6 +8,61 @@ import "testing"
 // in game_destroy_test.go. Tests for specific released cards live with those
 // cards in the set packages under cards/.
 
+// isSubjectPredicate and subjectNarrowing recognize exactly the conditions decided
+// by the played, used, or discarded card and its board position — so a reaction
+// gated on one is narrowed before resolution instead of joining every ordering
+// window (Dexus's flank, Dark Æmber Vault's friendly Mutant creature).
+func TestSubjectPredicateNarrowing(t *testing.T) {
+	subject := []Condition{
+		ItIsFriendly{},
+		ItIsOfTrait{Trait: Giant},
+		OnFlank{OfIt: true, Where: RightFlank},
+		And{Conditions: []Condition{ItIsFriendly{}, ItIsOfTrait{Trait: Giant}}},
+	}
+	for _, c := range subject {
+		if !isSubjectPredicate(c) {
+			t.Errorf("%T should be a subject predicate", c)
+		}
+		if _, ok := subjectNarrowing(Conditional{Cond: c, Then: Draw{Amount: 1}}); !ok {
+			t.Errorf("Conditional{%T} should narrow", c)
+		}
+	}
+	notSubject := []Condition{
+		OnFlank{OfIt: false, Where: RightFlank},
+		PoolAember{Player: Opponent, Is: AtLeast, Amount: 1},
+		And{},
+		And{
+			Conditions: []Condition{
+				ItIsFriendly{},
+				PoolAember{Player: Opponent, Is: AtLeast, Amount: 1},
+			},
+		},
+	}
+	for _, c := range notSubject {
+		if isSubjectPredicate(c) {
+			t.Errorf("%T should not be a subject predicate", c)
+		}
+	}
+	// A Conditional with an Else, over a board condition, or a non-Conditional
+	// effect does not narrow.
+	if _, ok := subjectNarrowing(Conditional{
+		Cond: ItIsFriendly{},
+		Then: Draw{Amount: 1},
+		Else: Draw{Amount: 1},
+	}); ok {
+		t.Error("a Conditional with an Else should not narrow")
+	}
+	if _, ok := subjectNarrowing(Conditional{
+		Cond: PoolAember{Player: Opponent, Is: AtLeast, Amount: 1},
+		Then: Draw{Amount: 1},
+	}); ok {
+		t.Error("a board-gated Conditional should not narrow")
+	}
+	if _, ok := subjectNarrowing(Draw{Amount: 1}); ok {
+		t.Error("a non-Conditional effect should not narrow")
+	}
+}
+
 func TestReapAndActionAbility(t *testing.T) {
 	g := started(t)
 	reaper := testCreature(

@@ -19,6 +19,10 @@ var SubtleMaul = set.New(
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.Action,
-		card.DiscardCard{Player: card.Opponent, Zone: card.Hand, Selection: card.Random{}},
+		card.DiscardCard{
+			Player:    card.Opponent,
+			Zones:     []card.Zone{card.Hand},
+			Selection: card.Random{Count: 1},
+		},
 	),
 )

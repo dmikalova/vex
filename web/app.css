@@ -993,6 +993,14 @@ body {
   .prompt-card {
     display: none;
   }
+  /* a long prompt is clipped to one line on the narrow mobile dock so it never
+     pushes the answer buttons off-screen; the full text stays reachable through
+     the prompt's data-tip tooltip (hover or tap the line to read it in full). */
+  .prompt {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .details {
@@ -2315,11 +2323,13 @@ button:disabled {
   flex-direction: column;
   gap: 0.25rem;
 }
-/* each zone's name floats above its cards, below the fixed header */
+/* each zone's name floats above its cards, below the fixed header. Its z-index
+   clears the cards' edge icons (.card-bonuses, z-index 4) so a card scrolling up
+   under the sticky label is covered by its opaque background, not showing through. */
 .zone-row .row-label {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 5;
   padding: 0.25rem 0;
   background-color: var(--surface);
 }

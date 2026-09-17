@@ -1,19 +1,45 @@
-//go:build todo
-
 package massmutation
+
+import "github.com/dmikalova/vactrol/internal/card"
 
 // Deusillus
 //
-// TODO(gigantic): deferred — gigantic creature; two cards form one big
-// creature. See docs/todo-agent.md "Gigantics". Needs engine design before
-// implementation; grill first.
-//
 //	House:  Saurian
-//	Type:   Gigantic Creature (base half)
+//	Type:   Creature
 //	Rarity: Rare
-//	Source: MM 244
+//	Power:  20
 //	Traits: Mutant
 //
-//	(Play only with the other half of Deusillus.)
-//	Play: Capture all of your opponent's A. Deal 5D to an enemy creature.
-//	Fight/Reap: Move 1A from Deusillus to the common supply. Deal 2D to each enemy creature.
+//	Play: Deusillus captures all your opponent's Æmber, and deal 5 damage to an enemy creature.
+//	Fight/Reap: Move 1 Æmber from Deusillus to the common supply, and deal 2 damage to each enemy creature.
+var Deusillus = set.Gigantic(
+	"Deusillus",
+	card.House.Saurian,
+	card.Rarity.Rare,
+	card.Provenance(card.MM, "244"),
+	card.WithPower(20),
+	card.WithTraits(card.Traits.Mutant),
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
+			card.CaptureAember{
+				All:    true,
+				Source: card.Opponent,
+				Target: card.Target.This,
+			},
+			card.DealDamage{
+				Amount: 5,
+				Target: card.Target.EnemyCreature,
+			},
+		}}),
+	card.WithAbility(
+		card.Trigger.FightReap, card.Sequence{Effects: []card.Effect{
+			card.MoveAemberToSupply{
+				Amount: 1,
+				Target: card.Target.This,
+			},
+			card.DealDamage{
+				Amount: 2,
+				Target: card.Target.EachEnemyCreature,
+			},
+		}}),
+)

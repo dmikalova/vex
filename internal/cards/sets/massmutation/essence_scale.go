@@ -1,21 +1,16 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// EssenceScale
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Essence Scale
 //
 //	House:  Dis
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	Action: Destroy a friendly creature. If you do, ready and use a friendly creature that shares a house with the destroyed creature.
+//	Action: Choose a friendly creature - destroy the chosen creature. Ready and use a friendly creature of that card's house.
 var EssenceScale = set.New(
 	"Essence Scale",
 	card.House.Dis,
@@ -24,5 +19,18 @@ var EssenceScale = set.New(
 	card.Provenance(card.MM, "021"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.ChooseCreatureThen{
+			Target: card.Target.FriendlyCreature,
+			Then: card.Sentences{Effects: []card.Effect{
+				card.Destroy{Target: card.Target.TheChosenCreature},
+				card.OnChooseCreature{
+					Target: card.Target.FriendlyCreature.House(card.Houses.Contextual),
+					Verbs: []card.CreatureVerb{
+						card.ReadyVerb{},
+						card.UseVerb{},
+					},
+				},
+			}},
+		}),
 )

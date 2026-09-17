@@ -1,19 +1,42 @@
-//go:build todo
-
 package massmutation
+
+import "github.com/dmikalova/vactrol/internal/card"
 
 // Ultra Gravitron
 //
-// TODO(gigantic): deferred — gigantic creature; two cards form one big
-// creature. See docs/todo-agent.md "Gigantics". Needs engine design before
-// implementation; grill first.
-//
 //	House:  Logos
-//	Type:   Gigantic Creature (base half)
+//	Type:   Creature
 //	Rarity: Rare
-//	Source: MM 125
+//	Power:  10
+//	Armor:  3
 //	Traits: Robot
 //
-//	(Play only with the other half of Ultra Gravitron.)
 //	Play: Archive the top 5 cards of your deck.
-//	Fight/Reap: Discard a card from your archives. If you do, purge a creature and resolve each of its bonus icons as if you had played it.
+//	Fight/Reap: Discard a card from your archives -> purge a creature, and resolve that card's bonus icons.
+var UltraGravitron = set.Gigantic(
+	"Ultra Gravitron",
+	card.House.Logos,
+	card.Rarity.Rare,
+	card.Provenance(card.MM, "125"),
+	card.WithPower(10),
+	card.WithArmor(3),
+	card.WithTraits(card.Traits.Robot),
+	card.WithAbility(
+		card.Trigger.Play, card.ArchiveCard{
+			Zone:      card.Deck,
+			Selection: card.Top{},
+			Amount:    5,
+		}),
+	card.WithAbility(
+		card.Trigger.FightReap, card.Then{
+			First: card.DiscardCard{
+				Player:    card.Controller,
+				Zones:     []card.Zone{card.Archives},
+				Selection: card.Chosen{},
+			},
+			Result: card.Sequence{Effects: []card.Effect{
+				card.PurgeCreature{Target: card.Target.Creature},
+				card.ResolveBonusIcons{Target: card.Target.Triggering},
+			}},
+		}),
+)

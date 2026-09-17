@@ -17,6 +17,7 @@ var (
 	ErrCannotFight        = errors.New("cannot use creatures to fight this turn")
 	ErrCannotPlayCreature = errors.New("cannot play creatures")
 	ErrCannotPlayType     = errors.New("cannot play cards of this type this turn")
+	ErrCannotPlayName     = errors.New("cannot play a card of this name")
 	ErrCardPlayLimit      = errors.New("card-play limit reached this turn")
 	ErrFirstTurnOneCard   = errors.New(
 		"the first player may play or discard only one card on their first turn",
@@ -30,6 +31,9 @@ var (
 		"that house is not an allowed active-house choice this turn",
 	)
 	ErrCannotUse = errors.New("card's use condition is not met")
+	ErrRuleOfSix = errors.New(
+		"a card of this name has already been used six times this turn",
+	)
 )
 
 // This file holds the turn lifecycle entry points — the three points at which a
@@ -52,6 +56,9 @@ func (g *Game) StartTurn(player int) {
 	g.State.PlayPermissionsUsedThisTurn[player] = [NumHouses]uint8{}
 	g.State.NonActivePlaysUsedThisTurn[player] = 0
 	g.State.FirstTurnPlayLimit[player] = false
+	// The Rule of Six resets every turn: the new turn is a fresh six-usage window
+	// for every card name, so clear the whole per-card usage ledger.
+	g.State.UsagesThisTurn = [maxCards]uint8{}
 	// The "used a creature this turn" tally resets at turn start, not at the ready
 	// step where the reap/fight tallies roll, so an end-of-turn ability (Sloth) can
 	// still read it after ready and draw have run (ADR 0013).
@@ -127,6 +134,14 @@ func (g *Game) ChooseHouse(player int, house House) error {
 	choose := g.window()
 	for _, id := range g.allInPlay(player) {
 		choose.add(id, TriggerAfterChooseHouse, 0, false)
+	}
+	// A card with TriggersFromDiscard keeps its choose-house ability live in its
+	// owner's discard pile (Relentless Creeper returns itself to hand), so the
+	// discard pile is scanned alongside cards in play — the only window that does.
+	for _, id := range g.State.Discard[player].slice() {
+		if g.cat.def(id).TriggersFromDiscard {
+			choose.add(id, TriggerAfterChooseHouse, 0, false)
+		}
 	}
 	g.resolveWindow(g.orderTriggered(player, choose.pending))
 	// A house choice is public, so cards on either side may react to it (Snag's
@@ -299,12 +314,16 @@ func (g *Game) CreaturesCannotUntilNextTurn(
 	g.State.CreaturesCannotNext[1-caster] = bar
 }
 
-// BlankEnemyText blanks the text box of every creature the given player controls
-// until the source's controller's next turn (Shadow of Dis). Set on the affected
-// player, the blank persists through that player's own next turn and is lifted by
-// their ready phase, so it spans exactly through the opponent's turn.
-func (g *Game) BlankEnemyText(player int, source LocalID) {
-	g.State.TextBlank[player] = Bar[bool]{Value: true, Source: source}
+// BlankEnemyText blanks the text box of every creature the caster's opponent
+// controls until the caster's next turn (Shadow of Dis). Installed as a
+// StartOfPlayerNextTurn continuous effect read live, it spans the rest of the
+// caster's turn and the whole opponent's turn, lifting before the caster's next.
+func (g *Game) BlankEnemyText(caster int) {
+	g.addContinuous(ContinuousEffect{
+		Kind:       ContinuousTextBlank,
+		Scope:      ScopeEnemyCreatures,
+		Controller: int8(caster),
+	}, StartOfPlayerNextTurn)
 }
 
 // SkipForgePhaseNextTurn makes a player skip their forge-a-key phase at the start of
@@ -587,7 +606,7 @@ func (g *Game) forgeKey(player int) {
 // reports whether a key was forged, so "forge a key … if you do, destroy Obsidian
 // Forge" can gate on the forge actually happening.
 func (g *Game) forgeKeyAtExtraCost(player, extra int) bool {
-	if g.forgeKeyNumberBarred(player) {
+	if g.keyForgeCapReached(player) || g.forgeKeyNumberBarred(player) {
 		return false
 	}
 	// A Discount forge (Desire) can pass a negative surcharge to bring the cost below
@@ -603,9 +622,9 @@ func (g *Game) forgeKeyAtExtraCost(player, extra int) bool {
 	}
 	// The colour is settled before the Æmber leaves the pool, so a forge is one
 	// step: a player looking at the colour prompt has not paid for anything yet.
-	color, ok := g.pickKeyColor(player)
+	color := g.pickKeyColor(player)
 	g.payKeyCost(player, cost)
-	g.finishForgeKey(player, color, ok)
+	g.finishForgeKey(player, color)
 	return true
 }
 
@@ -663,32 +682,28 @@ func (g *Game) vaults(player int) []LocalID {
 // forgeKeyFree forges one key without paying its current cost, reporting whether
 // a key was forged.
 func (g *Game) forgeKeyFree(player int) bool {
-	if g.forgeKeyNumberBarred(player) {
+	if g.keyForgeCapReached(player) || g.forgeKeyNumberBarred(player) {
 		return false
 	}
 	if g.beforeForgePrevented(player) {
 		return false
 	}
-	color, ok := g.pickKeyColor(player)
-	g.finishForgeKey(player, color, ok)
+	color := g.pickKeyColor(player)
+	g.finishForgeKey(player, color)
 	return true
 }
 
 // finishForgeKey records a newly forged key in the colour already picked, fires
-// "after you forge a key" abilities, and checks for the win. hasColor is false
-// only when every colour is already spent, which leaves the key colourless.
-func (g *Game) finishForgeKey(player int, color KeyColor, hasColor bool) {
+// "after you forge a key" abilities, and checks for the win.
+func (g *Game) finishForgeKey(player int, color KeyColor) {
 	g.State.Keys[player]++
 	g.State.TurnHistory[player][KeysForgedThisTurn]++
-	if hasColor {
-		g.State.KeyColors[player][g.State.Keys[player]-1] = color
-	}
+	g.State.KeyColors[player][g.State.Keys[player]-1] = color
 	g.record(KeyForged{
-		Player:   player,
-		Color:    color,
-		HasColor: hasColor,
-		Keys:     g.State.Keys[player],
-		Needed:   KeysToWin,
+		Player: player,
+		Color:  color,
+		Keys:   g.State.Keys[player],
+		Needed: KeysToWin,
 	})
 	// Forging opens one window: the forger's own "after you forge a key" abilities,
 	// every card's "after a player forges a key" abilities, and the forge-key lasting
@@ -737,14 +752,14 @@ func (g *Game) Concede(player int) {
 }
 
 // pickKeyColor asks the player which colour the key they are forging should be,
-// choosing among the colours they have not forged yet, and reports whether one
-// was available. The final key's colour is forced (only one remains), so it is
-// taken without a prompt. There is no default: every UI is asked whenever more
-// than one colour is available.
-func (g *Game) pickKeyColor(player int) (KeyColor, bool) {
+// choosing among the colours they have not forged yet. The final palette colour is
+// forced (only one remains), so it is taken without a prompt; a fourth key has no
+// colour left and is KeyColorColorless. There is no default: every UI is asked
+// whenever more than one colour is available.
+func (g *Game) pickKeyColor(player int) KeyColor {
 	remaining := g.remainingKeyColors(player)
 	if len(remaining) == 0 {
-		return 0, false
+		return KeyColorColorless
 	}
 	choice := remaining[0]
 	if len(remaining) > 1 {
@@ -762,13 +777,13 @@ func (g *Game) pickKeyColor(player int) (KeyColor, bool) {
 			choice = remaining[idx]
 		}
 	}
-	return choice, true
+	return choice
 }
 
 // remainingKeyColors lists the key colours the player has not yet forged, in
 // canonical order.
 func (g *Game) remainingKeyColors(player int) []KeyColor {
-	var used [4]bool
+	var used [len(keyColorNames)]bool
 	for i := 0; i < g.State.Keys[player]; i++ {
 		used[g.State.KeyColors[player][i]] = true
 	}

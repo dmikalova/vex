@@ -29,15 +29,15 @@ func TestDamageThenIfSurvives(t *testing.T) {
 		Amount: 3,
 		After:  IfSurvives,
 		Target: Target{Kind: TargetChosenCreature},
-		Then:   DiscardCard{Player: ItsOwner, Zone: Hand, Selection: Random{}},
+		Then:   DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{Count: 1}},
 	}
 	if e.Text() != "deal 3 damage to a creature. If it is not destroyed, its owner discards a random card from their hand" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if (DamageThen{After: IfSurvives, Then: DiscardCard{Player: Opponent, Zone: Hand, Selection: Random{}}}).validate() == nil {
+	if (DamageThen{After: IfSurvives, Then: DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).validate() == nil {
 		t.Error("unset target should be invalid")
 	}
-	if (DamageThen{Target: Target{Kind: TargetChosenCreature}, After: IfSurvives, Then: DiscardCard{Player: Opponent, Zone: Hand, Selection: Random{}}}).validate() != nil {
+	if (DamageThen{Target: Target{Kind: TargetChosenCreature}, After: IfSurvives, Then: DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).validate() != nil {
 		t.Error("a set target with a valid follow-up should pass")
 	}
 
@@ -53,7 +53,7 @@ func TestDamageThenIfSurvives(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	dead := g2.AddToBattleline(testCreature("d", 2), 1)
 	g2.AddToHand(testCreature("keep", 1), 1)
-	(DamageThen{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardCard{Player: ItsOwner, Zone: Hand, Selection: Random{}}}).Resolve(
+	(DamageThen{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).Resolve(
 		&EffectContext{Resolver: g2, Controller: 0},
 	)
 	if g2.inPlay(dead) {
@@ -65,7 +65,7 @@ func TestDamageThenIfSurvives(t *testing.T) {
 
 	// No creature to target: nothing happens.
 	g3 := NewGame("A", "B", 1)
-	(DamageThen{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardCard{Player: ItsOwner, Zone: Hand, Selection: Random{}}}).Resolve(
+	(DamageThen{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).Resolve(
 		&EffectContext{Resolver: g3, Controller: 0},
 	)
 }

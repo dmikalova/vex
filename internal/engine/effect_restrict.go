@@ -318,27 +318,36 @@ const (
 	FoughtActiveHouse
 	// JustChosenActiveHouse reads the house a player just chose, from the board.
 	JustChosenActiveHouse
+	// ItActiveHouse reads the house of the creature in context (ctx.It) and binds
+	// that creature's own controller — Mark of Dis's damaged survivor, whose
+	// controller must choose its house next turn regardless of which side it is on.
+	ItActiveHouse
 )
 
 // MustChooseHouse forces a player to choose a house as their active house on their
 // next turn — the house an enclosing ChooseHouseThen picked (Control the Weak,
-// Reference Chosen) or the house of the creature the source fought (Snag, Reference
-// Fought). Player names whose next-turn choice is forced; it is source-relative, so
-// a card binding its own controller reads "you must choose … on your next turn".
+// Reference Chosen), the house of the creature the source fought (Snag, Reference
+// Fought), or the house of the creature in context and that creature's own
+// controller (Mark of Dis, Reference It). Player names whose next-turn choice is
+// forced; it is source-relative, so a card binding its own controller reads "you
+// must choose … on your next turn" (an It reference binds the creature's controller
+// and ignores Player).
 type MustChooseHouse struct {
 	// Player is whose next-turn active-house choice is forced.
 	Player Player
-	// Reference names where the forced house is read from (Chosen or Fought).
+	// Reference names where the forced house is read from (Chosen, Fought, or It).
 	Reference HouseChoiceReference
 }
 
-// validate requires a player and a Chosen or Fought reference.
+// validate requires a player and a Chosen, Fought, or It reference.
 func (e MustChooseHouse) validate() error {
 	if !e.Player.valid() {
 		return errUnsetPlayer("MustChooseHouse")
 	}
-	if e.Reference != ChosenActiveHouse && e.Reference != FoughtActiveHouse {
-		return fmt.Errorf("MustChooseHouse: reference must be Chosen or Fought")
+	switch e.Reference {
+	case ChosenActiveHouse, FoughtActiveHouse, ItActiveHouse:
+	default:
+		return fmt.Errorf("MustChooseHouse: reference must be Chosen, Fought, or It")
 	}
 	return nil
 }
@@ -346,6 +355,10 @@ func (e MustChooseHouse) validate() error {
 // Text renders the effect in the player's voice, e.g. "your opponent must choose
 // that house as their active house during their next turn".
 func (e MustChooseHouse) Text() string {
+	if e.Reference == ItActiveHouse {
+		return "its controller must choose that creature's house as their " +
+			"active house on their next turn"
+	}
 	who, whose := e.Player.secondPerson()
 	if e.Reference == FoughtActiveHouse {
 		return who + " must choose the house of the creature " + SelfName +
@@ -355,10 +368,20 @@ func (e MustChooseHouse) Text() string {
 		" active house during " + whose + " next turn"
 }
 
-// Resolve arms the must on the player's next turn. A Fought reference stores a live
-// reference to the fought creature, resolved to its current house at choice time,
-// and does nothing when no creature is in context.
+// Resolve arms the must on the player's next turn. A Fought or It reference stores a
+// live reference to the creature in context, resolved to its current house at choice
+// time, and does nothing when no creature is in context; an It reference binds that
+// creature's own controller (read live), whichever side it is on.
 func (e MustChooseHouse) Resolve(ctx *EffectContext) {
+	if e.Reference == ItActiveHouse {
+		if !ctx.HasIt {
+			return
+		}
+		ctx.Resolver.MustChooseFoughtHouseNextTurn(
+			ctx.Resolver.Controller(ctx.It), ctx.It, ctx.Source,
+		)
+		return
+	}
 	player := ctx.PlayerFor(e.Player)
 	if e.Reference == FoughtActiveHouse {
 		if !ctx.HasIt {

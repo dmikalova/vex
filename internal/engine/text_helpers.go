@@ -132,6 +132,9 @@ func countNoun(n int, noun string) string {
 // adjectives stay: "an enemy damaged creature" becomes "enemy damaged creature",
 // which pluralizes correctly and keeps the "enemy" the card is scoped to.
 func singularNoun(phrase string) string {
+	if rest, ok := strings.CutPrefix(phrase, "another "); ok {
+		return "other " + rest
+	}
 	for _, p := range []string{"each other ", "each ", "an ", "a "} {
 		if strings.HasPrefix(phrase, p) {
 			return strings.TrimPrefix(phrase, p)

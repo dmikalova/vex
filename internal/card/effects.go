@@ -141,6 +141,9 @@ type (
 	Each = engine.Each
 	// Named pins the pick to the first card of a given name (Hyde archives Velum).
 	Named = engine.Named
+	// Self pins the pick to the card whose ability is resolving, so it acts on
+	// itself in a zone (Relentless Creeper returns itself from its discard pile).
+	Self = engine.Self
 	// Top pins the pick to the top card of an ordered zone (deck or discard pile).
 	Top = engine.Top
 	// Bottom pins the pick to the bottom card of an ordered zone.
@@ -263,12 +266,16 @@ type (
 	// recovering it from the discard pile when it was already destroyed (Nizak, The
 	// Forgotten returns an enemy destroyed fighting it).
 	ReturnItToHand = engine.ReturnItToHand
-	// SearchForName searches your deck and discard pile for a named card.
-	SearchForName = engine.SearchForName
-	// SearchDeck searches your deck for a card (any card, one of a given house, or
-	// one the Filter admits — e.g. an upgrade), puts it into your hand, and
-	// shuffles your deck.
-	SearchDeck = engine.SearchDeck
+	// Search searches one or more of your own zones — named explicitly in Sources
+	// (e.g. the deck, or the deck and discard pile) — for cards matching a filter:
+	// any card, a named card, a trait, a type, or a house. It reveals what it takes
+	// and puts it into your hand or archives. Any takes every match; Max caps the
+	// take at that many optional choices (the gigantic tutors take up to two
+	// halves). A search must name at least one zone; there is no assumed default. A
+	// search never shuffles; follow it with a Shuffle — except a search that places
+	// its finds on top of the deck, which sets ShuffleBeforePlacing to shuffle
+	// between finding and placing so the finds land on top (Digging Up the Monster).
+	Search = engine.Search
 	// Shuffle shuffles your deck, optionally folding whole zones of your cards into
 	// it first: nothing (the bare "shuffle your deck" a search ends on, also a
 	// RevealTopOfDeck/LookAtTopOfDeck routing terminal — Borr Nit) or whole Zones
@@ -691,6 +698,11 @@ type (
 	OpponentForgedKeys = engine.OpponentForgedKeys
 	// CountersOnThis counts the generic counters of one kind on the source card.
 	CountersOnThis = engine.CountersOnThis
+	// PowerCountersOnThis counts the +1/-1 power counters on the source card (the
+	// tally Chonkers doubles).
+	PowerCountersOnThis = engine.PowerCountersOnThis
+	// ArtifactsInPlay counts every artifact in play, both players' (Blossom Drake).
+	ArtifactsInPlay = engine.ArtifactsInPlay
 	// PurgedCards counts every card in the purge pile across both players.
 	PurgedCards = engine.PurgedCards
 	// TurnCount counts one of the engine's turn-history tallies (Player + Of).
@@ -715,6 +727,9 @@ type (
 	UsedNoCreatures = engine.UsedNoCreatures
 	// FirstReapOfTurn is met when the reap in context is the first this turn.
 	FirstReapOfTurn = engine.FirstReapOfTurn
+	// SourceFirstUseThisTurn is met when the source creature's current use is its
+	// first this turn (Gladiodontus).
+	SourceFirstUseThisTurn = engine.SourceFirstUseThisTurn
 	// CounterInPlay is met while at least one card in play carries a generic counter of the given kind.
 	CounterInPlay = engine.CounterInPlay
 	// CountersOnThisAtLeast is met when this card carries at least N counters of the given kind.
@@ -775,6 +790,9 @@ type (
 	// NeighborsSharingHouse counts the neighbors of the context creature (ctx.It)
 	// that share its house (0-2).
 	NeighborsSharingHouse = engine.NeighborsSharingHouse
+	// CombinedPowerOfNeighborsWithout sums the power of the source's battleline
+	// neighbors that lack a trait — Picaroon's X excludes its Changeling neighbors.
+	CombinedPowerOfNeighborsWithout = engine.CombinedPowerOfNeighborsWithout
 	// CardsInHand counts the cards in a player's hand of a referenced house.
 	CardsInHand = engine.CardsInHand
 	// CreaturesHealed counts the creatures the most recent Heal healed.
@@ -796,6 +814,9 @@ type (
 	PowerOfChosen = engine.PowerOfChosen
 	// TraitsOfChosen counts the traits of the creature just chosen.
 	TraitsOfChosen = engine.TraitsOfChosen
+	// BonusIconsOfChosen counts the bonus icons on the card in context — the card
+	// just discarded or revealed (Mindfire). Subject names it in the text.
+	BonusIconsOfChosen = engine.BonusIconsOfChosen
 	// CopiesInDiscard counts the copies of this card in your discard pile.
 	CopiesInDiscard = engine.CopiesInDiscard
 )
@@ -845,6 +866,9 @@ type (
 	// CannotBeDealtDamage marks the targeted creatures unable to be dealt damage
 	// for a Duration.
 	CannotBeDealtDamage = engine.CannotBeDealtDamage
+	// OverrideStats masks every creature's power and/or armor to a fixed value for
+	// the remainder of the turn (The Pale Star: 1 power, 0 armor).
+	OverrideStats = engine.OverrideStats
 	// MayPlayOrUse lets the controller act with cards outside their active house for
 	// the remainder of the turn — the one node for every out-of-house permission
 	// grant. Houses selects whose cards it frees (card.GrantHouses.Named/Chosen/Any/
@@ -859,6 +883,9 @@ type (
 	// NameHouse remembers the house an enclosing ChooseHouseThen picked on this card,
 	// feeding the card's HouseLock for as long as it stays in play.
 	NameHouse = engine.NameHouse
+	// NameCard has the controller name a card; while the source permanent stays in
+	// play, cards of that name cannot be played by either player (Etan's Jar).
+	NameCard = engine.NameCard
 	// MustChooseHouse forces a player's next active-house choice, read from
 	// Reference (card.ChosenActiveHouse — Control the Weak; card.FoughtActiveHouse —
 	// Snag). Player names whose choice is forced (card.Opponent, or card.Controller
@@ -1110,6 +1137,10 @@ var FoughtActiveHouse = engine.FoughtActiveHouse
 
 // JustChosenActiveHouse — see ChosenActiveHouse.
 var JustChosenActiveHouse = engine.JustChosenActiveHouse
+
+// ItActiveHouse names the house of the creature in context (ctx.It) and binds that
+// creature's own controller — Mark of Dis's damaged survivor.
+var ItActiveHouse = engine.ItActiveHouse
 
 // LeftFlank and RightFlank name a flank for an OnFlank predicate, e.g.
 // card.OnFlank{OfIt: true, Where: card.LeftFlank}.

@@ -67,6 +67,7 @@ func (e Destroy) destroy(ctx *EffectContext, ids []LocalID) bool {
 	for _, id := range ids {
 		controllers[id] = ctx.Resolver.Controller(id)
 		powers[id] = ctx.Resolver.Power(id)
+		captureDepartingSubject(ctx, id)
 	}
 	ctx.Resolver.DestroyEachFrom(ctx.Controller, ctx.Source, ids)
 	if len(ids) == 1 {

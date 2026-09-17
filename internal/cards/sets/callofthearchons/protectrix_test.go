@@ -35,7 +35,7 @@ func TestProtectrix(t *testing.T) {
 		h.P1.ClickCard(ally)
 
 		h.Expect(ally).Damage(0)
-		if !h.Game().State.Cards[ally.ID()].DamageImmune {
+		if !h.Game().DamageImmune(ally.ID()) {
 			t.Error("the healed creature should be protected from damage")
 		}
 	})
@@ -56,7 +56,7 @@ func TestProtectrix(t *testing.T) {
 		h.P1.ClickCard(ally)
 
 		h.Expect(ally).Damage(0)
-		if !h.Game().State.Cards[ally.ID()].DamageImmune {
+		if !h.Game().DamageImmune(ally.ID()) {
 			t.Error("the chosen creature should be protected from damage even undamaged")
 		}
 	})

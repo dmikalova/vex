@@ -16,7 +16,7 @@ import (
 //	Armor:  2
 //	Traits: Cyborg • Leader
 //
-//	While Zenzizenzizenzic is in the center of the battleline, during your "draw cards" phase, refill your hand to 2 additional cards.
+//	While Zenzizenzizenzic is in the center of the battleline, your hand size is 2 more.
 func TestZenzizenzizenzic(t *testing.T) {
 	t.Run("refills two extra while in the center", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

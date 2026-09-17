@@ -18,6 +18,31 @@ func TestUseTextAndValidation(t *testing.T) {
 	}
 }
 
+func TestUseWithVerb(t *testing.T) {
+	pool := Target{Kind: TargetEachFriendlyCreature}
+	if got := (Use{Max: 2, Verb: FightVerb{}, Target: pool}).Text(); got != "fight with 2 creatures, one at a time" {
+		t.Errorf("fight text = %q", got)
+	}
+	if got := (Use{Max: 1, Verb: ReapVerb{}, Target: pool}).Text(); got != "reap with a creature" {
+		t.Errorf("reap text = %q", got)
+	}
+
+	// Resolve reaps with the chosen creature — the verb is forced, not chosen.
+	g := NewGame("A", "B", 1)
+	src := g.AddArtifact(NewCard("source", StarAlliance, Artifact, Uncommon), 0)
+	reaper := g.AddToBattleline(NewCard("reaper", Shadows, Creature, Common, WithPower(3)), 0)
+	g.SetChooser(0, idChooser{id: reaper})
+	Use{Max: 1, Verb: ReapVerb{}, Target: pool}.Resolve(
+		&EffectContext{Resolver: g, Source: src, Controller: 0},
+	)
+	if g.Aember(0) != 1 {
+		t.Errorf("reap should gain 1 aember, got %d", g.Aember(0))
+	}
+	if !g.Exhausted(reaper) {
+		t.Error("reaping should exhaust the reaper")
+	}
+}
+
 func TestUseUsesCreaturesSequentially(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddArtifact(NewCard("source", Mars, Artifact, Uncommon), 0)

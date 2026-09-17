@@ -14,6 +14,11 @@ import (
 type Use struct {
 	Max    int
 	Target Target
+	// Verb restricts each use to one action — FightVerb ("fight with"), ReapVerb
+	// ("reap with") — instead of letting the controller choose how to use the card
+	// (J43G3R V fights or reaps with two non-Star Alliance creatures). The zero
+	// value (nil) offers the full choice, as a plain "use" does.
+	Verb CreatureVerb
 	// EvenUnusable offers every artifact in the pool, not only the ready ones with
 	// an Action. Poltergeist sets it because its payload is the destroy that
 	// follows, not the use: it must be able to choose any artifact — one with no
@@ -33,14 +38,19 @@ func (e Use) validate() error {
 	return nil
 }
 
-// Text renders the effect, e.g. "use an enemy artifact" for a single use, or
-// "use 2 other Mars cards, one at a time" for several.
+// Text renders the effect, e.g. "use an enemy artifact" for a single use, "use 2
+// other Mars cards, one at a time" for several, or "fight with 2 non-Star Alliance
+// creatures, one at a time" when a Verb restricts the use.
 func (e Use) Text() string {
 	noun := useNoun(e.Target.Text())
-	if e.Max == 1 {
-		return "use " + indefinite(noun)
+	verb := "use"
+	if e.Verb != nil {
+		verb = e.Verb.VerbText()
 	}
-	return "use " + countNoun(e.Max, noun) + ", one at a time"
+	if e.Max == 1 {
+		return verb + " " + indefinite(noun)
+	}
+	return verb + " " + countNoun(e.Max, noun) + ", one at a time"
 }
 
 // useNoun turns a Target's collective phrase into the singular noun the "use N ..."
@@ -68,6 +78,10 @@ func (e Use) Resolve(ctx *EffectContext) {
 			return
 		}
 		ctx.It, ctx.HasIt = id, true
+		if e.Verb != nil {
+			e.Verb.Apply(ctx, id)
+			continue
+		}
 		useCard(ctx, id)
 	}
 }

@@ -44,7 +44,7 @@ out-of-the-game (purge).
 `Shuffle…IntoDeck`, `Put…` — each a thin authoring struct with flat, ergonomically
 named fields that builds the shared mechanism with its destination fixed.
 `PurgeCard` sets the destination to out-of-the-game; `ArchiveTop{From: Deck}` sets
-it to archives; `DiscardCard{Player, Zone, Selection, Amount, AnyNumber}` sets it
+it to archives; `DiscardCard{Player, Zones, Selection, Amount, AnyNumber}` sets it
 to discard. The printed card says the verb, so the verb is what the author writes.
 
 **The sugar delegates; it does not embed.** This follows the quantity decision:

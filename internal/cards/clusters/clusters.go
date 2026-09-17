@@ -24,3 +24,14 @@ var Ludo = card.Cluster{
 	Strategy: card.ClusterStrategy.Pull,
 	Trigger:  card.ClusterTrigger.ByLead,
 }
+
+// Tutors is the gigantic tutors: Houseless reservoir cards, each pulled into a
+// gigantic base's pod at deck generation and stamped to that pod's House, so a
+// deck that runs a gigantic also runs a tutor that fetches its halves (ADR 0044).
+// It is a catalog-wide cluster, so every gigantic-bearing set reaches every tutor
+// and a new tutor joins each such set's pull with no per-set change.
+var Tutors = card.Cluster{
+	Name:     "Tutors",
+	Strategy: card.ClusterStrategy.PerGigantic,
+	Trigger:  card.ClusterTrigger.ByAnyMember,
+}

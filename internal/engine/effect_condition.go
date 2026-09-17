@@ -190,11 +190,41 @@ func (n Not) Met(ctx *EffectContext) bool { return !n.Cond.Met(ctx) }
 // it has Æmber on it". Each condition renders "if <clause>" (the shared
 // convention), so the leading "if " is dropped before the clauses are joined.
 func (o Or) CondText() string {
+	if s, ok := o.combinedHouses(); ok {
+		return s
+	}
 	clauses := make([]string, len(o.Conditions))
 	for i, c := range o.Conditions {
 		clauses[i] = strings.TrimPrefix(c.CondText(), "if ")
 	}
 	return "if " + strings.Join(clauses, " or ")
+}
+
+// combinedHouses renders an Or of ItIs clauses that differ only in a single named
+// house as one phrase — "if it is a Dis or Shadows card" — rather than repeating
+// "it is" once per house (Ambassador Liu). It returns false unless every clause is
+// such an ItIs and they share the same type, subject, and other flag.
+func (o Or) combinedHouses() (string, bool) {
+	houses := make([]string, 0, len(o.Conditions))
+	var shape ItIs
+	for i, c := range o.Conditions {
+		it, ok := c.(ItIs)
+		if !ok {
+			return "", false
+		}
+		h, sh, ok := it.asNamedHouseAlt()
+		if !ok {
+			return "", false
+		}
+		if i == 0 {
+			shape = sh
+		} else if sh != shape {
+			return "", false
+		}
+		houses = append(houses, h.String())
+	}
+	noun := strings.Join(houses, " or ") + " " + typeNoun(shape.Type)
+	return "if " + shape.Subject.noun() + " is " + indefinite(noun), true
 }
 
 // Met reports whether any of the conditions is met.

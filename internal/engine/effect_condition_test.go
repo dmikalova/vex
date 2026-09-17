@@ -988,9 +988,54 @@ func TestOrCondition(t *testing.T) {
 	}
 }
 
-// TestAndCondition mirrors the Or test: And is met only when every sub-condition
-// holds, so it filters the global "after a creature is played" trigger down to a
-// creature you played that is also a Mutant.
+// TestOrCombinesNamedHouses covers the text folding: an Or of ItIs clauses that
+// differ only in a single named house renders as one phrase (Ambassador Liu).
+func TestOrCombinesNamedHouses(t *testing.T) {
+	cards := Or{Conditions: []Condition{
+		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Dis}},
+		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Shadows}},
+	}}
+	if got := cards.CondText(); got != "if it is a Dis or Shadows card" {
+		t.Errorf("combined house text = %q", got)
+	}
+
+	// Sharing a type folds the type into the combined noun.
+	creatures := Or{Conditions: []Condition{
+		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Untamed}, Type: Creature},
+		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Logos}, Type: Creature},
+	}}
+	if got := creatures.CondText(); got != "if it is an Untamed or Logos creature" {
+		t.Errorf("combined creature text = %q", got)
+	}
+
+	// A differing type breaks the fold, so each clause renders on its own.
+	mixed := Or{Conditions: []Condition{
+		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Dis}, Type: Creature},
+		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Shadows}, Type: Artifact},
+	}}
+	if got := mixed.CondText(); got != "if it is a Dis creature or it is a Shadows artifact" {
+		t.Errorf("mixed text = %q", got)
+	}
+
+	// A non-ItIs clause breaks the fold too.
+	nonHouse := Or{Conditions: []Condition{
+		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Dis}},
+		ItHasAember{},
+	}}
+	if got := nonHouse.CondText(); got != "if it is a Dis card or it has Æmber on it" {
+		t.Errorf("non-house text = %q", got)
+	}
+
+	// An ItIs that filters by something other than a single named house
+	// (here the active house) breaks the fold, so each clause renders on its own.
+	notNamed := Or{Conditions: []Condition{
+		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Dis}},
+		ItIs{House: activeHouse},
+	}}
+	if got := notNamed.CondText(); got != "if it is a Dis card or it is of the active house" {
+		t.Errorf("not-named text = %q", got)
+	}
+}
 func TestAndCondition(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mutant := NewCard("mutant", Sanctum, Creature, Common, WithPower(3), WithTraits(Mutant))
@@ -1323,6 +1368,32 @@ func TestFirstReapOfTurn(t *testing.T) {
 	g.reapWith(second)
 	if (FirstReapOfTurn{}).Met(&EffectContext{Resolver: g, It: second, HasIt: true}) {
 		t.Error("a later reap should not meet the condition")
+	}
+}
+
+// TestSourceFirstUseThisTurn covers Gladiodontus's gate: met only while the
+// source creature's current use is its first this turn.
+func TestSourceFirstUseThisTurn(t *testing.T) {
+	want := "if this is the first time " + SelfName + " has been used this turn"
+	if got := (SourceFirstUseThisTurn{}).CondText(); got != want {
+		t.Errorf("CondText = %q", got)
+	}
+
+	g := started(t)
+	c := g.AddToBattleline(NewCard("glad", Saurian, Creature, Common, WithPower(5)), 0)
+	if (SourceFirstUseThisTurn{}).Met(&EffectContext{Resolver: g, Source: c}) {
+		t.Error("an unused creature should not meet the condition")
+	}
+
+	g.reapWith(c)
+	if !(SourceFirstUseThisTurn{}).Met(&EffectContext{Resolver: g, Source: c}) {
+		t.Error("the first use of the turn should meet the condition")
+	}
+
+	g.SetExhausted(c, false)
+	g.reapWith(c)
+	if (SourceFirstUseThisTurn{}).Met(&EffectContext{Resolver: g, Source: c}) {
+		t.Error("a second use should not meet the condition")
 	}
 }
 

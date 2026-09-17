@@ -45,7 +45,7 @@ func TestCannotBeDealtDamage(t *testing.T) {
 	}.Resolve(
 		ctx,
 	)
-	if !g.State.SideDamageImmune[1] {
+	if !g.DamageImmune(foe) {
 		t.Fatal("enemy side should be protected")
 	}
 	g.applyRawDamage(DamageTarget{ID: foe, Amount: 3})
@@ -54,7 +54,7 @@ func TestCannotBeDealtDamage(t *testing.T) {
 	}
 	g.StartTurn(0)
 	g.EndPlayPhase(0)
-	if g.State.SideDamageImmune[0] || g.State.SideDamageImmune[1] {
+	if g.DamageImmune(friend) || g.DamageImmune(foe) {
 		t.Error("end of turn should clear side-wide damage immunity for both players")
 	}
 }

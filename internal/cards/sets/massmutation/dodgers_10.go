@@ -1,14 +1,23 @@
-//go:build todo
-
 package massmutation
+
+import "github.com/dmikalova/vactrol/internal/card"
 
 // Dodger's 10
 //
-// TODO(gigantic): deferred — gigantic creature; two cards form one big
-// creature. See docs/todo-agent.md "Gigantics". Needs engine design before
-// implementation; grill first.
-//
 //	House:  Shadows
-//	Type:   Gigantic Creature (art half)
+//	Type:   Creature
 //	Rarity: Rare
-//	Source: MoMu 258
+//	Power:  11
+//	Traits: Elf • Thief
+//
+//	Play/Fight/Reap: Steal half of your opponent's Æmber, rounded down.
+var Dodgers10 = set.Gigantic(
+	"Dodger's 10",
+	card.House.Shadows,
+	card.Rarity.Rare,
+	card.Provenance(card.MoMu, "258"),
+	card.WithPower(11),
+	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
+	card.WithAbility(
+		card.Trigger.PlayFightReap, card.StealAember{By: card.HalfRoundedDown}),
+)

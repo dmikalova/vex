@@ -37,11 +37,14 @@ func scriptsFrom(r *rand.Rand, count int) [][]byte {
 }
 
 // Failure is a replayed simulation failure: the script that produced it, the
-// violation, and the game log leading up to it. A zero Err means the script
-// played out cleanly.
+// violation, the game log leading up to it, and each player's full deck list. A
+// zero Err means the script played out cleanly. Decks lists every card each player
+// owns so a reader can scan for the mechanic behind an invariant even when the
+// culprit card never appears in the log tail.
 type Failure struct {
 	Script []byte
 	Log    []string
+	Decks  [2][]string
 	Err    error
 }
 
@@ -53,7 +56,12 @@ func Debug(script []byte) Failure {
 	if err == nil {
 		return Failure{Script: script}
 	}
-	return Failure{Script: script, Log: g.LogText(), Err: err}
+	return Failure{
+		Script: script,
+		Log:    g.LogText(),
+		Decks:  [2][]string{g.DeckList(0), g.DeckList(1)},
+		Err:    err,
+	}
 }
 
 // FirstSeedFailure plays the fixed-seed batch and replays the first script that

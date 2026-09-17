@@ -23,8 +23,8 @@ var DoubleDoom = set.New(
 			},
 			card.DiscardCard{
 				Player:    card.Opponent,
-				Zone:      card.Hand,
-				Selection: card.Random{},
+				Zones:     []card.Zone{card.Hand},
+				Selection: card.Random{Count: 1},
 				Amount:    1,
 			},
 		}}),

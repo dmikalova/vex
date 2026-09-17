@@ -36,10 +36,12 @@ func (e BelongToHouse) validate() error {
 }
 
 // Text renders the effect, e.g. "for the remainder of the turn, this creature
-// belongs to house Mars".
+// belongs to house Mars". An UntilThisLeavesPlay change omits any "until it leaves
+// play" clause: every targeted effect ends when the creature leaves play, so the
+// clause would only restate the default (Borrow).
 func (e BelongToHouse) Text() string {
 	if e.Duration == UntilThisLeavesPlay {
-		return e.Target.Text() + " belongs to house " + e.House.String() + " until it leaves play"
+		return e.durationSubject() + " " + e.durationPredicate()
 	}
 	return "for the remainder of the turn, " + e.durationSubject() + " " + e.durationPredicate()
 }

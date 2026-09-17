@@ -24,8 +24,8 @@ var PerplexingSophistry = set.New(
 				Effects: []card.Effect{
 					card.DiscardCard{
 						Player:    card.Opponent,
-						Zone:      card.Hand,
-						Selection: card.Random{},
+						Zones:     []card.Zone{card.Hand},
+						Selection: card.Random{Count: 1},
 					},
 					card.Draw{
 						Amount: 1,

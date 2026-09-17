@@ -77,6 +77,34 @@ func TestAddPowerCounterPer(t *testing.T) {
 	}
 }
 
+// TestAddPowerCounterWalk covers Growth Surge: counters placed along an inward
+// flank walk instead of on a named Target.
+func TestAddPowerCounterWalk(t *testing.T) {
+	e := AddPowerCounter{Walk: []int{3, 2, 1}}
+	want := "choose a flank creature. Give it three +1 power counters, " +
+		"its neighbor two +1 power counters, and the neighbor's other neighbor " +
+		"a +1 power counter"
+	if got := e.Text(); got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+	// A walk chooses its own creatures, so it needs no Target to validate.
+	if err := e.validate(); err != nil {
+		t.Errorf("walk validate = %v, want nil", err)
+	}
+
+	g := NewGame("A", "B", 1)
+	left := g.AddToBattleline(testCreature("left", 4), 0)
+	mid := g.AddToBattleline(testCreature("mid", 4), 0)
+	right := g.AddToBattleline(testCreature("right", 4), 0)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.Power(left) != 7 || g.Power(mid) != 6 || g.Power(right) != 5 {
+		t.Errorf(
+			"power = %d/%d/%d, want 7/6/5",
+			g.Power(left), g.Power(mid), g.Power(right),
+		)
+	}
+}
+
 // A -1 power counter that lowers a damaged creature's power to its damage
 // destroys it at the resolution boundary, the same sweep a leaving buff triggers
 // — CanUse's map order must never leave a lethal creature sitting in play.

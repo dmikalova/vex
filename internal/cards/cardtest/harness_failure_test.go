@@ -120,6 +120,7 @@ func TestExpectMismatches(t *testing.T) {
 			AmberOn(2).
 			Exhausted().
 			Stunned(true).
+			Enraged(true).
 			At(Discard)
 		troll.Exhaust()
 		h.Expect(troll).Ready()
@@ -131,6 +132,7 @@ func TestExpectMismatches(t *testing.T) {
 		"Æmber-on-card = 0, want 2",
 		"is ready, want exhausted",
 		"stunned = false, want true",
+		"enraged = false, want true",
 		"is in play area, want discard",
 		"is exhausted, want ready",
 	)

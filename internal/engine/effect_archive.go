@@ -38,6 +38,10 @@ type ArchiveCard struct {
 	// Or switches Amount to an alternate when a condition holds, so the card reads
 	// "archive a card, or 2 cards if …" (Velum archives 2 while controlling Hyde).
 	Or OrAmount
+	// Bind records the archived card as the choice context (ctx.It) so a later
+	// effect in the same ability can read it (Blast from the Past deals the
+	// archived creature's power to an enemy creature).
+	Bind bool
 }
 
 // validate rejects an ArchiveCard whose selection was left unset, a source zone
@@ -197,6 +201,9 @@ func (e ArchiveCard) archive(ctx *EffectContext, ids []LocalID) {
 				Player: ctx.Controller,
 				Cards:  []LocalID{id},
 			})
+		}
+		if e.Bind {
+			ctx.It, ctx.HasIt = id, true
 		}
 		if e.From == Opponent {
 			// Abduction from hand: the enemy card goes into the controller's own

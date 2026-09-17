@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// RelentlessCreeper
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Relentless Creeper
 //
 //	House:  Dis
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Imp
 //
-//	After you choose Dis as your active house, you may return Relentless Creeper from your discard pile to your hand.
+//	After you choose Dis as your active house, you may put Relentless Creeper from your discard pile into your hand.
 var RelentlessCreeper = set.New(
 	"Relentless Creeper",
 	card.House.Dis,
@@ -24,5 +19,15 @@ var RelentlessCreeper = set.New(
 	card.Provenance(card.MM, "029"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithTriggersFromDiscard(),
+	card.WithAbility(
+		card.Trigger.AfterChooseHouse, card.Conditional{
+			Cond: card.ChoseHouse{House: card.House.Self},
+			Then: card.May{
+				Do: card.PutFromDiscard{
+					Selection:   card.Self{},
+					Destination: card.To.Hand,
+				},
+			},
+		}),
 )

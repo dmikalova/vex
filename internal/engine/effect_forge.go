@@ -23,11 +23,6 @@ type ForgeKey struct {
 	// to 0) — Desire reaps to forge at current cost reduced by 1 for each friendly Sin
 	// creature. It reads with no "+N" surcharge and floors the whole cost at 0.
 	Discount bool
-	// Keep leaves the source card in play instead of purging it on a successful
-	// forge. The self-purge is an anti-regrowth measure for key cheats that could
-	// loop a body back to forge again; a repeatable reap engine (Desire) is not such
-	// a loop, so it keeps its body (see docs/keyforge-divergences.md).
-	Keep bool
 	// Or switches Extra to an alternate surcharge when a condition holds, so the card
 	// reads "forge a key at +6 Æmber current cost, or +2 if …" instead of a two-armed
 	// Otherwise branch (rule 22).
@@ -57,7 +52,7 @@ func (e ForgeKey) validate() error {
 }
 
 // Text renders the effect. The forge gates a self-purge: the card that made it is
-// spent only if a key is actually forged, unless Keep leaves it in play.
+// spent only if a key is actually forged.
 func (e ForgeKey) Text() string {
 	var body string
 	switch {
@@ -81,14 +76,11 @@ func (e ForgeKey) Text() string {
 	if e.Or.set() {
 		body += e.Or.tail(fmt.Sprintf("+%d", e.Or.Amount))
 	}
-	if e.Keep {
-		return body
-	}
 	return body + " -> purge " + SelfName
 }
 
 // Resolve forges one key for the controller if affordable, then purges the source
-// card when a key was actually forged (unless Keep leaves it in play).
+// card when a key was actually forged.
 func (e ForgeKey) Resolve(ctx *EffectContext) {
 	var forged bool
 	if e.FreeOfCost {
@@ -109,7 +101,7 @@ func (e ForgeKey) Resolve(ctx *EffectContext) {
 		}
 		forged = ctx.Resolver.ForgeKeyAtExtraCost(ctx.Controller, extra)
 	}
-	if forged && !e.Keep {
+	if forged {
 		PurgeSource{}.Resolve(ctx)
 	}
 }

@@ -134,11 +134,14 @@ func (d Destination) moveFrom(ctx *EffectContext, from Zone, owner int, id Local
 		}
 		ctx.Resolver.DiscardCardFromHand(owner, id)
 	case destTopOfDeck:
-		if from == Discard {
+		switch from {
+		case Discard:
 			ctx.Resolver.MoveFromDiscardToTopOfDeck(id)
-			return
+		case Deck:
+			ctx.Resolver.MoveFromDeckToTopOfDeck(id)
+		default:
+			ctx.Resolver.PutOnTopOfDeck(id)
 		}
-		ctx.Resolver.PutOnTopOfDeck(id)
 	case destDeckShuffled:
 		switch from {
 		case Hand:

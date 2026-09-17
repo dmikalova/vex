@@ -41,10 +41,6 @@ type CardCore struct {
 	// Ward persists until it is spent or an effect removes it; the ready phase does
 	// not clear it.
 	Warded bool
-	// DamageImmune, while set, prevents any damage from being dealt to this creature.
-	// It lasts until end of turn (the ready phase clears it) — Shield of Justice,
-	// Protectrix.
-	DamageImmune bool
 	// GrantedKeywords is the set of keywords this creature has gained for the
 	// remainder of the turn, as a bitmask of Keyword.bit() values (Scout grants
 	// Skirmish). The ready phase clears it for every creature.
@@ -154,6 +150,14 @@ type CardCore struct {
 	// printed on the card — Restringuntus bars the house it named. It is the card's
 	// choice, not the house the card belongs to.
 	NamedHouse House
+	// NamedCardPlus records a card this permanent named as it entered play, matched
+	// by name against every card attempted to be played while this permanent stays
+	// in play — Etan's Jar bars the card it named. It stores that card's
+	// representative LocalID+1 (0 means "named nothing") so the zero value is cleanly
+	// "none", like HostPlus; the gate compares by the named def's Name, so any copy
+	// of that name in either deck is barred. resetCore clears it when the card leaves
+	// play, lifting the bar.
+	NamedCardPlus uint8
 	// Upgrades attached to a creature form an intrusive singly-linked list threaded
 	// through these three bytes, so a creature carries any number of upgrades with no
 	// per-card fixed array — KeyForge sets no limit on how many upgrades a creature
@@ -310,6 +314,16 @@ func (z *wideList) remove(id LocalID) bool   { return listRemove(z.IDs[:], &z.Co
 type GameState struct {
 	// Cards is every card's mutable per-match state, indexed by LocalID.
 	Cards [maxCards]CardCore
+	// UsagesThisTurn counts each card's usages this turn, indexed by LocalID — a
+	// play, a discard, a use (reap/fight/action), each repeat iteration past the
+	// first, each Destroyed: resolution, and each chained Replicator-style trigger
+	// past the free first (charged to the card that started the chain). The
+	// Rule of Six caps the usages of a whole card *name* (summed across every copy
+	// regardless of owner, since only the active player uses cards), not a single
+	// card, so it lives here beside Cards rather than in
+	// CardCore, which resetCore would clear when a copy leaves play. StartTurn zeroes
+	// the whole array.
+	UsagesThisTurn [maxCards]uint8
 	// Battleline[p] is player p's row of creatures in play, in flank-to-flank order.
 	Battleline [2]wideList
 	// Hand[p] is player p's hand.
@@ -332,8 +346,8 @@ type GameState struct {
 
 	// KeyColors[p] holds the colour of each key player p has forged, in forge order;
 	// entries [0:Keys[p]] are set, the rest are KeyColorNone. A player picks the
-	// colour as they forge (see pickKeyColor).
-	KeyColors [2][KeysToWin]KeyColor
+	// colour as they forge (see pickKeyColor); a fourth key is KeyColorColorless.
+	KeyColors [2][MaxKeys]KeyColor
 
 	// ForgePrevented means a "when your opponent would forge a key" ability
 	// cancelled the forge in progress (Keyforgery). It is set during the before-forge
@@ -390,14 +404,6 @@ type GameState struct {
 	// fight bar StartTurn promotes it and the ready phase lifts it.
 	CannotUse     [2]Bar[bool]
 	CannotUseNext [2]Bar[bool]
-
-	// SideDamageImmune[p], while set, makes every creature player p controls immune
-	// to damage for the current turn — Shield of Justice protects each friendly
-	// creature for the remainder of the turn. It is a side-wide mask read live at
-	// damage time (not a snapshot of the creatures in play when it resolved), so a
-	// creature played or gained after it resolves is protected too, and one taken by
-	// the opponent is not. The ready phase clears it, like the turn bars.
-	SideDamageImmune [2]bool
 
 	// Reap bars. CannotReap[p] stops player p reaping with any creature this turn
 	// (Inky Gloom); CannotReapNext[p] arms that block for p's next turn. Like the
@@ -501,26 +507,22 @@ type GameState struct {
 	// player's own last completed turn.
 	TurnHistory [2][turnStatCount]int8
 
-	// KeywordsLost is the set of keywords every creature in play has lost for the
-	// remainder of the turn — Sniffer takes elusive away from each creature. It is a
-	// bitmask over keywordBit so the state stays flat and comparable; the ready
-	// phase clears it.
-	KeywordsLost uint16
-
-	// TextBlank[p] blanks the text box of every creature player p controls — its
-	// printed keywords, abilities, and constant grants are ignored (its traits and
-	// stats remain). Shadow of Dis blanks the opponent's creatures "until your next
-	// turn": set on the affected player, it persists through that player's own next
-	// turn and is lifted by their ready phase, so it always spans exactly through
-	// the opponent's turn whoever plays in between.
-	TextBlank [2]Bar[bool]
-
 	// Lasting holds the "for the remainder of the turn" effects active now (Full
 	// Moon, Charge!, Crystal Hive reactions; Dimension Door's replacement), fired or
 	// queried by game_lasting.go when their event occurs; LastingCount is how many of
 	// the fixed array are in use. The ready phase drops a player's entries.
 	Lasting      [maxLasting]LastingEffect
 	LastingCount uint8
+
+	// Continuous holds the duration-scoped, read-live modifiers a resolving effect
+	// installed on the board — damage immunity, lost keywords, blanked text, stat
+	// overrides (game_continuous.go); ContinuousCount is how many of the fixed array
+	// are in use. Unlike a ConstantAbility (a property of a card in play), a
+	// continuous effect outlives its source and is dropped by turn window, not by
+	// the source leaving play. The end-of-turn sweep drops entries whose window has
+	// closed.
+	Continuous      [maxContinuous]ContinuousEffect
+	ContinuousCount uint8
 
 	// AlsoTriggers holds the "for the remainder of the turn" also-triggers-on rules
 	// active now (Livia the Elder's fight/reap fuse), queried by game_abilities.go
@@ -659,6 +661,9 @@ func (c *catalog) add(def *CardDefinition, owner int) LocalID {
 
 // hasRoom reports whether another card can still be registered in this match.
 func (c *catalog) hasRoom() bool { return len(c.defs) < maxCards }
+
+// count returns how many cards are registered in the match.
+func (c *catalog) count() int { return len(c.defs) }
 
 // def returns the definition for an id.
 func (c *catalog) def(id LocalID) *CardDefinition { return c.defs[id] }

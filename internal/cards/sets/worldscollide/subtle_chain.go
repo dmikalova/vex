@@ -20,6 +20,10 @@ var SubtleChain = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.DiscardCard{Player: card.Opponent, Zone: card.Hand, Selection: card.Random{}},
+		card.DiscardCard{
+			Player:    card.Opponent,
+			Zones:     []card.Zone{card.Hand},
+			Selection: card.Random{Count: 1},
+		},
 	),
 )

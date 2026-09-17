@@ -196,7 +196,7 @@ func TestPurgeFromHand(t *testing.T) {
 	if got := (PurgeFromHand{Player: Controller, Selection: Chosen{Optional: true}}).Text(); got != "you may purge a card from your hand" {
 		t.Errorf("chosen any-card text = %q", got)
 	}
-	if got := (PurgeFromHand{Player: Opponent, Selection: Random{}}).Text(); got != "purge a random card from your opponent's hand" {
+	if got := (PurgeFromHand{Player: Opponent, Selection: Random{Count: 1}}).Text(); got != "purge a random card from your opponent's hand" {
 		t.Errorf("random text = %q", got)
 	}
 	if got := (PurgeFromHand{Player: Controller, Selection: Each{Type: Creature, House: exceptHouse(Mars)}}).Text(); got != "purge each non-Mars creature from your hand" {
@@ -334,7 +334,7 @@ func TestPurgeFromHandRandom(t *testing.T) {
 	)
 	g.State.Hand[1].add(only)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	if !(PurgeFromHand{Player: Opponent, Selection: Random{}}).resolveGate(
+	if !(PurgeFromHand{Player: Opponent, Selection: Random{Count: 1}}).resolveGate(
 		ctx,
 	) {
 		t.Error("purging a card should report true")
@@ -349,13 +349,43 @@ func TestPurgeFromHandRandom(t *testing.T) {
 	// An empty hand purges nothing and reports false.
 	g2 := NewGame("A", "B", 1)
 	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	if (PurgeFromHand{Player: Opponent, Selection: Random{}}).resolveGate(
+	if (PurgeFromHand{Player: Opponent, Selection: Random{Count: 1}}).resolveGate(
 		ctx2,
 	) {
 		t.Error("empty hand should report false")
 	}
 	if len(g2.Purge(1)) != 0 {
 		t.Error("empty hand should purge nothing")
+	}
+}
+
+// TestPurgeFromHandRandomCount covers a multi-card random purge (Tormax): the
+// count-bearing text, purging that many distinct cards, and stopping early when
+// the hand holds fewer.
+func TestPurgeFromHandRandomCount(t *testing.T) {
+	two := PurgeFromHand{Player: Opponent, Selection: Random{Count: 2}}
+	if got := two.Text(); got != "purge 2 random cards from your opponent's hand" {
+		t.Errorf("count text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	for _, name := range []string{"a", "b", "c"} {
+		g.State.Hand[1].add(g.Register(NewCard(name, Shadows, Creature, Common, WithPower(3)), 1))
+	}
+	two.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if len(g.Purge(1)) != 2 {
+		t.Errorf("purged = %d, want 2", len(g.Purge(1)))
+	}
+	if len(g.Hand(1)) != 1 {
+		t.Errorf("hand = %d, want 1 left", len(g.Hand(1)))
+	}
+
+	// A hand of one still purges only what it holds.
+	g2 := NewGame("A", "B", 1)
+	g2.State.Hand[1].add(g2.Register(NewCard("only", Shadows, Creature, Common, WithPower(3)), 1))
+	two.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	if len(g2.Purge(1)) != 1 {
+		t.Errorf("purged = %d, want 1", len(g2.Purge(1)))
 	}
 }
 

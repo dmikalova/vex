@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Fully heal Ancient Bear. If there are no Ancient Bears in play, search your deck and discard pile and put each Ancient Bear from them into your hand -> shuffle your discard pile into your deck.
+//	Action: Fully heal Ancient Bear. If there are no Ancient Bears in play, search your deck and discard pile for any number of Ancient Bears, reveal them, and put them into your hand -> shuffle your discard pile into your deck.
 func TestBearFlute(t *testing.T) {
 	t.Run("heals a bear that is in play", func(t *testing.T) {
 		var flute, bear ct.Card

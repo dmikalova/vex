@@ -1384,6 +1384,8 @@
     "traits": [
       "robot"
     ],
+    "power": 10,
+    "armor": 3,
     "text": "(Play only with the other half of Ultra Gravitron.)\nPlay: Archive the top 5 cards of your deck.\nFight/Reap: Discard a card from your archives. If you do, purge a creature and resolve each of its bonus icons as if you had played it."
   },
   {
@@ -2734,6 +2736,7 @@
     "traits": [
       "mutant"
     ],
+    "power": 20,
     "text": "(Play only with the other half of Deusillus.)\nPlay: Capture all of your opponent's A. Deal 5D to an enemy creature.\nFight/Reap: Move 1A from Deusillus to the common supply. Deal 2D to each enemy creature."
   },
   {
@@ -4710,6 +4713,8 @@
       "mutant",
       "niffle"
     ],
+    "power": 12,
+    "armor": 2,
     "text": "(Play only with the other half of Niffle Kong.)\nPlay: Search your deck and discard pile for any number of Niffle creatures, reveal them, and put them into your hand. Shuffle your deck.\nFight/Reap: You may destroy a friendly Niffle creature. If you do, deal 3D to a creature, steal 1A, and destroy an enemy artifact."
   }
 ]

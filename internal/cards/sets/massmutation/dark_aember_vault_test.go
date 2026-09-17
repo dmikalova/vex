@@ -15,7 +15,7 @@ import (
 //	Traits: Location
 //
 //	Each friendly Mutant creature gains +2 power.
-//	After a creature is played, if it is a friendly creature and it is a Mutant creature, draw a card.
+//	After you play a Mutant creature, draw a card.
 func TestDarkAemberVault(t *testing.T) {
 	t.Run("draws and buffs when you play a Mutant creature", func(t *testing.T) {
 		var mutant, top ct.Card
@@ -39,6 +39,35 @@ func TestDarkAemberVault(t *testing.T) {
 			t.Errorf("friendly Mutant power = %d, want 5 (3 base + 2)", got)
 		}
 	})
+
+	t.Run(
+		"draws when you play a Mutant creature with treachery into the enemy line",
+		func(t *testing.T) {
+			var mutant, top ct.Card
+			h := ct.Play(t, ct.Setup{
+				P1: ct.Side{
+					House:  card.House.Sanctum,
+					InPlay: ct.Cards(DarkAemberVault),
+					Hand: ct.Cards(ct.Bind(&mutant, ct.Creature(
+						ct.OfHouse(card.House.Sanctum),
+						ct.Traits(card.Traits.Mutant),
+						ct.Keywords(card.Keyword.Treachery),
+						ct.Power(3),
+					))),
+					Deck: ct.Cards(ct.Bind(&top, ct.Creature(ct.OfHouse(card.House.Sanctum)))),
+				},
+			})
+
+			h.P1.Play(mutant)
+
+			// Treachery hands the creature to your opponent, but you played it, so the
+			// "after you play a Mutant creature" reaction still draws.
+			if got := h.Game().Controller(mutant.ID()); got != 1 {
+				t.Fatalf("controller = %d, want 1 (your opponent, via treachery)", got)
+			}
+			h.Expect(top).At(ct.Hand)
+		},
+	)
 
 	t.Run("no draw when you play a non-Mutant creature", func(t *testing.T) {
 		var plain, top ct.Card

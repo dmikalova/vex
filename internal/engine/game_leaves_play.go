@@ -206,11 +206,14 @@ func (g *Game) discardUnder(id LocalID) {
 // "destroy this Upgrade" saves the creature and consumes the Upgrade. It reports
 // whether the destruction was replaced.
 func (g *Game) applyDestructionReplacement(id LocalID) bool {
-	// A replacement fires once per sweep. If it already stood in for this creature's
-	// destruction earlier in the sweep yet the creature is destroyable again (it sits
-	// at 0 power, which the replacement's heal does not lift), the second destruction
-	// resolves for real — otherwise the sweep would replace it forever and hang.
-	if g.destructionReplacedThisSweep(id) {
+	// A destruction replacement is bounded by the Rule of Six: it counts as a usage
+	// of the creature's name (Reassembling Automaton "instead move it to a flank"),
+	// so it stands in for at most six of that name's destructions in one turn across
+	// a player's copies. A creature stuck at 0 power — which the replacement's heal
+	// does not lift — would otherwise be re-detected and replaced on every sweep pass,
+	// hanging the game; once the name's pool is spent the next destruction resolves
+	// for real instead.
+	if g.atRuleOfSix(id) {
 		return false
 	}
 	src, r, ok := g.destructionReplacement(id)
@@ -218,7 +221,7 @@ func (g *Game) applyDestructionReplacement(id LocalID) bool {
 		return false
 	}
 	g.record(DestructionReplaced{Card: id, By: src})
-	g.replacedThisSweep = append(g.replacedThisSweep, id)
+	g.recordUsage(id)
 	r.With.Resolve(&EffectContext{
 		Resolver:   g,
 		Source:     src,
@@ -416,6 +419,14 @@ func (g *Game) resolveDestroyedWindow() {
 		i := g.pickNextReaction(g.destroyWindowController, orderDestroyedPrompt, g.destroyPending)
 		t := g.destroyPending[i]
 		g.destroyPending = append(g.destroyPending[:i], g.destroyPending[i+1:]...)
+		// Resolving a Destroyed: ability is a usage of its creature's name, so it is
+		// bounded by the Rule of Six: once that name's pool is spent this turn the
+		// remaining Destroyed: abilities of that name do not resolve, though the
+		// creature still leaves play.
+		if g.atRuleOfSix(t.source) {
+			continue
+		}
+		g.recordUsage(t.source)
 		g.resolveTriggered(t)
 	}
 }

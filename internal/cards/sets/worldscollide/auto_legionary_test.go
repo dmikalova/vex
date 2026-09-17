@@ -63,4 +63,29 @@ func TestAutoLegionary(t *testing.T) {
 		}
 		h.Expect(auto).Power(5).At(ct.PlayArea)
 	})
+
+	t.Run("used again as a creature repositions instead of duplicating", func(t *testing.T) {
+		var auto ct.Card
+		h := ct.Play(t, ct.Setup{
+			P1: ct.Side{
+				House:  card.House.Saurian,
+				InPlay: ct.Cards(ct.Bind(&auto, AutoLegionary)),
+			},
+		})
+
+		h.P1.UseAction(auto)
+		h.P1.ClickOption("left")
+
+		// A second use finds it already a creature in the battleline; it must
+		// reposition, not insert a duplicate — a duplicate breaks card conservation.
+		auto.Ready()
+		h.P1.UseAction(auto)
+		h.P1.ClickOption("right")
+
+		if err := h.Game().InvariantError(); err != nil {
+			t.Fatalf("card conservation broken after repeated use: %v", err)
+		}
+		// It kept its counters across both uses (five each) and stayed one creature.
+		h.Expect(auto).Power(10).At(ct.PlayArea)
+	})
 }

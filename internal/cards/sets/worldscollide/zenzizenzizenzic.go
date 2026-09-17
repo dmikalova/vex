@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Cyborg • Leader
 //
-//	While Zenzizenzizenzic is in the center of the battleline, during your "draw cards" phase, refill your hand to 2 additional cards.
+//	While Zenzizenzizenzic is in the center of the battleline, your hand size is 2 more.
 var Zenzizenzizenzic = set.New(
 	"Zenzizenzizenzic",
 	card.House.Logos,

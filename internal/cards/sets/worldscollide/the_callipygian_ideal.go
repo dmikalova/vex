@@ -16,7 +16,7 @@ var TheCallipygianIdeal = set.New(
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "212"),
-	card.WithStatic(card.StaticModifier{SpendAemberOnCard: true}),
+	card.WithStatic(card.StaticModifier{SpendAemberOnCard: card.SpendScope.Controller}),
 	card.WithAbility(
 		card.Trigger.Play, card.Exalt{
 			Target: card.Target.This,

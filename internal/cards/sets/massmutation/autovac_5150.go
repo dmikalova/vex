@@ -21,7 +21,7 @@ var AutoVac5150 = set.New(
 		card.Trigger.Action, card.Then{
 			First: card.DiscardCard{
 				Player:    card.Controller,
-				Zone:      card.Archives,
+				Zones:     []card.Zone{card.Archives},
 				Selection: card.Chosen{Optional: true},
 			},
 			Result: card.RaiseKeyCost{

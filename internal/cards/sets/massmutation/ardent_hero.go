@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ArdentHero
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Ardent Hero
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -25,5 +20,9 @@ var ArdentHero = set.New(
 	card.Provenance(card.MM, "126"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Taunt),
+	card.WithCannotBeDealtDamageBy(card.DamageSource{
+		Trait:    card.Traits.Mutant,
+		MinPower: 5,
+	}),
 )

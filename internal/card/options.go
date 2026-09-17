@@ -42,6 +42,25 @@ var (
 	WithDestroyedWhen = func(c Condition) Option { return gameplay(engine.WithDestroyedWhen(c)) }
 	// WithTakesDamageFor makes this card take the damage dealt to other creatures.
 	WithTakesDamageFor = func(t engine.Target) Option { return gameplay(engine.WithTakesDamageFor(t)) }
+	// WithAlsoTakesNeighborFightDamage makes this creature take an equal share of the
+	// damage dealt to its neighbors during a fight, on top of the neighbor's own
+	// damage (Drecker).
+	WithAlsoTakesNeighborFightDamage = func() Option {
+		return gameplay(engine.WithAlsoTakesNeighborFightDamage())
+	}
+	// WithPowerX gives a creature a variable "X" power: a live Count added to its
+	// base power while its text is not blanked (Picaroon's combined-neighbor power).
+	WithPowerX = func(c engine.Count) Option { return gameplay(engine.WithPowerX(c)) }
+	// WithCannotBeDealtDamageBy makes the card refuse damage dealt to it by the
+	// creatures the matcher names (Ardent Hero refuses Mutant creatures or creatures
+	// with power 5 or higher).
+	WithCannotBeDealtDamageBy = func(m DamageSource) Option {
+		return gameplay(engine.WithCannotBeDealtDamageBy(m))
+	}
+	// WithTriggersFromDiscard keeps a card's triggered abilities live while it sits
+	// in its owner's discard pile, so an "after you choose <house>" ability fires
+	// from the discard (Relentless Creeper returns itself to hand).
+	WithTriggersFromDiscard = func() Option { return gameplay(engine.WithTriggersFromDiscard()) }
 	// WithAttackIgnores makes a creature ignore defensive keywords while attacking.
 	WithAttackIgnores = func(kws ...engine.Keyword) Option { return gameplay(engine.WithAttackIgnores(kws...)) }
 	// WithEntersPlay adds an effect that resolves as the creature enters play.

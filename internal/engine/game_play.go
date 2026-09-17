@@ -380,9 +380,15 @@ func (g *Game) playCardFromZone(
 	if g.cannotPlayCard(player) {
 		return 0, ErrCardPlayLimit
 	}
+	if g.atRuleOfSix(id) {
+		return 0, ErrRuleOfSix
+	}
 	def := g.cat.def(id)
 	if !g.meetsPlayRequirement(player, def) {
 		return 0, ErrPlayRequirement
+	}
+	if g.barredByNamedCard(def) {
+		return 0, ErrCannotPlayName
 	}
 	switch def.Type {
 	case Creature:
@@ -531,8 +537,15 @@ func (g *Game) playCreatureCard(player int, id LocalID, fl flank) {
 // control is held permanently: the card names itself as the source of a
 // control-stack entry, which only clears when the card itself leaves play (never
 // reverted by a leaving source).
+//
+// A gigantic creature enters play only by being played, which recruits its other
+// half; a lone half cannot be put into play, so a gigantic half is left where it
+// came from.
 func (g *Game) putIntoPlay(id LocalID, controller int) {
 	if g.inPlay(id) {
+		return
+	}
+	if g.cat.def(id).GiganticRole != GiganticNone {
 		return
 	}
 	g.removeFromAnyZone(id)
@@ -647,6 +660,8 @@ func (g *Game) discardFromHand(owner int, id LocalID) {
 	hand.removeAt(i)
 	g.State.Discard[owner].add(id)
 	g.State.DiscardedThisTurn[owner].add(id)
+	// Discarding a card is a usage of its name toward the Rule of Six.
+	g.recordUsage(id)
 	g.record(CardDiscarded{Player: owner, Card: id})
 	for _, watcher := range g.allInPlay(owner) {
 		g.triggerAbilities(watcher, TriggerAfterDiscardFromHand, id, true)
@@ -775,6 +790,8 @@ func (g *Game) recordCardPlayed(player int, id LocalID, opts playCardOptions) {
 		g.consumeOffHousePlay(player, def)
 	}
 	g.State.PlayedThisTurn[player].add(id)
+	// Playing a card is a usage of its name toward the Rule of Six.
+	g.recordUsage(id)
 }
 
 // barredByFirstTurn reports whether the first-turn rule blocks player from
@@ -858,6 +875,9 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 	if g.cannotPlayCard(player) {
 		return ErrCardPlayLimit
 	}
+	if g.atRuleOfSix(id) {
+		return ErrRuleOfSix
+	}
 	if g.barredByFirstTurn(player) {
 		return ErrFirstTurnOneCard
 	}
@@ -869,6 +889,9 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 	}
 	if !g.meetsPlayRequirement(player, def) {
 		return ErrPlayRequirement
+	}
+	if g.barredByNamedCard(def) {
+		return ErrCannotPlayName
 	}
 	if def.Type == Artifact &&
 		g.State.Aember[player] < g.tollOwed(player, TollPlayArtifact) {

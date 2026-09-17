@@ -23,7 +23,7 @@ var Eureka = set.New(
 		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{
 				card.GainAember{Player: card.Controller, Amount: 2},
-				card.ArchiveCard{Zone: card.Hand, Selection: card.Random{}, Amount: 2},
+				card.ArchiveCard{Zone: card.Hand, Selection: card.Random{Count: 1}, Amount: 2},
 			},
 		}),
 )

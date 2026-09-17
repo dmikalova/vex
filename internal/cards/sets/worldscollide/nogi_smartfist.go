@@ -24,8 +24,8 @@ var NogiSmartfist = set.New(
 			card.Draw{Amount: 2},
 			card.DiscardCard{
 				Player:    card.Controller,
-				Zone:      card.Hand,
-				Selection: card.Random{},
+				Zones:     []card.Zone{card.Hand},
+				Selection: card.Random{Count: 1},
 				Amount:    2,
 			},
 		}}),

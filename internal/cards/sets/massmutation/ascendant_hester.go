@@ -1,19 +1,33 @@
-//go:build todo
-
 package massmutation
+
+import "github.com/dmikalova/vactrol/internal/card"
 
 // Ascendant Hester
 //
-// TODO(gigantic): deferred — gigantic creature; two cards form one big
-// creature. See docs/todo-agent.md "Gigantics". Needs engine design before
-// implementation; grill first.
-//
 //	House:  Sanctum
-//	Type:   Gigantic Creature (base half)
+//	Type:   Creature
 //	Rarity: Special
-//	Source: MoMu 134
+//	Power:  8
 //	Traits: Knight • Spirit
 //
-//	(Play only with the other half of Ascendant Hester.)
-//	Each other friendly creature gets +2 armor for each Aember on it.
-//	Play/After Fight: Each friendly creature captures 1 Aember.
+//	Each other friendly creature gains +2 armor for each Æmber on it.
+//	Play/Fight: Each friendly creature captures 1 Æmber from your opponent.
+var AscendantHester = set.Gigantic(
+	"Ascendant Hester",
+	card.House.Sanctum,
+	card.Rarity.Special,
+	card.Provenance(card.MoMu, "134"),
+	card.WithPower(8),
+	card.WithTraits(card.Traits.Knight, card.Traits.Spirit),
+	card.WithConstant(card.ConstantAbility{
+		Target:     card.Target.EachOtherFriendlyCreature,
+		ArmorBonus: 2,
+		PerTarget:  card.AemberOnIt,
+	}),
+	card.WithAbility(
+		card.Trigger.PlayFight, card.CaptureAember{
+			Amount: 1,
+			Target: card.Target.EachFriendlyCreature,
+			Source: card.Opponent,
+		}),
+)

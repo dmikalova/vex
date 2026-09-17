@@ -16,7 +16,7 @@ import (
 //	Traits: Demon • Leader
 //
 //	Elusive.
-//	While Lord Invidius is in the center of your battleline, it gains, "Reap: Take control of an enemy flank creature and exhaust it. It belongs to house Dis until it leaves play."
+//	While Lord Invidius is in the center of your battleline, it gains, "Reap: Take control of an enemy flank creature and exhaust it. It belongs to house Dis."
 func TestLordInvidius(t *testing.T) {
 	t.Run(
 		"centered, its reap seizes an enemy flank creature as an exhausted Dis creature",

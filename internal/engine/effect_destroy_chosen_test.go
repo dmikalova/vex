@@ -17,6 +17,10 @@ func TestDestroyChosen(t *testing.T) {
 	if got := (DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: 2}).Text(); got != "destroy 2 friendly creatures" {
 		t.Errorf("fixed-amount text = %q", got)
 	}
+	// "another creature" pluralizes to "other creatures" (Wretched Anathema).
+	if got := (DestroyChosen{Target: Target{Kind: TargetChosenOtherCreature}, Amount: 2}).Text(); got != "destroy 2 other creatures" {
+		t.Errorf("other-creature text = %q", got)
+	}
 	if (DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: -1}).validate() == nil {
 		t.Error("a negative Amount should not validate")
 	}

@@ -21,11 +21,15 @@ var MindBarb = set.New(
 		Effects: []card.Effect{
 			card.DiscardCard{
 				Player:    card.Controller,
-				Zone:      card.Hand,
+				Zones:     []card.Zone{card.Hand},
 				Selection: card.Chosen{},
 				Amount:    1,
 			},
-			card.DiscardCard{Player: card.Opponent, Zone: card.Hand, Selection: card.Random{}},
+			card.DiscardCard{
+				Player:    card.Opponent,
+				Zones:     []card.Zone{card.Hand},
+				Selection: card.Random{Count: 1},
+			},
 		},
 	}),
 )

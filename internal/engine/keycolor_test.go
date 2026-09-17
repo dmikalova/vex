@@ -8,7 +8,7 @@ import (
 func TestKeyColorString(t *testing.T) {
 	cases := map[KeyColor]string{
 		KeyColorNone: "None", KeyColorRed: "Red", KeyColorBlue: "Blue",
-		KeyColorYellow: "Yellow", KeyColor(9): "Unknown",
+		KeyColorYellow: "Yellow", KeyColorColorless: "Colorless", KeyColor(9): "Unknown",
 	}
 	for c, want := range cases {
 		if got := c.String(); got != want {
@@ -49,19 +49,24 @@ func TestForgeKeyColorChoice(t *testing.T) {
 	}
 }
 
-// TestForgeBeyondKeysLeavesColorsUntouched covers forging when no colour remains:
-// a fourth forge records nothing rather than overrunning the colour slots.
-func TestForgeBeyondKeysLeavesColorsUntouched(t *testing.T) {
+// TestForgeFourthKeyIsColorless covers forging past the three palette colours: the
+// fourth key has no colour left to pick, so it is recorded as KeyColorColorless
+// rather than overrunning or reusing a colour.
+func TestForgeFourthKeyIsColorless(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Aember[0] = 4 * KeyCost
 	for i := 0; i < 4; i++ {
 		g.forgeKey(0)
 	}
-	if got := g.State.KeyColors[0]; got != [KeysToWin]KeyColor{
+	if got := g.Keys(0); got != MaxKeys {
+		t.Errorf("keys after 4 forges = %d, want %d", got, MaxKeys)
+	}
+	if got := g.State.KeyColors[0]; got != [MaxKeys]KeyColor{
 		KeyColorRed,
 		KeyColorBlue,
 		KeyColorYellow,
+		KeyColorColorless,
 	} {
-		t.Errorf("key colours after 4 forges = %v, want [Red Blue Yellow]", got)
+		t.Errorf("key colours after 4 forges = %v, want [Red Blue Yellow Colorless]", got)
 	}
 }

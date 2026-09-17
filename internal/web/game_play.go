@@ -24,7 +24,14 @@ import (
 
 // selectBoardID selects a card in play, deriving whether it belongs to the active
 // player (actionable) or is another card (read-only).
-func (g *game) selectBoardID(_ app.Context, id engine.LocalID) {
+func (g *game) selectBoardID(ctx app.Context, id engine.LocalID) {
+	// While an option prompt is up, a tap inspects the card (a read-only lift)
+	// rather than selecting it: the prompt is answered on its own buttons, never
+	// by a tap on a card, so the player can enlarge and read any card mid-prompt.
+	if g.choosingOption {
+		g.liftCard(ctx, id)
+		return
+	}
 	if g.busy || g.choosing || g.phase == phaseFightTarget {
 		return
 	}
@@ -38,7 +45,13 @@ func (g *game) selectBoardID(_ app.Context, id engine.LocalID) {
 
 // selectHandID selects a card in the active player's hand, recovering its hand
 // index from the id.
-func (g *game) selectHandID(_ app.Context, id engine.LocalID) {
+func (g *game) selectHandID(ctx app.Context, id engine.LocalID) {
+	// During an option prompt a tap inspects rather than selects, for the same
+	// reason as selectBoardID: the tap reads the card, it never answers the prompt.
+	if g.choosingOption {
+		g.liftCard(ctx, id)
+		return
+	}
 	if g.busy || g.choosing || g.phase == phaseFightTarget {
 		return
 	}

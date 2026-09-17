@@ -227,7 +227,7 @@ func (e UnforgedKeys) CountText() string {
 type DamageOnThis struct{}
 
 // Value returns the damage on the source card.
-func (DamageOnThis) Value(ctx *EffectContext) int { return ctx.Resolver.Damage(ctx.Source) }
+func (DamageOnThis) Value(ctx *EffectContext) int { return ctx.damageOn(ctx.Source) }
 
 // CountText renders the singular noun the "for each" clause repeats.
 func (DamageOnThis) CountText() string { return "damage on it" }
@@ -255,7 +255,7 @@ func (e PowerOfChosen) Value(ctx *EffectContext) int {
 	if !ctx.HasIt {
 		return 0
 	}
-	power := ctx.Resolver.Power(ctx.It)
+	power := ctx.powerOf(ctx.It)
 	if e.Of != nil {
 		power = e.Of.lose(power)
 	}
@@ -287,6 +287,29 @@ func (TraitsOfChosen) Value(ctx *EffectContext) int {
 
 // CountText renders the singular noun the "for each" clause repeats.
 func (TraitsOfChosen) CountText() string { return "trait that creature has" }
+
+// BonusIconsOfChosen counts the bonus icons on the card in context (ctx.It) — the
+// card an effect just discarded or revealed. Mindfire steals 1 Æmber for each
+// bonus icon on the card it discarded. Subject names the card in the text so the
+// clause reads "the discarded card" rather than a bare "it".
+type BonusIconsOfChosen struct {
+	Subject Subject
+}
+
+// Value returns the number of bonus icons on the context card, or zero when no
+// card is in context.
+func (e BonusIconsOfChosen) Value(ctx *EffectContext) int {
+	if !ctx.HasIt {
+		return 0
+	}
+	return ctx.Resolver.BonusIconCount(ctx.It)
+}
+
+// CountText renders the singular noun the "for each" clause repeats, e.g. "bonus
+// icon on the discarded card".
+func (e BonusIconsOfChosen) CountText() string {
+	return "bonus icon on " + e.Subject.noun()
+}
 
 // CopiesInDiscard counts the cards in the controller's discard pile sharing the
 // source card's name — a card that pays off for having been played before
@@ -373,6 +396,36 @@ func (c NeighborsOfThis) CountText() string {
 // where a trailing "it" would be a forward reference — Nyzyk Resonator.
 func (c NeighborsOfThis) leadingCountText() string {
 	return "neighbor " + SelfName + " has"
+}
+
+// CombinedPowerOfNeighborsWithout sums the current power of the source creature's
+// battleline neighbors that do not carry Without — Picaroon's X is the combined
+// power of its non-Changeling neighbors. It reads power live, so a neighbor's buff
+// or a change to the battleline shifts the total.
+type CombinedPowerOfNeighborsWithout struct {
+	Without Trait
+}
+
+// Value sums the power of the source's neighbors that lack the excluded trait.
+func (c CombinedPowerOfNeighborsWithout) Value(ctx *EffectContext) int {
+	sum := 0
+	for _, id := range neighbors(ctx, ctx.Source) {
+		if !ctx.Resolver.HasTrait(id, c.Without) {
+			sum += ctx.Resolver.Power(id)
+		}
+	}
+	return sum
+}
+
+// CountText renders the singular noun a "for each" clause would repeat.
+func (c CombinedPowerOfNeighborsWithout) CountText() string {
+	return "combined power of " + SelfName + "'s non-" + c.Without.String() + " neighbors"
+}
+
+// cardinalCountText renders the value as a standalone phrase, for the "X is …"
+// power line rather than a "for each …" clause.
+func (c CombinedPowerOfNeighborsWithout) cardinalCountText() string {
+	return "the combined power of " + SelfName + "'s non-" + c.Without.String() + " neighbors"
 }
 
 // NeighborsSharingHouse counts the battleline neighbors of the creature in

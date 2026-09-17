@@ -1,26 +1,34 @@
-//go:build todo
-
 package massmutation
 
-import "github.com/dmikalova/vactrol/internal/card"
+import (
+	"github.com/dmikalova/vactrol/internal/card"
+	"github.com/dmikalova/vactrol/internal/cards/clusters"
+)
 
-// DiggingUpTheMonster
+// Digging Up the Monster
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Dis
+//	House:  None
 //	Type:   Tactic
 //	Rarity: Special
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Search your deck and discard pile for two halves of a gigantic creature and reveal them. Put them on top of your deck in any order.
+//	Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, shuffle your deck, and put them into the top of your deck.
 var DiggingUpTheMonster = set.New(
 	"Digging Up the Monster",
-	card.House.Dis,
+	card.House.None,
 	card.Type.Tactic,
 	card.Rarity.Special,
 	card.Provenance(card.MoMu, "003"),
+	card.InCluster(clusters.Tutors),
+	card.Houseless(),
 	card.WithBonus(card.Bonus.Aember),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Search{
+			Sources:              []card.Zone{card.Deck, card.Discard},
+			Filter:               card.Filter{Gigantic: true},
+			Max:                  2,
+			Reveal:               true,
+			ShuffleBeforePlacing: true,
+			Dest:                 card.To.TopOfDeck,
+		}),
 )

@@ -1,20 +1,15 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Painmail
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
 //	House:  Dis
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This creature gains, "After any player chooses Dis as their active house, put Painmail into its owner's archives and destroy this creature."
+//	This creature gains, "After a player chooses Dis as their active house, archive Painmail, and destroy this creature."
 var Painmail = set.New(
 	"Painmail",
 	card.House.Dis,
@@ -22,5 +17,16 @@ var Painmail = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.MM, "042"),
 	card.WithBonus(card.Bonus.Aember),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithStatic(card.StaticModifier{
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.AfterAnyPlayerChoosesHouse,
+			Effect: card.Conditional{
+				Cond: card.ChoseHouse{House: card.House.Dis},
+				Then: card.Sequence{Effects: []card.Effect{
+					card.ArchiveGrantingUpgrade{},
+					card.Destroy{Target: card.Target.This},
+				}},
+			},
+		}},
+	}),
 )

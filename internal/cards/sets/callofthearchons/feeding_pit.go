@@ -20,7 +20,7 @@ var FeedingPit = set.New(
 	card.WithAbility(card.Trigger.Action, card.Then{
 		First: card.DiscardCard{
 			Player:    card.Controller,
-			Zone:      card.Hand,
+			Zones:     []card.Zone{card.Hand},
 			Selection: card.Chosen{Type: card.Type.Creature},
 			Amount:    1,
 		},

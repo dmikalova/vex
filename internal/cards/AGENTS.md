@@ -316,6 +316,19 @@ smaller shared vocabularies: prefer a `Target`/`Refinement` filter, a `Count`, a
 sentence (see [docs/style-guide.md](../../docs/style-guide.md), "Composition and
 design").
 
+## An effect can read a creature it just destroyed
+
+When one effect destroys (or deals lethal damage to) a creature and a following
+effect in the **same** ability reads that creature — "Destroy a friendly creature.
+Each player loses Æmber equal to half **its power**" (Power of Fire) — the read
+sees the creature's power / Æmber-on-card / damage as they were the instant before
+it left play, counters and buffs included, not the zeroed card it becomes. This is
+automatic for `PowerOfChosen`, `AemberOnThis` / `AemberOnIt`, and `DamageOnThis` /
+`DamageOnIt`; compose them freely after a `Destroy` or `DamageThen{IfDestroyed}`.
+Only those three mutable dimensions are captured — printed power, house, traits,
+keywords, and bonus icons survive on their own; a departed creature's _granted_
+keywords do not (no card reads them). See [ADR 0030](../../docs/adr/0030-a-card-out-of-play-takes-no-further-part.md).
+
 ## Tests
 
 - Every card has its own `snake_case_test.go` in the same set package, built on

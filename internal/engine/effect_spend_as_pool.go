@@ -3,39 +3,75 @@ package engine
 import "strings"
 
 // Spend-as-pool: some cards let the Æmber sitting on a creature be spent to pay
-// Æmber costs as if it were in its controller's pool. Senator Bracchus grants it
-// to every friendly creature (a ConstantAbility with SpendAsPool set), and The
-// Callipygian Ideal grants it to the one creature it upgrades (a StaticModifier
-// with SpendAsPool set). The permission is a flat modifier the pay path consults
-// (ADR 0005): "which creatures' Æmber may be spent as pool" is a predicate over
-// the modifiers in play, not a closure held in state.
+// Æmber costs as if it were in a pool. Senator Bracchus grants it to every
+// friendly creature (a ConstantAbility), The Callipygian Ideal to the one creature
+// it upgrades (a StaticModifier), and Mole grants the creature's OPPONENT the right
+// to spend its Æmber (a StaticModifier scoped to the opponent). The permission is a
+// flat modifier the pay path consults (ADR 0005): "which creatures' Æmber may this
+// player spend as pool" is a predicate over the modifiers in play, not a closure.
 
-// spendAsPoolCreatures returns player's creatures whose Æmber may be spent as if
-// it were in player's pool, in battleline order, so the pay path can draw from
-// them after the pool.
+// SpendScope says which player a spend-as-pool permission benefits. It has no
+// implicit default: a card that grants the permission must name Controller or
+// Opponent explicitly (the zero value grants nothing).
+type SpendScope uint8
+
+const (
+	spendScopeUnset SpendScope = iota
+	// SpendByController lets the creature's own controller spend its Æmber (Senator
+	// Bracchus, The Callipygian Ideal).
+	SpendByController
+	// SpendByOpponent lets the creature's controller's opponent spend its Æmber
+	// (Mole).
+	SpendByOpponent
+)
+
+// grants reports whether the scope grants any permission at all.
+func (s SpendScope) grants() bool { return s != spendScopeUnset }
+
+// allows reports whether beneficiary may spend the Æmber on a creature this scope
+// governs, given that creature's controller.
+func (s SpendScope) allows(beneficiary, controller int) bool {
+	switch s {
+	case SpendByController:
+		return beneficiary == controller
+	case SpendByOpponent:
+		return beneficiary == 1-controller
+	default:
+		return false
+	}
+}
+
+// spendAsPoolCreatures returns every creature in play whose Æmber player may spend
+// as if it were in their pool — their own (Bracchus, Callipygian) and any enemy
+// creature a permission hands them (Mole). Player's own side is listed first so the
+// pay path draws from it before reaching across the board.
 func (g *Game) spendAsPoolCreatures(player int) []LocalID {
 	var out []LocalID
-	for _, id := range g.State.Battleline[player].slice() {
-		if g.creatureSpendableAsPool(player, id) {
-			out = append(out, id)
+	for _, p := range [2]int{player, 1 - player} {
+		for _, id := range g.State.Battleline[p].slice() {
+			if g.creatureSpendableAsPool(player, id) {
+				out = append(out, id)
+			}
 		}
 	}
 	return out
 }
 
-// creatureSpendableAsPool reports whether the Æmber on creature id, controlled by
-// player, may be spent as pool Æmber — either an attached Upgrade grants it
-// (StaticModifier.SpendAsPool, The Callipygian Ideal) or an in-play card's active
-// ConstantAbility reaches it (Senator Bracchus).
+// creatureSpendableAsPool reports whether player may spend the Æmber on creature id
+// as pool Æmber — an attached Upgrade grants it (StaticModifier.SpendAemberOnCard,
+// The Callipygian Ideal to its controller, Mole to the opponent) or an in-play
+// card's active ConstantAbility reaches it (Senator Bracchus).
 func (g *Game) creatureSpendableAsPool(player int, id LocalID) bool {
+	controller := g.controller(id)
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		if g.cat.def(up).Static.SpendAemberOnCard {
+		if g.cat.def(up).Static.SpendAemberOnCard.allows(player, controller) {
 			return true
 		}
 	}
-	for _, src := range g.allInPlay(player) {
+	for _, src := range g.allInPlay(controller) {
 		for _, c := range g.cat.def(src).ConstantAbilities {
-			if c.SpendAemberOnCard && g.constantActive(src, c) && g.constantAffects(src, c, id) {
+			if c.SpendAemberOnCard.allows(player, controller) &&
+				g.constantActive(src, c) && g.constantAffects(src, c, id) {
 				return true
 			}
 		}
@@ -91,8 +127,11 @@ func (g *Game) drawFromSpendAsPool(player, want int) int {
 // on friendly creatures …"). It is empty when the card grants no such permission.
 func spendAsPoolLines(def *CardDefinition, hosted bool) []string {
 	var lines []string
-	if def.Static.SpendAemberOnCard {
+	if s := def.Static.SpendAemberOnCard; s.grants() {
 		body := "You may spend Æmber on this creature as if it were in your pool."
+		if s == SpendByOpponent {
+			body = "Your opponent may spend Æmber on this creature as if it were in their pool."
+		}
 		if hosted {
 			lines = append(lines, body)
 		} else {
@@ -100,7 +139,7 @@ func spendAsPoolLines(def *CardDefinition, hosted bool) []string {
 		}
 	}
 	for _, c := range def.ConstantAbilities {
-		if !c.SpendAemberOnCard {
+		if !c.SpendAemberOnCard.grants() {
 			continue
 		}
 		lines = append(lines,

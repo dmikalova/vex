@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg • Scientist
 //
 //	Elusive.
-//	During your "draw cards" phase, refill your hand to 1 additional card.
+//	Your hand size is 1 more.
 var Daughter = set.New(
 	"Daughter",
 	card.House.Logos,

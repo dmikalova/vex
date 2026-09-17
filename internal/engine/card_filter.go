@@ -19,6 +19,9 @@ type CardFilter struct {
 	Trait Trait
 	// Name requires the card to have this exact name; the zero value requires none.
 	Name string
+	// Gigantic requires the card to be a half of a gigantic creature (either half);
+	// the zero value requires none. The tutors search for a gigantic's halves.
+	Gigantic bool
 	// Or lists alternative filters: a card also qualifies if it satisfies any of
 	// them. Chief Engineer Walls admits an upgrade or a Robot card.
 	Or []CardFilter
@@ -27,7 +30,7 @@ type CardFilter struct {
 // empty reports that the filter sets no predicate, so it admits every card.
 func (f CardFilter) empty() bool {
 	return f.Type == TypeUnset && f.Trait == traitUnset && f.Name == "" &&
-		len(f.Or) == 0
+		!f.Gigantic && len(f.Or) == 0
 }
 
 // admits reports whether the card satisfies the filter.
@@ -50,7 +53,7 @@ func (f CardFilter) admits(r StateReader, id LocalID) bool {
 // predicates, ignoring Or. A clause that sets no predicate never matches on its
 // own — it exists only to carry alternatives in Or.
 func (f CardFilter) satisfiesClause(r StateReader, id LocalID) bool {
-	if f.Type == TypeUnset && f.Trait == traitUnset && f.Name == "" {
+	if f.Type == TypeUnset && f.Trait == traitUnset && f.Name == "" && !f.Gigantic {
 		return false
 	}
 	if f.Type != TypeUnset && r.TypeOf(id) != f.Type {
@@ -60,6 +63,9 @@ func (f CardFilter) satisfiesClause(r StateReader, id LocalID) bool {
 		return false
 	}
 	if f.Name != "" && r.Name(id) != f.Name {
+		return false
+	}
+	if f.Gigantic && r.GiganticRoleOf(id) == GiganticNone {
 		return false
 	}
 	return true
@@ -76,6 +82,9 @@ func (f CardFilter) noun() string {
 	base := "card"
 	if f.Type != TypeUnset {
 		base = typeWord(f.Type)
+	}
+	if f.Gigantic {
+		base = "gigantic creature"
 	}
 	if f.Trait != traitUnset {
 		base = f.Trait.String() + " " + base

@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Demon
 //
-//	After your opponent plays a card, if it is on the left flank, your opponent loses 1 Æmber.
+//	After your opponent plays a creature on their left flank, your opponent loses 1 Æmber.
 func TestSinestra(t *testing.T) {
 	t.Run("drains the opponent when they play onto their left flank", func(t *testing.T) {
 		var beast ct.Card

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Mutant
 //
-//	At the end of your turn, Snarette captures 1 Æmber from your own side.
+//	At the end of your turn, Snarette captures 1 Æmber from your opponent.
 //	Action: Move each Æmber on Snarette to the common supply.
 var Snarette = set.New(
 	"Snarette",
@@ -24,7 +24,7 @@ var Snarette = set.New(
 		card.Trigger.EndOfTurn, card.CaptureAember{
 			Amount: 1,
 			Target: card.Target.This,
-			Source: card.Controller,
+			Source: card.Opponent,
 		}),
 	card.WithAbility(
 		card.Trigger.Action, card.MoveAemberToSupply{

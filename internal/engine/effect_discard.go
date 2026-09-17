@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"slices"
+	"strings"
 )
 
 // PutFromDiscard moves cards from the controller's own discard pile to a
@@ -99,17 +100,20 @@ func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 // DiscardCard discards cards from a player's hand or archives, with a Selection
 // deciding how each card is picked — the controller chooses one (Chosen,
 // restrictable to a type), or a uniformly random card leaves a hidden zone
-// (Random, for Mind Barb and Tantadlin). Zone names the source, Hand or Archives.
-// Amount discards that many (Old Yurk discards 2); the zero value discards one.
-// AnyNumber instead lets the controller discard as many matching cards as they
-// like, declining when done (Helmsman Spears). Every card discarded this way is
-// recorded on the context so a following ForEachDiscarded can act once per card,
-// and it gates a Then (Feeding Pit only gains Æmber if a creature was discarded).
+// (Random, for Mind Barb and Tantadlin). Zones names the source piles the discard
+// draws from, each Hand or Archives; naming both lets the controller discard the
+// picked card from either pile (Munchling, Novu Dynamo). Amount discards that many
+// (Old Yurk discards 2); the zero value discards one. AnyNumber instead lets the
+// controller discard as many matching cards as they like, declining when done
+// (Helmsman Spears). Every card discarded this way is recorded on the context so a
+// following ForEachDiscarded can act once per card, and it gates a Then (Feeding
+// Pit only gains Æmber if a creature was discarded).
 type DiscardCard struct {
 	// Player whose zone the cards are discarded from.
 	Player Player
-	// Zone names the source the cards are discarded from: Hand or Archives.
-	Zone Zone
+	// Zones names the source piles the cards are discarded from, each Hand or
+	// Archives. Naming both combines them into one pool the controller picks from.
+	Zones []Zone
 	// Selection decides how each card is picked; it must be set.
 	Selection Selection
 	// Amount is how many cards to discard; the zero value counts as one.
@@ -117,16 +121,15 @@ type DiscardCard struct {
 	// AnyNumber lets the controller discard as many cards as they like instead of a
 	// fixed Amount, declining when done.
 	AnyNumber bool
-	// OrArchives extends the source to the archives as well as the hand, so the
-	// controller may discard the picked card from either pile (Munchling, Novu
-	// Dynamo). It is only valid with Zone Hand.
-	OrArchives bool
+	// Bind leaves the last card discarded in context (ctx.It) so a following effect
+	// can act on it — Ambassador Liu discards a card and rewards by its house. A
+	// discard that moves nothing binds nothing.
+	Bind bool
 }
 
 // validate rejects a DiscardCard whose player or selection was left unset, an
-// Amount paired with AnyNumber (the two count modes are mutually exclusive), a
-// source zone other than the hand or archives, or an OrArchives combined source
-// not rooted at the hand.
+// Amount paired with AnyNumber (the two count modes are mutually exclusive), an
+// empty zone list, or a source zone other than the hand or archives.
 func (e DiscardCard) validate() error {
 	if !e.Player.valid() {
 		return errUnsetPlayer("DiscardCard")
@@ -137,11 +140,13 @@ func (e DiscardCard) validate() error {
 	if e.AnyNumber && e.Amount != 0 {
 		return fmt.Errorf("DiscardCard: AnyNumber and Amount are exclusive")
 	}
-	if e.Zone != Hand && e.Zone != Archives {
-		return fmt.Errorf("DiscardCard: zone must be Hand or Archives")
+	if len(e.Zones) == 0 {
+		return fmt.Errorf("DiscardCard: at least one zone must be set")
 	}
-	if e.OrArchives && e.Zone != Hand {
-		return fmt.Errorf("DiscardCard: OrArchives requires Zone Hand")
+	for _, z := range e.Zones {
+		if z != Hand && z != Archives {
+			return fmt.Errorf("DiscardCard: zone must be Hand or Archives")
+		}
 	}
 	return nil
 }
@@ -167,13 +172,14 @@ func (e DiscardCard) object() string {
 	}
 }
 
-// sourceNoun names the pile the discard draws from, joining the archives with
-// "or" when OrArchives lets the controller pick from either (Munchling).
+// sourceNoun names the piles the discard draws from, joining them with "or" when
+// the controller may pick from either (Munchling's "hand or archives").
 func (e DiscardCard) sourceNoun() string {
-	if e.OrArchives {
-		return e.Zone.noun() + " or " + Archives.noun()
+	nouns := make([]string, len(e.Zones))
+	for i, z := range e.Zones {
+		nouns[i] = z.noun()
 	}
-	return e.Zone.noun()
+	return strings.Join(nouns, " or ")
 }
 
 // Text renders the effect, naming the source zone explicitly (rule 17). The voice
@@ -216,32 +222,43 @@ func (e DiscardCard) resolveGate(ctx *EffectContext) bool {
 			toDiscard.moveFrom(ctx, e.zoneOf(ctx, owner, id), owner, id)
 			recordDiscardedThisWay(ctx, id)
 			moved = true
+			if e.Bind {
+				ctx.It, ctx.HasIt = id, true
+			}
 		}
 	}
 	return moved
 }
 
-// source returns the cards the selection may pick from: the archives, or the hand
-// on its own, or — when OrArchives — the hand and archives combined (Munchling).
-func (e DiscardCard) source(ctx *EffectContext, owner int) []LocalID {
-	if e.Zone == Archives {
+// zoneCards returns the cards in one of the discard's source piles.
+func (e DiscardCard) zoneCards(ctx *EffectContext, owner int, z Zone) []LocalID {
+	if z == Archives {
 		return ctx.Resolver.Archives(owner)
 	}
-	hand := ctx.Resolver.Hand(owner)
-	if !e.OrArchives {
-		return hand
+	return ctx.Resolver.Hand(owner)
+}
+
+// source returns the cards the selection may pick from: one pile on its own, or —
+// when Zones names both — the hand and archives combined (Munchling).
+func (e DiscardCard) source(ctx *EffectContext, owner int) []LocalID {
+	if len(e.Zones) == 1 {
+		return e.zoneCards(ctx, owner, e.Zones[0])
 	}
-	archives := ctx.Resolver.Archives(owner)
-	combined := make([]LocalID, 0, len(hand)+len(archives))
-	combined = append(combined, hand...)
-	return append(combined, archives...)
+	var combined []LocalID
+	for _, z := range e.Zones {
+		combined = append(combined, e.zoneCards(ctx, owner, z)...)
+	}
+	return combined
 }
 
 // zoneOf reports which pile a picked card sits in, so a combined hand-or-archives
-// discard removes it from the right one; a single-zone discard always uses Zone.
+// discard removes it from the right one. Every pile but the last is checked; a card
+// found in none of them must sit in the last, which also covers a single-zone discard.
 func (e DiscardCard) zoneOf(ctx *EffectContext, owner int, id LocalID) Zone {
-	if e.OrArchives && slices.Contains(ctx.Resolver.Archives(owner), id) {
-		return Archives
+	for _, z := range e.Zones[:len(e.Zones)-1] {
+		if slices.Contains(e.zoneCards(ctx, owner, z), id) {
+			return z
+		}
 	}
-	return e.Zone
+	return e.Zones[len(e.Zones)-1]
 }

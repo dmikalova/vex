@@ -50,7 +50,7 @@ var AemberOnIt PerTarget = aemberOnIt{}
 type aemberOnIt struct{}
 
 func (aemberOnIt) perTargetValue(ctx *EffectContext, id LocalID) int {
-	return ctx.Resolver.AmberOn(id)
+	return ctx.amberOn(id)
 }
 
 func (aemberOnIt) perTargetText() string { return "\u00c6mber on it" }
@@ -63,7 +63,7 @@ var DamageOnIt PerTarget = damageOnIt{}
 type damageOnIt struct{}
 
 func (damageOnIt) perTargetValue(ctx *EffectContext, id LocalID) int {
-	return ctx.Resolver.Damage(id)
+	return ctx.damageOn(id)
 }
 
 func (damageOnIt) perTargetText() string { return "point of damage on it" }
@@ -228,7 +228,12 @@ func (e DealDamage) dealTo(ctx *EffectContext, amount int, ids []LocalID) {
 		if e.PerTarget != nil {
 			hit *= e.PerTarget.perTargetValue(ctx, id)
 		}
-		targets[i] = DamageTarget{ID: id, Amount: hit, IgnoreArmor: e.IgnoreArmor}
+		targets[i] = DamageTarget{
+			ID:          id,
+			Amount:      hit,
+			IgnoreArmor: e.IgnoreArmor,
+			Source:      ctx.Source,
+		}
 	}
 	ctx.dealDamage(targets)
 }
@@ -307,6 +312,7 @@ func (e DamageThen) Resolve(ctx *EffectContext) {
 	id := ids[0]
 	if e.After == IfDestroyed {
 		ctx.Produced.Neighbors = neighbors(ctx, id)
+		captureDepartingSubject(ctx, id)
 	}
 	ctx.dealDamage([]DamageTarget{{ID: id, Amount: e.Amount}})
 	switch e.After {
@@ -607,6 +613,46 @@ func flankWalkPhrase(i int) string {
 	}
 }
 
+// flankWalkStep pairs a battleline creature with the amount it receives at its
+// step of an inward flank walk.
+type flankWalkStep struct {
+	ID     LocalID
+	Amount int
+}
+
+// flankWalkSteps chooses a flank creature and walks amounts inward along its
+// battleline, pairing each creature with its step's amount — Amounts[0] to the
+// chosen flank creature, Amounts[1] to its neighbor, and so on, stopping at the
+// far flank when the battleline is shorter than the list. Shared by the FlankWalk
+// damage spread and AddPowerCounter's counter walk.
+func flankWalkSteps(ctx *EffectContext, amounts []int) []flankWalkStep {
+	chosen := (Target{Kind: TargetChosenCreature}).OnFlank().Select(ctx)
+	if len(chosen) == 0 {
+		return nil
+	}
+	bl := battlelineContaining(ctx, chosen[0])
+	idx := -1
+	for i, x := range bl {
+		if x == chosen[0] {
+			idx = i
+			break
+		}
+	}
+	step := 1
+	if idx == len(bl)-1 {
+		step = -1
+	}
+	var out []flankWalkStep
+	for k, amt := range amounts {
+		pos := idx + k*step
+		if pos < 0 || pos >= len(bl) {
+			break
+		}
+		out = append(out, flankWalkStep{ID: bl[pos], Amount: amt})
+	}
+	return out
+}
+
 // spreadText renders the clause, e.g. "choose a flank creature. Deal 3 damage to
 // it, 2 damage to its neighbor, and 1 damage to the neighbor's other neighbor."
 func (s FlankWalk) spreadText() string {
@@ -635,29 +681,13 @@ func (s FlankWalk) validate() error {
 
 // hits chooses a flank creature and walks the amounts inward, all at once.
 func (s FlankWalk) hits(ctx *EffectContext) []DamageTarget {
-	chosen := (Target{Kind: TargetChosenCreature}).OnFlank().Select(ctx)
-	if len(chosen) == 0 {
+	steps := flankWalkSteps(ctx, s.Amounts)
+	if len(steps) == 0 {
 		return nil
 	}
-	bl := battlelineContaining(ctx, chosen[0])
-	idx := -1
-	for i, x := range bl {
-		if x == chosen[0] {
-			idx = i
-			break
-		}
-	}
-	step := 1
-	if idx == len(bl)-1 {
-		step = -1
-	}
-	var out []DamageTarget
-	for k, amt := range s.Amounts {
-		pos := idx + k*step
-		if pos < 0 || pos >= len(bl) {
-			break
-		}
-		out = append(out, DamageTarget{ID: bl[pos], Amount: amt})
+	out := make([]DamageTarget, len(steps))
+	for i, st := range steps {
+		out[i] = DamageTarget{ID: st.ID, Amount: st.Amount}
 	}
 	return out
 }

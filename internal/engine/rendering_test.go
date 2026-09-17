@@ -72,6 +72,29 @@ func TestEntersPlayAbilityText(t *testing.T) {
 	if want := SelfName + " enters play ready."; ready != want {
 		t.Errorf("enters-play ready = %q, want %q", ready, want)
 	}
+	// An Enrage effect renders as the "enraged" state word.
+	enrage := RenderAbility(
+		Ability{
+			Trigger: TriggerEntersPlay,
+			Effect:  Enrage{Target: Target{Kind: TargetThisCreature}},
+		},
+	)
+	if want := SelfName + " enters play enraged."; enrage != want {
+		t.Errorf("enters-play enrage = %q, want %q", enrage, want)
+	}
+	// A Sentences of state effects joins its words with "and" (Gizelhart's Zealot).
+	both := RenderAbility(
+		Ability{
+			Trigger: TriggerEntersPlay,
+			Effect: Sentences{Effects: []Effect{
+				Ready{Target: Target{Kind: TargetThisCreature}},
+				Enrage{Target: Target{Kind: TargetThisCreature}},
+			}},
+		},
+	)
+	if want := SelfName + " enters play ready and enraged."; both != want {
+		t.Errorf("enters-play ready+enrage = %q, want %q", both, want)
+	}
 	// An effect without a dedicated enter word falls back to its ordinary text.
 	other := RenderAbility(
 		Ability{Trigger: TriggerEntersPlay, Effect: GainAember{Player: Controller, Amount: 1}},
@@ -123,6 +146,20 @@ func TestAfterYouPlayFolding(t *testing.T) {
 	)
 	if want := "After you play Subtle Chain, gain 1 Æmber."; named != want {
 		t.Errorf("named = %q, want %q", named, want)
+	}
+	// A Conditional{ItIsOfTrait} folds into "after you play a <Trait> creature"
+	// (Dark Æmber Vault), so a treachery-gifted Mutant still triggers "you played".
+	trait := RenderAbility(
+		Ability{
+			Trigger: TriggerAfterCardPlayed,
+			Effect: Conditional{
+				Cond: ItIsOfTrait{Trait: Mutant},
+				Then: Draw{Amount: 1},
+			},
+		},
+	)
+	if want := "After you play a Mutant creature, draw a card."; trait != want {
+		t.Errorf("trait = %q, want %q", trait, want)
 	}
 	// A non-Conditional reaction keeps the broad prefix.
 	plain := RenderAbility(
@@ -257,6 +294,66 @@ func TestAfterCreaturePlayedAdjacentFolding(t *testing.T) {
 	if want := "After a creature is played adjacent to " + SelfName +
 		", if your opponent has 1 Æmber or more, draw a card."; stateGated != want {
 		t.Errorf("state-gated = %q, want %q", stateGated, want)
+	}
+}
+
+func TestAfterEnemyPlaysCreatureOnFlankFolding(t *testing.T) {
+	// Dexus / Sinestra: a Conditional{OnFlank{OfIt}} on an AfterEnemyCardPlayed
+	// reaction folds the flank into the trigger phrase and names the creature the
+	// position already requires.
+	for _, tc := range []struct {
+		where FlankPosition
+		want  string
+	}{
+		{RightFlank, "After your opponent plays a creature on their right flank, your opponent loses 1 Æmber."},
+		{LeftFlank, "After your opponent plays a creature on their left flank, your opponent loses 1 Æmber."},
+	} {
+		folded := RenderAbility(
+			Ability{
+				Trigger: TriggerAfterEnemyCardPlayed,
+				Effect: Conditional{
+					Cond: OnFlank{OfIt: true, Where: tc.where},
+					Then: LoseAember{Player: Opponent, Amount: 1},
+				},
+			},
+		)
+		if folded != tc.want {
+			t.Errorf("folded = %q, want %q", folded, tc.want)
+		}
+	}
+	// A non-Conditional enemy-play reaction keeps the broad prefix.
+	plain := RenderAbility(
+		Ability{Trigger: TriggerAfterEnemyCardPlayed, Effect: Draw{Amount: 1}},
+	)
+	if want := "After your opponent plays a card, draw a card."; plain != want {
+		t.Errorf("plain = %q, want %q", plain, want)
+	}
+	// A Conditional with an Else, an any-flank position, a source-flank position, or
+	// a non-flank condition stays literal with the broad prefix.
+	literal := []struct {
+		name string
+		cond Condition
+		els  Effect
+	}{
+		{"else", OnFlank{OfIt: true, Where: RightFlank}, Draw{Amount: 1}},
+		{"any-flank", OnFlank{OfIt: true, Where: AnyFlank}, nil},
+		{"source-flank", OnFlank{OfIt: false, Where: RightFlank}, nil},
+		{"non-flank", ItIsOfTrait{Trait: Giant}, nil},
+	}
+	for _, tc := range literal {
+		got := RenderAbility(
+			Ability{
+				Trigger: TriggerAfterEnemyCardPlayed,
+				Effect: Conditional{
+					Cond: tc.cond,
+					Then: LoseAember{Player: Opponent, Amount: 1},
+					Else: tc.els,
+				},
+			},
+		)
+		if strings.HasPrefix(got, "After your opponent plays a creature") {
+			t.Errorf("%s: got folded %q, want broad prefix", tc.name, got)
+		}
 	}
 }
 
@@ -858,6 +955,18 @@ func TestRenderCardRules(t *testing.T) {
 				WithTakesDamageFor(Target{Kind: TargetEachCreature}.Neighboring()),
 			),
 			"Damage dealt to each neighboring creature is dealt to Ward instead.",
+		},
+		// A card that shares its neighbors' fight damage renders that line.
+		{
+			NewCard(
+				"Drecker",
+				Dis,
+				Creature,
+				Common,
+				WithPower(4),
+				WithAlsoTakesNeighborFightDamage(),
+			),
+			"Damage dealt to Drecker's neighbors during fights is also dealt to Drecker.",
 		},
 		// A card that gains a keyword only while attacking renders that clause.
 		{

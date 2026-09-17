@@ -6,7 +6,7 @@ import "slices"
 // gathering a player's cards from a set of source zones and detecting which zone
 // each picked card came from. The actual source-by-destination move is the shared
 // Destination.moveFrom (ADR 0031); a mover only supplies the origin and delegates.
-// The authoring verbs — ReturnNamedToHand, SearchForName,
+// The authoring verbs — ReturnNamedToHand, Search,
 // ShuffleNamedFromDiscardIntoDeck, ShuffleChosenCreaturesFromZones — are thin
 // wrappers that supply their own filter, prompt, and printed text and delegate
 // the zone plumbing here.

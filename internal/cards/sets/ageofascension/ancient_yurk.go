@@ -22,7 +22,7 @@ var AncientYurk = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.DiscardCard{
 			Player:    card.Controller,
-			Zone:      card.Hand,
+			Zones:     []card.Zone{card.Hand},
 			Selection: card.Chosen{},
 			Amount:    3,
 		}),

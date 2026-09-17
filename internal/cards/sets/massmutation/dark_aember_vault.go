@@ -24,7 +24,7 @@ func isMutantCreature(d card.Definition) bool {
 //	Traits: Location
 //
 //	Each friendly Mutant creature gains +2 power.
-//	After a creature is played, if it is a friendly creature and it is a Mutant creature, draw a card.
+//	After you play a Mutant creature, draw a card.
 var DarkAemberVault = set.New(
 	"Dark Æmber Vault",
 	card.House.None,
@@ -39,11 +39,8 @@ var DarkAemberVault = set.New(
 		Target:     card.Target.EachFriendlyCreature.WithTrait(card.Traits.Mutant),
 	}),
 	card.WithAbility(
-		card.Trigger.AfterCreaturePlayed, card.Conditional{
-			Cond: card.And{Conditions: []card.Condition{
-				card.ItIsFriendly{},
-				card.ItIsOfTrait{Trait: card.Traits.Mutant},
-			}},
+		card.Trigger.AfterCardPlayed, card.Conditional{
+			Cond: card.ItIsOfTrait{Trait: card.Traits.Mutant},
 			Then: card.Draw{Amount: 1},
 		}),
 )

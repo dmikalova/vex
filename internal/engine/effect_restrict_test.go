@@ -567,7 +567,44 @@ func TestForceActiveHouseOfFoughtNextTurn(t *testing.T) {
 	}
 }
 
-// TestWagerOpponentChoosesChosenHouse covers Snaglet's bet: arming the wager on
+// TestForceActiveHouseOfItNextTurn covers Mark of Dis's It reference: the damaged
+// creature's own controller is forced to choose that creature's house next turn,
+// whichever side the creature is on, and nothing arms without a creature in context.
+func TestForceActiveHouseOfItNextTurn(t *testing.T) {
+	e := MustChooseHouse{Player: ItsController, Reference: ItActiveHouse}
+	if err := e.validate(); err != nil {
+		t.Errorf("an It must should validate: %v", err)
+	}
+	if got := e.Text(); got != "its controller must choose that creature's house as their active house on their next turn" {
+		t.Errorf("text = %q", got)
+	}
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Dis); err != nil {
+		t.Fatal(err)
+	}
+	// The creature belongs to the opponent, so its own controller (player 1) is bound.
+	foe := g.AddToBattleline(NewCard("foe", Logos, Creature, Common, WithPower(3)), 1)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0, It: foe, HasIt: true})
+	if got := g.State.HouseConstraintsNext[1][0]; g.State.HouseConstraintCountNext[1] != 1 ||
+		got.Kind != constraintMustCreature || got.Creature != foe {
+		t.Errorf(
+			"armed = %+v, want a live must on player 1 referencing creature %d",
+			got, foe,
+		)
+	}
+
+	// With no creature in context there is nothing to force.
+	g.State.HouseConstraintCountNext[1] = 0
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.State.HouseConstraintCountNext[1] != 0 {
+		t.Errorf(
+			"armed without a creature (count %d), want none",
+			g.State.HouseConstraintCountNext[1],
+		)
+	}
+}
+
 // the opponent's next active house and the payoff when they match it.
 func TestWagerOpponentChoosesChosenHouse(t *testing.T) {
 	e := WagerOpponentChoosesChosenHouse{Amount: 2}

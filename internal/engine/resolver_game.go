@@ -1,5 +1,7 @@
 package engine
 
+import "sort"
+
 // This file holds the *Game implementation of the Resolver port declared in
 // resolver.go: every method a card can reach through EffectContext, grouped by
 // the same roles as the interfaces (reads, economy, creature state, combat,
@@ -49,6 +51,12 @@ func (g *Game) HasBonusIcons(id LocalID) bool {
 	return ok && len(g.cat.def(art).Bonuses) > 0
 }
 
+// BonusIconCount reports how many bonus icons a card prints, following a gigantic
+// base half to its linked art half (ADR 0042).
+func (g *Game) BonusIconCount(id LocalID) int {
+	return len(g.bonusIconsOf(id))
+}
+
 // SharesTrait reports whether two cards have at least one trait in common.
 func (g *Game) SharesTrait(a, b LocalID) bool {
 	other := g.cat.def(b)
@@ -72,47 +80,57 @@ func (g *Game) ProtectedByTaunt(attacker, target LocalID) bool {
 // LoseKeyword takes a keyword away from every creature in play for the remainder
 // of the turn (Sniffer).
 func (g *Game) LoseKeyword(k Keyword) {
-	g.State.KeywordsLost |= k.bit()
+	g.addContinuous(ContinuousEffect{
+		Kind:       ContinuousKeywordLost,
+		Scope:      ScopeAllCreatures,
+		Controller: int8(g.State.ActivePlayer),
+		Keywords:   k.bit(),
+	}, RemainderOfPlayerTurn)
 	g.record(KeywordLostByAll{Keyword: k})
 }
 
 // GrantKeyword gives one creature a keyword for the remainder of the turn (Scout).
 func (g *Game) GrantKeyword(id LocalID, k Keyword) {
-	if g.State.Cards[id].GrantedKeywords&k.bit() != 0 {
+	c := g.stateOf(id)
+	if c == nil || c.GrantedKeywords&k.bit() != 0 {
 		return
 	}
-	g.State.Cards[id].GrantedKeywords |= k.bit()
+	c.GrantedKeywords |= k.bit()
 	g.record(CreatureGainedKeyword{Creature: id, Keyword: k})
 }
 
 // LoseKeywordFrom takes a keyword away from one creature for the remainder of the
 // turn (Niffle Grounds).
 func (g *Game) LoseKeywordFrom(id LocalID, k Keyword) {
-	if g.State.Cards[id].LostKeywords&k.bit() != 0 {
+	c := g.stateOf(id)
+	if c == nil || c.LostKeywords&k.bit() != 0 {
 		return
 	}
-	g.State.Cards[id].LostKeywords |= k.bit()
+	c.LostKeywords |= k.bit()
 	g.record(CreatureLostKeyword{Creature: id, Keyword: k})
 }
 
 // LoseKeywordUntilNextTurn takes a keyword away from one creature until the start
 // of its controller's next turn, so the loss survives the opponent's turn
-// (Reckless Rizzo).
+// (Reckless Rizzo). A creature destroyed mid-ability has left play, so the loss
+// lands on nothing rather than leaving lasting state on a card in the discard pile.
 func (g *Game) LoseKeywordUntilNextTurn(id LocalID, k Keyword) {
-	if g.State.Cards[id].LostKeywordsUntilNextTurn&k.bit() != 0 {
+	c := g.stateOf(id)
+	if c == nil || c.LostKeywordsUntilNextTurn&k.bit() != 0 {
 		return
 	}
-	g.State.Cards[id].LostKeywordsUntilNextTurn |= k.bit()
+	c.LostKeywordsUntilNextTurn |= k.bit()
 	g.record(CreatureLostKeyword{Creature: id, Keyword: k})
 }
 
 // GrantKeywordUntilNextTurn gives one creature a keyword until the start of its
 // controller's next turn (Hideaway Hole).
 func (g *Game) GrantKeywordUntilNextTurn(id LocalID, k Keyword) {
-	if g.State.Cards[id].KeywordsUntilNextTurn&k.bit() != 0 {
+	c := g.stateOf(id)
+	if c == nil || c.KeywordsUntilNextTurn&k.bit() != 0 {
 		return
 	}
-	g.State.Cards[id].KeywordsUntilNextTurn |= k.bit()
+	c.KeywordsUntilNextTurn |= k.bit()
 	g.record(CreatureGainedKeyword{Creature: id, Keyword: k})
 }
 
@@ -211,6 +229,12 @@ func (g *Game) TypeOf(id LocalID) CardType {
 	return g.cat.def(id).Type
 }
 
+// GiganticRoleOf returns which half of a gigantic creature a card is, reading its
+// printed role.
+func (g *Game) GiganticRoleOf(id LocalID) GiganticRole {
+	return g.cat.def(id).GiganticRole
+}
+
 // SetAember sets a player's Æmber pool, clamped at zero. Pool Æmber can feed a
 // creature's power (Marmo Swarm gains +1 power per Æmber in its controller's pool),
 // so lowering a pool can leave a creature with lethal damage; the resolution
@@ -292,20 +316,46 @@ func (g *Game) SetWarded(id LocalID, warded bool) {
 	}
 }
 
-// SetDamageImmune marks a creature unable to be dealt damage for the remainder of
-// the turn.
-func (g *Game) SetDamageImmune(id LocalID) {
-	if c := g.stateOf(id); c != nil {
-		c.DamageImmune = true
+// SetDamageImmune marks a creature unable to be dealt damage for the duration,
+// installed as a continuous effect on that single creature.
+func (g *Game) SetDamageImmune(id LocalID, d Duration) {
+	if g.stateOf(id) == nil {
+		return
 	}
+	g.addContinuous(ContinuousEffect{
+		Kind:       ContinuousDamageImmune,
+		Scope:      ScopeSubject,
+		Subject:    id,
+		Controller: int8(g.controller(id)),
+	}, d)
 }
 
 // SetSideDamageImmune makes every creature player controls unable to be dealt
-// damage for the remainder of the turn (Shield of Justice). The mask is read live
+// damage for the duration (Shield of Justice, Lucky Dice). The mask is read live
 // at damage time, so a creature played or taken after this resolves is protected
 // too.
-func (g *Game) SetSideDamageImmune(player int) {
-	g.State.SideDamageImmune[player] = true
+func (g *Game) SetSideDamageImmune(player int, d Duration) {
+	g.addContinuous(ContinuousEffect{
+		Kind:       ContinuousDamageImmune,
+		Scope:      ScopeFriendlyCreatures,
+		Controller: int8(player),
+	}, d)
+}
+
+// SetStatOverride masks every creature's power and/or armor to a fixed value for
+// the duration (The Pale Star: 1 power, 0 armor). It is read live, so a creature
+// that enters later is masked too; the stored counters and armor pool are
+// untouched and revealed again when it lifts.
+func (g *Game) SetStatOverride(power, armor int8, hasPower, hasArmor bool, d Duration) {
+	g.addContinuous(ContinuousEffect{
+		Kind:       ContinuousStatOverride,
+		Scope:      ScopeAllCreatures,
+		Controller: int8(g.State.ActivePlayer),
+		Power:      power,
+		Armor:      armor,
+		HasPower:   hasPower,
+		HasArmor:   hasArmor,
+	}, d)
 }
 
 // SetExhausted sets a creature's exhausted status.
@@ -336,9 +386,14 @@ func (g *Game) SetLastingHouse(id LocalID, house House) {
 // chosen flank; it keeps its exhaustion, Æmber, and power counters, and its
 // LastingType makes it read as a creature until it leaves play. Its ArmorRemaining
 // is topped up to its full armor so it can absorb hits as a creature this turn.
+// A repeated use finds the card already a creature in the battleline; removing it
+// from there first makes the second use reposition it to the chosen flank rather
+// than insert a duplicate.
 func (g *Game) PutIntoBattlelineAsCreature(id LocalID, right bool) {
 	controller := g.controller(id)
-	g.State.Artifacts[controller].remove(id)
+	if !g.State.Artifacts[controller].remove(id) {
+		g.State.Battleline[controller].remove(id)
+	}
 	c := &g.State.Cards[id]
 	c.LastingType = Creature
 	c.ArmorRemaining = int16(g.armor(id))
@@ -356,6 +411,37 @@ func (g *Game) SetNamedHouse(id LocalID, house House) {
 	if c := g.stateOf(id); c != nil {
 		c.NamedHouse = house
 	}
+}
+
+// SetNamedCard records the card a permanent named as it entered play, matched by
+// name against every card attempted to be played while the permanent stays in play
+// (Etan's Jar). It stores the named card's LocalID+1 so the zero value is "named
+// nothing"; resetCore clears it when the permanent leaves play.
+func (g *Game) SetNamedCard(id, named LocalID) {
+	if c := g.stateOf(id); c != nil {
+		c.NamedCardPlus = uint8(named) + 1
+	}
+}
+
+// NameableCards returns one representative card id per distinct card name present
+// in the match, ordered by name so a "name a card" choice is deterministic for
+// replay. Every playable card is registered in the match catalog, so this reaches
+// every name a player could name without the engine seeing the global card
+// database (ADR 0003).
+func (g *Game) NameableCards() []LocalID {
+	seen := make(map[string]bool, len(g.cat.defs))
+	out := make([]LocalID, 0, len(g.cat.defs))
+	for i := range g.cat.defs {
+		id := LocalID(i)
+		if name := g.cat.def(id).Name; !seen[name] {
+			seen[name] = true
+			out = append(out, id)
+		}
+	}
+	sort.Slice(out, func(a, b int) bool {
+		return g.cat.def(out[a]).Name < g.cat.def(out[b]).Name
+	})
+	return out
 }
 
 // SetFightDamageRedirect redirects the attacker's fight damage in the current
@@ -594,6 +680,15 @@ func (g *Game) MoveFromDiscardToTopOfDeck(id LocalID) {
 	g.record(CardPutFromDiscardOnTopOfDeck{Player: o, Card: id})
 }
 
+// MoveFromDeckToTopOfDeck repositions a card already in its owner's deck to the
+// top of that deck.
+func (g *Game) MoveFromDeckToTopOfDeck(id LocalID) {
+	o := g.owner(id)
+	g.State.Deck[o].remove(id)
+	g.State.Deck[o].addFront(id)
+	g.record(CardPutOnTopOfDeck{Card: id, Owner: o})
+}
+
 // ShuffleFromDiscardIntoDeck moves a card from its owner's discard pile into their
 // deck and shuffles. During a shuffle batch the card is collected for a single
 // grouped narration rather than narrated on its own (Not Finished with You).
@@ -724,28 +819,29 @@ func (g *Game) sourceName(source LocalID) string {
 }
 
 // FightWith makes attacker fight defender, ability-driven (ignoring active player
-// and house). A creature can only be used while ready, so an exhausted attacker
-// does nothing.
+// and house). A creature can only be used while ready and while its name is under
+// the Rule of Six, so an exhausted or six-times-used attacker does nothing.
 func (g *Game) FightWith(attacker, defender LocalID) {
-	if g.readyToUse(attacker) {
+	if g.usableByAbility(attacker) {
 		g.fight(attacker, defender)
 	}
 }
 
 // ReapWith reaps with a creature, ability-driven (ignoring active player and
-// house). A creature can only be used while ready, so an exhausted creature does
-// nothing.
+// house). A creature can only be used while ready and while its name is under the
+// Rule of Six, so an exhausted or six-times-used creature does nothing.
 func (g *Game) ReapWith(id LocalID) {
-	if g.readyToUse(id) {
+	if g.usableByAbility(id) {
 		g.reapWith(id)
 	}
 }
 
 // UseActionOf fires a card's "Action:" ability on behalf of actor, ability-driven
-// (ignoring active player and house). A card can only be used while ready, so an
-// exhausted card does nothing.
+// (ignoring active player and house). A card can only be used while ready and
+// while its name is under the Rule of Six, so an exhausted or six-times-used card
+// does nothing.
 func (g *Game) UseActionOf(actor int, id LocalID) {
-	if g.readyToUse(id) {
+	if g.usableByAbility(id) {
 		g.useActionOf(actor, id)
 	}
 }
@@ -755,13 +851,21 @@ func (g *Game) UseActionOf(actor int, id LocalID) {
 // the point: an exhausted creature's reap effect still triggers, and the creature
 // neither exhausts nor counts as used.
 func (g *Game) TriggerAbilityOf(actor int, id LocalID, trigger Trigger) {
-	g.triggerDepth++
-	defer func() { g.triggerDepth-- }()
 	g.triggerAbilitiesAs(actor, id, trigger, 0, false)
 }
 
-// TriggerDepth is how many TriggerAbilityOf resolutions are currently open.
-func (g *Game) TriggerDepth() int { return g.triggerDepth }
+// TriggerAbilityOfRooted is TriggerAbilityOf carrying the Rule-of-Six cascade
+// root, so every ability the chain resolves charges root's name pool rather than
+// each resolving card's own.
+func (g *Game) TriggerAbilityOfRooted(actor int, id LocalID, trigger Trigger, root LocalID) {
+	g.triggerAbilitiesRooted(actor, id, trigger, 0, false, root, true)
+}
+
+// AtRuleOfSix reports whether id's card name has been used six times this turn.
+func (g *Game) AtRuleOfSix(id LocalID) bool { return g.atRuleOfSix(id) }
+
+// RecordUsage counts one usage of id toward its card name's Rule-of-Six pool.
+func (g *Game) RecordUsage(id LocalID) { g.recordUsage(id) }
 
 // HasTrigger reports whether a card has an ability under the trigger.
 func (g *Game) HasTrigger(id LocalID, trigger Trigger) bool {

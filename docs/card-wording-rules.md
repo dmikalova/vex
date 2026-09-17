@@ -588,7 +588,9 @@ key"` or `"draw cards"` part of the turn writes `phase`, where KeyForge writes
 | `skips the "forge a key" step during …` | `skips the "forge a key" phase during …` |
 | `You skip your "forge a key" step.`     | `You skip your "forge a key" phase.`     |
 
-(Affected: Streke, Mother, Succubus, The Howling Pit, Miasma.)
+(Affected: Miasma. The end-of-turn hand-size cards — Streke, Mother, Succubus,
+The Howling Pit — formerly used the `"draw cards" phase` wording but now state the
+new size directly through the hand-size template of § 33.)
 
 ---
 
@@ -667,6 +669,52 @@ cannot use **creatures of the chosen house** to reap during their next turn".
 | `During your opponent's next turn, creatures of the chosen house cannot be used to reap.` | `Your opponent cannot use creatures of the chosen house to reap during their next turn.` |
 
 (Affected: United Action, Seismo-entangler.)
+
+---
+
+## 33. Hand-size changes read `your hand size is N more/less`
+
+A card that continuously changes a player's end-of-turn hand size states the new
+size directly, rather than KeyForge's `refill your hand to N additional cards`
+during the `"draw cards"` phase. The subject names whose hand — `your hand size`,
+`your opponent's hand size`, or `each player's hand size` — the verb is always
+`is`, and the magnitude is `N more` or `N less`:
+
+- `Your hand size is 1 more.` (Mother)
+- `Your opponent's hand size is 1 less.` (Succubus)
+- `Each player's hand size is 1 more.` (The Howling Pit)
+
+A per-count scale prefixes `For each <count>`: `For each friendly Sin creature
+your hand size is 1 more.` (Greed). A flank/center restriction prefixes
+`While <self> is …,`: `While Streke is not on a flank, your opponent's hand size
+is 1 less.` (Streke); `While Zenzizenzizenzic is in the center of the battleline,
+your hand size is 2 more.` (Zenzizenzizenzic).
+
+This is a phrasing reword — the effect, a continuous end-of-turn hand-size
+modifier, is unchanged — so it carries no divergence-register entry.
+
+---
+
+## 34. A change until its card leaves play omits `until it leaves play`
+
+A targeted effect that lasts until its creature or artifact leaves play does not
+say so: every targeted effect already ends when its subject leaves play, so the
+clause would only restate the default. Borrow reads `Take control of an enemy
+artifact. It belongs to house Shadows.`, not `… until it leaves play`. (Affected:
+Borrow, Sneklifter, Boosted B4-RRY, Lord Invidius.)
+
+---
+
+## 35. "Shares a house with `<the card in context>`" becomes `of that card's house`
+
+A target narrowed to the house of the card a preceding effect put in focus —
+KeyForge's "a creature that shares a house with the destroyed creature" — is
+rendered `a friendly creature of that card's house`. The contextual-house matcher
+reads the house of the card in context (`ctx.It`), so the referent is whichever
+card the sentence before it named, and the shorter phrase keeps every such target
+on one template. Essence Scale reads `Choose a friendly creature - destroy the
+chosen creature. Ready and use a friendly creature of that card's house.`
+(Affected: Essence Scale.)
 
 ---
 

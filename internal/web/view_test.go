@@ -627,12 +627,12 @@ func TestZoneTipNamesTheCardsInAFaceUpPile(t *testing.T) {
 	}
 }
 
-// TestArchivesPillNamesItselfWithAPlainTip checks the Archives pill — hidden even
-// from its owner, so it never lists cards — falls through to the same plain
-// floating tip every other label-only icon uses, rather than a roster box, so all
-// label-only tooltips look alike. It still leaks no card names, and a truly hidden
-// zone (an opponent's deck) likewise gets no roster popover.
-func TestArchivesPillNamesItselfWithAPlainTip(t *testing.T) {
+// TestArchivesPillReadableToItsOwnerOnly checks the Archives pill lists its cards
+// in a roster to the owner — who set them face-down but knows their contents — while
+// an opponent sees only the count through the plain floating tip, so archives never
+// leak across the table. A truly hidden zone (an opponent's deck) likewise gets no
+// roster popover.
+func TestArchivesPillReadableToItsOwnerOnly(t *testing.T) {
 	c := newClient(t)
 	def, ok := c.g.defByName[testCreature]
 	if !ok {
@@ -640,20 +640,28 @@ func TestArchivesPillNamesItselfWithAPlainTip(t *testing.T) {
 	}
 	p := c.g.active()
 	id := c.g.g.AddToArchives(*def, p)
-	if roster := c.g.zoneRoster(p, "Archives", []engine.LocalID{id}); roster != nil {
-		t.Fatal("the Archives pill got a roster box; it should use the plain tip")
+
+	// The owner sees a roster naming their archived card.
+	if roster := c.g.zoneRoster(p, "Archives", []engine.LocalID{id}); roster == nil {
+		t.Fatal("the owner's Archives pill got no roster; it should list its cards")
 	}
-	// The pill still names the zone (and only the zone) through the plain tip.
-	html := app.HTMLString(app.Div().Body(c.g.zoneCounts(p)...))
-	if !strings.Contains(html, `data-tip="Archives"`) {
-		t.Errorf("the Archives pill has no plain tip naming it: %s", html)
+	ownerHTML := app.HTMLString(app.Div().Body(c.g.zoneCounts(p)...))
+	if !strings.Contains(ownerHTML, testCreature) {
+		t.Errorf("the owner's Archives pill did not name its card: %s", ownerHTML)
 	}
-	if strings.Contains(html, testCreature) {
-		t.Errorf("the Archives pill leaked a card name: %s", html)
+
+	// An opponent sees only the count through the plain tip — no roster, no names.
+	opp := 1 - p
+	if roster := c.g.zoneRoster(opp, "Archives", []engine.LocalID{id}); roster != nil {
+		t.Fatal("an opponent's Archives pill got a roster; it should stay hidden")
 	}
+	if got := c.g.zoneNames(opp, "Archives", []engine.LocalID{id}); got != nil {
+		t.Errorf("an opponent's archives leaked its names: %v", got)
+	}
+
 	// An opponent's deck is hidden and not a labelled zone of its own, so it stays a
 	// plain tip with no popover.
-	if got := c.g.zoneRoster(1-p, "Deck", []engine.LocalID{id}); got != nil {
+	if got := c.g.zoneRoster(opp, "Deck", []engine.LocalID{id}); got != nil {
 		t.Error("a hidden opponent deck got a roster popover")
 	}
 }
@@ -812,7 +820,7 @@ func TestDrawingTheCardPicker(t *testing.T) {
 func TestDrawingTheForgePicker(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
-	c.do(c.g.manualForgeKey(c.g.active()))
+	c.g.openForgeKey(c.g.active())
 	c.wants("the forge picker", "Red", "Blue", "Yellow")
 }
 
@@ -952,7 +960,7 @@ func TestDrawingForgedKeys(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	me := c.g.active()
-	c.do(c.g.manualForgeKey(me))
+	c.g.openForgeKey(me)
 	c.do(c.g.pickForgeColor(engine.KeyColorRed))
 	c.wants("a forged key", "score-keys", "key-red.svg", "key-btn")
 }

@@ -91,6 +91,21 @@ func TestPutIntoPlay(t *testing.T) {
 		}
 	})
 
+	t.Run("a gigantic half is left where it came from, never put into play", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		half := g.AddToDiscard(
+			NewCard("titan", Logos, Creature, Common, WithPower(9), WithGiganticRole(GiganticBase)),
+			1,
+		)
+		g.putIntoPlay(half, 0)
+		if g.inPlay(half) {
+			t.Error("a lone gigantic half must not enter play")
+		}
+		if !g.State.Discard[1].contains(half) {
+			t.Error("the half should stay in the discard pile it came from")
+		}
+	})
+
 	t.Run("with no target, does nothing", func(_ *testing.T) {
 		g := NewGame("A", "B", 1)
 		PutIntoPlay{

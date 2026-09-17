@@ -52,8 +52,10 @@ func (g *game) promptSourceHeader() app.UI {
 // prompt into a green log-card token — tap or hover to enlarge the card, the same
 // affordance a log mention gives — so the prompt reads as one line ("Exalt
 // <Centurion Stenopius>") instead of repeating the name as a heading above it.
+// It carries the full text as a data-tip so the mobile dock, which clips a long
+// prompt to one line (app.css), can still surface the whole sentence on hover/tap.
 func (g *game) promptLine(text string) app.UI {
-	return app.Div().Class("prompt").Body(g.promptTextSegments(text)...)
+	return app.Div().Class("prompt").DataSet("tip", text).Body(g.promptTextSegments(text)...)
 }
 
 // promptTextSegments splits a prompt's text around each mention of its source

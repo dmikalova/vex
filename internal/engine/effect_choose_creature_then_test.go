@@ -28,7 +28,7 @@ func TestChooseCreatureThen(t *testing.T) {
 	if g.State.Cards[ally].Damage != 0 {
 		t.Error("the chosen creature should have been healed")
 	}
-	if !g.State.Cards[ally].DamageImmune {
+	if !g.DamageImmune(ally) {
 		t.Error("the chosen creature should be protected from damage")
 	}
 }

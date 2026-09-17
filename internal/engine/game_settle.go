@@ -17,10 +17,8 @@ func (g *Game) settleDestroyed(controller int) {
 		return
 	}
 	g.settling = true
-	g.replacedThisSweep = nil
 	defer func() {
 		g.settling = false
-		g.replacedThisSweep = nil
 	}()
 	for {
 		var dying []LocalID
@@ -41,18 +39,4 @@ func (g *Game) settleDestroyed(controller int) {
 		}
 		g.destroyBatch(controller, dying)
 	}
-}
-
-// destructionReplacedThisSweep reports whether a creature's destruction was already
-// replaced earlier in this sweep. A replacement that heals damage but does not lift
-// the reason the creature is destroyable — it sits at 0 power — would otherwise be
-// re-detected and re-replaced every pass, hanging the sweep, so its second
-// destruction in the same sweep resolves for real instead of being replaced again.
-func (g *Game) destructionReplacedThisSweep(id LocalID) bool {
-	for _, r := range g.replacedThisSweep {
-		if r == id {
-			return true
-		}
-	}
-	return false
 }

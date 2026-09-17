@@ -318,6 +318,9 @@ func cardFeatureLines(def *engine.CardDefinition) []glyphLine {
 	if def.DealsNoDamageWhenAttacked {
 		gs = append(gs, glyph{asset: "damage"}, glyph{asset: "glyph-ban"})
 	}
+	if def.CannotBeDealtDamageBy.Active() {
+		gs = append(gs, glyph{asset: "shield"}, glyph{asset: "damage"}, glyph{asset: "glyph-ban"})
+	}
 	if a := typeIconName(def.EntersReadyGrant.Type); a != "" {
 		gs = append(gs,
 			glyph{asset: "exhausted", decor: decorFriendly},
@@ -641,6 +644,15 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			gs = append(gs, glyph{asset: "shield", qty: v.Armor})
 		}
 		return append(gs, arrowTo(targetGlyph(v.Target))), true
+	case engine.OverrideStats:
+		gs := make([]glyph, 0, 2)
+		if v.HasPower {
+			gs = append(gs, glyph{asset: "power", qty: v.Power})
+		}
+		if v.HasArmor {
+			gs = append(gs, glyph{asset: "shield", qty: v.Armor})
+		}
+		return gs, true
 	case engine.GainAssault:
 		return []glyph{{asset: "kw-assault"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.GainAssaultUntilNextTurn:
@@ -869,6 +881,9 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.NameHouse:
 		// The chosen house is barred; ChooseHouseThen supplies the choose glyph.
 		return []glyph{{asset: "glyph-ban"}}, true
+	case engine.NameCard:
+		// Name a card, then bar every copy of it from being played.
+		return []glyph{{asset: "glyph-choose"}, {asset: "glyph-ban"}}, true
 	case engine.OpponentNamesHouse:
 		return []glyph{{asset: "glyph-choose"}}, true
 	case engine.LookAtTopOfDeck:
@@ -879,9 +894,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-hand"}, {asset: "glyph-look"}}, true
 	case engine.RevealChosenFromHand:
 		return []glyph{{asset: "zone-hand"}, {asset: "glyph-look"}}, true
-	case engine.SearchForName:
-		return []glyph{{asset: "zone-deck"}, {asset: "glyph-search"}}, true
-	case engine.SearchDeck:
+	case engine.Search:
 		return []glyph{{asset: "zone-deck"}, {asset: "glyph-search"}}, true
 	case engine.Instead:
 		return []glyph{{asset: "glyph-swap"}}, true

@@ -36,10 +36,10 @@ func TestManualControlsNeedManualMode(t *testing.T) {
 	c.do(c.g.manualMove(engine.ManualPurge))
 	c.do(c.g.manualReady)
 	c.do(c.g.manualExhaust)
-	c.do(c.g.manualAmberDelta(me, 3))
-	c.do(c.g.manualChainsDelta(me, 3))
-	c.do(c.g.manualForgeKey(me))
-	c.do(c.g.manualUnforgeKey(me))
+	c.do(c.g.onManualAmberStep)
+	c.do(c.g.onManualChainsStep)
+	c.do(c.g.onManualForgeKey)
+	c.do(c.g.onManualUnforgeKey)
 	c.do(c.g.manualSetHouse(engine.Brobnar))
 
 	if !containsID(c.hand(), id) {
@@ -114,15 +114,54 @@ func TestManualCounters(t *testing.T) {
 	me := c.g.active()
 
 	before := c.g.g.State.Aember[me]
-	c.do(c.g.manualAmberDelta(me, 4))
+	c.g.adjustManualAmber(c.ctx, me, 4)
+	c.settle()
 	if got := c.g.g.State.Aember[me]; got != before+4 {
 		t.Errorf("Æmber is %d, want %d", got, before+4)
 	}
 
 	chains := c.g.g.State.Chains[me]
-	c.do(c.g.manualChainsDelta(me, 2))
+	c.g.adjustManualChains(c.ctx, me, 2)
+	c.settle()
 	if got := c.g.g.State.Chains[me]; got != chains+2 {
 		t.Errorf("chains are %d, want %d", got, chains+2)
+	}
+}
+
+// A stepper on the opponent's bar credits the opponent, not the seated (active)
+// player. The controls read their target player from the DOM rather than a captured
+// closure precisely so one bar's stepper cannot drive the other player (go-app binds
+// a per-render closure by a shared function pointer); this pins that both bars stay
+// independent.
+func TestManualCountersTargetTheOpponentBar(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	me := c.g.active()
+	opp := 1 - me
+
+	myAmber, oppAmber := c.g.g.State.Aember[me], c.g.g.State.Aember[opp]
+	c.g.adjustManualAmber(c.ctx, opp, 3)
+	c.settle()
+	if got := c.g.g.State.Aember[opp]; got != oppAmber+3 {
+		t.Errorf("the opponent's Æmber is %d, want %d", got, oppAmber+3)
+	}
+	if got := c.g.g.State.Aember[me]; got != myAmber {
+		t.Errorf("the active player's Æmber changed to %d, want %d", got, myAmber)
+	}
+
+	myChains, oppChains := c.g.g.State.Chains[me], c.g.g.State.Chains[opp]
+	c.g.adjustManualChains(c.ctx, opp, 2)
+	c.settle()
+	if got := c.g.g.State.Chains[opp]; got != oppChains+2 {
+		t.Errorf("the opponent's chains are %d, want %d", got, oppChains+2)
+	}
+	if got := c.g.g.State.Chains[me]; got != myChains {
+		t.Errorf("the active player's chains changed to %d, want %d", got, myChains)
+	}
+
+	c.g.openForgeKey(opp)
+	if c.g.forgingKey != opp {
+		t.Errorf("the forge picker is at %d, want the opponent %d", c.g.forgingKey, opp)
 	}
 }
 
@@ -133,7 +172,7 @@ func TestManualForgeAndUnforge(t *testing.T) {
 	c.manualTurn(testHouse)
 	me := c.g.active()
 
-	c.do(c.g.manualForgeKey(me))
+	c.g.openForgeKey(me)
 	if c.g.forgingKey != me {
 		t.Fatalf("the forge picker is at %d, want player %d", c.g.forgingKey, me)
 	}
@@ -145,7 +184,8 @@ func TestManualForgeAndUnforge(t *testing.T) {
 		t.Errorf("the player has %d keys, want 1", c.g.g.Keys(me))
 	}
 
-	c.do(c.g.manualUnforgeKey(me))
+	c.g.removeManualKey(c.ctx, me)
+	c.settle()
 	if c.g.g.Keys(me) != 0 {
 		t.Errorf("the player has %d keys after unforging, want 0", c.g.g.Keys(me))
 	}
@@ -166,7 +206,7 @@ func TestKeyColorKeys(t *testing.T) {
 			c := newClient(t)
 			c.manualTurn(testHouse)
 			me := c.g.active()
-			c.do(c.g.manualForgeKey(me))
+			c.g.openForgeKey(me)
 			c.press(tt.key)
 			if c.g.forgingKey != -1 {
 				t.Fatalf("%q did not answer the forge picker", tt.key)
@@ -184,10 +224,10 @@ func TestAKeyColorAlreadyForgedIsNotOffered(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	me := c.g.active()
-	c.do(c.g.manualForgeKey(me))
+	c.g.openForgeKey(me)
 	c.press("r")
 
-	c.do(c.g.manualForgeKey(me))
+	c.g.openForgeKey(me)
 	c.press("r")
 	if c.g.forgingKey != me {
 		t.Error("r answered the picker with a colour that was already forged")

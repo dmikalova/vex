@@ -10,6 +10,8 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ### Next focus
 
+- Skill to mage check and then commit
+- Need a thorough implementation examples doc so nodes don't keep being reinvented
 - using property testing to find unused code paths and then force specific tests there
 - Is there a way to validate that the UI handles and presents all possible game states/prompts? eg if I add a new prompt route, can the UI then automatically fail bc its not handled?
 - On the style page add a section with all of the Log and Text usages rendered out. The easiest wayt to do this might be to create a dedicated preview area that dynamically displays these elements as they are used in the engine (eg show a set of cards that covers every rendering element, and a log that does the same for all log entries)
@@ -43,15 +45,17 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ## Things that can be done now
 
-- [WithoutBonus](https://discord.com/channels/802313100485197855/802313100987990053/1549192438978191372)
 - Decomposables:
   - OpponentForgedKeys
   - AfterFriendlyCreatureFights
+  - LoseKeywordsUntilNextTurn
+  - card.WithAemberCannotBeStolenWhilePoolAtLeast(4),
+  - WithAemberCannotBeStolenWhileItHasAember
+  - FoughtCreatureIsMostPowerfulEnemy
+- Lumilu - could card.InPlay be better represented by filters or refinements instead of the specific fields?
 
-- Capitalizing card types in text - eg Creature in Floomf
+- Livia and Fidgit could go further
 - Changing card.X to instead be e.X eg for engine - is the facade really providing value, or is there anything else we could do to organize the repo better instead of one mega engine?
-- Lumilu - could card.InPlay be better represented by filters or refinements?
-- mutants: technofiend, daemosaurus - you should be able to find the rest of the house suffixes/prefixes from these two
 - shard of unity prompt doesn't lift creature for use
 - rows have excess scroll space and don't hide the scroll bar by default
 
@@ -60,8 +64,25 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - Granted: card.FightReap(card.ArchiveGrantingUpgrade{}), should be card.Archive{Target: GrantingUpgrade}
 - Why is DamageThen and ChooseCreatureThen needed? Why can't these just be sequences that pass along the effect context?
 - Get rid of bar.go
+- /cards view cuts off side icons - why isn't this rendering like in the engine?
 
-- Livia and Fidgit could go further
+### Automatic linters
+
+[https://lobehub.com/skills/saifoelloh-golang-best-practices-skill-design-patterns?activeTab=installation](lint skill)
+
+If you are looking for automated CLI/CI tools rather than conversational agent skills, the Go ecosystem relies on specific linters bundled inside golangci-lint (what other linters are available):
+
+gocyclo / gocognit: Detects bloated functions with high cyclomatic or cognitive complexity.
+
+funlen: Flags overly long functions or methods (Long Method smell).
+
+dupl: Finds structural code clones and duplicate logic.
+
+maintidx: Calculates maintainability index metrics across your Go files.
+
+interfacebloat: Catches interfaces that define too many methods.
+
+Semgrep (Go rulesets): Detects Go-specific architectural smells like unbuffered channel leaks, missing context propagation in loops, and repeated logger instantiation.
 
 ## Sites of all the things
 
@@ -108,6 +129,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ## Game finesse
 
+- [WithoutBonus](https://discord.com/channels/802313100485197855/802313100987990053/1549192438978191372)
 - after implementing all cards, identify cards that have unique effects and decide if they can be reworded for simplicity - is it possibility to introspect and see how many times each card facet is used?
 - Renaming the draw pile to reserve so that deck list, the full deck itself, and the deck pile are distinct and clearly named
 - Choose one: rewrites

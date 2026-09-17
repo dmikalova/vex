@@ -43,6 +43,7 @@ var ClusterStrategy = clusterStrategies{
 	PullExact:   deckgen.PullExact,
 	Pull:        deckgen.Pull,
 	OnePerHouse: deckgen.OnePerHouse,
+	PerGigantic: deckgen.PerGigantic,
 }
 
 type clusterStrategies struct {
@@ -66,6 +67,10 @@ type clusterStrategies struct {
 	// and gated complete-by-construction — every House must have a member (the
 	// Shards).
 	OnePerHouse deckgen.ClusterStrategy
+	// PerGigantic places one member, chosen at random, into each gigantic base's
+	// pod, stamped to that pod's House. Its members are Houseless reservoir cards
+	// pulled only by a gigantic, never drawn on their own (the tutors).
+	PerGigantic deckgen.ClusterStrategy
 }
 
 // ClusterTrigger groups the cluster triggers, e.g.

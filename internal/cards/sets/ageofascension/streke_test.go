@@ -16,7 +16,7 @@ import (
 //	Traits: Imp
 //
 //	Elusive.
-//	While Streke is not on a flank, during their "draw cards" phase, your opponent refills their hand to 1 less card.
+//	While Streke is not on a flank, your opponent's hand size is 1 less.
 func TestStreke(t *testing.T) {
 	t.Run("slows the opponent's refill while off a flank", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

@@ -55,15 +55,28 @@ func (e TriggerAbility) Text() string {
 
 // Resolve triggers the named abilities of each selected card for the effect's
 // controller. Only cards that actually carry the trigger are offered, so the
-// choice is never a wasted one. A chain of these — two Replicators reaching for
-// each other — stops at the Rule of Six.
+// choice is never a wasted one. The use that fired this ability buys its first
+// trigger for free; every trigger the chain sets off past that charges one usage
+// against the card that started the chain, so a run of these — two Replicators
+// reaching for each other's reap effect — spends one Rule of Six pool between them
+// and stops when it is empty, attributed to the starter even when a different card
+// resolves mid-chain.
 func (e TriggerAbility) Resolve(ctx *EffectContext) {
-	if ctx.Resolver.TriggerDepth() >= RuleOfSix {
-		return
+	root, chained := ctx.Root, ctx.HasRoot
+	if !chained {
+		root = ctx.Source
 	}
+	free := !chained
 	carries := func(id LocalID) bool { return ctx.Resolver.HasTrigger(id, e.Trigger) }
 	for _, id := range e.Target.selectWith(ctx, false, carries) {
+		if !free {
+			if ctx.Resolver.AtRuleOfSix(root) {
+				return
+			}
+			ctx.Resolver.RecordUsage(root)
+		}
+		free = false
 		ctx.It, ctx.HasIt = id, true
-		ctx.Resolver.TriggerAbilityOf(ctx.Controller, id, e.Trigger)
+		ctx.Resolver.TriggerAbilityOfRooted(ctx.Controller, id, e.Trigger, root)
 	}
 }

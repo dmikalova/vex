@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Demon
 //
-//	During their "draw cards" phase, your opponent refills their hand to 1 less card.
+//	Your opponent's hand size is 1 less.
 var Succubus = set.New(
 	"Succubus",
 	card.House.Dis,

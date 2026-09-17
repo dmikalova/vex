@@ -48,9 +48,13 @@ func (e StealAember) validate() error {
 func (e StealAember) Text() string {
 	object := fmt.Sprintf("%d Æmber", e.Amount)
 	if e.By != nil {
-		// A share is measured against the opponent's pool, so name whose pool it is:
-		// "all but 6 Æmber" on its own does not say.
-		object = aemberObject(e.Amount, e.By, "your opponent's") + " from your opponent"
+		// A share is measured against the opponent's pool, so name whose pool it is.
+		object = aemberObject(e.Amount, e.By, "your opponent's")
+		if _, namesPool := e.By.(Fraction); !namesPool {
+			// A Fraction share already names the pool ("half of your opponent's Æmber,
+			// rounded down"); allBut does not ("all but 6 Æmber"), so name it here.
+			object += " from your opponent"
+		}
 	}
 	verb := "steal "
 	if e.Player == Opponent {

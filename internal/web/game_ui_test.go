@@ -326,6 +326,31 @@ func TestOpenSetupIsAlwaysAllowed(t *testing.T) {
 	}
 }
 
+// A tap on a card while an option prompt is up inspects it (a read-only lift) and
+// leaves the prompt unanswered: the prompt is answered only on its own buttons.
+// This checks the opening mulligan prompt — a plain option prompt — lifts a tapped
+// hand card without settling the mulligan.
+func TestTapDuringOptionPromptInspects(t *testing.T) {
+	c := newBlankClient(t)
+	c.g.dealMatch(testSeed)
+	c.await("the first mulligan prompt", func() bool { return c.g.choosingOption })
+
+	hand := c.g.g.Hand(c.g.active())
+	if len(hand) == 0 {
+		t.Fatal("no cards in hand during the mulligan prompt")
+	}
+	id := hand[0]
+	c.do(func(ctx app.Context, _ app.Event) { c.g.selectHandID(ctx, id) })
+
+	if !c.g.choosingOption {
+		t.Error("the tap answered the mulligan prompt; it should only inspect")
+	}
+	if !c.g.inspecting || !c.g.hasSel || c.g.sel != id {
+		t.Errorf("the tap did not raise an inspect lift: inspecting=%v hasSel=%v sel=%v want %v",
+			c.g.inspecting, c.g.hasSel, c.g.sel, id)
+	}
+}
+
 func TestOverlayToggles(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()

@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Demon
 //
-//	After your opponent plays a card, if it is on the right flank, your opponent loses 1 Æmber.
+//	After your opponent plays a creature on their right flank, your opponent loses 1 Æmber.
 func TestDexus(t *testing.T) {
 	t.Run("drains the opponent when they play onto their right flank", func(t *testing.T) {
 		var beast ct.Card

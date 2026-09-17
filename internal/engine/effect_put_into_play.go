@@ -27,7 +27,8 @@ func (c Control) suffix() string {
 // an opponent's card into play without making that player's play decisions.
 // Control puts the card under the resolving player's control (Overlord Greking
 // reanimates a destroyed enemy "into play under your control") or, by default,
-// under its owner's. Ownership never changes.
+// under its owner's. Ownership never changes. A gigantic half is never put into
+// play — a lone half cannot enter play, so it stays where it came from.
 type PutIntoPlay struct {
 	Target  Target
 	Control Control

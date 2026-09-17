@@ -1,14 +1,29 @@
-//go:build todo
-
 package massmutation
+
+import "github.com/dmikalova/vactrol/internal/card"
 
 // Tormax
 //
-// TODO(gigantic): deferred — gigantic creature; two cards form one big
-// creature. See docs/todo-agent.md "Gigantics". Needs engine design before
-// implementation; grill first.
-//
 //	House:  Dis
-//	Type:   Gigantic Creature (art half)
+//	Type:   Creature
 //	Rarity: Rare
-//	Source: MoMu 020
+//	Power:  8
+//	Traits: Demon
+//
+//	Play/Fight/Reap: Discard your hand, and purge 2 random cards from your opponent's hand.
+var Tormax = set.Gigantic(
+	"Tormax",
+	card.House.Dis,
+	card.Rarity.Rare,
+	card.Provenance(card.MoMu, "020"),
+	card.WithPower(8),
+	card.WithTraits(card.Traits.Demon),
+	card.WithAbility(
+		card.Trigger.PlayFightReap, card.Sequence{Effects: []card.Effect{
+			card.DiscardHand{Player: card.Controller},
+			card.PurgeFromHand{
+				Player:    card.Opponent,
+				Selection: card.Random{Count: 2},
+			},
+		}}),
+)

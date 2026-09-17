@@ -46,7 +46,7 @@ func TestBlankEnemyTextSuppressesAbilitiesAndConstants(t *testing.T) {
 	foe := g.AddToBattleline(
 		NewCard("chatterbox", Dis, Creature, Common, WithPower(3),
 			WithAbility(TriggerAfterReap, spy)), 1)
-	g.BlankEnemyText(1, foe)
+	g.BlankEnemyText(0)
 	g.triggerAbilities(foe, TriggerAfterReap, 0, false)
 	if fired {
 		t.Error("blanked creature's own ability should not fire")
@@ -60,7 +60,7 @@ func TestBlankEnemyTextSuppressesAbilitiesAndConstants(t *testing.T) {
 				Target:     Target{Kind: TargetEachFriendlyCreature},
 			})), 1)
 	ally := g.AddToBattleline(testCreature("ally", 3), 1)
-	g.BlankEnemyText(1, foe) // player 1's creatures, including granter, are blank
+	g.BlankEnemyText(0) // player 1's creatures, including granter, are blank
 	if got := g.Power(ally); got != 3 {
 		t.Errorf("ally power with blanked granter = %d, want 3", got)
 	}
@@ -86,7 +86,7 @@ func TestBlankEnemyTextSettlesLethal(t *testing.T) {
 		t.Fatal("5 damage should not destroy it at 6 power")
 	}
 
-	g.BlankEnemyText(1, foe)
+	g.BlankEnemyText(0)
 	g.settleDestroyed(0) // the resolution boundary settles the blank (ADR 0029)
 
 	if g.inPlay(foe) {
@@ -97,7 +97,7 @@ func TestBlankEnemyTextSettlesLethal(t *testing.T) {
 func TestBlankEnemyTextIgnoresNonCreatures(t *testing.T) {
 	g := started(t)
 	art := g.AddArtifact(NewCard("relic", Dis, Artifact, Common), 1)
-	g.BlankEnemyText(1, art)
+	g.BlankEnemyText(0)
 	if g.textBlanked(art) {
 		t.Error("an artifact is not a creature and is never blanked")
 	}
@@ -106,7 +106,7 @@ func TestBlankEnemyTextIgnoresNonCreatures(t *testing.T) {
 func TestBlankEnemyTextLiftsAfterOpponentTurn(t *testing.T) {
 	g := started(t)
 	foe := g.AddToBattleline(testCreature("foe", 5, WithKeywords(Taunt)), 1)
-	g.BlankEnemyText(1, foe)
+	g.BlankEnemyText(0)
 
 	// Still blank through the controller's turn.
 	g.EndPlayPhase(0)
@@ -121,6 +121,40 @@ func TestBlankEnemyTextLiftsAfterOpponentTurn(t *testing.T) {
 	g.EndPlayPhase(1)
 	if g.textBlanked(foe) {
 		t.Error("blank should lift after the opponent's turn")
+	}
+}
+
+// A blank can suppress an enemy constant power-reducer (Shadow of Dis blanking
+// King of the Crag). When the blank lifts at the very end of the turn, the
+// reducer reactivates and can drop a creature to zero power — that creature must
+// be settled before the turn hands over, not left in play at 0 power.
+func TestBlankLiftingSettlesLethalConstant(t *testing.T) {
+	g := started(t)
+	// Player 0's victim sits at base power 2.
+	victim := g.AddToBattleline(testCreature("victim", 2), 0)
+	// Player 0 blanks player 1's creatures before the reducer arrives, so the
+	// reducer's -2 is suppressed and the victim keeps its 2 power.
+	g.BlankEnemyText(0)
+	g.AddToBattleline(
+		NewCard("reducer", Dis, Creature, Common, WithPower(4),
+			WithConstantAbility(ConstantAbility{
+				PowerBonus: -2,
+				Target:     Target{Kind: TargetEachEnemyCreature},
+			})), 1)
+	if !g.inPlay(victim) {
+		t.Fatal("precondition: victim should survive while the reducer is blanked")
+	}
+
+	// The blank persists through the opponent's turn, then lifts at its end.
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
+	if err := g.ChooseHouse(1, Brobnar); err != nil {
+		t.Fatalf("ChooseHouse: %v", err)
+	}
+	g.EndPlayPhase(1)
+
+	if g.inPlay(victim) {
+		t.Error("victim dropped to 0 power when the blank lifted; it must be destroyed")
 	}
 }
 

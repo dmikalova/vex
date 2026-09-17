@@ -49,8 +49,8 @@ would only weaken it.
 
 ## Consequences
 
-- Bonus icons render in the Rules voice and the log says "bonus" ("Splinter deals 1
-  bonus damage to …"), so a bonus icon is never confused with the same effect from
+- Bonus icons render in the Rules voice and the log says "bonus" ("Splinter bonus
+  deals 1 damage to …"), so a bonus icon is never confused with the same effect from
   an ability. They have a rulebook section, complete by construction (ADR 0018): a
   new icon kind without a term fails the build.
 - The engine's flat-state invariant (ADR 0005) is untouched — `Bonuses`/`Enhances`

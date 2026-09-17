@@ -21,7 +21,6 @@ func TestForgeKeyExtraCost(t *testing.T) {
 			ForgeKey{Discount: true, ReducedBy: CardsInHand{Player: Controller, House: AnyHouse}},
 			"forge a key at current cost, reduced by 1 Æmber for each card in your hand -> purge {self}",
 		},
-		{"kept", ForgeKey{Keep: true}, "forge a key at current cost"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -100,27 +99,26 @@ func TestForgeKeyReducedBelowTheSurcharge(t *testing.T) {
 	}
 }
 
-func TestForgeKeyDiscountFloorsAndKeeps(t *testing.T) {
+func TestForgeKeyDiscountFloorsAndPurges(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddArtifact(NewCard("Forge", Dis, Artifact, Common), 0)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
 	// A discount larger than the current key cost floors the whole cost at 0, so the
-	// forge lands with an empty pool, and Keep leaves the source in play.
+	// forge lands with an empty pool, and the successful forge purges the source.
 	for i := 0; i < 8; i++ {
 		g.AddToHand(NewCard("Filler", Brobnar, Tactic, Common), 0)
 	}
 	ForgeKey{
 		Discount:  true,
-		Keep:      true,
 		ReducedBy: CardsInHand{Player: Controller, House: AnyHouse},
 	}.Resolve(ctx)
 
 	if g.Keys(0) != 1 {
 		t.Errorf("keys = %d, want 1 — the discount floors the cost at 0", g.Keys(0))
 	}
-	if !g.inPlay(src) {
-		t.Error("source should stay in play with Keep")
+	if g.inPlay(src) {
+		t.Error("a successful forge should purge the source")
 	}
 }
 

@@ -117,8 +117,8 @@ func TestRequiredTargetValidation(t *testing.T) {
 		},
 		{
 			"DiscardCard",
-			DiscardCard{Zone: Hand, Selection: Random{}},
-			DiscardCard{Player: Opponent, Zone: Hand, Selection: Random{}},
+			DiscardCard{Zones: []Zone{Hand}, Selection: Random{Count: 1}},
+			DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{Count: 1}},
 		},
 		{"Reveal", RevealHand{}, RevealHand{Player: Controller}},
 	}

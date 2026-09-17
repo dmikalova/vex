@@ -119,7 +119,9 @@ func (g *Game) fight(attacker, defender LocalID) {
 			if redirect != 0 {
 				dmgTarget = redirect
 			}
-			targets := []DamageTarget{{ID: dmgTarget, Amount: g.fightDamage(attacker, defender)}}
+			targets := []DamageTarget{
+				{ID: dmgTarget, Amount: g.fightDamage(attacker, defender), Source: attacker},
+			}
 			// Retaliation damage equals the defender's power, unless a Fixed
 			// AttackDamage replaces it: Shadow Self and Ether Spider "deal no damage
 			// when fighting", so they deal none back to an attacker either. An
@@ -132,7 +134,8 @@ func (g *Game) fight(attacker, defender LocalID) {
 			skirmish := g.hasKeyword(attacker, Skirmish)
 			if !skirmish &&
 				!g.cat.def(defender).DealsNoDamageWhenAttacked {
-				targets = append(targets, DamageTarget{ID: attacker, Amount: retaliation})
+				targets = append(targets,
+					DamageTarget{ID: attacker, Amount: retaliation, Source: defender})
 			} else if skirmish && retaliation > 0 {
 				g.record(SkirmishAvoidedReturn{Attacker: attacker})
 			}
@@ -140,7 +143,7 @@ func (g *Game) fight(attacker, defender LocalID) {
 			// attacker fights, at the same time as fight damage.
 			if s := g.splashAttack(attacker); s > 0 {
 				for _, n := range neighbors(&EffectContext{Resolver: g}, defender) {
-					targets = append(targets, DamageTarget{ID: n, Amount: s})
+					targets = append(targets, DamageTarget{ID: n, Amount: s, Source: attacker})
 				}
 			}
 			// Snapshot each target's damage so poison can tell which creatures the
@@ -434,12 +437,12 @@ func (g *Game) applyRawDamage(t DamageTarget) LocalID {
 	if !g.inPlay(id) {
 		return id
 	}
-	if amount = g.mitigateDamage(id, amount, ignoreArmor); amount <= 0 {
+	if amount = g.mitigateDamage(id, amount, ignoreArmor, t.Source); amount <= 0 {
 		return id
 	}
 	if shield := g.damageRedirect(id); shield != id {
 		id = shield
-		if amount = g.mitigateDamage(id, amount, ignoreArmor); amount <= 0 {
+		if amount = g.mitigateDamage(id, amount, ignoreArmor, t.Source); amount <= 0 {
 			return id
 		}
 	}
@@ -457,11 +460,13 @@ func (g *Game) applyRawDamage(t DamageTarget) LocalID {
 }
 
 // mitigateDamage runs a creature's defenses over incoming damage and returns what
-// is left for it to be dealt.
-func (g *Game) mitigateDamage(id LocalID, amount int, ignoreArmor bool) int {
+// is left for it to be dealt. source credits the creature dealing the damage (0
+// when uncredited), so a card that refuses damage from certain sources — Ardent
+// Hero from Mutant or high-power creatures — can turn it away here.
+func (g *Game) mitigateDamage(id LocalID, amount int, ignoreArmor bool, source LocalID) int {
 	core := &g.State.Cards[id]
-	if core.DamageImmune || g.State.SideDamageImmune[g.controller(id)] ||
-		g.hasKeyword(id, Invulnerable) {
+	if g.continuousActive(ContinuousDamageImmune, id) || g.hasKeyword(id, Invulnerable) ||
+		g.refusesDamageFrom(id, source) {
 		g.record(DamageRefused{Creature: id})
 		return 0
 	}
@@ -469,7 +474,13 @@ func (g *Game) mitigateDamage(id LocalID, amount int, ignoreArmor bool) int {
 		return 0
 	}
 	if !ignoreArmor {
-		if absorbed := min(int(core.ArmorRemaining), amount); absorbed > 0 {
+		// A stat override masks the armor available this hit (The Pale Star: 0),
+		// without spending the real pool, which is revealed again when it lifts.
+		available := int(core.ArmorRemaining)
+		if v, ok := g.continuousArmorOverride(id); ok {
+			available = v
+		}
+		if absorbed := min(available, amount); absorbed > 0 {
 			core.ArmorRemaining -= int16(absorbed)
 			amount -= absorbed
 			g.record(ArmorAbsorbed{Creature: id, Amount: absorbed})
@@ -519,6 +530,10 @@ const (
 // chooses. Resolving destruction is part of dealing damage, so once dealDamage
 // returns the dead creatures are already in the discard.
 func (g *Game) dealDamage(controller int, targets ...DamageTarget) {
+	// A creature that also takes its neighbors' fight damage (Drecker) adds its own
+	// instances to the batch, so its share lands simultaneously with the damage that
+	// triggered it.
+	targets = g.neighborFightSplash(targets)
 	// Snapshot the armor of any creature that watches for its own armor prevention
 	// (Maruck the Marked) so the batch can report how much each just prevented. The
 	// snapshot is skipped entirely when no such creature is in play, so the common
@@ -614,6 +629,52 @@ func (g *Game) damageRedirect(id LocalID) LocalID {
 		}
 	}
 	return id
+}
+
+// neighborFightSplash expands a combat damage batch with the extra instances a
+// creature carrying AlsoTakesNeighborFightDamage takes when one of its battleline
+// neighbors is dealt damage during the fight in progress (Drecker). It leaves the
+// batch untouched outside a fight or when no such creature is in play, so it costs
+// nothing in the common case. The extra instances are computed from the original
+// batch only, so two such creatures standing side by side do not cascade splash
+// between one another.
+func (g *Game) neighborFightSplash(targets []DamageTarget) []DamageTarget {
+	if g.State.FightersPlus == ([2]LocalID{}) {
+		return targets
+	}
+	var sharers []LocalID
+	for player := range 2 {
+		for _, id := range g.allInPlay(player) {
+			if g.cat.def(id).AlsoTakesNeighborFightDamage {
+				sharers = append(sharers, id)
+			}
+		}
+	}
+	if len(sharers) == 0 {
+		return targets
+	}
+	var extra []DamageTarget
+	for _, t := range targets {
+		if t.Amount <= 0 {
+			continue
+		}
+		for _, sharer := range sharers {
+			if sharer == t.ID {
+				continue
+			}
+			for _, n := range neighbors(&EffectContext{Resolver: g}, sharer) {
+				if n == t.ID {
+					extra = append(extra, DamageTarget{
+						ID:     sharer,
+						Amount: t.Amount,
+						Source: t.Source,
+					})
+					break
+				}
+			}
+		}
+	}
+	return append(targets, extra...)
 }
 
 // shouldDestroy reports whether a creature is currently in a destroyable state:

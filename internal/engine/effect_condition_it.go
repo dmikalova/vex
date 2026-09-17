@@ -59,6 +59,21 @@ func (e ItIs) negatedText() string {
 	return "if " + e.Subject.noun() + " is not " + e.predicate()
 }
 
+// asNamedHouseAlt reports the single named house this clause filters on, together
+// with the rest of its shape (its type, subject, and other flag with the house
+// cleared). An Or of such clauses sharing a shape combines their houses into one
+// phrase — "if it is a Dis or Shadows card" — instead of repeating "it is" for
+// each house (Ambassador Liu). It returns false unless the clause filters by
+// exactly one named house.
+func (e ItIs) asNamedHouseAlt() (house House, shape ItIs, ok bool) {
+	if e.House.Kind != MatchNamedHouse {
+		return HouseNone, ItIs{}, false
+	}
+	shape = e
+	shape.House = HouseMatcher{}
+	return e.House.House, shape, true
+}
+
 // Met reports whether a card is in context and matches the house and type
 // filters. Other additionally bars the source card itself, so a card never counts
 // its own play.

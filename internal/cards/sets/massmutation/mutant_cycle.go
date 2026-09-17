@@ -61,7 +61,7 @@ var mutantHouses = map[engine.House]mutantHouse{
 			Effect: card.Then{
 				First: card.DiscardCard{
 					Player:    card.Controller,
-					Zone:      card.Hand,
+					Zones:     []card.Zone{card.Hand},
 					Selection: card.Chosen{},
 					Amount:    1,
 				},

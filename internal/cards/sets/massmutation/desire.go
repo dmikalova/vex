@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon • Sin
 //
 //	Each player's keys cost +4 Æmber.
-//	Reap: Forge a key at current cost, reduced by 1 Æmber for each friendly Sin creature.
+//	Reap: Forge a key at current cost, reduced by 1 Æmber for each friendly Sin creature -> purge Desire.
 var Desire = set.New(
 	"Desire",
 	card.House.Dis,
@@ -25,7 +25,6 @@ var Desire = set.New(
 	card.WithKeyCost(card.KeyCostChange(card.EachPlayer, 4)),
 	card.WithAbility(card.Trigger.Reap, card.ForgeKey{
 		Discount: true,
-		Keep:     true,
 		ReducedBy: card.InPlay{
 			Player: card.Controller,
 			Type:   card.Type.Creature,

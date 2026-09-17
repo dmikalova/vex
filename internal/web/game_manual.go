@@ -1,6 +1,7 @@
 package web
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
@@ -184,59 +185,111 @@ func (g *game) manualExhaust(ctx app.Context, _ app.Event) {
 	g.save(ctx)
 }
 
-// manualAmberDelta adjusts a player's Æmber in manual mode. It stops the click
-// from bubbling to the score pill (whose click opens the zone viewer).
-func (g *game) manualAmberDelta(player, delta int) app.EventHandler {
-	return func(ctx app.Context, e app.Event) {
-		e.Call("stopPropagation")
-		if !g.g.Manual() {
-			return
-		}
-		g.beginAction()
-		g.record(input{Kind: inManualAmber, Player: player, Delta: delta})
-		g.g.ManualAddAmber(player, delta)
-		g.save(ctx)
-	}
+// A manual per-player control reads its target player (and a stepper its signed
+// step) from the button's own data attributes rather than a captured closure. go-app
+// compares event handlers by function pointer, and a closure minted at one call site
+// — manualAmberDelta(player, delta) — shares that pointer for both players and both
+// signs, so the diff never re-binds it: one bar's stepper would drive whichever
+// player was rendered first. A stable method that reads the DOM is bound once and
+// always acts on the button that was clicked (the same pattern as onScorePillClick).
+
+// stopManualClick stops a manual control's click from bubbling to the score pill
+// (whose click opens the zone viewer) and reports whether manual mode is on.
+func (g *game) stopManualClick(e app.Event) bool {
+	e.Call("stopPropagation")
+	return g.g.Manual()
 }
 
-// manualForgeKey opens the key-forge colour picker for player in manual mode.
-func (g *game) manualForgeKey(player int) app.EventHandler {
-	return func(_ app.Context, e app.Event) {
-		e.Call("stopPropagation")
-		if !g.g.Manual() {
-			return
-		}
+// datasetPlayer reads a manual control's target player from its data-player
+// attribute, or -1 when unreadable (off-browser, or a malformed attribute).
+func (g *game) datasetPlayer(ctx app.Context) int {
+	p, err := strconv.Atoi(ctx.JSSrc().Get("dataset").Get("player").String())
+	if err != nil {
+		return -1
+	}
+	return p
+}
+
+// datasetDelta reads a stepper's signed step from its data-delta attribute, or 0
+// (a no-op) when unreadable.
+func (g *game) datasetDelta(ctx app.Context) int {
+	d, err := strconv.Atoi(ctx.JSSrc().Get("dataset").Get("delta").String())
+	if err != nil {
+		return 0
+	}
+	return d
+}
+
+// onManualAmberStep adjusts the clicked bar's player's Æmber in manual mode.
+func (g *game) onManualAmberStep(ctx app.Context, e app.Event) {
+	if !g.stopManualClick(e) {
+		return
+	}
+	g.adjustManualAmber(ctx, g.datasetPlayer(ctx), g.datasetDelta(ctx))
+}
+
+// adjustManualAmber applies a manual Æmber step of delta to player.
+func (g *game) adjustManualAmber(ctx app.Context, player, delta int) {
+	if player < 0 || delta == 0 {
+		return
+	}
+	g.beginAction()
+	g.record(input{Kind: inManualAmber, Player: player, Delta: delta})
+	g.g.ManualAddAmber(player, delta)
+	g.save(ctx)
+}
+
+// onManualForgeKey opens the key-forge colour picker for the clicked bar's player.
+func (g *game) onManualForgeKey(ctx app.Context, e app.Event) {
+	if !g.stopManualClick(e) {
+		return
+	}
+	g.openForgeKey(g.datasetPlayer(ctx))
+}
+
+// openForgeKey aims the key-forge colour picker at player.
+func (g *game) openForgeKey(player int) {
+	if player >= 0 {
 		g.forgingKey = player
 	}
 }
 
-// manualUnforgeKey removes player's most recently forged key in manual mode.
-func (g *game) manualUnforgeKey(player int) app.EventHandler {
-	return func(ctx app.Context, e app.Event) {
-		e.Call("stopPropagation")
-		if !g.g.Manual() {
-			return
-		}
-		g.beginAction()
-		g.record(input{Kind: inManualUnforge, Player: player})
-		g.g.ManualUnforgeKey(player)
-		g.save(ctx)
+// onManualUnforgeKey removes the clicked bar's player's most recently forged key.
+func (g *game) onManualUnforgeKey(ctx app.Context, e app.Event) {
+	if !g.stopManualClick(e) {
+		return
 	}
+	g.removeManualKey(ctx, g.datasetPlayer(ctx))
 }
 
-// manualChainsDelta adjusts a player's chains in manual mode. It stops the click
-// from bubbling to the score pill (whose click opens the zone viewer).
-func (g *game) manualChainsDelta(player, delta int) app.EventHandler {
-	return func(ctx app.Context, e app.Event) {
-		e.Call("stopPropagation")
-		if !g.g.Manual() {
-			return
-		}
-		g.beginAction()
-		g.record(input{Kind: inManualChains, Player: player, Delta: delta})
-		g.g.ManualAddChains(player, delta)
-		g.save(ctx)
+// removeManualKey unforges player's most recently forged key in manual mode.
+func (g *game) removeManualKey(ctx app.Context, player int) {
+	if player < 0 {
+		return
 	}
+	g.beginAction()
+	g.record(input{Kind: inManualUnforge, Player: player})
+	g.g.ManualUnforgeKey(player)
+	g.save(ctx)
+}
+
+// onManualChainsStep adjusts the clicked bar's player's chains in manual mode.
+func (g *game) onManualChainsStep(ctx app.Context, e app.Event) {
+	if !g.stopManualClick(e) {
+		return
+	}
+	g.adjustManualChains(ctx, g.datasetPlayer(ctx), g.datasetDelta(ctx))
+}
+
+// adjustManualChains applies a manual chains step of delta to player.
+func (g *game) adjustManualChains(ctx app.Context, player, delta int) {
+	if player < 0 || delta == 0 {
+		return
+	}
+	g.beginAction()
+	g.record(input{Kind: inManualChains, Player: player, Delta: delta})
+	g.g.ManualAddChains(player, delta)
+	g.save(ctx)
 }
 
 // manualSetHouse switches the active player's active house in manual mode; from

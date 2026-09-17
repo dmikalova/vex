@@ -1,18 +1,34 @@
-//go:build todo
-
 package massmutation
+
+import "github.com/dmikalova/vactrol/internal/card"
 
 // Horizon Saber
 //
-// TODO(gigantic): deferred — gigantic creature; two cards form one big
-// creature. See docs/todo-agent.md "Gigantics". Needs engine design before
-// implementation; grill first.
-//
 //	House:  Logos
-//	Type:   Gigantic Creature (base half)
+//	Type:   Creature
 //	Rarity: Special
-//	Source: MoMu 078
+//	Power:  11
+//	Armor:  2
 //	Traits: Robot
 //
-//	(Play only with the other half of Horizon Saber.)
-//	Play/After Fight/After Reap: Search your deck and discard pile for a card, reveal it, and put it into your archives. Shuffle your discard pile into your deck.
+//	Play/Fight/Reap: Search your deck and discard pile for a card, reveal it, and put it into your archives, and shuffle your discard pile into your deck.
+var HorizonSaber = set.Gigantic(
+	"Horizon Saber",
+	card.House.Logos,
+	card.Rarity.Special,
+	card.Provenance(card.MoMu, "078"),
+	card.WithPower(11),
+	card.WithArmor(2),
+	card.WithTraits(card.Traits.Robot),
+	card.WithAbility(
+		card.Trigger.PlayFightReap, card.Sequence{
+			Effects: []card.Effect{
+				card.Search{
+					Sources: []card.Zone{card.Deck, card.Discard},
+					Reveal:  true,
+					Dest:    card.To.Archives,
+				},
+				card.Shuffle{Zones: []card.Zone{card.Discard}},
+			},
+		}),
+)

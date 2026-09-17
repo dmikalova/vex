@@ -43,6 +43,23 @@ func (s *Set) New(
 	return New(name, house, ct, rarity, opts...)
 }
 
+// Gigantic registers a gigantic creature as a member of the set (ADR 0042),
+// prefilling its home set before delegating to the package-level Gigantic. Author
+// it as `var X = set.Gigantic("X", card.House.Y, card.Rarity.W, …)`. Only the
+// base half is registered; it carries its synthetic art half for deck generation.
+func (s *Set) Gigantic(
+	name string,
+	house engine.House,
+	rarity engine.Rarity,
+	opts ...Option,
+) Definition {
+	opts = append(opts, InSet(s.src))
+	if s.reservoir {
+		opts = append(opts, reservoir())
+	}
+	return Gigantic(name, house, rarity, opts...)
+}
+
 // Reprint records that Name — implemented in the set that introduced it — is also
 // printed in this set at collector number number, joining this set's pool as a
 // full member (ADR 0021). It is the set-scoped form of the package-level Reprint.

@@ -36,6 +36,19 @@ func TestArchiveEffect(t *testing.T) {
 	}
 }
 
+// TestArchiveCardBind covers Bind recording the archived card as the choice
+// context so a later effect can read it (Blast from the Past).
+func TestArchiveCardBind(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	c := g.AddToDiscard(testCreature("c", 3), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	(ArchiveCard{Zone: Discard, Selection: Chosen{}, Bind: true}).Resolve(ctx)
+	if !ctx.HasIt || ctx.It != c {
+		t.Errorf("bound It = %d (has %v), want %d", ctx.It, ctx.HasIt, c)
+	}
+}
+
 // TestArchiveEnemyHand covers archiving from the opponent's hand into the
 // caster's own archives — the abduction-from-hand path (Hidden Stash).
 func TestArchiveEnemyHand(t *testing.T) {
@@ -94,7 +107,7 @@ func TestArchiveCardDeclinableFlags(t *testing.T) {
 	if (ArchiveCard{Zone: Hand, Selection: Chosen{Optional: true}, Amount: 2}).declinable() {
 		t.Error("a multi-count (up-to) archive should not be declinable")
 	}
-	if (ArchiveCard{Zone: Hand, Selection: Random{}}).declinable() {
+	if (ArchiveCard{Zone: Hand, Selection: Random{Count: 1}}).declinable() {
 		t.Error("a random archive is not a card choice, so not declinable")
 	}
 	if (ArchiveCard{Zone: Discard, Selection: Named{Name: "x"}}).declinable() {
@@ -669,13 +682,13 @@ func TestArchiveFromHandExceptHouse(t *testing.T) {
 }
 
 func TestArchiveRandomFromHand(t *testing.T) {
-	if (ArchiveCard{Zone: Hand, Selection: Random{}}).Text() != "archive a random card from your hand" {
+	if (ArchiveCard{Zone: Hand, Selection: Random{Count: 1}}).Text() != "archive a random card from your hand" {
 		t.Errorf(
 			"text = %q",
-			(ArchiveCard{Zone: Hand, Selection: Random{}}).Text(),
+			(ArchiveCard{Zone: Hand, Selection: Random{Count: 1}}).Text(),
 		)
 	}
-	two := ArchiveCard{Zone: Hand, Selection: Random{}, Amount: 2}
+	two := ArchiveCard{Zone: Hand, Selection: Random{Count: 1}, Amount: 2}
 	if two.Text() != "archive 2 random cards from your hand" {
 		t.Errorf("plural text = %q", two.Text())
 	}
@@ -695,7 +708,7 @@ func TestArchiveRandomFromHand(t *testing.T) {
 	}
 
 	// Archiving more than the hand holds stops when the hand empties.
-	(ArchiveCard{Zone: Hand, Selection: Random{}, Amount: 5}).Resolve(ctx)
+	(ArchiveCard{Zone: Hand, Selection: Random{Count: 1}, Amount: 5}).Resolve(ctx)
 	if len(g.Hand(0)) != 0 {
 		t.Errorf("hand should be empty, got %v", g.Hand(0))
 	}

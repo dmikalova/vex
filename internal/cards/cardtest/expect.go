@@ -75,6 +75,15 @@ func (e CardExpect) Stunned(want bool) CardExpect {
 	return e
 }
 
+// Enraged asserts the creature's enrage status.
+func (e CardExpect) Enraged(want bool) CardExpect {
+	e.h.t.Helper()
+	if got := e.c.Enraged(); got != want {
+		e.h.t.Errorf("%s enraged = %v, want %v", e.name(), got, want)
+	}
+	return e
+}
+
 // At asserts the card is in the given zone.
 func (e CardExpect) At(z Zone) CardExpect {
 	e.h.t.Helper()

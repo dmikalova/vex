@@ -1026,3 +1026,101 @@ func TestTakesDamageForAfterArmor(t *testing.T) {
 			g.Damage(tough), g.Damage(sid))
 	}
 }
+
+// A creature that also takes its neighbors' fight damage takes an equal instance
+// whenever a neighbor is dealt damage during a fight, on top of the neighbor's own
+// damage — and never doubles up on its own damage or cascades to another such
+// creature beside it.
+func TestAlsoTakesNeighborFightDamage(t *testing.T) {
+	newDrecker := func() CardDefinition {
+		return NewCard("Drecker", Brobnar, Creature, Common, WithPower(9),
+			WithAlsoTakesNeighborFightDamage())
+	}
+
+	t.Run("shares a neighbor's fight damage", func(t *testing.T) {
+		g := started(t)
+		left := g.AddToBattleline(testCreature("left", 9), 0)
+		did := g.AddToBattleline(newDrecker(), 0)
+		right := g.AddToBattleline(testCreature("right", 9), 0)
+		far := g.AddToBattleline(testCreature("far", 9), 0)
+
+		// Outside a fight there is no splash.
+		g.dealDamage(0, DamageTarget{ID: left, Amount: 2})
+		if g.Damage(did) != 0 || g.Damage(left) != 2 {
+			t.Errorf("no fight: drecker=%d left=%d, want 0 and 2",
+				g.Damage(did), g.Damage(left))
+		}
+
+		// While a fight is resolving, damage to a neighbor is also dealt to Drecker.
+		g.State.FightersPlus = [2]LocalID{right + 1, far + 1}
+		g.dealDamage(0, DamageTarget{ID: left, Amount: 2})
+		if g.Damage(left) != 4 || g.Damage(did) != 2 {
+			t.Errorf("left=%d drecker=%d, want 4 and 2", g.Damage(left), g.Damage(did))
+		}
+
+		// A creature that is not a neighbor does not splash onto it.
+		g.dealDamage(0, DamageTarget{ID: far, Amount: 3})
+		if g.Damage(did) != 2 {
+			t.Errorf("drecker=%d, want 2 (far is not a neighbor)", g.Damage(did))
+		}
+
+		// Its own fight damage does not double onto itself.
+		g.dealDamage(0, DamageTarget{ID: did, Amount: 1})
+		if g.Damage(did) != 3 {
+			t.Errorf("drecker=%d, want 3 (its own damage does not double)", g.Damage(did))
+		}
+	})
+
+	t.Run("no such creature in play costs nothing", func(t *testing.T) {
+		g := started(t)
+		a := g.AddToBattleline(testCreature("a", 9), 0)
+		b := g.AddToBattleline(testCreature("b", 9), 0)
+		g.State.FightersPlus = [2]LocalID{a + 1, b + 1}
+		g.dealDamage(0, DamageTarget{ID: a, Amount: 2})
+		if g.Damage(a) != 2 || g.Damage(b) != 0 {
+			t.Errorf("a=%d b=%d, want 2 and 0", g.Damage(a), g.Damage(b))
+		}
+	})
+
+	t.Run("its own armor absorbs the shared instance", func(t *testing.T) {
+		g := started(t)
+		did := g.AddToBattleline(NewCard("Drecker", Brobnar, Creature, Common,
+			WithPower(9), WithArmor(2), WithAlsoTakesNeighborFightDamage()), 0)
+		right := g.AddToBattleline(testCreature("right", 9), 0)
+		g.State.FightersPlus = [2]LocalID{right + 1, right + 1}
+		g.dealDamage(0, DamageTarget{ID: right, Amount: 3})
+		if g.Damage(right) != 3 || g.Damage(did) != 1 {
+			t.Errorf("right=%d drecker=%d, want 3 and 1 (3 shared minus 2 armor)",
+				g.Damage(right), g.Damage(did))
+		}
+	})
+
+	t.Run("a zero-amount instance in the batch is not shared", func(t *testing.T) {
+		g := started(t)
+		did := g.AddToBattleline(newDrecker(), 0)
+		right := g.AddToBattleline(testCreature("right", 9), 0)
+		g.State.FightersPlus = [2]LocalID{right + 1, right + 1}
+		// A zero-amount instance to Drecker's neighbor contributes no splash.
+		g.dealDamage(0, DamageTarget{ID: right, Amount: 0})
+		if g.Damage(did) != 0 {
+			t.Errorf("drecker=%d, want 0 (a zero-amount neighbor hit is not shared)",
+				g.Damage(did))
+		}
+	})
+
+	t.Run("does not cascade between two such creatures", func(t *testing.T) {
+		g := started(t)
+		one := g.AddToBattleline(newDrecker(), 0)
+		two := g.AddToBattleline(newDrecker(), 0)
+		x := g.AddToBattleline(testCreature("x", 9), 0)
+		g.State.FightersPlus = [2]LocalID{x + 1, x + 1}
+		// x's only sharer-neighbor is two; one neighbors two, not x, so it takes
+		// nothing — the splash is computed from the original batch, never from two's
+		// own shared instance.
+		g.dealDamage(0, DamageTarget{ID: x, Amount: 2})
+		if g.Damage(x) != 2 || g.Damage(two) != 2 || g.Damage(one) != 0 {
+			t.Errorf("x=%d two=%d one=%d, want 2, 2, 0",
+				g.Damage(x), g.Damage(two), g.Damage(one))
+		}
+	})
+}

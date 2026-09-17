@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// Bullwark
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Bull-wark
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -16,8 +11,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Mutant • Knight
 //
-//	Assault 2. (Before this creature attacks, deal 2D to the attacked enemy.)
-//	Each of Bull-wark's neighbors gains assault 2.
+//	Assault 2.
+//	Each neighboring creature gains assault 2.
 var Bullwark = set.New(
 	"Bull-wark",
 	card.House.Sanctum,
@@ -27,5 +22,9 @@ var Bullwark = set.New(
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Mutant, card.Traits.Knight),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAssault(2),
+	card.WithConstant(card.ConstantAbility{
+		Target:       card.Target.EachCreature.Neighboring(),
+		AssaultBonus: 2,
+	}),
 )

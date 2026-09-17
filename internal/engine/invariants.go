@@ -13,12 +13,12 @@ func (g *Game) InvariantError() error {
 		if a := g.State.Aember[p]; a < 0 {
 			return fmt.Errorf("player %d has negative Æmber (%d)", p, a)
 		}
-		if k := g.State.Keys[p]; k < 0 || k > KeysToWin {
+		if k := g.State.Keys[p]; k < 0 || k > MaxKeys {
 			return fmt.Errorf(
 				"player %d has out-of-range key count (%d, want 0..%d)",
 				p,
 				k,
-				KeysToWin,
+				MaxKeys,
 			)
 		}
 		if c := g.State.Chains[p]; c < 0 {

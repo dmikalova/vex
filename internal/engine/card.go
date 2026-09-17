@@ -18,6 +18,11 @@ type CardDefinition struct {
 	Power int
 	Armor int
 
+	// PowerX, when set, is the creature's variable "X" power: a live Count added to
+	// its base power while its text is not blanked — Picaroon's X is the combined
+	// power of its non-Changeling neighbors. Nil means the creature has no X power.
+	PowerX Count
+
 	// Keywords are the keywords printed on the card.
 	Keywords []Keyword
 
@@ -77,6 +82,20 @@ type CardDefinition struct {
 	// It is read wherever damage lands, so it covers fight damage and effect damage
 	// alike. The zero Target shields nobody.
 	TakesDamageFor Target
+
+	// AlsoTakesNeighborFightDamage, when set, makes this creature take an equal
+	// share of any damage dealt to its battleline neighbors during a fight (Drecker).
+	// Unlike TakesDamageFor the neighbor still takes its own damage — this is an
+	// additional instance dealt to this creature — and it applies only to damage
+	// dealt while a fight is resolving. The zero value takes nothing.
+	AlsoTakesNeighborFightDamage bool
+
+	// TriggersFromDiscard, when set, keeps the card's triggered abilities live
+	// while it sits in its owner's discard pile, so an "after you choose <house>"
+	// ability fires from the discard pile (Relentless Creeper returns itself to
+	// hand). Only the choose-house window scans the discard pile for these; the
+	// zero value confines a card's abilities to play, as usual.
+	TriggersFromDiscard bool
 
 	// AttackIgnores are the defensive keywords this creature ignores while it is
 	// attacking — Niffle Ape ignores taunt and elusive, so it may be used to fight a
@@ -166,6 +185,11 @@ type CardDefinition struct {
 	// card, Succubus refills the opponent to one fewer. The zero value changes
 	// nothing.
 	DrawModifier DrawModifier
+
+	// CannotBeDealtDamageBy, while the card is in play, refuses damage dealt to it by
+	// the creatures the matcher names (Ardent Hero refuses Mutant creatures or
+	// creatures with power 5 or higher). The zero value refuses none.
+	CannotBeDealtDamageBy DamageSourceMatcher
 
 	// AemberCannotBeStolen, while the card is in play, makes its controller's Æmber
 	// impossible for the opponent to steal (The Vaultkeeper).
@@ -483,10 +507,10 @@ type StaticModifier struct {
 	HouseOverride House
 
 	// SpendAemberOnCard lets the Æmber sitting on the host creature be spent to pay
-	// Æmber costs as if it were in its controller's pool — The Callipygian Ideal
-	// grants the creature it upgrades this permission. The pay path
-	// (spendAsPoolCreatures) consults it; the zero value grants nothing.
-	SpendAemberOnCard bool
+	// Æmber costs as if it were in a pool — The Callipygian Ideal grants the creature
+	// it upgrades this to its controller, Mole grants it to the opponent. The scope
+	// names which player; the zero value grants nothing.
+	SpendAemberOnCard SpendScope
 
 	// CannotBeUsedTo bars the host creature from these ways of being used while the
 	// Upgrade is attached — Access Denied bars reaping, Detention Coil bars
@@ -513,7 +537,7 @@ func (m StaticModifier) grants() bool {
 		m.ProtectsFromNonFlank ||
 		m.HouseOverride != HouseNone ||
 		m.AemberCannotBeStolen ||
-		m.SpendAemberOnCard ||
+		m.SpendAemberOnCard.grants() ||
 		len(m.CannotBeUsedTo) > 0
 }
 
@@ -530,6 +554,9 @@ type ConstantAbility struct {
 	// HazardousBonus is Hazardous the ability grants each creature the Target
 	// reaches — Armsmaster Molina gives each of its neighbors hazardous 3.
 	HazardousBonus int
+	// AssaultBonus is Assault the ability grants each creature the Target reaches —
+	// Bull-wark gives each of its neighbors assault 2.
+	AssaultBonus int
 	// Target says which cards the ability reaches, read from the source's point of
 	// view; the zero value reaches every card in play.
 	Target Target
@@ -575,7 +602,17 @@ type ConstantAbility struct {
 	// be spent to pay Æmber costs as if it were in its controller's pool — Senator
 	// Bracchus grants this to every friendly creature. The pay path
 	// (spendAsPoolCreatures) consults it; the zero value grants nothing.
-	SpendAemberOnCard bool
+	SpendAemberOnCard SpendScope
+	// DisableTriggers stops the listed triggers from firing at all while the source
+	// stays in play — Purifier of Souls disables every Destroyed ability. It reads
+	// board-wide, ignoring Target: the source's presence alone suppresses the
+	// trigger for every card in play.
+	DisableTriggers []Trigger
+	// BlankText blanks the text box of every card the Target reaches — its printed
+	// keywords, abilities, and constant grants are ignored while its traits and
+	// stats remain — for as long as the source stays in play. Blossom Drake blanks
+	// every artifact's text box. It is the while-in-play twin of BlankEnemyText.
+	BlankText bool
 }
 
 // target returns the constant ability's effective Target: an unset Target reaches
@@ -763,10 +800,38 @@ func WithDestroyedWhen(cond Condition) CardOption {
 	return func(c *CardDefinition) { c.DestroyedWhen = cond }
 }
 
+// WithPowerX gives a creature a variable "X" power: a live Count added to its
+// base power while its text is not blanked — Picaroon's X is the combined power of
+// its non-Changeling neighbors.
+func WithPowerX(c Count) CardOption {
+	return func(d *CardDefinition) { d.PowerX = c }
+}
+
 // WithTakesDamageFor makes this card take the damage dealt to the creatures its
 // Target names, instead of them (Shadow Self shields its non-Specter neighbors).
 func WithTakesDamageFor(t Target) CardOption {
 	return func(c *CardDefinition) { c.TakesDamageFor = t }
+}
+
+// WithAlsoTakesNeighborFightDamage makes this creature take an equal share of any
+// damage dealt to its neighbors during a fight, on top of the neighbor's own
+// damage (Drecker).
+func WithAlsoTakesNeighborFightDamage() CardOption {
+	return func(c *CardDefinition) { c.AlsoTakesNeighborFightDamage = true }
+}
+
+// WithTriggersFromDiscard keeps the card's triggered abilities live while it sits
+// in its owner's discard pile, so an "after you choose <house>" ability fires from
+// the discard pile (Relentless Creeper returns itself to hand).
+func WithTriggersFromDiscard() CardOption {
+	return func(c *CardDefinition) { c.TriggersFromDiscard = true }
+}
+
+// WithCannotBeDealtDamageBy makes the card, while in play, refuse damage dealt to
+// it by the creatures the matcher names (Ardent Hero refuses Mutant creatures or
+// creatures with power 5 or higher).
+func WithCannotBeDealtDamageBy(m DamageSourceMatcher) CardOption {
+	return func(c *CardDefinition) { c.CannotBeDealtDamageBy = m }
 }
 
 // WithPower sets a creature's power.

@@ -101,7 +101,7 @@ func (g *Game) discardArchives(owner int) {
 // DiscardCardFromArchives moves a specific card from a player's archives to a
 // discard pile, doing nothing if the card is not in those archives. A player's
 // archives are facedown, so the card is chosen at random by the caller (the
-// Random selection behind DiscardCard{Zone: Archives}), not shown to be picked.
+// Random selection behind DiscardCard{Zones: []Zone{Archives}}), not shown to be picked.
 func (g *Game) DiscardCardFromArchives(owner int, id LocalID) {
 	arc := &g.State.Archives[owner]
 	if arc.indexOf(id) < 0 {

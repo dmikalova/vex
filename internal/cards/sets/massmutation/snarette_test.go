@@ -15,22 +15,22 @@ import (
 //	Power:  4
 //	Traits: Mutant
 //
-//	At the end of your turn, Snarette captures 1 Æmber from your own side.
+//	At the end of your turn, Snarette captures 1 Æmber from your opponent.
 //	Action: Move each Æmber on Snarette to the common supply.
 func TestSnarette(t *testing.T) {
-	t.Run("captures 1 Æmber from your pool at end of turn", func(t *testing.T) {
+	t.Run("captures 1 Æmber from your opponent at end of turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House:  card.House.Dis,
 				InPlay: ct.Cards(Snarette),
-				Amber:  3,
 			},
+			P2: ct.Side{Amber: 3},
 		})
 
 		h.P1.EndTurn()
 
 		h.Expect(Snarette).AmberOn(1)
-		h.P1.ExpectAmber(2)
+		h.P2.ExpectAmber(2)
 	})
 
 	t.Run("action moves each captured Æmber to the supply", func(t *testing.T) {
@@ -38,8 +38,8 @@ func TestSnarette(t *testing.T) {
 			P1: ct.Side{
 				House:  card.House.Dis,
 				InPlay: ct.Cards(Snarette),
-				Amber:  3,
 			},
+			P2: ct.Side{Amber: 3},
 		})
 		h.P1.EndTurn()
 		h.P2.EndTurn()
@@ -47,6 +47,6 @@ func TestSnarette(t *testing.T) {
 		h.P1.UseAction(Snarette)
 
 		h.Expect(Snarette).AmberOn(0)
-		h.P1.ExpectAmber(2)
+		h.P2.ExpectAmber(2)
 	})
 }

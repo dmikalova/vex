@@ -23,7 +23,11 @@ var ZParticleTracker = set.New(
 			Trigger: card.Trigger.Fight,
 			Effect: card.Sentences{
 				Effects: []card.Effect{
-					card.SearchDeck{Filter: card.Filter{Type: card.Type.Upgrade}},
+					card.Search{
+						Sources: []card.Zone{card.Deck},
+						Filter:  card.Filter{Type: card.Type.Upgrade},
+						Reveal:  true,
+					},
 					card.Shuffle{},
 				},
 			},

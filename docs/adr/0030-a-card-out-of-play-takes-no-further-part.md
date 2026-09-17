@@ -101,3 +101,76 @@ guard lives in one place and applies identically everywhere.
   guard, and it stays.
 - The destruction window's guard and `triggerAbilitiesAs`'s guard are siblings of
   the same one-line shape in two different loops, not duplicates to merge.
+
+## Refinement: a departed subject reads from its last-known scalars
+
+The model above leaves one half open. A card that left play "can be the subject of
+a resolving ability" — but a subject the ability still needs to _read_. When an
+effect removes a card and a later effect in the **same resolution** reads that
+card's mutable state (Power of Fire destroys a friendly creature, then each player
+loses Æmber equal to half **its power**), the live read returns the zeroed core
+`resetCore` left behind: printed power only, with power counters, buffs, upgrades,
+and constants all dropped. The ability must instead read the value the card had the
+instant before it left.
+
+The engine already did this ad hoc for three dimensions — `Produced.DestroyedPower`
+(summed power), `Produced.Neighbors` (position), and `ctx.ItController` (controller)
+— each captured before the exit and consumed by one reader. This refinement
+generalizes the same idea rather than adding a persistent snapshot:
+
+- **Ephemeral, not stateful.** The last-known values live on the resolving
+  `EffectContext` (`ctx.Departed`, a `map[LocalID]departedSubject`), never in
+  `GameState`. `EffectContext` is short-lived execution context, so this pays none
+  of the flat/comparable cost ADR 0005 imposes on `GameState` and grows no undo
+  snapshot. A fresh context per ability means the captures never leak between
+  abilities.
+- **Captured at the exit boundary.** `captureDepartingSubject(ctx, id)` records a
+  card's power, Æmber-on-card, and damage the instant before an effect removes it.
+  It is called by the effects that remove a card they will keep referencing —
+  `Destroy` captures every creature it destroys, `DamageThen{IfDestroyed}` captures
+  the creature it deals lethal damage to (alongside the neighbor snapshot it
+  already took).
+- **Consulted only once the card is gone.** The scalar readers route through
+  `ctx.powerOf` / `ctx.amberOn` / `ctx.damageOn` (`PowerOfChosen`, `AemberOnThis`,
+  `DamageOnThis`, and the per-target `AemberOnIt` / `DamageOnIt`). While the card is
+  still in play its live value is authoritative; only after it has left play do they
+  fall back to the captured value. This is invisible to card authors — the reader
+  is the same node either way.
+
+Only these three mutable dimensions are captured. House, traits, printed keywords,
+printed power, and bonus icons live on the immutable `CardDefinition` and survive a
+card leaving play unaided; a departed subject's _granted_ keywords/house are not
+read by any card, so no snapshot of them is kept. The write no-op (`stateOf` returns
+`nil` off-board) is unchanged: a departed subject is still read-only — this only
+lets an in-flight ability _read_ what it was.
+
+## Refinement: a card active in its owner's discard pile is a second source exception
+
+A tactic is not the only card that resolves an ability while off the board.
+KeyForge has cards that stay live **in their owner's discard pile** and trigger
+from there — Relentless Creeper (Mass Mutation #029) returns _itself_ from the
+discard pile to hand after its controller chooses Dis. Its `AfterChooseHouse`
+ability resolves with the card sitting in the discard pile, so the source-in-play
+guard would otherwise drop it.
+
+This is a bounded, opt-in exception, not a hole in the model:
+
+- **Opt-in per card.** A card carries the exception only by setting the
+  `TriggersFromDiscard` field (`WithTriggersFromDiscard()`); every other card is
+  unaffected. The guard reads `if !g.inPlay(src) && def.Type != Tactic &&
+!g.activeInDiscard(src) { return false }`, where `activeInDiscard` is true only
+  for a `TriggersFromDiscard` card sitting in its owner's discard pile.
+- **Scanned at one window only.** The choose-house window is the sole site that
+  gathers these abilities: after adding the in-play sources, `ChooseHouse` scans
+  the acting player's discard pile and adds each `TriggersFromDiscard` card's
+  `TriggerAfterChooseHouse` ability. No other trigger window looks in the discard
+  pile, so a discard-active card fires only where its printed text says it does.
+- **Still read-only as a subject elsewhere.** The card is a legitimate _source_
+  only for its own discard-pile ability; everywhere else the write no-op and
+  target/selection filters keep it read-only, exactly as for any other off-board
+  card.
+
+So the precise model becomes: a card that has left play can only ever be the
+subject of a resolving ability, never its source — **except** a tactic resolving
+its own `Play:`, and a `TriggersFromDiscard` card resolving its own choose-house
+ability from its owner's discard pile.

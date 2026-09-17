@@ -24,7 +24,7 @@ var SanitationEngineer = set.New(
 	card.WithAbility(
 		card.Trigger.Reap, card.DiscardCard{
 			Player:    card.Controller,
-			Zone:      card.Hand,
+			Zones:     []card.Zone{card.Hand},
 			Selection: card.Chosen{},
 			Amount:    1,
 		}),

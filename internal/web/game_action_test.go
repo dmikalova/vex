@@ -98,7 +98,8 @@ func TestUndoHistoryIsNotCapped(t *testing.T) {
 	c.manualTurn(testHouse)
 	const n = 120
 	for i := 0; i < n; i++ {
-		c.do(c.g.manualAmberDelta(c.g.active(), 1))
+		c.g.adjustManualAmber(c.ctx, c.g.active(), 1)
+		c.settle()
 	}
 	if len(c.g.rootMarks) < n {
 		t.Errorf("the command log holds %d roots, want at least %d",

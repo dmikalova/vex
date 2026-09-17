@@ -16,6 +16,15 @@ func TestCardFilter(t *testing.T) {
 		0,
 	)
 	upgrade := g.Register(NewCard("chip", StarAlliance, Upgrade, Common), 0)
+	gigBase := g.Register(
+		NewCard("colossus", StarAlliance, Creature, Common,
+			WithPower(6), WithGiganticRole(GiganticBase)),
+		0,
+	)
+	gigArt := g.Register(
+		NewCard("colossus", StarAlliance, Creature, Common, WithGiganticRole(GiganticArt)),
+		0,
+	)
 
 	cases := []struct {
 		name   string
@@ -52,10 +61,16 @@ func TestCardFilter(t *testing.T) {
 		},
 		{"pure-Or admits alt", CardFilter{Or: []CardFilter{{Trait: Robot}}}, robot, true},
 		{"pure-Or rejects", CardFilter{Or: []CardFilter{{Trait: Robot}}}, human, false},
+		{"gigantic admits base", CardFilter{Gigantic: true}, gigBase, true},
+		{"gigantic admits art", CardFilter{Gigantic: true}, gigArt, true},
+		{"gigantic rejects ordinary", CardFilter{Gigantic: true}, human, false},
 	}
 	for _, c := range cases {
 		if got := c.filter.admits(g, c.id); got != c.want {
 			t.Errorf("%s: admits = %v, want %v", c.name, got, c.want)
 		}
+	}
+	if got := (CardFilter{Gigantic: true}).noun(); got != "gigantic creature" {
+		t.Errorf("Gigantic noun = %q, want %q", got, "gigantic creature")
 	}
 }

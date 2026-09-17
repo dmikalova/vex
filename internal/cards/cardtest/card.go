@@ -87,6 +87,9 @@ func (c Card) Exhausted() bool { c.require(); return c.h.g.State.Cards[c.id].Exh
 // Stunned reports whether the creature is stunned.
 func (c Card) Stunned() bool { c.require(); return c.h.g.State.Cards[c.id].Stunned }
 
+// Enraged reports whether the creature is enraged.
+func (c Card) Enraged() bool { c.require(); return c.h.g.State.Cards[c.id].Enraged }
+
 // Location returns the zone the card is currently in.
 func (c Card) Location() Zone { c.require(); return c.h.location(c.id) }
 

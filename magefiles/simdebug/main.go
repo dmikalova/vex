@@ -63,6 +63,13 @@ func run(args []string) error {
 	}
 
 	fmt.Printf("script: %s\n\n", hex.EncodeToString(f.Script))
+	for p, deck := range f.Decks {
+		fmt.Printf("P%d deck (%d cards):\n", p, len(deck))
+		for _, name := range deck {
+			fmt.Printf("  %s\n", name)
+		}
+		fmt.Println()
+	}
 	lines := f.Log
 	if tail > 0 && len(lines) > tail {
 		fmt.Printf("… %d earlier log lines elided\n", len(lines)-tail)

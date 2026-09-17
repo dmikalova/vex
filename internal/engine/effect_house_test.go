@@ -85,7 +85,7 @@ func TestBelongToHouseUntilLeavesPlay(t *testing.T) {
 		House:    Mars,
 		Duration: UntilThisLeavesPlay,
 	}
-	if got := e.Text(); got != "{self} belongs to house Mars until it leaves play" {
+	if got := e.Text(); got != "{self} belongs to house Mars" {
 		t.Errorf("text = %q", got)
 	}
 	e.Resolve(&EffectContext{Resolver: g, Source: host, Controller: 0})

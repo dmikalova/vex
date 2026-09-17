@@ -21,6 +21,10 @@ var Gongoozle = set.New(
 		Amount: 3,
 		After:  card.IfSurvives,
 		Target: card.Target.Creature,
-		Then:   card.DiscardCard{Player: card.ItsOwner, Zone: card.Hand, Selection: card.Random{}},
+		Then: card.DiscardCard{
+			Player:    card.ItsOwner,
+			Zones:     []card.Zone{card.Hand},
+			Selection: card.Random{Count: 1},
+		},
 	}),
 )

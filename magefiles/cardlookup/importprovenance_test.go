@@ -295,3 +295,75 @@ func TestHasInteriorGap(t *testing.T) {
 		t.Error("lettered reference numbers should not count as gaps")
 	}
 }
+
+func TestTransformCardGiganticBase(t *testing.T) {
+	got, err := transformCard(mvCard{
+		CardTitle:  "Deusillus",
+		House:      "Saurian",
+		CardType:   "Gigantic Creature Base",
+		CardText:   "Play: Capture all of your opponent's <A>.",
+		Traits:     "Mutant",
+		Power:      "20",
+		Armor:      "0",
+		Rarity:     "Special",
+		CardNumber: "197",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Type != "gigantic creature base" {
+		t.Errorf("type = %q, want gigantic creature base", got.Type)
+	}
+	if got.Power != 20 {
+		t.Errorf("power = %d, want 20 (a gigantic base carries stats)", got.Power)
+	}
+}
+
+func TestMergeCardPrefersGiganticBase(t *testing.T) {
+	base := mvCard{
+		CardNumber: "197",
+		CardTitle:  "Deusillus",
+		CardType:   "Gigantic Creature Base",
+		Power:      "20",
+	}
+	art := mvCard{CardNumber: "197", CardTitle: "Deusillus", CardType: "Gigantic Creature Art"}
+
+	t.Run("art seen first, base replaces it", func(t *testing.T) {
+		seen := map[string]int{}
+		var got []mvCard
+		var isNew bool
+		got, isNew = mergeCard(got, seen, art)
+		if !isNew {
+			t.Error("the first half should count as a new card")
+		}
+		got, isNew = mergeCard(got, seen, base)
+		if isNew {
+			t.Error("the second half shares a key, so it is not a new card")
+		}
+		if len(got) != 1 || got[0].CardType != "Gigantic Creature Base" {
+			t.Errorf("base half should win, got %+v", got)
+		}
+	})
+
+	t.Run("base seen first, art does not displace it", func(t *testing.T) {
+		seen := map[string]int{}
+		var got []mvCard
+		got, _ = mergeCard(got, seen, base)
+		got, _ = mergeCard(got, seen, art)
+		if len(got) != 1 || got[0].CardType != "Gigantic Creature Base" {
+			t.Errorf("base half should stay, got %+v", got)
+		}
+	})
+
+	t.Run("distinct cards each collect", func(t *testing.T) {
+		seen := map[string]int{}
+		var got []mvCard
+		got, _ = mergeCard(got, seen, base)
+		other := mvCard{CardNumber: "198", CardTitle: "Other"}
+		var isNew bool
+		got, isNew = mergeCard(got, seen, other)
+		if !isNew || len(got) != 2 {
+			t.Errorf("a distinct card should be added, got %+v", got)
+		}
+	})
+}

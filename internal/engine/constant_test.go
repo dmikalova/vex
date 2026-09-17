@@ -261,6 +261,21 @@ func TestConstantText(t *testing.T) {
 	if got := constantText(&plain); got != "" {
 		t.Errorf("no-constant text = %q, want empty", got)
 	}
+
+	blank := NewCard(
+		"Blossom Drake",
+		Untamed,
+		Creature,
+		Rare,
+		WithPower(4),
+		WithConstantAbility(
+			ConstantAbility{Target: Target{Kind: TargetEachArtifact}, BlankText: true},
+		),
+	)
+	if got := constantText(&blank); got !=
+		"Each artifact's text box is considered blank (except for traits)." {
+		t.Errorf("blank-text constant = %q", got)
+	}
 }
 
 // TestConstantHazardousGrant covers a constant ability that grants Hazardous to
@@ -292,6 +307,38 @@ func TestConstantHazardousGrant(t *testing.T) {
 	}
 	if got := g.Hazardous(far); got != 0 {
 		t.Errorf("distant creature hazardous = %d, want 0", got)
+	}
+}
+
+// TestConstantAssaultGrant covers a constant ability that grants Assault to the
+// creatures it reaches, both in its printed text and the value it produces.
+func TestConstantAssaultGrant(t *testing.T) {
+	bullwark := NewCard(
+		"Bull",
+		Sanctum,
+		Creature,
+		Common,
+		WithPower(4),
+		WithAssault(2),
+		WithConstantAbility(ConstantAbility{
+			AssaultBonus: 2,
+			Target:       Target{Kind: TargetEachCreature}.Neighboring(),
+		}),
+	)
+	if got := constantText(&bullwark); got != "Each neighboring creature gains assault 2." {
+		t.Errorf("assault constant text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	left := g.AddToBattleline(testCreature("l", 3), 0)
+	g.AddToBattleline(bullwark, 0)
+	g.AddToBattleline(testCreature("r", 3), 0)
+	far := g.AddToBattleline(testCreature("f", 3), 1)
+	if got := g.assault(left); got != 2 {
+		t.Errorf("neighbor assault = %d, want 2", got)
+	}
+	if got := g.assault(far); got != 0 {
+		t.Errorf("distant creature assault = %d, want 0", got)
 	}
 }
 

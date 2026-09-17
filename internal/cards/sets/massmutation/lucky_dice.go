@@ -1,21 +1,17 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LuckyDice
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Lucky Dice
 //
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	Omni: Destroy Lucky Dice. During your opponent's next turn, friendly creatures cannot be dealt damage.
+//	Versatile.
+//	Action: Destroy Lucky Dice. During your opponent's next turn, each friendly creature cannot be dealt damage.
 var LuckyDice = set.New(
 	"Lucky Dice",
 	card.House.Shadows,
@@ -24,5 +20,13 @@ var LuckyDice = set.New(
 	card.Provenance(card.MM, "267"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Versatile),
+	card.WithAbility(
+		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+			card.Destroy{Target: card.Target.This},
+			card.CannotBeDealtDamage{
+				Target:   card.Target.EachFriendlyCreature,
+				Duration: card.Duration.OpponentNextTurn,
+			},
+		}}),
 )

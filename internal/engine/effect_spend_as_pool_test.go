@@ -11,7 +11,7 @@ func spendAsPoolCreature() CardDefinition {
 	return NewCard("Bracchus", Brobnar, Creature, Rare, WithPower(4),
 		WithConstantAbility(ConstantAbility{
 			Target:            Target{Kind: TargetEachFriendlyCreature},
-			SpendAemberOnCard: true,
+			SpendAemberOnCard: SpendByController,
 		}))
 }
 
@@ -19,7 +19,7 @@ func spendAsPoolCreature() CardDefinition {
 // Æmber may be spent as if it were in the controller's pool.
 func spendAsPoolUpgrade() CardDefinition {
 	return NewCard("Ideal", Brobnar, Upgrade, Uncommon,
-		WithStatic(StaticModifier{SpendAemberOnCard: true}))
+		WithStatic(StaticModifier{SpendAemberOnCard: SpendByController}))
 }
 
 // TestSpendAsPoolForgesFromCreatureConstant covers the forge path: a friendly
@@ -233,5 +233,45 @@ func TestSpendAsPoolText(t *testing.T) {
 	// The subject falls back to the Target's own phrasing for a non-friendly reach.
 	if got := spendAsPoolSubject(Target{Kind: TargetEachCreature}); got != "each creature" {
 		t.Errorf("subject fallback = %q, want %q", got, "each creature")
+	}
+}
+
+// TestSpendAsPoolOpponentScope covers Mole: an upgrade scoped to the opponent lets
+// the creature's controller's opponent — not the controller — spend its Æmber.
+func TestSpendAsPoolOpponentScope(t *testing.T) {
+	g := started(t)
+	host := g.AddToBattleline(testCreature("host", 4), 0)
+	up := g.Register(NewCard("mole", Shadows, Upgrade, Rare,
+		WithStatic(StaticModifier{SpendAemberOnCard: SpendByOpponent})), 0)
+	g.AttachUpgrade(host, up)
+	g.AddAmberOn(host, 3)
+
+	if got := g.spendAsPoolCreatures(1); len(got) != 1 || got[0] != host {
+		t.Errorf("opponent spendable = %v, want [host]", got)
+	}
+	if got := g.spendAsPoolCreatures(0); len(got) != 0 {
+		t.Errorf("controller spendable = %v, want none", got)
+	}
+
+	// The opponent forges using the enemy creature's Æmber.
+	g.State.Aember[1] = KeyCost - 3
+	g.forgeKey(1)
+	if g.Keys(1) != 1 {
+		t.Errorf("keys = %d, want 1", g.Keys(1))
+	}
+	if g.AmberOn(host) != 0 {
+		t.Errorf("host Æmber = %d, want 0 (spent by the opponent)", g.AmberOn(host))
+	}
+}
+
+// TestSpendAsPoolTextForOpponent covers the rendered rules text for the
+// opponent-scoped permission (Mole).
+func TestSpendAsPoolTextForOpponent(t *testing.T) {
+	mole := NewCard("Mole", Shadows, Upgrade, Rare,
+		WithStatic(StaticModifier{SpendAemberOnCard: SpendByOpponent}))
+	hosted := spendAsPoolLines(&mole, true)
+	want := "Your opponent may spend Æmber on this creature as if it were in their pool."
+	if len(hosted) != 1 || hosted[0] != want {
+		t.Errorf("hosted lines = %v, want [%q]", hosted, want)
 	}
 }

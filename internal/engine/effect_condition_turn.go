@@ -236,3 +236,20 @@ func (FirstReapOfTurn) Met(ctx *EffectContext) bool {
 	}
 	return ctx.Resolver.TurnHistory(ctx.Resolver.Controller(ctx.It), CreaturesReapedThisTurn) == 1
 }
+
+// SourceFirstUseThisTurn is met when the current use of the source creature is
+// its first this turn — Gladiodontus readies and enrages itself only the first
+// time it is used. A creature is used when it reaps, fights, or fires an Action
+// ability; the use is tallied before the Fight:/Reap: ability resolves, so the
+// first use reads as a tally of one.
+type SourceFirstUseThisTurn struct{}
+
+// CondText renders the condition, naming the source card.
+func (SourceFirstUseThisTurn) CondText() string {
+	return "if this is the first time " + SelfName + " has been used this turn"
+}
+
+// Met reports whether the source creature's current use is its first this turn.
+func (SourceFirstUseThisTurn) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.TimesUsedThisTurn(ctx.Source) == 1
+}

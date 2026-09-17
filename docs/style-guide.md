@@ -155,6 +155,18 @@ would find easiest to build on — not the shortest path to a passing build.
   piece this card needs, and how would the _next_ card reuse it? Prefer many
   small pieces that snap together over one bespoke effect that does everything a
   single card happens to want.
+- **Reach for an existing node before writing a new one.** The default outcome
+  of authoring a card is that it composes nodes that already exist — a new node
+  is the exception that has to earn itself. Before adding an effect node, _search
+  for one that already does this_: grep the `effect_*.go` files and existing
+  cards for the verb the card prints, and read the candidate node's fields. Most
+  "new" behavior is an unused **mode on an axis the node already has** — a
+  `By: All` where the node took a fixed amount, a dynamic `Count` where it took a
+  literal, one more bit in a grant bitset, one more `Target` refinement. Extending
+  that axis is almost always right and adding a sibling node almost always wrong;
+  when in doubt, extend. Only when no existing node's axis can carry the behavior
+  does a new node earn its place — and then it is the smallest general primitive
+  (see "a one-off name is a smell" below), not a bespoke one.
 - **Decompose fused effects.** A card that "does A, then B if C" is a `Sequence`
   of an effect, a `Conditional`, and a condition — not one `DoAThenBIfC` node.
   Bonkers Killing Machine is `DiscardTopOfEachDeck` →

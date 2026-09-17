@@ -1,6 +1,9 @@
 package engine
 
-import "slices"
+import (
+	"fmt"
+	"slices"
+)
 
 // This file holds read accessors over the flat GameState: a card's derived stats
 // (power, armor, assault, hazardous, keywords — each folding in upgrades and
@@ -33,6 +36,31 @@ func (g *Game) controller(id LocalID) int {
 
 // Name returns a card's printed name.
 func (g *Game) Name(id LocalID) string { return g.cat.def(id).Name }
+
+// DeckList returns the printed names of every card player owns, deduplicated with
+// an "xN" count and sorted. It reads the whole catalog rather than the live zones,
+// so it lists a player's entire deck — the cards still in the draw pile included —
+// which is what a debug replay needs to spot the card behind an invariant even
+// when that card never reached the game log.
+func (g *Game) DeckList(player int) []string {
+	counts := map[string]int{}
+	for id := 0; id < g.cat.count(); id++ {
+		if g.cat.owner(LocalID(id)) == player {
+			counts[g.cat.def(LocalID(id)).Name]++
+		}
+	}
+	names := make([]string, 0, len(counts))
+	for name := range counts {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	for i, name := range names {
+		if counts[name] > 1 {
+			names[i] = fmt.Sprintf("%s x%d", name, counts[name])
+		}
+	}
+	return names
+}
 
 // AemberBonus returns the number of Æmber pips printed on a card.
 func (g *Game) AemberBonus(id LocalID) int {
@@ -73,6 +101,22 @@ func (g *Game) ActivePlayer() int { return g.State.ActivePlayer }
 
 // Power returns a creature's current power including attached upgrades.
 func (g *Game) Power(id LocalID) int {
+	// A stat override masks the real total: The Pale Star makes each creature have 1
+	// power, read live and ignoring counters and bonuses, revealed again when it
+	// lifts (the stored counters are untouched).
+	if v, ok := g.continuousPowerOverride(id); ok {
+		return v
+	}
+	// A variable "X" power reads its neighbors' power, so two such creatures that
+	// reference each other would recurse forever. A creature already mid-computation
+	// contributes 0 — its power is undeterminable, which KeyForge treats as 0.
+	for _, computing := range g.powerComputing {
+		if computing == id {
+			return 0
+		}
+	}
+	g.powerComputing = append(g.powerComputing, id)
+	defer func() { g.powerComputing = g.powerComputing[:len(g.powerComputing)-1] }()
 	core := &g.State.Cards[id]
 	p := g.cat.def(id).Power
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
@@ -82,7 +126,19 @@ func (g *Game) Power(id LocalID) int {
 	p += int(core.PowerCounters)
 	p += int(core.TempPowerBonus)
 	p += g.constantBonus(id, func(c ConstantAbility) int { return c.PowerBonus })
+	// A variable "X" power (Picaroon's combined-neighbor power) is a blank-able part
+	// of the card's text, so it contributes only while the text is not blanked.
+	if px := g.cat.def(id).PowerX; px != nil && !g.textBlanked(id) {
+		p += px.Value(&EffectContext{Resolver: g, Source: id, Controller: g.controller(id)})
+	}
 	return p
+}
+
+// PowerCountersOn returns the net +1/-1 power counters placed on a creature — the
+// running tally Chonkers doubles. It is the raw counter total, not the creature's
+// power.
+func (g *Game) PowerCountersOn(id LocalID) int {
+	return int(g.State.Cards[id].PowerCounters)
 }
 
 // Armor absorbs damage. A creature with armor prevents that much of the damage it
@@ -102,8 +158,15 @@ func (g *Game) armor(id LocalID) int {
 }
 
 // Armor returns a creature's current armor value, including attached upgrades and
-// any constant abilities reaching it.
-func (g *Game) Armor(id LocalID) int { return g.armor(id) }
+// any constant abilities reaching it. A stat override masks it (The Pale Star sets
+// each creature to 0 armor); the real armor pool is untouched and revealed again
+// when the mask lifts.
+func (g *Game) Armor(id LocalID) int {
+	if v, ok := g.continuousArmorOverride(id); ok {
+		return v
+	}
+	return g.armor(id)
+}
 
 // ArmorStripped returns how much armor an effect has taken off a creature this
 // turn. It is not the armor the creature spent absorbing damage: only a strip
@@ -173,10 +236,32 @@ func (g *Game) constantActive(src LocalID, c ConstantAbility) bool {
 }
 
 // textBlanked reports whether a creature's text box is currently blanked (Shadow
-// of Dis), so its printed keywords, abilities, and constant grants are ignored —
-// its traits and stats are untouched. Only creatures are blanked.
+// of Dis): its printed keywords, abilities, and constant grants are ignored while
+// its traits and stats remain. A duration-scoped blank in the continuous registry
+// reaches creatures; a while-in-play ConstantAbility.BlankText reaches artifacts
+// (Blossom Drake) — this predicate consults both.
 func (g *Game) textBlanked(id LocalID) bool {
-	return g.State.TextBlank[g.controller(id)].Value && g.TypeOf(id) == Creature
+	return g.continuousActive(ContinuousTextBlank, id) || g.constantBlanksText(id)
+}
+
+// constantBlanksText reports whether a card in play with a BlankText constant
+// ability reaches card id. A source blanked itself (by the registry) grants
+// nothing, so its blank is skipped — a constant BlankText reaches artifacts, never
+// a creature source, so the registry check alone breaks any recursion.
+func (g *Game) constantBlanksText(id LocalID) bool {
+	for p := 0; p < 2; p++ {
+		for _, src := range g.allInPlay(p) {
+			if g.continuousActive(ContinuousTextBlank, src) {
+				continue
+			}
+			for _, c := range g.cat.def(src).ConstantAbilities {
+				if c.BlankText && g.constantAffects(src, c, id) {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 // assault returns a creature's Assault value including attached upgrades.
@@ -190,6 +275,7 @@ func (g *Game) assault(id LocalID) int {
 	}
 	a += int(g.State.Cards[id].TempAssaultBonus)
 	a += int(g.State.Cards[id].AssaultUntilNextTurn)
+	a += g.constantBonus(id, func(c ConstantAbility) int { return c.AssaultBonus })
 	return a
 }
 
@@ -234,7 +320,7 @@ func (g *Game) ElusiveSpent(id LocalID) bool {
 // granted by an attached upgrade, granted by a card's constant ability, or gained
 // for the remainder of the turn (Scout).
 func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
-	if g.State.KeywordsLost&k.bit() != 0 {
+	if g.continuousLostKeywords(id)&k.bit() != 0 {
 		return false
 	}
 	if g.State.Cards[id].LostKeywords&k.bit() != 0 {
@@ -452,6 +538,13 @@ func (g *Game) inPlay(id LocalID) bool {
 	return false
 }
 
+// activeInDiscard reports whether a card resolves an ability from a discard pile:
+// it carries TriggersFromDiscard and currently sits in its owner's discard pile
+// (Relentless Creeper returns itself to hand after its controller chooses Dis).
+func (g *Game) activeInDiscard(id LocalID) bool {
+	return g.cat.def(id).TriggersFromDiscard && g.State.Discard[g.owner(id)].contains(id)
+}
+
 // InBattleline reports whether a creature currently sits on either player's
 // battleline, excluding artifacts and cards that have left play.
 func (g *Game) InBattleline(id LocalID) bool {
@@ -576,6 +669,23 @@ func (g *Game) barredFromPlaying(player int, t CardType) bool {
 	return barred == t || barred == AnyType
 }
 
+// barredByNamedCard reports whether a card named by a permanent in play (Etan's
+// Jar) bars def from being played. The bar is symmetric — it applies to whichever
+// player attempts the play — and matches by name, so it covers every copy of the
+// named card in either deck. It lifts when the naming permanent leaves play,
+// because resetCore clears the stored name.
+func (g *Game) barredByNamedCard(def *CardDefinition) bool {
+	for p := 0; p < 2; p++ {
+		for _, id := range g.allInPlay(p) {
+			named := g.State.Cards[id].NamedCardPlus
+			if named != 0 && g.cat.def(LocalID(named-1)).Name == def.Name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // cannotPlayCreatures reports whether player is barred from playing creatures by a
 // constant "cannot play" rule on a card in play — either a Restrictions.CannotPlay
 // rule they control or a symmetric CannotPlayWhile bar whose condition holds.
@@ -616,6 +726,13 @@ func (g *Game) skipsForge(player int) bool {
 		}
 	}
 	return false
+}
+
+// keyForgeCapReached reports whether player already holds the maximum number of
+// keys (MaxKeys), so a "forge a key" trigger that fires after the fourth forge
+// cannot push the count past the KeyColors slots.
+func (g *Game) keyForgeCapReached(player int) bool {
+	return g.State.Keys[player] >= MaxKeys
 }
 
 // forgeKeyNumberBarred reports whether the next key player would forge is barred

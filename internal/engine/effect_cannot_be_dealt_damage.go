@@ -4,29 +4,31 @@ import "fmt"
 
 // CannotBeDealtDamage marks each creature its Target selects unable to be dealt
 // damage for the given Duration — Shield of Justice protects each friendly
-// creature for the remainder of the turn. Only RemainderOfPlayerTurn is supported
-// today (the mark is cleared by the ready phase); the field is explicit so a
-// longer window can be added without reshaping the callers.
+// creature for the remainder of the turn, Lucky Dice during the opponent's next
+// turn. It installs a continuous effect read live at damage time.
 type CannotBeDealtDamage struct {
 	Target   Target
 	Duration Duration
 }
 
-// validate requires an explicit target and a supported duration.
+// validate requires an explicit target and one of the supported durations.
 func (e CannotBeDealtDamage) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("CannotBeDealtDamage")
 	}
-	if e.Duration != RemainderOfPlayerTurn {
-		return fmt.Errorf("CannotBeDealtDamage: duration must be RemainderOfPlayerTurn")
+	switch e.Duration {
+	case RemainderOfPlayerTurn, OpponentNextTurn:
+		return nil
+	default:
+		return fmt.Errorf(
+			"CannotBeDealtDamage: duration must be RemainderOfPlayerTurn or OpponentNextTurn")
 	}
-	return nil
 }
 
 // Text renders the effect, e.g. "for the remainder of the turn, each friendly
 // creature cannot be dealt damage".
 func (e CannotBeDealtDamage) Text() string {
-	return "for the remainder of the turn, " + e.durationSubject() + " " + e.durationPredicate()
+	return durationClause(e.Duration) + ", " + e.durationSubject() + " " + e.durationPredicate()
 }
 
 // durationSubject and durationPredicate split the body so ForDuration can state
@@ -41,10 +43,10 @@ func (e CannotBeDealtDamage) durationPredicate() string { return "cannot be deal
 // creatures in play the moment it resolved.
 func (e CannotBeDealtDamage) Resolve(ctx *EffectContext) {
 	if player, ok := e.Target.wholeSide(ctx.Controller); ok {
-		ctx.Resolver.SetSideDamageImmune(player)
+		ctx.Resolver.SetSideDamageImmune(player, e.Duration)
 		return
 	}
 	for _, id := range e.Target.Select(ctx) {
-		ctx.Resolver.SetDamageImmune(id)
+		ctx.Resolver.SetDamageImmune(id, e.Duration)
 	}
 }

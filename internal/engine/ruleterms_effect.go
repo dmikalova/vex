@@ -345,21 +345,16 @@ and a discard card is recovered.`,
 		},
 		{
 			Section:    SectionEffect,
-			Title:      "Search for Named Card",
-			Definition: "Search your deck and discard pile for a named card, reveal it, and put it into your hand.",
-			Body: `SearchForName lets the controller search their deck and discard pile for a card
-with a specific name, reveal it, and put it into their hand — Help from Future
-Self tutoring a Timetraveller. Nothing happens if no matching card is found.`,
-		},
-		{
-			Section:    SectionEffect,
-			Title:      "Search Your Deck",
-			Definition: "Search your deck for a card and put it into your hand.",
-			Body: `SearchDeck is the KeyForge "search" keyword's deck search: the controller
-searches their deck for a card — any card, or one of a given House — and puts it
-into their hand. A House-restricted search reveals the card it takes. It does not
-shuffle: a search is always followed by a separate Shuffle, enforced by a
-card lint.`,
+			Title:      "Search",
+			Definition: "Search one or more of your zones for cards matching a filter, reveal what you take, and put it into your hand or archives.",
+			Body: `Search is the KeyForge "search" keyword: the controller looks through one or
+more of their own zones — the deck, or the deck and discard pile — for cards
+matching a filter (any card, a named card, a trait, a type, or a house), reveals
+what they take, and moves it to their hand or archives. It can take one chosen
+card or every match. It does not shuffle: a search is always followed by a
+separate Shuffle, enforced by a card lint — except a search that puts its finds
+on top of the deck, which shuffles between finding and placing so the finds land
+on top of an already-shuffled deck (Digging Up the Monster).`,
 		},
 		{
 			Section:    SectionEffect,

@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Human • Knight
 //
-//	Gizelhart's Zealot enters play ready and enrage Gizelhart's Zealot.
+//	Gizelhart's Zealot enters play ready and enraged.
 func TestGizelhartsZealot(t *testing.T) {
 	t.Run("enters play ready and enraged", func(t *testing.T) {
 		var zealot ct.Card

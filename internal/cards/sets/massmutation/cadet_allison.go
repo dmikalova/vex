@@ -1,14 +1,30 @@
-//go:build todo
-
 package massmutation
+
+import "github.com/dmikalova/vactrol/internal/card"
 
 // Cadet Allison
 //
-// TODO(gigantic): deferred — gigantic creature; two cards form one big
-// creature. See docs/todo-agent.md "Gigantics". Needs engine design before
-// implementation; grill first.
-//
-//	House:  Staralliance
-//	Type:   Gigantic Creature (art half)
+//	House:  Star Alliance
+//	Type:   Creature
 //	Rarity: Rare
-//	Source: MoMu 318
+//	Power:  8
+//	Traits: Human
+//
+//	Play/Reap: Discard a random card from your hand -> its house becomes your active house.
+var CadetAllison = set.Gigantic(
+	"Cadet Allison",
+	card.House.StarAlliance,
+	card.Rarity.Rare,
+	card.Provenance(card.MoMu, "318"),
+	card.WithPower(8),
+	card.WithTraits(card.Traits.Human),
+	card.WithAbility(
+		card.Trigger.PlayReap, card.Then{
+			First: card.DiscardCard{
+				Player:    card.Controller,
+				Zones:     []card.Zone{card.Hand},
+				Selection: card.Random{Count: 1},
+			},
+			Result: card.ChangeActiveHouse{To: card.TheContextualHouse},
+		}),
+)

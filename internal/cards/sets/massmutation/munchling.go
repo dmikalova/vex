@@ -24,10 +24,9 @@ var Munchling = set.New(
 	card.WithAbility(card.Trigger.Fight, card.May{
 		Do: card.Then{
 			First: card.DiscardCard{
-				Player:     card.Controller,
-				Zone:       card.Hand,
-				OrArchives: true,
-				Selection:  card.Chosen{House: card.Houses.Named(card.House.Self)},
+				Player:    card.Controller,
+				Zones:     []card.Zone{card.Hand, card.Archives},
+				Selection: card.Chosen{House: card.Houses.Named(card.House.Self)},
 			},
 			Result: card.GainAember{
 				Player: card.Controller,

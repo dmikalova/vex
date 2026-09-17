@@ -203,14 +203,15 @@ func (g *game) zoneNames(player int, label string, ids []engine.LocalID) []strin
 // readableZoneIDs returns a zone's cards sorted by house, then card type in the
 // deck list's order (typeRank — Tactics last; ADR 0025), then name, but only for
 // the zones this player may read: the face-up discard and purge piles of either
-// player, and their own hand and deck. Sorting the deck by house rather than draw
+// player, and their own hand, deck, and archives. Sorting by house rather than draw
 // order lets a player review their own remaining deck without its order leaking,
-// and matches the deck list's order. A hidden zone (face-down archives, an
-// opponent's hand or deck) returns nil, so hovering it never leaks its contents.
+// and matches the deck list's order. A player may read their own archives (they set
+// them face-down but know their contents); an opponent's archives, hand, or deck is
+// hidden and returns nil, so hovering it never leaks its contents.
 func (g *game) readableZoneIDs(player int, label string, ids []engine.LocalID) []engine.LocalID {
 	switch label {
 	case "Discard", "Purge":
-	case "Hand", "Deck":
+	case "Hand", "Deck", "Archives":
 		if player != g.active() {
 			return nil
 		}
@@ -356,9 +357,9 @@ func (g *game) aemberSeg(player int) app.UI {
 	return app.Span().Class(cx("stat-seg", "amber-manual", "tip", gain)).
 		DataSet("tip", "Æmber").
 		Body(
-			g.stepBtn(g.manualAmberDelta(player, -1), false),
+			g.stepBtn(g.onManualAmberStep, false, player, -1),
 			count, ic,
-			g.stepBtn(g.manualAmberDelta(player, 1), true),
+			g.stepBtn(g.onManualAmberStep, true, player, 1),
 		)
 }
 
@@ -371,20 +372,27 @@ func (g *game) chainsSeg(player int) app.UI {
 		return app.Span().Class("stat-seg tip").DataSet("tip", "Chains").Body(count, ic)
 	}
 	return app.Span().Class("stat-seg amber-manual tip").DataSet("tip", "Chains").Body(
-		g.stepBtn(g.manualChainsDelta(player, -1), false),
+		g.stepBtn(g.onManualChainsStep, false, player, -1),
 		count, ic,
-		g.stepBtn(g.manualChainsDelta(player, 1), true),
+		g.stepBtn(g.onManualChainsStep, true, player, 1),
 	)
 }
 
 // stepBtn is a green plus or red minus stepper for the manual-mode Æmber/chains
 // adjusters.
-func (g *game) stepBtn(onClick app.EventHandler, plus bool) app.UI {
+// stepBtn is a manual-mode +/- button. It carries its target player and signed
+// step as data attributes and binds a stable method handler (never a per-render
+// closure), so go-app — which compares handlers by function pointer — keeps the
+// button bound to its own bar and a stepper never credits the other player.
+func (g *game) stepBtn(onClick app.EventHandler, plus bool, player, delta int) app.UI {
 	label, cls := "−", "amber-btn amber-btn-minus"
 	if plus {
 		label, cls = "+", "amber-btn amber-btn-plus"
 	}
-	return app.Button().Class(cls).Text(label).OnClick(onClick)
+	return app.Button().Class(cls).Text(label).
+		DataSet("player", strconv.Itoa(player)).
+		DataSet("delta", strconv.Itoa(delta)).
+		OnClick(onClick)
 }
 
 // keyForgePanel is the manual-mode key-forge picker, shown inline in the controls
@@ -422,13 +430,13 @@ func (g *game) keysDisplay(player int) app.UI {
 		}
 		slots = append(
 			slots,
-			g.keySlot(icon(name, "icon-stat"), manual, g.manualUnforgeKey(player)),
+			g.keySlot(icon(name, "icon-stat"), manual, player, g.onManualUnforgeKey),
 		)
 	}
 	for i := len(colors); i < engine.KeysToWin; i++ {
 		slots = append(
 			slots,
-			g.keySlot(icon("key", "icon-stat", "key-unforged"), manual, g.manualForgeKey(player)),
+			g.keySlot(icon("key", "icon-stat", "key-unforged"), manual, player, g.onManualForgeKey),
 		)
 	}
 	gain := cx(
@@ -439,12 +447,15 @@ func (g *game) keysDisplay(player int) app.UI {
 }
 
 // keySlot renders a key icon as a clickable forge/unforge button in manual mode,
-// or a plain icon otherwise.
-func (g *game) keySlot(ic app.UI, manual bool, onClick app.EventHandler) app.UI {
+// or a plain icon otherwise. The button carries its player on its dataset so the
+// stable handler acts on the clicked bar (see stepBtn).
+func (g *game) keySlot(ic app.UI, manual bool, player int, onClick app.EventHandler) app.UI {
 	if !manual {
 		return ic
 	}
-	return app.Button().Class("key-btn").OnClick(onClick).Body(ic)
+	return app.Button().Class("key-btn").
+		DataSet("player", strconv.Itoa(player)).
+		OnClick(onClick).Body(ic)
 }
 
 // keysTally draws a static row of a player's three key slots for the game log:

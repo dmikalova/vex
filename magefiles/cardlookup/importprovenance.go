@@ -258,7 +258,7 @@ func (f *flexString) UnmarshalJSON(data []byte) error {
 // relearn the feed's throttling for every set.
 func fetchSetCards(client *http.Client, p *pacer, slug string, expansion int) ([]mvCard, error) {
 	const pageSize = 25
-	seen := map[string]bool{}
+	seen := map[string]int{}
 	var collected []mvCard
 
 	emptyStreak := 0
@@ -275,13 +275,11 @@ func fetchSetCards(client *http.Client, p *pacer, slug string, expansion int) ([
 			if c.IsMaverick || (c.Expansion != 0 && c.Expansion != expansion) {
 				continue
 			}
-			key := c.CardNumber + "|" + c.CardTitle
-			if seen[key] {
-				continue
+			var isNew bool
+			collected, isNew = mergeCard(collected, seen, c)
+			if isNew {
+				added++
 			}
-			seen[key] = true
-			collected = append(collected, c)
-			added++
 		}
 		if added > 0 {
 			emptyStreak = 0
@@ -314,7 +312,37 @@ func fetchSetCards(client *http.Client, p *pacer, slug string, expansion int) ([
 	return collected, nil
 }
 
-// fetchDecksPage requests one page of the decks feed. The feed throttles heavily,
+// mergeCard folds one card into the collected set, keyed by collector number and
+// title. A gigantic creature's two halves share both a number and a title, so the
+// base half — which carries the power, armor, and card text — replaces an art half
+// already collected under the same key, and an art half never displaces a base. It
+// returns the (possibly grown) slice and whether a new card was added; a
+// replacement is not a new card.
+func mergeCard(collected []mvCard, seen map[string]int, c mvCard) ([]mvCard, bool) {
+	key := c.CardNumber + "|" + c.CardTitle
+	if idx, ok := seen[key]; ok {
+		if isGiganticBase(c.CardType) && !isGiganticBase(collected[idx].CardType) {
+			collected[idx] = c
+		}
+		return collected, false
+	}
+	seen[key] = len(collected)
+	return append(collected, c), true
+}
+
+// isGiganticBase reports whether a Master Vault card type is the base half of a
+// gigantic creature — the half that carries its power, armor, and card text (its
+// art half prints "Gigantic Creature Art" with none of those).
+func isGiganticBase(cardType string) bool {
+	return strings.EqualFold(cardType, "gigantic creature base")
+}
+
+// hasCreatureStats reports whether a card type carries power and armor: a plain
+// creature or a gigantic creature's base half.
+func hasCreatureStats(cardType string) bool {
+	return strings.EqualFold(cardType, "creature") || isGiganticBase(cardType)
+}
+
 // so a 429 is never fatal: it waits and keeps retrying until the page comes back.
 // Each wait starts from *longest — the longest wait seen so far across all pages —
 // and doubles up to a one-minute cap, so throttling that returns picks up where the
@@ -499,7 +527,7 @@ func transformCard(m mvCard) (catalogCard, error) {
 	if name != m.CardTitle {
 		c.Printed = m.CardTitle
 	}
-	if strings.EqualFold(m.CardType, "creature") {
+	if hasCreatureStats(m.CardType) {
 		c.Power = atoiSafe(string(m.Power))
 		c.Armor = atoiSafe(string(m.Armor))
 	}

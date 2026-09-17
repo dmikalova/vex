@@ -198,8 +198,13 @@
     "number": "020",
     "name": "Tormax",
     "house": "dis",
-    "type": "gigantic creature art",
-    "rarity": "Rare"
+    "type": "gigantic creature base",
+    "rarity": "Special",
+    "traits": [
+      "demon"
+    ],
+    "power": 8,
+    "text": "(Play only with the other half of Tormax.)\nPlay/After Fight/After Reap: Discard your hand. Purge 2 random cards from your opponent's hand."
   },
   {
     "number": "021",
@@ -234,6 +239,7 @@
     "traits": [
       "demon"
     ],
+    "power": 10,
     "text": "(Play only with the other half of Wretched Anathema.)\nIf there are no other friendly creatures in play, Wretched Anathema gains, \"Action: Gain 4 Aember.\"\nPlay/After Reap: Destroy 2 other creatures."
   },
   {
@@ -849,6 +855,8 @@
     "traits": [
       "robot"
     ],
+    "power": 11,
+    "armor": 2,
     "text": "(Play only with the other half of Horizon Saber.)\nPlay/After Fight/After Reap: Search your deck and discard pile for a card, reveal it, and put it into your archives. Shuffle your discard pile into your deck."
   },
   {
@@ -964,8 +972,14 @@
     "number": "089",
     "name": "Ultra Gravitron",
     "house": "logos",
-    "type": "gigantic creature art",
-    "rarity": "Rare"
+    "type": "gigantic creature base",
+    "rarity": "Special",
+    "traits": [
+      "robot"
+    ],
+    "power": 10,
+    "armor": 3,
+    "text": "(Play only with the other half of Ultra Gravitron.)\nPlay: Archive the top 5 cards of your deck.\nAfter Fight/After Reap: Discard a card from your archives. If you do, purge a creature and resolve each of its bonus icons as if you had played it."
   },
   {
     "number": "090",
@@ -1472,6 +1486,7 @@
       "knight",
       "spirit"
     ],
+    "power": 8,
     "text": "(Play only with the other half of Ascendant Hester.)\nEach other friendly creature gets +2 armor for each Aember on it.\nPlay/After Fight: Each friendly creature captures 1 Aember."
   },
   {
@@ -1667,8 +1682,15 @@
     "number": "152",
     "name": "Sirs Colossus",
     "house": "sanctum",
-    "type": "gigantic creature art",
-    "rarity": "Rare"
+    "type": "gigantic creature base",
+    "rarity": "Special",
+    "traits": [
+      "knight",
+      "spirit"
+    ],
+    "power": 10,
+    "armor": 3,
+    "text": "(Play only with the other half of Sirs Colossus.)\nTaunt.\nPlay: Capture all your opponent's Aember, distributed among any number of friendly creatures.\nAfter Fight: Move all Aember from a friendly creature to the common supply."
   },
   {
     "number": "153",
@@ -1886,7 +1908,7 @@
     ],
     "power": 4,
     "armor": 1,
-    "text": "Assault 2. (Before this creature attacks, deal 2 Damage to the attacked enemy.)\nEach of Bull-wark's neighbors gains assault 2."
+    "text": "Assault 2.\nEach of Bull-wark's neighbors gains assault 2."
   },
   {
     "number": "173",
@@ -2152,6 +2174,7 @@
     "house": "saurian",
     "type": "gigantic creature base",
     "rarity": "Special",
+    "power": 14,
     "text": "(Play only with the other half of Bawretchadontius.)\nEach friendly creature with Aember on it gains, \"After Reap: Deal 4 Damage to a creature.\"\nPlay/After Fight/After Reap: Exalt a friendly creature and 2 enemy creatures."
   },
   {
@@ -2183,6 +2206,7 @@
     "traits": [
       "mutant"
     ],
+    "power": 20,
     "text": "(Play only with the other half of Deusillus.)\nPlay: Capture all of your opponent's Aember. Deal 5 Damage to an enemy creature.\nAfter Fight/After Reap: Move 1 Aember from Deusillus to the common supply. Deal 2 Damage to each enemy creature."
   },
   {
@@ -2852,6 +2876,8 @@
     "traits": [
       "robot"
     ],
+    "power": 7,
+    "armor": 2,
     "text": "(Play only with the other half of Boosted B4-RRY.)\nPlay/After Fight/After Reap: Choose one:\nTake control of an enemy artifact. While under your control, it belongs to house Shadows (instead of its original house).\nPlay a random card from your opponent's archives as if it were yours."
   },
   {
@@ -2859,8 +2885,14 @@
     "name": "Dodger's 10",
     "printed": "Dodger’s 10",
     "house": "shadows",
-    "type": "gigantic creature art",
-    "rarity": "Rare"
+    "type": "gigantic creature base",
+    "rarity": "Special",
+    "traits": [
+      "elf",
+      "thief"
+    ],
+    "power": 11,
+    "text": "(Play only with the other half of Dodger's 10.)\nPlay/After Fight/After Reap: Steal half of your opponent's Aember (rounding down)."
   },
   {
     "number": "259",
@@ -3546,8 +3578,13 @@
     "number": "318",
     "name": "Cadet Allison",
     "house": "staralliance",
-    "type": "gigantic creature art",
-    "rarity": "Rare"
+    "type": "gigantic creature base",
+    "rarity": "Special",
+    "traits": [
+      "human"
+    ],
+    "power": 8,
+    "text": "(Play only with the other half of Cadet Allison.)\nPlay/After Reap: Discard a random card from your hand. If you do, the discarded card's house becomes your active house."
   },
   {
     "number": "319",
@@ -3670,8 +3707,14 @@
     "number": "331",
     "name": "J43G3R V",
     "house": "staralliance",
-    "type": "gigantic creature art",
-    "rarity": "Rare"
+    "type": "gigantic creature base",
+    "rarity": "Special",
+    "traits": [
+      "robot"
+    ],
+    "power": 8,
+    "armor": 2,
+    "text": "(Play only with the other half of J43G3R V.)\nAfter Reap: You may reap with up to 2 non-Star Alliance creatures this turn.\nAfter Fight: You may fight with up to 2 non-Star Alliance creatures this turn."
   },
   {
     "number": "332",
@@ -4314,6 +4357,8 @@
       "mutant",
       "niffle"
     ],
+    "power": 12,
+    "armor": 2,
     "text": "(Play only with the other half of Niffle Kong.)\nPlay: Search your deck and discard pile for any number of Niffle creatures, reveal them, and put them into your hand. Shuffle your deck.\nAfter Fight/After Reap: You may destroy a friendly Niffle creature. If you do, deal 3 Damage to a creature, steal 1 Aember, and destroy an enemy artifact."
   },
   {
@@ -4371,8 +4416,14 @@
     "number": "395",
     "name": "Titanic Bumblebird",
     "house": "untamed",
-    "type": "gigantic creature art",
-    "rarity": "Rare"
+    "type": "gigantic creature base",
+    "rarity": "Special",
+    "traits": [
+      "beast",
+      "insect"
+    ],
+    "power": 8,
+    "text": "(Play only with the other half of Titanic Bumblebird.)\nPlay/After Reap: Destroy an enemy creature. If you do, give +1 power counters equal to the destroyed creatures power to a friendly creature."
   },
   {
     "number": "396",
@@ -4590,7 +4641,7 @@
       "beast"
     ],
     "power": 3,
-    "text": "Hazardous 3. (Before this creature is attacked, deal 3 Damage to the attacking enemy.)\nAfter an enemy creature reaps, gain 1 Aember."
+    "text": "Hazardous 3.\nAfter an enemy creature reaps, gain 1 Aember."
   },
   {
     "number": "416",

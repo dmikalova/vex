@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Human • Knight
 //
-//	Gizelhart's Zealot enters play ready and enrage Gizelhart's Zealot.
+//	Gizelhart's Zealot enters play ready and enraged.
 var GizelhartsZealot = set.New(
 	"Gizelhart's Zealot",
 	card.House.Sanctum,
@@ -19,7 +19,7 @@ var GizelhartsZealot = set.New(
 	card.Provenance(card.MM, "136"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
-	card.WithEntersPlay(card.Sequence{Effects: []card.Effect{
+	card.WithEntersPlay(card.Sentences{Effects: []card.Effect{
 		card.Ready{Target: card.Target.This},
 		card.Enrage{Target: card.Target.This},
 	}}),

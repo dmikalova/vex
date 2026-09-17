@@ -257,14 +257,16 @@ func (e CaptureFromAnyPlayer) Resolve(ctx *EffectContext) {
 type DistributeCapture struct {
 	// By is the share of the Source pool to capture (By: AllBut(5)).
 	By Loss
+	// All captures the whole Source pool instead of a By share (Sirs Colossus).
+	All bool
 	// Source is the pool the Æmber is taken from.
 	Source Player
 }
 
-// validate requires a By share and an explicit Source.
+// validate requires exactly one of By or All and an explicit Source.
 func (e DistributeCapture) validate() error {
-	if e.By == nil {
-		return fmt.Errorf("DistributeCapture: By must set the share to capture")
+	if (e.By == nil) == !e.All {
+		return fmt.Errorf("DistributeCapture: set exactly one of By or All")
 	}
 	if e.Source == playerUnset {
 		return errUnsetPlayer("DistributeCapture")
@@ -273,17 +275,21 @@ func (e DistributeCapture) validate() error {
 }
 
 // Text renders the effect, e.g. "capture all but 5 Æmber from your opponent,
-// distributed among any number of friendly creatures".
+// distributed among any number of friendly creatures", or "capture all your
+// opponent's Æmber, distributed among any number of friendly creatures" in All
+// mode.
 func (e DistributeCapture) Text() string {
 	from := "your opponent"
 	possessive := "your opponent's"
 	if e.Source == Controller {
 		from, possessive = "you", "your"
 	}
+	const tail = ", distributed among any number of friendly creatures"
+	if e.All {
+		return fmt.Sprintf("capture all %s Æmber%s", possessive, tail)
+	}
 	return fmt.Sprintf(
-		"capture %s from %s, distributed among any number of friendly creatures",
-		aemberObject(0, e.By, possessive),
-		from,
+		"capture %s from %s%s", aemberObject(0, e.By, possessive), from, tail,
 	)
 }
 
@@ -292,7 +298,11 @@ func (e DistributeCapture) Text() string {
 // unit to CaptureAember. The loop stops early if no friendly creature remains.
 func (e DistributeCapture) Resolve(ctx *EffectContext) {
 	pool := ctx.PlayerFor(e.Source)
-	total := min(e.By.lose(ctx.Resolver.Aember(pool)), ctx.Resolver.Aember(pool))
+	by := e.By
+	if e.All {
+		by = AllAember
+	}
+	total := min(by.lose(ctx.Resolver.Aember(pool)), ctx.Resolver.Aember(pool))
 	for i := 0; i < total; i++ {
 		if len(ctx.Resolver.Battleline(ctx.Controller)) == 0 {
 			return

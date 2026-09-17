@@ -1,20 +1,45 @@
-//go:build todo
-
 package massmutation
+
+import "github.com/dmikalova/vactrol/internal/card"
 
 // Boosted B4-RRY
 //
-// TODO(gigantic): deferred — gigantic creature; two cards form one big
-// creature. See docs/todo-agent.md "Gigantics". Needs engine design before
-// implementation; grill first.
-//
 //	House:  Shadows
-//	Type:   Gigantic Creature (base half)
+//	Type:   Creature
 //	Rarity: Special
-//	Source: MoMu 257
+//	Power:  7
+//	Armor:  2
 //	Traits: Robot
 //
-//	(Play only with the other half of Boosted B4-RRY.)
-//	Play/After Fight/After Reap: Choose one:
-//	Take control of an enemy artifact. While under your control, it belongs to house Shadows (instead of its original house).
-//	Play a random card from your opponent's archives as if it were yours.
+//	Play/Fight/Reap: Choose one:
+//	- Take control of an enemy artifact. If it does not belong to a house on your identity, it belongs to house Shadows.
+//	- Play a random card from your opponent's archives.
+var BoostedB4RRY = set.Gigantic(
+	"Boosted B4-RRY",
+	card.House.Shadows,
+	card.Rarity.Special,
+	card.Provenance(card.MoMu, "257"),
+	card.WithPower(7),
+	card.WithArmor(2),
+	card.WithTraits(card.Traits.Robot),
+	card.WithAbility(
+		card.Trigger.PlayFightReap, card.ChooseOne{
+			Options: []card.Effect{
+				card.Sentences{Effects: []card.Effect{
+					card.TakeControl{
+						Target:   card.Target.EnemyArtifact,
+						Duration: card.Duration.Forever,
+					},
+					card.Conditional{
+						Cond: card.ItIsOffIdentity{},
+						Then: card.BelongToHouse{
+							Target:   card.Target.Triggering,
+							House:    card.House.Self,
+							Duration: card.Duration.UntilThisLeavesPlay,
+						},
+					},
+				}},
+				card.PlayFromOpponent{From: card.Archives},
+			},
+		}),
+)

@@ -77,6 +77,15 @@ comment/rulebook generation, golines), so use them:
   card that has since left play was granting — so identify the cards that were in
   play around it, not only the card the invariant printed.
 
+  Read the whole deck, not only the cards in the log. The card that causes an
+  invariant may never appear in the tail — the log names the victim, not the
+  culprit. `mage debug` prints both players' full deck lists above the log for
+  exactly this reason: scan every card for the mechanic that could produce the bad
+  state — a power reducer for a 0-power creature, a blanker for a creature that
+  lost its ability, an attachment for a stat that drifted. Suspect the mechanic
+  first, then find which card in the deck carries it; do not assume the only
+  suspects are the cards printed near the violation.
+
 - `mage trace` — play the fixed-seed property games once with the game log on and
   write every line to `tmp/sim/trace.log` (gitignored), so a whole game reads end
   to end. Where `mage debug` shows the tail of the game that broke, a trace is the

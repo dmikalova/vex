@@ -1,14 +1,29 @@
-//go:build todo
-
 package massmutation
+
+import "github.com/dmikalova/vactrol/internal/card"
 
 // Titanic Bumblebird
 //
-// TODO(gigantic): deferred — gigantic creature; two cards form one big
-// creature. See docs/todo-agent.md "Gigantics". Needs engine design before
-// implementation; grill first.
-//
 //	House:  Untamed
-//	Type:   Gigantic Creature (art half)
+//	Type:   Creature
 //	Rarity: Rare
-//	Source: MoMu 395
+//	Power:  8
+//	Traits: Beast • Insect
+//
+//	Play/Reap: Destroy an enemy creature -> give a friendly creature +1 power counters equal to power of creatures destroyed this way.
+var TitanicBumblebird = set.Gigantic(
+	"Titanic Bumblebird",
+	card.House.Untamed,
+	card.Rarity.Rare,
+	card.Provenance(card.MoMu, "395"),
+	card.WithPower(8),
+	card.WithTraits(card.Traits.Beast, card.Traits.Insect),
+	card.WithAbility(
+		card.Trigger.PlayReap, card.Then{
+			First: card.Destroy{Target: card.Target.EnemyCreature},
+			Result: card.AddPowerCounter{
+				Target: card.Target.FriendlyCreature,
+				Equal:  card.PowerDestroyedThisWay{},
+			},
+		}),
+)

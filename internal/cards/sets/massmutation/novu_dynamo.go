@@ -24,9 +24,8 @@ var NovuDynamo = set.New(
 	card.WithAbility(
 		card.Trigger.StartOfTurn, card.Then{
 			First: card.DiscardCard{
-				Player:     card.Controller,
-				Zone:       card.Hand,
-				OrArchives: true,
+				Player: card.Controller,
+				Zones:  []card.Zone{card.Hand, card.Archives},
 				Selection: card.Chosen{
 					House:    card.Houses.Named(card.House.Self),
 					Optional: true,

@@ -421,6 +421,17 @@ func TestTurnIntoCreature(t *testing.T) {
 		t.Fatalf("battleline after right conversion = %v, want %v", got, want)
 	}
 
+	// A repeated use finds the card already a creature in the battleline, so it is
+	// pulled from there (not the artifact row) and repositioned to the chosen flank
+	// rather than duplicated.
+	g.SetChooser(0, optionPicker{idx: 1})
+	TurnIntoCreature{Target: Target{Kind: TargetThisCreature}}.
+		Resolve(&EffectContext{Resolver: g, Source: art, Controller: 0})
+	if got, want := g.Battleline(0),
+		[]LocalID{existing, art2, art}; !slices.Equal(got, want) {
+		t.Fatalf("battleline after repositioning = %v, want %v", got, want)
+	}
+
 	// A source no longer in play is a safe no-op.
 	gone := g.AddArtifact(testArtifact("gone"), 0)
 	g.State.Artifacts[0].remove(gone)

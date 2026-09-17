@@ -21,6 +21,10 @@ var Dendrix = set.New(
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
 		card.Trigger.Fight,
-		card.DiscardCard{Player: card.Opponent, Zone: card.Hand, Selection: card.Random{}},
+		card.DiscardCard{
+			Player:    card.Opponent,
+			Zones:     []card.Zone{card.Hand},
+			Selection: card.Random{Count: 1},
+		},
 	),
 )

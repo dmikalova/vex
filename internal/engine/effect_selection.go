@@ -183,15 +183,25 @@ func (s Chosen) pick(ctx *EffectContext, cands []LocalID) []LocalID {
 	return []LocalID{id}
 }
 
-// Random takes one uniformly random card, so the acting player does not choose
-// which card leaves (Impspector).
-type Random struct{}
+// Random takes Count uniformly random cards, so the acting player does not choose
+// which cards leave (Impspector takes one, Tormax two). Count is explicit: the
+// zero value takes none, so a single random pick is Random{Count: 1}.
+type Random struct {
+	// Count is how many distinct random cards to take; the zero value takes none.
+	Count int
+}
 
 // noun renders the bare kind of card taken at random.
 func (Random) noun() string { return "random card" }
 
-// object renders the random card the verb acts on.
-func (Random) object() string { return "a random card" }
+// object renders the random cards the verb acts on, e.g. "a random card" or "2
+// random cards".
+func (s Random) object() string {
+	if s.Count == 1 {
+		return "a random card"
+	}
+	return countNoun(s.Count, s.noun())
+}
 
 // candidates returns every card — a random pick applies no filter.
 func (Random) candidates(
@@ -205,13 +215,20 @@ func (Random) candidates(
 // hand's owner, so an opponent's random discard reads "your opponent discards …".
 func (Random) ownerActs() bool { return true }
 
-// pick draws one uniformly random card from the candidates, or none when empty.
+// pick draws Count distinct uniformly random cards from the candidates, stopping
+// early once the candidates run out.
 func (s Random) pick(ctx *EffectContext, cands []LocalID) []LocalID {
-	id, ok := ctx.ChooseRandom(s.candidates(ctx, cands))
-	if !ok {
-		return nil
+	pool := s.candidates(ctx, cands)
+	var out []LocalID
+	for i := 0; i < s.Count; i++ {
+		id, ok := ctx.ChooseRandom(pool)
+		if !ok {
+			break
+		}
+		out = append(out, id)
+		pool = filterIDs(pool, func(c LocalID) bool { return c != id })
 	}
-	return []LocalID{id}
+	return out
 }
 
 // Each takes every card the filters admit, with no choice: the filters decide
@@ -289,6 +306,31 @@ func (s Named) pick(ctx *EffectContext, cands []LocalID) []LocalID {
 		return matching[:1]
 	}
 	return nil
+}
+
+// Self pins the pick to the card whose ability is resolving (ctx.Source), so a
+// card can act on itself in a zone — Relentless Creeper returns itself from its
+// owner's discard pile to hand after its controller chooses Dis. It matches only
+// when the source card is actually among the zone's cards, so a lost or moved
+// source picks nothing.
+type Self struct{}
+
+// noun renders the acting card's own name placeholder, replaced with the card's
+// printed name in its rendered text.
+func (Self) noun() string { return SelfName }
+
+// object renders the acting card by its own name placeholder — a proper name takes
+// no article.
+func (Self) object() string { return SelfName }
+
+// candidates keeps the source card when it is among the zone's cards.
+func (Self) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
+	return filterIDs(cands, func(id LocalID) bool { return id == ctx.Source })
+}
+
+// pick takes the source card when it is present, or none.
+func (s Self) pick(ctx *EffectContext, cands []LocalID) []LocalID {
+	return s.candidates(ctx, cands)
 }
 
 // Top pins the pick to the top card of an ordered zone (Deck or Discard), taken

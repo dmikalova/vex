@@ -49,6 +49,13 @@ func errUnsetTarget(effect string) error {
 	return fmt.Errorf("%s: target must be set", effect)
 }
 
+// errUnsetZone is the configuration error a zone-searching effect returns when it
+// names no source zone to look through, so the zone must be stated rather than
+// silently assumed.
+func errUnsetZone(effect string) error {
+	return fmt.Errorf("%s: at least one source zone must be set", effect)
+}
+
 // errUnsetDuration is the configuration error a timed effect returns when its
 // Duration was left as the invalid zero value.
 func errUnsetDuration(effect string) error {
@@ -100,9 +107,23 @@ type EffectContext struct {
 	// valid card, so HasGrantor, not a zero check, distinguishes "no grantor".
 	Grantor    LocalID
 	HasGrantor bool
+	// Root is the card that was used to start a chain of Replicator-style triggers,
+	// the one every trigger past the free first charges against the Rule of Six —
+	// a Replicator triggering a chain of reap effects charges them all to that
+	// Replicator, not to each creature whose effect resolves along the way. HasRoot
+	// reports whether one is set; only a chained trigger resolution carries it, so
+	// its absence marks the free head that rides on the use.
+	Root    LocalID
+	HasRoot bool
 	// ChosenHouse is a house picked by a ChooseHouseThen, read by
 	// Target.OfChosenHouse targets nested inside it.
 	ChosenHouse House
+	// Departed holds the last-known scalars of cards that left play mid-resolution,
+	// keyed by LocalID, so a still-resolving reader (PowerOfChosen, AemberOnThis,
+	// DamageOnIt, ...) reads the value a card had the instant before it left rather
+	// than its zeroed core. Filled by captureDepartingSubject at the exit boundary
+	// and consulted only once the card is out of play; see ADR 0030.
+	Departed map[LocalID]departedSubject
 	// Produced holds the "... this way" tallies an effect records for a following
 	// effect in the same resolution to read.
 	Produced Produced

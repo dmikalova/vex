@@ -16,9 +16,9 @@ import (
 //	Traits: Demon • Sin
 //
 //	Each player's keys cost +4 Æmber.
-//	Reap: Forge a key at current cost, reduced by 1 Æmber for each friendly Sin creature.
+//	Reap: Forge a key at current cost, reduced by 1 Æmber for each friendly Sin creature -> purge Desire.
 func TestDesire(t *testing.T) {
-	t.Run("forges below the raised cost and is not purged", func(t *testing.T) {
+	t.Run("forges below the raised cost and purges itself", func(t *testing.T) {
 		var desire ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
@@ -46,6 +46,6 @@ func TestDesire(t *testing.T) {
 
 		h.P1.ExpectKeys(1)
 		h.P1.ExpectAmber(1)
-		h.Expect(desire).At(ct.PlayArea) // kept, not purged
+		h.Expect(desire).At(ct.Purge) // a landed forge purges the source
 	})
 }

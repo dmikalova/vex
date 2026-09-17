@@ -396,7 +396,7 @@ func TestEscapeBacksOutOneLayerAtATime(t *testing.T) {
 func TestEscapeClosesTheForgePicker(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
-	c.do(c.g.manualForgeKey(0))
+	c.g.openForgeKey(0)
 	if c.g.forgingKey != 0 {
 		t.Fatalf("the forge picker is at %d, want player 0", c.g.forgingKey)
 	}

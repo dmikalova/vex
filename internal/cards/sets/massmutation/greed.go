@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Demon • Sin
 //
-//	During your "draw cards" phase, refill your hand to 1 additional card for each friendly Sin creature.
+//	For each friendly Sin creature your hand size is 1 more.
 var Greed = set.New(
 	"Greed",
 	card.House.Dis,

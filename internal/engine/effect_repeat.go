@@ -37,10 +37,14 @@ func (e ForEach) Resolve(ctx *EffectContext) {
 	}
 }
 
-// RuleOfSix is the most times a card can be played, used, or made to resolve
-// again in one turn. A self-repeating effect is bounded by it: Bait and Switch's
-// "steal 1 Æmber -> repeat this effect" resolves the initial steal plus at most
-// five repeats, so it steals six at most however far ahead the opponent is.
+// RuleOfSix is the most times a card *name* can be used in one turn by one
+// player. Every usage of a name shares one pool of six: a play, a discard, a use
+// (reap, fight, or Action:), each Destroyed: resolution, each loop of a
+// self-repeating ability past its first, and each chained Replicator-style trigger
+// past the first. The use that fires an ability buys its first resolution free;
+// what is left in the pool bounds the rest. Bait and Switch's "steal 1 Æmber ->
+// repeat this effect" resolves the initial steal plus at most five repeats, so it
+// steals six at most however far ahead the opponent is.
 const RuleOfSix = 6
 
 // Repeat resolves Do and repeats it as its Gate allows — automatically while a
@@ -104,7 +108,14 @@ func (g While) text(do Effect) string {
 }
 
 func (g While) run(ctx *EffectContext, do Effect) {
-	for range RuleOfSix {
+	// The first resolution rides free on the use that triggered it; each further
+	// loop counts one usage against this card name's Rule-of-Six pool, so the loop
+	// runs until the pool is spent.
+	if !resolveGateOf(ctx, do) || !g.Cond.Met(ctx) {
+		return
+	}
+	for !ctx.Resolver.AtRuleOfSix(ctx.Source) {
+		ctx.Resolver.RecordUsage(ctx.Source)
 		if !resolveGateOf(ctx, do) || !g.Cond.Met(ctx) {
 			return
 		}
@@ -128,10 +139,12 @@ func (g MayWhile) text(do Effect) string {
 }
 
 func (g MayWhile) run(ctx *EffectContext, do Effect) {
+	// The first resolution rides free on the use that triggered it; each chosen
+	// repeat counts one usage against this card name's Rule-of-Six pool.
 	do.Resolve(ctx)
 	d, byChoice := do.(declinableEffect)
 	byChoice = byChoice && d.declinable()
-	for range RuleOfSix - 1 {
+	for !ctx.Resolver.AtRuleOfSix(ctx.Source) {
 		if !g.Cond.Met(ctx) {
 			return
 		}
@@ -139,11 +152,13 @@ func (g MayWhile) run(ctx *EffectContext, do Effect) {
 			if !d.resolveOptional(ctx) {
 				return
 			}
+			ctx.Resolver.RecordUsage(ctx.Source)
 			continue
 		}
 		if ctx.ChooseOption("Repeat this effect?", []string{"Yes", "No"}) != 0 {
 			return
 		}
+		ctx.Resolver.RecordUsage(ctx.Source)
 		do.Resolve(ctx)
 	}
 }

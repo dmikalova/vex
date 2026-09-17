@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MercyMalkinQueen
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Mercy, Malkin Queen
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Witch
 //
 //	Skirmish.
-//	After a friendly Cat creature enters play, ward it.
+//	After a creature enters play, if it is a friendly creature and it is a Cat creature, ward it.
 //	Fight: Ready a friendly Beast creature.
 var MercyMalkinQueen = set.New(
 	"Mercy, Malkin Queen",
@@ -26,5 +21,17 @@ var MercyMalkinQueen = set.New(
 	card.Provenance(card.MM, "403"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Skirmish),
+	card.WithAbility(
+		card.Trigger.AfterCreatureEnters, card.Conditional{
+			Cond: card.And{Conditions: []card.Condition{
+				card.ItIsFriendly{},
+				card.ItIsOfTrait{Trait: card.Traits.Cat},
+			}},
+			Then: card.Ward{Target: card.Target.Triggering},
+		}),
+	card.WithAbility(
+		card.Trigger.Fight, card.ReadyCreatures{
+			Target: card.Target.EachFriendlyCreature.WithTrait(card.Traits.Beast),
+		}),
 )

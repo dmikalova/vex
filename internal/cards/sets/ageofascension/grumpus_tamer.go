@@ -32,7 +32,11 @@ var GrumpusTamer = set.New(
 	card.WithAbility(
 		card.Trigger.Reap, card.Sentences{
 			Effects: []card.Effect{
-				card.SearchForName{Name: WarGrumpus.Name},
+				card.Search{
+					Sources: []card.Zone{card.Deck, card.Discard},
+					Filter:  card.Filter{Name: WarGrumpus.Name},
+					Reveal:  true,
+				},
 				card.Shuffle{},
 			},
 		}),

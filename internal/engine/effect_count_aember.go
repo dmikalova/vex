@@ -5,7 +5,7 @@ package engine
 type AemberOnThis struct{}
 
 // Value returns the Æmber on the source card.
-func (AemberOnThis) Value(ctx *EffectContext) int { return ctx.Resolver.AmberOn(ctx.Source) }
+func (AemberOnThis) Value(ctx *EffectContext) int { return ctx.amberOn(ctx.Source) }
 
 // CountText renders the singular noun the "for each" clause repeats.
 func (AemberOnThis) CountText() string { return "Æmber on it" }

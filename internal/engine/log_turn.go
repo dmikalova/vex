@@ -156,23 +156,19 @@ func (e KeyForgePrevented) Text(n Namer) string {
 		n.PlayerName(e.Player), n.Name(e.By))
 }
 
-// KeyForged narrates a forged key: its colour when the player picked one, and
-// where it puts them on the way to winning.
+// KeyForged narrates a forged key: its colour and where it puts the player on the
+// way to winning.
 type KeyForged struct {
-	Player   int
-	Color    KeyColor
-	HasColor bool
-	Keys     int
-	Needed   int
+	Player int
+	Color  KeyColor
+	Keys   int
+	Needed int
 }
 
-// Text renders the forged key, naming its colour when it has one.
+// Text renders the forged key, naming its colour.
 func (e KeyForged) Text(n Namer) string {
-	if e.HasColor {
-		return fmt.Sprintf("%s forges a %s key (%d/%d)",
-			n.PlayerName(e.Player), e.Color, e.Keys, e.Needed)
-	}
-	return fmt.Sprintf("%s forges a key (%d/%d)", n.PlayerName(e.Player), e.Keys, e.Needed)
+	return fmt.Sprintf("%s forges a %s key (%d/%d)",
+		n.PlayerName(e.Player), e.Color, e.Keys, e.Needed)
 }
 
 // KeyUnforged narrates a key taken back off a player (Key Charge's mirror, and

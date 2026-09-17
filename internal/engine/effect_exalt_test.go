@@ -25,6 +25,49 @@ func TestExaltEffect(t *testing.T) {
 	e.Resolve(ctx)
 }
 
+// TestExaltDistinctSpread covers Bawretchadontius: a Times exalt spreads across
+// that many distinct creatures, and stops once the pool of distinct creatures
+// runs out.
+func TestExaltDistinctSpread(t *testing.T) {
+	spread := Exalt{
+		Target:   Target{Kind: TargetChosenEnemyCreature},
+		Amount:   1,
+		Times:    Fixed(2),
+		Distinct: true,
+	}
+	if got := spread.Text(); got != "exalt 2 enemy creatures" {
+		t.Errorf("distinct-spread text = %q, want %q", got, "exalt 2 enemy creatures")
+	}
+	if err := (Exalt{Target: Target{Kind: TargetChosenEnemyCreature}, Distinct: true}).validate(); err == nil {
+		t.Error("Distinct without a Times should be rejected")
+	}
+
+	t.Run("exalts two distinct creatures", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		src := g.AddToBattleline(testCreature("src", 1), 0)
+		e1 := g.AddToBattleline(testCreature("e1", 1), 1)
+		e2 := g.AddToBattleline(testCreature("e2", 1), 1)
+		e3 := g.AddToBattleline(testCreature("e3", 1), 1)
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{e1, e2}})
+		spread.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+		if g.AmberOn(e1) != 1 || g.AmberOn(e2) != 1 || g.AmberOn(e3) != 0 {
+			t.Errorf("amber e1/e2/e3 = %d/%d/%d, want 1/1/0",
+				g.AmberOn(e1), g.AmberOn(e2), g.AmberOn(e3))
+		}
+	})
+
+	t.Run("stops when distinct creatures run out", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		src := g.AddToBattleline(testCreature("src", 1), 0)
+		only := g.AddToBattleline(testCreature("only", 1), 1)
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{only}})
+		spread.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+		if g.AmberOn(only) != 1 {
+			t.Errorf("amber on only = %d, want 1", g.AmberOn(only))
+		}
+	})
+}
+
 // A "you may exalt <self>" is one clickable card — the source — so it is offered
 // declinably (Senator Shrix): clicking the source confirms, Done declines.
 func TestMayExaltSelfDeclinable(t *testing.T) {

@@ -525,9 +525,43 @@ func TestDistributeCapture(t *testing.T) {
 	if err := (DistributeCapture{By: AllBut(5)}).validate(); err == nil {
 		t.Error("a missing Source should be rejected")
 	}
+	if err := (DistributeCapture{By: AllBut(5), All: true, Source: Opponent}).validate(); err == nil {
+		t.Error("setting both By and All should be rejected")
+	}
 	if err := e.validate(); err != nil {
 		t.Errorf("valid effect rejected: %v", err)
 	}
+
+	const wantAll = "capture all your opponent's Æmber, " +
+		"distributed among any number of friendly creatures"
+	if got := (DistributeCapture{All: true, Source: Opponent}).Text(); got != wantAll {
+		t.Errorf("all-mode text = %q, want %q", got, wantAll)
+	}
+	const wantAllSelf = "capture all your Æmber, " +
+		"distributed among any number of friendly creatures"
+	if got := (DistributeCapture{All: true, Source: Controller}).Text(); got != wantAllSelf {
+		t.Errorf("all-mode self text = %q, want %q", got, wantAllSelf)
+	}
+	if err := (DistributeCapture{All: true, Source: Opponent}).validate(); err != nil {
+		t.Errorf("valid all-mode effect rejected: %v", err)
+	}
+
+	t.Run("all mode captures the whole pool", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToBattleline(testCreature("a", 4), 0)
+		b := g.AddToBattleline(testCreature("b", 4), 0)
+		g.SetAember(1, 3)
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{a, b, a}})
+		(DistributeCapture{All: true, Source: Opponent}).Resolve(
+			&EffectContext{Resolver: g, Source: a, Controller: 0},
+		)
+		if g.Aember(1) != 0 {
+			t.Errorf("opponent pool = %d, want 0", g.Aember(1))
+		}
+		if g.AmberOn(a) != 2 || g.AmberOn(b) != 1 {
+			t.Errorf("captured a/b = %d/%d, want 2/1", g.AmberOn(a), g.AmberOn(b))
+		}
+	})
 
 	t.Run("distributes onto chosen creatures", func(t *testing.T) {
 		g := NewGame("A", "B", 1)

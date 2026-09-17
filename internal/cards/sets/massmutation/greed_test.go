@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Demon • Sin
 //
-//	During your "draw cards" phase, refill your hand to 1 additional card for each friendly Sin creature.
+//	For each friendly Sin creature your hand size is 1 more.
 func TestGreed(t *testing.T) {
 	t.Run("refills one extra card for each friendly Sin creature", func(t *testing.T) {
 		var deck []any

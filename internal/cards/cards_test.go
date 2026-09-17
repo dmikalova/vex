@@ -328,7 +328,7 @@ func houseName(expr ast.Node) string {
 // pulled in by X always shares X's pod. References are read straight from the
 // definition: card text is generated from the effect tree rather than stored, so
 // the only strings that equal another card's name are genuine references (an
-// effect's SearchForName, a Target's Named filter, …).
+// effect's Search filter Name, a Target's Named filter, …).
 func TestReferencedCardIsConnected(t *testing.T) {
 	regs := card.Cards()
 	names := make(map[string]bool, len(regs))
@@ -440,12 +440,12 @@ func TestReprintedConnectedOrphanPanics(t *testing.T) {
 
 // TestSearchIsFollowedByShuffle enforces the KeyForge rule that a deck search is
 // always followed by a shuffle: whenever an ability's effect tree contains a
-// search effect (SearchForName or SearchDeck), the same tree must also contain a
+// search effect (Search), the same tree must also contain a
 // shuffle effect (any Shuffle* effect — Shuffle, ShuffleFromDiscard, etc.). The
 // search and the shuffle are deliberately separate effects, so this lint is what
 // keeps a search from silently skipping its shuffle.
 func TestSearchIsFollowedByShuffle(t *testing.T) {
-	searches := map[string]bool{"SearchForName": true, "SearchDeck": true}
+	searches := map[string]bool{"Search": true}
 	for _, rc := range card.Cards() {
 		for _, ab := range rc.Def.Abilities {
 			types := effectTypeNames(reflect.ValueOf(ab.Effect))
@@ -463,6 +463,9 @@ func TestSearchIsFollowedByShuffle(t *testing.T) {
 				if strings.HasPrefix(name, "Shuffle") {
 					shuffled = true
 				}
+			}
+			if searchShufflesInternally(reflect.ValueOf(ab.Effect)) {
+				shuffled = true
 			}
 			if !shuffled {
 				t.Errorf(
@@ -487,6 +490,46 @@ func effectTypeNames(v reflect.Value) map[string]bool {
 		switch v.Kind() {
 		case reflect.Struct:
 			found[v.Type().Name()] = true
+			for i := range v.NumField() {
+				walk(v.Field(i))
+			}
+		case reflect.Slice, reflect.Array:
+			for i := range v.Len() {
+				walk(v.Index(i))
+			}
+		case reflect.Interface, reflect.Pointer:
+			if !v.IsNil() {
+				walk(v.Elem())
+			}
+		case reflect.Map:
+			for iter := v.MapRange(); iter.Next(); {
+				walk(iter.Value())
+			}
+		}
+	}
+	walk(v)
+	return found
+}
+
+// searchShufflesInternally reports whether v's tree holds a Search effect that
+// shuffles as part of its own resolution (ShuffleBeforePlacing), which satisfies
+// the deck-search shuffle rule without a separate Shuffle effect (Digging Up the
+// Monster).
+func searchShufflesInternally(v reflect.Value) bool {
+	found := false
+	var walk func(v reflect.Value)
+	walk = func(v reflect.Value) {
+		if found {
+			return
+		}
+		switch v.Kind() {
+		case reflect.Struct:
+			if v.Type().Name() == "Search" {
+				if f := v.FieldByName("ShuffleBeforePlacing"); f.IsValid() && f.Bool() {
+					found = true
+					return
+				}
+			}
 			for i := range v.NumField() {
 				walk(v.Field(i))
 			}

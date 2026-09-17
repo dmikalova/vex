@@ -22,6 +22,6 @@ var Impspector = set.New(
 	card.WithAbility(
 		card.Trigger.Destroyed, card.PurgeFromHand{
 			Player:    card.Opponent,
-			Selection: card.Random{},
+			Selection: card.Random{Count: 1},
 		}),
 )

@@ -1,20 +1,23 @@
 package engine
 
-// KeyColor is the colour of a forged key. The colours are Red, Blue, and Yellow,
-// as in KeyForge.
+// KeyColor is the colour of a forged key. A player picks Red, Blue, or Yellow for
+// each of their first three keys. A fourth key has no colour left to pick, so it is
+// KeyColorColorless — an explicit value, not the KeyColorNone zero.
 // KeyColorNone is the zero value (an unforged slot).
 type KeyColor uint8
 
-// The key colours a player can forge; KeyColorNone is the unforged zero value.
+// The key colours a player can forge; KeyColorNone is the unforged zero value and
+// KeyColorColorless is the forced colour of a fourth key (no palette colour remains).
 const (
 	KeyColorNone KeyColor = iota
 	KeyColorRed
 	KeyColorBlue
 	KeyColorYellow
+	KeyColorColorless
 )
 
 // keyColorNames maps a KeyColor to its printed name, indexed by the enum value.
-var keyColorNames = [...]string{"None", "Red", "Blue", "Yellow"}
+var keyColorNames = [...]string{"None", "Red", "Blue", "Yellow", "Colorless"}
 
 // String returns the printed colour name.
 func (c KeyColor) String() string {

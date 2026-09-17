@@ -38,6 +38,11 @@ func RenderAbility(a Ability) string {
 			return punctuate(capitalizeFirst(s))
 		}
 	}
+	if a.Trigger == TriggerAfterEnemyCardPlayed {
+		if s, ok := afterEnemyPlaysCreatureOnFlankText(a.Effect); ok {
+			return punctuate(capitalizeFirst(s))
+		}
+	}
 	if a.Trigger == TriggerEntersPlay {
 		if s, ok := entersPlayConditionalText(a.Effect); ok {
 			return punctuate(capitalizeFirst(s))
@@ -59,8 +64,10 @@ func RenderAbility(a Ability) string {
 // Mengevin's "after you discard a Sanctum card, ...", rather than the literal
 // "after you <verb> a card, if it is a <shape>, ...". A Conditional{ItIsNamed}
 // folds the same way to a named card — Chain Gang's "after you play Subtle Chain,
-// ready Chain Gang". Any other effect renders with the broad prefix, so an
-// unconditional or state-gated reaction still reads "After you <verb> a card, ...".
+// ready Chain Gang" — and a Conditional{ItIsOfTrait} to a trait creature — Dark
+// Æmber Vault's "after you play a Mutant creature, draw a card". Any other effect
+// renders with the broad prefix, so an unconditional or state-gated reaction still
+// reads "After you <verb> a card, ...".
 func afterYouActOnText(verb string, e Effect) (string, bool) {
 	cond, ok := e.(Conditional)
 	if !ok {
@@ -73,6 +80,10 @@ func afterYouActOnText(verb string, e Effect) (string, bool) {
 		) + ", " + cond.Then.Text(), true
 	case ItIsNamed:
 		return "after you " + verb + " " + it.Name + ", " + cond.Then.Text(), true
+	case ItIsOfTrait:
+		return "after you " + verb + " " + indefinite(
+			it.Trait.String()+" creature",
+		) + ", " + cond.Then.Text(), true
 	case ItHasBonusIcon:
 		return "after you " + verb + " a card with a bonus icon, " + cond.Then.Text(), true
 	default:
@@ -99,6 +110,26 @@ func afterCreaturePlayedAdjacentText(e Effect) (string, bool) {
 	}
 	return "after a " + trait.Trait.String() + " creature is played adjacent to " +
 		SelfName + ", " + cond.Then.Text(), true
+}
+
+// afterEnemyPlaysCreatureOnFlankText folds an AfterEnemyCardPlayed reaction gated
+// only on which flank the played creature landed on — a Conditional{OnFlank{OfIt}} —
+// into "after your opponent plays a creature on their <side> flank, <then>" (Dexus
+// right, Sinestra left), rather than the literal "after your opponent plays a card,
+// if it is on the right flank, ...". Only a creature holds a flank, so the fused
+// wording names the creature the position already requires. Any other effect shape
+// reports false and renders with the broad prefix.
+func afterEnemyPlaysCreatureOnFlankText(e Effect) (string, bool) {
+	cond, ok := e.(Conditional)
+	if !ok || cond.Else != nil {
+		return "", false
+	}
+	fl, ok := cond.Cond.(OnFlank)
+	if !ok || !fl.OfIt || fl.Where == AnyFlank {
+		return "", false
+	}
+	return "after your opponent plays a creature on their " +
+		fl.sideName() + " flank, " + cond.Then.Text(), true
 }
 
 // afterChooseHouseText folds an AfterChooseHouse ability, whose effect is a
@@ -159,14 +190,24 @@ func entersPlayConditionalText(e Effect) (string, bool) {
 }
 
 // enterStateWord renders the state an "enters play" ability leaves its creature in,
-// e.g. Stun -> "stunned", so the ability reads "<name> enters play stunned." An
-// effect without a dedicated enter word falls back to its ordinary text.
+// e.g. Stun -> "stunned", so the ability reads "<name> enters play stunned." A
+// Sentences of state effects joins its words with "and" (Gizelhart's Zealot enters
+// play ready and enraged). An effect without a dedicated enter word falls back to
+// its ordinary text.
 func enterStateWord(e Effect) string {
-	switch e.(type) {
+	switch ef := e.(type) {
 	case Stun:
 		return "stunned"
 	case Ready:
 		return "ready"
+	case Enrage:
+		return "enraged"
+	case Sentences:
+		words := make([]string, len(ef.Effects))
+		for i, sub := range ef.Effects {
+			words[i] = enterStateWord(sub)
+		}
+		return strings.Join(words, " and ")
 	default:
 		return e.Text()
 	}
@@ -440,6 +481,18 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 		rules = append(rules,
 			"Damage dealt to "+t.Text()+" is dealt to "+def.Name+" instead.")
 	}
+	if def.AlsoTakesNeighborFightDamage {
+		rules = append(rules,
+			"Damage dealt to "+def.Name+"'s neighbors during fights is also dealt to "+
+				def.Name+".")
+	}
+	if m := def.CannotBeDealtDamageBy; m.Active() {
+		rules = append(rules, def.Name+" cannot be dealt damage by "+m.clause()+".")
+	}
+	if px := def.PowerX; px != nil {
+		rules = append(rules,
+			strings.ReplaceAll("X is "+cardinalCountText(px)+".", SelfName, def.Name))
+	}
 	if s := attackIgnoresText(def); s != "" {
 		rules = append(rules, s)
 	}
@@ -546,51 +599,33 @@ func CardDocComment(def *CardDefinition) string {
 }
 
 // drawModifierText renders a card's continuous change to a player's end-of-turn
-// hand refill, e.g. `During your "draw cards" phase, refill your hand to 1
-// additional card.` Returns "" when the modifier is zero.
+// hand size, e.g. `Your hand size is 1 more.` or, scaled by a running count,
+// `For each friendly Sin creature your hand size is 1 more.` Returns "" when the
+// modifier is zero.
 func drawModifierText(m DrawModifier) string {
 	if m.Amount == 0 {
 		return ""
 	}
-	word, n := "additional", m.Amount
+	word, n := "more", m.Amount
 	if n < 0 {
 		word, n = "less", -n
 	}
-	noun := "card"
-	if n != 1 {
-		noun = "cards"
-	}
-	var s string
+	var subject string
 	switch m.Player {
 	case Controller:
-		s = fmt.Sprintf(
-			"During your %q phase, refill your hand to %d %s %s",
-			"draw cards",
-			n,
-			word,
-			noun,
-		)
+		subject = "your hand size"
 	case Opponent:
-		s = fmt.Sprintf(
-			"During their %q phase, your opponent refills their hand to %d %s %s",
-			"draw cards",
-			n,
-			word,
-			noun,
-		)
+		subject = "your opponent's hand size"
 	default: // EachPlayer
-		s = fmt.Sprintf(
-			"During their %q phase, each player refills their hand to %d %s %s",
-			"draw cards",
-			n,
-			word,
-			noun,
-		)
+		subject = "each player's hand size"
 	}
+	body := fmt.Sprintf("%s is %d %s", subject, n, word)
+	var s string
 	if m.Per != nil {
-		s += " for each " + m.Per.CountText()
+		s = "For each " + m.Per.CountText() + " " + body + "."
+	} else {
+		s = capitalizeFirst(body) + "."
 	}
-	s += "."
 	if m.OnlyWhileOffFlank {
 		s = "While " + SelfName + " is not on a flank, " + strings.ToLower(s[:1]) + s[1:]
 	}
@@ -806,6 +841,12 @@ func constantText(def *CardDefinition) string {
 	var lines []string
 	for _, c := range def.ConstantAbilities {
 		who := capitalizeFirst(c.target().Text())
+		for _, t := range c.DisableTriggers {
+			lines = append(lines, t.String()+" effects cannot trigger.")
+		}
+		if c.BlankText {
+			lines = append(lines, who+"'s text box is considered blank (except for traits).")
+		}
 		for _, k := range c.CannotBeUsedTo {
 			line := who + " cannot " + k.verb() + "."
 			lines = append(lines, strings.ReplaceAll(line, SelfName, def.Name))
@@ -824,6 +865,9 @@ func constantText(def *CardDefinition) string {
 		}
 		if c.HazardousBonus != 0 {
 			parts = append(parts, fmt.Sprintf("hazardous %d", c.HazardousBonus))
+		}
+		if c.AssaultBonus != 0 {
+			parts = append(parts, fmt.Sprintf("assault %d", c.AssaultBonus))
 		}
 		for _, k := range c.Keywords {
 			parts = append(parts, strings.ToLower(k.String()))

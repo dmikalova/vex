@@ -178,6 +178,7 @@ var Traits = traits{
 	Assassin:     engine.Assassin,
 	Beast:        engine.Beast,
 	Cat:          engine.Cat,
+	Changeling:   engine.Changeling,
 	Cleric:       engine.Cleric,
 	Cyborg:       engine.Cyborg,
 	Demon:        engine.Demon,
@@ -245,6 +246,7 @@ type traits struct {
 	Angel,
 	Beast,
 	Cat,
+	Changeling,
 	Cleric,
 	Cyborg,
 	Demon,
@@ -373,6 +375,24 @@ type useKinds struct {
 // because card.UseKind is the value namespace, so a []card.UseKind literal can't
 // be written directly. E.g. card.UseKinds(card.UseKind.Reap).
 func UseKinds(k ...engine.UseKind) []engine.UseKind { return k }
+
+// Triggers builds the trigger slice for a ConstantAbility.DisableTriggers field,
+// because card.Trigger is the value namespace, so a []card.Trigger literal can't
+// be written directly. E.g. card.Triggers(card.Trigger.Destroyed).
+func Triggers(t ...engine.Trigger) []engine.Trigger { return t }
+
+// SpendScope names which player a spend-as-pool permission benefits, e.g.
+// card.SpendScope.Controller (The Callipygian Ideal) or card.SpendScope.Opponent
+// (Mole). It has no default: a card that grants the permission names one.
+var SpendScope = spendScopes{
+	Controller: engine.SpendByController,
+	Opponent:   engine.SpendByOpponent,
+}
+
+type spendScopes struct {
+	Controller engine.SpendScope
+	Opponent   engine.SpendScope
+}
 
 // Trigger groups the ability triggers, e.g. card.Trigger.Play or
 // card.Trigger.AfterForgeKey.

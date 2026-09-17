@@ -45,6 +45,15 @@ func (c OnFlank) flankPhrase() string {
 	}
 }
 
+// sideName names the flank side for the possessive "their <side> flank" wording
+// the fused enemy-play trigger renders (Dexus right, Sinestra left).
+func (c OnFlank) sideName() string {
+	if c.Where == RightFlank {
+		return "right"
+	}
+	return "left"
+}
+
 // CondText renders the condition naming the subject and flank.
 func (c OnFlank) CondText() string {
 	return "if " + c.subject() + " is on " + c.flankPhrase()

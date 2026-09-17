@@ -72,6 +72,10 @@ type (
 	// is in play, optionally gated on your Æmber pool and withholding one house
 	// (Fandangle); pass it to card.WithFriendlyEntersPlayReady.
 	EntersReadyGrant = engine.EntersReadyGrant
+	// DamageSource names the creatures a card refuses damage from — those carrying a
+	// trait or at least a power (Ardent Hero refuses Mutant creatures or creatures
+	// with power 5 or higher); pass it to card.WithCannotBeDealtDamageBy.
+	DamageSource = engine.DamageSourceMatcher
 )
 
 // TollOn groups the actions a Toll can charge for, e.g. card.TollOn.PlayArtifact.

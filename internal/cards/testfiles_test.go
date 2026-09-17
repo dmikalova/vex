@@ -175,19 +175,31 @@ func declaresCardValue(expr ast.Expr) bool {
 	return ok
 }
 
-// isCardNewCall reports whether expr is a card-building New call: card.New (the
-// facade) or set.New (a set package's registrar declared in its 0set.go).
+// isCardNewCall reports whether expr is a card-building call: card.New (the
+// facade) or set.New (a set package's registrar declared in its 0set.go), or
+// set.Gigantic (the registrar's two-half gigantic builder, which registers the
+// base card).
 func isCardNewCall(expr ast.Expr) bool {
 	call, ok := expr.(*ast.CallExpr)
 	if !ok {
 		return false
 	}
 	sel, ok := call.Fun.(*ast.SelectorExpr)
-	if !ok || sel.Sel.Name != "New" {
+	if !ok {
 		return false
 	}
 	pkg, ok := sel.X.(*ast.Ident)
-	return ok && (pkg.Name == "card" || pkg.Name == "set")
+	if !ok {
+		return false
+	}
+	switch {
+	case sel.Sel.Name == "New" && (pkg.Name == "card" || pkg.Name == "set"):
+		return true
+	case sel.Sel.Name == "Gigantic" && pkg.Name == "set":
+		return true
+	default:
+		return false
+	}
 }
 
 // registersCards reports whether f registers cards through a card.New or set.New

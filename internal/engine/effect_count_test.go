@@ -600,6 +600,28 @@ func TestTraitsOfChosen(t *testing.T) {
 	}
 }
 
+// TestBonusIconsOfChosen covers Mindfire: the value is the number of bonus icons
+// on the card in context (ctx.It), zero without one, and the text names the card.
+func TestBonusIconsOfChosen(t *testing.T) {
+	c := BonusIconsOfChosen{Subject: DiscardedCard}
+	if got := c.CountText(); got != "bonus icon on the discarded card" {
+		t.Errorf("CountText = %q", got)
+	}
+	if got := c.Value(&EffectContext{}); got != 0 {
+		t.Errorf("Value with no It = %d, want 0", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	id := g.Register(
+		NewCard("pip", Dis, Tactic, Common, WithBonus(BonusAember, BonusDraw)), 1)
+	if got := g.BonusIconCount(id); got != 2 {
+		t.Errorf("BonusIconCount = %d, want 2", got)
+	}
+	if got := c.Value(&EffectContext{Resolver: g, It: id, HasIt: true}); got != 2 {
+		t.Errorf("Value = %d, want 2", got)
+	}
+}
+
 // TestPowerOfChosen covers the full-power count (Mindworm): the value is the
 // context creature's power, zero without one, and it renders inside an "equal to"
 // clause.

@@ -91,9 +91,9 @@ func TestDestructionReplacedByOwnStatic(t *testing.T) {
 // A destruction replacement that heals damage but does not restore power —
 // Reassembling Automaton "instead fully heal it and move it to a flank" — must not
 // hang the state-based sweep when the creature is destroyable because it sits at 0
-// power (a debuff, not damage). The replacement fires once; because the creature is
-// still destroyable afterward, the second pass destroys it for real instead of
-// replacing it forever.
+// power (a debuff, not damage). The Rule of Six bounds the replacement: it stands
+// in for six destructions, then the seventh resolves for real instead of replacing
+// the 0-power creature forever.
 func TestDestructionReplacementDoesNotHangAtZeroPower(t *testing.T) {
 	g := started(t)
 	automaton := testCreature("automaton", 3, WithStatic(StaticModifier{
@@ -110,8 +110,21 @@ func TestDestructionReplacementDoesNotHangAtZeroPower(t *testing.T) {
 	g.AddToBattleline(testCreature("ally", 3), 0) // satisfies the replacement's condition
 	g.State.Cards[saved].TempPowerBonus = -3      // drop it to 0 power, destroyable
 
-	g.settleDestroyed(0) // must terminate, not loop forever replacing the 0-power creature
+	g.settleDestroyed(0) // must terminate, bounded by the Rule of Six, not loop forever
 
+	var replaced int
+	for _, e := range g.Log {
+		if _, ok := e.Entry.(DestructionReplaced); ok {
+			replaced++
+		}
+	}
+	if replaced != RuleOfSix {
+		t.Errorf(
+			"the replacement stood in %d times, want %d (the Rule of Six)",
+			replaced,
+			RuleOfSix,
+		)
+	}
 	if slices.Contains(g.Battleline(0), saved) {
 		t.Error("a creature still destroyable after its replacement should be destroyed")
 	}

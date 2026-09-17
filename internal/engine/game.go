@@ -16,6 +16,10 @@ const (
 	KeyCost = 6
 	// KeysToWin is the number of keys a player must forge to win.
 	KeysToWin = 3
+	// MaxKeys is the most keys a player can hold. A player wins on their third key,
+	// but an effect can forge a fourth (colourless) key before the game ends, so the
+	// key count and the KeyColors slots run one past KeysToWin.
+	MaxKeys = 4
 	// HandSize is the number of cards a player draws back up to at end of turn.
 	HandSize = 6
 )
@@ -132,10 +136,6 @@ type Game struct {
 	Log []Record
 	// frames is the stack of open attribution frames; see Game.openFrame.
 	frames []Frame
-	// triggerDepth is how many TriggerAbility resolutions are open. Two Replicators
-	// would trigger each other's reap effect forever, so the Rule of Six bounds the
-	// chain the same way it bounds a repeated effect.
-	triggerDepth int
 	// recording is whether outcomes are narrated at all. NewGame turns it on; a bot
 	// exploring cloned positions turns it off so the log costs nothing.
 	recording bool
@@ -192,15 +192,14 @@ type Game struct {
 	// resolve. A Destroyed ability that destroys more creatures appends theirs here,
 	// so the resolve loop re-gathers and keeps going until the queue drains.
 	destroyPending []triggeredAbility
-	// replacedThisSweep names the creatures whose destruction a replacement stood in
-	// for during the current state-based sweep (Reassembling Automaton "instead move
-	// it to a flank"). A replacement that heals damage but does not lift the reason
-	// the creature is destroyable — it sits at 0 power — would otherwise be
-	// re-detected and re-replaced every pass, hanging the sweep. The replacement
-	// fires once per sweep: a creature that is destroyable again after being replaced
-	// is destroyed for real. settleDestroyed resets this when the sweep begins and
-	// clears it when the sweep ends, so it never leaks between sweeps.
-	replacedThisSweep []LocalID
+	// powerComputing is the stack of creatures whose Power is mid-computation, so a
+	// variable "X" power that reads a neighbor's power cannot recurse forever when
+	// two such creatures reference each other (two Picaroons that both lost
+	// Changeling to Grey Aberrant). A creature asked for its power while already on
+	// the stack contributes 0 — an undeterminable value is 0 (KeyForge). It is
+	// runtime scratch, always balanced by Power's defer, so it is not part of the
+	// snapshotted state.
+	powerComputing []LocalID
 }
 
 // NewGame creates a new two-player game seeded for deterministic play.

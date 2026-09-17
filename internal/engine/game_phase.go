@@ -129,7 +129,6 @@ func (g *Game) readyPhase(player int) {
 	// including any enemy one an effect protected (Protectrix). A keyword gained for
 	// the turn (Scout) expires the same way, on whichever creature holds it.
 	for _, id := range append(g.allInPlay(player), g.allInPlay(1-player)...) {
-		g.State.Cards[id].DamageImmune = false
 		g.State.Cards[id].GrantedKeywords = 0
 		g.State.Cards[id].LostKeywords = 0
 		g.State.Cards[id].ConsideredFlank = false
@@ -140,7 +139,6 @@ func (g *Game) readyPhase(player int) {
 	}
 	g.State.CannotFight[player] = Bar[bool]{}
 	g.State.CannotUse[player] = Bar[bool]{}
-	g.State.SideDamageImmune = [2]bool{}
 	g.State.CannotReap[player] = Bar[bool]{}
 	g.State.CannotReapHouse[player] = Bar[House]{}
 	g.State.CreaturesCannot[player] = Bar[CreatureBar]{}
@@ -174,8 +172,6 @@ func (g *Game) readyPhase(player int) {
 	g.clearOffHousePermits(player)
 	g.State.KeyCostBump[player] = Bar[int]{}
 	g.State.KeyCostPerHouse[player] = Bar[perHouseKeySurcharge]{}
-	g.State.KeywordsLost = 0
-	g.State.TextBlank[player] = Bar[bool]{}
 	g.clearLasting(player)
 	// End of the "ready cards" step: every card has readied (Greater Oxtet purges
 	// a card from hand to grow).
@@ -218,6 +214,16 @@ func (g *Game) endOfTurnPhase(player int) {
 	g.resolveWindow(g.orderTriggered(player, pending))
 	g.settleDestroyed(player)
 	g.clearScheduled()
+	// Duration-scoped continuous effects (damage immunity, lost keywords, blanked
+	// text, stat overrides) end here, after the end-of-turn window and immediately
+	// before the turn hands over, so an end-of-turn ability still sees this turn's
+	// effects and a "during your opponent's next turn" effect survives into it.
+	g.clearExpiredContinuous()
+	// Expiring a continuous effect can leave a creature lethal: an un-blanked
+	// constant power-reducer (Shadow of Dis wearing off King of the Crag) or a
+	// lifted stat override can drop a creature to zero power, so settle again
+	// before the turn hands over.
+	g.settleDestroyed(player)
 	// The turn is handed over on a shared scoreboard: the player who just played,
 	// then the one about to.
 	for _, p := range [2]int{player, 1 - player} {

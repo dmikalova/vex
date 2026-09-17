@@ -37,6 +37,11 @@ const (
 	// deck-wide strategy and the only one gated complete-by-construction — every
 	// House the set can deck must have a member, or NewSet panics. Shards use it.
 	OnePerHouse
+	// PerGigantic places one member, chosen at random, into each gigantic base's
+	// pod, stamped to that pod's House. It fires off deck structure (a gigantic
+	// present), not a member being drawn, so its members are Houseless reservoir
+	// cards drawn only by the pull. The tutors use it (ADR 0044).
+	PerGigantic
 )
 
 // ClusterTrigger is what fires a cluster. The zero value is invalid, caught at
@@ -163,6 +168,12 @@ func (s Set) validateClusters() {
 	for name, ci := range s.clusters {
 		if ci.strategy == clusterStrategyInvalid {
 			panic(fmt.Sprintf("deckgen: cluster %q in set %q has no strategy", name, s.Name))
+		}
+		// PerGigantic fires off deck structure (a gigantic present), not a member
+		// being drawn, so it needs no trigger, lead, or rollable member — a member
+		// is pulled into a gigantic's pod, never drawn on its own.
+		if ci.strategy == PerGigantic {
+			continue
 		}
 		if ci.trigger == clusterTriggerInvalid {
 			panic(fmt.Sprintf("deckgen: cluster %q in set %q has no trigger", name, s.Name))
@@ -323,6 +334,29 @@ func (s Set) onePerHouseClusters() []clusterIndex {
 	names := make([]string, 0, len(src))
 	for name, ci := range src {
 		if ci.strategy == OnePerHouse {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	out := make([]clusterIndex, 0, len(names))
+	for _, name := range names {
+		out = append(out, src[name])
+	}
+	return out
+}
+
+// perGiganticClusters returns the PerGigantic clusters to resolve when a gigantic
+// is placed, in name order, drawn from the attached catalog ClusterPool when one
+// is set so a tutor family shared across sets (the tutors) is reachable by every
+// gigantic-bearing set, else from the set's own clusters.
+func (s Set) perGiganticClusters() []clusterIndex {
+	src := s.clusters
+	if s.crossClusters != nil {
+		src = s.crossClusters.clusters
+	}
+	names := make([]string, 0, len(src))
+	for name, ci := range src {
+		if ci.strategy == PerGigantic {
 			names = append(names, name)
 		}
 	}

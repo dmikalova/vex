@@ -70,6 +70,9 @@ func (g *Game) usable(player int, id LocalID) error {
 	if g.State.Cards[id].Exhausted {
 		return ErrCardExhausted
 	}
+	if g.atRuleOfSix(id) {
+		return ErrRuleOfSix
+	}
 	if !g.usableInActiveHouse(id) {
 		return ErrWrongHouse
 	}
@@ -231,8 +234,10 @@ func (g *Game) Unstun(player int, id LocalID) error {
 // recordUse marks one successful use of a creature this turn. "Used" is the
 // rulebook umbrella for reaping, fighting, or using an Action: ability; the count
 // advances before that use resolves so Fight:/Reap: abilities see their first use
-// as count 1.
+// as count 1. Using any card also counts a usage of its name toward the Rule of
+// Six, so an artifact's Action: is bounded even though it is not a creature.
 func (g *Game) recordUse(id LocalID) {
+	g.recordUsage(id)
 	if g.TypeOf(id) == Creature {
 		g.State.Cards[id].TimesUsedThisTurn++
 		g.State.TurnHistory[g.controller(id)][CreaturesUsedThisTurn]++
@@ -335,20 +340,47 @@ func (g *Game) firesForSubject(t triggeredAbility) bool {
 }
 
 // subjectNarrowing returns the condition a reaction uses to narrow the triggering
-// event to a shape of the card in context — an ItIs family condition (house, type,
-// name, trait, or friendliness of "it") wrapping the whole effect with no Else. It
-// is exactly the shape afterYouActOnText folds into "after you play an artifact",
-// so a reaction that reads as narrowed is the reaction that fires only when narrowed.
+// event to a shape of the card in context — a predicate evaluable purely from the
+// played, used, or discarded card and its board position, wrapping the whole effect
+// with no Else. It is exactly the shape afterYouActOnText folds into "after you play
+// an artifact", so a reaction that reads as narrowed is the reaction that fires only
+// when narrowed.
 func subjectNarrowing(e Effect) (Condition, bool) {
 	c, ok := e.(Conditional)
 	if !ok || c.Else != nil {
 		return nil, false
 	}
-	switch c.Cond.(type) {
-	case ItIs, ItIsNamed, ItIsOfTrait, ItIsFriendly:
+	if isSubjectPredicate(c.Cond) {
 		return c.Cond, true
 	}
 	return nil, false
+}
+
+// isSubjectPredicate reports whether a condition is decided entirely by the card in
+// context — its house, type, name, trait, friendliness, or flank position — with no
+// dependence on wider board state, so a reaction gated on it can be narrowed before
+// resolution instead of joining every ordering window. An And of subject predicates
+// is itself a subject predicate (Dark Æmber Vault's friendly Mutant creature); a
+// board "if" (Overwhelmed) is not, so that reaction still fires and is rechecked at
+// resolution.
+func isSubjectPredicate(c Condition) bool {
+	switch cc := c.(type) {
+	case ItIs, ItIsNamed, ItIsOfTrait, ItIsFriendly:
+		return true
+	case OnFlank:
+		return cc.OfIt
+	case And:
+		if len(cc.Conditions) == 0 {
+			return false
+		}
+		for _, sub := range cc.Conditions {
+			if !isSubjectPredicate(sub) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
 }
 
 // reapReactions gathers, in default resolution order, every card-sourced ability
@@ -498,9 +530,10 @@ func (g *Game) Fight(player int, attacker, defender LocalID) error {
 }
 
 // hasTrigger reports whether an in-play card has the trigger itself, from an
-// attached upgrade, or from a constant ability affecting it.
+// attached upgrade, or from a constant ability affecting it. A blanked card's own
+// printed trigger is ignored, so its "Action:"/"Omni:" is not offered while blank.
 func (g *Game) hasTrigger(id LocalID, trigger Trigger) bool {
-	if g.cat.def(id).hasTrigger(trigger) {
+	if !g.textBlanked(id) && g.cat.def(id).hasTrigger(trigger) {
 		return true
 	}
 	for _, upgrade := range g.Upgrades(id) {
@@ -606,12 +639,15 @@ func (g *Game) recoverFromStun(id LocalID) bool {
 	return true
 }
 
-// readyToUse reports whether a creature may be used by an ability right now. A
-// creature can only be used while ready: an ability may still target an exhausted
-// creature, but using it then does nothing. Unlike canUse this ignores the active
-// player and active house — ability-driven use cares only about readiness.
-func (g *Game) readyToUse(id LocalID) bool {
-	if g.State.Cards[id].Exhausted {
+// usableByAbility reports whether a card may be used by an ability right now. A
+// card can only be used while ready, and only while its name is under the Rule of
+// Six: an ability that would use a creature whose name has already been used six
+// times this turn does nothing, the same cap the active player's own uses obey, so
+// two Legatus Raptors readying and using each other cannot fight past six between
+// them. Unlike canUse this ignores the active player and active house — ability-
+// driven use cares only about readiness and the Rule of Six.
+func (g *Game) usableByAbility(id LocalID) bool {
+	if g.State.Cards[id].Exhausted || g.atRuleOfSix(id) {
 		g.record(CardCannotBeUsed{Card: id})
 		return false
 	}
@@ -829,10 +865,26 @@ func (g *Game) triggerAbilitiesAs(
 	it LocalID,
 	hasIt bool,
 ) {
+	g.triggerAbilitiesRooted(actor, src, trigger, it, hasIt, 0, false)
+}
+
+// triggerAbilitiesRooted is triggerAbilitiesAs carrying the Rule-of-Six cascade
+// root, so a chain of Replicator-style triggers charges the card that started it
+// rather than each card whose ability resolves along the way.
+func (g *Game) triggerAbilitiesRooted(
+	actor int,
+	src LocalID,
+	trigger Trigger,
+	it LocalID,
+	hasIt bool,
+	root LocalID,
+	hasRoot bool,
+) {
 	pending := g.triggeredBy(src, trigger)
 	for i := range pending {
 		pending[i].actor = int8(actor)
 		pending[i].it, pending[i].hasIt = it, hasIt
+		pending[i].root, pending[i].hasRoot = root, hasRoot
 	}
 	g.resolveWindow(g.orderTriggered(actor, pending))
 }
@@ -886,11 +938,13 @@ func (g *Game) resolveWindow(ordered []triggeredAbility) {
 // card that has left play resolves nothing more, so it is skipped and false
 // returned. A tactic is the one source that resolves its own ability while not in
 // play — it never enters play, so "source in play" does not apply to it; its Play:
-// still resolves.
+// still resolves. A TriggersFromDiscard card is the other exception: it resolves
+// its choose-house ability from its owner's discard pile (Relentless Creeper
+// returns itself to hand), so a source that is discard-active is not skipped.
 func (g *Game) resolveTriggered(t triggeredAbility) bool {
 	src := t.source
 	actor := int(t.actor)
-	if !g.inPlay(src) && g.cat.def(src).Type != Tactic {
+	if !g.inPlay(src) && g.cat.def(src).Type != Tactic && !g.activeInDiscard(src) {
 		return false
 	}
 	closeFrame := g.openFrame(Frame{
@@ -907,6 +961,8 @@ func (g *Game) resolveTriggered(t triggeredAbility) bool {
 		Controller: actor,
 		It:         t.it,
 		HasIt:      t.hasIt,
+		Root:       t.root,
+		HasRoot:    t.hasRoot,
 	}
 	// A granted ability still knows the card that granted it (Source is the
 	// creature the ability now lives on), so an effect on the granted ability can
@@ -1138,6 +1194,12 @@ type triggeredAbility struct {
 	actor   int8
 	it      LocalID
 	hasIt   bool
+	// root carries the Rule-of-Six cascade root through a chain of Replicator-style
+	// triggers, so every ability the chain resolves charges the card that started
+	// it rather than each resolving card's own name. hasRoot reports whether one is
+	// set; only a chained trigger window carries it.
+	root    LocalID
+	hasRoot bool
 	// lasting marks a duration reaction from the lasting registry (Full Moon,
 	// Charge!, Crystal Hive) rather than a card's printed ability. It has no source
 	// card in play, so it carries its LastingEffect in le and resolves through
@@ -1155,6 +1217,9 @@ type triggeredAbility struct {
 // then destroyTogether lets the active player order the whole set as KeyForge
 // requires.
 func (g *Game) destroyedAbilities(ids []LocalID) []triggeredAbility {
+	if g.triggerDisabled(TriggerDestroyed) {
+		return nil
+	}
 	var pending []triggeredAbility
 	for _, id := range ids {
 		got := g.triggeredBy(id, TriggerDestroyed)
@@ -1164,4 +1229,26 @@ func (g *Game) destroyedAbilities(ids []LocalID) []triggeredAbility {
 		pending = append(pending, got...)
 	}
 	return pending
+}
+
+// triggerDisabled reports whether any active constant ability in play disables the
+// given trigger, so no card's ability with that trigger fires — Purifier of Souls
+// disables every Destroyed ability while it stays in play. It reads board-wide,
+// independent of the disabling ability's Target.
+func (g *Game) triggerDisabled(t Trigger) bool {
+	for p := 0; p < 2; p++ {
+		for _, src := range g.allInPlay(p) {
+			for _, c := range g.cat.def(src).ConstantAbilities {
+				if len(c.DisableTriggers) == 0 || !g.constantActive(src, c) {
+					continue
+				}
+				for _, dt := range c.DisableTriggers {
+					if dt == t {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }

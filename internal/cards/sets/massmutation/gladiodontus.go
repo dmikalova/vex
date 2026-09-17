@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Gladiodontus
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -15,9 +10,9 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  15
 //	Traits: Mutant
 //
+//	Gladiodontus deals 5 Damage when fighting.
 //	Gladiodontus enters play stunned.
-//	Gladiodontus only deals 5D when fighting.
-//	Fight/Reap: If this is the first time Gladiodontus has been used this turn, ready and enrage it.
+//	Fight/Reap: If this is the first time Gladiodontus has been used this turn, ready and enrage Gladiodontus.
 var Gladiodontus = set.New(
 	"Gladiodontus",
 	card.House.Saurian,
@@ -26,5 +21,16 @@ var Gladiodontus = set.New(
 	card.Provenance(card.MM, "206"),
 	card.WithPower(15),
 	card.WithTraits(card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithEntersPlay(card.Stun{Target: card.Target.This}),
+	card.WithAttackDamage(card.AttackDamage{
+		Amount: 5,
+		Fixed:  true,
+	}),
+	card.WithAbility(card.Trigger.FightReap, card.Conditional{
+		Cond: card.SourceFirstUseThisTurn{},
+		Then: card.Sequence{Effects: []card.Effect{
+			card.Ready{Target: card.Target.This},
+			card.Enrage{Target: card.Target.This},
+		}},
+	}),
 )

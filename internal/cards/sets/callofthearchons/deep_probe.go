@@ -23,7 +23,7 @@ var DeepProbe = set.New(
 				card.RevealHand{Player: card.Opponent},
 				card.DiscardCard{
 					Player:    card.Opponent,
-					Zone:      card.Hand,
+					Zones:     []card.Zone{card.Hand},
 					Selection: card.Each{Type: card.Type.Creature, House: card.Houses.Chosen},
 				},
 			}},

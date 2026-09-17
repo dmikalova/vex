@@ -1,20 +1,15 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// Borrow
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// "Borrow"
 //
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Take control of an enemy artifact. While under your control, it belongs to house Shadows. (Instead of its original house.)
+//	Play: Take control of an enemy artifact. It belongs to house Shadows.
 var Borrow = set.New(
 	"\"Borrow\"",
 	card.House.Shadows,
@@ -22,5 +17,16 @@ var Borrow = set.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "263"),
 	card.WithBonus(card.Bonus.Aember),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.TakeControl{
+				Target:   card.Target.EnemyArtifact,
+				Duration: card.Duration.Forever,
+			},
+			card.BelongToHouse{
+				Target:   card.Target.Triggering,
+				House:    card.House.Self,
+				Duration: card.Duration.UntilThisLeavesPlay,
+			},
+		}}),
 )

@@ -183,6 +183,31 @@ bonus, you gain that much Æmber`. Instead of refunding only the Æmber bonus,
   lets the card reuse the shared `ResolveBonusIcons` mechanic instead of a one-off
   Æmber-bonus count node. On the common case (an artifact whose only bonus is
   Æmber) the outcome is identical.
+- **J43G3R V** is mandatory and immediate: it reads `Reap: Reap with 2 non-Star
+Alliance creatures, one at a time` and `Fight: Fight with 2 non-Star Alliance
+creatures, one at a time`, not KeyForge's deferred `After Reap: You may reap with
+up to 2 non-Star Alliance creatures this turn` (and the matching Fight permission).
+  The `you may … up to 2 … this turn` permission is dropped in favor of an
+  immediate use of the same creatures, one at a time — the same move already made
+  on Ghosthawk (mandatory neighbor reaps) and the play-permission cards under
+  rule 21. This drops the turn-scoped unused-permission memory and folds the card
+  into the shared `Use` mechanic (a `Verb`-restricted use, the same node Combat
+  Pheromones uses) instead of a bespoke deferred grant.
+- **Bawretchadontius** carries the `Beast` trait, which its KeyForge printing
+  lacks (it is printed traitless). Vactrol requires every creature to hold at least
+  one trait (`TestEveryCreatureAndArtifactHasTrait`), so a traitless gigantic
+  creature is given `Beast` — the trait that names what it is.
+- **Boosted B4-RRY** rewords both halves of its `Choose one` to reuse shared
+  mechanics. Its take-control half reads `Take control of an enemy artifact. If it
+  does not belong to a house on your identity, it belongs to house Shadows until it
+  leaves play`, dropping KeyForge's `while under your control` scoping in favor of
+  the same `TakeControl{Forever}` + off-identity `BelongToHouse` pattern Sneklifter
+  uses — the control is permanent, so the house holds until the artifact leaves
+  play rather than until control reverts (it never does). Its archives half reads
+  `Play a random card from your opponent's archives`, dropping `as if it were
+  yours`; the card is played as your own but stays owned by, and returns to, the
+  opponent — the shared `PlayFromOpponent` model Murkens uses. The archives are
+  facedown, so the played card is always random (it cannot be chosen).
 
 ## Invented cards
 
@@ -225,14 +250,12 @@ friendly Shard, …`). Their effects — Shard of Glory exalts a friendly creatu
   so a Keyfrog that lands its forge is purged rather than discarded. This is the
   same anti-regrowth divergence (a returned Keyfrog cannot loop its Destroyed
   forge), applied to a creature whose forge fires from its Destroyed trigger.
-  **Desire** (Dis creature, MM #053) is the deliberate exception: its
-  `Reap: Forge a key at current cost, reduced by 1 Æmber for each friendly Sin
-  creature.` keeps its body via the `ForgeKey` node's `Keep` flag, so a successful
-  forge does **not** purge Desire. The self-purge exists to stop a key cheat from
-  looping a body back into play to forge again in one turn; a once-per-turn reap
-  engine is not such a loop (a creature reaps at most once a turn), so purging it
-  would neuter the card without serving the anti-regrowth purpose. Desire therefore
-  reads with no `-> purge <self>` tail.
+  **Desire** (Dis creature, MM #053) purges itself too: its `Reap: Forge a key at
+current cost, reduced by 1 Æmber for each friendly Sin creature -> purge Desire`
+  spends the creature the moment a key lands, so a repeatable reap engine cannot
+  keep forging turn after turn. The rule has **no exception** — every key cheat
+  purges itself on a successful forge, creatures included — so the `ForgeKey` node
+  carries no opt-out flag.
 - **A bonus icon's source is the card that carries it.** When a bonus icon
   resolves (Æmber, Capture, Damage, Draw), KeyForge treats the game itself as the
   source of the effect; Vactrol treats the card the icon is printed on as the
@@ -254,3 +277,20 @@ friendly Shard, …`). Their effects — Shard of Glory exalts a friendly creatu
   never lands those bonus-icon kinds on it, while other kinds may still land — for
   a bonus a card would only be weakened by (Effervescent Principle bars Capture).
   Rolled in per card as they are found.
+
+- **The Rule of Six caps every usage of a card name, not just playing and using.**
+  KeyForge's Rule of Six counts a name's plays and uses (reap, fight, `Action:`)
+  and stops there: it explicitly does **not** apply to repeating an effect or to
+  triggering or resolving abilities again (KeyForge Master Rulebook — "the Rule of
+  Six only applies to playing or using cards, not triggering (or resolving) their
+  effect multiple times"; the Nirbor Flamewing ruling turns on this). Vactrol
+  extends the same six-usage-per-name-per-turn pool to **every** kind of usage:
+  each loop of a self-repeating ability past its first, each `Destroyed:`
+  resolution, each destruction replacement (Reassembling Automaton), and each
+  Replicator-style trigger all draw from the name's pool of six. The "by card
+  name, per player" scope matches KeyForge; the extension to repeats, resolutions,
+  and triggers is the divergence. It gives every unbounded loop one uniform bound
+  and is what lets a 0-power Reassembling Automaton terminate — its replacement
+  stops standing in once the name's pool is spent. The pool lives in
+  `GameState.UsagesThisTurn` and is summed by name and owner
+  ([game_ruleofsix.go](../internal/engine/game_ruleofsix.go)).

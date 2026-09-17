@@ -179,6 +179,7 @@ const (
 	Assassin
 	Beast
 	Cat
+	Changeling
 	Cleric
 	Cyborg
 	Demon
@@ -250,6 +251,7 @@ var traitNames = [traitCount]string{
 	Assassin:     "Assassin",
 	Beast:        "Beast",
 	Cat:          "Cat",
+	Changeling:   "Changeling",
 	Cleric:       "Cleric",
 	Cyborg:       "Cyborg",
 	Demon:        "Demon",
@@ -412,7 +414,7 @@ func (k Keyword) String() string {
 // valid reports whether k names a real keyword (not the unset zero value).
 func (k Keyword) valid() bool { return k > keywordUnset && k < keywordCount }
 
-// bit is the bit k occupies in GameState.KeywordsLost, so a "for the remainder of
+// bit is the bit k occupies in a lost-keyword bitmask, so a "for the remainder of
 // the turn, each creature loses <keyword>" effect can be held as one flat
 // comparable value. Being derived from the enum, it cannot fall out of step with
 // it the way a hand-maintained table could. It is a uint16 because the keyword
