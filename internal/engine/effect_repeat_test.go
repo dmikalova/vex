@@ -6,8 +6,13 @@ import "testing"
 // afresh each time, and the two ways a repetition can be misconfigured.
 func TestRepeat(t *testing.T) {
 	e := ForEach{
-		Times: InPlay{Player: Controller, Type: Creature, House: namedHouse(Mars), Ready: true},
-		Do:    DealDamage{Target: Target{Kind: TargetChosenCreature}, Amount: 2},
+		Times: CardsInPlay{
+			Player: Controller,
+			Type:   Creature,
+			House:  namedHouse(Mars),
+			Ready:  true,
+		},
+		Do: DealDamage{Target: Target{Kind: TargetChosenCreature}, Amount: 2},
 	}
 	want := "for each friendly ready Mars creature, deal 2 damage to a creature"
 	if got := e.Text(); got != want {
@@ -77,7 +82,7 @@ func TestLoseAemberPer(t *testing.T) {
 	e := LoseAember{
 		Player: Opponent,
 		Amount: 1,
-		Per: InPlay{
+		Per: CardsInPlay{
 			Player: Controller,
 			Type:   Creature,
 			House:  namedHouse(Mars),

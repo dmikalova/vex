@@ -26,7 +26,7 @@ func (PurgeArchives) Resolve(ctx *EffectContext) {
 		func() []LocalID { return ctx.Resolver.Archives(ctx.Controller) },
 	)
 	for _, id := range chosen {
-		ctx.Resolver.PurgeFromArchives(ctx.Controller, id)
+		purgeFrom(ctx, Archives, ctx.Controller, id)
 		ctx.Produced.Purged[ctx.Controller]++
 	}
 }

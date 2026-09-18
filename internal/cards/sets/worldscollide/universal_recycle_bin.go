@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Bonus:  Æmber
 //	Traits: Item
 //
-//	Action: Archive a purged card you own.
+//	Action: Archive a card from your purge pile.
 var UniversalRecycleBin = set.New(
 	"Universal Recycle Bin",
 	card.House.Logos,
@@ -20,5 +20,8 @@ var UniversalRecycleBin = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
-		card.Trigger.Action, card.ArchivePurgedCard{}),
+		card.Trigger.Action, card.ArchiveCard{
+			Zone:      card.Purged,
+			Selection: card.Chosen{},
+		}),
 )

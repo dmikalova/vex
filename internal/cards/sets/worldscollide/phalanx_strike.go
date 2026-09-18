@@ -21,7 +21,7 @@ var PhalanxStrike = set.New(
 		card.Trigger.Play, card.Repeat{
 			Do: card.DealDamage{
 				Amount: 1,
-				Per: card.InPlay{
+				Per: card.CardsInPlay{
 					Player: card.Controller,
 					Type:   card.Type.Creature,
 				},

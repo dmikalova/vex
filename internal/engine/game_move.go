@@ -39,7 +39,7 @@ func (g *Game) pile(ref zoneRef) cardPile {
 		return &g.State.Discard[ref.Player]
 	case Archives:
 		return &g.State.Archives[ref.Player]
-	case purged:
+	case Purged:
 		return &g.State.Purge[ref.Player]
 	default:
 		return nil

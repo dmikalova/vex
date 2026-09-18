@@ -39,7 +39,8 @@ func (e GainAssault) durationPredicate() string {
 // Text renders the effect, e.g. "for the remainder of the turn, it gains assault
 // equal to its power".
 func (e GainAssault) Text() string {
-	return "for the remainder of the turn, " + e.durationSubject() + " " + e.durationPredicate()
+	return durationClause(RemainderOfPlayerTurn, "") + ", " +
+		e.durationSubject() + " " + e.durationPredicate()
 }
 
 // Resolve grants each selected creature the Assault for the remainder of the turn.

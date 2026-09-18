@@ -23,7 +23,8 @@ var GreaterOxtet = set.New(
 	card.WithKeywords(card.Keyword.Taunt),
 	card.WithAbility(
 		card.Trigger.EndOfReadyStep, card.Then{
-			First: card.PurgeFromHand{
+			First: card.PurgeCard{
+				Zone:      card.Hand,
 				Player:    card.Controller,
 				Selection: card.Chosen{},
 			},

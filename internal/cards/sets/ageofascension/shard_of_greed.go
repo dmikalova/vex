@@ -26,7 +26,7 @@ var ShardOfGreed = set.New(
 		card.Trigger.Action, card.GainAember{
 			Player: card.Controller,
 			Amount: 1,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player: card.Controller,
 				Trait:  card.Traits.Shard,
 			},

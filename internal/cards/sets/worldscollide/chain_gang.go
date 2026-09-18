@@ -19,7 +19,7 @@ var chainGangCluster = card.Cluster{
 //	Traits: Elf • Thief
 //
 //	After you play Subtle Chain, ready Chain Gang.
-//	Action: Steal 1 Æmber. Shuffle a Subtle Chain from your discard pile into your deck.
+//	Action: Steal 1 Æmber. Shuffle Subtle Chain from your discard pile into your deck.
 var ChainGang = set.New(
 	"Chain Gang",
 	card.House.Shadows,
@@ -38,7 +38,10 @@ var ChainGang = set.New(
 		card.Trigger.Action, card.Sentences{
 			Effects: []card.Effect{
 				card.StealAember{Amount: 1},
-				card.ShuffleNamedFromDiscardIntoDeck{Name: SubtleChain.Name},
+				card.ShuffleIntoDeck{
+					Player: card.Controller, From: []card.Zone{card.Discard},
+					Selection: card.Named{Name: SubtleChain.Name},
+				},
 			},
 		}),
 )

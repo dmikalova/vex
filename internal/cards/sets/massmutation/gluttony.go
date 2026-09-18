@@ -23,7 +23,7 @@ var Gluttony = set.New(
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Demon, card.Traits.Sin),
 	card.WithAbility(card.Trigger.Play, card.ForEach{
-		Times: card.InPlay{
+		Times: card.CardsInPlay{
 			Player: card.Controller,
 			Type:   card.Type.Creature,
 			Trait:  card.Traits.Sin,

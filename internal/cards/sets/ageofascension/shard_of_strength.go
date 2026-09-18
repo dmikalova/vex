@@ -26,7 +26,7 @@ var ShardOfStrength = set.New(
 		card.Trigger.Action, card.AddPowerCounter{
 			Target: card.Target.FriendlyCreature,
 			Amount: 3,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player: card.Controller,
 				Trait:  card.Traits.Shard,
 			},

@@ -45,14 +45,14 @@ func (e TakeControl) validate() error {
 // player taking it.
 func (e TakeControl) Text() string {
 	if !e.Target.valid() {
-		return "take control of this creature until " + CardName + " leaves play"
+		return "take control of this creature " + durationClause(UntilThisLeavesPlay, CardName)
 	}
 	if e.ToOpponent {
 		return "your opponent gains control of " + e.Target.Text()
 	}
 	text := "take control of " + e.Target.Text()
 	if e.Duration != Forever {
-		text += " until " + SelfName + " leaves play"
+		text += " " + durationClause(UntilThisLeavesPlay, SelfName)
 	}
 	if e.AndExhaust {
 		text += " and exhaust it"

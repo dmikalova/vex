@@ -5,6 +5,33 @@ import (
 	"strings"
 )
 
+// joinOr renders a list as an alternation in card voice, e.g. "artifact,
+// upgrade, or tactic". The final "or" takes the serial comma from three items up.
+func joinOr(words []string) string {
+	switch len(words) {
+	case 0, 1:
+		return strings.Join(words, "")
+	case 2:
+		return words[0] + " or " + words[1]
+	default:
+		return strings.Join(words[:len(words)-1], ", ") + ", or " + words[len(words)-1]
+	}
+}
+
+// possessive renders the determiner that puts a zone or pool on a side, e.g. the
+// "your" in "your discard pile". It is the one place card voice decides how a
+// side is named, so every effect that owns a noun phrase phrases it alike.
+func possessive(p Player) string {
+	switch p {
+	case Opponent:
+		return "your opponent's"
+	case EachPlayer:
+		return "each player's"
+	default:
+		return "your"
+	}
+}
+
 // RenderAbility renders a single triggered ability to its printed card line,
 // e.g. "After you forge a key, deal 2 damage to each enemy creature."
 func RenderAbility(a Ability) string {
@@ -550,6 +577,19 @@ func playableAsUpgradeText(def *CardDefinition) string {
 // the creature (see RenderUpgradeOnCreature).
 func cardRules(def *CardDefinition, hosted bool) []string {
 	var rules []string
+	rules = append(rules, combatRules(def)...)
+	rules = append(rules, restrictionAndResourceRules(def)...)
+	rules = append(rules, staticRules(def, hosted)...)
+	rules = append(rules, trailingRules(def)...)
+	return rules
+}
+
+// combatRules renders a creature's fight- and damage-facing rule lines: its
+// keywords, taunt reach, attack damage, the damage it deals or refuses when
+// attacked, its enters-ready grant, fight restriction, use bars, self-destroy
+// condition, damage redirection, variable power, and attack-modifying lines.
+func combatRules(def *CardDefinition) []string {
+	var rules []string
 	if s := keywordText(def); s != "" {
 		rules = append(rules, s)
 	}
@@ -606,6 +646,15 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := attackKeywordsText(def); s != "" {
 		rules = append(rules, s)
 	}
+	return rules
+}
+
+// restrictionAndResourceRules renders a card's use restrictions and resource-facing
+// lines: play bars, Æmber-cannot-be-stolen and spendable-Æmber rules, play
+// requirements, key-cost and house-lock changes, hand-size draw modifiers, play
+// permissions, and the Æmber capture/take/forge lines.
+func restrictionAndResourceRules(def *CardDefinition) []string {
+	var rules []string
 	for _, r := range restrictionText(def.Restricts, def.Type == Upgrade) {
 		rules = append(rules, strings.ReplaceAll(r, SelfName, def.Name))
 	}
@@ -655,6 +704,14 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := bonusInsteadText(def); s != "" {
 		rules = append(rules, s)
 	}
+	return rules
+}
+
+// staticRules renders a card's continuous-modifier lines: its upgrade static grant
+// and flank protection, its constant abilities and the abilities they grant, its
+// spend-as-pool lines, and the house grant it applies while in play.
+func staticRules(def *CardDefinition, hosted bool) []string {
+	var rules []string
 	// A creature played as an upgrade folds its Static grant into the "may be played
 	// as an upgrade" clause below, so it does not also print as standalone lines.
 	if !def.PlayableAsUpgrade {
@@ -675,6 +732,14 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if !def.PlayableAsUpgrade && def.Static.HouseOverride == HouseNone {
 		rules = append(rules, grantedText(def.Static, def.Name, hosted)...)
 	}
+	return rules
+}
+
+// trailingRules renders the lines that print last in a card's text box: its
+// triggered abilities, the "may be played as an upgrade" clause, and the Enhance
+// deck-building note.
+func trailingRules(def *CardDefinition) []string {
+	var rules []string
 	rules = append(rules, abilityLines(def)...)
 	if s := playableAsUpgradeText(def); s != "" {
 		rules = append(rules, s)
@@ -952,85 +1017,104 @@ func constantText(def *CardDefinition) string {
 	}
 	var lines []string
 	for _, c := range def.ConstantAbilities {
-		who := capitalizeFirst(c.target().Text())
-		for _, t := range c.DisableTriggers {
-			lines = append(lines, t.String()+" effects cannot trigger.")
+		lines = append(lines, constantFlagLines(def, c)...)
+		if s := constantBonusLine(def, c); s != "" {
+			lines = append(lines, s)
 		}
-		if c.BlankText {
-			lines = append(lines, who+"'s text box is considered blank (except for traits).")
-		}
-		if c.RemovesTraits {
-			lines = append(lines, who+" loses each of its traits.")
-		}
-		if c.SelectiveArchivePickup {
-			lines = append(
-				lines,
-				"Instead of picking up all of your archives, you may pick up any number of cards in your archives.",
-			)
-		}
-		for _, k := range c.CannotBeUsedTo {
-			line := who + " cannot " + k.verb() + "."
-			lines = append(lines, strings.ReplaceAll(line, SelfName, def.Name))
-		}
-		for _, m := range c.AlsoTriggers {
-			from, onto := triggerEffectNoun(m.From), triggerEffectNoun(m.Onto)
-			line := who + "'s " + from + " effect is a " + from + "/" + onto + " effect."
-			lines = append(lines, strings.ReplaceAll(line, SelfName, def.Name))
-		}
-		var parts []string
-		if c.PowerBonus != 0 {
-			parts = append(parts, fmt.Sprintf("%+d power", c.PowerBonus))
-		}
-		if c.ArmorBonus != 0 {
-			parts = append(parts, fmt.Sprintf("%+d armor", c.ArmorBonus))
-		}
-		if c.HazardousBonus != 0 {
-			parts = append(parts, fmt.Sprintf("hazardous %d", c.HazardousBonus))
-		}
-		if c.AssaultBonus != 0 {
-			parts = append(parts, fmt.Sprintf("assault %d", c.AssaultBonus))
-		}
-		for _, k := range c.Keywords {
-			parts = append(parts, strings.ToLower(k.String()))
-		}
-		if len(parts) == 0 {
-			continue
-		}
-		line := who + " gains " + oxfordAnd(parts)
-		if c.WhileInCenter {
-			line = "While " + SelfName + " is in the center of your battleline, " +
-				c.target().Text() + " gains " + oxfordAnd(parts)
-		}
-		if c.WhileCondition != nil {
-			line = "While " + trimCondPrefix(c.WhileCondition.CondText()) + ", " +
-				SelfName + " gains " + oxfordAnd(parts)
-		}
-		if c.Per != nil {
-			// A count read from the source names it, unless the buffed creature is the
-			// source itself, where a trailing "it" reads unambiguously (Centurion
-			// Stenopius "for each Æmber on it").
-			noun := c.Per.CountText()
-			if c.target().Kind != TargetThisCreature {
-				noun = countLeadText(c.Per)
-			}
-			line += " for each " + noun
-		}
-		if c.PerTarget != nil {
-			line += " for each " + c.PerTarget.perTargetText()
-		}
-		if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.onFlank {
-			line += " while it is on a flank"
-		}
-		if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.damaged {
-			line += " while it is damaged"
-		}
-		if c.WhileOffFlank {
-			line += " while it is not on a flank"
-		}
-		line += "."
-		lines = append(lines, strings.ReplaceAll(line, SelfName, def.Name))
 	}
 	return strings.Join(lines, "\n")
+}
+
+// constantFlagLines renders a constant ability's non-stat effects — the triggers it
+// disables, the text box or traits it removes, its selective archive pickup, the
+// ways it bars its target from being used, and the also-triggers-on rules it adds.
+func constantFlagLines(def *CardDefinition, c ConstantAbility) []string {
+	who := capitalizeFirst(c.target().Text())
+	var lines []string
+	for _, t := range c.DisableTriggers {
+		lines = append(lines, t.String()+" effects cannot trigger.")
+	}
+	if c.BlankText {
+		lines = append(lines, who+"'s text box is considered blank (except for traits).")
+	}
+	if c.RemovesTraits {
+		lines = append(lines, who+" loses each of its traits.")
+	}
+	if c.SelectiveArchivePickup {
+		lines = append(
+			lines,
+			"Instead of picking up all of your archives, you may pick up any number of cards in your archives.",
+		)
+	}
+	for _, k := range c.CannotBeUsedTo {
+		line := who + " cannot " + k.verb() + "."
+		lines = append(lines, strings.ReplaceAll(line, SelfName, def.Name))
+	}
+	for _, m := range c.AlsoTriggers {
+		from, onto := triggerEffectNoun(m.From), triggerEffectNoun(m.Onto)
+		line := who + "'s " + from + " effect is a " + from + "/" + onto + " effect."
+		lines = append(lines, strings.ReplaceAll(line, SelfName, def.Name))
+	}
+	return lines
+}
+
+// constantBonusLine renders a constant ability's "<target> gains <bonuses>" stat
+// line, with its while/per/flank suffixes, or "" when the ability grants no stat
+// bonus or keyword.
+func constantBonusLine(def *CardDefinition, c ConstantAbility) string {
+	who := capitalizeFirst(c.target().Text())
+	var parts []string
+	if c.PowerBonus != 0 {
+		parts = append(parts, fmt.Sprintf("%+d power", c.PowerBonus))
+	}
+	if c.ArmorBonus != 0 {
+		parts = append(parts, fmt.Sprintf("%+d armor", c.ArmorBonus))
+	}
+	if c.HazardousBonus != 0 {
+		parts = append(parts, fmt.Sprintf("hazardous %d", c.HazardousBonus))
+	}
+	if c.AssaultBonus != 0 {
+		parts = append(parts, fmt.Sprintf("assault %d", c.AssaultBonus))
+	}
+	for _, k := range c.Keywords {
+		parts = append(parts, strings.ToLower(k.String()))
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	line := who + " gains " + oxfordAnd(parts)
+	if c.WhileInCenter {
+		line = "While " + SelfName + " is in the center of your battleline, " +
+			c.target().Text() + " gains " + oxfordAnd(parts)
+	}
+	if c.WhileCondition != nil {
+		line = "While " + trimCondPrefix(c.WhileCondition.CondText()) + ", " +
+			SelfName + " gains " + oxfordAnd(parts)
+	}
+	if c.Per != nil {
+		// A count read from the source names it, unless the buffed creature is the
+		// source itself, where a trailing "it" reads unambiguously (Centurion
+		// Stenopius "for each Æmber on it").
+		noun := c.Per.CountText()
+		if c.target().Kind != TargetThisCreature {
+			noun = countLeadText(c.Per)
+		}
+		line += " for each " + noun
+	}
+	if c.PerTarget != nil {
+		line += " for each " + c.PerTarget.perTargetText()
+	}
+	if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.onFlank {
+		line += " while it is on a flank"
+	}
+	if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.damaged {
+		line += " while it is damaged"
+	}
+	if c.WhileOffFlank {
+		line += " while it is not on a flank"
+	}
+	line += "."
+	return strings.ReplaceAll(line, SelfName, def.Name)
 }
 
 // constantGrantedText renders the triggered abilities a card's constant ability

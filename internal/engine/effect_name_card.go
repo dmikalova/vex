@@ -14,8 +14,8 @@ type NameCard struct{}
 // binds the naming to its lasting consequence, the way ChooseHouseThen binds a
 // house choice to what it does.
 func (NameCard) Text() string {
-	return "name a card - cards with that name cannot be played until " +
-		SelfName + " leaves play"
+	return "name a card - cards with that name cannot be played " +
+		durationClause(UntilThisLeavesPlay, SelfName)
 }
 
 // Resolve asks the controller to name a card and records it on the source. A name

@@ -18,7 +18,8 @@ var MartiansMakeBadAllies = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.RevealHand{Player: card.Controller},
-			card.PurgeFromHand{
+			card.PurgeCard{
+				Zone:   card.Hand,
 				Player: card.Controller,
 				Selection: card.Each{
 					Type:  card.Type.Creature,

@@ -64,6 +64,17 @@ existing effect at a new type. `indefinite` is in `internal/engine/text.go`
 alongside `plural` and `countNoun`, which exist for the same reason on the
 number axis: never write `noun + "s"` or a `card(s)` placeholder by hand.
 
+### A card name is a proper name and takes no article
+
+A phrase that names a card by its printed name renders the name bare — "archive
+Velum from your discard pile", "shuffle Subtle Chain from your discard pile into
+your deck" — never "a Velum" or "a Subtle Chain". KeyForge is split on this
+(Hyde prints the bare name, Chain Gang prints the article), so Vactrol picks the
+bare form for all of them: one template means a by-name pick is just a `Named`
+selection handed to an existing verb, rather than a verb that owns an article and
+therefore has to be its own node. This is phrasing only, so it is not a
+divergence-register entry.
+
 ### Two wordings that are standardized, not left to the printed card
 
 - **A leading duration clause takes a comma**: "for the remainder of the turn,
@@ -372,6 +383,12 @@ creature`), exactly as houses do (`Mars creature`, `Sanctum creature`). Neither
 - **`during their next turn`** — not `on their next turn`.
 - **`the chosen creature`** — the standard referent for a creature just chosen
   (`Choose a creature. … the chosen creature`).
+- **`it` names a card, `this` names an event.** `it` is reserved for the card in
+  context, so a clause whose subject is an event says `this` instead: Æmber
+  Conduction Unit reads `if this is the first time a creature has reaped this
+turn`, not `if it is …`. Without the split a card that gates on both reads
+  `if it is an enemy creature, if it is the first time …`, where the two `it`s
+  look like one referent.
 
 ## 17. Name the source zone for card-movement effects
 

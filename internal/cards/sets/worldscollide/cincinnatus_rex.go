@@ -22,7 +22,7 @@ var CincinnatusRex = set.New(
 	card.WithPower(6),
 	card.WithArmor(4),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),
-	card.WithDestroyedWhen(card.InPlay{
+	card.WithDestroyedWhen(card.CardsInPlay{
 		Player: card.Opponent,
 		Type:   card.Type.Creature,
 		None:   true,

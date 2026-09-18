@@ -71,20 +71,29 @@ func (m HouseMatcher) qualify(noun string) string {
 	return m.qualifyPhrase(m.qualifyNoun(noun))
 }
 
+// adjective returns the house's prefix adjective — "Mars", "non-Sanctum" — and
+// whether the matcher has one. Only the prefix kinds do; the suffix kinds render
+// after the noun and the any-house matcher renders nothing.
+func (m HouseMatcher) adjective() (string, bool) {
+	switch m.Kind {
+	case MatchNamedHouse:
+		return m.House.String(), true
+	case MatchExceptHouse:
+		return "non-" + m.House.String(), true
+	}
+	return "", false
+}
+
 // qualifyNoun prefixes the house onto a base noun for the prefix kinds, e.g.
 // "Mars creature" or "non-Sanctum creature". The suffix kinds and any-house leave
 // the noun unchanged, to be rendered later by qualifyPhrase — Target needs the two
 // halves apart because power and flank qualifiers sit between the noun and the
 // suffix kinds' "of the chosen house".
 func (m HouseMatcher) qualifyNoun(noun string) string {
-	switch m.Kind {
-	case MatchNamedHouse:
-		return m.House.String() + " " + noun
-	case MatchExceptHouse:
-		return "non-" + m.House.String() + " " + noun
-	default:
-		return noun
+	if adj, ok := m.adjective(); ok {
+		return adj + " " + noun
 	}
+	return noun
 }
 
 // qualifyPhrase suffixes the house onto a rendered phrase for the suffix kinds,

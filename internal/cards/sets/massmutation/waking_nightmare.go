@@ -20,7 +20,7 @@ var WakingNightmare = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithEnhance(card.Bonus.Capture),
 	card.WithAbility(
-		card.Trigger.Play, card.RaiseKeyCostPerHouseCreature{
+		card.Trigger.Play, card.RaiseKeyCost{
 			Player:   card.Opponent,
 			Amount:   1,
 			House:    card.Houses.Named(card.House.Dis),

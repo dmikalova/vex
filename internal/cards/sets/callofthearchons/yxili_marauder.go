@@ -30,7 +30,7 @@ var YxiliMarauder = set.New(
 			Amount: 1,
 			Target: card.Target.This,
 			Source: card.Opponent,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 				House:  card.Houses.Named(card.House.Self),

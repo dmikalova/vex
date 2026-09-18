@@ -35,6 +35,6 @@ func (e PurgeArchivedCardThen) Resolve(ctx *EffectContext) {
 	if !ok {
 		return
 	}
-	ctx.Resolver.PurgeFromArchives(ctx.Controller, chosen)
+	purgeFrom(ctx, Archives, ctx.Controller, chosen)
 	e.Then.Resolve(ctx)
 }

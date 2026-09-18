@@ -174,3 +174,37 @@ So the precise model becomes: a card that has left play can only ever be the
 subject of a resolving ability, never its source — **except** a tactic resolving
 its own `Play:`, and a `TriggersFromDiscard` card resolving its own choose-house
 ability from its owner's discard pile.
+
+## Refinement: a deferred "Leaves Play:" window is a third source exception
+
+A `Leaves Play:` ability is the one trigger whose whole purpose is to fire
+*because* its card left play. It escapes the guard today only by timing: the card
+is still listed on the board when `emitLeavesPlay` resolves it, so `inPlay(src)`
+is still true.
+
+That timing is what makes a multi-card move non-simultaneous. When an effect moves
+several cards, the first card's `Leaves Play:` ability resolved before the rest had
+moved, so it could destroy a card the same effect had already selected but not yet
+reached — and the outcome depended on the order the selection happened to be
+visited. `simultaneously` now holds those windows until the whole batch has moved,
+which means they resolve with their source already gone.
+
+The exception is as bounded as the other two:
+
+- **Gathered on the board, resolved off it.** `leavesPlayWindow` collects the
+  abilities while the card is still listed, so its controller, its grantors, and
+  its ability list all read exactly as before. Only resolution moves.
+- **Marked, not inferred.** The entry carries `fromLeave`, set at gather time and
+  nowhere else. The guard reads `if !t.fromLeave && !g.inPlay(src) && …`, so no
+  other trigger gains the exemption by accident.
+- **Drained by the batch that opened it.** A nested batch does not flush; the
+  outermost one owns the moment, so the queue never outlives the effect that
+  created it. It is runtime scheduling, not game state, and stays off `GameState`
+  and out of the undo snapshot (ADR 0005).
+
+So the final model: a card that has left play can only ever be the subject of a
+resolving ability, never its source — **except** a tactic resolving its own
+`Play:`, a `TriggersFromDiscard` card resolving its own choose-house ability from
+its owner's discard pile, and a `Leaves Play:` window gathered while its card was
+still on the board. Pinned by `TestLeavesPlayWaitsForTheWholeBatch` and
+`TestPutFromPlayMovesTheWholeSelectionTogether`.

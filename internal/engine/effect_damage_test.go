@@ -278,7 +278,7 @@ func TestDealDamagePerCount(t *testing.T) {
 
 	e := DealDamage{
 		Amount: 1,
-		Per:    InPlay{Player: Controller, Type: Creature},
+		Per:    CardsInPlay{Player: Controller, Type: Creature},
 		Target: Target{Kind: TargetEachEnemyCreature},
 	}
 	if e.Text() != "for each friendly creature in play, deal 1 damage to each enemy creature" {
@@ -307,7 +307,7 @@ func TestDealDamagePerInstanceChoosesEachTarget(t *testing.T) {
 
 	e := DealDamage{
 		Amount: 1,
-		Per:    InPlay{Player: Controller, Type: Creature},
+		Per:    CardsInPlay{Player: Controller, Type: Creature},
 		Target: Target{Kind: TargetChosenEnemyCreature},
 	}
 	e.Resolve(ctx)
@@ -322,7 +322,7 @@ func TestDealDamagePerInstanceChoosesEachTarget(t *testing.T) {
 func TestDealDamagePerInstanceDegenerate(t *testing.T) {
 	base := DealDamage{
 		Amount: 1,
-		Per:    InPlay{Player: Controller, Type: Creature},
+		Per:    CardsInPlay{Player: Controller, Type: Creature},
 		Target: Target{Kind: TargetChosenEnemyCreature},
 	}
 
@@ -933,7 +933,7 @@ func TestSpreadDivideDamage(t *testing.T) {
 	t.Run("text with a Per count front-loads the source", func(t *testing.T) {
 		e := DealDamage{Spread: DivideDamage{
 			Amount: 2,
-			Per:    InPlay{Player: Controller, House: namedHouse(Brobnar), Type: Creature},
+			Per:    CardsInPlay{Player: Controller, House: namedHouse(Brobnar), Type: Creature},
 		}}
 		want := "deal 2 damage for each friendly Brobnar creature, " +
 			"divided among any number of creatures"
@@ -980,7 +980,7 @@ func TestSpreadDivideDamage(t *testing.T) {
 		// default chooser.
 		DealDamage{Spread: DivideDamage{
 			Amount: 2,
-			Per:    InPlay{Player: Controller, House: namedHouse(Brobnar), Type: Creature},
+			Per:    CardsInPlay{Player: Controller, House: namedHouse(Brobnar), Type: Creature},
 		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if g.Damage(a) != 4 {
 			t.Errorf("damage on a = %d, want 4", g.Damage(a))
@@ -992,7 +992,7 @@ func TestSpreadDivideDamage(t *testing.T) {
 		g.AddToBattleline(testCreature("a", 9), 0)
 		DealDamage{Spread: DivideDamage{
 			Amount: 2,
-			Per:    InPlay{Player: Opponent, House: namedHouse(Brobnar), Type: Creature},
+			Per:    CardsInPlay{Player: Opponent, House: namedHouse(Brobnar), Type: Creature},
 		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 	})
 

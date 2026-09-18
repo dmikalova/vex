@@ -83,7 +83,7 @@ func (g *Game) archiveFromDiscard(player int, id LocalID) {
 // archiveFromPurge moves a card from a player's purge pile to their archives —
 // the recovery of a card set aside out of the game (Universal Recycle Bin).
 func (g *Game) archiveFromPurge(player int, id LocalID) {
-	g.archiveFrom(player, id, purged, CardArchivedFromPurge{Player: player, Card: id})
+	g.archiveFrom(player, id, Purged, CardArchivedFromPurge{Player: player, Card: id})
 }
 
 // archiveFromDeck moves a specific card the controller looked at — one of the top

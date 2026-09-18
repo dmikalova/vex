@@ -155,6 +155,13 @@ type Target struct {
 	// is unexported, a SelfHouse sentinel in it resolves through houseReplaced
 	// rather than by reflection.
 	house HouseMatcher
+	// matchAny makes the house and trait axes disjoin instead of conjoin, so "each
+	// Mars or Robot creature" is one target rather than two sequenced ones and a Mars
+	// Robot is affected once (EMP Blast). It is a flag rather than a list of
+	// alternatives because Target must stay comparable (ADR 0005). It governs the
+	// identity axes only — power, damage, and position refinements always conjoin,
+	// where "or" has no clear meaning.
+	matchAny bool
 	// houseWithMostCreatures narrows the target to creatures of the house with the
 	// most creatures in play, counting both players' battlelines; on a tie every
 	// tied house's creatures are eligible so the chooser picks among them
@@ -263,6 +270,24 @@ func (t Target) House(m HouseMatcher) Target {
 	return t
 }
 
+// MatchingAny makes the house and trait axes disjoin rather than conjoin, so
+// Target{Kind: TargetEachCreature}.House(namedHouse(Mars)).WithTrait(Robot).
+// MatchingAny() reads "each Mars or Robot creature" and a Mars Robot is one
+// member of that set, not two (EMP Blast).
+func (t Target) MatchingAny() Target {
+	t.matchAny = true
+	return t
+}
+
+// disjoins reports whether MatchingAny has two identity axes to actually join: a
+// house with a prefix adjective and a trait. Without both there is nothing for
+// "or" to join, so the target narrows conjunctively and selection and text cannot
+// disagree about which set they mean.
+func (t Target) disjoins() bool {
+	_, named := t.house.adjective()
+	return t.matchAny && named && t.trait != traitUnset
+}
+
 // OfHouseWithMostCreatures narrows the target to creatures of the house with the
 // most creatures in play across both battlelines, ties keeping every tied house
 // eligible (Etaromme).
@@ -287,7 +312,7 @@ func (t Target) houseReplaced(from, to House) any {
 
 // SharingTrait narrows the target to cards that share at least one trait with the
 // card in context (ctx.It), rendering "that shares a trait with it" — the purged
-// creature after a PurgeFromHand that moves a single card (Custom Virus), or
+// creature after a PurgeCard that moves a single card (Custom Virus), or
 // whatever an earlier effect put in context.
 func (t Target) SharingTrait() Target {
 	t.sharesTrait = true
@@ -532,37 +557,8 @@ func (t Target) pronoun() string {
 // Text renders the target as an English noun phrase, e.g. "each enemy creature",
 // "each Scientist creature", or "each creature with power 3 or lower".
 func (t Target) Text() string {
-	switch t.Kind {
-	case TargetThisCreature:
-		return SelfName
-	case TargetTriggeringCreature:
-		return t.decorateNeighbors("it")
-	case TargetCreatureFought:
-		if t.withNeighbors || t.neighborsOf {
-			return t.decorateNeighbors("the creature " + SelfName + " fights")
-		}
-		return "the creature " + SelfName + " fought"
-	case TargetTheOtherCreature:
-		return "the other creature"
-	case TargetTheSameCreature:
-		return "the same creature"
-	case TargetTheChosenCreature:
-		return "the chosen creature"
-	case TargetAttachedHost:
-		if t.named != "" {
-			return t.named
-		}
-		return "the attached creature"
-	case TargetGrantingCard:
-		return CardName
-	case TargetFormerNeighbors:
-		return "each of that creature's neighbors"
-	case TargetEachNeighbor:
-		return "each of " + SelfName + "'s neighbors"
-	case TargetEachUpgradeOnThis:
-		return "each upgrade on " + SelfName
-	case TargetTheFoughtCreature:
-		return t.decorateNeighbors("the fought creature")
+	if s, ok := t.specialKindText(); ok {
+		return s
 	}
 	noun := "creature"
 	if t.Kind == TargetEachArtifact || t.Kind == TargetChosenArtifact ||
@@ -586,10 +582,15 @@ func (t Target) Text() string {
 	if t.named != "" {
 		noun = t.named
 	}
-	if t.trait != traitUnset {
-		noun = t.trait.String() + " " + noun
+	if t.disjoins() {
+		adj, _ := t.house.adjective()
+		noun = adj + " or " + t.trait.String() + " " + noun
+	} else {
+		if t.trait != traitUnset {
+			noun = t.trait.String() + " " + noun
+		}
+		noun = t.house.qualifyNoun(noun)
 	}
-	noun = t.house.qualifyNoun(noun)
 	if t.exceptTrait != traitUnset {
 		noun = "non-" + t.exceptTrait.String() + " " + noun
 	}
@@ -627,6 +628,53 @@ func (t Target) Text() string {
 		// "ward a friendly Lieutenant Khrkhar").
 		return t.decorateNeighbors(noun)
 	}
+	return t.decorateNeighbors(t.quantifiedPhrase(noun))
+}
+
+// specialKindText renders the target Kinds whose phrasing is a fixed noun phrase
+// rather than a noun built up from adjectives and a quantifier. The bool is false
+// for a Kind that falls through to the general noun/phrase construction.
+func (t Target) specialKindText() (string, bool) {
+	switch t.Kind {
+	case TargetThisCreature:
+		return SelfName, true
+	case TargetTriggeringCreature:
+		return t.decorateNeighbors("it"), true
+	case TargetCreatureFought:
+		if t.withNeighbors || t.neighborsOf {
+			return t.decorateNeighbors("the creature " + SelfName + " fights"), true
+		}
+		return "the creature " + SelfName + " fought", true
+	case TargetTheOtherCreature:
+		return "the other creature", true
+	case TargetTheSameCreature:
+		return "the same creature", true
+	case TargetTheChosenCreature:
+		return "the chosen creature", true
+	case TargetAttachedHost:
+		if t.named != "" {
+			return t.named, true
+		}
+		return "the attached creature", true
+	case TargetGrantingCard:
+		return CardName, true
+	case TargetFormerNeighbors:
+		return "each of that creature's neighbors", true
+	case TargetEachNeighbor:
+		return "each of " + SelfName + "'s neighbors", true
+	case TargetEachUpgradeOnThis:
+		return "each upgrade on " + SelfName, true
+	case TargetTheFoughtCreature:
+		return t.decorateNeighbors("the fought creature"), true
+	}
+	return "", false
+}
+
+// quantifiedPhrase turns a constructed noun into the full phrase: it prefixes the
+// article or quantifier the target's Kind calls for ("each", "a friendly",
+// "another", …), then appends the power, resource, position, and refinement clauses
+// that narrow which cards match. The clauses accumulate in printed order.
+func (t Target) quantifiedPhrase(noun string) string {
 	var phrase string
 	switch t.Kind {
 	case TargetEachCardInPlay:
@@ -680,6 +728,12 @@ func (t Target) Text() string {
 	default:
 		phrase = indefinite(noun)
 	}
+	return t.narrowingClauses(phrase)
+}
+
+// narrowingClauses appends the power, resource, position, house, and refinement
+// clauses that narrow a quantified phrase to the cards that match, in printed order.
+func (t Target) narrowingClauses(phrase string) string {
 	if t.hasMaxPower {
 		phrase += fmt.Sprintf(" with power %d or lower", t.maxPower)
 	}
@@ -743,7 +797,7 @@ func (t Target) Text() string {
 	if t.refinement != nil {
 		phrase = t.refinement.clause(phrase)
 	}
-	return t.decorateNeighbors(phrase)
+	return phrase
 }
 
 // decorateNeighbors wraps a rendered noun phrase with the neighbour builders:

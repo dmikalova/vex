@@ -24,7 +24,7 @@ var ShardOfHate = set.New(
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(
 		card.Trigger.Action, card.ForEach{
-			Times: card.InPlay{
+			Times: card.CardsInPlay{
 				Player: card.Controller,
 				Trait:  card.Traits.Shard,
 			},

@@ -426,7 +426,15 @@ damage or removal is absorbed: the creature stays, and its ward is spent. Even a
 single point of damage spends the whole ward. Ward intercepts every removal, even
 the controller's own. It covers only damage and leaving play; it does not stop a
 stun, an enrage, a capture, a change of control, or a loss of power. Warding
-applies this status to each creature the effect targets.`,
+applies this status to each creature the effect targets.
+
+Each removal is absorbed separately. A creature whose ward absorbs a destruction
+and is then warded again absorbs the next removal with the new ward.
+
+A ward gained after a creature is already destroyed does not undo the
+destruction. That creature still reaches its discard pile once the "Destroyed:"
+abilities finish. The new ward does absorb any other removal in the meantime, so
+a "Destroyed:" ability that tries to purge the creature is absorbed.`,
 		},
 		{
 			Section:    SectionEffect,

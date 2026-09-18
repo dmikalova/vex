@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"time"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
@@ -24,6 +25,12 @@ import (
 // a run — kept modest because it plays synchronously on the wasm main thread.
 const styleLogSampleGames = 200
 
+// styleSampleDelay is how long autoSampleGames waits before it starts sampling.
+// The sampling loop is CPU-bound and blocks the wasm main thread, so it is
+// scheduled through a timer that first yields to the browser — letting the page
+// paint and its load indicator settle — rather than run during the initial mount.
+const styleSampleDelay = 200 * time.Millisecond
+
 // sampleNamer names cards and players from their ids alone, so a catalogued log
 // entry can render its own shape in the synthetic fallback with no game behind it.
 type sampleNamer struct{}
@@ -31,16 +38,17 @@ type sampleNamer struct{}
 func (sampleNamer) Name(id engine.LocalID) string { return fmt.Sprintf("Card%d", id) }
 func (sampleNamer) PlayerName(player int) string  { return fmt.Sprintf("P%d", player) }
 
-// logSection draws the Game log gallery, or a button to build it: sampling plays
-// games synchronously, so nothing runs until the reader asks for it.
+// logSection draws the Game log gallery, or a loading note while it builds:
+// sampling plays games synchronously, so autoSampleGames runs it off the first
+// paint (OnMount) and this section fills in when that finishes.
 func (s *style) logSection() app.UI {
 	if !s.logSampled {
 		return app.Div().Class("style-log").Body(
 			app.P().Class("style-note").Text(
-				"Play a batch of seeded games and show every kind of log line they "+
+				"Playing a batch of seeded games to show every kind of log line they "+
 					"produce — one real bubble per kind. Kinds no game produced fall "+
 					"back to a constructed sample."),
-			app.Button().Class("style-btn").Text("Sample games").OnClick(s.sampleGames),
+			app.P().Class("style-note").Text("Sampling games…"),
 		)
 	}
 	return app.Div().Class("style-log").Body(
@@ -50,14 +58,47 @@ func (s *style) logSection() app.UI {
 		s.logDrill(),
 		app.H3().Class("style-h3").Text("Synthetic — not produced by a sampled game"),
 		s.logSyntheticGallery(),
+		s.logPreviewOverlay(),
 	)
 }
 
-// sampleGames plays the fixed-seed batch so a visit draws the same gallery until
-// the reader reshuffles it.
-func (s *style) sampleGames(app.Context, app.Event) {
-	s.logCov = sampleLog(sim.SeedScripts(styleLogSampleGames))
-	s.logSampled, s.drillOpen = true, false
+// logPreviewOverlay draws the enlarged card face for whichever sampled bubble is
+// hovered. The bubbles are rendered by the game's own logBlockView, so hovering a
+// card mention runs that game's onLogCardHover and sets its hoverDef; the style
+// page owns no per-mention state, so it finds the one game holding a preview and
+// draws it. Nothing hovered draws an empty div.
+func (s *style) logPreviewOverlay() app.UI {
+	if def := s.hoveredPreviewDef(); def != nil {
+		return app.Div().Class("style-log-preview").Body(printedFace(def))
+	}
+	return app.Div()
+}
+
+// hoveredPreviewDef returns the card a sampled bubble's log-mention hover is
+// previewing, or nil if none is. The hover handler lives on the game wrapper, so
+// the previewed card is read back off whichever wrapper is holding it.
+func (s *style) hoveredPreviewDef() *engine.CardDefinition {
+	for _, sg := range s.logCov.games {
+		if sg.game.hoverDef != nil {
+			return sg.game.hoverDef
+		}
+	}
+	return nil
+}
+
+// autoSampleGames plays the fixed-seed batch after the page has loaded, so the
+// Game log section fills itself in on a fresh visit instead of waiting for a
+// button. The batch is heavy and blocks the wasm main thread, so it is scheduled
+// through a short timer (ctx.After) that lets the page paint first; the sampling
+// then runs and its result re-renders the section.
+func (s *style) autoSampleGames(ctx app.Context) {
+	if s.logSampled {
+		return
+	}
+	ctx.After(styleSampleDelay, func(app.Context) {
+		s.logCov = sampleLog(sim.SeedScripts(styleLogSampleGames))
+		s.logSampled, s.drillOpen = true, false
+	})
 }
 
 // reshuffleGames replays a fresh, non-deterministic batch, so a reader can look
@@ -89,7 +130,7 @@ func (s *style) logHeroGallery() app.UI {
 	for _, cb := range cov.cover {
 		cb := cb
 		gw := cov.games[cb.game].game
-		blocks := gw.logBlocks()
+		blocks := cov.games[cb.game].blocks
 		if cb.block >= len(blocks) {
 			continue
 		}
@@ -122,7 +163,7 @@ func (s *style) logDrill() app.UI {
 		return app.Div()
 	}
 	gw := s.logCov.games[s.drill.game].game
-	blocks := gw.logBlocks()
+	blocks := s.logCov.games[s.drill.game].blocks
 	body := make([]app.UI, 0, len(blocks))
 	for i, b := range blocks {
 		view := gw.logBlockView(b)

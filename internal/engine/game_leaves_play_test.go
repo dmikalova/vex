@@ -45,7 +45,7 @@ func TestDestructionReplacedByOwnStatic(t *testing.T) {
 		return testCreature("automaton", 3, WithStatic(StaticModifier{
 			Replaces: Replace{
 				When: EventCreatureDestroyed,
-				Cond: InPlay{Player: Controller, Type: Creature, Other: true},
+				Cond: CardsInPlay{Player: Controller, Type: Creature, Other: true},
 				With: GainAember{Player: Controller, Amount: 1},
 			},
 		}))
@@ -99,7 +99,7 @@ func TestDestructionReplacementDoesNotHangAtZeroPower(t *testing.T) {
 	automaton := testCreature("automaton", 3, WithStatic(StaticModifier{
 		Replaces: Replace{
 			When: EventCreatureDestroyed,
-			Cond: InPlay{Player: Controller, Type: Creature, Other: true},
+			Cond: CardsInPlay{Player: Controller, Type: Creature, Other: true},
 			With: Sequence{Effects: []Effect{
 				Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
 				MoveToFlank{Target: Target{Kind: TargetTriggeringCreature}},
@@ -142,7 +142,7 @@ func TestCreatureSelfDestructionReplacementText(t *testing.T) {
 		WithStatic(StaticModifier{
 			Replaces: Replace{
 				When: EventCreatureDestroyed,
-				Cond: InPlay{Player: Controller, Type: Creature, Other: true},
+				Cond: CardsInPlay{Player: Controller, Type: Creature, Other: true},
 				With: Sequence{Effects: []Effect{
 					Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
 					MoveToFlank{Target: Target{Kind: TargetTriggeringCreature}},
@@ -537,5 +537,94 @@ func TestDestroyedEachDoesNotReTriggerItself(t *testing.T) {
 		if n != 1 {
 			t.Errorf("creature %v appears %d times in discard, want exactly 1", id, n)
 		}
+	}
+}
+
+// Destruction and purge are separate removal attempts, so a ward granted between
+// them absorbs the second as well as the first (the human's Old Egad scenario).
+func TestWardAbsorbsDestructionAndPurgeSeparately(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	c := g.AddToBattleline(testCreature("c", 3), 0)
+	g.State.Cards[c].Warded = true
+
+	g.destroyTogether(0, []LocalID{c})
+	if !g.inPlay(c) {
+		t.Fatal("ward should absorb the destruction and leave the creature in play")
+	}
+	if g.Warded(c) {
+		t.Error("absorbing the destruction should spend the ward")
+	}
+
+	g.State.Cards[c].Warded = true
+	g.purgeFromPlay(c)
+	if !g.inPlay(c) {
+		t.Error("a fresh ward should absorb the purge too")
+	}
+	if g.Warded(c) {
+		t.Error("absorbing the purge should spend the fresh ward")
+	}
+}
+
+// Filing an already-destroyed creature is bookkeeping, not a removal attempt, so
+// it never consults ward — a ward granted while the Destroyed window is open must
+// not resurrect a creature the destruction already claimed.
+func TestDiscardDestroyedIgnoresWard(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	c := g.AddToBattleline(testCreature("c", 3), 0)
+	g.State.Cards[c].Warded = true
+
+	g.discardDestroyed(c)
+	if g.inPlay(c) {
+		t.Error("ward must not stop a destroyed creature reaching its discard pile")
+	}
+	if g.State.Discard[0].Count != 1 {
+		t.Errorf("destroyed creature should be in the discard, got %d", g.State.Discard[0].Count)
+	}
+}
+
+// TestUpgradeReleasesAemberOnLeavingHost checks an upgrade gets the same teardown
+// as any other card leaving play, by whichever exit it takes. Æmber on a
+// non-creature returns to the common supply (Master Rulebook line 927), so an
+// upgrade must never carry it into the discard pile or a hand.
+func TestUpgradeReleasesAemberOnLeavingHost(t *testing.T) {
+	cases := []struct {
+		name string
+		move func(g *Game, host LocalID)
+		in   func(g *Game, up LocalID) bool
+	}{
+		{
+			"discarded with its host",
+			func(g *Game, host LocalID) { g.discardDestroyed(host) },
+			func(g *Game, up LocalID) bool { return g.State.Discard[0].contains(up) },
+		},
+		{
+			"returned to hand",
+			func(g *Game, host LocalID) { g.returnUpgradesToHand(host) },
+			func(g *Game, up LocalID) bool { return g.State.Hand[0].contains(up) },
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewGame("A", "B", 1)
+			host := g.AddToBattleline(testCreature("Host", 3), 0)
+			up := g.Register(NewCard("Laden", Mars, Upgrade, Common), 0)
+			g.AttachUpgrade(host, up)
+			c := g.State.Cards[up]
+			c.Amber = 2
+			g.State.Cards[up] = c
+
+			tc.move(g, host)
+
+			if !tc.in(g, up) {
+				t.Fatal("the upgrade did not reach its destination zone")
+			}
+			if got := g.State.Cards[up].Amber; got != 0 {
+				t.Errorf("Æmber on the upgrade = %d, want 0: it was carried out of play", got)
+			}
+			if g.Aember(0) != 0 || g.Aember(1) != 0 {
+				t.Errorf("pools = [%d %d], want [0 0]: a non-creature's Æmber goes to the supply",
+					g.Aember(0), g.Aember(1))
+			}
+		})
 	}
 }

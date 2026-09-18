@@ -37,7 +37,7 @@ func TestArtifactSelfDestroysWhenNoCreatures(t *testing.T) {
 	g := started(t)
 	sigil := g.AddArtifact(
 		NewCard("Doom Sigil", Shadows, Artifact, Rare,
-			WithDestroyedWhen(InPlay{Player: EachPlayer, Type: Creature, None: true})), 0)
+			WithDestroyedWhen(CardsInPlay{Player: EachPlayer, Type: Creature, None: true})), 0)
 	creature := g.AddToBattleline(
 		NewCard("Sapling", Untamed, Creature, Common, WithPower(2)), 0)
 
@@ -318,5 +318,95 @@ func TestPlaceAemberOnACardOutOfPlayLandsOnNothing(t *testing.T) {
 
 	if got := g.State.Cards[src].Amber; got != 0 {
 		t.Errorf("Æmber on a card in hand = %d, want 0", got)
+	}
+}
+
+// TestSimultaneouslySettlesOnce pins that a batch of board changes is one moment:
+// the board does not settle behind each change inside the batch, only once after
+// it. That is what makes a multi-card move order-independent — a card leaving play
+// cannot destroy a card still waiting its turn in the same batch.
+func TestSimultaneouslySettlesOnce(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	doomed := g.AddToBattleline(testCreature("doomed", 3), 0)
+	g.State.Cards[doomed].Damage = 3
+
+	ran := false
+	g.simultaneously(0, func() {
+		ran = true
+		if !g.settling {
+			t.Error("settling flag not held during the batch")
+		}
+		if !g.inPlay(doomed) {
+			t.Error("a destroyable creature was swept mid-batch; the batch is not simultaneous")
+		}
+	})
+
+	if !ran {
+		t.Fatal("batch never ran")
+	}
+	if g.settling {
+		t.Error("settling flag not restored after the batch")
+	}
+	if g.inPlay(doomed) {
+		t.Error("the board did not settle after the batch")
+	}
+}
+
+// TestLeavesPlayWaitsForTheWholeBatch checks a "Leaves Play:" ability inside a
+// simultaneous batch still resolves, and resolves only after every card in the
+// batch has moved. It is gathered while its card is on the board but fires from
+// out of play, so it is the one card ability exempt from the source-in-play guard
+// (ADR 0030) — without that exemption the window would be silently skipped.
+func TestLeavesPlayWaitsForTheWholeBatch(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	watcher := g.AddToBattleline(NewCard("watcher", Mars, Creature, Common, WithPower(2),
+		WithAbility(TriggerLeavesPlay, GainAember{Player: Controller, Amount: 1})), 0)
+	other := g.AddToBattleline(NewCard("other", Mars, Creature, Common, WithPower(2)), 0)
+
+	g.simultaneously(0, func() {
+		g.putIntoHand(watcher)
+		if g.Aember(0) != 0 {
+			t.Error("the Leaves Play ability fired before the batch finished moving")
+		}
+		g.putIntoHand(other)
+	})
+
+	if got := g.Aember(0); got != 1 {
+		t.Errorf("Æmber = %d, want 1: the deferred Leaves Play ability never resolved", got)
+	}
+	if len(g.deferredLeaves) != 0 {
+		t.Errorf("deferredLeaves = %d, want 0: the queue was not drained", len(g.deferredLeaves))
+	}
+}
+
+// TestLeavesPlayWindowIsOrderedByTheActivePlayer checks the active player orders
+// a deferred leave-play window, not whoever resolved the effect (ADR 0013). A
+// batch can take cards from both players out at once, so the two differ: here
+// player 0 resolves the batch while player 1 is active.
+func TestLeavesPlayWindowIsOrderedByTheActivePlayer(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.State.ActivePlayer = 1
+	mine := g.AddToBattleline(NewCard("mine", Mars, Creature, Common, WithPower(2),
+		WithAbility(TriggerLeavesPlay, GainAember{Player: Controller, Amount: 1})), 0)
+	theirs := g.AddToBattleline(NewCard("theirs", Mars, Creature, Common, WithPower(2),
+		WithAbility(TriggerLeavesPlay, Draw{Amount: 1})), 1)
+
+	resolver, active := &reactionOrderRecorder{}, &reactionOrderRecorder{}
+	g.SetChooser(0, resolver)
+	g.SetChooser(1, active)
+
+	g.simultaneously(0, func() {
+		g.putIntoHand(mine)
+		g.putIntoHand(theirs)
+	})
+
+	if !active.asked {
+		t.Error("the active player was never asked to order the window")
+	}
+	if resolver.asked {
+		t.Error("the resolving player ordered the window instead of the active player")
+	}
+	if len(active.got) != 2 {
+		t.Errorf("window had %d entries, want 2", len(active.got))
 	}
 }

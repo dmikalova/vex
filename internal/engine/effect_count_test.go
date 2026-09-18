@@ -39,19 +39,19 @@ func TestInPlay(t *testing.T) {
 	// Value across type and house filters, and the opposing side.
 	values := []struct {
 		name string
-		in   InPlay
+		in   CardsInPlay
 		want int
 	}{
-		{"friendly creatures", InPlay{Player: Controller, Type: Creature}, 3},
+		{"friendly creatures", CardsInPlay{Player: Controller, Type: Creature}, 3},
 		{
 			"friendly Mars creatures",
-			InPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)},
+			CardsInPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)},
 			2,
 		},
-		{"friendly artifacts", InPlay{Player: Controller, Type: Artifact}, 2},
-		{"friendly cards, any type", InPlay{Player: Controller}, 5},
-		{"friendly Shards", InPlay{Player: Controller, Trait: Shard}, 1},
-		{"enemy creatures", InPlay{Player: Opponent, Type: Creature}, 1},
+		{"friendly artifacts", CardsInPlay{Player: Controller, Type: Artifact}, 2},
+		{"friendly cards, any type", CardsInPlay{Player: Controller}, 5},
+		{"friendly Shards", CardsInPlay{Player: Controller, Trait: Shard}, 1},
+		{"enemy creatures", CardsInPlay{Player: Opponent, Type: Creature}, 1},
 	}
 	for _, tc := range values {
 		if got := tc.in.Value(ctx); got != tc.want {
@@ -61,20 +61,20 @@ func TestInPlay(t *testing.T) {
 
 	// CountText — the singular "for each" noun.
 	texts := []struct {
-		in   InPlay
+		in   CardsInPlay
 		want string
 	}{
-		{InPlay{Player: Controller, Type: Creature}, "friendly creature in play"},
+		{CardsInPlay{Player: Controller, Type: Creature}, "friendly creature in play"},
 		{
-			InPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)},
+			CardsInPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)},
 			"friendly Mars creature",
 		},
-		{InPlay{Player: Controller, Trait: Shard}, "friendly Shard"},
-		{InPlay{Player: Controller, Type: Creature, Trait: Thief}, "friendly Thief creature"},
-		{InPlay{Player: Controller, Type: Artifact, Trait: Shard}, "friendly Shard artifact"},
-		{InPlay{Player: Opponent, Type: Creature}, "enemy creature in play"},
-		{InPlay{Player: Controller, Type: Artifact}, "friendly artifact in play"},
-		{InPlay{Player: Controller}, "friendly card in play"},
+		{CardsInPlay{Player: Controller, Trait: Shard}, "friendly Shard"},
+		{CardsInPlay{Player: Controller, Type: Creature, Trait: Thief}, "friendly Thief creature"},
+		{CardsInPlay{Player: Controller, Type: Artifact, Trait: Shard}, "friendly Shard artifact"},
+		{CardsInPlay{Player: Opponent, Type: Creature}, "enemy creature in play"},
+		{CardsInPlay{Player: Controller, Type: Artifact}, "friendly artifact in play"},
+		{CardsInPlay{Player: Controller}, "friendly card in play"},
 	}
 	for _, tc := range texts {
 		if got := tc.in.CountText(); got != tc.want {
@@ -83,31 +83,31 @@ func TestInPlay(t *testing.T) {
 	}
 
 	// CondText — singular and plural.
-	if got := (InPlay{Player: Controller, Type: Creature}).CondText(); got != "if there is a friendly creature in play" {
+	if got := (CardsInPlay{Player: Controller, Type: Creature}).CondText(); got != "if there is a friendly creature in play" {
 		t.Errorf("singular CondText = %q", got)
 	}
-	if got := (InPlay{Player: Controller, Type: Creature, Amount: 2}).CondText(); got != "if there are 2 or more friendly creatures in play" {
+	if got := (CardsInPlay{Player: Controller, Type: Creature, Amount: 2}).CondText(); got != "if there are 2 or more friendly creatures in play" {
 		t.Errorf("plural CondText = %q", got)
 	}
-	if got := (InPlay{Player: Controller, Type: Creature, Other: true}).CondText(); got != "if there is another friendly creature in play" {
+	if got := (CardsInPlay{Player: Controller, Type: Creature, Other: true}).CondText(); got != "if there is another friendly creature in play" {
 		t.Errorf("other CondText = %q", got)
 	}
 
 	// Met — Amount defaults to one; a higher threshold may not be reached.
-	if !(InPlay{Player: Controller, Type: Creature}).Met(ctx) {
+	if !(CardsInPlay{Player: Controller, Type: Creature}).Met(ctx) {
 		t.Error("default threshold should be met with 3 creatures")
 	}
-	if !(InPlay{Player: Controller, Type: Creature, Amount: 3}).Met(ctx) {
+	if !(CardsInPlay{Player: Controller, Type: Creature, Amount: 3}).Met(ctx) {
 		t.Error("threshold 3 should be met with 3 creatures")
 	}
-	if (InPlay{Player: Controller, Type: Creature, Amount: 4}).Met(ctx) {
+	if (CardsInPlay{Player: Controller, Type: Creature, Amount: 4}).Met(ctx) {
 		t.Error("threshold 4 should not be met with 3 creatures")
 	}
 
 	// Met with Other counts friendly creatures besides the source.
 	src := g.AddToBattleline(NewCard("src", Mars, Creature, Common, WithPower(2)), 0)
 	octx := &EffectContext{Resolver: g, Source: src, Controller: 0}
-	if !(InPlay{Player: Controller, Type: Creature, Other: true}).Met(octx) {
+	if !(CardsInPlay{Player: Controller, Type: Creature, Other: true}).Met(octx) {
 		t.Error("Other should be met while another friendly creature is in play")
 	}
 }
@@ -120,15 +120,15 @@ func TestCardinalCountText(t *testing.T) {
 		want string
 	}{
 		{
-			InPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)},
+			CardsInPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)},
 			"the number of friendly Mars creatures you control",
 		},
 		{
-			InPlay{Player: Opponent, Type: Creature},
+			CardsInPlay{Player: Opponent, Type: Creature},
 			"the number of enemy creatures your opponent controls",
 		},
 		{
-			InPlay{Player: EachPlayer, Type: Creature},
+			CardsInPlay{Player: EachPlayer, Type: Creature},
 			"the number of creatures in play",
 		},
 		{ForgedKeys{Player: Opponent}, "the number of forged key your opponent has"},
@@ -149,7 +149,7 @@ func TestInPlayMinPower(t *testing.T) {
 	g.AddToBattleline(NewCard("small", Brobnar, Creature, Common, WithPower(4)), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	strong := InPlay{Player: Controller, Type: Creature, MinPower: 5}
+	strong := CardsInPlay{Player: Controller, Type: Creature, MinPower: 5}
 	if got := strong.Value(ctx); got != 2 {
 		t.Errorf("MinPower 5 Value = %d, want 2", got)
 	}
@@ -165,7 +165,7 @@ func TestInPlayWithAember(t *testing.T) {
 	g.AddAmberOn(rich, 2)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	withAember := InPlay{Player: Controller, Type: Creature, WithAember: true}
+	withAember := CardsInPlay{Player: Controller, Type: Creature, WithAember: true}
 	if got := withAember.Value(ctx); got != 1 {
 		t.Errorf("WithAember Value = %d, want 1 (only the Æmber-bearer counts)", got)
 	}
@@ -182,7 +182,7 @@ func TestInPlayEachPlayer(t *testing.T) {
 
 	// EachPlayer counts both players' matching cards, with no friendly/enemy
 	// qualifier in the rendered noun.
-	byHouse := InPlay{Player: EachPlayer, Type: Creature, House: namedHouse(Brobnar)}
+	byHouse := CardsInPlay{Player: EachPlayer, Type: Creature, House: namedHouse(Brobnar)}
 	if got := byHouse.CountText(); got != "Brobnar creature in play" {
 		t.Errorf("count text = %q, want %q", got, "Brobnar creature in play")
 	}
@@ -190,7 +190,7 @@ func TestInPlayEachPlayer(t *testing.T) {
 		t.Errorf("value = %d, want 2 (one creature per player)", got)
 	}
 
-	if got := (InPlay{Player: EachPlayer, Type: Creature}).CountText(); got != "creature in play" {
+	if got := (CardsInPlay{Player: EachPlayer, Type: Creature}).CountText(); got != "creature in play" {
 		t.Errorf("no-house count text = %q, want %q", got, "creature in play")
 	}
 }
@@ -202,7 +202,7 @@ func TestInPlayReady(t *testing.T) {
 	g.SetExhausted(spent, true)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	ready := InPlay{Player: Controller, Type: Creature, House: namedHouse(Mars), Ready: true}
+	ready := CardsInPlay{Player: Controller, Type: Creature, House: namedHouse(Mars), Ready: true}
 	if got := ready.CountText(); got != "friendly ready Mars creature" {
 		t.Errorf("count text = %q, want %q", got, "friendly ready Mars creature")
 	}
@@ -484,7 +484,7 @@ func TestInPlayByName(t *testing.T) {
 	g.AddToBattleline(testCreature("other", 3), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	none := InPlay{Player: EachPlayer, Type: Creature, Name: "Ancient Bear", None: true}
+	none := CardsInPlay{Player: EachPlayer, Type: Creature, Name: "Ancient Bear", None: true}
 	if want := "if there are no Ancient Bears in play"; none.CondText() != want {
 		t.Errorf("cond text = %q, want %q", none.CondText(), want)
 	}
@@ -496,14 +496,14 @@ func TestInPlayByName(t *testing.T) {
 	if none.Met(ctx) {
 		t.Error("None should not be met once an Ancient Bear is in play")
 	}
-	some := InPlay{Player: EachPlayer, Type: Creature, Name: "Ancient Bear"}
+	some := CardsInPlay{Player: EachPlayer, Type: Creature, Name: "Ancient Bear"}
 	if n := some.Value(ctx); n != 1 {
 		t.Errorf("value = %d, want 1 (only the named card counts)", n)
 	}
 	if want := "if there is an Ancient Bear in play"; some.CondText() != want {
 		t.Errorf("cond text = %q, want %q", some.CondText(), want)
 	}
-	two := InPlay{Player: EachPlayer, Type: Creature, Name: "Ancient Bear", Amount: 2}
+	two := CardsInPlay{Player: EachPlayer, Type: Creature, Name: "Ancient Bear", Amount: 2}
 	if want := "if there are 2 or more Ancient Bears in play"; two.CondText() != want {
 		t.Errorf("cond text = %q, want %q", two.CondText(), want)
 	}
@@ -934,16 +934,22 @@ func TestPutFromPlayTalliesRemovalsPerController(t *testing.T) {
 	}
 }
 
-// TestPutFromPlaySkipsCardsAlreadyGone checks a card a "Leaves Play:" ability
-// destroyed mid-move is neither moved again nor counted in the tally.
-func TestPutFromPlaySkipsCardsAlreadyGone(t *testing.T) {
+// TestPutFromPlayMovesTheWholeSelectionTogether checks every card an effect
+// targets moves before any of their "Leaves Play:" abilities fire. The bomb's
+// ability would destroy both enemy creatures, but they are in the same selection
+// and have already been shuffled away by the time it resolves, so it finds
+// nothing and all three cards are counted. Before leave-play windows were held
+// to the end of the batch the bomb fired mid-loop and the other two were skipped,
+// which made the outcome depend on the order the selection happened to be
+// visited.
+func TestPutFromPlayMovesTheWholeSelectionTogether(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.AddToBattleline(NewCard("bomb", Mars, Creature, Common, WithPower(2),
 		WithAbility(TriggerLeavesPlay, Destroy{
 			Target: Target{Kind: TargetEachEnemyCreature},
 		})), 0)
-	g.AddToBattleline(NewCard("theirs1", Mars, Creature, Common, WithPower(2)), 1)
-	g.AddToBattleline(NewCard("theirs2", Mars, Creature, Common, WithPower(2)), 1)
+	theirs1 := g.AddToBattleline(NewCard("theirs1", Mars, Creature, Common, WithPower(2)), 1)
+	theirs2 := g.AddToBattleline(NewCard("theirs2", Mars, Creature, Common, WithPower(2)), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	PutFromPlay{
@@ -951,9 +957,14 @@ func TestPutFromPlaySkipsCardsAlreadyGone(t *testing.T) {
 		Destination: ToDeckShuffled,
 	}.Resolve(ctx)
 
-	if ctx.Produced.Moved != [2]int{1, 0} {
-		t.Errorf("Moved = %v, want [1 0]: the destroyed creatures were not shuffled",
+	if ctx.Produced.Moved != [2]int{1, 2} {
+		t.Errorf("Moved = %v, want [1 2]: the whole selection moves as one moment",
 			ctx.Produced.Moved)
+	}
+	for _, id := range []LocalID{theirs1, theirs2} {
+		if !g.State.Deck[1].contains(id) {
+			t.Errorf("card %d was destroyed mid-selection instead of being shuffled away", id)
+		}
 	}
 }
 

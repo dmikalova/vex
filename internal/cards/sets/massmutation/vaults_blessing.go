@@ -21,7 +21,7 @@ var VaultsBlessing = set.New(
 		card.Trigger.Play, card.GainAember{
 			Player: card.EachPlayer,
 			Amount: 1,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 				Trait:  card.Traits.Mutant,

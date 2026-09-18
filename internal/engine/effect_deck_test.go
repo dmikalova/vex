@@ -453,12 +453,16 @@ func TestEvasionSigilCompositionMiss(t *testing.T) {
 // a card the filters admit, reports success so a Then can follow, records the run it
 // discarded, and runs the deck out when nothing matches.
 func TestDiscardUntil(t *testing.T) {
-	e := DiscardUntil{Player: Controller, Type: Creature, House: namedHouse(Brobnar)}
+	e := DiscardUntil{
+		Player: Controller,
+		Filter: CardFilter{Type: Creature},
+		House:  namedHouse(Brobnar),
+	}
 	want := "discard cards from the top of your deck until you discard a Brobnar creature or run out of cards"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
 	}
-	if got := (DiscardUntil{Type: Artifact}).Text(); got !=
+	if got := (DiscardUntil{Filter: CardFilter{Type: Artifact}}).Text(); got !=
 		"discard cards from the top of your deck until you discard an artifact or run out of cards" {
 		t.Errorf("artifact text = %q", got)
 	}
@@ -470,7 +474,7 @@ func TestDiscardUntil(t *testing.T) {
 		"discard cards from the top of your opponent's deck until you discard a card or run out of cards" {
 		t.Errorf("opponent text = %q", got)
 	}
-	if got := (DiscardUntil{Player: ItsController, Type: Creature}).Text(); got !=
+	if got := (DiscardUntil{Player: ItsController, Filter: CardFilter{Type: Creature}}).Text(); got !=
 		"discard cards from the top of its controller's deck until you discard a creature or run out of cards" {
 		t.Errorf("its-controller text = %q", got)
 	}
@@ -478,11 +482,11 @@ func TestDiscardUntil(t *testing.T) {
 		"discard cards from the top of your deck until you discard a Brobnar card or choose to stop" {
 		t.Errorf("may-stop text = %q", got)
 	}
-	if got := (DiscardUntil{Name: "Angry Mob"}).Text(); got !=
+	if got := (DiscardUntil{Filter: CardFilter{Name: "Angry Mob"}}).Text(); got !=
 		"discard cards from the top of your deck until you discard an Angry Mob or run out of cards" {
 		t.Errorf("named text = %q", got)
 	}
-	if got := (DiscardUntil{Player: ItsController, Type: Creature, ExceptTrait: Mutant}).Text(); got !=
+	if got := (DiscardUntil{Player: ItsController, Filter: CardFilter{Type: Creature, ExceptTrait: Mutant}}).Text(); got !=
 		"discard cards from the top of its controller's deck until you discard a non-Mutant creature or run out of cards" {
 		t.Errorf("except-trait text = %q", got)
 	}
@@ -522,7 +526,7 @@ func TestDiscardUntil(t *testing.T) {
 
 	// Nothing matching left: the dig empties the deck and the tail does nothing.
 	Then{
-		First:  DiscardUntil{Player: Controller, Type: Artifact},
+		First:  DiscardUntil{Player: Controller, Filter: CardFilter{Type: Artifact}},
 		Result: PutDiscardedIntoHand{},
 	}.Resolve(
 		ctx,
@@ -534,7 +538,7 @@ func TestDiscardUntil(t *testing.T) {
 		t.Errorf("hand should be untouched, got %v", g.Hand(0))
 	}
 	// Resolved bare, the dig still runs; it just has no tail to gate.
-	DiscardUntil{Player: Controller, Type: Artifact}.Resolve(ctx)
+	DiscardUntil{Player: Controller, Filter: CardFilter{Type: Artifact}}.Resolve(ctx)
 	PutDiscardedIntoHand{}.Resolve(ctx)
 
 	// A named dig stops at the first card of that name, skipping the rest.
@@ -542,7 +546,7 @@ func TestDiscardUntil(t *testing.T) {
 	g3.AddToDeck(NewCard("Filler", Brobnar, Creature, Common), 0)
 	mob := g3.AddToDeck(NewCard("Angry Mob", Sanctum, Creature, Common), 0)
 	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
-	DiscardUntil{Player: Controller, Name: "Angry Mob"}.Resolve(ctx3)
+	DiscardUntil{Player: Controller, Filter: CardFilter{Name: "Angry Mob"}}.Resolve(ctx3)
 	if !ctx3.HasIt || ctx3.It != mob {
 		t.Errorf("named dig found %v (has=%v), want %d", ctx3.It, ctx3.HasIt, mob)
 	}
@@ -561,7 +565,10 @@ func TestDiscardUntil(t *testing.T) {
 	clean := g4.AddToDeck(NewCard("Clean", Sanctum, Creature, Common, WithPower(3)), 1)
 	ctx4 := &EffectContext{Resolver: g4, Controller: 0, ItController: 1}
 	Then{
-		First:  DiscardUntil{Player: ItsController, Type: Creature, ExceptTrait: Mutant},
+		First: DiscardUntil{
+			Player: ItsController,
+			Filter: CardFilter{Type: Creature, ExceptTrait: Mutant},
+		},
 		Result: PutDiscardedIntoPlay{Type: Creature},
 	}.Resolve(ctx4)
 	if !ctx4.HasIt || ctx4.It != clean {

@@ -20,7 +20,7 @@ var Quicksand = set.New(
 	card.WithAbility(
 		card.Trigger.Play,
 		card.BatchDestroy{Gather: card.EachPlayerUnless{
-			Spare: card.InPlay{
+			Spare: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 				House:  card.Houses.Named(card.House.Self),

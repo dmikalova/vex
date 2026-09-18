@@ -27,7 +27,7 @@ var ShardOfHope = set.New(
 			Amount: 1,
 			Target: card.Target.FriendlyCreature,
 			Source: card.Opponent,
-			Times: card.InPlay{
+			Times: card.CardsInPlay{
 				Player: card.Controller,
 				Trait:  card.Traits.Shard,
 			},

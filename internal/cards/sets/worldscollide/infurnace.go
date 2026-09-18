@@ -22,6 +22,7 @@ var Infurnace = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.PurgeCard{
+				Zone:      card.Discard,
 				Player:    card.ChosenPlayer,
 				Selection: card.Chosen{Optional: true},
 				Amount:    2,

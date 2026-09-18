@@ -18,7 +18,8 @@ var NotFinishedWithYou = set.New(
 	card.Provenance(card.AoA, "63"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.ShuffleFromDiscard{
+		card.Trigger.Play, card.ShuffleIntoDeck{
+			Player: card.Controller, From: []card.Zone{card.Discard},
 			Selection: card.Chosen{Type: card.Type.Creature, Optional: true},
 			AnyNumber: true,
 		}),

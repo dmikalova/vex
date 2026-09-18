@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Put a creature from your discard pile into your hand. If it is a Mutant creature, put a creature from your discard pile into your hand.
+//	Play: Put a creature from your discard pile into your hand. If it is a Mutant creature, put another creature from your discard pile into your hand.
 //	Enhance Draw.
 var Resurgence = set.New(
 	"Resurgence",
@@ -27,7 +27,7 @@ var Resurgence = set.New(
 			card.Conditional{
 				Cond: card.ItIsOfTrait{Trait: card.Traits.Mutant},
 				Then: card.PutFromDiscard{
-					Selection:   card.Chosen{Type: card.Type.Creature},
+					Selection:   card.Chosen{Type: card.Type.Creature, Another: true},
 					Destination: card.To.Hand,
 				},
 			},

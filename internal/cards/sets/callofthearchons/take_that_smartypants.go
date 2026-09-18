@@ -18,7 +18,7 @@ var TakeThatSmartypants = set.New(
 	card.Provenance(card.CotA, "11"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(card.Trigger.Play, card.Conditional{
-		Cond: card.InPlay{
+		Cond: card.CardsInPlay{
 			Player: card.Opponent,
 			House:  card.Houses.Named(card.House.Logos),
 			Amount: 3,

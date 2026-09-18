@@ -21,7 +21,8 @@ func (e ConsiderFlank) validate() error {
 // Text renders the effect, e.g. "for the remainder of the turn, it is considered a
 // flank creature".
 func (e ConsiderFlank) Text() string {
-	return "for the remainder of the turn, " + e.Target.Text() + " is considered a flank creature"
+	return durationClause(RemainderOfPlayerTurn, "") + ", " +
+		e.Target.Text() + " is considered a flank creature"
 }
 
 // Resolve makes each selected creature count as a flank creature for the turn.

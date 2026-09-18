@@ -4,7 +4,7 @@ import "testing"
 
 func TestBlankEnemyTextEffect(t *testing.T) {
 	if got := (BlankEnemyText{}).Text(); got !=
-		"until your next turn, enemy creatures' text boxes are "+
+		"until the start of your next turn, enemy creatures' text boxes are "+
 			"considered blank (except for traits)" {
 		t.Errorf("text = %q", got)
 	}

@@ -21,7 +21,7 @@ func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 		}}),
 		WithPlayPermission(PlayPermission{House: SelfHouse, Amount: 1}),
 		WithHouseLock(HouseLock{Player: Controller, House: SelfHouse}),
-		WithKeyCost(NewKeyCostChange(Opponent, 1).Per(InPlay{
+		WithKeyCost(NewKeyCostChange(Opponent, 1).Per(CardsInPlay{
 			Player: Controller,
 			Type:   Creature,
 			House:  namedHouse(SelfHouse),

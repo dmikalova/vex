@@ -177,3 +177,25 @@ func TestPeekable(t *testing.T) {
 		t.Error("the opponent should not be able to peek")
 	}
 }
+
+// TestGraftUnderTakesBothGiganticHalves confirms grafting a gigantic under a host
+// moves both halves under it. A gigantic leaves play as one card, so a graft that
+// took only the base half would strand the art half in play (ADR 0042).
+func TestGraftUnderTakesBothGiganticHalves(t *testing.T) {
+	g := started(t)
+	base, art := playedGigantic(g, 0)
+	host := g.AddToBattleline(testCreature("Host", 4), 0)
+
+	g.GraftUnder(base, host)
+
+	under := g.underOf(host)
+	if len(under) != 2 || under[0] != base || under[1] != art {
+		t.Fatalf("underOf(host) = %v, want both halves [%d %d]", under, base, art)
+	}
+	if g.inPlay(art) {
+		t.Error("the art half should have left play with the base half")
+	}
+	if err := g.InvariantError(); err != nil {
+		t.Fatalf("state unsound after graft: %v", err)
+	}
+}

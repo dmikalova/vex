@@ -538,7 +538,7 @@ func TestForceActiveHouseOfFoughtNextTurn(t *testing.T) {
 	if err := e.validate(); err != nil {
 		t.Errorf("a Fought must should validate: %v", err)
 	}
-	if got := e.Text(); got != "your opponent must choose the house of the creature {self} fights as their active house on their next turn" {
+	if got := e.Text(); got != "your opponent must choose the house of the creature {self} fights as their active house during their next turn" {
 		t.Errorf("text = %q", got)
 	}
 	g := NewGame("A", "B", 1)
@@ -575,7 +575,7 @@ func TestForceActiveHouseOfItNextTurn(t *testing.T) {
 	if err := e.validate(); err != nil {
 		t.Errorf("an It must should validate: %v", err)
 	}
-	if got := e.Text(); got != "its controller must choose that creature's house as their active house on their next turn" {
+	if got := e.Text(); got != "its controller must choose that creature's house as their active house during their next turn" {
 		t.Errorf("text = %q", got)
 	}
 	g := NewGame("A", "B", 1)
@@ -608,7 +608,7 @@ func TestForceActiveHouseOfItNextTurn(t *testing.T) {
 // the opponent's next active house and the payoff when they match it.
 func TestWagerOpponentChoosesChosenHouse(t *testing.T) {
 	e := WagerOpponentChoosesChosenHouse{Amount: 2}
-	want := "if your opponent chooses that house as their active house on their next turn, steal 2 Æmber"
+	want := "if your opponent chooses that house as their active house during their next turn, steal 2 Æmber"
 	if got := e.Text(); got != want {
 		t.Errorf("text = %q", got)
 	}
@@ -662,7 +662,7 @@ func TestWagerMissed(t *testing.T) {
 // their active house, their opponent cannot choose that same house next turn.
 func TestForbidSameActiveHouseNextTurn(t *testing.T) {
 	e := CannotChooseHouse{Player: Opponent, Reference: JustChosenActiveHouse}
-	if got := e.Text(); got != "their opponent cannot choose the same house as their active house on their next turn" {
+	if got := e.Text(); got != "their opponent cannot choose the same house as their active house during their next turn" {
 		t.Errorf("text = %q", got)
 	}
 	if err := e.validate(); err != nil {
@@ -689,7 +689,7 @@ func TestForbidSameActiveHouseNextTurn(t *testing.T) {
 
 func TestForbidActiveHouseNextTurn(t *testing.T) {
 	e := CannotChooseHouse{Player: Opponent, Reference: ChosenActiveHouse}
-	if got := e.Text(); got != "your opponent cannot choose that house as their active house on their next turn" {
+	if got := e.Text(); got != "your opponent cannot choose that house as their active house during their next turn" {
 		t.Errorf("text = %q", got)
 	}
 	g := NewGame("A", "B", 1)

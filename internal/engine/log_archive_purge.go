@@ -13,5 +13,5 @@ type CardArchivedFromPurge struct {
 func (e CardArchivedFromPurge) Text(n Namer) string {
 	who, owner := actorPossessive(n, e.Player)
 	return fmt.Sprintf("%s archives %s from %s purge pile",
-		who, nameMoved(n, e.Card, purged, Archives), owner)
+		who, nameMoved(n, e.Card, Purged, Archives), owner)
 }

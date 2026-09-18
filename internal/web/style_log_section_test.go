@@ -62,3 +62,42 @@ func TestLogSectionRenders(t *testing.T) {
 		t.Fatal("open logDrill rendered nil")
 	}
 }
+
+// TestSampleLogGamesResolveCardNames checks each retained game carries a card
+// lookup, so a hover over a log mention can resolve the printed card to preview
+// it — without it, onLogCardHover would find nothing and no preview would open.
+func TestSampleLogGamesResolveCardNames(t *testing.T) {
+	s := sampledStyle(t)
+	if len(s.logCov.games) == 0 {
+		t.Fatal("sample retained no games")
+	}
+	for i, sg := range s.logCov.games {
+		if len(sg.game.defByName) == 0 {
+			t.Errorf("game %d has no card lookup, so its log mentions cannot preview", i)
+		}
+	}
+}
+
+// TestLogPreviewFollowsHover checks the style page reflects a sampled game's
+// hover: with nothing hovered there is no preview, and once a game holds a hovered
+// card the page previews that card.
+func TestLogPreviewFollowsHover(t *testing.T) {
+	s := sampledStyle(t)
+	if def := s.hoveredPreviewDef(); def != nil {
+		t.Fatalf("nothing hovered but preview shows %q", def.Name)
+	}
+	gw := s.logCov.games[0].game
+	for _, def := range gw.defByName {
+		gw.hoverDef = def
+		break
+	}
+	if gw.hoverDef == nil {
+		t.Fatal("could not seed a hovered card")
+	}
+	if got := s.hoveredPreviewDef(); got != gw.hoverDef {
+		t.Fatalf("hoveredPreviewDef = %v, want the hovered card %q", got, gw.hoverDef.Name)
+	}
+	if ui := s.logPreviewOverlay(); ui == nil {
+		t.Fatal("logPreviewOverlay rendered nil with a card hovered")
+	}
+}

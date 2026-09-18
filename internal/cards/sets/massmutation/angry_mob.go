@@ -23,7 +23,10 @@ var AngryMob = set.New(
 	card.WithTraits(card.Traits.Human),
 	card.WithAbility(
 		card.Trigger.BeforeFight, card.May{Do: card.Then{
-			First:  card.DiscardUntil{Player: card.Controller, Name: angryMobName},
+			First: card.DiscardUntil{
+				Player: card.Controller,
+				Filter: card.Filter{Name: angryMobName},
+			},
 			Result: card.PutDiscardedIntoHand{Type: card.Type.Creature},
 		}}),
 )

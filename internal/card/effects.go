@@ -127,7 +127,7 @@ type ByActivePlayer = engine.ByActivePlayer
 // controller chooses one (Chosen), one is random (Random), or every match is
 // taken (Each).
 type (
-	// Selection is the axis a movement verb varies along; set it on PurgeFromHand.
+	// Selection is the axis a movement verb varies along; set it on PurgeCard.
 	Selection = engine.Selection
 	// Chosen has the controller pick one card, narrowed by House and an identity
 	// filter (Type, Trait, Name, or an Or disjunction); it is mandatory by default,
@@ -171,12 +171,11 @@ type (
 	// the end-of-turn phase rather than now (Ragnarok).
 	DestroyEachCreatureAtEndOfTurn = engine.DestroyEachCreatureAtEndOfTurn
 	// PurgeCard sets cards aside out of the game, from a discard pile, with a
-	// Selection deciding which cards leave and Player choosing the pile(s):
-	// card.ChosenPlayer for one the controller picks, card.EachPlayer for both.
+	// Selection deciding which cards leave, Zone naming the source (card.Hand or
+	// card.Discard), and Player whose copy of it: card.Controller or card.Opponent
+	// for a fixed side, card.ChosenPlayer for one the controller picks, or
+	// card.EachPlayer for both.
 	PurgeCard = engine.PurgeCard
-	// PurgeFromHand purges cards from a player's hand, with a Selection deciding how
-	// they are picked (chosen / random / each).
-	PurgeFromHand = engine.PurgeFromHand
 	// PurgeCreature purges each creature its Target selects from play.
 	PurgeCreature = engine.PurgeCreature
 	// PurgeSource purges the card whose ability this is (Library Access purges itself).
@@ -287,14 +286,10 @@ type (
 	// so a following Draw{Per: CardsShuffledIntoDeck} draws one card for each card
 	// that returned to your own deck (Timequake).
 	ShuffleFriendlyCardsIntoDeck = engine.ShuffleFriendlyCardsIntoDeck
-	// ShuffleFromDiscard shuffles the cards a Selection picks from your discard pile
-	// into your deck — each match, any number of a chosen kind, or a counted number.
-	ShuffleFromDiscard = engine.ShuffleFromDiscard
-	// ShuffleChosenCreaturesFromZones shuffles any number of chosen friendly creatures from your hand, discard pile, or battleline into your deck.
-	ShuffleChosenCreaturesFromZones = engine.ShuffleChosenCreaturesFromZones
-	// ShuffleNamedFromDiscardIntoDeck shuffles one card of a given name from your
-	// discard pile into your deck.
-	ShuffleNamedFromDiscardIntoDeck = engine.ShuffleNamedFromDiscardIntoDeck
+	// ShuffleIntoDeck shuffles the cards a Selection picks from your own zones (From:
+	// card.Discard, card.Hand, card.Battleline) into your deck — each match, any number of
+	// a chosen kind, or a counted number.
+	ShuffleIntoDeck = engine.ShuffleIntoDeck
 	// SwapDeckAndDiscard exchanges the controller's deck with their discard pile,
 	// then shuffles.
 	SwapDeckAndDiscard = engine.SwapDeckAndDiscard
@@ -309,8 +304,6 @@ type (
 	// ArchiveGrantingUpgrade archives the upgrade whose granted ability this is
 	// (Ghostform archives itself off its host).
 	ArchiveGrantingUpgrade = engine.ArchiveGrantingUpgrade
-	// ArchivePurgedCard archives a card the controller chooses from their own purge pile (Universal Recycle Bin).
-	ArchivePurgedCard = engine.ArchivePurgedCard
 	// DiscardArchives moves all of a player's archived cards into their discard pile.
 	DiscardArchives = engine.DiscardArchives
 	// DiscardHand discards a player's whole hand, one card at a time (Player may be
@@ -700,8 +693,8 @@ type (
 	// Fixed is a Count of a constant number, for a Times that does not scale with
 	// the board (RepeatedFight fights a fixed number of times).
 	Fixed = engine.Fixed
-	// InPlay counts (or gates on) the cards a player has in play matching its filters.
-	InPlay = engine.InPlay
+	// CardsInPlay counts (or gates on) the cards a player has in play matching its filters.
+	CardsInPlay = engine.CardsInPlay
 	// CardsPlayed counts the cards of a house a player has played this turn.
 	CardsPlayed = engine.CardsPlayed
 	// CreaturesUsed counts the creatures a player has used this turn.
@@ -924,12 +917,12 @@ type (
 	// ScheduleOnLeave arms an effect to resolve when the source card leaves play
 	// (Turnkey's forced forge).
 	ScheduleOnLeave = engine.ScheduleOnLeave
-	// RaiseKeyCost makes keys cost more throughout a player's next turn.
+	// RaiseKeyCost makes keys cost more for a Duration; may be EachPlayer, and when
+	// House is set it taxes per creature of that house in play, counted live (Waking
+	// Nightmare, +1 per Dis creature).
 	RaiseKeyCost = engine.RaiseKeyCost
-	// RaiseKeyCostPerHouseCreature makes keys cost more per creature of a house in
-	// play during a player's next turn (Waking Nightmare, +1 per Dis creature).
-	RaiseKeyCostPerHouseCreature = engine.RaiseKeyCostPerHouseCreature
-	// LowerKeyCost drops keys' cost (a negative bump) for a Duration; may be EachPlayer.
+	// LowerKeyCost drops keys' cost (a negative raise) for a Duration; shares
+	// RaiseKeyCost's shape and may be EachPlayer.
 	LowerKeyCost = engine.LowerKeyCost
 	// GainChains gives a player chains (a draw penalty).
 	GainChains = engine.GainChains

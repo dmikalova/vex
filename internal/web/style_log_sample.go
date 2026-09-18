@@ -54,10 +54,14 @@ func blockKinds(b logBlock, want map[logKind]bool) map[logKind]bool {
 
 // sampledGame is a played-out game retained for the log gallery: the script that
 // reproduces it and the web game wrapping it, so its blocks render through the
-// production logBlockView and a drill-in shows its whole log.
+// production logBlockView and a drill-in shows its whole log. blocks is the
+// game's grouped log, computed once when the game is retained: the game is
+// finished so its log never changes, and re-grouping it on every re-render is
+// what made the page crawl once a hover started redrawing the whole gallery.
 type sampledGame struct {
 	script []byte
 	game   *game
+	blocks []logBlock
 }
 
 // coverBubble points at one bubble in the set-cover: which retained game it came
@@ -91,6 +95,7 @@ type logCoverage struct {
 func sampleLog(scripts [][]byte) logCoverage {
 	want := catalogKinds()
 	observed := map[logKind]bool{}
+	names := cardsByName()
 	cov := logCoverage{}
 	for _, script := range scripts {
 		if len(observed) == len(want) {
@@ -103,10 +108,11 @@ func sampleLog(scripts [][]byte) logCoverage {
 		}
 		gw := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
 		gw.g = g
+		gw.defByName = names
 		if !foldsNewKind(gw, want, observed) {
 			continue
 		}
-		cov.games = append(cov.games, sampledGame{script: script, game: gw})
+		cov.games = append(cov.games, sampledGame{script: script, game: gw, blocks: gw.logBlocks()})
 	}
 	cov.cover = coverBubbles(cov.games, observed, want)
 	for t := range want {
@@ -146,7 +152,7 @@ func coverBubbles(games []sampledGame, observed, want map[logKind]bool) []coverB
 	}
 	var cands []candidate
 	for gi, sg := range games {
-		for bi, b := range sg.game.logBlocks() {
+		for bi, b := range sg.blocks {
 			if ks := blockKinds(b, want); len(ks) > 0 {
 				cands = append(cands, candidate{coverBubble{gi, bi}, ks})
 			}

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Deal 2 damage to a creature. If it is not destroyed, its controller must choose that creature's house as their active house on their next turn.
+//	Play: Deal 2 damage to a creature. If it is not destroyed, its controller must choose that creature's house as their active house during their next turn.
 var MarkOfDis = set.New(
 	"Mark of Dis",
 	card.House.Dis,

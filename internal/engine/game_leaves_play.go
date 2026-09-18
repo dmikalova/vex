@@ -21,9 +21,17 @@ func (g *Game) resetCore(id LocalID) { g.State.Cards[id] = CardCore{} }
 // the final step of destruction, run only for creatures still in play after their
 // "Destroyed:" abilities resolve (see destroyTogether). A gigantic's two halves
 // leave together (ADR 0042).
+//
+// It deliberately does NOT consult ward. Ward prevents a creature from being
+// tagged for destruction, but a ward counter placed on a creature that is already
+// tagged does not remove the tag — so once the "Destroyed:" abilities finish, the
+// tagged card goes to the discard regardless (Master Rulebook, Ward). A ward
+// gained mid-window still stops the creature leaving play any OTHER way, which is
+// why purgeFromPlay and the bounce and archive paths do check it. Pinned by
+// TestDiscardDestroyedIgnoresWard and TestWardAbsorbsDestructionAndPurgeSeparately.
 func (g *Game) discardDestroyed(id LocalID) {
 	for _, half := range g.giganticHalves(id) {
-		o := g.leavePlayDestroyed(half)
+		o := g.leavePlayTeardown(half)
 		g.State.Discard[o].add(half)
 	}
 }
@@ -32,12 +40,17 @@ func (g *Game) discardDestroyed(id LocalID) {
 // the game), shedding its upgrades, Æmber, and per-match state on the way — the
 // "purge this creature" a Destroyed ability can do (Annihilation Ritual). A card
 // purged as it is destroyed leaves play, so destroyTogether then skips discarding it.
+//
+// Unlike discardDestroyed, this is a removal ATTEMPT, so it consults ward — even on
+// a creature already tagged for destruction. A creature whose ward absorbed the
+// destruction and which a later "Destroyed:" ability then wards again absorbs this
+// purge with the fresh ward.
 func (g *Game) purgeFromPlay(id LocalID) {
 	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
 	for _, half := range g.giganticHalves(id) {
-		o := g.leavePlayDestroyed(half)
+		o := g.leavePlayTeardown(half)
 		g.State.Purge[o].add(half)
 		g.record(CardPurged{Card: half})
 	}
@@ -48,6 +61,10 @@ func (g *Game) purgeFromPlay(id LocalID) {
 // stays; the effect that tried to remove or damage it still resolves, just with no
 // effect on the creature. Ward covers only leaving play and damage — not stun,
 // enrage, capture, control, or power loss — so only those funnels ask it.
+// Each removal attempt asks separately, so a creature can absorb a destruction and
+// then absorb a later purge with a ward granted in between; filing an
+// already-tagged card into the discard is not an attempt and never asks
+// (see discardDestroyed).
 // prevented names what the ward stopped (and amount the damage it refused) so the
 // log can say what it saved the creature from.
 func (g *Game) absorbedByWard(id LocalID, prevented wardPrevented, amount int) bool {
@@ -60,12 +77,22 @@ func (g *Game) absorbedByWard(id LocalID, prevented wardPrevented, amount int) b
 	return true
 }
 
-// leavePlayDestroyed performs the shared teardown when a destroyed card leaves
-// play: it removes the card from the battle line and artifact row, discards its
-// upgrades, releases any Æmber on it (releaseAemberOnLeavePlay), and resets its
-// per-match state. It returns the owner so the caller can file the card in the
-// right zone.
-func (g *Game) leavePlayDestroyed(id LocalID) int {
+// leavePlayTeardown performs the shared teardown every card leaving play gets,
+// whether it was destroyed or merely relocated: it removes the card from the
+// battle line and artifact row, discards its upgrades and the cards under it,
+// releases any Æmber on it (releaseAemberOnLeavePlay), and resets its per-match
+// state. It returns the owner so the caller can file the card in the right zone.
+// Every exit routes through here — a caller that hand-inlines these five steps
+// will drift from the ones that do not.
+//
+// The upgrades are shed here and now, rather than by a later sweep over upgrades
+// whose host has gone. That eager discard was investigated as a refactor and
+// rejected: it runs with `settling` held, so the power drop it causes is noticed
+// at the same resolution boundary a sweep would use, and a dangling upgrade is
+// already an invariant violation (see checkStaleInPlayState) that -tags assert
+// runs never trip. A sweep would be cleanup for a state that cannot occur. If a
+// card ever does orphan an upgrade, that invariant fires first.
+func (g *Game) leavePlayTeardown(id LocalID) int {
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
@@ -93,7 +120,7 @@ func (g *Game) releaseAemberOnLeavePlay(id LocalID) {
 		g.record(AemberOnCardReleased{Card: id, Amount: amt, To: to})
 		return
 	}
-	g.record(AemberMovedToCommonSupply{Creature: id, Amount: amt})
+	g.record(AemberMovedToCommonSupply{Card: id, Amount: amt})
 }
 
 // removeFromPlay takes a card out of play for good: it fires the card's Leaves
@@ -139,9 +166,48 @@ func (g *Game) unlistFromPlay(id LocalID) {
 // — funnels through removeFromPlay, so this one call covers them all. It also fires
 // any effect the card armed to resolve when it leaves play (Turnkey's forced
 // forge), which likewise wants the card still on the board so its controller reads.
+//
+// Inside a simultaneous batch the abilities are gathered here — still while the
+// card is on the board, so its controller and ability list read correctly — but
+// held for the end of the batch, so every card has moved before any of them
+// reacts (flushDeferredLeaves). Pinned by TestLeavesPlayWaitsForTheWholeBatch.
 func (g *Game) emitLeavesPlay(id LocalID) {
+	if g.deferringLeaves {
+		g.deferredLeaves = append(g.deferredLeaves, g.leavesPlayWindow(id)...)
+		g.fireScheduledOnLeave(id)
+		return
+	}
 	g.triggerAbilities(id, TriggerLeavesPlay, 0, false)
 	g.fireScheduledOnLeave(id)
+}
+
+// leavesPlayWindow gathers a card's "Leaves Play:" abilities without resolving
+// them, stamped with the controller it had while still on the board.
+func (g *Game) leavesPlayWindow(id LocalID) []triggeredAbility {
+	pending := g.triggeredBy(id, TriggerLeavesPlay)
+	actor := g.controller(id)
+	for i := range pending {
+		pending[i].actor = int8(actor)
+		pending[i].fromLeave = true
+	}
+	return pending
+}
+
+// upgradeTeardown performs the shared teardown an upgrade gets when it leaves its
+// host, whether it is discarded or returned to hand: it detaches from the chain,
+// sheds what it was holding, releases any Æmber on it, and resets its per-match
+// state. It returns the owner so the caller can file it in the right zone. This
+// is leavePlayTeardown's counterpart for a card that leaves play from a chain
+// rather than from a row — hand-inlining the steps is what once let an upgrade
+// carry its Æmber into the discard (TestUpgradeReleasesAemberOnLeavingHost).
+func (g *Game) upgradeTeardown(up LocalID) int {
+	o := g.owner(up)
+	g.detachUpgrade(up)
+	g.releaseControlHeldBy(up)
+	g.clearCounters(up)
+	g.releaseAemberOnLeavePlay(up)
+	g.resetCore(up)
+	return o
 }
 
 // discardUpgrades moves a card's attached upgrades to their owner's discard pile.
@@ -149,10 +215,8 @@ func (g *Game) emitLeavesPlay(id LocalID) {
 // they do not follow it to hand, deck, or archives.
 func (g *Game) discardUpgrades(id LocalID) {
 	for _, up := range g.upgradesOf(id) {
-		g.detachUpgrade(up)
-		g.releaseControlHeldBy(up)
-		g.clearCounters(up)
-		g.State.Discard[g.owner(up)].add(up)
+		g.State.Discard[g.upgradeTeardown(up)].add(up)
+		g.record(UpgradeDiscarded{Upgrade: up, Host: id})
 	}
 }
 
@@ -162,11 +226,7 @@ func (g *Game) discardUpgrades(id LocalID) {
 // play, so its upgrades are already gone when the host's own move would shed them.
 func (g *Game) returnUpgradesToHand(host LocalID) {
 	for _, up := range g.upgradesOf(host) {
-		g.detachUpgrade(up)
-		g.releaseControlHeldBy(up)
-		g.clearCounters(up)
-		g.resetCore(up)
-		o := g.owner(up)
+		o := g.upgradeTeardown(up)
 		g.State.Hand[o].add(up)
 		g.record(CardPutIntoHand{Card: up, Owner: o})
 	}
@@ -493,7 +553,7 @@ func (g *Game) putOnTopOfDeck(id LocalID) {
 		return
 	}
 	for _, half := range g.giganticHalves(id) {
-		o := g.leavePlayDestroyed(half)
+		o := g.leavePlayTeardown(half)
 		g.State.Deck[o].addFront(half)
 		g.record(CardPutOnTopOfDeck{Card: half, Owner: o})
 	}
@@ -507,7 +567,7 @@ func (g *Game) putIntoHand(id LocalID) {
 		return
 	}
 	for _, half := range g.giganticHalves(id) {
-		o := g.leavePlayDestroyed(half)
+		o := g.leavePlayTeardown(half)
 		g.State.Hand[o].add(half)
 		g.record(CardPutIntoHand{Card: half, Owner: o})
 	}
@@ -521,7 +581,7 @@ func (g *Game) putIntoArchives(id LocalID) {
 		return
 	}
 	for _, half := range g.giganticHalves(id) {
-		o := g.leavePlayDestroyed(half)
+		o := g.leavePlayTeardown(half)
 		g.State.Archives[o].add(half)
 		g.record(CardPutIntoArchives{Card: half, Owner: o})
 	}
@@ -533,13 +593,11 @@ func (g *Game) putIntoArchives(id LocalID) {
 // the neighbor it was buffing at the same time, so the neighbor is archived, not
 // destroyed for the power it just lost).
 func (g *Game) putIntoArchivesEach(controller int, ids []LocalID) {
-	was := g.settling
-	g.settling = true
-	for _, id := range ids {
-		g.putIntoArchives(id)
-	}
-	g.settling = was
-	g.settleDestroyed(controller)
+	g.simultaneously(controller, func() {
+		for _, id := range ids {
+			g.putIntoArchives(id)
+		}
+	})
 }
 
 // putIntoDeckShuffled removes a card from play and shuffles it into its owner's
@@ -550,7 +608,7 @@ func (g *Game) putIntoDeckShuffled(id LocalID) {
 		return
 	}
 	for _, half := range g.giganticHalves(id) {
-		o := g.leavePlayDestroyed(half)
+		o := g.leavePlayTeardown(half)
 		g.State.Deck[o].add(half)
 		g.Shuffle(o)
 		if g.batchingShuffle {
@@ -600,12 +658,9 @@ func (g *Game) PutIntoYourArchives(id LocalID, player int) {
 	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
-	o := g.owner(id)
-	g.removeFromPlay(id)
-	g.discardUpgrades(id)
-	g.discardUnder(id)
-	g.releaseAemberOnLeavePlay(id)
-	g.resetCore(id)
-	g.State.Archives[player].add(id)
-	g.record(CardAbducted{Player: player, Card: id, Owner: o})
+	for _, half := range g.giganticHalves(id) {
+		o := g.leavePlayTeardown(half)
+		g.State.Archives[player].add(half)
+		g.record(CardAbducted{Player: player, Card: half, Owner: o})
+	}
 }

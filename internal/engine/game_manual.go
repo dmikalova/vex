@@ -45,8 +45,11 @@ func (g *Game) Manual() bool { return g.manual }
 func (g *Game) SetManual(on bool) { g.manual = on }
 
 // ManualMove takes a card from wherever it is — a resting zone or in play — and
-// places it into dest for its owner, shedding any in-play state (upgrades to the
-// discard, damage/Æmber/counters cleared) if it was on the board.
+// places it into dest for its owner. A card leaving the board gets the standard
+// leave-play teardown, so its upgrades and the cards under it are discarded and
+// the Æmber on it is released just as an effect-driven move would release it
+// (TestManualMoveReleasesAember). Manual mode grants permission to take an action
+// that would normally need a card to authorize it; it does not change the action.
 func (g *Game) ManualMove(id LocalID, dest ManualZone) {
 	o := g.owner(id)
 	g.removeFromAnyZone(id)
@@ -67,19 +70,16 @@ func (g *Game) ManualMove(id LocalID, dest ManualZone) {
 	g.record(ManualCardMoved{Player: o, Card: id, To: dest})
 }
 
-// removeFromAnyZone removes id from whatever holds it. A card in play sheds its
-// upgrades (to the discard) and its per-match state; a card in a resting zone is
-// simply unlisted.
+// removeFromAnyZone removes id from whatever holds it. A card in play gets the
+// standard leave-play teardown — manual mode grants permission to take an action
+// a card effect would normally have to authorize, it does not change what the
+// action does — so a laden creature hands its Æmber back just as it would if an
+// effect had removed it. A card in a resting zone is simply unlisted.
 func (g *Game) removeFromAnyZone(id LocalID) {
 	o := g.owner(id)
 	if g.inPlay(id) {
-		art, hasArt := g.giganticPartner(id)
-		g.removeFromPlay(id)
-		g.discardUpgrades(id)
-		g.resetCore(id)
-		if hasArt { // tear down the gigantic art half so it does not dangle
-			g.removeFromPlay(art)
-			g.resetCore(art)
+		for _, half := range g.giganticHalves(id) {
+			g.leavePlayTeardown(half)
 		}
 		return
 	}

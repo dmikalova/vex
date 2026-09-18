@@ -32,7 +32,7 @@ func (e ForRemainderOfTurn) validate() error {
 // Text renders the effect, e.g. "for the remainder of the turn, each time you play
 // a creature, gain 1 Æmber".
 func (e ForRemainderOfTurn) Text() string {
-	return "for the remainder of the turn, " + e.On.clause() + ", " + e.Do.Text()
+	return durationClause(RemainderOfPlayerTurn, "") + ", " + e.On.clause() + ", " + e.Do.Text()
 }
 
 // Resolve registers the reaction on the controller for the rest of their turn. On
@@ -61,7 +61,8 @@ func (e ForOpponentNextTurn) validate() error {
 // Text renders the effect, e.g. "during your opponent's next turn, after forging a
 // key, your opponent gives you all their Æmber".
 func (e ForOpponentNextTurn) Text() string {
-	return "during your opponent's next turn, " + e.On.clauseOnOpponentTurn() + ", " + e.Do.Text()
+	return durationClause(OpponentNextTurn, "") + ", " +
+		e.On.clauseOnOpponentTurn() + ", " + e.Do.Text()
 }
 
 // Resolve arms the reaction on the opponent, so it lies dormant this turn and fires
@@ -208,9 +209,9 @@ func (e GainAbility) Text() string {
 	text := e.Target.Text() + ` gains, "` + granted + `"`
 	switch e.Duration {
 	case StartOfPlayerNextTurn:
-		return "until the start of your next turn, " + text
+		return durationClause(e.Duration, "") + ", " + text
 	case RemainderOfPlayerTurn:
-		return "for the remainder of the turn, " + text
+		return durationClause(e.Duration, "") + ", " + text
 	}
 	return text
 }
@@ -266,8 +267,8 @@ func (e TakesExtraDamage) validate() error {
 // damage, it takes an additional 2 damage".
 func (e TakesExtraDamage) Text() string {
 	return fmt.Sprintf(
-		"for the remainder of the turn, whenever %s takes damage, it takes an additional %d damage",
-		e.Target.Text(), e.Amount)
+		"%s, whenever %s takes damage, it takes an additional %d damage",
+		durationClause(RemainderOfPlayerTurn, ""), e.Target.Text(), e.Amount)
 }
 
 // Resolve registers the modifier on each selected creature for the rest of the
@@ -389,7 +390,8 @@ func (e Instead) validate() error {
 // Text renders the effect, e.g. "for the remainder of the turn, instead of gaining
 // Æmber from reaping, steal the same amount".
 func (e Instead) Text() string {
-	return "for the remainder of the turn, instead of " + e.Of.gerund() + ", " + e.With.text()
+	return durationClause(RemainderOfPlayerTurn, "") + ", instead of " +
+		e.Of.gerund() + ", " + e.With.text()
 }
 
 // Resolve registers the replacement on the controller for the rest of the turn.
@@ -429,8 +431,8 @@ func (e DamageOthersAfterUsingTrait) Text() string {
 		Amount: e.Amount,
 		Target: Target{Kind: TargetEachCreature}.ExceptTrait(e.Trait),
 	}
-	return "for the remainder of the turn, after you use a " + e.Trait.String() +
-		" creature, " + damage.Text()
+	return durationClause(RemainderOfPlayerTurn, "") + ", after you use a " +
+		e.Trait.String() + " creature, " + damage.Text()
 }
 
 // Resolve registers the reaction on the controller for the rest of their turn.

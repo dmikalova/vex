@@ -23,8 +23,9 @@ var ShardOfLife = set.New(
 	card.OneCopyPerDeck(),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(
-		card.Trigger.Action, card.ShuffleFromDiscard{
+		card.Trigger.Action, card.ShuffleIntoDeck{
+			Player: card.Controller, From: []card.Zone{card.Discard},
 			Selection: card.Chosen{},
-			Count:     card.InPlay{Player: card.Controller, Trait: card.Traits.Shard},
+			Count:     card.CardsInPlay{Player: card.Controller, Trait: card.Traits.Shard},
 		}),
 )

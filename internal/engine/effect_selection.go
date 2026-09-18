@@ -129,6 +129,11 @@ type Chosen struct {
 	// Optional makes the pick a "you may" the controller can decline; the default is
 	// a mandatory pick that forces the choice when a card matches.
 	Optional bool
+	// Another excludes the card in context (ctx.It) and renders the object as
+	// "another …" rather than "a …", so a second pick cannot re-take what the first
+	// one took (Resurgence). It enforces the promise the word "another" makes rather
+	// than leaving it to the zone the first pick moved the card out of.
+	Another bool
 }
 
 // filter is the identity predicate the choice narrows by, conjoining Type, Trait,
@@ -144,22 +149,32 @@ func (s Chosen) noun() string {
 }
 
 // object renders the single card chosen, e.g. "a Sanctum creature".
-func (s Chosen) object() string { return indefinite(s.noun()) }
+func (s Chosen) object() string {
+	if s.Another {
+		return "another " + s.noun()
+	}
+	return indefinite(s.noun())
+}
 
 // plainType reports that the choice narrows by a single concrete card type alone —
-// no house, trait, name, Or, or Optional — so its object is a bare "a <type>" that
-// a noun-list fold can collapse (Look What I Found!).
+// no house, trait, name, Or, Another, or Optional — so its object is a bare
+// "a <type>" that a noun-list fold can collapse (Look What I Found!).
 func (s Chosen) plainType() bool {
 	return s.Type != TypeUnset && s.Type != AnyType && !s.House.filters() &&
-		s.Trait == traitUnset && s.Name == "" && s.Or == nil && !s.Optional
+		s.Trait == traitUnset && s.Name == "" && s.Or == nil && !s.Optional &&
+		!s.Another
 }
 
 // declinable reports that an Optional Chosen may be passed.
 func (s Chosen) declinable() bool { return s.Optional }
 
-// candidates keeps the cards the house and identity filters admit.
+// candidates keeps the cards the house and identity filters admit, dropping the
+// card in context when Another is set.
 func (s Chosen) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
 	return filterIDs(cands, func(id LocalID) bool {
+		if s.Another && ctx.HasIt && id == ctx.It {
+			return false
+		}
 		return s.House.matches(ctx, id) && s.filter().admits(ctx.Resolver, id)
 	})
 }
@@ -395,11 +410,16 @@ func (s Bottom) pick(ctx *EffectContext, cands []LocalID) []LocalID {
 	return s.candidates(ctx, cands)
 }
 
-// whoseHand renders the possessive for a player's hand from the controller's
-// point of view: "your hand" or "your opponent's hand".
-func whoseHand(p Player) string {
-	if p == Opponent {
-		return "your opponent's hand"
+// whoseZone renders the possessive for a player's copy of a zone from the
+// controller's point of view: "your hand", "your opponent's hand", "each player's
+// discard pile", or — for a ChosenPlayer, where the controller picks a side at
+// resolution — the indefinite "a discard pile".
+func whoseZone(p Player, z Zone) string {
+	if z == InPlay {
+		return "in play"
 	}
-	return "your hand"
+	if p == ChosenPlayer {
+		return indefinite(z.noun())
+	}
+	return possessive(p) + " " + z.noun()
 }

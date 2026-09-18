@@ -185,7 +185,7 @@ func TestCannotBeUsedWhile(t *testing.T) {
 func TestDestroyedWhen(t *testing.T) {
 	g := started(t)
 	g.AddToBattleline(
-		testCreature("Crocag", 7, WithDestroyedWhen(InPlay{
+		testCreature("Crocag", 7, WithDestroyedWhen(CardsInPlay{
 			Player: Opponent,
 			Type:   Creature,
 			None:   true,
@@ -255,7 +255,7 @@ func TestDestroyedWhenRejectsInvalidCondition(t *testing.T) {
 func TestCannotBeUsedToText(t *testing.T) {
 	def := NewCard("Crocag", Brobnar, Creature, Common, WithPower(1),
 		WithCannotBeUsedTo(ReapUse, FightUse, ActionUse),
-		WithDestroyedWhen(InPlay{Player: Opponent, Type: Creature, None: true}),
+		WithDestroyedWhen(CardsInPlay{Player: Opponent, Type: Creature, None: true}),
 	)
 	got := cardRules(&def, false)
 	want := []string{

@@ -22,7 +22,7 @@ var PhylyxTheDisintegrator = set.New("Phylyx the Disintegrator",
 		card.Trigger.Action, card.LoseAember{
 			Player: card.Opponent,
 			Amount: 1,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 				House:  card.Houses.Named(card.House.Self),

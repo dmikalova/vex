@@ -23,7 +23,7 @@ var TirelessCrocag = set.New(
 	card.WithTraits(card.Traits.Giant),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithCannotBeUsedTo(card.UseKind.Reap),
-	card.WithDestroyedWhen(card.InPlay{
+	card.WithDestroyedWhen(card.CardsInPlay{
 		Player: card.Opponent,
 		Type:   card.Type.Creature,
 		None:   true,

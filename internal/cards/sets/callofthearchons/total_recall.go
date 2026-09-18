@@ -21,7 +21,7 @@ var TotalRecall = set.New(
 		card.GainAember{
 			Player: card.Controller,
 			Amount: 1,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 				Ready:  true,

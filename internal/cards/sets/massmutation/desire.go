@@ -25,7 +25,7 @@ var Desire = set.New(
 	card.WithKeyCost(card.KeyCostChange(card.EachPlayer, 4)),
 	card.WithAbility(card.Trigger.Reap, card.ForgeKey{
 		Discount: true,
-		ReducedBy: card.InPlay{
+		ReducedBy: card.CardsInPlay{
 			Player: card.Controller,
 			Type:   card.Type.Creature,
 			Trait:  card.Traits.Sin,

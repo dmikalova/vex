@@ -4,13 +4,17 @@ import "testing"
 
 // TestShuffleFromDiscardText covers the three selection modes' printed text.
 func TestShuffleFromDiscardText(t *testing.T) {
-	each := ShuffleFromDiscard{Selection: Each{House: namedHouse(Untamed), Type: Creature}}
+	each := ShuffleIntoDeck{
+		Player:    Controller,
+		From:      []Zone{Discard},
+		Selection: Each{House: namedHouse(Untamed), Type: Creature},
+	}
 	if got := each.Text(); got !=
 		"shuffle each Untamed creature from your discard pile into your deck" {
 		t.Errorf("Each text = %q", got)
 	}
 
-	anyNum := ShuffleFromDiscard{
+	anyNum := ShuffleIntoDeck{Player: Controller, From: []Zone{Discard},
 		Selection: Chosen{Type: Creature, Optional: true},
 		AnyNumber: true,
 	}
@@ -18,7 +22,7 @@ func TestShuffleFromDiscardText(t *testing.T) {
 		"shuffle any number of creatures from your discard pile into your deck" {
 		t.Errorf("AnyNumber text = %q", got)
 	}
-	anyHouse := ShuffleFromDiscard{
+	anyHouse := ShuffleIntoDeck{Player: Controller, From: []Zone{Discard},
 		Selection: Chosen{House: namedHouse(Untamed), Type: Creature, Optional: true},
 		AnyNumber: true,
 	}
@@ -27,9 +31,9 @@ func TestShuffleFromDiscardText(t *testing.T) {
 		t.Errorf("AnyNumber house text = %q", got)
 	}
 
-	counted := ShuffleFromDiscard{
+	counted := ShuffleIntoDeck{Player: Controller, From: []Zone{Discard},
 		Selection: Chosen{},
-		Count:     InPlay{Player: Controller, Trait: Shard},
+		Count:     CardsInPlay{Player: Controller, Trait: Shard},
 	}
 	if got := counted.Text(); got !=
 		"for each friendly Shard, shuffle a card from your discard pile into your deck" {
@@ -37,20 +41,26 @@ func TestShuffleFromDiscardText(t *testing.T) {
 	}
 }
 
-// TestShuffleFromDiscardValidate covers the node's two validation rules.
+// TestShuffleFromDiscardValidate covers the node's validation rules.
 func TestShuffleFromDiscardValidate(t *testing.T) {
-	if (ShuffleFromDiscard{}).validate() == nil {
+	if (ShuffleIntoDeck{Player: Controller, From: []Zone{Discard}}).validate() == nil {
 		t.Error("a missing Selection should fail validation")
 	}
-	both := ShuffleFromDiscard{
+	if (ShuffleIntoDeck{Player: Controller, Selection: Chosen{}}).validate() == nil {
+		t.Error("an empty From should fail validation")
+	}
+	if (ShuffleIntoDeck{Player: Controller, From: []Zone{Archives}, Selection: Chosen{}}).validate() == nil {
+		t.Error("a zone no shuffle draws from should fail validation")
+	}
+	both := ShuffleIntoDeck{Player: Controller, From: []Zone{Discard},
 		Selection: Chosen{},
 		AnyNumber: true,
-		Count:     InPlay{Player: Controller, Trait: Shard},
+		Count:     CardsInPlay{Player: Controller, Trait: Shard},
 	}
 	if both.validate() == nil {
 		t.Error("pairing AnyNumber with a Count should fail validation")
 	}
-	if err := (ShuffleFromDiscard{Selection: Chosen{}}).validate(); err != nil {
+	if err := (ShuffleIntoDeck{Player: Controller, From: []Zone{Discard}, Selection: Chosen{}}).validate(); err != nil {
 		t.Errorf("a set Selection should validate, got %v", err)
 	}
 }
@@ -67,7 +77,7 @@ func TestShuffleFromDiscardEach(t *testing.T) {
 	tactic := g.AddToDiscard(NewCard("ut", Untamed, Tactic, Common), 0)
 	mars := g.AddToDiscard(NewCard("mc", Mars, Creature, Common, WithPower(3)), 0)
 
-	ShuffleFromDiscard{Selection: sel}.
+	ShuffleIntoDeck{Player: Controller, From: []Zone{Discard}, Selection: sel}.
 		Resolve(&EffectContext{Resolver: g, Controller: 0, Source: src})
 
 	if g.State.Deck[0].Count != 2 {
@@ -100,7 +110,7 @@ func TestShuffleFromDiscardEach(t *testing.T) {
 	// With nothing matching, the effect shuffles nothing and narrates nothing.
 	g2 := NewGame("A", "B", 1)
 	only := g2.AddToDiscard(NewCard("mc", Mars, Creature, Common, WithPower(3)), 0)
-	ShuffleFromDiscard{Selection: sel}.
+	ShuffleIntoDeck{Player: Controller, From: []Zone{Discard}, Selection: sel}.
 		Resolve(&EffectContext{Resolver: g2, Controller: 0, Source: only})
 	if g2.State.Deck[0].Count != 0 || !containsID(g2.Discard(0), only) {
 		t.Error("a non-matching discard pile should be left untouched")
@@ -122,7 +132,12 @@ func TestShuffleFromDiscardAnyNumber(t *testing.T) {
 	a := g.AddToDiscard(testCreature("a", 3), 0)
 	b := g.AddToDiscard(testCreature("b", 3), 0)
 	tactic := g.AddToDiscard(NewCard("t", Dis, Tactic, Common), 0)
-	ShuffleFromDiscard{Selection: sel, AnyNumber: true}.Resolve(
+	ShuffleIntoDeck{
+		Player:    Controller,
+		From:      []Zone{Discard},
+		Selection: sel,
+		AnyNumber: true,
+	}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0, Source: a},
 	)
 	if g.State.Deck[0].Count != 2 {
@@ -140,8 +155,15 @@ func TestShuffleFromDiscardAnyNumber(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	untamed := g2.AddToDiscard(NewCard("u", Untamed, Creature, Common, WithPower(1)), 0)
 	g2.AddToDiscard(NewCard("d", Dis, Creature, Common, WithPower(1)), 0)
-	ShuffleFromDiscard{Selection: houseSel, AnyNumber: true}.
-		Resolve(&EffectContext{Resolver: g2, Controller: 0, Source: untamed})
+	ShuffleIntoDeck{
+		Player:    Controller,
+		From:      []Zone{Discard},
+		Selection: houseSel,
+		AnyNumber: true,
+	}.
+		Resolve(
+			&EffectContext{Resolver: g2, Controller: 0, Source: untamed},
+		)
 	if g2.State.Deck[0].Count != 1 || containsID(g2.Discard(0), untamed) {
 		t.Error("only the Untamed creature should have been shuffled away")
 	}
@@ -150,7 +172,7 @@ func TestShuffleFromDiscardAnyNumber(t *testing.T) {
 	g3 := NewGame("A", "B", 1)
 	kept := g3.AddToDiscard(testCreature("kept", 3), 0)
 	g3.SetChooser(0, &cardDecliner{decline: true})
-	ShuffleFromDiscard{Selection: sel, AnyNumber: true}.
+	ShuffleIntoDeck{Player: Controller, From: []Zone{Discard}, Selection: sel, AnyNumber: true}.
 		Resolve(&EffectContext{Resolver: g3, Controller: 0, Source: kept})
 	if g3.State.Deck[0].Count != 0 || !containsID(g3.Discard(0), kept) {
 		t.Error("declining should shuffle nothing")
@@ -168,9 +190,9 @@ func TestShuffleFromDiscardAnyNumber(t *testing.T) {
 // TestShuffleFromDiscardCount covers Shard of Life: the controller shuffles one
 // card from their discard pile back into their deck for each friendly Shard.
 func TestShuffleFromDiscardCount(t *testing.T) {
-	sel := ShuffleFromDiscard{
+	sel := ShuffleIntoDeck{Player: Controller, From: []Zone{Discard},
 		Selection: Chosen{},
-		Count:     InPlay{Player: Controller, Trait: Shard},
+		Count:     CardsInPlay{Player: Controller, Trait: Shard},
 	}
 
 	// Two friendly Shards in play shuffle two discard cards back.
@@ -207,5 +229,52 @@ func TestShuffleFromDiscardCount(t *testing.T) {
 	sel.Resolve(&EffectContext{Resolver: g3, Controller: 0, Source: src3})
 	if g3.State.Deck[0].Count != 1 || containsID(g3.Discard(0), only) {
 		t.Error("the single discard card should have been shuffled away")
+	}
+}
+
+// TestShuffleFromDiscardNamed covers Chain Gang: one card of the named
+// card leaves the discard for the deck while a differently-named card stays put.
+func TestShuffleFromDiscardNamed(t *testing.T) {
+	if got := (ShuffleIntoDeck{Player: Controller, From: []Zone{Discard}, Selection: Named{Name: "Subtle Chain"}}).Text(); got !=
+		"shuffle Subtle Chain from your discard pile into your deck" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	chain := g.AddToDiscard(NewCard("Subtle Chain", Dis, Tactic, Common), 0)
+	other := g.AddToDiscard(NewCard("Mind Barb", Dis, Tactic, Common), 0)
+
+	ShuffleIntoDeck{
+		Player:    Controller,
+		From:      []Zone{Discard},
+		Selection: Named{Name: "Subtle Chain"},
+	}.
+		Resolve(
+			&EffectContext{Resolver: g, Controller: 0, Source: other},
+		)
+
+	if containsID(g.Discard(0), chain) {
+		t.Error("the named card should have left the discard pile")
+	}
+	if !containsID(g.Discard(0), other) {
+		t.Error("a differently-named card should stay in the discard pile")
+	}
+	if g.State.Deck[0].Count != 1 {
+		t.Errorf("deck count = %d, want 1", g.State.Deck[0].Count)
+	}
+
+	// With no card of that name in the discard pile, the effect shuffles nothing.
+	g2 := NewGame("A", "B", 1)
+	only := g2.AddToDiscard(NewCard("Mind Barb", Dis, Tactic, Common), 0)
+	ShuffleIntoDeck{
+		Player:    Controller,
+		From:      []Zone{Discard},
+		Selection: Named{Name: "Subtle Chain"},
+	}.
+		Resolve(
+			&EffectContext{Resolver: g2, Controller: 0, Source: only},
+		)
+	if g2.State.Deck[0].Count != 0 || !containsID(g2.Discard(0), only) {
+		t.Error("a discard pile without the named card should be left untouched")
 	}
 }

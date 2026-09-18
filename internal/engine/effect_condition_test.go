@@ -601,7 +601,7 @@ func TestRepeatMayWhile(t *testing.T) {
 	if err := validateEffect(
 		Repeat{
 			Do:   StealAember{Amount: 1},
-			Gate: MayWhile{Cond: InPlay{Player: Controller, Type: Creature}},
+			Gate: MayWhile{Cond: CardsInPlay{Player: Controller, Type: Creature}},
 		},
 	); err != nil {
 		t.Errorf("validate = %v", err)
@@ -612,7 +612,7 @@ func TestRepeatMayWhile(t *testing.T) {
 // player keep picking rather than answering Yes/No.
 func TestRepeatMayWhileDrivenByChoice(t *testing.T) {
 	e := Repeat{
-		Gate: MayWhile{Cond: InPlay{Player: Controller, Type: Creature}},
+		Gate: MayWhile{Cond: CardsInPlay{Player: Controller, Type: Creature}},
 		Do: Sequence{Effects: []Effect{
 			Destroy{Target: Target{Kind: TargetChosenEnemyCreature}},
 			Destroy{Target: Target{Kind: TargetChosenFriendlyCreature}},
@@ -1385,7 +1385,7 @@ func TestNamedCardPurged(t *testing.T) {
 // TestFirstReapOfTurn covers Aember Conduction Unit's gate: met only while the
 // reap in context is the first creature to reap this turn.
 func TestFirstReapOfTurn(t *testing.T) {
-	if got := (FirstReapOfTurn{}).CondText(); got != "if it is the first time a creature has reaped this turn" {
+	if got := (FirstReapOfTurn{}).CondText(); got != "if this is the first time a creature has reaped this turn" {
 		t.Errorf("CondText = %q", got)
 	}
 	if (FirstReapOfTurn{}).Met(&EffectContext{Resolver: started(t)}) {

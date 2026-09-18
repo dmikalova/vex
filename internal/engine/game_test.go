@@ -628,7 +628,7 @@ func TestOrderByChoice(t *testing.T) {
 // carry: a count that scales it, and a flank condition that suspends it.
 func TestKeyCostChangePerAndFlank(t *testing.T) {
 	obelisk := NewCard("Iron Obelisk", Brobnar, Artifact, Rare,
-		WithKeyCost(NewKeyCostChange(Opponent, 1).Per(InPlay{
+		WithKeyCost(NewKeyCostChange(Opponent, 1).Per(CardsInPlay{
 			Player:  Controller,
 			Type:    Creature,
 			House:   namedHouse(Brobnar),

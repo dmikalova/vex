@@ -26,6 +26,7 @@ var EeOnTheFringes = set.New(
 		Then: card.May{
 			Do: card.Then{
 				First: card.PurgeCard{
+					Zone:      card.Discard,
 					Player:    card.ChosenPlayer,
 					Selection: card.Chosen{House: card.Houses.Named(card.House.Self)},
 				},

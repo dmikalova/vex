@@ -47,10 +47,7 @@ func (e LoseKeywords) Text() string {
 	for _, k := range e.Keywords {
 		names = append(names, strings.ToLower(k.String()))
 	}
-	clause := "for the remainder of the turn"
-	if e.Duration == StartOfPlayerNextTurn {
-		clause = "until the start of your next turn"
-	}
+	clause := durationClause(e.Duration, "")
 	return clause + ", " + e.Target.Text() + " loses " + oxfordAnd(names)
 }
 

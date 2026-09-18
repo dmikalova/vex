@@ -16,13 +16,16 @@ const (
 	Archives
 	// Deck is a player's deck.
 	Deck
-	// The zones below are exported to no one: a card may not name them, but the
-	// engine still has to place a move's endpoints to know what the log may say.
-
-	// inPlay is the board — battleline, artifacts, and the upgrades on them.
-	inPlay
-	// purged is the pile a purged card is set aside in, out of the game.
-	purged
+	// Purged is the pile a purged card is set aside in, out of the game. A card may
+	// name it as a source — Universal Recycle Bin archives a card from it — but never
+	// as a destination: setting a card aside is written as the Purge verb, which
+	// moves through the unexported toPurged destination (ADR 0031).
+	Purged
+	// InPlay is every card someone controls in play — creatures, artifacts, and the
+	// upgrades on them. A card under another card is not in play; it is in the
+	// out-of-play zone that is "under" its host. Like Purged, a card may name InPlay
+	// only as a source — putting a card into play is its own verb.
+	InPlay
 )
 
 // noun names the zone as printed card text says it, so every effect that has to
@@ -36,6 +39,10 @@ func (z Zone) noun() string {
 		return "archives"
 	case Deck:
 		return "deck"
+	case Purged:
+		return "purge pile"
+	case InPlay:
+		return "play"
 	default: // Discard
 		return "discard pile"
 	}
@@ -45,7 +52,9 @@ func (z Zone) noun() string {
 // log names a card only where it is public (ADR 0011): a discard pile, the board,
 // and the purged pile are open, while a hand, archives, and deck are not, so a
 // move between two hidden zones is narrated without naming what moved.
-func (z Zone) public() bool { return z == Discard || z == inPlay || z == purged }
+func (z Zone) public() bool {
+	return z == Discard || z == InPlay || z == Purged
+}
 
 // ordered reports whether the zone is a stack with a top and a bottom, so a
 // positional selection (Top / Bottom) can name an end of it. Only the deck and

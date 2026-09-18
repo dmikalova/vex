@@ -360,7 +360,7 @@ func (d DeckDest) mover(ctx *EffectContext, player int) func(LocalID) {
 	case IntoDiscard:
 		return ctx.Resolver.MoveFromDeckToDiscard
 	case IntoPurge:
-		return func(id LocalID) { ctx.Resolver.PurgeFromDeck(player, id) }
+		return func(id LocalID) { purgeFrom(ctx, Deck, player, id) }
 	case IntoBottomOfDeck:
 		return ctx.Resolver.PutDeckCardOnBottom
 	default: // IntoHand
@@ -711,16 +711,13 @@ func resolverInPlay(ctx *EffectContext, id LocalID) bool {
 type DiscardUntil struct {
 	// Player names whose deck is dug; every caller sets it explicitly.
 	Player Player
-	// Type filters what ends the dig; the zero value stops at any card.
-	Type CardType
-	// House filters what ends the dig; an unset matcher stops at any house.
+	// House filters what ends the dig; an unset matcher stops at any house. House
+	// and Filter conjoin, as they do on Search.
 	House HouseMatcher
-	// Name filters what ends the dig to a card of this printed name; the empty
-	// string stops at any name (Angry Mob digs for another Angry Mob).
-	Name string
-	// ExceptTrait filters what ends the dig to a card lacking this trait; traitUnset
-	// imposes no exclusion (Purify digs for a non-Mutant creature).
-	ExceptTrait Trait
+	// Filter restricts what ends the dig by name, trait, or type; the zero value
+	// stops at any card (Angry Mob digs for another Angry Mob, Purify for a
+	// non-Mutant creature).
+	Filter CardFilter
 	// MayStop lets the controller stop the dig before a match; the terminator then
 	// reads "or choose to stop" instead of "or run out of cards".
 	MayStop bool
@@ -751,31 +748,15 @@ func (e DiscardUntil) Text() string {
 // noun names the cards the filters admit, e.g. "card", "Brobnar Creature", a
 // printed name ("Angry Mob"), or a trait exclusion ("non-Mutant creature").
 func (e DiscardUntil) noun() string {
-	if e.Name != "" {
-		return e.Name
+	if e.Filter.Name != "" {
+		return e.Filter.Name
 	}
-	noun := "card"
-	switch e.Type {
-	case Creature:
-		noun = "creature"
-	case Artifact:
-		noun = "artifact"
-	}
-	if e.ExceptTrait != traitUnset {
-		noun = "non-" + e.ExceptTrait.String() + " " + noun
-	}
-	return e.House.qualifyNoun(noun)
+	return e.House.qualifyNoun(e.Filter.noun())
 }
 
 // matches reports whether a discarded card is the one the dig was looking for.
 func (e DiscardUntil) matches(ctx *EffectContext, id LocalID) bool {
-	if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
-		return false
-	}
-	if e.Name != "" && ctx.Resolver.Name(id) != e.Name {
-		return false
-	}
-	if e.ExceptTrait != traitUnset && ctx.Resolver.HasTrait(id, e.ExceptTrait) {
+	if !e.Filter.admits(ctx.Resolver, id) {
 		return false
 	}
 	return e.House.matches(ctx, id)

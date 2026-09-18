@@ -159,13 +159,23 @@ func (e ScheduleOnLeave) Resolve(ctx *EffectContext) {
 }
 
 // RaiseKeyCost makes a player's keys cost Amount more Æmber for the Duration —
-// Lash of Broken Dreams taxes the opponent during their next turn. It mirrors
-// LowerKeyCost's windows: OpponentNextTurn stays dormant until the affected
-// player's own next turn, whoever plays in between (the window every "during
-// your opponent's next turn" surcharge wants); EndOfPlayerNextTurn is instead
-// live the moment it resolves and again on the affected player's next turn, so
-// a forge forced this turn (Keyfrog) already pays the surcharge; and
-// RemainderOfPlayerTurn bites at once and lifts when the current turn ends.
+// Lash of Broken Dreams taxes the opponent during their next turn. Its windows:
+// OpponentNextTurn stays dormant until the affected player's own next turn,
+// whoever plays in between (the window every "during your opponent's next turn"
+// surcharge wants); EndOfPlayerNextTurn is instead live the moment it resolves
+// and again on the affected player's next turn, so a forge forced this turn
+// (Keyfrog) already pays the surcharge; and RemainderOfPlayerTurn bites at once
+// and lifts when the current turn ends.
+//
+// When House filters, Amount is charged once for each creature it admits in play,
+// counted live at each forge rather than frozen (Waking Nightmare, +1 per Dis
+// creature). The counted form folds in here rather than as its own node, and only
+// the OpponentNextTurn window can carry it. Player may be EachPlayer, taxing both
+// players at once.
+//
+// RaiseKeyCost and LowerKeyCost share this shape, one resolution, and one text:
+// a lower is a raise with a negative amount (armKeyCost) and a "-" sign, so the
+// two differ only in the sign keyCostText renders.
 //
 // A surcharge that should last as long as its card is in play is not this
 // effect: print it on the card as a KeyCostChange (WithKeyCost), which the key
@@ -173,137 +183,33 @@ func (e ScheduleOnLeave) Resolve(ctx *EffectContext) {
 type RaiseKeyCost struct {
 	Player   Player
 	Amount   int
+	House    HouseMatcher
 	Duration Duration
 }
 
 // validate requires a player, a raise, and a duration this bar can express.
 func (e RaiseKeyCost) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("RaiseKeyCost")
-	}
-	if e.Amount <= 0 {
-		return fmt.Errorf("RaiseKeyCost: Amount must be positive")
-	}
-	switch e.Duration {
-	case OpponentNextTurn, RemainderOfPlayerTurn, EndOfPlayerNextTurn:
-		return nil
-	case durationUnset:
-		return errUnsetDuration("RaiseKeyCost")
-	default:
-		return fmt.Errorf(
-			"RaiseKeyCost: Duration %v is not a key surcharge window; "+
-				"for a raise that lasts while the card is in play use WithKeyCost",
-			e.Duration,
-		)
-	}
+	return validateKeyCost("RaiseKeyCost", e.Player, e.Amount, e.House, e.Duration)
 }
 
-// Text renders the effect, e.g. "keys cost +3 Æmber during your opponent's next
-// turn".
+// Text renders the effect through keyCostText, e.g. "keys cost +3 Æmber during
+// your opponent's next turn". A raise passes the "+" sign; the rest of the
+// sentence is shared with LowerKeyCost.
 func (e RaiseKeyCost) Text() string {
-	whose := "your"
-	if e.Player == Opponent {
-		whose = "your opponent's"
-	}
-	if e.Duration == RemainderOfPlayerTurn {
-		return fmt.Sprintf("%s keys cost +%d Æmber for the remainder of the turn", whose, e.Amount)
-	}
-	return fmt.Sprintf("keys cost +%d Æmber during %s next turn", e.Amount, whose)
+	return keySurchargeText(e.Player, "+", e.Amount, e.House, e.Duration)
 }
 
-// Resolve arms the surcharge on the named player for the Duration.
+// Resolve arms the surcharge on each affected player for the Duration.
 func (e RaiseKeyCost) Resolve(ctx *EffectContext) {
-	p := ctx.PlayerFor(e.Player)
-	switch e.Duration {
-	case OpponentNextTurn:
-		ctx.Resolver.RaiseKeyCostNextTurn(p, e.Amount, ctx.Source)
-	case RemainderOfPlayerTurn:
-		ctx.Resolver.RaiseKeyCostThisTurn(p, e.Amount, ctx.Source)
-	case EndOfPlayerNextTurn:
-		// Live the moment it resolves and again on the affected player's next turn,
-		// so a forge forced this turn (Keyfrog) already pays the surcharge.
-		ctx.Resolver.RaiseKeyCostThisTurn(p, e.Amount, ctx.Source)
-		ctx.Resolver.RaiseKeyCostNextTurn(p, e.Amount, ctx.Source)
-	}
-}
-
-// RaiseKeyCostPerHouseCreature raises a player's key cost by Amount for each
-// creature of House in play, measured live while the surcharge is active — Waking
-// Nightmare taxes the opponent +1 per Dis creature during their next turn. Unlike
-// RaiseKeyCost's fixed bump, the surcharge is recomputed at each forge, so a Dis
-// creature entering or leaving during the taxed turn changes what a key costs.
-//
-// It only arms the next-turn window (OpponentNextTurn); a counted surcharge for
-// the current turn has no card to want it yet.
-type RaiseKeyCostPerHouseCreature struct {
-	Player   Player
-	Amount   int
-	House    HouseMatcher
-	Duration Duration
-}
-
-// validate requires a player, a positive raise, a context-free house matcher, and
-// the OpponentNextTurn window (the only counted surcharge window any card wants).
-// The matcher must be named or non-house (or any): a surcharge measured live
-// across a turn boundary has no resolution context to resolve a chosen or active
-// house against.
-func (e RaiseKeyCostPerHouseCreature) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("RaiseKeyCostPerHouseCreature")
-	}
-	if e.Amount <= 0 {
-		return fmt.Errorf("RaiseKeyCostPerHouseCreature: Amount must be positive")
-	}
-	switch e.House.Kind {
-	case MatchAnyHouse, MatchNamedHouse, MatchExceptHouse:
-	default:
-		return fmt.Errorf(
-			"RaiseKeyCostPerHouseCreature: house matcher %v needs resolution context",
-			e.House.Kind,
-		)
-	}
-	if err := e.House.validate(); err != nil {
-		return err
-	}
-	switch e.Duration {
-	case OpponentNextTurn:
-		return nil
-	case durationUnset:
-		return errUnsetDuration("RaiseKeyCostPerHouseCreature")
-	default:
-		return fmt.Errorf(
-			"RaiseKeyCostPerHouseCreature: Duration %v is not supported; "+
-				"a counted surcharge only arms OpponentNextTurn",
-			e.Duration,
-		)
-	}
-}
-
-// Text renders the effect, e.g. "keys cost +1 Æmber for each Dis creature in play
-// during your opponent's next turn".
-func (e RaiseKeyCostPerHouseCreature) Text() string {
-	whose := "your"
-	if e.Player == Opponent {
-		whose = "your opponent's"
-	}
-	return fmt.Sprintf(
-		"keys cost +%d Æmber for each %s in play during %s next turn",
-		e.Amount, e.House.qualifyNoun("creature"), whose,
-	)
-}
-
-// Resolve arms the counted surcharge on the named player for their next turn.
-func (e RaiseKeyCostPerHouseCreature) Resolve(ctx *EffectContext) {
-	p := ctx.PlayerFor(e.Player)
-	ctx.Resolver.RaiseKeyCostPerHouseNextTurn(p, e.Amount, e.House, ctx.Source)
+	armKeyCost(ctx, e.Player, e.Amount, e.House, e.Duration)
 }
 
 // LowerKeyCost makes a player's keys cost Amount less Æmber for the Duration —
 // We Can ALL Win drops each player's keys by 2 until the end of the controller's
-// next turn. Amount is written positive and rendered "-N". It shares the key
-// surcharge bars with RaiseKeyCost (a lower is a negative bump), so a coexisting
-// lower and raise on the same player sum, and the key cost read floors the total
-// at 0 before a key is forged.
+// next turn. Amount is written positive and rendered "-N". It shares RaiseKeyCost's
+// shape and bars (a lower is a negative raise), so a coexisting lower and raise on
+// the same player sum, and the key cost read floors the total at 0 before a key is
+// forged.
 //
 // Player may be EachPlayer, lowering both players' keys at once.
 // EndOfPlayerNextTurn is live the moment it resolves, unlike RaiseKeyCost's
@@ -312,75 +218,178 @@ func (e RaiseKeyCostPerHouseCreature) Resolve(ctx *EffectContext) {
 type LowerKeyCost struct {
 	Player   Player
 	Amount   int
+	House    HouseMatcher
 	Duration Duration
 }
 
 // validate requires a player, a positive drop, and a key surcharge window.
 func (e LowerKeyCost) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("LowerKeyCost")
+	return validateKeyCost("LowerKeyCost", e.Player, e.Amount, e.House, e.Duration)
+}
+
+// Text renders the effect through keyCostText, e.g. "each player's keys cost -2
+// Æmber until the end of your next turn". A lower passes the "-" sign; the rest of
+// the sentence is shared with RaiseKeyCost.
+func (e LowerKeyCost) Text() string {
+	return keySurchargeText(e.Player, "-", e.Amount, e.House, e.Duration)
+}
+
+// Resolve arms the drop on each affected player for the Duration — a negative raise.
+func (e LowerKeyCost) Resolve(ctx *EffectContext) {
+	armKeyCost(ctx, e.Player, -e.Amount, e.House, e.Duration)
+}
+
+// validateKeyCost checks the shared shape of RaiseKeyCost and LowerKeyCost: a set
+// player, a positive Amount (each node renders its own sign), and a Duration the
+// bars can express. When House filters, the surcharge is counted live per creature
+// it admits and only the OpponentNextTurn window can carry it, and the matcher must
+// be context-free (a named house or all-but-one) — a surcharge measured live across
+// a turn boundary has no resolution context to resolve a chosen or active house.
+func validateKeyCost(
+	name string,
+	player Player,
+	amount int,
+	house HouseMatcher,
+	dur Duration,
+) error {
+	if !player.valid() {
+		return errUnsetPlayer(name)
 	}
-	if e.Amount <= 0 {
-		return fmt.Errorf("LowerKeyCost: Amount must be positive")
+	if amount <= 0 {
+		return fmt.Errorf("%s: Amount must be positive", name)
 	}
-	switch e.Duration {
-	case RemainderOfPlayerTurn, OpponentNextTurn, EndOfPlayerNextTurn:
+	if house.filters() {
+		switch house.Kind {
+		case MatchNamedHouse, MatchExceptHouse:
+		default:
+			return fmt.Errorf("%s: house matcher %v needs resolution context", name, house.Kind)
+		}
+		if err := house.validate(); err != nil {
+			return err
+		}
+		if dur == durationUnset {
+			return errUnsetDuration(name)
+		}
+		if dur != OpponentNextTurn {
+			return fmt.Errorf("%s: a counted surcharge only arms OpponentNextTurn", name)
+		}
+		return nil
+	}
+	switch dur {
+	case OpponentNextTurn, RemainderOfPlayerTurn, EndOfPlayerNextTurn:
 		return nil
 	case durationUnset:
-		return errUnsetDuration("LowerKeyCost")
+		return errUnsetDuration(name)
 	default:
 		return fmt.Errorf(
-			"LowerKeyCost: Duration %v is not a key surcharge window", e.Duration,
+			"%s: Duration %v is not a key surcharge window; for a change that lasts "+
+				"while the card is in play use WithKeyCost",
+			name, dur,
 		)
 	}
 }
 
-// Text renders the effect, e.g. "each player's keys cost -2 Æmber until the end
-// of your next turn".
-func (e LowerKeyCost) Text() string {
-	whose := "your"
-	if e.Player == Opponent {
-		whose = "your opponent's"
+// perCreatureClause renders " for each <house> creature in play" for a counted key
+// surcharge (House filters), else "". The clause sits between the amount and the
+// window clause, so a caller appends it directly after "Æmber".
+func perCreatureClause(house HouseMatcher) string {
+	if !house.filters() {
+		return ""
 	}
-	if e.Player == EachPlayer {
-		return fmt.Sprintf("each player's keys cost -%d Æmber %s", e.Amount, e.window())
-	}
-	return fmt.Sprintf("%s keys cost -%d Æmber %s", whose, e.Amount, e.window())
+	return " for each " + house.qualifyNoun("creature") + " in play"
 }
 
-// window renders the duration clause. "your" always names the controller, whose
-// next turn ends the window even when EachPlayer lowers both sides.
-func (e LowerKeyCost) window() string {
-	switch e.Duration {
-	case RemainderOfPlayerTurn:
-		return "for the remainder of the turn"
-	case OpponentNextTurn:
-		return "during your next turn"
-	default: // EndOfPlayerNextTurn
-		return "until the end of your next turn"
+// keySurchargeText renders the sentence RaiseKeyCost and LowerKeyCost share; sign
+// is "+" for a raise or "-" for a lower, the only difference between the two. The
+// window is framed from the affected player — the opponent's turn reads "your
+// opponent's next turn", the controller's or each player's "your next turn". A
+// next-turn window already names whose keys are taxed, so the subject stays
+// implicit ("keys cost +3 Æmber during your opponent's next turn"); the
+// remainder-of-turn window names no player, and EachPlayer taxes both, so those
+// name the subject up front ("your keys cost …", "each player's keys cost …"). A
+// counted surcharge (House filters) reads "for each <house> creature in play".
+func keySurchargeText(
+	player Player,
+	sign string,
+	amount int,
+	house HouseMatcher,
+	dur Duration,
+) string {
+	clause := perCreatureClause(house)
+	window := windowClause(dur, keySurchargeWindowWhose(player), "")
+	if player != EachPlayer && windowNamesAffectedPlayer(dur) {
+		return fmt.Sprintf("keys cost %s%d Æmber%s %s", sign, amount, clause, window)
+	}
+	return fmt.Sprintf(
+		"%s keys cost %s%d Æmber%s %s",
+		keySurchargeSubject(player), sign, amount, clause, window,
+	)
+}
+
+// keySurchargeSubject names whose keys a surcharge taxes, for a sentence that
+// states its subject up front.
+func keySurchargeSubject(player Player) string {
+	switch player {
+	case Opponent:
+		return "your opponent's"
+	case EachPlayer:
+		return "each player's"
+	default:
+		return "your"
 	}
 }
 
-// Resolve arms the drop on each affected player for the Duration.
-func (e LowerKeyCost) Resolve(ctx *EffectContext) {
-	if e.Player == EachPlayer {
+// keySurchargeWindowWhose names the possessive the next-turn window is measured
+// against: the opponent's turn for an opponent-only surcharge, the controller's
+// otherwise (EachPlayer is framed from the controller, like We Can ALL Win).
+func keySurchargeWindowWhose(player Player) string {
+	if player == Opponent {
+		return "your opponent's"
+	}
+	return "your"
+}
+
+// windowNamesAffectedPlayer reports whether the window clause embeds the affected
+// player's possessive — a next-turn window does ("during your opponent's next
+// turn"), the remainder-of-turn window does not — so a caller can leave the subject
+// implicit when the window already names it.
+func windowNamesAffectedPlayer(d Duration) bool {
+	switch d {
+	case OpponentNextTurn, StartOfPlayerNextTurn, EndOfPlayerNextTurn:
+		return true
+	default:
+		return false
+	}
+}
+
+// armKeyCost arms the one-turn key surcharge described by a RaiseKeyCost or
+// LowerKeyCost on each affected player: signed amount (a lower passes it negative)
+// charged flat, or per creature House admits when House filters, over the window
+// Duration names. EachPlayer arms both players.
+func armKeyCost(ctx *EffectContext, player Player, amount int, house HouseMatcher, dur Duration) {
+	if player == EachPlayer {
 		for _, p := range [2]int{ctx.Controller, ctx.Opponent()} {
-			e.arm(ctx, p)
+			armKeyCostOn(ctx, p, amount, house, dur)
 		}
 		return
 	}
-	e.arm(ctx, ctx.PlayerFor(e.Player))
+	armKeyCostOn(ctx, ctx.PlayerFor(player), amount, house, dur)
 }
 
-// arm records the negative bump on player p. EndOfPlayerNextTurn sets both the
-// current turn and next turn bars so the drop is live now and again on p's next
-// turn.
-func (e LowerKeyCost) arm(ctx *EffectContext, p int) {
-	if e.Duration == RemainderOfPlayerTurn || e.Duration == EndOfPlayerNextTurn {
-		ctx.Resolver.RaiseKeyCostThisTurn(p, -e.Amount, ctx.Source)
+// armKeyCostOn arms the surcharge on one player p. A counted surcharge (House
+// filters) is stored per house and only arms the next turn; a flat surcharge arms
+// the current turn, the next turn, or both — EndOfPlayerNextTurn arms both so it is
+// live the moment it resolves and again on p's next turn (Keyfrog).
+func armKeyCostOn(ctx *EffectContext, p, amount int, house HouseMatcher, dur Duration) {
+	if house.filters() {
+		ctx.Resolver.RaiseKeyCostPerHouseNextTurn(p, amount, house, ctx.Source)
+		return
 	}
-	if e.Duration == OpponentNextTurn || e.Duration == EndOfPlayerNextTurn {
-		ctx.Resolver.RaiseKeyCostNextTurn(p, -e.Amount, ctx.Source)
+	if dur == RemainderOfPlayerTurn || dur == EndOfPlayerNextTurn {
+		ctx.Resolver.RaiseKeyCostThisTurn(p, amount, ctx.Source)
+	}
+	if dur == OpponentNextTurn || dur == EndOfPlayerNextTurn {
+		ctx.Resolver.RaiseKeyCostNextTurn(p, amount, ctx.Source)
 	}
 }
 

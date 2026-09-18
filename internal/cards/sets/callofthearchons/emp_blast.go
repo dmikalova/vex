@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Bonus:  Æmber
 //
-//	Play: Stun each Mars creature and each Robot creature, and destroy each artifact.
+//	Play: Stun each Mars or Robot creature, and destroy each artifact.
 var EMPBlast = set.New(
 	"EMP Blast",
 	card.House.Mars,
@@ -19,8 +19,10 @@ var EMPBlast = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Stun{Target: card.Target.EachCreature.House(card.Houses.Named(card.House.Self))},
-			card.Stun{Target: card.Target.EachCreature.WithTrait(card.Traits.Robot)},
+			card.Stun{Target: card.Target.EachCreature.
+				House(card.Houses.Named(card.House.Self)).
+				WithTrait(card.Traits.Robot).
+				MatchingAny()},
 			card.Destroy{Target: card.Target.EachArtifact},
 		}}),
 )

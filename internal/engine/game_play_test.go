@@ -547,3 +547,36 @@ func TestPlayableAsUpgradeText(t *testing.T) {
 		}
 	}
 }
+
+// TestResolvingCardRedirectIsPerCard pins that a self-archiving Tactic reaches
+// its archives whatever zone it was played from, and that an outer Tactic which
+// played it is unaffected. Wild Wormhole plays Causal Loop off the deck; Causal
+// Loop still archives itself, and Wild Wormhole still goes to the discard pile.
+func TestResolvingCardRedirectIsPerCard(t *testing.T) {
+	g := started(t)
+	inner := g.AddToDeck(
+		NewCard("Self Archive", Brobnar, Tactic, Common,
+			WithAbility(TriggerAfterPlay, ArchiveSource{})),
+		0,
+	)
+	idx := int(g.State.Hand[0].Count)
+	outer := g.AddToHand(
+		NewCard("Wormhole", Brobnar, Tactic, Common,
+			WithAbility(TriggerAfterPlay, PlayTopOfDeck{})),
+		0,
+	)
+
+	if err := g.PlayAction(0, idx); err != nil {
+		t.Fatalf("PlayAction: %v", err)
+	}
+
+	if !g.State.Archives[0].contains(inner) {
+		t.Error("a Tactic played from the deck should still archive itself")
+	}
+	if !g.State.Discard[0].contains(outer) {
+		t.Error("the Tactic that played it should still reach the discard pile")
+	}
+	if g.State.Archives[0].contains(outer) {
+		t.Error("the inner card's redirect should not follow the outer card")
+	}
+}

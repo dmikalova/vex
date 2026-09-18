@@ -308,3 +308,27 @@ func TestManualAddCard(t *testing.T) {
 		t.Errorf("refused add changed the hand: %d, want %d", len(g.Hand(0)), full)
 	}
 }
+
+// TestManualMoveReleasesAember checks manual mode uses the standard leave-play
+// teardown rather than a shortcut of its own: a creature carrying Æmber hands it
+// to its controller's opponent, and the cards under it are discarded. Manual mode
+// grants permission to take an action a card would normally have to authorize; it
+// does not change what the action does.
+func TestManualMoveReleasesAember(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	id := g.AddToBattleline(NewCard("laden", Mars, Creature, Common, WithPower(3)), 0)
+	under := g.AddToBattleline(NewCard("buried", Mars, Creature, Common, WithPower(1)), 0)
+	g.AttachUnder(id, under, false)
+	c := g.State.Cards[id]
+	c.Amber = 2
+	g.State.Cards[id] = c
+
+	g.ManualMove(id, ManualHand)
+
+	if got := g.Aember(1); got != 2 {
+		t.Errorf("opponent Æmber = %d, want 2: the Æmber on the creature was not released", got)
+	}
+	if !g.State.Discard[0].contains(under) {
+		t.Error("the card under the creature was not discarded")
+	}
+}

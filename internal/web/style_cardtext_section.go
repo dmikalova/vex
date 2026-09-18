@@ -87,43 +87,59 @@ func continuousSpecimens() []specimen {
 	return out
 }
 
-// targetType is the reflect type walkEffectTargets stops on.
-var targetType = reflect.TypeOf(engine.Target{})
+// targetType and durationType are the reflect types the effect walk collects.
+var (
+	targetType   = reflect.TypeOf(engine.Target{})
+	durationType = reflect.TypeOf(engine.Duration(0))
+)
 
-// walkEffectTargets calls fn for every Target reachable through an effect's
+// walkEffectValues calls visit for every value reachable through an effect's
 // exported fields, descending into nested effects (a Sequence's children, a
-// Conditional's branches). It reads targets by reflection rather than a
-// per-effect switch so a new effect that carries a Target is covered for free;
-// an unexported field holding a Target is skipped, not read, so the walk never
-// panics on one.
-func walkEffectTargets(e engine.Effect, fn func(engine.Target)) {
-	walkForTargets(reflect.ValueOf(e), fn)
-}
-
-func walkForTargets(v reflect.Value, fn func(engine.Target)) {
+// Conditional's branches), slices, and pointers. It reads the tree by reflection
+// rather than a per-effect switch so a new effect that carries a Target or a
+// Duration is covered for free. It stops at a Target so its internal filter
+// fields are not walked, and it never reads an unexported field, so the walk
+// never panics on one.
+func walkEffectValues(v reflect.Value, visit func(reflect.Value)) {
 	if !v.IsValid() {
 		return
 	}
+	visit(v)
 	switch v.Kind() {
 	case reflect.Interface, reflect.Pointer:
 		if !v.IsNil() {
-			walkForTargets(v.Elem(), fn)
+			walkEffectValues(v.Elem(), visit)
 		}
 	case reflect.Slice, reflect.Array:
 		for i := 0; i < v.Len(); i++ {
-			walkForTargets(v.Index(i), fn)
+			walkEffectValues(v.Index(i), visit)
 		}
 	case reflect.Struct:
 		if v.Type() == targetType {
-			if v.CanInterface() {
-				fn(v.Interface().(engine.Target))
-			}
 			return
 		}
 		for i := 0; i < v.NumField(); i++ {
-			walkForTargets(v.Field(i), fn)
+			walkEffectValues(v.Field(i), visit)
 		}
 	}
+}
+
+// walkEffectTargets calls fn for every Target reachable through an effect.
+func walkEffectTargets(e engine.Effect, fn func(engine.Target)) {
+	walkEffectValues(reflect.ValueOf(e), func(v reflect.Value) {
+		if v.Type() == targetType && v.CanInterface() {
+			fn(v.Interface().(engine.Target))
+		}
+	})
+}
+
+// walkEffectDurations calls fn for every Duration reachable through an effect.
+func walkEffectDurations(e engine.Effect, fn func(engine.Duration)) {
+	walkEffectValues(reflect.ValueOf(e), func(v reflect.Value) {
+		if v.Type() == durationType && v.CanInterface() {
+			fn(v.Interface().(engine.Duration))
+		}
+	})
 }
 
 // defTargetsPhrase reports whether a card has an ability effect that targets the
@@ -172,6 +188,37 @@ func targetShapeSpecimens() []specimen {
 	return out
 }
 
+// defUsesDuration reports whether a card has an ability effect carrying the given
+// timing window, the predicate the duration specimens select on.
+func defUsesDuration(d *engine.CardDefinition, dur engine.Duration) bool {
+	found := false
+	for _, ab := range d.Abilities {
+		walkEffectDurations(ab.Effect, func(got engine.Duration) {
+			if got == dur {
+				found = true
+			}
+		})
+	}
+	return found
+}
+
+// durationSpecimens returns one real card per timing window a timed effect can
+// take, ranging over engine.Durations() rather than a list written here so a new
+// duration shows up as a new specimen. A duration no loaded card carries yet is
+// drawn as a gap. The caption names the window (Duration.String()); the card
+// itself shows how that window is actually phrased in context, which varies by
+// effect.
+func durationSpecimens() []specimen {
+	out := make([]specimen, 0, len(engine.Durations()))
+	for _, dur := range engine.Durations() {
+		dur := dur
+		out = append(out, randomMatch(dur.String(), func(d *engine.CardDefinition) bool {
+			return defUsesDuration(d, dur)
+		}))
+	}
+	return out
+}
+
 // textCombiner is a constructed noun phrase that isolates one text-helper axis,
 // so the article and quantifier inflections read as minimal pairs side by side
 // rather than being hunted for across cards.
@@ -206,11 +253,35 @@ func combinerList() app.UI {
 	return app.Div().Class("style-combiners").Body(items...)
 }
 
+// cardTextSpecimens holds the Card text section's four specimen rows. They are
+// queried once per page load and cached on the style component, because the
+// target-shape and duration rows walk every card's effect tree by reflection and
+// the page re-renders in full on every hover.
+type cardTextSpecimens struct {
+	triggers, continuous, targetShapes, durations []specimen
+}
+
+// cardTextSpecs returns the cached specimens, computing them on first use. The
+// queries depend only on styleSeed, which is fixed for the life of a page load,
+// so one computation serves every re-render.
+func (s *style) cardTextSpecs() *cardTextSpecimens {
+	if s.cardText == nil {
+		s.cardText = &cardTextSpecimens{
+			triggers:     triggerSpecimens(),
+			continuous:   continuousSpecimens(),
+			targetShapes: targetShapeSpecimens(),
+			durations:    durationSpecimens(),
+		}
+	}
+	return s.cardText
+}
+
 // cardTextSection shows one card per text feature: the triggers a card can fire
 // on, then the continuous abilities it can carry. Each specimen is a real card
 // the query matched, so the section shows how the client actually renders that
 // feature's rules text; an empty query is drawn as a gap rather than skipped.
 func (s *style) cardTextSection() app.UI {
+	specs := s.cardTextSpecs()
 	return app.Div().Body(
 		app.P().Class("style-note").Body(
 			app.Text("One card per text feature, each a random real card the query "+
@@ -219,11 +290,13 @@ func (s *style) cardTextSection() app.UI {
 			app.Text("."),
 		),
 		app.H3().Class("style-h3").Text("Triggers"),
-		s.specimenRow(triggerSpecimens()),
+		s.specimenRow(specs.triggers),
 		app.H3().Class("style-h3").Text("Continuous abilities"),
-		s.specimenRow(continuousSpecimens()),
+		s.specimenRow(specs.continuous),
 		app.H3().Class("style-h3").Text("Target shapes"),
-		s.specimenRow(targetShapeSpecimens()),
+		s.specimenRow(specs.targetShapes),
+		app.H3().Class("style-h3").Text("Durations"),
+		s.specimenRow(specs.durations),
 		app.H3().Class("style-h3").Text("Combiners"),
 		combinerList(),
 	)

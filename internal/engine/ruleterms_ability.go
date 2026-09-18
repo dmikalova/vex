@@ -258,7 +258,7 @@ from hand to grow).`,
 			Definition: "An ability that resolves after any player chooses their active house, whoever's turn it is.",
 			Body: `This ability resolves after any player chooses their active house,
 whether the choice was made by its controller or their opponent (Snag's Mirror
-bars the chooser's opponent from that same house on their next turn).`,
+bars the chooser's opponent from that same house during their next turn).`,
 		},
 		{
 			Section:    SectionAbility,

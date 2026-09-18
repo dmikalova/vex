@@ -231,9 +231,11 @@ func (UsedNoCreatures) Met(ctx *EffectContext) bool {
 // active player's tally, which counts one once this reap has been tallied.
 type FirstReapOfTurn struct{}
 
-// CondText renders the condition.
+// CondText renders the condition. The subject is "this" because the event, not a
+// card, is what is first — "it" is reserved for the card in context, and Æmber
+// Conduction Unit gates on both (docs/card-wording-rules.md § 16).
 func (FirstReapOfTurn) CondText() string {
-	return "if it is the first time a creature has reaped this turn"
+	return "if this is the first time a creature has reaped this turn"
 }
 
 // Met reports whether exactly one creature has reaped this turn, the reaping

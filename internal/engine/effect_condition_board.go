@@ -157,7 +157,7 @@ func (c ControlsNamed) CondText() string {
 
 // Met reports whether the controller has the named card in play.
 func (c ControlsNamed) Met(ctx *EffectContext) bool {
-	return InPlay{Player: Controller, Name: c.Name}.Met(ctx)
+	return CardsInPlay{Player: Controller, Name: c.Name}.Met(ctx)
 }
 
 // Overwhelmed reports whether the controller is overwhelmed — their opponent

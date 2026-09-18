@@ -182,7 +182,7 @@ type EachPlayerUnless struct {
 	// Spare is the board condition that, read from a player's own perspective,
 	// exempts that player. It must be phrased as the controller's board (Player:
 	// Controller) because it is re-based onto each player in turn.
-	Spare InPlay
+	Spare CardsInPlay
 	// Take keeps the doomed creatures of an unspared player's battleline.
 	Take Refinement
 }

@@ -33,6 +33,7 @@ func main() {
 	app.Route("/glossary", web.NewGlossary)
 	if styleEnabled() {
 		app.Route("/style", web.NewStyle)
+		app.Route("/clusters", web.NewClusters)
 	}
 	app.RunWhenOnBrowser()
 
@@ -165,6 +166,8 @@ func (g *gzipResponseWriter) Write(b []byte) (int, error) {
 func staticAssets(version string) http.Handler {
 	etag := `"` + version + `"`
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// path.Clean collapses any ".." before the web/ prefix guard below rejects
+		// anything that escaped it, so traversal cannot reach outside web/.
 		file := filepath.FromSlash(strings.TrimPrefix(path.Clean(r.URL.Path), "/"))
 		if !strings.HasPrefix(file, "web"+string(filepath.Separator)) {
 			http.NotFound(w, r)
@@ -334,6 +337,10 @@ const appleTouchIcon = `<link rel="apple-touch-icon" href="/web/assets/apple-tou
 const bootStyle = `<style>
   html, body { margin: 0; background-color: #1c1c1b; color: #f7f1ff; }
   #app-wasm-loader, .goapp-app-info { background-color: #1c1c1b; color: #8b888f; }
+  /* go-app spins Icon.Default, which is the opaque PWA square. Swap in the bare
+     Æmber gem (transparent) so only the gem spins, with no box corners to sweep
+     the progress label; the PWA and favicon icons keep their opaque background. */
+  #app-wasm-loader-icon { content: url("/web/assets/aember.svg"); }
 </style>`
 
 // card strips (convenient when a battleline runs off-screen) and keeps the game

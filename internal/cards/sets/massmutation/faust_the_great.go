@@ -21,7 +21,7 @@ var FaustTheGreat = set.New(
 	card.InCluster(card.Pulled(monumentToFaustCluster, 1, 1)),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dinosaur),
-	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.InPlay{
+	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.CardsInPlay{
 		Player:     card.Controller,
 		Type:       card.Type.Creature,
 		WithAember: true,

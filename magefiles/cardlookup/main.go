@@ -34,6 +34,10 @@
 //	                     the category its declaration block documents, with how
 //	                     many card definitions and sets use it.
 //
+//	review [-n=<count>]  Open a random batch of card files (default 10) in VS Code
+//	                     for review, recording them so they are not picked again
+//	                     until the whole pool has been seen, then cycling.
+//
 //	import-provenance [setSlug|all]
 //	                     Rebuild a set's source catalog (…/provenance/<slug>.json)
 //	                     from the Master Vault decks feed, ASCII-folding names and
@@ -88,6 +92,8 @@ func run(args []string) error {
 		return nextCard(args[1:])
 	case "node-usage":
 		return nodeUsage(args[1:])
+	case "review":
+		return review(args[1:])
 	case "import-provenance":
 		return importProvenance(args[1:])
 	default:
@@ -100,6 +106,7 @@ func usage() error {
 		"usage: cardlookup <lookup <query> | missing [setSlug] | " +
 			"coverage [-new] | stub <setSlug> | next-card [setSlug] | " +
 			"node-usage [-max=<n>] [-category=<substring>] | " +
+			"review [-n=<count>] | " +
 			"import-provenance [setSlug|all]>",
 	)
 }

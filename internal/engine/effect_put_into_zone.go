@@ -77,24 +77,35 @@ func (e PutFromPlay) resolveOptional(ctx *EffectContext) bool {
 }
 
 // put moves an already-selected set and reports whether any card actually moved.
+// The set moves as one moment: the board does not settle between two cards of one
+// selection, and no card's "Leaves Play:" ability resolves until every card has
+// moved, so the outcome cannot depend on the order the selection is visited
+// (TestPutFromPlayMovesTheWholeSelectionTogether).
+//
+// The per-card in-play recheck survives that batching because one move can still
+// carry a second card out with it: a gigantic is two cards and moving either half
+// moves both, so the loop reaches the other half after it has already left
+// (TestPutFromPlaySkipsTheSecondGiganticHalf).
 func (e PutFromPlay) put(ctx *EffectContext, ids []LocalID) bool {
 	if e.Destination == ToTopOfDeck {
 		ids = ctx.OrderByChoice("Choose the next card to put on top of the deck", ids)
 	}
 	moved := false
-	for _, id := range ids {
-		if !resolverInPlay(ctx, id) {
-			continue
+	ctx.Resolver.Simultaneously(ctx.Controller, func() {
+		for _, id := range ids {
+			if !resolverInPlay(ctx, id) {
+				continue
+			}
+			if e.WithUpgrades {
+				ctx.Resolver.ReturnUpgradesToHand(id)
+			}
+			controller := ctx.Resolver.Controller(id)
+			e.Destination.move(ctx, id)
+			ctx.Produced.Moved[controller]++
+			ctx.It, ctx.HasIt = id, true
+			moved = true
 		}
-		if e.WithUpgrades {
-			ctx.Resolver.ReturnUpgradesToHand(id)
-		}
-		controller := ctx.Resolver.Controller(id)
-		e.Destination.move(ctx, id)
-		ctx.Produced.Moved[controller]++
-		ctx.It, ctx.HasIt = id, true
-		moved = true
-	}
+	})
 	return moved
 }
 
@@ -178,9 +189,9 @@ func (e PutChosen) resolveMoves(ctx *EffectContext) {
 }
 
 // PutNamedIntoHand puts a card with a specific name that the controller chooses
-// into their hand, taken either from a friendly creature in play or from their
+// into their hand, taken either from a friendly card in play or from their
 // discard pile — Faygin recovering an Urchin. The controller chooses among both
-// zones at once; an in-play creature returns to hand (shedding its in-play state)
+// zones at once; an in-play card returns to hand (shedding its in-play state)
 // and a discard card is recovered.
 type PutNamedIntoHand struct {
 	Name string
@@ -202,7 +213,7 @@ func (e PutNamedIntoHand) Resolve(ctx *EffectContext) {
 	mover := crossZoneMover{
 		Player:  ctx.Controller,
 		Dest:    ToHand,
-		Sources: []Zone{inPlay, Discard},
+		Sources: []Zone{InPlay, Discard},
 	}
 	pool := mover.gather(ctx, func(LocalID) bool { return true })
 	for _, id := range (Chosen{Name: e.Name}).pick(ctx, pool) {

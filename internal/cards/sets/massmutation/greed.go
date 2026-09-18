@@ -21,7 +21,7 @@ var Greed = set.New(
 	card.OneCopyPerDeck(),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Demon, card.Traits.Sin),
-	card.WithDrawModifierPer(card.Controller, 1, card.InPlay{
+	card.WithDrawModifierPer(card.Controller, 1, card.CardsInPlay{
 		Player: card.Controller,
 		Type:   card.Type.Creature,
 		Trait:  card.Traits.Sin,

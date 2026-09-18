@@ -24,9 +24,11 @@ var Purify = set.New(
 			},
 			Result: card.Then{
 				First: card.DiscardUntil{
-					Player:      card.ItsController,
-					Type:        card.Type.Creature,
-					ExceptTrait: card.Traits.Mutant,
+					Player: card.ItsController,
+					Filter: card.Filter{
+						Type:        card.Type.Creature,
+						ExceptTrait: card.Traits.Mutant,
+					},
 				},
 				Result: card.PutDiscardedIntoPlay{Type: card.Type.Creature},
 			},

@@ -19,7 +19,7 @@ var MartianHounds = set.New(
 		card.Trigger.Play, card.AddPowerCounter{
 			Target: card.Target.Creature,
 			Amount: 2,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player:  card.EachPlayer,
 				Type:    card.Type.Creature,
 				Damaged: true,

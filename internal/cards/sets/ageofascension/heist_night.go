@@ -20,7 +20,7 @@ var HeistNight = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.StealAember{
 			Amount: 1,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 				Trait:  card.Traits.Thief,

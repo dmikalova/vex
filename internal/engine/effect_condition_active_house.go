@@ -11,23 +11,14 @@ func (ActiveHouseMatchesNoCardsInPlay) CondText() string {
 	return "which matches no cards in play"
 }
 
-// Met reports whether the active house matches no card in play. It scans both
-// players' creatures (and their attached upgrades) and artifacts; the first card
-// of the active house makes the condition false.
+// Met reports whether the active house matches no card in play. The first card
+// of the active house makes the condition false. Upgrades count as cards in play,
+// including the ones on an artifact, which the hand-rolled scan this replaced
+// missed.
 func (ActiveHouseMatchesNoCardsInPlay) Met(ctx *EffectContext) bool {
 	house := ctx.Resolver.ActiveHouse()
 	for _, p := range []int{ctx.Controller, ctx.Opponent()} {
-		for _, id := range ctx.Resolver.Battleline(p) {
-			if ctx.Resolver.House(id) == house {
-				return false
-			}
-			for _, up := range ctx.Resolver.Upgrades(id) {
-				if ctx.Resolver.House(up) == house {
-					return false
-				}
-			}
-		}
-		for _, id := range ctx.Resolver.Artifacts(p) {
+		for _, id := range resolverCardsInPlay(ctx, p) {
 			if ctx.Resolver.House(id) == house {
 				return false
 			}

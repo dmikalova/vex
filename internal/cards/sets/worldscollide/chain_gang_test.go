@@ -16,7 +16,7 @@ import (
 //	Traits: Elf • Thief
 //
 //	After you play Subtle Chain, ready Chain Gang.
-//	Action: Steal 1 Æmber. Shuffle a Subtle Chain from your discard pile into your deck.
+//	Action: Steal 1 Æmber. Shuffle Subtle Chain from your discard pile into your deck.
 func TestChainGang(t *testing.T) {
 	t.Run("playing Subtle Chain readies Chain Gang", func(t *testing.T) {
 		var gang ct.Card

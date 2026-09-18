@@ -105,10 +105,7 @@ func (e Restrict) validate() error {
 // next turn" (Seismo-entangler).
 func (e Restrict) Text() string {
 	who, whose := e.Player.secondPerson()
-	when := "during " + whose + " next turn"
-	if e.Duration == RemainderOfPlayerTurn {
-		when = "for the remainder of the turn"
-	}
+	when := windowClause(e.Duration, whose, "")
 	phrase := e.Action.phrase()
 	if h := e.House.phrase(); h != "" {
 		phrase = "creatures " + h + " to reap"
@@ -184,7 +181,7 @@ func (e CreaturesCannot) validate() error {
 // creatures cannot be used to fight", or with no house exception "until the start
 // of your next turn, creatures cannot be used to reap".
 func (e CreaturesCannot) Text() string {
-	return "until the start of your next turn, " +
+	return durationClause(StartOfPlayerNextTurn, "") + ", " +
 		e.Houses.qualify("creatures") +
 		" cannot be used to " + e.Action.verb()
 }
@@ -240,10 +237,7 @@ func (e CannotPlay) validate() error {
 func (e CannotPlay) Text() string {
 	who, whose := e.Player.secondPerson()
 	noun := strings.ToLower(e.barred().String()) + "s"
-	when := "during " + whose + " next turn"
-	if e.Duration == RemainderOfPlayerTurn {
-		when = "for the remainder of the turn"
-	}
+	when := windowClause(e.Duration, whose, "")
 	return who + " cannot play " + noun + " " + when
 }
 
@@ -290,7 +284,7 @@ func (e PlayersCannotPlay) validate() error {
 // play tactics". Card types read as lowercase common nouns in card text.
 func (e PlayersCannotPlay) Text() string {
 	noun := strings.ToLower(e.barred().String()) + "s"
-	return "until the end of your next turn, players cannot play " + noun
+	return durationClause(EndOfPlayerNextTurn, "") + ", players cannot play " + noun
 }
 
 // Resolve arms the play-type bar on both players: the caster for the rest of this
@@ -324,14 +318,14 @@ const (
 	ItActiveHouse
 )
 
-// MustChooseHouse forces a player to choose a house as their active house on their
-// next turn — the house an enclosing ChooseHouseThen picked (Control the Weak,
+// MustChooseHouse forces a player to choose a house as their active house during
+// their next turn — the house an enclosing ChooseHouseThen picked (Control the Weak,
 // Reference Chosen), the house of the creature the source fought (Snag, Reference
 // Fought), or the house of the creature in context and that creature's own
 // controller (Mark of Dis, Reference It). Player names whose next-turn choice is
 // forced; it is source-relative, so a card binding its own controller reads "you
-// must choose … on your next turn" (an It reference binds the creature's controller
-// and ignores Player).
+// must choose … during your next turn" (an It reference binds the creature's
+// controller and ignores Player).
 type MustChooseHouse struct {
 	// Player is whose next-turn active-house choice is forced.
 	Player Player
@@ -357,15 +351,15 @@ func (e MustChooseHouse) validate() error {
 func (e MustChooseHouse) Text() string {
 	if e.Reference == ItActiveHouse {
 		return "its controller must choose that creature's house as their " +
-			"active house on their next turn"
+			"active house " + windowClause(OpponentNextTurn, "their", "")
 	}
 	who, whose := e.Player.secondPerson()
 	if e.Reference == FoughtActiveHouse {
 		return who + " must choose the house of the creature " + SelfName +
-			" fights as " + whose + " active house on " + whose + " next turn"
+			" fights as " + whose + " active house " + windowClause(OpponentNextTurn, whose, "")
 	}
 	return who + " must choose that house as " + whose +
-		" active house during " + whose + " next turn"
+		" active house " + windowClause(OpponentNextTurn, whose, "")
 }
 
 // Resolve arms the must on the player's next turn. A Fought or It reference stores a
@@ -422,11 +416,12 @@ func (e CannotChooseHouse) validate() error {
 // chooses a house" trigger and speaks from the chooser's point of view.
 func (e CannotChooseHouse) Text() string {
 	if e.Reference == JustChosenActiveHouse {
-		return "their opponent cannot choose the same house as their active house on their next turn"
+		return "their opponent cannot choose the same house as their active house " +
+			windowClause(OpponentNextTurn, "their", "")
 	}
 	who, whose := e.Player.secondPerson()
 	return who + " cannot choose that house as " + whose +
-		" active house on " + whose + " next turn"
+		" active house " + windowClause(OpponentNextTurn, whose, "")
 }
 
 // Resolve bars the house on the barred player's next turn. A JustChosen reference
@@ -449,7 +444,7 @@ func (e CannotChooseHouse) Resolve(ctx *EffectContext) {
 // WagerOpponentChoosesChosenHouse bets on the opponent matching the house an
 // enclosing ChooseHouseThen picked: if they choose it as their active house next
 // turn, the controller steals Amount — Snaglet's "if your opponent chooses that
-// house as their active house on their next turn, steal 2A."
+// house as their active house during their next turn, steal 2A."
 type WagerOpponentChoosesChosenHouse struct {
 	// Amount is how much Æmber the controller steals if the bet lands.
 	Amount int
@@ -458,8 +453,8 @@ type WagerOpponentChoosesChosenHouse struct {
 // Text renders the effect.
 func (e WagerOpponentChoosesChosenHouse) Text() string {
 	return fmt.Sprintf(
-		"if your opponent chooses that house as their active house on their next turn, steal %d Æmber",
-		e.Amount,
+		"if your opponent chooses that house as their active house %s, steal %d Æmber",
+		windowClause(OpponentNextTurn, "their", ""), e.Amount,
 	)
 }
 

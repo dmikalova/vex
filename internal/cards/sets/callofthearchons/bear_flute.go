@@ -33,7 +33,7 @@ var BearFlute = set.New(
 				Target: card.Target.Creature.Named(AncientBear.Name),
 			},
 			card.Conditional{
-				Cond: card.InPlay{
+				Cond: card.CardsInPlay{
 					Player: card.EachPlayer,
 					Type:   card.Type.Creature,
 					Name:   AncientBear.Name,

@@ -105,7 +105,7 @@ type LendTextBoxFromHand struct{}
 // controller picks and the duration of the loan.
 func (LendTextBoxFromHand) Text() string {
 	return "reveal a creature from your hand and choose a creature in play - " +
-		"for the remainder of the turn, the chosen creature gains the text box of " +
+		durationClause(RemainderOfPlayerTurn, "") + ", the chosen creature gains the text box of " +
 		"the revealed creature"
 }
 

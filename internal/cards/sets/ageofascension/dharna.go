@@ -24,7 +24,7 @@ var Dharna = set.New(
 		card.Trigger.Play, card.GainAember{
 			Player: card.Controller,
 			Amount: 1,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player:  card.Controller,
 				Type:    card.Type.Creature,
 				Damaged: true,

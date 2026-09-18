@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Put a creature from your discard pile into your hand. If it is a Mutant creature, put a creature from your discard pile into your hand.
+//	Play: Put a creature from your discard pile into your hand. If it is a Mutant creature, put another creature from your discard pile into your hand.
 //	Enhance Draw.
 func TestResurgence(t *testing.T) {
 	t.Run("a Mutant first return brings back a second creature", func(t *testing.T) {

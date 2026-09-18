@@ -118,19 +118,17 @@ func (g *Game) PutCardUnder(owner int, id, host LocalID, faceDown bool) {
 // Graft). Like the leave-play relocations in game_leaves_play.go it sheds the
 // card's upgrades, the cards under it, and its per-match state on the way out;
 // unlike them it lands in the host's under-chain rather than a resting zone.
-// AttachUnder runs after resetCore because resetCore zeroes the very link fields
-// it sets. Spangler Box grafts a creature onto itself.
+// AttachUnder runs after the teardown because resetCore zeroes the very link
+// fields it sets. Spangler Box grafts a creature onto itself.
 func (g *Game) GraftUnder(id, host LocalID) {
 	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
-	g.removeFromPlay(id)
-	g.discardUpgrades(id)
-	g.discardUnder(id)
-	g.releaseAemberOnLeavePlay(id)
-	g.resetCore(id)
-	g.AttachUnder(host, id, false)
-	g.record(CardGrafted{Card: id, Host: host})
+	for _, half := range g.giganticHalves(id) {
+		g.leavePlayTeardown(half)
+		g.AttachUnder(host, half, false)
+		g.record(CardGrafted{Card: half, Host: host})
+	}
 }
 
 // PutUnderIntoPlay puts every card placed under host into play under its owner's

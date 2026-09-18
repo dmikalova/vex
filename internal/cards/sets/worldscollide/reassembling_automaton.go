@@ -22,7 +22,7 @@ var ReassemblingAutomaton = set.New(
 	card.WithStatic(card.StaticModifier{
 		Replaces: card.Replace{
 			When: card.Event.Destroyed,
-			Cond: card.InPlay{Player: card.Controller, Type: card.Type.Creature, Other: true},
+			Cond: card.CardsInPlay{Player: card.Controller, Type: card.Type.Creature, Other: true},
 			With: card.Sequence{Effects: []card.Effect{
 				card.Heal{Fully: true, Target: card.Target.Triggering},
 				card.Exhaust{Target: card.Target.Triggering},

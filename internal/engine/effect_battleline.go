@@ -219,7 +219,7 @@ func (e TurnIntoCreature) Text() string {
 		text += " with versatile"
 	}
 	if e.Duration == RemainderOfPlayerTurn {
-		text += " for the remainder of the turn"
+		text += " " + durationClause(e.Duration, "")
 	}
 	return text
 }

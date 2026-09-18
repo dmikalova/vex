@@ -21,7 +21,8 @@ var Tormax = set.Gigantic(
 	card.WithAbility(
 		card.Trigger.PlayFightReap, card.Sequence{Effects: []card.Effect{
 			card.DiscardHand{Player: card.Controller},
-			card.PurgeFromHand{
+			card.PurgeCard{
+				Zone:      card.Hand,
 				Player:    card.Opponent,
 				Selection: card.Random{Count: 2},
 			},

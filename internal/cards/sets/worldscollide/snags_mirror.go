@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Bonus:  Æmber
 //	Traits: Item
 //
-//	After a player chooses an active house, their opponent cannot choose the same house as their active house on their next turn.
+//	After a player chooses an active house, their opponent cannot choose the same house as their active house during their next turn.
 var SnagsMirror = set.New(
 	"Snag's Mirror",
 	card.House.Dis,

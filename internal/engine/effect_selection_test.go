@@ -13,6 +13,38 @@ func TestSelfSelectionText(t *testing.T) {
 	}
 }
 
+// TestChosenAnotherExcludesTheCardInContext covers Resurgence's second pick: the
+// word "another" is a promise, so an Another Chosen both renders it and drops
+// ctx.It from the candidates rather than trusting the first pick to have moved
+// the card out of the pile.
+func TestChosenAnotherExcludesTheCardInContext(t *testing.T) {
+	sel := Chosen{Type: Creature, Another: true}
+	if got := sel.object(); got != "another creature" {
+		t.Errorf("object() = %q, want %q", got, "another creature")
+	}
+	if sel.plainType() {
+		t.Error("an Another Chosen is not a bare type and must not fold into a noun list")
+	}
+
+	g := NewGame("A", "B", 1)
+	first := g.AddToDiscard(testCreature("first", 2), 0)
+	second := g.AddToDiscard(testCreature("second", 2), 0)
+	ctx := &EffectContext{Resolver: g, It: first, HasIt: true}
+
+	got := sel.candidates(ctx, []LocalID{first, second})
+	if len(got) != 1 || got[0] != second {
+		t.Errorf("candidates = %v, want only the creature the first pick did not take", got)
+	}
+	if plain := (Chosen{Type: Creature}).candidates(
+		ctx,
+		[]LocalID{first, second},
+	); len(
+		plain,
+	) != 2 {
+		t.Errorf("without Another both creatures stay eligible, got %v", plain)
+	}
+}
+
 // TestTriggersFromDiscardReturnsSelf covers the discard-trigger path end to end: a
 // card with WithTriggersFromDiscard keeps its AfterChooseHouse ability live in its
 // owner's discard pile, and a PutFromDiscard{Self} returns that very card to hand.

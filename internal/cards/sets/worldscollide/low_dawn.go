@@ -26,9 +26,10 @@ var LowDawn = set.New(
 			},
 			Then: card.GainAember{Player: card.Controller, Amount: 2},
 		},
-		card.ShuffleFromDiscard{Selection: card.Each{
-			House: card.Houses.Named(card.House.Self),
-			Type:  card.Type.Creature,
-		}},
+		card.ShuffleIntoDeck{
+			Player: card.Controller, From: []card.Zone{card.Discard}, Selection: card.Each{
+				House: card.Houses.Named(card.House.Self),
+				Type:  card.Type.Creature,
+			}},
 	}}),
 )

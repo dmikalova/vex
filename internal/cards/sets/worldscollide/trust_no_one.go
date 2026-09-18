@@ -21,7 +21,7 @@ var TrustNoOne = set.New(
 		card.Trigger.Play, card.ChooseOne{
 			Options: []card.Effect{
 				card.Conditional{
-					Cond: card.InPlay{
+					Cond: card.CardsInPlay{
 						Player: card.Controller,
 						Type:   card.Type.Creature,
 						None:   true,

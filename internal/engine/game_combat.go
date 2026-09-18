@@ -57,40 +57,9 @@ func (g *Game) fight(attacker, defender LocalID) {
 	// battleline.
 	neighborsAtFight := neighbors(&EffectContext{Resolver: g}, attacker)
 
-	// Assault and Hazardous deal their damage before fight damage: the attacker's
-	// Assault hits the defender, the defender's Hazardous hits the attacker.
-	// Either can destroy a fighter before combat. Skipped if a "Before Fight"
-	// effect already removed the defender.
-	if g.inPlay(defender) {
-		var pre []DamageTarget
-		if a := g.assault(attacker); a > 0 {
-			pre = append(pre, DamageTarget{
-				ID:            defender,
-				Amount:        a,
-				Source:        attacker,
-				SourceKeyword: assaultDamage,
-			})
-		}
-		if h := g.hazardous(defender); h > 0 {
-			pre = append(pre, DamageTarget{
-				ID:            attacker,
-				Amount:        h,
-				Source:        defender,
-				SourceKeyword: hazardousDamage,
-			})
-		}
-		if len(pre) > 0 {
-			g.dealDamage(g.controller(attacker), pre...)
-			// Skoll's Assault destroying the creature it attacks — before the fight
-			// itself — fires "after a creature is destroyed by this creature's assault
-			// damage" on the attacker, with the destroyed defender as "it". Assault is
-			// the only pre-fight damage aimed at the defender, so a defender no longer
-			// in play here was destroyed by it.
-			if a := g.assault(attacker); a > 0 && g.inPlay(attacker) && !g.inPlay(defender) {
-				g.triggerAbilities(attacker, TriggerAfterAssaultDestroys, defender, true)
-			}
-		}
-	}
+	// Assault and Hazardous deal their damage before fight damage: either can
+	// destroy a fighter before combat.
+	g.resolvePreFightDamage(attacker, defender)
 
 	// Elusive replaces the fight itself, so it is read only once the whole pre-fight
 	// sequence — "Before Fight" abilities, Assault, Hazardous — has resolved. It is
@@ -101,94 +70,157 @@ func (g *Game) fight(attacker, defender LocalID) {
 	// Combat damage is exchanged only while both fighters are still in play (a
 	// "Before Fight" effect, Assault, or Hazardous can remove one first).
 	if g.inPlay(attacker) && g.inPlay(defender) {
-		ap, dp := g.Power(attacker), g.Power(defender)
-		// Skirmish and the poison each side brings are read here, before any damage
-		// moves, so the fight line can name them as properties of the combatants.
-		// They are not separate lines: a keyword belongs to the creature that has it,
-		// and annotating it there says whose it is without a sentence of its own.
-		skirmish := g.hasKeyword(attacker, Skirmish)
-		attackerKeywords := FightKeywords(0)
-		if skirmish {
-			attackerKeywords |= FightSkirmish
-		}
-		if g.hasKeyword(attacker, Poison) || g.attackGrantsPoison(attacker, defender) {
-			attackerKeywords |= FightPoison
-		}
-		defenderKeywords := FightKeywords(0)
-		if elusive {
-			defenderKeywords |= FightElusive
-		}
-		if g.hasKeyword(defender, Poison) {
-			defenderKeywords |= FightPoison
-		}
-		g.record(Fought{
-			Attacker:         attacker,
-			AttackerPower:    ap,
-			AttackerKeywords: attackerKeywords,
-			Defender:         defender,
-			DefenderPower:    dp,
-			DefenderKeywords: defenderKeywords,
-		})
-		if !elusive {
-			// Both fighters take their damage simultaneously, then destruction is
-			// resolved together as part of dealing it — so each dying creature is
-			// already in the discard before the other's "Destroyed:" ability (or the
-			// attacker's "After Fight") fires, and neither death changes the other's.
-			dmgTarget := defender
-			if redirect != 0 {
-				dmgTarget = redirect
-			}
-			targets := []DamageTarget{
-				{ID: dmgTarget, Amount: g.fightDamage(attacker, defender), Source: attacker},
-			}
-			// Retaliation damage equals the defender's power, unless a Fixed
-			// AttackDamage replaces it: Shadow Self and Ether Spider "deal no damage
-			// when fighting", so they deal none back to an attacker either. An
-			// additive AttackDamage bonus (Valdr's flank +2) is an attack-only bonus
-			// and never adds to retaliation.
-			retaliation := dp
-			if ad := g.cat.def(defender).AttackDamage; ad.Fixed {
-				retaliation = ad.Amount
-			}
-			if !skirmish &&
-				!g.cat.def(defender).DealsNoDamageWhenAttacked {
-				if n := g.cat.def(defender).StealsInsteadOfDamageWhenAttacked; n > 0 &&
-					retaliation > 0 {
-					// Shoulder Id: its retaliation is replaced by its controller stealing.
-					StealAember{Amount: n}.Resolve(&EffectContext{
-						Resolver:   g,
-						Controller: defenderSide,
-						Source:     defender,
-					})
-				} else {
-					targets = append(targets,
-						DamageTarget{ID: attacker, Amount: retaliation, Source: defender})
-				}
-			}
-			// Splash-attack deals its damage to each neighbor of the creature the
-			// attacker fights, at the same time as fight damage.
-			if s := g.splashAttack(attacker); s > 0 {
-				for _, n := range neighbors(&EffectContext{Resolver: g}, defender) {
-					targets = append(targets, DamageTarget{ID: n, Amount: s, Source: attacker})
-				}
-			}
-			// Snapshot each target's damage so poison can tell which creatures the
-			// fight's damage actually landed on, once armor and immunity had their say.
-			before := make([]int16, len(targets))
-			for i, t := range targets {
-				before[i] = g.State.Cards[t.ID].Damage
-			}
-			g.dealDamage(g.controller(attacker), targets...)
-			g.applyFightPoison(attacker, defender, dmgTarget, targets, before)
+		g.exchangeFightDamage(attacker, defender, redirect, elusive, defenderSide)
+	}
+	g.resolvePostFight(attacker, defender, attackerSide, defenderSide, neighborsAtFight)
+}
 
+// resolvePreFightDamage deals the Assault and Hazardous damage that precedes fight
+// damage: the attacker's Assault hits the defender, the defender's Hazardous hits
+// the attacker, and either can destroy a fighter before combat. Skipped when a
+// "Before Fight" effect already removed the defender.
+func (g *Game) resolvePreFightDamage(attacker, defender LocalID) {
+	if !g.inPlay(defender) {
+		return
+	}
+	var pre []DamageTarget
+	if a := g.assault(attacker); a > 0 {
+		pre = append(pre, DamageTarget{
+			ID:            defender,
+			Amount:        a,
+			Source:        attacker,
+			SourceKeyword: assaultDamage,
+		})
+	}
+	if h := g.hazardous(defender); h > 0 {
+		pre = append(pre, DamageTarget{
+			ID:            attacker,
+			Amount:        h,
+			Source:        defender,
+			SourceKeyword: hazardousDamage,
+		})
+	}
+	if len(pre) == 0 {
+		return
+	}
+	g.dealDamage(g.controller(attacker), pre...)
+	// Skoll's Assault destroying the creature it attacks — before the fight
+	// itself — fires "after a creature is destroyed by this creature's assault
+	// damage" on the attacker, with the destroyed defender as "it". Assault is
+	// the only pre-fight damage aimed at the defender, so a defender no longer
+	// in play here was destroyed by it.
+	if a := g.assault(attacker); a > 0 && g.inPlay(attacker) && !g.inPlay(defender) {
+		g.triggerAbilities(attacker, TriggerAfterAssaultDestroys, defender, true)
+	}
+}
+
+// exchangeFightDamage resolves the simultaneous combat-damage step, once both
+// fighters are confirmed in play. It records the fight line (naming each side's
+// Skirmish/Poison/Elusive keywords), then — unless Elusive replaced the fight —
+// deals fight damage to the defender (or a redirect target), the defender's
+// retaliation back to the attacker (a Fixed AttackDamage replaces it, and Shoulder
+// Id steals instead), and Splash-attack to the defender's neighbors, all at once,
+// applying poison to whichever creatures the damage landed on.
+func (g *Game) exchangeFightDamage(
+	attacker, defender, redirect LocalID,
+	elusive bool,
+	defenderSide int,
+) {
+	ap, dp := g.Power(attacker), g.Power(defender)
+	// Skirmish and the poison each side brings are read here, before any damage
+	// moves, so the fight line can name them as properties of the combatants.
+	// They are not separate lines: a keyword belongs to the creature that has it,
+	// and annotating it there says whose it is without a sentence of its own.
+	skirmish := g.hasKeyword(attacker, Skirmish)
+	attackerKeywords := FightKeywords(0)
+	if skirmish {
+		attackerKeywords |= FightSkirmish
+	}
+	if g.hasKeyword(attacker, Poison) || g.attackGrantsPoison(attacker, defender) {
+		attackerKeywords |= FightPoison
+	}
+	defenderKeywords := FightKeywords(0)
+	if elusive {
+		defenderKeywords |= FightElusive
+	}
+	if g.hasKeyword(defender, Poison) {
+		defenderKeywords |= FightPoison
+	}
+	g.record(Fought{
+		Attacker:         attacker,
+		AttackerPower:    ap,
+		AttackerKeywords: attackerKeywords,
+		Defender:         defender,
+		DefenderPower:    dp,
+		DefenderKeywords: defenderKeywords,
+	})
+	if elusive {
+		return
+	}
+	// Both fighters take their damage simultaneously, then destruction is
+	// resolved together as part of dealing it — so each dying creature is
+	// already in the discard before the other's "Destroyed:" ability (or the
+	// attacker's "After Fight") fires, and neither death changes the other's.
+	dmgTarget := defender
+	if redirect != 0 {
+		dmgTarget = redirect
+	}
+	targets := []DamageTarget{
+		{ID: dmgTarget, Amount: g.fightDamage(attacker, defender), Source: attacker},
+	}
+	// Retaliation damage equals the defender's power, unless a Fixed
+	// AttackDamage replaces it: Shadow Self and Ether Spider "deal no damage
+	// when fighting", so they deal none back to an attacker either. An
+	// additive AttackDamage bonus (Valdr's flank +2) is an attack-only bonus
+	// and never adds to retaliation.
+	retaliation := dp
+	if ad := g.cat.def(defender).AttackDamage; ad.Fixed {
+		retaliation = ad.Amount
+	}
+	if !skirmish &&
+		!g.cat.def(defender).DealsNoDamageWhenAttacked {
+		if n := g.cat.def(defender).StealsInsteadOfDamageWhenAttacked; n > 0 &&
+			retaliation > 0 {
+			// Shoulder Id: its retaliation is replaced by its controller stealing.
+			StealAember{Amount: n}.Resolve(&EffectContext{
+				Resolver:   g,
+				Controller: defenderSide,
+				Source:     defender,
+			})
+		} else {
+			targets = append(targets,
+				DamageTarget{ID: attacker, Amount: retaliation, Source: defender})
 		}
 	}
-	// The whole post-combat reaction set resolves as one ordered window (ADR 0013):
-	// the attacker's own "Fight:", the after-destroyed-in-a-fight reactions, the
-	// after-use reactions, the board-wide "after a creature fights", and the
-	// neighbor reactions are gathered before any resolves so the active player orders
-	// them together. Tallies are read first because they are bookkeeping, not
-	// reactions, and a later reaction must see them settled.
+	// Splash-attack deals its damage to each neighbor of the creature the
+	// attacker fights, at the same time as fight damage.
+	if s := g.splashAttack(attacker); s > 0 {
+		for _, n := range neighbors(&EffectContext{Resolver: g}, defender) {
+			targets = append(targets, DamageTarget{ID: n, Amount: s, Source: attacker})
+		}
+	}
+	// Snapshot each target's damage so poison can tell which creatures the
+	// fight's damage actually landed on, once armor and immunity had their say.
+	before := make([]int16, len(targets))
+	for i, t := range targets {
+		before[i] = g.State.Cards[t.ID].Damage
+	}
+	g.dealDamage(g.controller(attacker), targets...)
+	g.applyFightPoison(attacker, defender, dmgTarget, targets, before)
+}
+
+// resolvePostFight settles the fight's bookkeeping and reaction window. The whole
+// post-combat reaction set resolves as one ordered window (ADR 0013): the
+// attacker's own "Fight:", the after-destroyed-in-a-fight reactions, the after-use
+// reactions, the board-wide "after a creature fights", and the neighbor reactions
+// are gathered before any resolves so the active player orders them together.
+// Tallies are read first because they are bookkeeping, not reactions, and a later
+// reaction must see them settled.
+func (g *Game) resolvePostFight(
+	attacker, defender LocalID,
+	attackerSide, defenderSide int,
+	neighborsAtFight []LocalID,
+) {
 	attackerDead, defenderDead := !g.inPlay(attacker), !g.inPlay(defender)
 	// A creature destroyed in a fight is an enemy kill from the other side's point of
 	// view, which is the tally The Warchest is paid for.

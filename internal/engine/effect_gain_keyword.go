@@ -67,9 +67,9 @@ func (e GainKeywords) durationPredicate() string {
 func (e GainKeywords) Text() string {
 	body := e.durationSubject() + " " + e.durationPredicate()
 	if e.Duration == StartOfPlayerNextTurn {
-		return body + " until the start of your next turn"
+		return body + " " + durationClause(e.Duration, "")
 	}
-	return "for the remainder of the turn, " + body
+	return durationClause(e.Duration, "") + ", " + body
 }
 
 // Resolve grants each selected creature every keyword for the chosen duration.

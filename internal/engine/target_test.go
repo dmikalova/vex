@@ -592,6 +592,69 @@ func TestTargetOfActiveHouse(t *testing.T) {
 	}
 }
 
+// TestTargetMatchingAny covers EMP Blast's target: house and trait disjoin into
+// one set, so a Mars Robot is one member of it rather than a member of two
+// sequenced targets — which matters because the same renderer produces "deal 1
+// damage to each Mars or Robot creature", where being hit twice would be wrong.
+func TestTargetMatchingAny(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	martian := g.AddToBattleline(
+		NewCard("m", Mars, Creature, Common, WithPower(3), WithTraits(Martian)), 0)
+	robot := g.AddToBattleline(
+		NewCard("r", Logos, Creature, Common, WithPower(3), WithTraits(Robot)), 0)
+	marsRobot := g.AddToBattleline(
+		NewCard("mr", Mars, Creature, Common, WithPower(3), WithTraits(Robot)), 0)
+	neither := g.AddToBattleline(
+		NewCard("n", Logos, Creature, Common, WithPower(3)), 0)
+	ctx := &EffectContext{Resolver: g, Source: martian, Controller: 0}
+
+	either := (Target{Kind: TargetEachCreature}).House(namedHouse(Mars)).
+		WithTrait(Robot).MatchingAny()
+	got := either.Select(ctx)
+	if len(got) != 3 || containsID(got, neither) {
+		t.Errorf("MatchingAny selected %v, want the three matching creatures once each", got)
+	}
+	hits := 0
+	for _, id := range got {
+		if id == marsRobot {
+			hits++
+		}
+	}
+	if hits != 1 {
+		t.Errorf("a creature matching both halves appears %d times in %v, want 1", hits, got)
+	}
+	if !containsID(got, martian) || !containsID(got, robot) {
+		t.Errorf("MatchingAny selected %v, want both halves included", got)
+	}
+	if text := either.Text(); text != "each Mars or Robot creature" {
+		t.Errorf("MatchingAny text = %q", text)
+	}
+
+	both := (Target{Kind: TargetEachCreature}).House(namedHouse(Mars)).WithTrait(Robot)
+	if conj := both.Select(ctx); len(conj) != 1 || conj[0] != marsRobot {
+		t.Errorf("without MatchingAny the axes still conjoin, got %v", conj)
+	}
+}
+
+// TestTargetMatchingAnyNeedsTwoAxes covers the degenerate case: with only one
+// identity axis carrying an adjective there is nothing for "or" to join, so the
+// target narrows conjunctively and its text cannot promise a union it does not
+// select.
+func TestTargetMatchingAnyNeedsTwoAxes(t *testing.T) {
+	lone := (Target{Kind: TargetEachCreature}).House(namedHouse(Mars)).MatchingAny()
+	if lone.disjoins() {
+		t.Error("a house alone has no second axis to disjoin")
+	}
+	if got := lone.Text(); got != "each Mars creature" {
+		t.Errorf("text = %q, want the plain conjunctive noun", got)
+	}
+	suffix := (Target{Kind: TargetEachCreature}).
+		House(HouseMatcher{Kind: MatchChosenHouse}).WithTrait(Robot).MatchingAny()
+	if suffix.disjoins() {
+		t.Error("a suffix-kind house renders after the noun and cannot be an \"or\" branch")
+	}
+}
+
 func TestTargetExceptTrait(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	agent := g.AddToBattleline(
@@ -870,7 +933,7 @@ func TestPowerLessThan(t *testing.T) {
 
 	// Threshold is the two friendly Mars creatures, so only power < 2 is kept:
 	// power == 2 and power 3 both survive.
-	limit := InPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)}
+	limit := CardsInPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)}
 	got := Target{Kind: TargetEachEnemyCreature}.Refine(PowerLessThan(limit)).Select(ctx)
 	if len(got) != 1 || got[0] != weak || containsID(got, equal) || containsID(got, strong) {
 		t.Errorf("PowerLessThan = %v, want [weak]", got)
@@ -893,7 +956,7 @@ func TestPowerLessThan(t *testing.T) {
 
 	// The SelfHouse sentinel in the count resolves to the card's own house, even
 	// though it lives in the refinement's unexported field.
-	selfLimit := InPlay{Player: Controller, Type: Creature, House: namedHouse(SelfHouse)}
+	selfLimit := CardsInPlay{Player: Controller, Type: Creature, House: namedHouse(SelfHouse)}
 	resolved := replacedIn(
 		(Target{Kind: TargetEachEnemyCreature}).Refine(PowerLessThan(selfLimit)),
 		SelfHouse,

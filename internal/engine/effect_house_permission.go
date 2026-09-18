@@ -62,15 +62,20 @@ func (e MayPlayOrUse) validate() error {
 // the axes select — "may fight", "may use", "may play or use" — over the houses,
 // types, and count the grant reaches.
 func (e MayPlayOrUse) Text() string {
+	remainder := durationClause(RemainderOfPlayerTurn, "")
 	if e.Trait != traitUnset {
-		return "for the remainder of the turn, you may use friendly " +
+		return remainder + ", you may use friendly " +
 			e.Trait.String() + " creatures"
 	}
 	if e.Houses.Controlled {
-		return "for the remainder of the turn, you may play cards from any house for which you have a card in play"
+		return remainder + ", you may play cards from any house for which you have a card in play"
 	}
 	switch e.Houses.Match.Kind {
 	case MatchExceptHouse:
+		// An except-house grant keeps KeyForge's shorter permission phrasing ("you
+		// may play a non-Logos card this turn"), the printed wording every such card
+		// carries — the same remainder-of-turn window as the branches below, said in
+		// the permission voice rather than the leading duration clause.
 		verb := "play"
 		if e.Grant&GrantUse != 0 {
 			verb = "play or use"
@@ -78,12 +83,12 @@ func (e MayPlayOrUse) Text() string {
 		return "you may " + verb + " " + e.exceptObject() + " this turn"
 	default: // MatchNamedHouse, MatchChosenHouse, MatchAnyHouse
 		if e.Grant == GrantFight {
-			return "for the remainder of the turn, " + e.fightSubject() + " may fight"
+			return remainder + ", " + e.fightSubject() + " may fight"
 		}
 		if e.Houses.Match.Kind == MatchAnyHouse {
-			return "for the remainder of the turn, you may use friendly artifacts as if they belonged to the active house"
+			return remainder + ", you may use friendly artifacts as if they belonged to the active house"
 		}
-		return "for the remainder of the turn, you may " + e.namedVerbObject()
+		return remainder + ", you may " + e.namedVerbObject()
 	}
 }
 

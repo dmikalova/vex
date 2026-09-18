@@ -76,7 +76,7 @@ func TestAddPowerCounterPer(t *testing.T) {
 	e := AddPowerCounter{
 		Target: Target{Kind: TargetThisCreature},
 		Amount: 2,
-		Per:    InPlay{Player: EachPlayer, Type: Creature, Damaged: true},
+		Per:    CardsInPlay{Player: EachPlayer, Type: Creature, Damaged: true},
 	}
 	want := "for each damaged creature in play, give {self} two +1 power counters"
 	if got := e.Text(); got != want {

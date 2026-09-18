@@ -348,6 +348,28 @@ func TestRaiseKeyCost(t *testing.T) {
 	}
 }
 
+// TestRaiseKeyCostEachPlayer checks a raise on both players speaks in the
+// controller's frame (like LowerKeyCost) and arms the surcharge on each player.
+func TestRaiseKeyCostEachPlayer(t *testing.T) {
+	each := RaiseKeyCost{Player: EachPlayer, Amount: 2, Duration: EndOfPlayerNextTurn}
+	if got := each.Text(); got != "each player's keys cost +2 Æmber until the end of your next turn" {
+		t.Errorf("text = %q", got)
+	}
+	if err := each.validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+
+	g := started(t)
+	source := g.AddToBattleline(NewCard("Tax", Dis, Creature, Common, WithPower(1)), 0)
+	each.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: source})
+	if got := g.CurrentKeyCost(0); got != KeyCost+2 {
+		t.Errorf("controller key cost = %d, want %d right away", got, KeyCost+2)
+	}
+	if got := g.CurrentKeyCost(1); got != KeyCost+2 {
+		t.Errorf("opponent key cost = %d, want %d right away", got, KeyCost+2)
+	}
+}
+
 // TestRaiseKeyCostThisTurn checks the RemainderOfPlayerTurn duration bites
 // immediately and lifts when the current turn ends, rather than waiting for a
 // turn boundary.
@@ -436,8 +458,8 @@ func TestRaiseKeyCostStacks(t *testing.T) {
 	}
 }
 
-func TestRaiseKeyCostPerHouseCreature(t *testing.T) {
-	effect := RaiseKeyCostPerHouseCreature{
+func TestRaiseKeyCostPerCreature(t *testing.T) {
+	effect := RaiseKeyCost{
 		Player:   Opponent,
 		Amount:   1,
 		House:    namedHouse(Dis),
@@ -447,7 +469,7 @@ func TestRaiseKeyCostPerHouseCreature(t *testing.T) {
 		"keys cost +1 Æmber for each Dis creature in play during your opponent's next turn" {
 		t.Errorf("text = %q", got)
 	}
-	if got := (RaiseKeyCostPerHouseCreature{
+	if got := (RaiseKeyCost{
 		Player:   Controller,
 		Amount:   2,
 		House:    namedHouse(Dis),
@@ -456,21 +478,21 @@ func TestRaiseKeyCostPerHouseCreature(t *testing.T) {
 		"keys cost +2 Æmber for each Dis creature in play during your next turn" {
 		t.Errorf("controller text = %q", got)
 	}
-	if err := (RaiseKeyCostPerHouseCreature{
+	if err := (RaiseKeyCost{
 		Amount:   1,
 		House:    namedHouse(Dis),
 		Duration: OpponentNextTurn,
 	}).validate(); err == nil {
 		t.Error("an unset player should not validate")
 	}
-	if err := (RaiseKeyCostPerHouseCreature{
+	if err := (RaiseKeyCost{
 		Player:   Opponent,
 		House:    namedHouse(Dis),
 		Duration: OpponentNextTurn,
 	}).validate(); err == nil {
 		t.Error("a zero raise should not validate")
 	}
-	if err := (RaiseKeyCostPerHouseCreature{
+	if err := (RaiseKeyCost{
 		Player:   Opponent,
 		Amount:   1,
 		House:    HouseMatcher{Kind: MatchChosenHouse},
@@ -478,7 +500,7 @@ func TestRaiseKeyCostPerHouseCreature(t *testing.T) {
 	}).validate(); err == nil {
 		t.Error("a context-dependent house matcher should not validate")
 	}
-	if err := (RaiseKeyCostPerHouseCreature{
+	if err := (RaiseKeyCost{
 		Player:   Opponent,
 		Amount:   1,
 		House:    HouseMatcher{Kind: MatchNamedHouse},
@@ -486,14 +508,14 @@ func TestRaiseKeyCostPerHouseCreature(t *testing.T) {
 	}).validate(); err == nil {
 		t.Error("a named house matcher with no house should not validate")
 	}
-	if err := (RaiseKeyCostPerHouseCreature{
+	if err := (RaiseKeyCost{
 		Player: Opponent,
 		Amount: 1,
 		House:  namedHouse(Dis),
 	}).validate(); err == nil {
 		t.Error("an unset duration should not validate")
 	}
-	if err := (RaiseKeyCostPerHouseCreature{
+	if err := (RaiseKeyCost{
 		Player:   Opponent,
 		Amount:   1,
 		House:    namedHouse(Dis),
@@ -506,17 +528,17 @@ func TestRaiseKeyCostPerHouseCreature(t *testing.T) {
 	}
 }
 
-// TestRaiseKeyCostPerHouseCreatureCountsLive proves the surcharge is dormant until
+// TestRaiseKeyCostPerCreatureCountsLive proves the surcharge is dormant until
 // the taxed player's turn, then reads the number of Dis creatures in play live at
 // each forge, and lifts when that turn ends.
-func TestRaiseKeyCostPerHouseCreatureCountsLive(t *testing.T) {
+func TestRaiseKeyCostPerCreatureCountsLive(t *testing.T) {
 	g := started(t)
 	source := g.AddToBattleline(NewCard("Nightmare", Dis, Creature, Common, WithPower(1)), 0)
 	g.AddToBattleline(NewCard("dis-a", Dis, Creature, Common, WithPower(1)), 0)
 	g.AddToBattleline(NewCard("dis-b", Dis, Creature, Common, WithPower(1)), 1)
 	g.AddToBattleline(NewCard("logos", Logos, Creature, Common, WithPower(1)), 1) // not counted
 
-	RaiseKeyCostPerHouseCreature{
+	RaiseKeyCost{
 		Player:   Opponent,
 		Amount:   1,
 		House:    namedHouse(Dis),
@@ -546,18 +568,18 @@ func TestRaiseKeyCostPerHouseCreatureCountsLive(t *testing.T) {
 	}
 }
 
-// TestRaiseKeyCostPerHouseCreatureStacks proves two surcharges of the same house
+// TestRaiseKeyCostPerCreatureStacks proves two surcharges of the same house
 // sum their per-creature amount, while a different house replaces the surcharge.
-func TestRaiseKeyCostPerHouseCreatureStacks(t *testing.T) {
+func TestRaiseKeyCostPerCreatureStacks(t *testing.T) {
 	g := started(t)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	RaiseKeyCostPerHouseCreature{
+	RaiseKeyCost{
 		Player:   Opponent,
 		Amount:   1,
 		House:    namedHouse(Dis),
 		Duration: OpponentNextTurn,
 	}.Resolve(ctx)
-	RaiseKeyCostPerHouseCreature{
+	RaiseKeyCost{
 		Player:   Opponent,
 		Amount:   2,
 		House:    namedHouse(Dis),
@@ -566,7 +588,7 @@ func TestRaiseKeyCostPerHouseCreatureStacks(t *testing.T) {
 	if got := g.State.KeyCostPerHouseNext[1].Value; got.Per != 3 || got.House != namedHouse(Dis) {
 		t.Errorf("armed surcharge = %+v, want {Dis 3}", got)
 	}
-	RaiseKeyCostPerHouseCreature{
+	RaiseKeyCost{
 		Player:   Opponent,
 		Amount:   5,
 		House:    namedHouse(Logos),
@@ -619,7 +641,7 @@ func TestLowerKeyCostText(t *testing.T) {
 		Player:   Opponent,
 		Amount:   3,
 		Duration: OpponentNextTurn,
-	}).Text(); got != "your opponent's keys cost -3 Æmber during your next turn" {
+	}).Text(); got != "keys cost -3 Æmber during your opponent's next turn" {
 		t.Errorf("opponent text = %q", got)
 	}
 	if err := each.validate(); err != nil {

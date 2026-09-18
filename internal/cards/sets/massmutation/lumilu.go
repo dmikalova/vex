@@ -23,7 +23,7 @@ var Lumilu = set.New(
 		card.Trigger.Reap, card.GainAember{
 			Player: card.Controller,
 			Amount: 1,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 				Trait:  card.Traits.Beast,

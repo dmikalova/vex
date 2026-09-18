@@ -25,7 +25,7 @@ var ShardOfPain = set.New(
 	card.WithAbility(
 		card.Trigger.Action, card.DealDamage{
 			Amount: 1,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player: card.Controller,
 				Trait:  card.Traits.Shard,
 			},

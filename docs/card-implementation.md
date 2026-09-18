@@ -573,38 +573,36 @@ Deck-top routing steps use the parallel `card.Into.Hand`, `.Archives`,
 
 **Verbs:**
 
-| Effect                            | What it does                             |
-| --------------------------------- | ---------------------------------------- |
-| `ArchiveCard`                     | archives from a pile or hand             |
-| `ArchiveFromPlay`                 | archives a card in play                  |
-| `ArchiveSource`                   | archives the source card                 |
-| `ArchiveGrantingUpgrade`          | archives the upgrade that granted this   |
-| `ArchivePurgedCard`               | archives a card out of the purge pile    |
-| `ArchiveDiscardedThisWay`         | archives what an earlier step discarded  |
-| `ArchiveCardUnder`                | archives the card sitting under this one |
-| `DiscardCard`                     | discards from hand, deck, or archives    |
-| `DiscardHand`                     | discards a whole hand                    |
-| `DiscardArchives`                 | discards a whole archives                |
-| `DiscardTop`                      | discards off the top of a deck           |
-| `DiscardUntil`                    | discards until a match turns up          |
-| `PutFromPlay`                     | moves a card out of play                 |
-| `PutChosen`                       | moves a card chosen mid-resolution       |
-| `PutFromDiscard`                  | moves a card out of the discard pile     |
-| `PutFromHand`                     | moves a card out of hand                 |
-| `PutIntoPlay`                     | puts a card into play                    |
-| `PutDiscardedIntoHand`            | returns what an earlier step discarded   |
-| `PutDiscardedIntoPlay`            | puts what was discarded into play        |
-| `ReturnNamedToHand`               | returns a card named by name             |
-| `ReturnItToHand`                  | returns the card in context              |
-| `Shuffle`                         | shuffles a deck                          |
-| `ShuffleFromDiscard`              | shuffles discard cards back in           |
-| `ShuffleFriendlyCardsIntoDeck`    | shuffles friendly cards in play back in  |
-| `ShuffleChosenCreaturesFromZones` | shuffles chosen creatures back in        |
-| `ShuffleNamedFromDiscardIntoDeck` | shuffles a named discarded card back in  |
-| `SwapDeckAndDiscard`              | swaps the two piles                      |
-| `Search`                          | searches named zones for a card          |
-| `Draw`                            | draws cards                              |
-| `RefillHand`                      | refills to the hand size                 |
+| Effect                         | What it does                             |
+| ------------------------------ | ---------------------------------------- |
+| `ArchiveCard`                  | archives from a pile or hand             |
+| `ArchiveFromPlay`              | archives a card in play                  |
+| `ArchiveSource`                | archives the source card                 |
+| `ArchiveGrantingUpgrade`       | archives the upgrade that granted this   |
+| `ArchivePurgedCard`            | archives a card out of the purge pile    |
+| `ArchiveDiscardedThisWay`      | archives what an earlier step discarded  |
+| `ArchiveCardUnder`             | archives the card sitting under this one |
+| `DiscardCard`                  | discards from hand, deck, or archives    |
+| `DiscardHand`                  | discards a whole hand                    |
+| `DiscardArchives`              | discards a whole archives                |
+| `DiscardTop`                   | discards off the top of a deck           |
+| `DiscardUntil`                 | discards until a match turns up          |
+| `PutFromPlay`                  | moves a card out of play                 |
+| `PutChosen`                    | moves a card chosen mid-resolution       |
+| `PutFromDiscard`               | moves a card out of the discard pile     |
+| `PutFromHand`                  | moves a card out of hand                 |
+| `PutIntoPlay`                  | puts a card into play                    |
+| `PutDiscardedIntoHand`         | returns what an earlier step discarded   |
+| `PutDiscardedIntoPlay`         | puts what was discarded into play        |
+| `ReturnNamedToHand`            | returns a card named by name             |
+| `ReturnItToHand`               | returns the card in context              |
+| `Shuffle`                      | shuffles a deck                          |
+| `ShuffleIntoDeck`              | shuffles cards from your zones back in   |
+| `ShuffleFriendlyCardsIntoDeck` | shuffles friendly cards in play back in  |
+| `SwapDeckAndDiscard`           | swaps the two piles                      |
+| `Search`                       | searches named zones for a card          |
+| `Draw`                         | draws cards                              |
+| `RefillHand`                   | refills to the hand size                 |
 
 `Search` names its zones explicitly (`Sources`) and never shuffles on its own:
 
@@ -722,30 +720,29 @@ card.Sentences{Effects: []card.Effect{
 }}
 ```
 
-| Effect                            | What it does                           |
-| --------------------------------- | -------------------------------------- |
-| `Restrict`                        | bars `Fighting`, `Reaping`, or `Use`   |
-| `CannotPlay`                      | bars a player from playing a card type |
-| `PlayersCannotPlay`               | bars both players                      |
-| `CreaturesCannot`                 | bars creatures from an action          |
-| `MayPlayOrUse`                    | grants out-of-house play or use        |
-| `BelongToHouse`                   | changes which house a card belongs to  |
-| `ChangeActiveHouse`               | switches the active house              |
-| `NameHouse`                       | names a house for a later step         |
-| `NameCard`                        | names a card for a later step          |
-| `MustChooseHouse`                 | forces the next house choice           |
-| `CannotChooseHouse`               | bars a house from being chosen         |
-| `OpponentNamesHouse`              | the opponent names the house           |
-| `WagerOpponentChoosesChosenHouse` | a wager on the opponent's guess        |
-| `ForgeKey`                        | forges a key now                       |
-| `UnforgeKey`                      | takes a forged key back                |
-| `CancelForge`                     | stops a forge that is about to happen  |
-| `RaiseKeyCost`                    | raises the next key's cost             |
-| `RaiseKeyCostPerHouseCreature`    | raises it per creature of a house      |
-| `LowerKeyCost`                    | lowers the next key's cost             |
-| `SkipForgePhase`                  | skips the forge step entirely          |
-| `GainChains`                      | gives a player chains                  |
-| `EndTurn`                         | ends the turn immediately              |
+| Effect                            | What it does                                                      |
+| --------------------------------- | ----------------------------------------------------------------- |
+| `Restrict`                        | bars `Fighting`, `Reaping`, or `Use`                              |
+| `CannotPlay`                      | bars a player from playing a card type                            |
+| `PlayersCannotPlay`               | bars both players                                                 |
+| `CreaturesCannot`                 | bars creatures from an action                                     |
+| `MayPlayOrUse`                    | grants out-of-house play or use                                   |
+| `BelongToHouse`                   | changes which house a card belongs to                             |
+| `ChangeActiveHouse`               | switches the active house                                         |
+| `NameHouse`                       | names a house for a later step                                    |
+| `NameCard`                        | names a card for a later step                                     |
+| `MustChooseHouse`                 | forces the next house choice                                      |
+| `CannotChooseHouse`               | bars a house from being chosen                                    |
+| `OpponentNamesHouse`              | the opponent names the house                                      |
+| `WagerOpponentChoosesChosenHouse` | a wager on the opponent's guess                                   |
+| `ForgeKey`                        | forges a key now                                                  |
+| `UnforgeKey`                      | takes a forged key back                                           |
+| `CancelForge`                     | stops a forge that is about to happen                             |
+| `RaiseKeyCost`                    | raises the next key's cost (per house creature when House is set) |
+| `LowerKeyCost`                    | lowers the next key's cost                                        |
+| `SkipForgePhase`                  | skips the forge step entirely                                     |
+| `GainChains`                      | gives a player chains                                             |
+| `EndTurn`                         | ends the turn immediately                                         |
 
 `MayPlayOrUse` is the single out-of-house permission node (ADR 0037):
 
@@ -899,7 +896,7 @@ condition. Phalanx Strike deals one damage per friendly creature:
 ```go
 card.DealDamage{
   Amount: 1,
-  Per:    card.InPlay{Player: card.Controller, Type: card.Type.Creature},
+  Per:    card.CardsInPlay{Player: card.Controller, Type: card.Type.Creature},
   Target: card.Target.Creature,
 }
 ```
@@ -909,7 +906,7 @@ card.DealDamage{
 | Count                             | Counts                               |
 | --------------------------------- | ------------------------------------ |
 | `Fixed`                           | a constant                           |
-| `InPlay`                          | matching cards in play               |
+| `CardsInPlay`                          | matching cards in play               |
 | `ArtifactsInPlay`                 | artifacts in play                    |
 | `ExcessCreatures`                 | creatures beyond the opponent's      |
 | `HousesInPlay`                    | distinct houses in play              |

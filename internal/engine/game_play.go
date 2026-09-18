@@ -588,8 +588,11 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 	g.settleDestroyed(player)
 }
 
-// playTacticCard resolves and discards a Tactic already removed from its previous
-// zone.
+// playTacticCard resolves a Tactic already removed from its previous zone, then
+// files it where its play ends. The Tactic is in no zone while it resolves, which
+// is why it cannot be chosen or discarded by its own ability (Labwork cannot
+// archive itself) and why its destination is a redirect rather than a move from
+// somewhere. Pinned by TestResolvingCardRedirectIsPerCard.
 func (g *Game) playTacticCard(player int, id LocalID) {
 	g.record(TacticPlayed{Player: player, Card: id})
 	g.resolveBonusIcons(player, id)
@@ -605,21 +608,19 @@ func (g *Game) playTacticCard(player int, id LocalID) {
 	pending := g.afterPlayReactions(player, id)
 	pending = append(pending, g.lastingReactions(EventCardPlayed, player, id)...)
 	g.resolveWindow(g.orderTriggered(player, pending))
-	// A played action goes to the top of its owner's discard pile — unless its own
-	// "Play:" ability purged it (Library Access), in which case it is set aside out
-	// of the game instead. Owner and player differ only when one player plays
-	// another's card (Mimicry).
+	// A played Tactic goes to the top of its owner's discard pile — unless its own
+	// "Play:" ability redirected it (Library Access purges itself, Sucker Punch
+	// archives itself). Owner and player differ only when one player plays another's
+	// card (Mimicry).
 	owner := g.owner(id)
-	if g.State.PurgePlayedActionSet && g.State.PurgePlayedAction == id {
-		g.State.PurgePlayedAction = 0
-		g.State.PurgePlayedActionSet = false
+	dest := g.State.Cards[id].ResolvingDest
+	g.State.Cards[id].ResolvingDest = Destination{}
+	switch dest.zone {
+	case destPurged:
 		g.State.Purge[owner].add(id)
 		g.record(CardPurged{Card: id})
 		return
-	}
-	if g.State.ArchivePlayedActionSet && g.State.ArchivePlayedAction == id {
-		g.State.ArchivePlayedAction = 0
-		g.State.ArchivePlayedActionSet = false
+	case destArchives:
 		g.PutIntoArchives(id)
 		return
 	}

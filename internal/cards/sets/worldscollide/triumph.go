@@ -19,7 +19,7 @@ var Triumph = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.InPlay{
+			Cond: card.CardsInPlay{
 				Player: card.Opponent,
 				Type:   card.Type.Creature,
 				None:   true,
@@ -30,7 +30,7 @@ var Triumph = set.New(
 					Amount: 1,
 				},
 				card.Conditional{
-					Cond: card.InPlay{
+					Cond: card.CardsInPlay{
 						Player: card.Controller,
 						Type:   card.Type.Creature,
 						Amount: 6,

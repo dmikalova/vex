@@ -67,14 +67,14 @@ func (e ExcessCreatures) CountText() string {
 	return base
 }
 
-// InPlay selects the cards a player has in play that match its filters — of a
+// CardsInPlay selects the cards a player has in play that match its filters — of a
 // given type and house — and serves two roles from one description. As a Count (a
 // Per clause) it yields the match count and renders the repeated "for each ..."
 // noun; as a Condition it is met when the count reaches Amount, which defaults to
 // one. This unifies the several friendly-creature counts and conditions, e.g.
-// InPlay{Player: Controller, Type: Creature} or the house-filtered
-// InPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)}.
-type InPlay struct {
+// CardsInPlay{Player: Controller, Type: Creature} or the house-filtered
+// CardsInPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)}.
+type CardsInPlay struct {
 	// Player names whose cards to count (Controller or Opponent).
 	Player Player
 	// Type filters by card type; the zero value counts any type.
@@ -110,7 +110,7 @@ type InPlay struct {
 }
 
 // Value counts the matching cards the player has in play.
-func (e InPlay) Value(ctx *EffectContext) int {
+func (e CardsInPlay) Value(ctx *EffectContext) int {
 	f := e.filter()
 	n := 0
 	for _, id := range e.set(ctx) {
@@ -142,35 +142,34 @@ func (e InPlay) Value(ctx *EffectContext) int {
 
 // filter is the identity predicate a counted card must satisfy, conjoining the
 // Type, Trait, and Name filters (Chosen's filter has the same shape).
-func (e InPlay) filter() CardFilter {
+func (e CardsInPlay) filter() CardFilter {
 	return CardFilter{Type: e.Type, Trait: e.Trait, Name: e.Name}
 }
 
 // Met reports whether at least Amount (default one) matching cards are in play,
 // or, under None, that none are.
-func (e InPlay) Met(ctx *EffectContext) bool {
+func (e CardsInPlay) Met(ctx *EffectContext) bool {
 	if e.None {
 		return e.Value(ctx) == 0
 	}
 	return e.Value(ctx) >= e.threshold()
 }
 
-// set returns every in-play id the count considers — the battleline and the
-// artifact row together, for one player or both. The Type filter (via filter)
-// narrows creatures or artifacts out of this universe, so the zones need no
-// type-specific selection here.
-func (e InPlay) set(ctx *EffectContext) []LocalID {
+// set returns every in-play id the count considers, for one player or both. The
+// Type filter (via filter) narrows creatures, artifacts, or upgrades out of this
+// universe, so the zones need no type-specific selection here.
+func (e CardsInPlay) set(ctx *EffectContext) []LocalID {
 	if e.Player == EachPlayer {
 		return append(e.playerSet(ctx, 0), e.playerSet(ctx, 1)...)
 	}
 	return e.playerSet(ctx, ctx.PlayerFor(e.Player))
 }
-func (e InPlay) playerSet(ctx *EffectContext, p int) []LocalID {
-	return append(ctx.Resolver.Battleline(p), ctx.Resolver.Artifacts(p)...)
+func (e CardsInPlay) playerSet(ctx *EffectContext, p int) []LocalID {
+	return resolverCardsInPlay(ctx, p)
 }
 
 // threshold is the Condition's required count, defaulting to one.
-func (e InPlay) threshold() int {
+func (e CardsInPlay) threshold() int {
 	if e.Amount < 1 {
 		return 1
 	}
@@ -178,7 +177,7 @@ func (e InPlay) threshold() int {
 }
 
 // who renders the controlling side as "friendly" or "enemy".
-func (e InPlay) who() string {
+func (e CardsInPlay) who() string {
 	switch e.Player {
 	case Opponent:
 		return "enemy"
@@ -191,7 +190,7 @@ func (e InPlay) who() string {
 
 // typeNoun renders the filtered type as a noun. A trait filter names the trait
 // itself ("Shard"), and combines with a type as "Thief creature".
-func (e InPlay) typeNoun() string {
+func (e CardsInPlay) typeNoun() string {
 	if e.Trait != traitUnset {
 		switch e.Type {
 		case Creature:
@@ -213,7 +212,7 @@ func (e InPlay) typeNoun() string {
 }
 
 // noun renders the "<side> [ready ][house ]<type>" phrase the text roles share.
-func (e InPlay) noun() string {
+func (e CardsInPlay) noun() string {
 	if e.Name != "" {
 		return e.Name
 	}
@@ -244,7 +243,7 @@ func (e InPlay) noun() string {
 // CountText renders the singular noun the "for each" clause repeats. A
 // house- or trait-filtered count reads "friendly Mars creature" / "friendly
 // Shard"; an unfiltered one adds "in play" to distinguish it from cards in hand.
-func (e InPlay) CountText() string {
+func (e CardsInPlay) CountText() string {
 	if (e.House.filters() || e.Trait != traitUnset || e.MinPower > 0 || e.WithAember) &&
 		e.Player != EachPlayer {
 		return e.noun()
@@ -254,12 +253,12 @@ func (e InPlay) CountText() string {
 
 // cardinalCountText renders the count as "the number of friendly Mars creatures
 // you control", the cardinal form for a clause that compares against it.
-func (e InPlay) cardinalCountText() string {
+func (e CardsInPlay) cardinalCountText() string {
 	return "the number of " + plural(2, e.noun()) + " " + e.controls()
 }
 
 // controls renders which side's board the cardinal count reads from.
-func (e InPlay) controls() string {
+func (e CardsInPlay) controls() string {
 	switch e.Player {
 	case Opponent:
 		return "your opponent controls"
@@ -272,7 +271,7 @@ func (e InPlay) controls() string {
 
 // CondText renders the condition, e.g. "if there is a friendly creature in play"
 // or "if there are 2 or more friendly creatures in play".
-func (e InPlay) CondText() string {
+func (e CardsInPlay) CondText() string {
 	if e.None {
 		return fmt.Sprintf("if there are no %s in play", plural(0, e.noun()))
 	}

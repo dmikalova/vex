@@ -22,7 +22,7 @@ var ProfessorSutterkin = set.New(
 	card.WithAbility(
 		card.Trigger.Reap, card.Draw{
 			Amount: 1,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 				House:  card.Houses.Named(card.House.Self),

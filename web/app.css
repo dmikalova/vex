@@ -4104,6 +4104,14 @@ body:has(.sel-cursor--on) .card-tab {
   font-size: 0.7rem;
   font-style: italic;
 }
+.style-log-preview {
+  position: fixed;
+  top: 5rem;
+  right: 1.5rem;
+  z-index: 40;
+  pointer-events: none;
+  filter: drop-shadow(0 0.5rem 1.5rem rgb(0 0 0 / 55%));
+}
 
 /* ---- Reference pages: /rulebook and /glossary -----------------------------
    Both draw the engine's rule-term registry as plain, readable text. They share
@@ -4488,4 +4496,116 @@ body:has(.sel-cursor--on) .card-tab {
 .glossary-def {
   margin: 0;
   color: var(--ink-soft);
+}
+
+/* The /clusters page: an internal data view of the deck-generation card families
+   (ADR 0036), gated behind styleEnabled like /style. Wider than the reference
+   pages because each cluster lays its member faces out in a row. */
+.clusters-page {
+  max-width: 92rem;
+  margin: 0 auto;
+  padding: var(--shell-pad) var(--shell-pad) 4rem;
+  color: var(--ink-soft);
+}
+.clusters-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.clusters-brand {
+  font-weight: 700;
+  color: var(--p0);
+}
+.clusters-title {
+  color: var(--ink);
+  font-weight: 600;
+}
+.clusters-nav {
+  display: flex;
+  gap: 1rem;
+  margin-left: auto;
+}
+.clusters-nav-link {
+  color: var(--ink-quiet);
+  text-decoration: none;
+}
+.clusters-nav-link:hover {
+  color: var(--ink);
+}
+.clusters-overview {
+  color: var(--ink-quiet);
+  margin: 0 0 1.5rem;
+}
+.clusters-section {
+  margin-bottom: 2.5rem;
+}
+.clusters-h2 {
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.3rem;
+}
+.cluster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.cluster {
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+  background-color: var(--surface);
+  padding: 1rem 1.25rem 1.25rem;
+}
+.cluster-head {
+  margin-bottom: 1rem;
+}
+.cluster-name {
+  color: var(--ink);
+  margin: 0 0 0.5rem;
+}
+.cluster-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+}
+.cluster-tag {
+  font-size: 0.85rem;
+}
+.cluster-tag-label {
+  color: var(--ink-quiet);
+}
+.cluster-tag-value {
+  color: var(--ink);
+}
+.cluster-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.cluster-member {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+.cluster-member-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  justify-content: center;
+  min-height: 1.2rem;
+}
+.cluster-badge {
+  font-size: 0.7rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--line);
+  color: var(--ink-quiet);
+}
+.cluster-badge--lead {
+  border-color: var(--p0);
+  color: var(--p0);
 }

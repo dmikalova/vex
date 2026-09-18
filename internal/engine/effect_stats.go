@@ -27,7 +27,8 @@ func (e GainStats) validate() error {
 // Text renders the effect, e.g. "for the remainder of the turn, each other
 // friendly creature gains +1 armor".
 func (e GainStats) Text() string {
-	return fmt.Sprintf("for the remainder of the turn, %s gains %s",
+	return fmt.Sprintf("%s, %s gains %s",
+		durationClause(RemainderOfPlayerTurn, ""),
 		e.Target.Text(), staticBonuses(StaticModifier{PowerBonus: e.Power, ArmorBonus: e.Armor}))
 }
 

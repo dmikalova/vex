@@ -16,7 +16,7 @@ import (
 //	Bonus:  Æmber
 //	Traits: Item
 //
-//	After a player chooses an active house, their opponent cannot choose the same house as their active house on their next turn.
+//	After a player chooses an active house, their opponent cannot choose the same house as their active house during their next turn.
 func TestSnagsMirror(t *testing.T) {
 	h := ct.Play(t, ct.Setup{
 		P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(SnagsMirror)},

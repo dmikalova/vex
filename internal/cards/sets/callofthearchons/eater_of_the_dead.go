@@ -21,6 +21,7 @@ var EaterOfTheDead = set.New(
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(card.Trigger.FightReap, card.Then{
 		First: card.PurgeCard{
+			Zone:      card.Discard,
 			Player:    card.ChosenPlayer,
 			Selection: card.Chosen{Type: card.Type.Creature},
 		},

@@ -52,7 +52,45 @@ const (
 	// lifts. (Today artifact control is only ever Forever, so no such timed override
 	// exists yet; this rule is the invariant to preserve when one is added.)
 	Forever
+	// durationCount is the exclusive upper bound Durations ranges to. It is not a
+	// real duration; keep it last.
+	durationCount
 )
 
 // valid reports whether d names a real duration (not the unset zero value).
 func (d Duration) valid() bool { return d != durationUnset }
+
+// Durations lists every real duration in declaration order, so a caller can
+// enumerate the timing windows a timed effect can take (the /style gallery shows
+// one card per duration). The unset zero value is excluded.
+func Durations() []Duration {
+	all := make([]Duration, 0, int(durationCount)-1)
+	for d := durationUnset + 1; d < durationCount; d++ {
+		all = append(all, d)
+	}
+	return all
+}
+
+// String names the timing window in the Rules voice — a short canonical label,
+// not the clause a card prints. There is no single printed phrase for a duration:
+// the same window renders differently per effect and flips between prefix and
+// suffix (durationClause and the timed effects render those), so this names the
+// window itself. The unset zero and the count sentinel render empty.
+func (d Duration) String() string {
+	switch d {
+	case RemainderOfPlayerTurn:
+		return "Rest of this turn"
+	case OpponentNextTurn:
+		return "Opponent's next turn"
+	case StartOfPlayerNextTurn:
+		return "Until your next turn"
+	case EndOfPlayerNextTurn:
+		return "Through your next turn"
+	case UntilThisLeavesPlay:
+		return "Until this leaves play"
+	case Forever:
+		return "Forever"
+	default:
+		return ""
+	}
+}

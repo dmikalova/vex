@@ -17,7 +17,7 @@ import "fmt"
 // play into its owner's zone whoever caused it.
 func putIntoZoneText(n Namer, id LocalID, owner int, dest Zone) string {
 	return fmt.Sprintf("%s is put into %s's %s",
-		nameMoved(n, id, inPlay, dest), n.PlayerName(owner), dest.noun())
+		nameMoved(n, id, InPlay, dest), n.PlayerName(owner), dest.noun())
 }
 
 // playerPutsPrefix renders the opening of a "<player> puts <card> from <their>
@@ -69,7 +69,7 @@ func moveVerb(to Zone) string {
 	switch to {
 	case Archives:
 		return "archives"
-	case purged:
+	case Purged:
 		return "purges"
 	default: // Discard
 		return "discards"
@@ -80,7 +80,7 @@ func moveVerb(to Zone) string {
 // "a <zone>", archive and discard name the zone's owner ("their <zone>" or
 // "Player 2's <zone>"), and a move out of a hidden hand prints no source.
 func moveFromPhrase(to, from Zone, owner string) string {
-	if to == purged {
+	if to == Purged {
 		switch from {
 		case Hand:
 			return " from a hand"
@@ -210,7 +210,7 @@ type CardPurged struct{ Card LocalID }
 
 // Text renders the card in play that was purged.
 func (e CardPurged) Text(n Namer) string {
-	return fmt.Sprintf("%s is purged", nameMoved(n, e.Card, inPlay, purged))
+	return fmt.Sprintf("%s is purged", nameMoved(n, e.Card, InPlay, Purged))
 }
 
 // CardPurgedFromHand narrates a card purged from a hand, naming the card whose
@@ -225,10 +225,10 @@ type CardPurgedFromHand struct {
 func (e CardPurgedFromHand) Text(n Namer) string {
 	if s, ok := framedSource(n); ok {
 		return fmt.Sprintf("%s purges %s from %s's hand",
-			s, nameMoved(n, e.Card, Hand, purged), n.PlayerName(e.Owner))
+			s, nameMoved(n, e.Card, Hand, Purged), n.PlayerName(e.Owner))
 	}
 	return fmt.Sprintf("%s is purged from %s's hand",
-		nameMoved(n, e.Card, Hand, purged), n.PlayerName(e.Owner))
+		nameMoved(n, e.Card, Hand, Purged), n.PlayerName(e.Owner))
 }
 
 // CardPutOnTopOfDeck narrates a card leaving play onto its owner's deck.
@@ -240,7 +240,7 @@ type CardPutOnTopOfDeck struct {
 // Text renders a card leaving play onto its owner's deck.
 func (e CardPutOnTopOfDeck) Text(n Namer) string {
 	return fmt.Sprintf("%s is put on top of %s's deck",
-		nameMoved(n, e.Card, inPlay, Deck), n.PlayerName(e.Owner))
+		nameMoved(n, e.Card, InPlay, Deck), n.PlayerName(e.Owner))
 }
 
 // CardPutIntoHand narrates a card leaving play into its owner's hand.
@@ -275,7 +275,7 @@ type CardShuffledIntoDeck struct {
 // Text renders a card leaving play into its owner's shuffled deck.
 func (e CardShuffledIntoDeck) Text(n Namer) string {
 	return fmt.Sprintf("%s is shuffled into %s's deck",
-		nameMoved(n, e.Card, inPlay, Deck), n.PlayerName(e.Owner))
+		nameMoved(n, e.Card, InPlay, Deck), n.PlayerName(e.Owner))
 }
 
 // DeckShuffled narrates a player's deck being shuffled (Borr Nit shuffles the
@@ -331,7 +331,7 @@ type CardAbducted struct {
 // Text renders the abduction, naming the abducted card's owner.
 func (e CardAbducted) Text(n Namer) string {
 	return fmt.Sprintf("%s abducts %s (owned by %s) into their archives",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, inPlay, Archives), n.PlayerName(e.Owner))
+		n.PlayerName(e.Player), nameMoved(n, e.Card, InPlay, Archives), n.PlayerName(e.Owner))
 }
 
 // CardPutFromDiscardIntoHand narrates a card recovered out of a discard pile.

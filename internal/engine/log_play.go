@@ -78,6 +78,19 @@ func (e UpgradeAttached) Text(n Namer) string {
 		subject(n, e.Player), n.Name(e.Upgrade), n.Name(e.Host))
 }
 
+// UpgradeDiscarded narrates an upgrade leaving its host for the discard pile,
+// the counterpart of UpgradeAttached. An upgrade goes with its host rather than
+// being destroyed in its own right, so the line names the host it fell off.
+type UpgradeDiscarded struct {
+	Upgrade LocalID
+	Host    LocalID
+}
+
+// Text renders the upgrade, and the card it was attached to.
+func (e UpgradeDiscarded) Text(n Namer) string {
+	return fmt.Sprintf("%s is discarded from %s", n.Name(e.Upgrade), n.Name(e.Host))
+}
+
 // CardPutIntoPlay narrates a card entering play without being played from hand.
 type CardPutIntoPlay struct {
 	Player int

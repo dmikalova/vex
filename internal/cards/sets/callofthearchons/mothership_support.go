@@ -16,7 +16,7 @@ var MothershipSupport = set.New("Mothership Support",
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ForEach{
-			Times: card.InPlay{
+			Times: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 				House:  card.Houses.Named(card.House.Self),

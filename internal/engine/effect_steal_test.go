@@ -50,7 +50,7 @@ func TestStealAemberPer(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 	g.State.Aember[1] = 5
 
-	e := StealAember{Amount: 1, Per: InPlay{Player: Controller, Type: Creature, Ready: true}}
+	e := StealAember{Amount: 1, Per: CardsInPlay{Player: Controller, Type: Creature, Ready: true}}
 	if want := "for each friendly ready creature in play, steal 1 Æmber"; e.Text() != want {
 		t.Errorf("text = %q", e.Text())
 	}

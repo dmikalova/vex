@@ -23,7 +23,7 @@ var FirstBlood = set.New(
 		card.Trigger.Play, card.DealDamage{
 			Spread: card.DivideDamage{
 				Amount: 2,
-				Per: card.InPlay{
+				Per: card.CardsInPlay{
 					Player: card.Controller,
 					Type:   card.Type.Creature,
 					House:  card.Houses.Named(card.House.Self),

@@ -115,6 +115,13 @@ func TestGiganticLeavesPlayTogether(t *testing.T) {
 			(*Game).putIntoDeckShuffled,
 			func(g *Game, id LocalID) bool { return g.State.Deck[0].contains(id) },
 		},
+		{
+			// Abduction files a card in the abductor's archives, not its owner's, so
+			// both halves must land on the same side or the gigantic is torn in two.
+			"abducted",
+			func(g *Game, base LocalID) { g.PutIntoYourArchives(base, 1) },
+			func(g *Game, id LocalID) bool { return g.State.Archives[1].contains(id) },
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -92,7 +92,7 @@ func TestDrawModifierText(t *testing.T) {
 		DrawModifier{
 			Player: Controller,
 			Amount: 1,
-			Per:    InPlay{Player: Controller, Type: Creature, Trait: Sin},
+			Per:    CardsInPlay{Player: Controller, Type: Creature, Trait: Sin},
 		},
 	); got != `For each friendly Sin creature your hand size is 1 more.` {
 		t.Errorf("per text = %q", got)
@@ -162,7 +162,7 @@ func TestDrawStepModifierPer(t *testing.T) {
 			WithDrawModifierPer(
 				Controller,
 				1,
-				InPlay{Player: Controller, Type: Creature, Trait: Sin},
+				CardsInPlay{Player: Controller, Type: Creature, Trait: Sin},
 			),
 		),
 		0,

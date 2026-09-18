@@ -15,7 +15,7 @@ import (
 //	Bonus:  Æmber
 //	Traits: Item
 //
-//	Action: Archive a purged card you own.
+//	Action: Archive a card from your purge pile.
 func TestUniversalRecycleBin(t *testing.T) {
 	t.Run("archives a purged card you own", func(t *testing.T) {
 		var recycled ct.Card

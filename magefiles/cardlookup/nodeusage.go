@@ -23,10 +23,7 @@ const setsDir = "internal/cards/sets"
 type node struct {
 	Name     string
 	Category string
-	File     string
 	Cards    int // card definition files naming it
-	Uses     int // total occurrences across those files
-	Sets     int // distinct sets naming it
 }
 
 // nodeUsage reports every exported name on the card facade grouped by the
@@ -99,7 +96,7 @@ func facadeNodes() ([]*node, error) {
 					if !id.IsExported() {
 						continue
 					}
-					nodes = append(nodes, &node{Name: id.Name, Category: cat, File: stem})
+					nodes = append(nodes, &node{Name: id.Name, Category: cat})
 				}
 			}
 		}
@@ -158,14 +155,13 @@ func firstSentence(text string) string {
 }
 
 // countNodeUses walks the implemented card definitions and counts, per node, the
-// card files and sets that name it. Tests are skipped: a node used only by its
-// own test is unused by the card pool, which is the fact this report is for.
+// card files that name it. Tests are skipped: a node used only by its own test is
+// unused by the card pool, which is the fact this report is for.
 func countNodeUses(nodes []*node) error {
 	patterns := make(map[*node]*regexp.Regexp, len(nodes))
 	for _, n := range nodes {
 		patterns[n] = regexp.MustCompile(`\bcard\.` + regexp.QuoteMeta(n.Name) + `\b`)
 	}
-	seenSets := make(map[*node]map[string]bool, len(nodes))
 	err := filepath.WalkDir(setsDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -178,20 +174,9 @@ func countNodeUses(nodes []*node) error {
 			return err
 		}
 		body := string(data)
-		set := filepath.Base(filepath.Dir(path))
 		for _, n := range nodes {
-			hits := len(patterns[n].FindAllStringIndex(body, -1))
-			if hits == 0 {
-				continue
-			}
-			n.Cards++
-			n.Uses += hits
-			if seenSets[n] == nil {
-				seenSets[n] = map[string]bool{}
-			}
-			if !seenSets[n][set] {
-				seenSets[n][set] = true
-				n.Sets++
+			if patterns[n].MatchString(body) {
+				n.Cards++
 			}
 		}
 		return nil
@@ -221,7 +206,16 @@ func printNodeUsage(nodes []*node, maxUses int, category string) {
 	}
 	sort.Strings(cats)
 
-	fmt.Printf("%-34s %6s %6s %5s  %s\n", "NODE", "CARDS", "USES", "SETS", "FILE")
+	// Widen the name column to the longest name printed, so one long name shifts
+	// the count column for every row rather than only for its own.
+	width := len("NODE")
+	for _, group := range byCategory {
+		for _, n := range group {
+			width = max(width, len(n.Name))
+		}
+	}
+
+	fmt.Printf("  %-*s %6s\n", width, "NODE", "CARDS")
 	for _, c := range cats {
 		group := byCategory[c]
 		sort.Slice(group, func(i, j int) bool {
@@ -232,7 +226,7 @@ func printNodeUsage(nodes []*node, maxUses int, category string) {
 		})
 		fmt.Printf("\n%s (%d)\n", c, len(group))
 		for _, n := range group {
-			fmt.Printf("  %-32s %6d %6d %5d  %s.go\n", n.Name, n.Cards, n.Uses, n.Sets, n.File)
+			fmt.Printf("  %-*s %6d\n", width, n.Name, n.Cards)
 		}
 	}
 

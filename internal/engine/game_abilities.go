@@ -805,6 +805,9 @@ func (g *Game) emitUpgradeEntered(upgrade LocalID) {
 func (g *Game) afterDestroyedReactions(members []LocalID) []triggeredAbility {
 	w := g.window()
 	for _, id := range members {
+		// An artifact and an upgrade leave play the same way a creature does, but
+		// "after a creature leaves play" watches creatures only. Pinned by
+		// TestAfterDestroyedReactionsAreCreatureOnly.
 		if g.TypeOf(id) != Creature {
 			continue
 		}
@@ -964,10 +967,14 @@ func (g *Game) resolveWindow(ordered []triggeredAbility) {
 // still resolves. A TriggersFromDiscard card is the other exception: it resolves
 // its choose-house ability from its owner's discard pile (Relentless Creeper
 // returns itself to hand), so a source that is discard-active is not skipped.
+// A deferred "Leaves Play:" window (fromLeave) is the last: it is gathered while
+// its card is still on the board and is meant to fire precisely because that card
+// left, so the guard would always skip it.
 func (g *Game) resolveTriggered(t triggeredAbility) bool {
 	src := t.source
 	actor := int(t.actor)
-	if !g.inPlay(src) && g.cat.def(src).Type != Tactic && !g.activeInDiscard(src) {
+	if !t.fromLeave && !g.inPlay(src) && g.cat.def(src).Type != Tactic &&
+		!g.activeInDiscard(src) {
 		return false
 	}
 	closeFrame := g.openFrame(Frame{
@@ -1231,6 +1238,12 @@ type triggeredAbility struct {
 	// abilities that fire on the same event (ADR 0013).
 	lasting bool
 	le      LastingEffect
+	// fromLeave marks a "Leaves Play:" window gathered while its card was still on
+	// the board but held for the end of a simultaneous batch, so that every card in
+	// the batch has moved before any of them reacts. Its source is out of play by
+	// the time it resolves, which the source-in-play guard would otherwise skip, so
+	// it is the one card ability exempt from that guard (see resolveTriggered).
+	fromLeave bool
 }
 
 // destroyedAbilities collects every Destroyed ability the creatures about to be

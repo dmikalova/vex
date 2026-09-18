@@ -364,41 +364,57 @@ func (g *Game) ElusiveSpent(id LocalID) bool {
 // granted by an attached upgrade, granted by a card's constant ability, or gained
 // for the remainder of the turn (Scout).
 func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
-	if g.continuousLostKeywords(id)&k.bit() != 0 {
+	if g.keywordLost(id, k) {
 		return false
 	}
-	if g.State.Cards[id].LostKeywords&k.bit() != 0 {
+	return g.keywordFromText(id, k) ||
+		g.keywordGranted(id, k) ||
+		g.keywordFromUpgrades(id, k) ||
+		g.keywordFromNeighborUpgrades(id, k) ||
+		g.keywordFromConstantAbilities(id, k)
+}
+
+// keywordLost reports whether a keyword is currently taken away from a creature —
+// by a continuous "loses its keywords" effect, or a lasting one lasting this turn
+// or until the creature's next turn.
+func (g *Game) keywordLost(id LocalID, k Keyword) bool {
+	return g.continuousLostKeywords(id)&k.bit() != 0 ||
+		g.State.Cards[id].LostKeywords&k.bit() != 0 ||
+		g.State.Cards[id].LostKeywordsUntilNextTurn&k.bit() != 0
+}
+
+// keywordFromText reports whether a keyword comes from a creature's own printed
+// text: its own keyword line, a card whose text box it has gained (Mimic Gel, Creed
+// of Nurture), or a card whose printed stats it copies (Cyber-Clone). A blanked
+// text box ignores all three.
+func (g *Game) keywordFromText(id LocalID, k Keyword) bool {
+	if g.textBlanked(id) {
 		return false
 	}
-	if g.State.Cards[id].LostKeywordsUntilNextTurn&k.bit() != 0 {
-		return false
-	}
-	if !g.textBlanked(id) && g.cat.def(id).hasKeyword(k) {
+	if g.cat.def(id).hasKeyword(k) {
 		return true
 	}
-	// A creature that has gained another card's text box also has that card's
-	// printed keywords (Mimic Gel, Creed of Nurture); a blanked text box ignores
-	// them just like its own.
-	if !g.textBlanked(id) {
-		for _, textSource := range g.grantedTextBoxSources(id) {
-			if g.cat.def(textSource).hasKeyword(k) {
-				return true
-			}
-		}
-	}
-	// A creature copying another card's printed stats (Cyber-Clone) gains that card's
-	// printed keywords, unless its own text box is blanked.
-	if !g.textBlanked(id) {
-		if src, ok := g.copiedStatsSource(id); ok && g.cat.def(src).hasKeyword(k) {
+	for _, textSource := range g.grantedTextBoxSources(id) {
+		if g.cat.def(textSource).hasKeyword(k) {
 			return true
 		}
 	}
-	if g.State.Cards[id].GrantedKeywords&k.bit() != 0 {
+	if src, ok := g.copiedStatsSource(id); ok && g.cat.def(src).hasKeyword(k) {
 		return true
 	}
-	if g.State.Cards[id].KeywordsUntilNextTurn&k.bit() != 0 {
-		return true
-	}
+	return false
+}
+
+// keywordGranted reports whether a keyword was gained for the remainder of the turn
+// or until the creature's next turn (Scout).
+func (g *Game) keywordGranted(id LocalID, k Keyword) bool {
+	return g.State.Cards[id].GrantedKeywords&k.bit() != 0 ||
+		g.State.Cards[id].KeywordsUntilNextTurn&k.bit() != 0
+}
+
+// keywordFromUpgrades reports whether an upgrade attached to the creature grants
+// the keyword, either as a plain static keyword or a host-directed keyword grant.
+func (g *Game) keywordFromUpgrades(id LocalID, k Keyword) bool {
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		m := g.staticOn(id, up)
 		for _, kw := range m.Keywords {
@@ -412,8 +428,13 @@ func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 			}
 		}
 	}
-	// A neighbor's upgrade may grant its keywords to this creature — Cloaking
-	// Dongle gives Elusive to its host and both of the host's neighbors.
+	return false
+}
+
+// keywordFromNeighborUpgrades reports whether a neighbor's upgrade grants the
+// keyword to this creature — Cloaking Dongle gives Elusive to its host and both of
+// the host's neighbors.
+func (g *Game) keywordFromNeighborUpgrades(id LocalID, k Keyword) bool {
 	for _, nb := range neighbors(&EffectContext{Resolver: g}, id) {
 		for up, ok := g.firstUpgrade(nb); ok; up, ok = g.nextUpgrade(up) {
 			for _, grant := range g.staticOn(nb, up).KeywordGrants {
@@ -423,6 +444,12 @@ func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 			}
 		}
 	}
+	return false
+}
+
+// keywordFromConstantAbilities reports whether any in-play card's constant ability
+// grants the keyword to this creature while active and affecting it.
+func (g *Game) keywordFromConstantAbilities(id LocalID, k Keyword) bool {
 	for p := 0; p < 2; p++ {
 		for _, src := range g.allInPlay(p) {
 			for _, c := range g.cat.def(src).ConstantAbilities {

@@ -15,7 +15,7 @@ import (
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Deal 2 damage to a creature. If it is not destroyed, its controller must choose that creature's house as their active house on their next turn.
+//	Play: Deal 2 damage to a creature. If it is not destroyed, its controller must choose that creature's house as their active house during their next turn.
 func TestMarkOfDis(t *testing.T) {
 	t.Run("survivor's controller is locked to its house next turn", func(t *testing.T) {
 		var foe ct.Card

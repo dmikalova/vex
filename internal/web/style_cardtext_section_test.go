@@ -61,6 +61,7 @@ func TestCardTextSectionRenders(t *testing.T) {
 	}
 	specs := append(triggerSpecimens(), continuousSpecimens()...)
 	specs = append(specs, targetShapeSpecimens()...)
+	specs = append(specs, durationSpecimens()...)
 	for _, sp := range specs {
 		if ui := s.styleCard(sp); ui == nil {
 			t.Errorf("styleCard for %q rendered nil", sp.Caption)
@@ -87,6 +88,31 @@ func TestTargetShapeSpecimensAreRealCards(t *testing.T) {
 		if !defTargetsPhrase(sp.Def, sp.Caption) {
 			t.Errorf(
 				"card %q does not target the phrase %q it was matched for",
+				sp.Def.Name,
+				sp.Caption,
+			)
+		}
+	}
+}
+
+// TestDurationSpecimensCoverDurations checks the duration gallery ranges over
+// engine.Durations(), not a written list: one specimen per timing window,
+// captioned by that window's name, so a duration added to the engine cannot
+// silently miss the gallery. A duration no loaded card carries is a gap; where a
+// specimen did resolve, its card really uses that window.
+func TestDurationSpecimensCoverDurations(t *testing.T) {
+	durs := engine.Durations()
+	specs := durationSpecimens()
+	if len(specs) != len(durs) {
+		t.Fatalf("got %d duration specimens, want %d durations", len(specs), len(durs))
+	}
+	for i, sp := range specs {
+		if sp.Caption != durs[i].String() {
+			t.Errorf("specimen %d caption = %q, want %q", i, sp.Caption, durs[i].String())
+		}
+		if sp.found() && !defUsesDuration(sp.Def, durs[i]) {
+			t.Errorf(
+				"card %q does not use the duration %q it was matched for",
 				sp.Def.Name,
 				sp.Caption,
 			)

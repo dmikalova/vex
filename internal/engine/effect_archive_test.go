@@ -966,3 +966,39 @@ func TestArchiveGrantingUpgrade(t *testing.T) {
 		t.Error("the host should stay in play")
 	}
 }
+
+// TestArchiveCardFromPurge covers the purge pile as an archive source — Universal
+// Recycle Bin recovering a card the game had set aside for good. The purge pile is
+// the one zone a card may name as a source but never as a destination.
+func TestArchiveCardFromPurge(t *testing.T) {
+	e := ArchiveCard{Zone: Purged, Selection: Chosen{}}
+	if err := e.validate(); err != nil {
+		t.Fatalf("validate: %v", err)
+	}
+	if got := e.Text(); got != "archive a card from your purge pile" {
+		t.Errorf("Text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	id := g.Register(testCreature("p", 1), 0)
+	g.State.Purge[0].add(id)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	if !g.State.Archives[0].contains(id) {
+		t.Error("the purged card should have been archived")
+	}
+	if g.State.Purge[0].contains(id) {
+		t.Error("the archived card should have left the purge pile")
+	}
+}
+
+// TestArchiveCardFromPurgeEmpty covers an empty purge pile: nothing is archived
+// and no choice is asked for.
+func TestArchiveCardFromPurgeEmpty(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ArchiveCard{Zone: Purged, Selection: Chosen{}}.
+		Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.State.Archives[0].Count != 0 {
+		t.Errorf("archives = %v, want empty", g.State.Archives[0].slice())
+	}
+}

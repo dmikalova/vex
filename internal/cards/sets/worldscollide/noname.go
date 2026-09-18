@@ -26,14 +26,17 @@ var Noname = set.New(
 		Per:        card.PurgedCards{},
 	}),
 	card.WithAbility(card.Trigger.Play, card.PurgeCard{
+		Zone:      card.Discard,
 		Player:    card.ChosenPlayer,
 		Selection: card.Chosen{},
 	}),
 	card.WithAbility(card.Trigger.Fight, card.PurgeCard{
+		Zone:      card.Discard,
 		Player:    card.ChosenPlayer,
 		Selection: card.Chosen{},
 	}),
 	card.WithAbility(card.Trigger.Reap, card.PurgeCard{
+		Zone:      card.Discard,
 		Player:    card.ChosenPlayer,
 		Selection: card.Chosen{},
 	}),

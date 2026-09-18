@@ -172,8 +172,8 @@ far:
   gathers a player's cards across a _set_ of source zones (play, hand, discard,
   deck) and sends the picked card to one destination — Faygin (`ReturnNamedToHand`:
   play/discard -> hand), the search tutors (`SearchForName`: deck/discard -> hand),
-  Chain Gang (`ShuffleNamedFromDiscardIntoDeck`: discard -> deck), Song of Spring
-  (`ShuffleChosenCreaturesFromZones`: play/hand/discard -> deck) — shares one
+  Song of Spring
+  (`ShuffleIntoDeck`: play/hand/discard -> deck) — shares one
   internal mechanism, `crossZoneMover{Player, Dest, Sources}` (`effect_cross_zone.go`).
   It gathers with a `keep` predicate (`gather`) and dispatches each picked card
   through the per-`(origin, Dest)` move that reaches the destination from the zone

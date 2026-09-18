@@ -18,7 +18,7 @@ var PsychicNetwork = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.StealAember{
 			Amount: 1,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 				House:  card.Houses.Named(card.House.Self),

@@ -43,7 +43,7 @@ func (e BelongToHouse) Text() string {
 	if e.Duration == UntilThisLeavesPlay {
 		return e.durationSubject() + " " + e.durationPredicate()
 	}
-	return "for the remainder of the turn, " + e.durationSubject() + " " + e.durationPredicate()
+	return durationClause(e.Duration, "") + ", " + e.durationSubject() + " " + e.durationPredicate()
 }
 
 // durationSubject and durationPredicate split the body so ForDuration can state
@@ -97,7 +97,7 @@ func (e NameHouse) validate() error {
 func (e NameHouse) Text() string {
 	who, possessive := e.Player.secondPerson()
 	return who + " cannot choose that house as " + possessive +
-		" active house until " + SelfName + " leaves play"
+		" active house " + durationClause(UntilThisLeavesPlay, SelfName)
 }
 
 // Resolve stores the chosen house on the source card.

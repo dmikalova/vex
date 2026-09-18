@@ -108,7 +108,7 @@ one resolution bar a single enum-selected noun (`ArchiveTopOfDeck` +
 `ArchiveTopOfDiscard` → `ArchiveTop{From Zone}`).
 
 **Scattered plumbing (thin verbs over a solid internal mechanism).** Sometimes
-sibling verbs are *not* mergeable — each prints its own text, filters its own way,
+sibling verbs are _not_ mergeable — each prints its own text, filters its own way,
 reveals or gates differently — yet they hand-roll the **same underlying
 machinery**: the same zone probes, the same dispatch table, the same drain-and-
 refill loop. The fix is not to merge the nodes (their identity diverges, per the
@@ -124,6 +124,24 @@ gather-pick-place loop (`placeAmong`). Pass any axis the mechanism needs
 the verb names the destination, the mechanism only carries it out. This is the
 resolution to reach for whenever "these are clearly the same operation" collides
 with "but I can't merge them without a branchy `Resolve`."
+
+**Unification (one engine behind sibling facades).** A narrower cousin of
+scattered plumbing: two nodes that render and resolve _differently_ but along one
+thin axis — a sign, a constant, a single enum — should share one parameterized
+helper rather than copy the template. `RaiseKeyCost` and `LowerKeyCost` keep
+their separate verb identities but both delegate to one `keySurchargeText` (passed
+`"+"`/`"-"`) and one `armKeyCost` (a lower is a negated raise), so the sentence
+template and the resolution cannot drift between them. This is **Parameterize
+Function**: the axis is so thin it is a scalar argument — a _degenerate Strategy_,
+not a Strategy object. The tell is two sibling `Text()` methods (or two `Resolve`
+bodies) that are line-for-line the same but for one literal; fold the shared body
+into a helper the axis parameterizes and leave each facade a one-line delegate.
+When the siblings instead share their whole _shape_ — the same struct fields, the
+same skeleton of steps, but a few steps genuinely differ — that is a **Template
+Method**: extract the skeleton once and let the differing steps be a Strategy seam
+(a `Chooser`/`Refinement`/`Count`/`Condition`) or, in Go, an embedded common
+struct, rather than repeating the skeleton per sibling. Either way the facades and
+their card call sites do not change; only the duplicated template collapses.
 
 **Ladder violations.** A change belongs at the cheapest rung that can carry it: a
 field or Strategy on an existing effect (a `Count`, `Refinement`, `Condition`,
@@ -214,6 +232,12 @@ expectation wrong before rewriting the test to assert the new correct behavior.
 A wording change means editing the effect's `Text()` in
 `internal/engine/effect_*.go` and re-running `mage generateComments`; card doc
 comments are generated and hand-edits are overwritten.
+
+Renames go through the language server, never `sed`/`perl` — see "Navigate and
+rename through the Go language server" in `AGENTS.md`. A sweep renames a lot, so
+its two traps bite here hardest: aim the rename with a locator unique enough to
+name its owner, and `git diff` after each one. A rename that lands on the wrong
+same-named field still compiles and still passes the suite.
 
 ## 5. Ratchet every finding
 

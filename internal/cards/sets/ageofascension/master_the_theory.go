@@ -19,13 +19,13 @@ var MasterTheTheory = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.InPlay{
+			Cond: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 				None:   true,
 			},
 			Then: card.ForEach{
-				Times: card.InPlay{
+				Times: card.CardsInPlay{
 					Player: card.Opponent,
 					Type:   card.Type.Creature,
 				},

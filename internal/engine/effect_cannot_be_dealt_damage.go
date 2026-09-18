@@ -28,7 +28,7 @@ func (e CannotBeDealtDamage) validate() error {
 // Text renders the effect, e.g. "for the remainder of the turn, each friendly
 // creature cannot be dealt damage".
 func (e CannotBeDealtDamage) Text() string {
-	return durationClause(e.Duration) + ", " + e.durationSubject() + " " + e.durationPredicate()
+	return durationClause(e.Duration, "") + ", " + e.durationSubject() + " " + e.durationPredicate()
 }
 
 // durationSubject and durationPredicate split the body so ForDuration can state

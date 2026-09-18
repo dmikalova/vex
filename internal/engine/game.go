@@ -168,6 +168,13 @@ type Game struct {
 	// settling is true while a destruction batch or a state-based sweep is running,
 	// so the sweep does not re-enter and split a batch's simultaneous timing.
 	settling bool
+	// deferringLeaves is true while a simultaneous batch is running, so a card's
+	// "Leaves Play:" window is gathered as it goes but held until every card in the
+	// batch has moved. deferredLeaves is where those windows wait. Both are runtime
+	// scheduling, not game state: they never outlive the batch, so they stay off
+	// GameState and out of the undo snapshot (ADR 0005).
+	deferringLeaves bool
+	deferredLeaves  []triggeredAbility
 	// destroyingSource names the card whose effect is carrying out the current
 	// destruction, so the batch it targets narrates as one grouped line ("Strange
 	// Gizmo destroys A, B, and C") instead of a passive line per creature. The next

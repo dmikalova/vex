@@ -10,7 +10,8 @@ import (
 // hand after choosing a house on a later turn. A Selection decides how each card
 // is picked — the controller chooses one (Chosen, restrictable to type/house), a
 // uniformly random card leaves a hidden hand (Random, Eureka!), or a named card is
-// pinned (Named, Hyde archiving Velum). Zone names the source, Hand or Discard.
+// pinned (Named, Hyde archiving Velum). Zone names the source: Hand, Discard,
+// Deck, or purged (Universal Recycle Bin recovering a card set aside for good).
 // Amount archives that many; the zero value archives one. An Optional Selection
 // (Chosen with Optional) lets the controller archive fewer, down to none, which
 // reads as "up to N" (Mobius Scroll). Revealed shows each card before
@@ -19,7 +20,8 @@ import (
 // when a condition holds (Velum). It reports whether any card was archived, so it
 // can gate a Then (Zyzzix the Many).
 type ArchiveCard struct {
-	// Zone names the source the cards are archived from: Hand or Discard.
+	// Zone names the source the cards are archived from: Hand, Discard, Deck, or
+	// purged.
 	Zone Zone
 	// From names whose zone the cards are drawn from. The zero value (playerUnset)
 	// is the controller's own zone; Opponent draws from the opponent's hand into
@@ -45,15 +47,14 @@ type ArchiveCard struct {
 }
 
 // validate rejects an ArchiveCard whose selection was left unset, a source zone
-// other than the hand, discard pile, or deck, a positional selection paired with
-// an unordered zone, a non-positional selection on the deck, or an invalid Or
-// guard.
+// no archive draws from, a positional selection paired with an unordered zone, a
+// non-positional selection on the deck, or an invalid Or guard.
 func (e ArchiveCard) validate() error {
 	if e.Selection == nil {
 		return fmt.Errorf("ArchiveCard: selection must be set")
 	}
-	if e.Zone != Hand && e.Zone != Discard && e.Zone != Deck {
-		return fmt.Errorf("ArchiveCard: zone must be Hand, Discard, or Deck")
+	if e.Zone != Hand && e.Zone != Discard && e.Zone != Deck && e.Zone != Purged {
+		return fmt.Errorf("ArchiveCard: zone must be Hand, Discard, Deck, or purged")
 	}
 	if selectionPositional(e.Selection) && !e.Zone.ordered() {
 		return fmt.Errorf("ArchiveCard: positional selection needs an ordered zone")
@@ -174,6 +175,8 @@ func (e ArchiveCard) source(ctx *EffectContext) []LocalID {
 		cards = ctx.Resolver.Discard(ctx.Controller)
 	case Deck:
 		cards = ctx.Resolver.Deck(ctx.Controller)
+	case Purged:
+		cards = ctx.Resolver.Purge(ctx.Controller)
 	default:
 		cards = ctx.Resolver.Hand(e.sourcePlayer(ctx))
 	}
@@ -266,22 +269,14 @@ func (e ArchiveFromPlay) archive(ctx *EffectContext, ids []LocalID) bool {
 }
 
 // ArchiveSource archives the card whose ability this is (Sucker Punch archives
-// itself). A source still in play — a creature or artifact — is archived from
-// play; a resolving action card, not yet in any zone, is instead marked to go to
-// its owner's archives when its play completes, rather than to the discard pile.
+// itself), wherever that card is — in play, or mid-play and in no zone at all.
 type ArchiveSource struct{}
 
 // Text renders the effect using the source card's own name.
 func (ArchiveSource) Text() string { return "archive " + SelfName }
 
 // Resolve archives the source card.
-func (ArchiveSource) Resolve(ctx *EffectContext) {
-	if resolverInPlay(ctx, ctx.Source) {
-		ctx.Resolver.PutIntoArchives(ctx.Source)
-		return
-	}
-	ctx.Resolver.MarkPlayedActionArchived(ctx.Source)
-}
+func (ArchiveSource) Resolve(ctx *EffectContext) { ToArchives.moveSource(ctx) }
 
 // ArchiveGrantingUpgrade archives the upgrade whose granted ability this is
 // (ctx.Upgrade) — Ghostform grants its host "Fight/Reap: Archive Ghostform",

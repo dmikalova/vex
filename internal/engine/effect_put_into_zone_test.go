@@ -562,3 +562,26 @@ func handContains(g *Game, player int, id LocalID) bool {
 	}
 	return false
 }
+
+// TestPutFromPlaySkipsTheSecondGiganticHalf checks the in-play recheck in put is
+// still load-bearing once leave-play triggers are deferred. A gigantic is two
+// cards, and moving either half carries both, so a selection holding both halves
+// reaches the second one after it has already left. Without the recheck it would
+// be moved twice and counted twice.
+func TestPutFromPlaySkipsTheSecondGiganticHalf(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	base, art := playedGigantic(g, 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	PutFromPlay{
+		Target:      Target{Kind: TargetEachCreature},
+		Destination: ToHand,
+	}.put(ctx, []LocalID{base, art})
+
+	if ctx.Produced.Moved != [2]int{1, 0} {
+		t.Errorf("Moved = %v, want [1 0]: the gigantic moved as one card", ctx.Produced.Moved)
+	}
+	if !g.State.Hand[0].contains(base) || !g.State.Hand[0].contains(art) {
+		t.Error("both halves should have reached hand")
+	}
+}

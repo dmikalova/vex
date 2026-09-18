@@ -24,7 +24,7 @@ func (e LoseKeyword) validate() error {
 // Text renders the effect, e.g. "for the remainder of the turn, each creature
 // loses elusive".
 func (e LoseKeyword) Text() string {
-	return "for the remainder of the turn, each creature loses " +
+	return durationClause(RemainderOfPlayerTurn, "") + ", each creature loses " +
 		strings.ToLower(e.Keyword.String())
 }
 

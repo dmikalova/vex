@@ -22,7 +22,7 @@ var DoomSigil = set.New(
 		Target:   card.Target.EachCreature,
 		Keywords: card.Keywords(card.Keyword.Poison),
 	}),
-	card.WithDestroyedWhen(card.InPlay{
+	card.WithDestroyedWhen(card.CardsInPlay{
 		Player: card.EachPlayer,
 		Type:   card.Type.Creature,
 		None:   true,

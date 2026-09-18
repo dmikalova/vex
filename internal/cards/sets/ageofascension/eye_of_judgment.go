@@ -21,6 +21,7 @@ var EyeOfJudgment = set.New(
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.PurgeCard{
+			Zone:      card.Discard,
 			Player:    card.ChosenPlayer,
 			Selection: card.Chosen{Type: card.Type.Creature},
 		}),

@@ -17,6 +17,10 @@ type CardFilter struct {
 	Type CardType
 	// Trait requires the card to carry this trait; the zero value requires none.
 	Trait Trait
+	// ExceptTrait requires the card to lack this trait; the zero value requires
+	// none. It is the only negated axis, so "non-Mutant creature" is a filter rather
+	// than a second field beside one (Purify).
+	ExceptTrait Trait
 	// Name requires the card to have this exact name; the zero value requires none.
 	Name string
 	// Gigantic requires the card to be a half of a gigantic creature (either half);
@@ -30,7 +34,7 @@ type CardFilter struct {
 // empty reports that the filter sets no predicate, so it admits every card.
 func (f CardFilter) empty() bool {
 	return f.Type == TypeUnset && f.Trait == traitUnset && f.Name == "" &&
-		!f.Gigantic && len(f.Or) == 0
+		f.ExceptTrait == traitUnset && !f.Gigantic && len(f.Or) == 0
 }
 
 // admits reports whether the card satisfies the filter.
@@ -53,13 +57,17 @@ func (f CardFilter) admits(r StateReader, id LocalID) bool {
 // predicates, ignoring Or. A clause that sets no predicate never matches on its
 // own — it exists only to carry alternatives in Or.
 func (f CardFilter) satisfiesClause(r StateReader, id LocalID) bool {
-	if f.Type == TypeUnset && f.Trait == traitUnset && f.Name == "" && !f.Gigantic {
+	if f.Type == TypeUnset && f.Trait == traitUnset && f.Name == "" && !f.Gigantic &&
+		f.ExceptTrait == traitUnset {
 		return false
 	}
 	if f.Type != TypeUnset && r.TypeOf(id) != f.Type {
 		return false
 	}
 	if f.Trait != traitUnset && !r.HasTrait(id, f.Trait) {
+		return false
+	}
+	if f.ExceptTrait != traitUnset && r.HasTrait(id, f.ExceptTrait) {
 		return false
 	}
 	if f.Name != "" && r.Name(id) != f.Name {
@@ -88,6 +96,9 @@ func (f CardFilter) noun() string {
 	}
 	if f.Trait != traitUnset {
 		base = f.Trait.String() + " " + base
+	}
+	if f.ExceptTrait != traitUnset {
+		base = "non-" + f.ExceptTrait.String() + " " + base
 	}
 	for _, alt := range f.Or {
 		base += " or " + alt.noun()

@@ -99,6 +99,13 @@ type style struct {
 	drill     coverBubble
 	drillOpen bool
 
+	// cardText caches the Card text section's specimens. They are fixed for a page
+	// load (seeded by styleSeed) but expensive to query — the target-shape and
+	// duration specimens walk every card's effect tree by reflection — so they are
+	// computed once rather than on every re-render. Hovering a sampled log bubble
+	// re-renders the whole gallery, which made recomputing them per hover crawl.
+	cardText *cardTextSpecimens
+
 	// dispatch re-renders the gallery from its always-mounted root, bound in
 	// OnMount. The specimen faces raise the hover preview and the held enlargement
 	// by mutating this component's state from inside a nested cardView's own event
@@ -147,6 +154,7 @@ func (s *style) OnMount(ctx app.Context) {
 	})
 	app.Window().Call("addEventListener", "beforeunload", s.saveScrollFunc)
 	s.restoreScroll(ctx)
+	s.autoSampleGames(ctx)
 }
 
 // OnDismount releases the unload listener OnMount installed.

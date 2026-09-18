@@ -702,6 +702,19 @@ func NewCard(
 		opt(&c)
 	}
 	c = resolveSelfHouse(c)
+	validateCardIcons(&c, name)
+	validateCardAbilities(&c, name)
+	validateCardReplacements(&c, name)
+	validateCardConditions(&c, name)
+	validateCardUseKinds(&c, name)
+	validateCardUpgrade(&c, name)
+	return c
+}
+
+// validateCardIcons panics if any trait, bonus, enhance, or no-enhance icon a card
+// was built with is unset — a WithTraits/WithBonus/WithEnhance/WithoutEnhancement
+// option was given a zero value.
+func validateCardIcons(c *CardDefinition, name string) {
 	for _, tr := range c.Traits {
 		if tr == traitUnset {
 			panic(fmt.Sprintf("card %q: WithTraits was given an unset trait", name))
@@ -722,6 +735,11 @@ func NewCard(
 			panic(fmt.Sprintf("card %q: WithoutEnhancement was given an unset bonus icon", name))
 		}
 	}
+}
+
+// validateCardAbilities panics if any triggered ability has no trigger set or an
+// invalid effect tree.
+func validateCardAbilities(c *CardDefinition, name string) {
 	for _, ab := range c.Abilities {
 		if !ab.Trigger.valid() {
 			panic(fmt.Sprintf("card %q: an ability has no trigger set", name))
@@ -730,6 +748,11 @@ func NewCard(
 			panic(fmt.Sprintf("card %q: %v", name, err))
 		}
 	}
+}
+
+// validateCardReplacements panics if any replacement rule or play-permission the
+// card carries is malformed.
+func validateCardReplacements(c *CardDefinition, name string) {
 	if err := c.Static.Replaces.validate(); err != nil {
 		panic(fmt.Sprintf("card %q: %v", name, err))
 	}
@@ -746,6 +769,11 @@ func NewCard(
 	if err := c.PlayPermission.validate(); err != nil {
 		panic(fmt.Sprintf("card %q: %v", name, err))
 	}
+}
+
+// validateCardConditions panics if any of the card's gating conditions — its use
+// restriction, self-destroy trigger, or Æmber-cannot-be-stolen guard — is invalid.
+func validateCardConditions(c *CardDefinition, name string) {
 	if uc := c.Restricts.UseCondition; uc != nil {
 		if err := validateCondition(uc); err != nil {
 			panic(fmt.Sprintf("card %q: %v", name, err))
@@ -761,6 +789,12 @@ func NewCard(
 			panic(fmt.Sprintf("card %q: %v", name, err))
 		}
 	}
+}
+
+// validateCardUseKinds panics if any CannotBeUsedTo use kind — on the card, on a
+// static modifier, or on a constant ability — is unset, or a constant ability's
+// also-triggers-on rule names a non-action trigger.
+func validateCardUseKinds(c *CardDefinition, name string) {
 	for _, k := range c.CannotBeUsedTo {
 		if !k.valid() {
 			panic(fmt.Sprintf("card %q: CannotBeUsedTo has an unset use kind", name))
@@ -794,18 +828,23 @@ func NewCard(
 			}
 		}
 	}
-	if c.PlayableAsUpgrade {
-		if c.Type != Creature {
-			panic(fmt.Sprintf("card %q: only a creature may be played as an upgrade", name))
-		}
-		if !c.Static.grants() {
-			panic(fmt.Sprintf(
-				"card %q: a creature played as an upgrade must grant its host something",
-				name,
-			))
-		}
+}
+
+// validateCardUpgrade panics if a card marked playable as an upgrade is not a
+// creature or does not grant its host anything.
+func validateCardUpgrade(c *CardDefinition, name string) {
+	if !c.PlayableAsUpgrade {
+		return
 	}
-	return c
+	if c.Type != Creature {
+		panic(fmt.Sprintf("card %q: only a creature may be played as an upgrade", name))
+	}
+	if !c.Static.grants() {
+		panic(fmt.Sprintf(
+			"card %q: a creature played as an upgrade must grant its host something",
+			name,
+		))
+	}
 }
 
 // WithCannotBeUsedTo bars a card from the named ways of being used.

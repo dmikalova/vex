@@ -11,6 +11,28 @@ appropriate durable place so it holds for future work: the relevant `AGENTS.md`,
 a `docs/` page, an ADR, or a code comment on the seam it governs. Make the change
 _and_ record the rule; a fix without the write-down is only half the task.
 
+## An explained mechanic becomes a test
+
+When the human **explains a nuanced game mechanic** — how ward interacts with the
+destroyed tag, when a "Destroyed:" ability still reaches a card, which of two
+similar timings wins — that explanation is a specification, and the turn is not
+finished until it is **pinned by a test**. Write the test even when the code
+already behaves correctly: the point is not to fix a bug but to stop the next
+agent from "simplifying" the nuance away, because a rule that lives only in a
+conversation is a rule that gets refactored out. A passing new test is a success,
+not a wasted change.
+
+Alongside the test, **add the documentation if it does not already exist** — a
+short comment on the seam the rule governs (a doc comment on the funnel, not a
+note buried in a caller), and a rulebook term or `docs/` line when the rule is
+player-facing. Cite the test by name in that comment so the claim and its proof
+are findable from each other. Do not write a markdown file just to record the
+explanation; the test and the seam comment are the durable record.
+
+Where the mechanic contradicts what the code does, the human's explanation is the
+authority — but say so plainly, and fix the code rather than quietly reshaping
+the explanation to match what is already there.
+
 ## Agent todos go in `docs/todo-agent.md`, not `docs/todo.md`
 
 `docs/todo.md` is the **human's** personal list — do not write into it. When a
@@ -153,8 +175,8 @@ the `tools` mage namespace, invoked with a colon (`mage tool:stub`):
 
 - `mage tool:nodeUsage` — inventory the card-authoring facade: every exported name
   in `internal/card`, grouped by the category its declaration block documents,
-  with how many card definitions, total occurrences, and sets use it (rarest
-  first), plus a summary of the whole facade. Use it to find the neighbours a new
+  with how many card definitions use it (rarest first), plus a summary of the
+  whole facade. Use it to find the neighbours a new
   node should be shaped alongside, and to audit that a thinly-used node is built
   from reusable atoms. **Low usage is not a defect** — half the card pool is
   unimplemented. Narrow with `-max=<n>` and `-category=<substring>`, e.g.
@@ -193,6 +215,44 @@ mage gen &&
 
 Prefer this layout over one unreadable line when chaining several build/test
 steps.
+
+## Navigate and rename through the Go language server, not text substitution
+
+Go has first-class language tooling, and the editor's symbol tools are backed by
+`gopls`. It understands the type graph, so it distinguishes a method from a
+same-named field, ignores a word in a comment or a string literal, and updates
+every reference across the module. Reach for it first:
+
+- **Renaming any identifier** — use the rename-symbol tool. **Never** rename with
+  `sed`/`perl` across the tree. Many of this repo's identifiers are ordinary
+  English (`Creature`, `Card`, `Power`, `House`, `Source`, `Target`), so a
+  bare-word substitution silently rewrites comments, log strings, and unrelated
+  types. A past sweep corrupted `g.State.Battleline[0]` into `g.State.InPlay[0]`
+  exactly this way.
+- **Finding a symbol's uses** — use the list-code-usages tool rather than `grep`
+  when you want real references. `grep` is still the right tool for a literal
+  string, a text pattern, or a survey across non-Go files.
+
+Two failure modes, both about **aiming** the tool rather than the tool itself:
+
+- **An ambiguous locator renames the wrong symbol.** The rename tool resolves a
+  position from the _first_ line matching the `lineContent` you pass, then renames
+  whatever symbol sits there. A bare field declaration is often not unique — this
+  file has had `\tCreature LocalID` in two different structs — so the rename lands
+  on the wrong one, compiles, and passes every test. Pass a locator that is unique
+  and names its owner (a call site like `AemberCaptured{Creature: id,` beats the
+  declaration line), and **`git diff` after every rename** to confirm it hit the
+  symbol you meant. A wrong-but-consistent rename is invisible to the gate.
+- **A stale language-server view rejects a valid rename**, citing errors in a file
+  that is no longer on disk (a test file whose symbols moved). Confirm with
+  `go build ./...`; if the tree really builds, the rename is safe and the server
+  is behind. Do not fall back to text substitution because of this — retry, or
+  make the edit by hand at the few call sites the usages tool reports.
+
+Related: a deleted **comment** line is invisible to build, vet, lint, and tests.
+When you insert a function directly above an existing one, re-read the seam (or
+check `git diff`) to confirm you did not swallow the first line of the next
+declaration's doc comment.
 
 ## Multiple agents may be running
 

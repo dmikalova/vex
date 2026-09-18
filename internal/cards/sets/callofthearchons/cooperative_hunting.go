@@ -18,7 +18,7 @@ var CooperativeHunting = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 1,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 			},

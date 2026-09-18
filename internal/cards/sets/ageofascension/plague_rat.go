@@ -31,7 +31,7 @@ var PlagueRat = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 1,
-			Per: card.InPlay{
+			Per: card.CardsInPlay{
 				Player: card.EachPlayer,
 				Type:   card.Type.Creature,
 				Trait:  card.Traits.Rat,

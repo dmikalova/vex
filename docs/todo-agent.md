@@ -29,6 +29,24 @@ human's personal list, which agents never write into. Rules:
 
 ---
 
+## gocognit gate: web renderers deferred to their own passes
+
+The engine pass is done: the `gocognit` gate's global `min-complexity` is now 40,
+with every genuinely nested engine/deckgen seam split (fight, NewCard, hasKeyword,
+the text.go renderers, Target.Text, Target.filter) and 100% coverage held. What
+remains are the web renderers, kept exempted by name in the `.golangci.yaml`
+`exclusions` `text:` list until each gets its own pass:
+
+- `effectGlyphs` (internal/web/icon.go, 90) — glyph dispatch; wants its own
+  glyph-family grilling session (see docs/todo.md "Split out glyphs more in
+  icon.go"). Split along glyph families, then delete its exclusion.
+- `installTips` (internal/web/game_lifecycle.go, 49) — tip installation; split by
+  tip group, then delete its exclusion.
+
+When both are split, lower the global toward the tool default (30) and re-check
+the 31–39 engine stragglers (`triggeredBy`, `RenderAbility`, `Harness.location`,
+`allowedHouses`) — left untouched this pass — one at a time.
+
 ## Post-Mass-Mutation cleanup sweep
 
 Everything below was decided in a grilling session after Mass Mutation landed.
@@ -65,10 +83,6 @@ each card purged this way, deal 2 damage to it` — by the second clause `it`
   still holds the creature (text bug) or not (behaviour bug), then find the other
   cards where a later clause re-binds `ctx.It` before a back-reference. A general
   fix is preferred over per-card rewording.
-- **`resurgence` second pick says `another`.** Render `If that creature is a
-Mutant, put **another** creature from your discard pile into your hand` — and
-  make the implementation actually forbid re-picking, since the text now promises
-  it.
 - **Conjoined `It*` conditions collapse in the renderer, not the card.**
   `mercy_malkin_queen` renders `if it is a friendly creature and it is a Cat
 creature`; it should read `if it is a friendly Cat creature`. **Decision: the
@@ -79,17 +93,12 @@ creature`; it should read `if it is a friendly Cat creature`. **Decision: the
 Æmber from your opponent. If it is a Dinosaur creature, it captures 1 Æmber from
 your opponent.` Look for the other `Otherwise`/`Choose one:` cards that can take
   the same simplification — **not all of them can**, so judge each.
-- **Grouped targets are singular, so a card that matches twice acts once.**
-  `emp_blast` renders `Stun each Mars creature and each Robot creature`. Adopt
-  `each Mars or Robot creature`: stun is idempotent so it does not matter there,
-  but the same renderer produces `deal 1 damage to each Mars creature and each
-Robot creature`, where a Mars Robot reading as 2 damage is wrong. **Decision:
-  the grouped-union form is correct and a card matching both halves is affected
-  once.**
-- **Event-scoped conditions say `this`, never `it`.** `aember_conduction_unit`
-  renders `if it is the first time a creature has reaped this turn` — `it` is
-  reserved for a card. Use `this` for an event referent and apply it consistently
-  everywhere an event, not a card, is the subject.
+- **Sweep for the other cards that want `Target.MatchingAny()`.** The union axis
+  now exists (`emp_blast` reads `Stun each Mars or Robot creature`, and a Mars
+  Robot is one member of that set rather than two). `MatchingAny` disjoins the
+  house and trait axes only, and degrades to a conjunction when there is no second
+  adjective to join. Hunt the remaining cards rendering `each X … and each Y …`
+  over the same base noun.
 - **Towards deleting `card.Sentences{}` (foundation only).** The goal is for
   `card.Sequence` to work out its own sentence breaks so a card implementation has
   exactly one text representation. `help_from_future_self` (`…put it into your
@@ -159,17 +168,122 @@ zoneRef, entry LogEntry) bool` over a `zoneRef{Player, Zone}` pair and a
     runs upgrade/damage/ward lifecycles the mover must not know about.
   - **Build on `crossZoneMover`** (`effect_cross_zone.go`, `{Player, Dest,
 Sources}` with `zoneCards`/`gather`/`originOf`/`inZone`), which already backs
-    `ReturnNamedToHand`, `Search`, `ShuffleNamedFromDiscardIntoDeck`, and
-    `ShuffleChosenCreaturesFromZones`. It is the fold's destination, not a rival.
+    `ReturnNamedToHand`, `Search`, and
+    `ShuffleIntoDeck`. It is the fold's destination, not a rival.
   - **Start with purge** — the smallest complete verb (`PurgeCard` 9 cards,
     `PurgeFromHand` 7, `PurgeCreature` 21, `PurgeSource` 3, `PurgeArchives` 1,
-    `PurgeArchivedCardThen` 1) — and land the mover collapse with it.
-  - **These are pure subsets or thin wrappers and dissolve:**
-    `ArchivePurgedCard`, `ArchiveDiscardedThisWay`, `DiscardTop`, `PurgeFromHand`,
-    `PurgeArchives`, `PutRevealedCard`, `PutDiscardedIntoHand`,
+    `PurgeArchivedCardThen` 1). Done; see the two entries below.
+  - **Purge's movement is now fully on the seam.** `Destination.moveFrom`'s
+    `destPurged` matrix was missing its `Archives` and `Deck` rows, so
+    `PurgeArchives`, `PurgeArchivedCardThen`, and `effect_deck.go`'s `IntoPurge`
+    closure each called `ctx.Resolver.PurgeFromX` directly and bypassed ADR 0031.
+    The rows are filled in and all four call sites (plus `PurgeSource`'s in-play
+    branch) now go through `purgeFrom`. **`Resolver.PurgeFromPlay` is the only
+    purge the effect layer still names directly, and only from `MarkPlayedActionPurged`'s
+    sibling branch — revisit it with the resolution-zone question below.**
+  - **Correction: the purge nodes do NOT fold into one, and here is the evidence.**
+    The earlier "pure subsets dissolve" list was drawn from names and usage counts,
+    not from reading the code; reading it contradicts the list. `PurgeCard` (from a
+    discard pile) and `PurgeFromHand` differ in more than a source zone: `PurgeCard`
+    _chooses among piles_ (`piles()` prompts when both hold a match) while
+    `PurgeFromHand` names a player outright; `PurgeCard` renders "up to N" through
+    `object()` while `PurgeFromHand` renders "you may purge"; `PurgeCard` tallies
+    `PurgedAemberBonus` and adds to `Produced.Purged` while `PurgeFromHand` assigns
+    it and puts a lone card in `ctx.It`; only `PurgeFromHand` implements the
+    `declinable`/`resolveOptional` May protocol. `PurgeArchives` is "any number",
+    which no `Selection` expresses — `Chosen` picks exactly one card, so
+    `PurgeCard` fakes "up to N" by looping `count()` times. Merging these would
+    produce one node whose fields are only valid in particular combinations, which
+    is the fused-effect anti-pattern wearing a fold's clothes.
+    **So the movement is the shared thing, and it is now shared. Selection
+    semantics and printed-text templates are what make these separate nodes, and
+    they should stay separate.** Re-check the other three verbs the same way — by
+    reading each node, not by comparing names — before folding anything.
+  - **Re-opened: the pile-purges DO look foldable, and the axis list is below.**
+    The "they are genuinely different" verdict above conflated two kinds of
+    difference. Sorting them honestly: most are **accidents of implementation
+    history**, and only two are **rules**.
+    _Accidents (a merged node should just do the right thing everywhere):_
+    `PurgeFromHand` assigns `Produced.Purged` where `PurgeCard` accumulates it
+    (accumulating is correct across two piles); `PurgeCard` tallies
+    `PurgedAemberBonus` and `PurgeFromHand` does not, though cards in hand carry
+    bonus icons too; `PurgeFromHand` binds a lone card to `ctx.It` and `PurgeCard`
+    does not, though a single-card purge is nameable either way; only
+    `PurgeFromHand` implements the `declinable`/`resolveOptional` May protocol.
+    _Rules (these must survive any fold):_ a purge **from play** selects with a
+    `Target` rather than a pile `Filter`, so `PurgeCreature` stays its own node \u2014
+    note this is now a **targeting** distinction only, not a lifecycle one, since
+    the leave-play teardown moves under the mover (below); and a **chooser can
+    only choose from a zone it can see**, which the two entries below turn from a
+    validation rule into computed behavior.
+    _Printed text is derivable, not a difference:_ "a discard pile" vs "your
+    opponent's hand" is just ChosenPlayer-vs-named crossed with the zone noun.
+    **Proposed shape**, following the human's steer (always name the zones, take
+    an array, split may/up-to into strategies):
+    `Purge{Zones []Zone, Player Player, Filter CardFilter, House HouseMatcher,
+Count Count, GainOwnerAember bool}` where the pick strategy is `Count`
+    (`Exactly{N}` / `UpTo{N}` / `AnyNumber{}` / `All{}` / `Random{N}`) rather than
+    today's `Selection`+`Amount` pair \u2014 which is what removes the invalid
+    combination, since `Amount` is meaningless beside an `Each` Selection and
+    "any number" (`PurgeArchives`) is not expressible as a `Selection` at all.
+    `Sources []Zone` has precedent on `Search` and `crossZoneMover`. Build it on
+    `crossZoneMover`, and do the same pass for Archive/Discard/Put/Shuffle after.
+  - **Better than validating visibility: compute it, and let the chooser degrade
+    to random by itself.** Instead of rejecting `Chosen` against a hidden zone,
+    give the engine `visibleTo(zone, owner, chooser)` and have the pick strategy
+    consult it \u2014 a chooser aimed at a zone it cannot see picks uniformly at random.
+    That makes the invalid combination unrepresentable rather than merely rejected,
+    and it pays off twice, because `Text()` derives "at random" from the same fact,
+    so printed text cannot desync from which zone a card reaches into (ADR 0006).
+    **It is not "hidden zone \u21d2 random", though**, and modelling it that way would
+    be wrong: visibility is a function of all three of zone, owner, and chooser \u2014
+    a discard pile is public, a deck is hidden to both players, and archives are
+    hidden to the opponent but visible to their owner. A card can also **grant** a
+    look (Philophosaurus looks at the top 3 of its own deck), so the grant has to
+    be an input to the function, not an exception around it. **Subsume, do not sit
+    beside, the half-model that already exists:** `ownerActsSelection` /
+    `Random.ownerActs` (`effect_selection.go:79-90,214-216`) already encodes "a
+    random pick from a hidden hand is attributed to its owner". That is the same
+    idea reached from the other end and must fold into the new function.
+  - **The leave-play lifecycle should move under the mover, and most of it already
+    has.** `removeFromPlay` (`game_leaves_play.go:99-108`) is already documented as
+    the funnel every real exit runs through, and `leavePlayDestroyed` is already
+    the shared teardown (unlist, discard upgrades, discard under-cards, release
+    \u00c6mber, reset core). `discardDestroyed` and `purgeFromPlay` are then the _same
+    five lines_, differing only in destination pile and log entry \u2014 which is
+    exactly `moveCard(id, from, to, entry)`. So lift the in-play exclusion in
+    `game_move.go` and have the mover run the teardown when the source is play;
+    purge, archive, bounce, and shuffle then stop knowing about the lifecycle.
+    **Hazard, stated precisely: a ward check belongs at a removal _attempt_, never
+    at the _filing_ of a removal already settled.** Two ward checks are not by
+    themselves wrong \u2014 destruction and purge are separate attempts, so a creature
+    whose ward absorbs a destruction, is granted a fresh ward by another creature's
+    Destroyed ability, and is then purged absorbs the purge too. The engine already
+    does this correctly: `filterUndestroyed` consults ward at the destruction
+    attempt, `purgeFromPlay` at the purge attempt, and `discardDestroyed` \u2014 the
+    filing step that runs after the Destroyed window resolves \u2014 deliberately does
+    not, so a ward granted mid-window cannot resurrect a creature the destruction
+    already claimed. **Both rules are now pinned by
+    `TestWardAbsorbsDestructionAndPurgeSeparately` and
+    `TestDiscardDestroyedIgnoresWard` in `game_leaves_play_test.go`.** The
+    consequence for the fold: `moveCard` must never consult ward itself \u2014 it tears
+    down and files, and ward stays at the attempt sites above. Gigantic halves
+    (ADR 0042) are uniform and fold cleanly.
+  - **Still believed to be thin wrappers, but UNVERIFIED by reading:**
+    `ArchiveDiscardedThisWay`, `DiscardTop`,
+    `PutRevealedCard`, `PutDiscardedIntoHand`,
     `PutDiscardedIntoPlay`, `PutFromHand`, `PutNamedIntoHand`, `PutItIntoHand`,
-    `PutChosen` (vs `PutFromPlay`), `ShuffleNamedFromDiscardIntoDeck`,
-    `ShuffleChosenCreaturesFromZones`.
+    `PutChosen` (vs `PutFromPlay`). Verify each before touching it.
+  - **`ArchivePurgedCard` was verified and is GONE.** It was
+    `ArchiveCard{Zone: Purged, Selection: Chosen{}}` spelled out by hand. The purge
+    pile is now an exported `Zone`, so a card may name it as a **source** (the only
+    one that does is Universal Recycle Bin) while still never naming it as a
+    destination — setting a card aside stays the `Purge` verb over the unexported
+    `toPurged` (ADR 0031). `Zone.noun()` gained the "purge pile" arm it was
+    silently missing (it fell through to "discard pile"). Text moved from "archive
+    a purged card you own" to "archive a card from your purge pile", which is the
+    template every other `ArchiveCard` already uses (rule 17 names the source zone).
+    Pinned by `TestArchiveCardFromPurge` and `TestArchiveCardFromPurgeEmpty`.
   - **These carry a genuinely distinct rule and survive:**
     `ArchiveGrantingUpgrade` (`ctx.Upgrade`), `ArchiveFromPlay` (batch +
     `ctx.Produced.Archived`), `DiscardArchives` (active-player ordering +
@@ -179,37 +293,129 @@ Sources}` with `zoneCards`/`gather`/`originOf`/`inZone`), which already backs
     fallback), `PurgeCard` (\u00c6mber bonus tally), `PutNextTacticIntoHand` (lasting
     replacement), the under-chain nodes (`game_under.go:117-123` \u2014 explicitly not
     zone movement), bare `Shuffle`, `ShuffleFriendlyCardsIntoDeck`.
-  - **`DiscardUntil` becomes a general `Until{}` dig-loop primitive** that other
-    `*Until` effects can compose over, rather than staying a bespoke node.
-  - **A resolving tactic is still in hand** \u2014 it is simply not in hand to be
-    discarded. That reclassifies `ArchiveSource`/`PurgeSource`, which were held
-    back as "genuinely distinct" only because the resolving tactic appeared to be
-    in no zone at all. **Open design question: does this want an explicit
-    resolution zone?** Settle that before folding those two.
-- **Purge is one mechanism** — `PurgeCreature`, `PurgeFromHand`, `PurgeArchives`,
-  `PurgeCard`, `ArchivePurgedCard`, `NamedCardPurged` collapse onto it. Approved
-  outright, but **held until the verb-fold investigation above reports**: purge is
-  one of the four verbs that fold, so doing it standalone would set a
-  source/destination shape the other three then have to match. Build it as part of
-  that consolidation, not before it.
+  - **`Until{}` was investigated and deliberately NOT built; the real atom was the
+    filter, and it has landed.** `DiscardUntil` is the only `*Until` node in the
+    engine, so an `Until{}` combinator would have had no second consumer to prove
+    its shape \u2014 speculative generality. What the dig _did_ duplicate was a card
+    matcher: it hand-rolled `Type`/`Name`/`ExceptTrait` inline while `Search`
+    already expressed the same axes as `Filter CardFilter` + `House HouseMatcher`.
+    `CardFilter` gained the one axis it was missing (`ExceptTrait`, the negation
+    `Target` already had), and `DiscardUntil` now carries `Filter`+`House` in
+    exactly `Search`'s shape. **Revisit an `Until{}` combinator only when a second
+    `*Until` card actually appears** \u2014 the loop body (reveal, record, test, offer a
+    stop) is then the thing to extract.
+  - **Fold `ArchiveSource`/`PurgeSource` into a `Self{}` selection.** The redirect
+    half of this is **DONE**: `PurgePlayedAction*`/`ArchivePlayedAction*` are gone
+    from `GameState`, replaced by per-card `CardCore.ResolvingDest` and one port
+    method `RedirectResolvingCard(id, dest)`. Per-card was load-bearing — the old
+    single-slot fields were a latent nesting bug, since a resolving Tactic can play
+    another card that also redirects itself (Wild Wormhole into Causal Loop,
+    `TestResolvingCardRedirectIsPerCard`).
+    - **The investigated premise was wrong, and the truth is simpler.** The plan
+      was to leave a resolving tactic in `State.Hand[owner]` with a `Resolving`
+      flag so it would have a `from` zone. It does not need one: `playTacticCard`'s
+      caller has already removed it from **every** zone, so a resolving card is in
+      no zone at all. That is why Labwork cannot archive itself (the hand no longer
+      holds it) and why the redirect is automatically generic over the origin zone
+      — Wild Wormhole plays off the deck and the redirect still lands. No
+      `Resolving` flag was added, because nothing reads one.
+    - **What remains:** nothing structural. The duplicated "in play → move, else →
+      redirect" body is now one seam, `Destination.moveSource(ctx)` in
+      `destination.go`, and `ArchiveSource`/`PurgeSource` are each a one-line
+      `Resolve` over it (`ToArchives.moveSource` / `toPurged.moveSource`). A future
+      "return {self} to hand" is one more line.
+    - **They were deliberately NOT folded into one `MoveSource{To: …}` node.** That
+      would put the destination on the card, and ADR 0031 hides `toPurged` from
+      cards precisely so a card writes the verb (`Purge`) and never the terminal
+      destination. Two verb-named nodes over one shared seam respects that; one
+      destination-parameterized node would not.
+- **Purge is one mechanism** — partly done, remainder scoped.
+  - **Done:** `PurgeFromHand` is gone. `PurgeCard` now carries a `Zone` (`Hand`
+    or `Discard`) and its `Player` means **whose copy of that zone**, with
+    `ChosenPlayer` keeping the "controller picks among the eligible sides"
+    reading and `EachPlayer` the "both at once" reading. `whoseHand` generalized
+    into `whoseZone(Player, Zone)`, so the phrase table is one function. All 16
+    call sites migrated with **zero card-text changes** (`mage gen` rewrote 0
+    comments), and `ctx.It` is now bound uniformly whenever exactly one card is
+    purged rather than only by the hand node.
+  - **`PurgeArchives` was deliberately left out of this pass.** It is
+    `PurgeCard{Zone: Archives}` in every respect except its count: it purges
+    "any number", which `Amount int` cannot say. Fold it when the `Count`
+    strategy (`Exactly`/`UpTo`/`AnyNumber`/`All`) replaces `Selection`+`Amount`
+    — adding an `AnyNumber bool` next to `Amount` now would be the boolean-flag
+    smell the `Count` item exists to remove. One consumer
+    (`destructive_analysis`), so there is no pressure.
+  - **`PurgeCreature` survives** — it is Target-based and sources from play, and
+    it carries the leaves-play-mid-resolution fallback that is the next item.
+  - **`PurgeArchivedCardThen` survives** — its purge is a _cost gate_, not a
+    selection.
 - **A creature that leaves play mid-resolution is followed into its visible
-  zone.** `PurgeCreature` (`effect_purge.go:221`) has a fallback: if the target
-  already died, find it in discard. **That is a general rule, not a purge
-  feature** — it belongs to _every_ mechanism that moves a creature which might
-  die (archive, discard, return to hand, …). If an ability is mid-resolution and
-  its subject leaves play into a **visible** zone, the ability continues on it
-  there. Lift the fallback into the shared movement mechanism, and write the rule
-  into the rulebook/engine guidance since it is player-facing.
-- **`ShuffleFromDiscard` takes a `Selection` strategy**, absorbing
-  `ShuffleNamedFromDiscardIntoDeck` (one consumer, `chain_gang`).
-- **Fold the `Shuffle*` family** (`ShuffleChosenCreaturesFromZones`,
-  `ShuffleFriendlyCardsIntoDeck`, `ShuffleFromDiscard`) into one shape with zone
-  and selection axes. **`SwapDeckAndDiscard` is a genuinely distinct mechanism and
-  stays separate.**
-- **Ownership is looked up from the card**, not passed around. The objection that
-  archives can hold abducted cards does not block the fold: the mover takes an
-  explicit destination (this card, to this player's archives) and derives owner
-  from the card.
+  zone.** The rule is now the shared `currentZone(ctx, id)` seam in
+  `effect_cross_zone.go`: it reports where a selected card can still be reached
+  (in play under its controller, or its owner's discard pile) and `PurgeCreature`
+  reads it instead of carrying its own fallback. Pinned by
+  `TestPurgeCreatureFollowsIntoDiscard`. **Still to do:** the other mechanisms
+  that move a creature which might die — archive, discard, return to hand — still
+  fizzle instead of following. Route each through `currentZone`, and write the
+  rule into the rulebook since it is player-facing.
+- **The `Shuffle*` family is folded.** `ShuffleFromDiscard`,
+  `ShuffleNamedFromDiscardIntoDeck`, and `ShuffleChosenCreaturesFromZones` are one
+  `ShuffleIntoDeck{From []Zone, Selection, AnyNumber, Count}` over
+  `crossZoneMover`. In-play is now two exported **source-only** zones like
+  `Purged`: `InPlay` (battleline + artifacts, for a future card that shuffles
+  upgrades out of play) and `Battleline` (the creature row alone, what Song of
+  Spring names). They are separate because they are separate printed nouns —
+  `Zone.noun()` must never guess which one a card meant. `ShuffleIntoDeck` also
+  takes an explicit `Player` and tallies `Produced.Moved` per **owner**, so a
+  controlled enemy card shuffled home credits its owner's deck. Two rewords fell
+  out and are recorded in `docs/card-wording-rules.md`: a card name takes no
+  article ("shuffle Subtle Chain", not "a Subtle Chain"), and Song of Spring
+  drops "friendly" because "your hand, discard pile, or battleline" already
+  scopes it.
+- **Finish making upgrades "in play" everywhere.** Decided: _in play_ means every
+  card someone controls in play — creatures, artifacts, **and the upgrades on
+  either**. A card placed _under_ another card is **not** in play; it is in the
+  out-of-play zone that is "under" its host. So an effect that says "cards in
+  play" without naming a type reaches upgrades, while one that says Creature or
+  Artifact narrows afterwards. **Done:** the one authoritative enumeration is
+  `resolverCardsInPlay(ctx, p)` in `effect_cross_zone.go` (each host's upgrades
+  listed ahead of the host), and `CardsInPlay`, `HousesInPlay`, untyped
+  `HousesAmong`, and `ActiveHouseMatchesNoCardsInPlay` all read it — the last of
+  which was hand-rolling the traversal and missing the upgrades on an artifact.
+  Pinned by `TestCardsInPlayCountsUpgrades`. **Still row-only, and each needs the
+  same treatment:**
+  - `Game.inPlay` (`game_read.go:580`) and `resolverInPlay`
+    (`effect_deck.go:681`) — the two "is this card in play?" predicates. They
+    must change **together with** the selection paths below: if a Target starts
+    returning an upgrade and the predicate still says it is not in play, every
+    removal that re-checks reachability will silently fizzle.
+  - `allCardsInPlay` and `cardsInPlayOf` (`target_select.go:496`, `:503`), which
+    back `TargetEachCardInPlay` and `TargetEachFriendlyCardInPlay`. The
+    creature-or-artifact target kinds name their types and must **not** change.
+  - `crossZoneMover.zoneCards` for `InPlay` (`effect_cross_zone.go`). Moving an
+    attached upgrade needs the mover to detach it from its host first. This is now
+    the **gating item for the Timequake fold below** — it used to be blocked behind
+    a leave-play sweep that has since been cancelled.
+  - `Game.allInPlay` (`game_read.go:1054`) has ~14 callers in ability scanning,
+    phase processing, and invariants. Decide per caller whether an upgrade
+    belongs in that scan; do **not** change it wholesale.
+- **Fold `ShuffleFriendlyCardsIntoDeck` (Timequake) into `ShuffleIntoDeck`.**
+  `ShuffleIntoDeck` now carries the per-owner `Produced.Moved` tally that
+  Timequake's `Draw{Per: CardsShuffledIntoDeck}` reads, so the shape would be
+  `ShuffleIntoDeck{Player: Controller, From: []Zone{InPlay}, Selection: Each{}}`.
+  The two nodes disagree about upgrades: the shared mover's in-play move runs
+  `putIntoDeckShuffled` → `leavePlayTeardown` → `discardUpgrades`, so a shuffled
+  creature's upgrades are **discarded**, while `shuffleFriendlyInPlayIntoDeck`
+  detaches each upgrade and shuffles it in on its own.
+  **The blocker has changed.** It used to read "blocked until the leave-play sweep
+  replaces the proactive teardown"; that sweep is cancelled, so the eager
+  `discardUpgrades` is permanent and the disagreement will not resolve itself. The
+  remaining route is to make the mover reach upgrades as cards in their own right:
+  `crossZoneMover.zoneCards(InPlay)` must list them and the mover must detach an
+  upgrade from its host before moving it, so `ShuffleIntoDeck` moves creature and
+  upgrade as two members of one `simultaneously` batch and never reaches
+  `discardUpgrades` for them at all. `SwapDeckAndDiscard` stays separate — a
+  distinct mechanism.
 - **`discardDestroyed` / `purgeFromPlay`** (`game_leaves_play.go:24`, `:35`)
   repeat the same gigantic-halves loop. **INVESTIGATE**: destruction participates
   in the Destroyed window and purge can be invoked during it — establish whether
@@ -385,18 +591,67 @@ acceptable; flat pointerless state (ADR 0005) is not negotiable.
   leaving a whole section of a "how it works" doc describing nothing.
 - **`docs/roadmap.md` is labelled** as forward-looking notes rather than
   current-state documentation, so a sweep should leave it alone. Nothing to do.
-- **`internal/session` vs web replay. Investigated; finish the migration.**
-  `internal/session` is the newer, ADR-0040-blessed driver: it is built on the
+- **`internal/session` vs web replay. Investigated twice; BLOCKED on an engine
+  gap, and the gap is now measured.** `internal/session` is the newer,
+  ADR-0040-blessed driver: it is built on the
   `engine.Stepper`/`Command`/`Request`/`View` seam in `suspend.go`, owns
   `{version, seed, sets, []Command}` plus the undo cursor, and is fully tested —
   but **nothing imports it**. `internal/web/replay.go` is a second, live
   implementation of the same job with its own ad-hoc `input` enum. So the
   migration was started and never completed, not the other way round.
-  **The decision: migrate the web client onto `internal/session` and delete
-  `internal/web/replay.go`.** The wrinkle to plan for is that ADR 0040 says the
-  engine code realizing the pure step function "does not exist yet" — the engine
-  still pulls choices through `Chooser` — so establish how much of `replay.go`'s
-  chooser/prompt replay `Stepper` already absorbs before starting.
+  **The decision stands: migrate the web client onto `internal/session` and delete
+  `internal/web/replay.go`.** What the second investigation established is _why it
+  cannot start yet_:
+  - **The engine's command vocabulary only implements half of ADR 0039.** The ADR
+    says a command is "a root action _or_ one answer to a choice", but
+    `engine.CommandKind` has only the answer half — `CommandPickCard`,
+    `CommandDecline`, `CommandOption`, `CommandPosition`, `CommandReaction`. Of
+    `replay.go`'s 27 `inputKind` values, **4** map onto a `Command`. The 11 real
+    root actions (`ChooseHouse`, `PlayCreature`/`Artifact`/`Action`/`Upgrade`,
+    `DiscardFromHand`, `Reap`, `Unstun`, `UseAction`, `Fight`, end-turn) and the 13
+    manual/debug roots have no representation at all.
+  - **`session.Action` is a fixed closure, not a live driver.** `Stepper` takes one
+    `func(*Game)` that must already encode the whole turn loop, and `Session`
+    exposes no way to say "run this root action next". A web client needs each
+    click to be the next command. So root actions must become a suspension point:
+    the turn loop yields a `RequestAction`, the client answers with a root
+    `Command`.
+  - **Legality enumeration exists but is not collected.** `CanPlay`, `CanDiscard`,
+    and `CanUse` already gate each root action (`internal/sim/sim.go:159-169` walks
+    them), so `Request.LegalCommands()` for a root request is assemblable from
+    parts that exist — no new rules work, just a gatherer.
+  - **`Orderer` is NOT a blocker.** `suspendChooser` does not implement it, so an
+    order prompt degrades to repeated `ChooseCreature` — which is the engine's
+    documented fallback and is fully expressible as a run of `CommandPickCard`s.
+    The web's single drag-to-order widget is a UI affordance over that run, not a
+    missing command kind.
+  - **Manual/debug mode is the open question.** 13 `Manual*` calls edit state with
+    no rule checks and sit entirely outside `Request`/`Command`. Either they become
+    command kinds (and a saved match can contain force-edits) or manual mode is
+    declared a web-only escape hatch that voids the Record.
+  - **Undo granularity differs.** Web undo works at root-action boundaries
+    (`rootMarks`); `Session.Undo(n)` works at raw command index. Once root actions
+    are commands the web still needs its own boundary bookkeeping on top.
+  - **Also update ADR 0039's and ADR 0040's stale opening lines** ("the engine code
+    that realizes it does not exist yet") when this lands.
+  - **DECIDED (human, this session): build `RequestAction` in the engine.** One
+    command vocabulary, not two — a second root-command type beside
+    `Request`/`Command` would recreate the two-sources-of-truth problem ADR 0039
+    exists to kill, and the ADR already says a command is "a root action _or_ an
+    answer to a choice". The engine grows a canonical turn loop that suspends with
+    a `RequestAction` carrying the legal set, and resumes on a root `Command`;
+    `internal/web`'s hand-rolled turn driver then disappears into the engine.
+  - **DECIDED (human, this session): manual/debug roots become command kinds.** A
+    playtester who force-edits the board and then hits a bug has produced exactly
+    the reproduction worth keeping, so the Record must carry the force-edits rather
+    than be voided by them. It also opens manual mode as a source for the style
+    page's log gallery (ADR 0046). **Constraint: the simulator must never run with
+    manual mode** — `internal/sim` drives legal play only, so the manual command
+    kinds must be unreachable from the sim's driver and a test should assert it.
+    Decide whether that is a build-tag split, a flag on the driver, or a
+    `LegalCommands()` that simply never offers them (preferred: the last, since it
+    keeps one vocabulary and makes the restriction a property of legality rather
+    than of who is asking).
 - **An engine-implementation doc, mirroring card-implementation.md.
   INVESTIGATE**: the `1 keys` bug happened because `countNoun` existed and was not
   found. Decide whether the fix is a new engine-side capability catalog (the
@@ -436,14 +691,90 @@ independently green.
     Æmber bonus, Æmber-cannot-be-stolen, spendable Æmber, forge Æmber, upgrade),
     one per **target shape** (distinct `Target.Text()` phrase gathered from every
     ability effect by a reflection walk, `walkEffectTargets`, so it is data-driven
-    and gapless), and a **Combiners** subsection of constructed minimal pairs
+    and gapless), one per **duration** (ranging `engine.Durations()`, captioned by
+    `Duration.String()`, a real card carrying that window found via the same
+    reflection walk `walkEffectDurations`; gaps drawn where no loaded card uses a
+    window), and a **Combiners** subsection of constructed minimal pairs
     (`combinerRows`) isolating the article (`a`/`an`) and single-vs-collective
     quantifier helpers. Real cards matched over `cards.All()`, gaps drawn not
     skipped, terms linked to `/rulebook`. Tested in `style_cardtext_section_test.go`.
-    **Still to add**: the axes with no card-side text hook yet — `Condition`/`Count`
-    composition and **durations** (`engine.Duration` renders no exported text; the
-    effect that uses it does). Expose an enumerable/renderable hook for these on
-    the engine side, then add a subsection in the same "walk `def.Abilities[].Effect`,
+    Duration needed a small engine surface — `engine.Durations()` + a canonical
+    `Duration.String()` short label — because there is **no** single printed
+    duration phrase: the same window renders differently per effect and flips
+    prefix/suffix, so the caption names the window and the card shows the phrasing.
+    **Still to add**: `Condition`/`Count` composition — the last axis with no
+    card-side text hook yet. Expose an enumerable/renderable hook on the engine
+    side, then add a subsection in the same "walk `def.Abilities[].Effect`,
     enumerate, randomMatch" shape.
   - Tests assert coverage (every catalogued kind sampled-or-flagged) and no-panic
     render — never markup or wording (ADR 0014).
+
+## Handoff: state of the zone-movement sweep
+
+Written for an agent who was not in the session that produced it. Everything
+below is current as of the last `mage check`.
+
+### What just landed
+
+The zone-movement consolidation is at a clean stopping point. `simultaneously`
+(`game_settle.go`) is now the one moment primitive: it holds the settling flag
+**and** the deferred leave-play queue across a batch, so a multi-card effect moves
+every card before any of them reacts. `Destination.move` is variadic and
+`PutFromPlay.put` runs its whole selection inside one batch.
+
+The part most likely to surprise you: a deferred `Leaves Play:` window resolves
+**after** its card has left play, which the source-in-play guard in
+`resolveTriggered` would normally skip. `triggeredAbility.fromLeave` is the
+exemption, and it is the fourth one in that guard — the others are tactics,
+`TriggersFromDiscard`, and duration reactions. This is written up as a Refinement
+section in ADR 0030. If a `Leaves Play:` ability ever appears to do nothing, that
+guard is the first place to look.
+
+Two deliberate asymmetries, both documented at their seam, neither a bug:
+
+- `fireScheduledOnLeave` (Turnkey's armed forced forge) still fires immediately
+  rather than joining the queue. It is an armed effect, not a trigger, and
+  deferring it would mean its flat-state entry has to outlive the card.
+- `flushDeferredLeaves` orders its window by `g.State.ActivePlayer` (ADR 0013)
+  while `settleDestroyed` beside it takes the resolving controller. The two
+  genuinely differ when a batch takes cards from both players out at once.
+
+### What was cancelled, and why it must not be re-proposed
+
+`settleBoard` and the orphaned-upgrade sweep. The backlog said to strip
+`discardUpgrades`/`discardUnder` out of `leavePlayTeardown` and let a sweep find
+upgrades whose host had gone. Investigating it killed it: `settleDestroyed`
+already loops to a fixpoint, a dangling upgrade is **already** an invariant
+violation that `-tags assert` runs never trip, and the eager discard settles at
+the same boundary a sweep would. It would have been cleanup for a state that
+cannot occur, in the hottest path in the engine. The reasoning now lives on
+`leavePlayTeardown`'s doc comment, which is the seam it governs.
+
+That cancellation also took the `returnUpgradesToHand` fold with it — that item
+depended on the sweep to make upgrades reachable as cards in play in their own
+right, so the helper and its `ZoneResolver.ReturnUpgradesToHand` port method stay.
+
+**It also moved the Timequake blocker.** The `ShuffleFriendlyCardsIntoDeck` fold
+used to be "blocked until the sweep lands". The sweep is never landing, so the
+route is now `crossZoneMover.zoneCards(InPlay)` listing upgrades plus a detach in
+the mover. Both items above say so; do not re-derive it.
+
+### Next up
+
+1. `crossZoneMover.zoneCards` for `InPlay` — now the gating item, since the
+   Timequake fold sits behind it.
+2. The Timequake fold itself. **Check `git status` first**: a sibling agent was
+   actively rewriting `effect_shuffle_*`, `effect_purge`, `effect_forge`, and
+   `zone.go` throughout this session. Stay out until their work lands.
+3. The remaining uniform-in-play groups, in the "Follow the creature" item above.
+
+### Gate status
+
+`mage check` is green on everything except engine coverage, which sits at 99.8%
+from the sibling agent's in-flight files — `effect_shuffle_discard.go` (0.0% ×5),
+`keycolor.go:35`, `log_render.go:92`, `assert_off.go:13`,
+`effect_damage.go:112`. None of them belong to this work; verify with
+`mage cover` before assuming a regression is yours. Worth knowing:
+`go test -tags assert ./...` enables the invariant checks at turn boundaries and
+is not part of `mage check` — it is the fastest way to prove a state-corruption
+claim, and it is what retired the orphan sweep.

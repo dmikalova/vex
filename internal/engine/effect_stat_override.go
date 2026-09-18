@@ -40,7 +40,7 @@ func (e OverrideStats) Text() string {
 	if e.HasArmor {
 		parts = append(parts, fmt.Sprintf("%d armor", e.Armor))
 	}
-	return "for the remainder of the turn, each creature is considered to have " +
+	return durationClause(RemainderOfPlayerTurn, "") + ", each creature is considered to have " +
 		strings.Join(parts, " and ")
 }
 

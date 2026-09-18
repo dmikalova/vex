@@ -99,10 +99,33 @@ func (d Destination) clause(subject string, plural bool) string {
 	return fmt.Sprintf(form[0], subject)
 }
 
-// move carries one card out of play to the destination: the from-play arm of the
-// matrix, where the resolving player owns whichever pile the card lands in.
-func (d Destination) move(ctx *EffectContext, id LocalID) {
-	d.moveFrom(ctx, inPlay, ctx.Controller, id)
+// move carries cards out of play to the destination: the from-play arm of the
+// matrix, where the resolving player owns whichever pile they land in. It is
+// plural by default, because moving several cards is one moment — the board
+// settles once after the whole set rather than between its members, so a card
+// leaving play cannot destroy one still waiting its turn. Nesting is harmless:
+// an inner batch's settle is a no-op while an outer one is open.
+func (d Destination) move(ctx *EffectContext, ids ...LocalID) {
+	ctx.Resolver.Simultaneously(ctx.Controller, func() {
+		for _, id := range ids {
+			d.moveFrom(ctx, InPlay, ctx.Controller, id)
+		}
+	})
+}
+
+// moveSource carries the card whose ability is resolving to the destination,
+// wherever that card is. A source still in play — a creature or artifact — moves
+// out of play. A resolving Tactic is in no zone at all, having already left the
+// one it was played from, so it cannot be moved; it is instead redirected to end
+// its play here rather than in the discard pile. That redirect names no source
+// zone, which is why it works whatever the Tactic was played from
+// (TestResolvingCardRedirectIsPerCard).
+func (d Destination) moveSource(ctx *EffectContext) {
+	if resolverInPlay(ctx, ctx.Source) {
+		d.move(ctx, ctx.Source)
+		return
+	}
+	ctx.Resolver.RedirectResolvingCard(ctx.Source, d)
 }
 
 // moveFrom carries one card from the zone `from` to this destination, dispatching
@@ -124,6 +147,10 @@ func (d Destination) moveFrom(ctx *EffectContext, from Zone, owner int, id Local
 			ctx.Resolver.PurgeFromHand(owner, id)
 		case Discard:
 			ctx.Resolver.PurgeFromDiscard(owner, id)
+		case Archives:
+			ctx.Resolver.PurgeFromArchives(owner, id)
+		case Deck:
+			ctx.Resolver.PurgeFromDeck(owner, id)
 		default: // inPlay
 			ctx.Resolver.PurgeFromPlay(id)
 		}
@@ -159,7 +186,7 @@ func (d Destination) moveFrom(ctx *EffectContext, from Zone, owner int, id Local
 			ctx.Resolver.ArchiveFromDiscard(owner, id)
 		case Deck:
 			ctx.Resolver.ArchiveFromDeck(id)
-		case purged:
+		case Purged:
 			ctx.Resolver.ArchiveFromPurge(owner, id)
 		default: // inPlay
 			if d.yours {

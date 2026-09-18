@@ -124,7 +124,7 @@ type HousesInPlay struct{ Except House }
 func (e HousesInPlay) Value(ctx *EffectContext) int {
 	seen := map[House]bool{}
 	for _, p := range [2]int{0, 1} {
-		for _, id := range append(ctx.Resolver.Battleline(p), ctx.Resolver.Artifacts(p)...) {
+		for _, id := range resolverCardsInPlay(ctx, p) {
 			if h := ctx.Resolver.House(id); h != e.Except {
 				seen[h] = true
 			}
@@ -180,12 +180,12 @@ func (e HousesAmong) players(ctx *EffectContext) []int {
 }
 
 // set returns a player's in-play ids the type filter surveys: the battleline for
-// creatures, or both rows when the type is unset.
+// creatures, or every card in play (upgrades included) when the type is unset.
 func (e HousesAmong) set(ctx *EffectContext, p int) []LocalID {
 	if e.Type == Creature {
 		return ctx.Resolver.Battleline(p)
 	}
-	return append(ctx.Resolver.Battleline(p), ctx.Resolver.Artifacts(p)...)
+	return resolverCardsInPlay(ctx, p)
 }
 
 // scope names the surveyed set as a plural noun the text roles share: "friendly

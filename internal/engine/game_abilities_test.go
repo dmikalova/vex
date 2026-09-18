@@ -957,3 +957,38 @@ func TestAfterUpgradeEnters(t *testing.T) {
 		}
 	})
 }
+
+// TestAfterDestroyedReactionsAreCreatureOnly pins that an "after a creature
+// leaves play" reaction watches creatures only. An artifact and an upgrade both
+// leave play the same way a creature does — and under the invalid-state sweep an
+// orphaned upgrade leaves play in its own right — but neither is a creature, so
+// neither wakes Pile of Skulls or Loot the Bodies.
+func TestAfterDestroyedReactionsAreCreatureOnly(t *testing.T) {
+	watcher := NewCard("Pile", Brobnar, Artifact, Rare,
+		WithAbility(TriggerAfterCreatureDestroyed, Draw{Amount: 1}))
+
+	g := NewGame("A", "B", 1)
+	g.State.ActivePlayer = 0
+	g.AddArtifact(watcher, 0)
+
+	creature := g.AddToBattleline(testCreature("e", 2), 1)
+	artifact := g.AddArtifact(NewCard("Relic", Brobnar, Artifact, Common), 1)
+	upgrade := g.Register(NewCard("Boon", Brobnar, Upgrade, Common), 1)
+	g.AttachUpgrade(creature, upgrade)
+
+	for _, tc := range []struct {
+		name string
+		id   LocalID
+		want int
+	}{
+		{"creature", creature, 1},
+		{"artifact", artifact, 0},
+		{"upgrade", upgrade, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := len(g.afterDestroyedReactions([]LocalID{tc.id})); got != tc.want {
+				t.Errorf("reactions to a destroyed %s = %d, want %d", tc.name, got, tc.want)
+			}
+		})
+	}
+}

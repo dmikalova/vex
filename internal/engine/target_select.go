@@ -194,7 +194,23 @@ func isOfMostPopulousHouse(ctx *EffectContext, id LocalID) bool {
 // filter narrows ids to those matching the target's trait, power, damaged, and
 // flank filters.
 func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
-	if t.trait == traitUnset &&
+	if t.hasNoFilters() {
+		return ids
+	}
+	out := make([]LocalID, 0, len(ids))
+	for _, id := range ids {
+		if t.matches(ctx, id) {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
+// hasNoFilters reports whether a target narrows its candidates at all. A target
+// that sets no trait, house, power, state, position, or identity filter matches
+// every candidate, so filter returns the input unchanged.
+func (t Target) hasNoFilters() bool {
+	return t.trait == traitUnset &&
 		t.exceptTrait == traitUnset &&
 		!t.house.filters() &&
 		!t.houseWithMostCreatures &&
@@ -223,105 +239,149 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		!t.toRightOfSource &&
 		!t.toLeftOfSource &&
 		!t.other &&
-		t.named == "" {
-		return ids
-	}
-	out := make([]LocalID, 0, len(ids))
-	for _, id := range ids {
-		if t.trait != traitUnset && !ctx.Resolver.HasTrait(id, t.trait) {
-			continue
+		t.named == ""
+}
+
+// matches reports whether one candidate passes every filter the target sets. The
+// filters are pure reads combined with AND, grouped into families so no single
+// predicate carries them all; a candidate must pass every family to match.
+func (t Target) matches(ctx *EffectContext, id LocalID) bool {
+	return t.matchesTraitHouse(ctx, id) &&
+		t.matchesPower(ctx, id) &&
+		t.matchesState(ctx, id) &&
+		t.matchesPosition(ctx, id) &&
+		t.matchesIdentity(ctx, id)
+}
+
+// matchesTraitHouse reports whether a candidate passes the target's trait and house
+// filters. A disjoining target matches a candidate of either the trait or the
+// house; otherwise both the trait and the house must match, and an except-trait,
+// most-populous-house, or shares-trait-with-"it" filter can still exclude it.
+func (t Target) matchesTraitHouse(ctx *EffectContext, id LocalID) bool {
+	if t.disjoins() {
+		if !ctx.Resolver.HasTrait(id, t.trait) && !t.house.matches(ctx, id) {
+			return false
 		}
-		if t.exceptTrait != traitUnset && ctx.Resolver.HasTrait(id, t.exceptTrait) {
-			continue
+	} else {
+		if t.trait != traitUnset && !ctx.Resolver.HasTrait(id, t.trait) {
+			return false
 		}
 		if !t.house.matches(ctx, id) {
-			continue
+			return false
 		}
-		if t.houseWithMostCreatures && !isOfMostPopulousHouse(ctx, id) {
-			continue
-		}
-		if t.sharesTrait && (!ctx.HasIt || !ctx.Resolver.SharesTrait(ctx.It, id)) {
-			continue
-		}
-		if t.hasMaxPower && ctx.Resolver.Power(id) > t.maxPower {
-			continue
-		}
-		if t.hasMinPower && ctx.Resolver.Power(id) < t.minPower {
-			continue
-		}
-		if t.hasExactPower && ctx.Resolver.Power(id) != t.exactPower {
-			continue
-		}
-		if t.oddPower && ctx.Resolver.Power(id)%2 == 0 {
-			continue
-		}
-		if t.evenPower && ctx.Resolver.Power(id)%2 != 0 {
-			continue
-		}
-		if t.damaged && ctx.Resolver.Damage(id) == 0 {
-			continue
-		}
-		if t.undamaged && ctx.Resolver.Damage(id) != 0 {
-			continue
-		}
-		if t.withAember && ctx.Resolver.AmberOn(id) == 0 {
-			continue
-		}
-		if t.withoutAember && ctx.Resolver.AmberOn(id) != 0 {
-			continue
-		}
-		if t.withoutBonusIcons && ctx.Resolver.HasBonusIcons(id) {
-			continue
-		}
-		if t.withCounter.valid() && ctx.Resolver.CountersOn(id, t.withCounter) == 0 {
-			continue
-		}
-		if t.withArmor && ctx.Resolver.Armor(id) == 0 {
-			continue
-		}
-		if t.withUpgrade && len(ctx.Resolver.Upgrades(id)) == 0 {
-			continue
-		}
-		if t.sharesHouseNeighbors > 0 &&
-			sharedHouseNeighbors(ctx, id) < t.sharesHouseNeighbors {
-			continue
-		}
-		if t.keyword.valid() && !ctx.Resolver.HasKeyword(id, t.keyword) {
-			continue
-		}
-		if t.stunned && !ctx.Resolver.Stunned(id) {
-			continue
-		}
-		if t.ready && ctx.Resolver.Exhausted(id) {
-			continue
-		}
-		if t.onFlank && ctx.Resolver.IsCreature(id) && !onFlank(ctx, id) {
-			continue
-		}
-		if t.notOnFlank && onFlank(ctx, id) {
-			continue
-		}
-		if t.inCenter && !ctx.Resolver.InCenterOfBattleline(id) {
-			continue
-		}
-		if t.neighboring && !isNeighbor(ctx, ctx.Source, id) {
-			continue
-		}
-		if t.toRightOfSource && !toSideOfSource(ctx, ctx.Source, id, +1) {
-			continue
-		}
-		if t.toLeftOfSource && !toSideOfSource(ctx, ctx.Source, id, -1) {
-			continue
-		}
-		if t.other && id == ctx.Source {
-			continue
-		}
-		if t.named != "" && ctx.Resolver.Name(id) != t.named {
-			continue
-		}
-		out = append(out, id)
 	}
-	return out
+	if t.exceptTrait != traitUnset && ctx.Resolver.HasTrait(id, t.exceptTrait) {
+		return false
+	}
+	if t.houseWithMostCreatures && !isOfMostPopulousHouse(ctx, id) {
+		return false
+	}
+	if t.sharesTrait && (!ctx.HasIt || !ctx.Resolver.SharesTrait(ctx.It, id)) {
+		return false
+	}
+	return true
+}
+
+// matchesPower reports whether a candidate's power passes the target's power
+// filters — a maximum, minimum, exact, odd, or even power requirement.
+func (t Target) matchesPower(ctx *EffectContext, id LocalID) bool {
+	if t.hasMaxPower && ctx.Resolver.Power(id) > t.maxPower {
+		return false
+	}
+	if t.hasMinPower && ctx.Resolver.Power(id) < t.minPower {
+		return false
+	}
+	if t.hasExactPower && ctx.Resolver.Power(id) != t.exactPower {
+		return false
+	}
+	if t.oddPower && ctx.Resolver.Power(id)%2 == 0 {
+		return false
+	}
+	if t.evenPower && ctx.Resolver.Power(id)%2 != 0 {
+		return false
+	}
+	return true
+}
+
+// matchesState reports whether a candidate passes the target's per-card state
+// filters: damage, Æmber, bonus icons, counters, armor, upgrades, house-sharing
+// neighbors, a keyword, and the stunned/ready flags.
+func (t Target) matchesState(ctx *EffectContext, id LocalID) bool {
+	if t.damaged && ctx.Resolver.Damage(id) == 0 {
+		return false
+	}
+	if t.undamaged && ctx.Resolver.Damage(id) != 0 {
+		return false
+	}
+	if t.withAember && ctx.Resolver.AmberOn(id) == 0 {
+		return false
+	}
+	if t.withoutAember && ctx.Resolver.AmberOn(id) != 0 {
+		return false
+	}
+	if t.withoutBonusIcons && ctx.Resolver.HasBonusIcons(id) {
+		return false
+	}
+	if t.withCounter.valid() && ctx.Resolver.CountersOn(id, t.withCounter) == 0 {
+		return false
+	}
+	if t.withArmor && ctx.Resolver.Armor(id) == 0 {
+		return false
+	}
+	if t.withUpgrade && len(ctx.Resolver.Upgrades(id)) == 0 {
+		return false
+	}
+	if t.sharesHouseNeighbors > 0 &&
+		sharedHouseNeighbors(ctx, id) < t.sharesHouseNeighbors {
+		return false
+	}
+	if t.keyword.valid() && !ctx.Resolver.HasKeyword(id, t.keyword) {
+		return false
+	}
+	if t.stunned && !ctx.Resolver.Stunned(id) {
+		return false
+	}
+	if t.ready && ctx.Resolver.Exhausted(id) {
+		return false
+	}
+	return true
+}
+
+// matchesPosition reports whether a candidate passes the target's battleline
+// position filters — on or off a flank, in the center, neighboring the source, or
+// to the source's right or left.
+func (t Target) matchesPosition(ctx *EffectContext, id LocalID) bool {
+	if t.onFlank && ctx.Resolver.IsCreature(id) && !onFlank(ctx, id) {
+		return false
+	}
+	if t.notOnFlank && onFlank(ctx, id) {
+		return false
+	}
+	if t.inCenter && !ctx.Resolver.InCenterOfBattleline(id) {
+		return false
+	}
+	if t.neighboring && !isNeighbor(ctx, ctx.Source, id) {
+		return false
+	}
+	if t.toRightOfSource && !toSideOfSource(ctx, ctx.Source, id, +1) {
+		return false
+	}
+	if t.toLeftOfSource && !toSideOfSource(ctx, ctx.Source, id, -1) {
+		return false
+	}
+	return true
+}
+
+// matchesIdentity reports whether a candidate passes the target's identity filters:
+// "other" excludes the source itself, and a name filter keeps only a named card.
+func (t Target) matchesIdentity(ctx *EffectContext, id LocalID) bool {
+	if t.other && id == ctx.Source {
+		return false
+	}
+	if t.named != "" && ctx.Resolver.Name(id) != t.named {
+		return false
+	}
+	return true
 }
 
 // onFlank reports whether a creature is on a flank of its battleline (its

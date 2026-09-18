@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Bonus:  Æmber
 //	Traits: Item
 //
-//	After a creature reaps, if it is the first time a creature has reaped this turn, deal 2 damage to it.
+//	After a creature reaps, if this is the first time a creature has reaped this turn, deal 2 damage to it.
 var Ragwarg = set.New(
 	"Ragwarg",
 	card.House.Brobnar,

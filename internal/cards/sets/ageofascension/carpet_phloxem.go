@@ -19,7 +19,7 @@ var CarpetPhloxem = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.InPlay{
+			Cond: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 				None:   true,

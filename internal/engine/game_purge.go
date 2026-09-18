@@ -5,41 +5,45 @@ package engine
 // the base game returns — so purge is the game's way of permanently answering
 // recursion out of the discard.
 
-// purgeFromDiscard moves a card from a player's discard pile to their purge pile.
-// Callers pass a card already in that discard pile.
-func (g *Game) purgeFromDiscard(owner int, id LocalID) {
-	g.purgeFrom(owner, id, Discard)
+// purgeFromDiscard moves a card from a player's discard pile to its owner's purge
+// pile. Callers pass a card already in that discard pile.
+func (g *Game) purgeFromDiscard(holder int, id LocalID) {
+	g.purgeFrom(holder, id, Discard)
 }
 
-// purgeFromHand moves a card from a player's hand to their purge pile. The card
-// whose ability purged it is credited through the record's frame. Callers pass a
-// card already in that hand.
-func (g *Game) purgeFromHand(owner int, id LocalID) {
+// purgeFromHand moves a card from a player's hand to its owner's purge pile. The
+// card whose ability purged it is credited through the record's frame. Callers
+// pass a card already in that hand.
+func (g *Game) purgeFromHand(holder int, id LocalID) {
 	g.moveCard(id,
-		zoneRef{Player: owner, Zone: Hand},
-		zoneRef{Player: owner, Zone: purged},
-		CardPurgedFromHand{Card: id, Owner: owner})
+		zoneRef{Player: holder, Zone: Hand},
+		zoneRef{Player: g.owner(id), Zone: Purged},
+		CardPurgedFromHand{Card: id, Owner: holder})
 }
 
-// purgeFromArchives moves a card from a player's archives to their purge pile.
-// Callers pass a card already in those archives.
-func (g *Game) purgeFromArchives(owner int, id LocalID) {
-	g.purgeFrom(owner, id, Archives)
+// purgeFromArchives moves a card from a player's archives to its owner's purge
+// pile. Callers pass a card already in those archives.
+func (g *Game) purgeFromArchives(holder int, id LocalID) {
+	g.purgeFrom(holder, id, Archives)
 }
 
-// purgeFromDeck moves a card from a player's deck to their purge pile. Callers
-// pass a card already in that deck (Borr Nit purges one of the cards it revealed
-// off the top).
-func (g *Game) purgeFromDeck(owner int, id LocalID) {
-	g.purgeFrom(owner, id, Deck)
+// purgeFromDeck moves a card from a player's deck to its owner's purge pile.
+// Callers pass a card already in that deck (Borr Nit purges one of the cards it
+// revealed off the top).
+func (g *Game) purgeFromDeck(holder int, id LocalID) {
+	g.purgeFrom(holder, id, Deck)
 }
 
 // purgeFrom purges from a zone whose move narrates as a plain relocation. Purging
 // from hand is the exception and records its own entry: a hand is hidden, so the
 // log has to say the card came from one.
-func (g *Game) purgeFrom(owner int, id LocalID, from Zone) {
+//
+// holder is who held the source zone, which is not always the owner: archives can
+// hold an abducted enemy card (Hidden Stash), and a purged card always goes to its
+// owner's pile. Pinned by TestPurgeFromArchivesGoesToOwnersPile.
+func (g *Game) purgeFrom(holder int, id LocalID, from Zone) {
 	g.moveCard(id,
-		zoneRef{Player: owner, Zone: from},
-		zoneRef{Player: owner, Zone: purged},
-		CardMoved{Player: g.State.ActivePlayer, Card: id, From: from, To: purged})
+		zoneRef{Player: holder, Zone: from},
+		zoneRef{Player: g.owner(id), Zone: Purged},
+		CardMoved{Player: g.State.ActivePlayer, Card: id, From: from, To: Purged})
 }

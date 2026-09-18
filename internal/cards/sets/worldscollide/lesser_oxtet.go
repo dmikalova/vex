@@ -23,7 +23,9 @@ var LesserOxtet = set.New(
 	card.WithTraits(card.Traits.Demon),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.Play, card.PurgeFromHand{Player: card.Controller, Selection: card.Each{}}),
+		card.Trigger.Play,
+		card.PurgeCard{Zone: card.Hand, Player: card.Controller, Selection: card.Each{}},
+	),
 	card.WithAbility(
 		card.Trigger.Reap, card.RaiseKeyCost{
 			Player:   card.Opponent,

@@ -173,6 +173,7 @@ func TestLogEntryText(t *testing.T) {
 		"P1 plays artifact Card9",
 		"P0 plays tactic Card9",
 		"P0 attaches Card9 to Card2",
+		"Card9 is discarded from Card2",
 		"P1 puts Card9 into play under their control",
 		"P0 plays Card9 from the top of P0's deck",
 		"Card9 has P0 gain 2 bonus Æmber",

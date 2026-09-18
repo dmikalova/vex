@@ -166,102 +166,138 @@ func buildClusters(cards []Card) map[string]clusterIndex {
 // gap is visible rather than a silent short deck.
 func (s Set) validateClusters() {
 	for name, ci := range s.clusters {
-		if ci.strategy == clusterStrategyInvalid {
-			panic(fmt.Sprintf("deckgen: cluster %q in set %q has no strategy", name, s.Name))
-		}
-		// PerGigantic fires off deck structure (a gigantic present), not a member
-		// being drawn, so it needs no trigger, lead, or rollable member — a member
-		// is pulled into a gigantic's pod, never drawn on its own.
-		if ci.strategy == PerGigantic {
+		s.validateCluster(name, ci)
+	}
+}
+
+// validateCluster panics if a single named cluster is malformed: it has a strategy
+// and trigger, a ByLead cluster names a lead, each strategy's own shape holds, the
+// cluster can actually be rolled to fire, and a OnePerHouse cluster covers every
+// house. PerGigantic fires off deck structure (a gigantic present), not a member
+// being drawn, so it needs no trigger, lead, or rollable member.
+func (s Set) validateCluster(name string, ci clusterIndex) {
+	if ci.strategy == clusterStrategyInvalid {
+		panic(fmt.Sprintf("deckgen: cluster %q in set %q has no strategy", name, s.Name))
+	}
+	if ci.strategy == PerGigantic {
+		return
+	}
+	if ci.trigger == clusterTriggerInvalid {
+		panic(fmt.Sprintf("deckgen: cluster %q in set %q has no trigger", name, s.Name))
+	}
+	if ci.trigger == ByLead && ci.lead == "" {
+		panic(
+			fmt.Sprintf(
+				"deckgen: ByLead cluster %q in set %q has no lead member",
+				name,
+				s.Name,
+			),
+		)
+	}
+	switch ci.strategy {
+	case RandomCount:
+		validateRandomCountCluster(name, s.Name, ci)
+	case SelfPull:
+		validateSelfPullCluster(name, s.Name, ci)
+	case PullExact:
+		validatePullExactCluster(name, s.Name, ci)
+	case Pull:
+		validatePullCluster(name, s.Name, ci)
+	}
+	if !clusterCanFire(ci) {
+		panic(fmt.Sprintf(
+			"deckgen: cluster %q in set %q can never fire — %s, so nothing rolls to "+
+				"trigger it (give a triggering member a rollable rarity)",
+			name, s.Name, clusterTriggerDesc(ci.trigger),
+		))
+	}
+	if ci.strategy == OnePerHouse {
+		s.validateOnePerHouseCluster(name, ci)
+	}
+}
+
+// validateRandomCountCluster panics if a RandomCount cluster's [min,max] does not
+// fit its placeable pool. A ByLead RandomCount cluster plants its lead and places a
+// count of the other members, so the placeable pool is the non-lead members (Dark
+// Harbinger pulls its Mutations). A ByAnyMember one has no lead, so every member is
+// placeable (the sins).
+func validateRandomCountCluster(name, setName string, ci clusterIndex) {
+	placeable := len(ci.members)
+	if ci.lead != "" {
+		placeable--
+	}
+	if ci.min < 1 || ci.max < ci.min || ci.max > placeable {
+		panic(fmt.Sprintf(
+			"deckgen: RandomCount cluster %q in set %q wants [%d,%d] of %d placeable members",
+			name,
+			setName,
+			ci.min,
+			ci.max,
+			placeable,
+		))
+	}
+}
+
+// validateSelfPullCluster panics if a SelfPull cluster is not a single member with
+// a well-formed 1 ≤ min ≤ mean ≤ PodSize count.
+func validateSelfPullCluster(name, setName string, ci clusterIndex) {
+	if len(ci.members) != 1 || ci.min < 1 || ci.mean < float64(ci.min) ||
+		ci.mean > PodSize {
+		panic(fmt.Sprintf(
+			"deckgen: SelfPull cluster %q in set %q wants min %d mean %g of %d members "+
+				"(needs exactly one member, 1 ≤ min ≤ mean ≤ %d)",
+			name, setName, ci.min, ci.mean, len(ci.members), PodSize,
+		))
+	}
+}
+
+// validatePullExactCluster panics if a PullExact cluster is not ByLead with at
+// least a lead and one other member.
+func validatePullExactCluster(name, setName string, ci clusterIndex) {
+	if ci.trigger != ByLead || len(ci.members) < 2 {
+		panic(fmt.Sprintf(
+			"deckgen: PullExact cluster %q in set %q needs ByLead and a partner "+
+				"(a lead plus at least one other member)",
+			name, setName,
+		))
+	}
+}
+
+// validatePullCluster panics if a Pull cluster is not ByLead with a partner, or any
+// non-lead member's pulled count is malformed.
+func validatePullCluster(name, setName string, ci clusterIndex) {
+	if ci.trigger != ByLead || len(ci.members) < 2 {
+		panic(fmt.Sprintf(
+			"deckgen: Pull cluster %q in set %q needs ByLead and a partner "+
+				"(a lead plus at least one other member)",
+			name, setName,
+		))
+	}
+	for _, m := range ci.members {
+		r := m.Profile.Cluster
+		if m.Def.Name == ci.lead {
 			continue
 		}
-		if ci.trigger == clusterTriggerInvalid {
-			panic(fmt.Sprintf("deckgen: cluster %q in set %q has no trigger", name, s.Name))
-		}
-		if ci.trigger == ByLead && ci.lead == "" {
-			panic(
-				fmt.Sprintf(
-					"deckgen: ByLead cluster %q in set %q has no lead member",
-					name,
-					s.Name,
-				),
-			)
-		}
-		if ci.strategy == RandomCount {
-			// A ByLead RandomCount cluster plants its lead and places a count of the
-			// other members, so the placeable pool is the non-lead members (Dark
-			// Harbinger pulls its Mutations). A ByAnyMember one has no lead, so every
-			// member is placeable (the sins).
-			placeable := len(ci.members)
-			if ci.lead != "" {
-				placeable--
-			}
-			if ci.min < 1 || ci.max < ci.min || ci.max > placeable {
-				panic(fmt.Sprintf(
-					"deckgen: RandomCount cluster %q in set %q wants [%d,%d] of %d placeable members",
-					name,
-					s.Name,
-					ci.min,
-					ci.max,
-					placeable,
-				))
-			}
-		}
-		if ci.strategy == SelfPull &&
-			(len(ci.members) != 1 || ci.min < 1 || ci.mean < float64(ci.min) ||
-				ci.mean > PodSize) {
+		if r.Min < 0 || r.Mean < float64(r.Min) {
 			panic(fmt.Sprintf(
-				"deckgen: SelfPull cluster %q in set %q wants min %d mean %g of %d members "+
-					"(needs exactly one member, 1 ≤ min ≤ mean ≤ %d)",
-				name, s.Name, ci.min, ci.mean, len(ci.members), PodSize,
+				"deckgen: Pull cluster %q in set %q pulls %q at min %d mean %g "+
+					"(needs 0 ≤ min ≤ mean; set it with card.Pulled)",
+				name, setName, m.Def.Name, r.Min, r.Mean,
 			))
 		}
-		if ci.strategy == PullExact && (ci.trigger != ByLead || len(ci.members) < 2) {
+	}
+}
+
+// validateOnePerHouseCluster panics if a OnePerHouse cluster is missing a member
+// for any house the set uses.
+func (s Set) validateOnePerHouseCluster(name string, ci clusterIndex) {
+	for _, h := range s.houses {
+		if _, ok := ci.byHouse[h]; !ok {
 			panic(fmt.Sprintf(
-				"deckgen: PullExact cluster %q in set %q needs ByLead and a partner "+
-					"(a lead plus at least one other member)",
-				name, s.Name,
+				"deckgen: OnePerHouse cluster %q in set %q has no member for House %s "+
+					"(stub one with //go:build todo)",
+				name, s.Name, h,
 			))
-		}
-		if ci.strategy == Pull {
-			if ci.trigger != ByLead || len(ci.members) < 2 {
-				panic(fmt.Sprintf(
-					"deckgen: Pull cluster %q in set %q needs ByLead and a partner "+
-						"(a lead plus at least one other member)",
-					name, s.Name,
-				))
-			}
-			for _, m := range ci.members {
-				r := m.Profile.Cluster
-				if m.Def.Name == ci.lead {
-					continue
-				}
-				if r.Min < 0 || r.Mean < float64(r.Min) {
-					panic(fmt.Sprintf(
-						"deckgen: Pull cluster %q in set %q pulls %q at min %d mean %g "+
-							"(needs 0 ≤ min ≤ mean; set it with card.Pulled)",
-						name, s.Name, m.Def.Name, r.Min, r.Mean,
-					))
-				}
-			}
-		}
-		if !clusterCanFire(ci) {
-			panic(fmt.Sprintf(
-				"deckgen: cluster %q in set %q can never fire — %s, so nothing rolls to "+
-					"trigger it (give a triggering member a rollable rarity)",
-				name, s.Name, clusterTriggerDesc(ci.trigger),
-			))
-		}
-		if ci.strategy == OnePerHouse {
-			for _, h := range s.houses {
-				if _, ok := ci.byHouse[h]; !ok {
-					panic(fmt.Sprintf(
-						"deckgen: OnePerHouse cluster %q in set %q has no member for House %s "+
-							"(stub one with //go:build todo)",
-						name, s.Name, h,
-					))
-				}
-			}
 		}
 	}
 }

@@ -24,7 +24,7 @@ var Envy = set.New(
 	card.WithTraits(card.Traits.Demon, card.Traits.Sin),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(card.Trigger.Reap, card.Conditional{
-		Cond: card.InPlay{
+		Cond: card.CardsInPlay{
 			Player: card.Controller,
 			Type:   card.Type.Creature,
 			Trait:  card.Traits.Sin,

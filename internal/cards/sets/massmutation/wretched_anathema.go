@@ -21,7 +21,7 @@ var WretchedAnathema = set.Gigantic(
 	card.WithTraits(card.Traits.Demon),
 	card.WithConstant(card.ConstantAbility{
 		Target: card.Target.This,
-		WhileCondition: card.InPlay{
+		WhileCondition: card.CardsInPlay{
 			Player: card.Controller,
 			Type:   card.Type.Creature,
 			Other:  true,

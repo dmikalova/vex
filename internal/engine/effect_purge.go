@@ -8,40 +8,51 @@ import (
 // no ability can reach it unless that ability names the purge pile. It is the most
 // permanent way a card leaves play: a purged card never enters a discard pile and
 // can never be drawn, played, or destroyed again.
-// PurgeCard sets cards aside out of the game, taken from a discard pile, with a
-// Selection deciding which cards leave (a chosen card, restricted by house or
-// type; or each matching card) and Player deciding which pile: ChosenPlayer picks
-// among the piles holding a matching card (Creeping Oblivion's "a discard pile"),
-// EachPlayer purges from both piles at once (Soldiers to Flowers). GainOwnerAember
-// gives each purged card's owner 1 Æmber.
+// PurgeCard sets cards aside out of the game, taken from a hand or a discard
+// pile. Zone names which, and Player whose: Controller or Opponent for one named
+// side (Imperial Traitor purges from your opponent's hand), ChosenPlayer for a
+// side the controller picks among those holding a matching card (Creeping
+// Oblivion's "a discard pile"), EachPlayer for both at once (Soldiers to
+// Flowers). A Selection decides which cards leave — a chosen card, restricted by
+// house or type; a uniformly random one (Impspector); or every match (Lesser
+// Oxtet). Amount purges that many per zone; an Optional Selection lets the
+// controller purge fewer, which reads "you may purge" for one card and "up to N"
+// for several. GainOwnerAember gives each purged card's owner 1 Æmber.
 // It serves both as a standalone effect (Creeping Oblivion purges up to 2 cards)
 // and as the first half of a Then ("purge a creature -> give a +1 power counter"),
 // so it reports whether it purged anything, and it records the tally and the total
 // Æmber bonus of the purged cards so a following effect can scale with them
 // (Noname's power, Infurnace's Æmber loss).
 type PurgeCard struct {
-	// Player chooses which discard pile(s) the purge pulls from: ChosenPlayer for a
-	// pile the controller picks, EachPlayer for both piles at once.
+	// Zone names the source the cards are purged from: Hand or Discard.
+	Zone Zone
+	// Player names whose copy of the zone the purge pulls from: Controller or
+	// Opponent for a fixed side, ChosenPlayer for one the controller picks,
+	// EachPlayer for both at once.
 	Player Player
 	// Selection decides which cards are purged; it must be set.
 	Selection Selection
-	// Amount is how many cards to purge from the pile; the zero value counts as one.
-	// It is ignored by an Each Selection, which takes every matching card. An Optional
-	// Selection lets the controller purge fewer, down to none, reading as "up to N"
-	// (Creeping Oblivion's "up to 2").
+	// Amount is how many cards to purge from each zone; the zero value counts as
+	// one. It is ignored by an Each Selection, which takes every matching card. An
+	// Optional Selection lets the controller purge fewer, down to none, reading as
+	// "up to N" (Creeping Oblivion's "up to 2").
 	Amount int
 	// GainOwnerAember gives each purged card's owner 1 Æmber per purged card
 	// (Soldiers to Flowers).
 	GainOwnerAember bool
 }
 
-// validate rejects a Purge whose player or selection was left unset.
+// validate rejects a Purge whose player or selection was left unset, or whose
+// source zone is one no purge draws from.
 func (e PurgeCard) validate() error {
 	if !e.Player.valid() {
 		return errUnsetPlayer("PurgeCard")
 	}
 	if e.Selection == nil {
 		return fmt.Errorf("PurgeCard: selection must be set")
+	}
+	if e.Zone != Hand && e.Zone != Discard {
+		return fmt.Errorf("PurgeCard: zone must be Hand or Discard")
 	}
 	return nil
 }
@@ -67,19 +78,23 @@ func (e PurgeCard) object() string {
 	}
 }
 
-// pileText renders which discard pile(s) the purge names.
-func (e PurgeCard) pileText() string {
-	if e.Player == EachPlayer {
-		return "each player's discard pile"
-	}
-	return "a discard pile"
+// declinable reports that a single-card purge with a declinable selection is one
+// clickable card, so the controller answers it by clicking that card or passing. A
+// multi-card purge renders "up to N" and runs its own cycle instead.
+func (e PurgeCard) declinable() bool {
+	return selectionDeclinable(e.Selection) && e.count() == 1
 }
 
 // Text renders the effect, e.g. "purge a creature from a discard pile", "purge up
-// to 2 cards from a discard pile", or "purge each Untamed creature from each
-// player's discard pile. For each card purged this way, its owner gains 1 Æmber".
+// to 2 cards from a discard pile", "you may purge a Sanctum card from your
+// opponent's hand", or "purge each Untamed creature from each player's discard
+// pile. For each card purged this way, its owner gains 1 Æmber".
 func (e PurgeCard) Text() string {
-	text := "purge " + e.object() + " from " + e.pileText()
+	verb := "purge "
+	if e.declinable() {
+		verb = "you may purge "
+	}
+	text := verb + e.object() + " from " + whoseZone(e.Player, e.Zone)
 	if e.GainOwnerAember {
 		text += ". For each card purged this way, its owner gains 1 Æmber"
 	}
@@ -89,52 +104,75 @@ func (e PurgeCard) Text() string {
 // Resolve purges the cards, ignoring the report used when Purge gates a Then.
 func (e PurgeCard) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 
-// piles returns the discard piles the purge acts on: both piles for EachPlayer, or
-// — for ChosenPlayer — the one pile the controller picks among those holding a
-// card the Selection would take (prompting only when both do).
-func (e PurgeCard) piles(ctx *EffectContext) []int {
-	if e.Player == EachPlayer {
+// resolveOptional is resolveGate under a May: the card is asked declinably, with a
+// Done to decline.
+func (e PurgeCard) resolveOptional(ctx *EffectContext) bool { return e.resolveGate(ctx) }
+
+// cards returns the cards in one player's copy of the source zone.
+func (e PurgeCard) cards(ctx *EffectContext, player int) []LocalID {
+	if e.Zone == Hand {
+		return ctx.Resolver.Hand(player)
+	}
+	return ctx.Resolver.Discard(player)
+}
+
+// sides returns whose copies of the zone the purge acts on: both for EachPlayer,
+// the named side for Controller or Opponent, or — for ChosenPlayer — the one the
+// controller picks among those holding a card the Selection would take (prompting
+// only when both do).
+func (e PurgeCard) sides(ctx *EffectContext) []int {
+	switch e.Player {
+	case EachPlayer:
 		return []int{ctx.Controller, ctx.Opponent()}
+	case ChosenPlayer:
+	default:
+		return []int{ctx.PlayerFor(e.Player)}
 	}
 	var eligible []int
 	for _, p := range []int{ctx.Controller, ctx.Opponent()} {
-		if len(e.Selection.candidates(ctx, ctx.Resolver.Discard(p))) > 0 {
+		if len(e.Selection.candidates(ctx, e.cards(ctx, p))) > 0 {
 			eligible = append(eligible, p)
 		}
 	}
 	if len(eligible) < 2 {
 		return eligible
 	}
-	chosen := ctx.ChooseOption("Choose a discard pile to purge from",
-		[]string{"your discard pile", "your opponent's discard pile"})
+	chosen := ctx.ChooseOption("Choose a "+e.Zone.noun()+" to purge from",
+		[]string{"your " + e.Zone.noun(), "your opponent's " + e.Zone.noun()})
 	return eligible[chosen : chosen+1]
 }
 
-// resolveGate purges up to count matching cards from each named pile — the cards
+// resolveGate purges up to count matching cards from each named zone — the cards
 // one at a time for a Chosen Selection, with a "Done" opt-out for an Optional
-// Selection, and every
-// match at once for an Each Selection — records the tally and the total Æmber
-// bonus, pays each owner when GainOwnerAember, and reports whether any card was
-// purged (so a Then can gate on it).
+// Selection, and every match at once for an Each Selection — records the tally and
+// the total Æmber bonus, pays each owner when GainOwnerAember, and reports whether
+// any card was purged (so a Then can gate on it). A purge that took exactly one
+// card puts it in context (ctx.It) so a following effect can name it — Custom Virus
+// destroys each creature sharing a trait with it.
 func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 	purged := 0
 	bonus := 0
-	for _, pile := range e.piles(ctx) {
+	var last LocalID
+	for _, side := range e.sides(ctx) {
 		for i := 0; i < e.count(); i++ {
-			ids := e.Selection.pick(ctx, ctx.Resolver.Discard(pile))
+			ids := e.Selection.pick(ctx, e.cards(ctx, side))
 			if len(ids) == 0 {
 				break
 			}
 			for _, id := range ids {
 				bonus += ctx.Resolver.AemberBonus(id)
-				purgeFrom(ctx, Discard, pile, id)
+				purgeFrom(ctx, e.Zone, side, id)
 				purged++
-				ctx.Produced.Purged[pile]++
+				last = id
+				ctx.Produced.Purged[side]++
 				if e.GainOwnerAember {
-					ctx.Resolver.GainAember(pile, 1)
+					ctx.Resolver.GainAember(side, 1)
 				}
 			}
 		}
+	}
+	if purged == 1 {
+		ctx.It, ctx.HasIt = last, true
 	}
 	ctx.Produced.PurgedAemberBonus = bonus
 	return purged > 0
@@ -146,73 +184,6 @@ func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 // 0031).
 func purgeFrom(ctx *EffectContext, from Zone, owner int, id LocalID) {
 	toPurged.moveFrom(ctx, from, owner, id)
-}
-
-// PurgeFromHand purges cards from a player's hand, with a Selection deciding how
-// the cards are picked: chosen by the controller, optionally restricted to a
-// house (Imperial Traitor, Greater Oxtet); a random card (Impspector); or each
-// matching card (Martians Make Bad Allies, Lesser Oxtet). It reports whether it
-// purged anything and records the tally, so it can gate a Then and a following
-// effect can scale with it (CardsPurged).
-type PurgeFromHand struct {
-	// Player whose hand the cards are purged from.
-	Player Player
-	// Selection decides which cards are purged; it must be set.
-	Selection Selection
-}
-
-// validate rejects a PurgeFromHand whose player or selection was left unset.
-func (e PurgeFromHand) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("PurgeFromHand")
-	}
-	if e.Selection == nil {
-		return fmt.Errorf("PurgeFromHand: selection must be set")
-	}
-	return nil
-}
-
-// Text renders the effect, e.g. "you may purge a Sanctum card from your
-// opponent's hand" or "purge each non-Mars creature from your hand".
-func (e PurgeFromHand) Text() string {
-	verb := "purge "
-	if selectionDeclinable(e.Selection) {
-		verb = "you may purge "
-	}
-	return verb + e.Selection.object() + " from " + whoseHand(e.Player)
-}
-
-// Resolve purges the selected cards from the player's hand.
-func (e PurgeFromHand) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
-
-// resolveGate purges the selected cards and reports whether any were, recording
-// the tally so a Then ("purge a card from your hand -> give two power counters",
-// Greater Oxtet) and a following "for each" (CardsPurged) can hang off it. When a
-// single card is purged it is put in context (ctx.It) so a following effect can
-// name it — Custom Virus destroys each creature sharing a trait with it.
-func (e PurgeFromHand) resolveGate(ctx *EffectContext) bool {
-	owner := ctx.PlayerFor(e.Player)
-	ids := e.Selection.pick(ctx, ctx.Resolver.Hand(owner))
-	for _, id := range ids {
-		purgeFrom(ctx, Hand, owner, id)
-	}
-	if len(ids) == 1 {
-		ctx.It, ctx.HasIt = ids[0], true
-	}
-	ctx.Produced.Purged[owner] = len(ids)
-	return len(ids) > 0
-}
-
-// declinable reports whether the purge can be passed — true only for an
-// Optional Chosen, whose single card choice is answered by clicking the card
-// (or passing) under a May.
-func (e PurgeFromHand) declinable() bool { return selectionDeclinable(e.Selection) }
-
-// resolveOptional resolves the purge as its own optional choice under a May.
-func (e PurgeFromHand) resolveOptional(
-	ctx *EffectContext,
-) bool {
-	return e.resolveGate(ctx)
 }
 
 // PurgeCreature purges each creature its Target selects from play into its owner's
@@ -275,28 +246,16 @@ func (e PurgeCreature) resolveOptional(ctx *EffectContext) bool {
 func (e PurgeCreature) purge(ctx *EffectContext, ids []LocalID) bool {
 	purged := 0
 	for _, id := range ids {
-		if resolverInPlay(ctx, id) {
-			controller := ctx.Resolver.Controller(id)
-			ctx.Produced.Purged[controller]++
-			if len(ids) == 1 {
-				ctx.ItController = controller
-			}
-			purgeFrom(ctx, inPlay, 0, id)
-			purged++
+		zone, side, ok := currentZone(ctx, id)
+		if !ok {
 			continue
 		}
-		owner := ctx.Resolver.Owner(id)
-		for _, d := range ctx.Resolver.Discard(owner) {
-			if d == id {
-				ctx.Produced.Purged[owner]++
-				if len(ids) == 1 {
-					ctx.ItController = owner
-				}
-				purgeFrom(ctx, Discard, owner, id)
-				purged++
-				break
-			}
+		ctx.Produced.Purged[side]++
+		if len(ids) == 1 {
+			ctx.ItController = side
 		}
+		purgeFrom(ctx, zone, side, id)
+		purged++
 	}
 	if len(ids) == 1 {
 		ctx.It, ctx.HasIt = ids[0], true
@@ -343,19 +302,11 @@ func (PurgedAemberBonus) Value(
 func (PurgedAemberBonus) CountText() string { return "the total Æmber bonus of the purged cards" }
 
 // PurgeSource purges the card whose ability this is (Library Access purges
-// itself). A source still in play — a creature or artifact — is purged from play;
-// a resolving action card, not yet in any zone, is instead marked to be set aside
-// out of the game when its play completes, rather than going to the discard pile.
+// itself), wherever that card is — in play, or mid-play and in no zone at all.
 type PurgeSource struct{}
 
 // Text renders the effect using the source card's own name.
 func (PurgeSource) Text() string { return "purge " + SelfName }
 
 // Resolve purges the source card.
-func (PurgeSource) Resolve(ctx *EffectContext) {
-	if resolverInPlay(ctx, ctx.Source) {
-		ctx.Resolver.PurgeFromPlay(ctx.Source)
-		return
-	}
-	ctx.Resolver.MarkPlayedActionPurged(ctx.Source)
-}
+func (PurgeSource) Resolve(ctx *EffectContext) { toPurged.moveSource(ctx) }

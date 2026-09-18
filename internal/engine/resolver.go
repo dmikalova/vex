@@ -453,6 +453,11 @@ type CombatResolver interface {
 // ZoneResolver moves cards between zones — drawing, and shuffling a card between
 // play, hand, deck, discard, archives, and purge.
 type ZoneResolver interface {
+	// Simultaneously runs a batch of moves as one moment, settling the board once
+	// after it rather than between the cards. Without it a card's own "Leaves Play:"
+	// ability settles mid-batch, so an effect moving several cards could destroy one
+	// it had not reached yet and the outcome would depend on iteration order.
+	Simultaneously(controller int, batch func())
 	// Draw makes a player draw count cards, crediting the card whose ability drew
 	// them through the record's frame.
 	Draw(controller, count int)
@@ -525,14 +530,13 @@ type ZoneResolver interface {
 	// PurgeFromPlay moves a card from play to its owner's purge pile (set aside out
 	// of the game).
 	PurgeFromPlay(id LocalID)
-	// MarkPlayedActionPurged marks a resolving action card to be set aside out of
-	// the game when its play completes, rather than going to the discard pile
-	// (Library Access purges itself).
-	MarkPlayedActionPurged(id LocalID)
-	// MarkPlayedActionArchived marks a resolving action card to go to its owner's
-	// archives when its play completes, rather than going to the discard pile
-	// (Sucker Punch archives itself).
-	MarkPlayedActionArchived(id LocalID)
+	// RedirectResolvingCard sends a card whose play is still resolving to dest when
+	// that play completes, rather than to its owner's discard pile (Sucker Punch
+	// archives itself, Library Access purges itself). It names no source zone
+	// because a resolving card is in none, which is what makes the redirect work
+	// whatever the card was played from — Wild Wormhole plays Causal Loop off the
+	// deck and Causal Loop still archives itself.
+	RedirectResolvingCard(id LocalID, dest Destination)
 	// PutIntoPlay puts a card into play under controller's control without playing
 	// it — no bonus icons and no Play: abilities resolve.
 	PutIntoPlay(id LocalID, controller int)
@@ -721,14 +725,14 @@ type TurnResolver interface {
 	// ends.
 	AddLastingAlsoTriggers(m LastingAlsoTriggersOn)
 	// ForceActiveHouseNextTurn makes a player have to choose the given house as their
-	// active house on their next turn (Control the Weak).
+	// active house during their next turn (Control the Weak).
 	MustChooseHouseNextTurn(player int, house House, source LocalID)
 	// MustChooseFoughtHouseNextTurn makes a player have to choose the house of the
-	// given creature — read live at choice time — as their active house on their
+	// given creature — read live at choice time — as their active house during their
 	// next turn (Snag).
 	MustChooseFoughtHouseNextTurn(player int, creature, source LocalID)
 	// CannotChooseHouseNextTurn makes a player unable to choose the given house as
-	// their active house on their next turn (Tezmal, Snag's Mirror).
+	// their active house during their next turn (Tezmal, Snag's Mirror).
 	CannotChooseHouseNextTurn(player int, house House, source LocalID)
 	// WagerOnHouseNextTurn arms a bet on a player's next active house: if they
 	// choose that house, the predictor steals amount (Snaglet).

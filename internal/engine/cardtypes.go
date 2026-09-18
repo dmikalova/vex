@@ -39,14 +39,7 @@ func (s CardTypes) list() string {
 			words = append(words, typeWord(t))
 		}
 	}
-	switch len(words) {
-	case 1:
-		return words[0]
-	case 2:
-		return words[0] + " or " + words[1]
-	default:
-		return strings.Join(words[:len(words)-1], ", ") + ", or " + words[len(words)-1]
-	}
+	return joinOr(words)
 }
 
 // typeWord is a card type's printed word in a filter or listing: the lowercase
@@ -69,12 +62,5 @@ func (s CardTypes) playablePlural() string {
 			words = append(words, typeWord(t)+"s")
 		}
 	}
-	switch len(words) {
-	case 1:
-		return words[0]
-	case 2:
-		return words[0] + " or " + words[1]
-	default:
-		return strings.Join(words[:len(words)-1], ", ") + ", or " + words[len(words)-1]
-	}
+	return joinOr(words)
 }

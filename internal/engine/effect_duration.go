@@ -16,16 +16,44 @@ type ForDuration struct {
 	Effects  []Effect
 }
 
-// durationClause renders the standalone duration prefix a timed effect uses when
-// it is not folded into a ForDuration — "for the remainder of the turn" or "during
-// your opponent's next turn".
-func durationClause(d Duration) string {
+// windowClause renders the turn-window clause a timed effect states to bound how
+// long it lasts, in the Rules voice. It is the single template every window phrase
+// comes from, so they cannot drift between effects, and it is total over the real
+// durations — TestWindowClauseIsTotal pins every value, so a new duration cannot
+// silently fall through to the wrong phrase. whose names the possessive for the
+// next-turn family: a controller-frame caller uses durationClause, which fills it
+// per duration ("your opponent's" / "your"); an effect that names its own subject —
+// a restriction, a key surcharge — passes that subject's possessive so the clause
+// agrees with the sentence ("during their next turn", not "during your opponent's
+// next turn"). source names the card whose leaving ends an UntilThisLeavesPlay
+// window. Forever and the unset sentinel carry no standing clause and render "".
+func windowClause(d Duration, whose, source string) string {
 	switch d {
-	case OpponentNextTurn:
-		return "during your opponent's next turn"
-	default:
+	case RemainderOfPlayerTurn:
 		return "for the remainder of the turn"
+	case OpponentNextTurn:
+		return "during " + whose + " next turn"
+	case StartOfPlayerNextTurn:
+		return "until the start of " + whose + " next turn"
+	case EndOfPlayerNextTurn:
+		return "until the end of " + whose + " next turn"
+	case UntilThisLeavesPlay:
+		return "until " + source + " leaves play"
+	default: // Forever and the unset sentinel carry no standing clause
+		return ""
 	}
+}
+
+// durationClause renders windowClause in the controller's absolute frame: the
+// opponent's next turn reads "your opponent's", the controller's own turn "your".
+// source names the card whose leaving ends an UntilThisLeavesPlay window — the
+// {self} or {card} token the effect uses — and is ignored by the other durations.
+func durationClause(d Duration, source string) string {
+	whose := "your"
+	if d == OpponentNextTurn {
+		whose = "your opponent's"
+	}
+	return windowClause(d, whose, source)
 }
 
 // durationScoped is a timed effect that renders its body in two parts — the
@@ -66,10 +94,11 @@ func (e ForDuration) validate() error {
 // be dealt damage"; otherwise each subject-predicate body joins with " and ".
 func (e ForDuration) Text() string {
 	subject, joined, shared := foldDurationBodies(e.Effects)
+	clause := durationClause(e.Duration, "") + ", "
 	if shared {
-		return "for the remainder of the turn, " + subject + " " + joined
+		return clause + subject + " " + joined
 	}
-	return "for the remainder of the turn, " + joined
+	return clause + joined
 }
 
 // Resolve resolves each child effect in order.
@@ -138,10 +167,11 @@ func (e GainUntilNextTurn) validate() error {
 // the predicates join with " and "; otherwise each subject-predicate body joins.
 func (e GainUntilNextTurn) Text() string {
 	subject, joined, shared := foldDurationBodies(e.Effects)
+	suffix := " " + durationClause(StartOfPlayerNextTurn, "")
 	if shared {
-		return subject + " " + joined + " until the start of your next turn"
+		return subject + " " + joined + suffix
 	}
-	return joined + " until the start of your next turn"
+	return joined + suffix
 }
 
 // Resolve resolves each child effect in order.

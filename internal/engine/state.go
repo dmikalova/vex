@@ -26,6 +26,18 @@ const (
 // CardCore is the mutable per-match state of a single card, stored purely by
 // value. It carries no pointers so the whole GameState copies flat.
 type CardCore struct {
+	// ResolvingDest is where a card mid-play goes when its play completes, when its
+	// own ability redirected it there (Sucker Punch archives itself, Library Access
+	// purges itself). The unset zero value sends it to its owner's discard pile.
+	//
+	// A card mid-play has left the zone it was played from and has not yet reached a
+	// destination, so it is in no zone at all. That is why the redirect names no
+	// source zone and works whatever the card was played from: Wild Wormhole plays
+	// Causal Loop off the deck and Causal Loop still archives itself. It is per-card
+	// rather than one field on GameState because a resolving Tactic can play another
+	// card while it resolves, and each needs its own destination
+	// (TestResolvingCardRedirectIsPerCard).
+	ResolvingDest Destination
 	// Exhausted is whether the card is turned sideways from being used, so it
 	// cannot be used again until it readies.
 	Exhausted bool
@@ -609,20 +621,6 @@ type GameState struct {
 	// it is one of these. It is set for the span of one fight and restored after, so
 	// a nested fight reads only its own pair, and is the zero value outside combat.
 	FightersPlus [2]LocalID
-	// PurgePlayedAction is the action card whose own "Play:" ability purges it
-	// (Library Access): it is set while that ability resolves and read when the
-	// played action would go to the discard pile, sending it to the purge pile
-	// instead. PurgePlayedActionSet distinguishes "purge card 0" from the unset
-	// zero value, since LocalID 0 is a valid card.
-	PurgePlayedAction    LocalID
-	PurgePlayedActionSet bool
-	// ArchivePlayedAction is the action card whose own "Play:" ability archives it
-	// (Sucker Punch): it is set while that ability resolves and read when the
-	// played action would go to the discard pile, sending it to the archives
-	// instead. ArchivePlayedActionSet distinguishes "archive card 0" from the
-	// unset zero value, since LocalID 0 is a valid card.
-	ArchivePlayedAction    LocalID
-	ArchivePlayedActionSet bool
 	// Counters is the global side-table of generic counters — the card-placed
 	// markers (doom, and its kin) whose meaning is defined entirely by the card
 	// that reads them. One entry per (card, kind) pair, its count folded into N, so

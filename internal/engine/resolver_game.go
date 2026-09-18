@@ -637,6 +637,11 @@ func (g *Game) PutIntoHand(id LocalID) { g.putIntoHand(id) }
 // ReturnUpgradesToHand is the Resolver entry point for returnUpgradesToHand.
 func (g *Game) ReturnUpgradesToHand(host LocalID) { g.returnUpgradesToHand(host) }
 
+// Simultaneously is the Resolver entry point for simultaneously.
+func (g *Game) Simultaneously(controller int, batch func()) {
+	g.simultaneously(controller, batch)
+}
+
 // ArchiveUpgrade is the Resolver entry point for archiveUpgrade.
 func (g *Game) ArchiveUpgrade(upgrade LocalID) { g.archiveUpgrade(upgrade) }
 
@@ -714,18 +719,12 @@ func (g *Game) PurgeFromDeck(owner int, id LocalID) { g.purgeFromDeck(owner, id)
 // PurgeFromPlay is the Resolver entry point for purgeFromPlay.
 func (g *Game) PurgeFromPlay(id LocalID) { g.purgeFromPlay(id) }
 
-// MarkPlayedActionPurged marks a resolving action to be purged instead of
-// discarded when its play completes (Library Access).
-func (g *Game) MarkPlayedActionPurged(id LocalID) {
-	g.State.PurgePlayedAction = id
-	g.State.PurgePlayedActionSet = true
-}
-
-// MarkPlayedActionArchived marks a resolving action to be archived instead of
-// discarded when its play completes (Sucker Punch).
-func (g *Game) MarkPlayedActionArchived(id LocalID) {
-	g.State.ArchivePlayedAction = id
-	g.State.ArchivePlayedActionSet = true
+// RedirectResolvingCard sends a card whose play is still resolving to dest when
+// that play completes, instead of to its owner's discard pile (Sucker Punch
+// archives itself, Library Access purges itself). It writes through stateOf's
+// in-play guard because a resolving card is deliberately in no zone at all.
+func (g *Game) RedirectResolvingCard(id LocalID, dest Destination) {
+	g.State.Cards[id].ResolvingDest = dest
 }
 
 // AddPowerCounter changes the net power counters on a creature. A -1 counter can

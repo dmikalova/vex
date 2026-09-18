@@ -28,7 +28,7 @@ func (g *Game) SwapCards(a, b LocalID) {
 // while the creature leaves play to the discard pile the resting card came from.
 // The creature sheds all its card state on the way out exactly as any creature
 // leaving play does — its Æmber goes to its opponent, its upgrades and counters
-// are discarded (leavePlayDestroyed). The move is a plain relocation, not a
+// are discarded (leavePlayTeardown). The move is a plain relocation, not a
 // destruction of its own: a creature leaving play this way counts as destroyed
 // only when an open Destroyed window already enrolled it (Gebuk). It does nothing
 // unless exactly one card is in a battleline and the other rests in a discard.
@@ -52,17 +52,17 @@ func (g *Game) swapAcrossZones(a, b LocalID) {
 	}
 	g.record(CardsSwapped{A: inPlay, B: resting, FromPlayer: restingOwner, FromZone: Discard})
 	art, hasArt := g.giganticPartner(inPlay)
-	o := g.leavePlayDestroyed(inPlay)
+	o := g.leavePlayTeardown(inPlay)
 	g.State.Discard[o].add(inPlay)
 	if hasArt { // the swapped-out creature's gigantic art half follows it to the discard
-		ao := g.leavePlayDestroyed(art)
+		ao := g.leavePlayTeardown(art)
 		g.State.Discard[ao].add(art)
 	}
 	g.State.Discard[restingOwner].remove(resting)
 	core := &g.State.Cards[resting]
 	core.Exhausted = true
 	core.ArmorRemaining = int16(g.armor(resting))
-	// leavePlayDestroyed may cascade and shrink the line below the slot idx
+	// leavePlayTeardown may cascade and shrink the line below the slot idx
 	// captured before removal; clamp so the reinsert lands on the flank.
 	line.insertAt(min(idx, int(line.Count)), resting)
 	g.emitCreatureEnters(resting)

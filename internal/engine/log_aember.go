@@ -116,16 +116,18 @@ func (e AemberCaptured) Text(n Namer) string {
 	return fmt.Sprintf("%s captures %d Æmber%s", n.Name(e.Source), e.Amount, onto)
 }
 
-// AemberMovedToCommonSupply narrates Æmber removed from a creature and returned
-// to the common supply, the reverse of a capture.
+// AemberMovedToCommonSupply narrates Æmber removed from a card and returned to
+// the common supply, the reverse of a capture. A creature leaving play gives its
+// Æmber to a player's pool instead (AemberOnCardReleased), so on that path this
+// entry is the non-creature case — an artifact's or an upgrade's Æmber.
 type AemberMovedToCommonSupply struct {
-	Creature LocalID
-	Amount   int
+	Card   LocalID
+	Amount int
 }
 
-// Text renders the Æmber a creature moved to the common supply.
+// Text renders the Æmber a card moved to the common supply.
 func (e AemberMovedToCommonSupply) Text(n Namer) string {
-	return fmt.Sprintf("%s moves %d Æmber to the common supply", n.Name(e.Creature), e.Amount)
+	return fmt.Sprintf("%s moves %d Æmber to the common supply", n.Name(e.Card), e.Amount)
 }
 
 // AemberCapturedInsteadOfGain narrates a gain that a capturing effect

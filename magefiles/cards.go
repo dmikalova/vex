@@ -94,6 +94,20 @@ func (Tool) NodeUsage(max *int, category *string) error {
 	return sh.RunV("go", args...)
 }
 
+// Review opens a random batch of card files for you to read. It records the ones
+// it opens so the same file is not picked again until you have seen the whole pool
+// — at which point the slate clears and a new cycle begins. It skips test files,
+// the generated 0set.go catalogs, and build-excluded stubs, opening only files
+// with a real ability. Progress is kept in .card-review.json (gitignored). Opens
+// 10 files by default; pass -n to change the batch, e.g. `mage tool:review -n=5`.
+func (Tool) Review(n *int) error {
+	args := []string{"run", "./magefiles/cardlookup", "review"}
+	if n != nil && *n > 0 {
+		args = append(args, fmt.Sprintf("-n=%d", *n))
+	}
+	return sh.RunV("go", args...)
+}
+
 // ImportProvenance rebuilds a set's source catalog from the Master Vault decks
 // feed. It pages the feed for the set's expansion, folds each linked card into the
 // catalog shape (ASCII-folded name and text, expanded amber/damage markup,

@@ -26,7 +26,7 @@ var Wrath = set.New(
 	card.WithTraits(card.Traits.Demon, card.Traits.Sin),
 	card.WithKeywords(card.Keyword.Taunt, card.Keyword.Poison, card.Keyword.Skirmish),
 	card.WithAbility(card.Trigger.Fight, card.ForEach{
-		Times: card.InPlay{
+		Times: card.CardsInPlay{
 			Player: card.Controller,
 			Type:   card.Type.Creature,
 			Trait:  card.Traits.Sin,
