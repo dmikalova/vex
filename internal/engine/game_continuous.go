@@ -113,6 +113,11 @@ func (g *Game) addContinuous(e ContinuousEffect, d Duration) {
 
 // dropContinuous removes every stack entry the predicate matches, keeping the
 // survivors contiguous and order-by-construction (oldest first).
+//
+// This deliberately does not share a primitive with the lasting registry's
+// removeLastingAt. That one deletes a single known index; this one is a bulk
+// filter-in-place, and expressing it as repeated index deletes would make it
+// quadratic. The two stay distinct operations.
 func (g *Game) dropContinuous(match func(ContinuousEffect) bool) {
 	w := 0
 	for i := 0; i < int(g.State.ContinuousCount); i++ {

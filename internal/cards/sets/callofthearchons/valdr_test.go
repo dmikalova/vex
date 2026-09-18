@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Giant
 //
-//	Valdr deals +2 Damage while attacking an enemy creature on the flank.
+//	Valdr deals +2 damage while attacking an enemy creature on the flank.
 func TestValdr(t *testing.T) {
 	t.Run("deals +2 damage while attacking a flank creature", func(t *testing.T) {
 		var flank ct.Card

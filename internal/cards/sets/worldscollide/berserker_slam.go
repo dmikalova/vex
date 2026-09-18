@@ -18,7 +18,7 @@ var BerserkerSlam = set.New(
 	card.Provenance(card.WC, "5"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.DamageThen{
+		card.Trigger.Play, card.DealDamage{
 			Amount: 4,
 			After:  card.IfDestroyed,
 			Target: card.Target.Creature.OnFlank(),

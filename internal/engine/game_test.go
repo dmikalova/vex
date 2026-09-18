@@ -329,7 +329,7 @@ func TestForgeKeyWins(t *testing.T) {
 	}
 
 	// Forging the third key wins the game.
-	g.State.Keys[0] = 2
+	g.State.ForgeCanonicalKeys(0, 2)
 	g.State.Aember[0] = KeyCost
 	g.forgeKey(0)
 	if g.Keys(0) != KeysToWin || g.Winner() != 0 {

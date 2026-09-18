@@ -68,7 +68,7 @@ func (g *Game) chargeToll(player int, action TollAction) error {
 	if owed == 0 {
 		return nil
 	}
-	if g.State.Aember[player] < owed {
+	if g.Aember(player) < owed {
 		return ErrCannotPayToll
 	}
 	payee := 1 - player
@@ -77,8 +77,8 @@ func (g *Game) chargeToll(player int, action TollAction) error {
 		if t.Amount <= 0 || t.Action != action {
 			continue
 		}
-		g.SetAember(player, g.State.Aember[player]-t.Amount)
-		g.SetAember(payee, g.State.Aember[payee]+t.Amount)
+		g.SetAember(player, g.Aember(player)-t.Amount)
+		g.SetAember(payee, g.Aember(payee)+t.Amount)
 		closeFrame := g.openFrame(Frame{Actor: payee, Source: id, HasSource: true})
 		g.record(AemberGiven{Giver: player, Receiver: payee, Amount: t.Amount, Reason: action})
 		closeFrame()
@@ -442,7 +442,7 @@ func (g *Game) playCardFromZone(
 	case Tactic:
 		g.recordCardPlayed(player, id, opts)
 		remove()
-		g.playActionCard(player, id)
+		g.playTacticCard(player, id)
 		return id, nil
 	case Upgrade:
 		candidates := append(g.battlelineCopy(player), g.battlelineCopy(1-player)...)
@@ -588,14 +588,14 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 	g.settleDestroyed(player)
 }
 
-// playActionCard resolves and discards an action already removed from its previous
+// playTacticCard resolves and discards a Tactic already removed from its previous
 // zone.
-func (g *Game) playActionCard(player int, id LocalID) {
-	g.record(ActionPlayed{Player: player, Card: id})
+func (g *Game) playTacticCard(player int, id LocalID) {
+	g.record(TacticPlayed{Player: player, Card: id})
 	g.resolveBonusIcons(player, id)
 	// A reaction to a Tactic being played resolves before the Tactic's own effect
 	// (Encounter Suit wards its host before the Tactic can reach it).
-	g.emitActionPlayedBeforeResolve(player, id)
+	g.emitTacticPlayedBeforeResolve(player, id)
 	// The Tactic's own "Play:", every "after you play a card" reaction, and the
 	// duration reactions on playing a card trigger at once, so the active player
 	// orders the set (ADR 0013). The "Play:" resolves under the control of the player
@@ -623,11 +623,11 @@ func (g *Game) playActionCard(player int, id LocalID) {
 		g.PutIntoArchives(id)
 		return
 	}
-	// A lasting "return your next action card to hand" redirect (High Priest Torvus)
+	// A lasting "put your next Tactic into your hand" redirect (High Priest Torvus)
 	// sends this card back to its owner's hand instead of the discard pile, once.
-	if g.consumeNextActionToHand(player) {
+	if g.consumeNextTacticIntoHand(player) {
 		g.State.Hand[owner].add(id)
-		g.record(CardReturnedToHand{Card: id, Owner: owner})
+		g.record(CardPutIntoHand{Card: id, Owner: owner})
 		return
 	}
 	g.State.Discard[owner].add(id)
@@ -786,8 +786,8 @@ func (g *Game) recordCardPlayed(player int, id LocalID, opts playCardOptions) {
 	if r := def.PlayRequirement; r.Spend && r.required() {
 		// Draw the pool first, then fall back to creatures whose Æmber counts as pool
 		// (Senator Bracchus) for any shortfall.
-		fromPool := min(r.Aember, g.State.Aember[player])
-		g.SetAember(player, g.State.Aember[player]-fromPool)
+		fromPool := min(r.Aember, g.Aember(player))
+		g.SetAember(player, g.Aember(player)-fromPool)
 		if rest := r.Aember - fromPool; rest > 0 {
 			g.drawFromSpendAsPool(player, rest)
 		}
@@ -901,7 +901,7 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 		return ErrCannotPlayName
 	}
 	if def.Type == Artifact &&
-		g.State.Aember[player] < g.tollOwed(player, TollPlayArtifact) {
+		g.Aember(player) < g.tollOwed(player, TollPlayArtifact) {
 		return ErrCannotPayToll
 	}
 	if def.Type == Upgrade &&

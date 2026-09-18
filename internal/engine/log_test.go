@@ -17,495 +17,221 @@ func (stubNamer) PlayerName(player int) string { return fmt.Sprintf("P%d", playe
 // tense outcome, and a change to that wording should have to be made on purpose.
 func TestLogEntryText(t *testing.T) {
 	n := stubNamer{}
-	cases := []struct {
-		entry LogEntry
-		want  string
-	}{
+	samples := LogEntrySamples()
+	// want holds the pinned wording of each sample in LogEntrySamples, index for
+	// index. A new variant appends a sample there and its wording here; the length
+	// check below fails loudly if the two ever drift out of alignment (ADR 0046).
+	want := []string{
 		// Turn shape.
-		{TurnBegan{Player: 0, Turn: 3}, "P0 begins turn 3"},
-		{PhaseBegan{Player: 1, Phase: PhaseReady}, "Ready phase"},
-		{CardsReadied{Player: 0, Cards: []LocalID{4, 7}}, "P0 readies Card4, Card7"},
-		{CardsDrawn{Player: 1, Count: 3, Hand: 6}, "P1 draws 3 cards, up to 6 in hand"},
-		{CardsDrawn{Player: 1, Count: 1, Hand: 6}, "P1 draws 1 card, up to 6 in hand"},
-		{CardsDrawn{Player: 0, Count: 0, Hand: 2}, "P0 draws nothing, holding 2"},
-		{CardsDrawnBy{Player: 0, Count: 1}, "P0 draws 1 card"},
-		{HouseChosen{Player: 1, House: Brobnar}, "P1 chooses house Brobnar"},
-		{ForgeSkipped{Player: 0}, "P0 skips their forge a key phase"},
-		{
-			AemberGainedFromForging{Card: 5, From: 1, Amount: 6},
-			"Card5 gains the 6 Æmber P1 spends forging a key",
-		},
-		{
-			KeyForged{Player: 0, Color: KeyColorRed, Keys: 1, Needed: 3},
-			"P0 forges a Red key (1/3)",
-		},
-		{
-			KeyForged{Player: 1, Color: KeyColorColorless, Keys: 4, Needed: 3},
-			"P1 forges a Colorless key (4/3)",
-		},
-		{KeyUnforged{Player: 0, Keys: 1, Needed: 3}, "P0 unforges a key (1/3)"},
-		{ChainShed{Player: 1, Remaining: 4}, "P1 sheds a chain (4 remaining)"},
-		{GameWon{Player: 0}, "P0 wins the game!"},
-		{PlayerConceded{Player: 1}, "P1 concedes."},
-		{
-			PlayerStanding{Player: 0, Aember: 4, KeyColors: []KeyColor{KeyColorRed}},
-			"P0 has 4 Æmber and 1 keys",
-		},
+		"P0 begins turn 3",
+		"P0 takes the first turn",
+		"P1 mulligans, drawing a new hand of 5",
+		"Ready phase",
+		"P0 readies Card4, Card7",
+		"P1 draws 3 cards, up to 6 in hand",
+		"P1 draws 1 card, up to 6 in hand",
+		"P0 draws nothing, holding 2",
+		"P0 draws 1 card",
+		"P1 chooses house Brobnar",
+		"P0 skips their forge a key phase",
+		"Card5 gains the 6 Æmber P1 spends forging a key",
+		"P0 forges a Red key (1/3)",
+		"P1 forges a Colorless key (4/3)",
+		"P0 unforges a key (1/3)",
+		"P1 sheds a chain (4 remaining)",
+		"P0 wins the game!",
+		"P1 concedes",
+		"P0 has 4 Æmber and 1 key",
 
 		// Æmber. The source-card subject is exercised in
 		// TestRecordTextSubjectsToSourceCard; here the entries render unframed, so
 		// they name the player.
-		{AemberGained{Player: 0, Amount: 2}, "P0 gains 2 Æmber"},
-		{AemberLost{Player: 1, Amount: 1}, "P1 loses 1 Æmber"},
-		{AemberStolen{Player: 0, From: 1, Amount: 2}, "P0 steals 2 Æmber from P1"},
-		{
-			AemberStolen{Player: 0, From: 1, Amount: 2, FromSupply: true, Cause: 9},
-			"Card9 has P0 steal 2 Æmber from the common supply, instead of from P1's pool",
-		},
-		{AemberCaptured{Creature: 7, Amount: 3, Source: 7}, "Card7 captures 3 Æmber"},
-		{
-			AemberCaptured{Creature: 7, Amount: 1, Source: 3},
-			"Card3 captures 1 Æmber onto Card7",
-		},
-		{
-			AemberCaptured{Creature: 7, Amount: 3, Source: 7, FromSupply: true, Cause: 9, From: 0},
-			"Card9 has Card7 capture 3 Æmber from the common supply, " +
-				"instead of from P0's pool",
-		},
-		{
-			AemberCaptured{Creature: 7, Amount: 1, Source: 3, FromSupply: true, Cause: 9, From: 0},
-			"Card9 has Card3 capture 1 Æmber onto Card7 from the common supply, " +
-				"instead of from P0's pool",
-		},
-		{
-			AemberMovedToCommonSupply{Creature: 7, Amount: 1},
-			"Card7 moves 1 Æmber to the common supply",
-		},
-		{
-			AemberCapturedInsteadOfGain{Creature: 7, Player: 1, Amount: 1},
-			"Card7 captures 1 Æmber, instead of P1 gaining it",
-		},
-		{
-			AemberCapturedInsteadOfSteal{Cause: 9, Creature: 7, Player: 0, Amount: 2},
-			"Card9 has Card7 capture 2 Æmber, instead of P0 stealing it",
-		},
-		{
-			AemberCapturedInsteadOfSteal{
-				Cause:      9,
-				Creature:   7,
-				Player:     0,
-				Amount:     2,
-				FromSupply: true,
-			},
-			"Card9 has Card7 capture 2 Æmber from the common supply, " +
-				"instead of P0 stealing it",
-		},
-		{AemberExalted{Creature: 4, Amount: 2}, "Card4 is exalted (2 Æmber placed)"},
-		{
-			AemberMovedToPool{Player: 0, From: 4, To: 1, Amount: 2},
-			"P0 moves 2 Æmber from Card4 to P1's pool",
-		},
-		{
-			AemberMovedToCard{Player: 0, From: 4, To: 5, Amount: 1},
-			"P0 moves 1 Æmber from Card4 to Card5",
-		},
-		{
-			AemberLostToCeiling{Card: 4, Amount: 2},
-			"Card4 can hold no more Æmber; 2 is lost to the ceiling",
-		},
+		"P0 gains 2 Æmber",
+		"P1 loses 1 Æmber",
+		"P0 steals 2 Æmber from P1",
+		"Card9 has P0 steal 2 Æmber from the common supply, instead of from P1's pool",
+		"Card7 captures 3 Æmber",
+		"Card3 captures 1 Æmber onto Card7",
+		"Card9 has Card7 capture 3 Æmber from the common supply, " +
+			"instead of from P0's pool",
+		"Card9 has Card3 capture 1 Æmber onto Card7 from the common supply, " +
+			"instead of from P0's pool",
+		"Card7 moves 1 Æmber to the common supply",
+		"Card7 captures 1 Æmber, instead of P1 gaining it",
+		"Card9 has Card7 capture 2 Æmber, instead of P0 stealing it",
+		"Card9 has Card7 capture 2 Æmber from the common supply, " +
+			"instead of P0 stealing it",
+		"P0 exalts 2 Æmber onto Card4",
+		"P0 moves 2 Æmber from Card4 to P1's pool",
+		"P0 moves 1 Æmber from Card4 to Card5",
+		"Maximum amount reached, 2 Æmber is lost",
 
 		// Creatures and cards in play.
-		{CreatureReadied{Creature: 2}, "Card2 is readied"},
-		{CreatureGainedKeyword{Creature: 2, Keyword: Skirmish}, "Card2 gains skirmish"},
-		{CreatureLostKeyword{Creature: 2, Keyword: Elusive}, "Card2 loses elusive"},
-		{CreatureGainedStats{Creature: 2, Armor: 1}, "Card2 gains +1 armor"},
-		{CreatureGainedStats{Creature: 2, Power: 2, Armor: 2}, "Card2 gains +2 power and +2 armor"},
-		{CreatureConsideredFlank{Creature: 2}, "Card2 is considered a flank creature"},
-		{CreatureExhausted{Creature: 2}, "Card2 is exhausted"},
-		{CreatureStunned{Creature: 2, By: 2}, "Card2 is stunned"},
-		{CreatureStunned{Creature: 2, By: 5}, "Card5 stunned Card2"},
-		{CreatureStunned{Creature: 2, By: 5, AlreadyStunned: true}, "Card2 is already stunned"},
-		{
-			CreaturesUnstunned{Player: 0, Creatures: []LocalID{2, 5}},
-			"P0 unstuns Card2 and Card5",
-		},
-		{CreatureEnraged{Creature: 2, By: 2}, "Card2 is enraged"},
-		{CreatureEnraged{Creature: 2, By: 5}, "Card5 enraged Card2"},
-		{CreatureEnraged{Creature: 2, By: 5, AlreadyEnraged: true}, "Card2 is already enraged"},
-		{CreatureWarded{Creature: 2, By: 2}, "Card2 is warded"},
-		{CreatureWarded{Creature: 2, By: 5}, "Card5 warded Card2"},
-		{CreatureWarded{Creature: 2, By: 5, AlreadyWarded: true}, "Card2 is already warded"},
-		{WardRemoved{Creature: 2, By: 5}, "Card5 removes the ward from Card2"},
-		{WardRemoved{Creature: 2, By: 5, AlreadyUnwarded: true}, "Card2 has no ward to remove"},
-		{WardAbsorbed{Creature: 2}, "Card2's ward keeps it in play"},
-		{
-			WardAbsorbed{Creature: 2, Prevented: wardDestruction},
-			"Card2's ward prevents the destruction",
-		},
-		{
-			WardAbsorbed{Creature: 2, Prevented: wardDamage, Amount: 5},
-			"Card2's ward prevents the 5 damage",
-		},
-		{NoCreatureToFight{Creature: 2}, "Card2 has no creature to fight"},
-		{CardsRevealedToAll{Player: 0, Cards: []LocalID{1, 2}}, "P0 reveals Card1, Card2"},
-		{KeyForgePrevented{Player: 1, By: 3}, "P1's forge a key is prevented by Card3"},
-		{PositionsSwapped{A: 1, B: 2}, "Card1 swaps positions with Card2"},
-		{
-			CardsSwapped{A: 1, B: 2, FromPlayer: 1, FromZone: Discard},
-			"Card1 swaps places with Card2 from P1's discard pile",
-		},
-		{MovedToFlank{Creature: 2, Right: true}, "Card2 moves to the right flank"},
-		{MovedToFlank{Creature: 2}, "Card2 moves to the left flank"},
-		{MovedWithinBattleline{Creature: 2}, "Card2 moves within its battleline"},
-		{
-			TurnedIntoCreature{Card: 2, Right: true},
-			"Card2 becomes a creature on the right flank",
-		},
-		{TurnedIntoCreature{Card: 2}, "Card2 becomes a creature on the left flank"},
-		{RevertedToArtifact{Card: 2}, "Card2 reverts to an artifact"},
-		{ControlTaken{Player: 1, Card: 3}, "P1 takes control of Card3"},
-		{ControlReturned{Card: 3, Owner: 0}, "Card3 returns to P0's control"},
-		{CardDestroyed{Card: 3}, "Card3 is destroyed"},
-		{
-			CardsDestroyedBy{Source: 5, Cards: []LocalID{3}},
-			"Card5 destroys Card3",
-		},
-		{
-			CardsDestroyedBy{Source: 5, Cards: []LocalID{3, 8}},
-			"Card5 destroys Card3 and Card8",
-		},
-		{
-			CardsDestroyedBy{Source: 5, Cards: []LocalID{3, 8, 9}},
-			"Card5 destroys Card3, Card8, and Card9",
-		},
-		{
-			DestructionReplaced{Card: 3, By: 8},
-			"Card3 would be destroyed, so Card8 replaces its destruction",
-		},
-		{
-			AemberOnCardReleased{Card: 3, Amount: 2, To: 1},
-			"2 Æmber on Card3 goes to P1's pool",
-		},
-		{StunRecovered{Player: 1, Creature: 3}, "P1 unstuns Card3"},
-		{CardCannotBeUsed{Card: 3}, "Card3 is exhausted and cannot be used"},
+		"Card2 is readied",
+		"Card2 gains skirmish",
+		"Card2 loses elusive",
+		"Card2 gains +1 armor",
+		"Card2 gains +2 power and +2 armor",
+		"Card2 gains assault 3",
+		"Card2 gains the Mutant trait",
+		"Card2 is considered a flank creature",
+		"Card2 is exhausted",
+		"Card2 is stunned",
+		"Card5 stunned Card2",
+		"Card2 is already stunned",
+		"P0 unstuns Card2 and Card5",
+		"Card2 is enraged",
+		"Card5 enraged Card2",
+		"Card2 is already enraged",
+		"Card2 is warded",
+		"Card5 warded Card2",
+		"Card2 is already warded",
+		"Card5 removes the ward from Card2",
+		"Card2 has no ward to remove",
+		"Card2's ward keeps it in play",
+		"Card2's ward absorbs the destruction",
+		"Card2's ward absorbs 5 damage",
+		"Card2 has no creature to fight",
+		"P0 reveals Card1, Card2",
+		"P1's forge a key is prevented by Card3",
+		"Card1 swaps positions with Card2",
+		"Card1 swaps places with Card2 from P1's discard pile",
+		"Card2 moves to the right flank",
+		"Card2 moves to the left flank",
+		"Card2 moves within its battleline",
+		"Card2 becomes a creature on the right flank",
+		"Card2 becomes a creature on the left flank",
+		"Card2 reverts to an artifact",
+		"P1 takes control of Card3",
+		"Card3 returns to P0's control",
+		"Card3 is destroyed",
+		"Card5 destroys Card3",
+		"Card5 destroys Card3 and Card8",
+		"Card5 destroys Card3, Card8, and Card9",
+		"Card3 would be destroyed, so Card8 replaces its destruction",
+		"2 Æmber on Card3 goes to P1's pool",
+		"P1 unstuns Card3",
+		"Card3 is exhausted and cannot be used",
+
+		// Copied stats and text box.
+		"Card2 copies the printed stats of Card5",
+		"Card2 gains the text box of Card5",
 
 		// Combat.
-		{FightCancelled{Attacker: 1}, "Card1's fight does not occur"},
-		{
-			Fought{Attacker: 1, AttackerPower: 4, Defender: 2, DefenderPower: 3},
-			"Card1 (4 power) fights Card2 (3 power)",
-		},
-		{
-			Fought{
-				Attacker:         1,
-				AttackerPower:    6,
-				AttackerKeywords: FightSkirmish,
-				Defender:         2,
-				DefenderPower:    3,
-				DefenderKeywords: FightElusive | FightPoison,
-			},
-			"Card1 (6 power, skirmish) fights Card2 (3 power, elusive, poison)",
-		},
-		{PoisonKills{Source: 1, Victim: 2}, "Card1's poison is lethal to Card2"},
-		{DamageRefused{Creature: 2}, "Card2 cannot be dealt damage"},
-		{ArmorAbsorbed{Creature: 2, Amount: 1}, "Card2's armor absorbs 1 damage"},
-		{DamageTaken{Creature: 2, Amount: 3, Total: 4}, "Card2 takes 3 damage (4 total)"},
-		{
-			AssaultDealt{Source: 1, Amount: 2, Target: 2},
-			"Card1 assaults 2 damage to Card2",
-		},
-		{
-			HazardousDealt{Source: 2, Amount: 5, Target: 1},
-			"Card2's hazardous deals 5 damage to Card1",
-		},
-		{
-			AbilityDamageDealt{Amount: 4, Target: 2},
-			"Card2 takes 4 damage",
-		},
+		"Card1's fight does not occur",
+		"Card1 (4 power) fights Card2 (3 power)",
+		"Card1 (6 power, skirmish) fights Card2 (3 power, elusive, poison)",
+		"Card1's poison is lethal to Card2",
+		"Card2 cannot be dealt damage",
+		"Card2's armor absorbs 1 damage",
+		"Card2 takes 3 damage (4 total)",
+		"Card1 deals 2 assault damage to Card2",
+		"Card2 deals 5 hazardous damage to Card1",
+		"Card2 takes 4 damage",
 
 		// Zones.
-		{
-			ArchivesTakenIntoHand{Player: 0, Count: 2},
-			"P0 takes 2 cards from their archives into hand",
-		},
-		{CardMoved{Player: 0, Card: 6, From: Hand, To: Archives}, "P0 archives a card"},
-		{
-			CardMoved{Player: 1, Card: 6, From: Discard, To: Archives},
-			"P1 archives Card6 from their discard pile",
-		},
-		{TopOfDeckArchived{Player: 0, Card: 6}, "P0 archives a card from the top of their deck"},
-		{ArchivesDiscarded{Player: 1, Count: 3}, "P1 discards 3 archived cards"},
-		{
-			TopOfDeckDiscarded{Player: 0, Card: 6},
-			"P0 discards Card6 from the top of their deck",
-		},
-		{
-			CardMoved{Player: 0, Card: 6, From: Deck, To: Discard},
-			"P0 discards Card6 from their deck",
-		},
-		{DeckAndDiscardSwapped{Player: 1}, "P1 swaps their deck and discard pile"},
-		{
-			ShuffledIntoDeck{Player: 0, DiscardCards: []LocalID{6}, HandCount: 2},
-			"P0 shuffles Card6 from their discard pile and 2 cards from their hand into their deck",
-		},
-		{
-			ShuffledIntoDeck{Player: 1, DiscardCards: []LocalID{4, 6}},
-			"P1 shuffles Card4 and Card6 from their discard pile into their deck",
-		},
-		{
-			ShuffledIntoDeck{Player: 0, ArchivesCount: 1},
-			"P0 shuffles 1 card from their archives into their deck",
-		},
-		{ShuffledIntoDeck{Player: 1}, "P1 shuffles their deck"},
-		{CardDiscarded{Player: 0, Card: 6}, "P0 discards Card6"},
-		{
-			CardMoved{Player: 0, Card: 6, From: Archives, To: Discard},
-			"P0 discards Card6 from their archives",
-		},
-		{
-			CardMoved{Player: 0, Card: 6, From: Discard, To: purged},
-			"P0 purges Card6 from a discard pile",
-		},
-		{CardMoved{Player: 1, Card: 6, From: Hand, To: purged}, "P1 purges Card6 from a hand"},
-		{
-			CardPurgedFromHand{Card: 6, Owner: 0},
-			"Card6 is purged from P0's hand",
-		},
-		{
-			CardMoved{Player: 1, Card: 6, From: Archives, To: purged},
-			"P1 purges Card6 from archives",
-		},
-		{CardMoved{Player: 1, Card: 6, From: Deck, To: purged}, "P1 purges Card6 from a deck"},
-		{CardPurged{Card: 6}, "Card6 is purged"},
-		{CardPutOnTopOfDeck{Card: 6, Owner: 0}, "Card6 is put on top of P0's deck"},
-		{CardReturnedToHand{Card: 6, Owner: 1}, "Card6 is returned to P1's hand"},
-		{CardPutIntoArchives{Card: 6, Owner: 0}, "Card6 is put into P0's archives"},
-		{
-			CardArchivedFromPurge{Player: 0, Card: 6},
-			"P0 archives Card6 from their purge pile",
-		},
-		{CardShuffledIntoDeck{Card: 6, Owner: 1}, "Card6 is shuffled into P1's deck"},
-		{DeckShuffled{Player: 1}, "P1's deck is shuffled"},
-		{
-			DiscardRecycledIntoDeck{Player: 1},
-			"P1's discard pile is shuffled into their deck",
-		},
-		{
-			CardsShuffledIntoDeckBy{Owner: 1, Cards: []LocalID{3, 8}},
-			"P1 shuffles Card3 and Card8 into their deck",
-		},
-		{
-			CardAbducted{Player: 0, Card: 6, Owner: 1},
-			"P0 abducts Card6 (owned by P1) into their archives",
-		},
-		{
-			CardReturnedFromDiscardToHand{Player: 0, Card: 6},
-			"P0 returns Card6 from their discard pile to hand",
-		},
-		{
-			CardPutFromDeckIntoHand{Player: 1, Card: 6},
-			"P1 puts a card from their deck into hand",
-		},
-		{
-			CardPutFromDiscardOnTopOfDeck{Player: 0, Card: 6},
-			"P0 puts Card6 from their discard pile on top of their deck",
-		},
-		{
-			CardPutUnder{Player: 0, Card: 6, Host: 9, FaceDown: false},
-			"P0 puts Card6 faceup under Card9",
-		},
-		{
-			CardPutUnder{Player: 0, Card: 6, Host: 9, FaceDown: true},
-			"P0 puts a card facedown under Card9",
-		},
-		{
-			CardGrafted{Card: 6, Host: 9},
-			"Card6 is grafted onto Card9",
-		},
+		"P0 takes 2 cards from their archives into hand",
+		"P0 archives a card",
+		"P1 archives Card6 from their discard pile",
+		"P0 archives a card from the top of their deck",
+		"P1 discards 3 archived cards",
+		"P0 discards Card6 from the top of their deck",
+		"P0 discards Card6 from their deck",
+		"P1 swaps their deck and discard pile",
+		"P0 shuffles Card6 from their discard pile and 2 cards from their hand into their deck",
+		"P1 shuffles Card4 and Card6 from their discard pile into their deck",
+		"P0 shuffles 1 card from their archives into their deck",
+		"P1 shuffles their deck",
+		"P0 discards Card6",
+		"P0 discards Card6 from their archives",
+		"P0 purges Card6 from a discard pile",
+		"P1 purges Card6 from a hand",
+		"Card6 is purged from P0's hand",
+		"P1 purges Card6 from archives",
+		"P1 purges Card6 from a deck",
+		"Card6 is purged",
+		"Card6 is put on top of P0's deck",
+		"Card6 is put into P1's hand",
+		"Card6 is put into P0's archives",
+		"P0 archives Card6 from their purge pile",
+		"Card6 is shuffled into P1's deck",
+		"P1's deck is shuffled",
+		"P1's discard pile is shuffled into their deck",
+		"P1 shuffles Card3 and Card8 into their deck",
+		"P0 abducts Card6 (owned by P1) into their archives",
+		"P0 puts Card6 from their discard pile into hand",
+		"P1 puts a card from their deck into hand",
+		"P0 puts Card6 from their discard pile on top of their deck",
+		"P0 puts Card6 faceup under Card9",
+		"P0 puts a card facedown under Card9",
+		"Card6 is grafted onto Card9",
 
 		// Playing and using.
-		{CardPlayedToBattleline{Player: 0, Card: 9}, "P0 plays Card9 on their right flank"},
-		{
-			CardPlayedToBattleline{Player: 0, Card: 9, FlankLeft: true},
-			"P0 plays Card9 on their left flank",
-		},
-		{
-			CardPlayedToBattleline{Player: 0, Card: 9, Interior: true},
-			"P0 plays Card9 into their battleline",
-		},
-		{ArtifactPlayed{Player: 1, Card: 9}, "P1 plays artifact Card9"},
-		{ActionPlayed{Player: 0, Card: 9}, "P0 plays action Card9"},
-		{UpgradeAttached{Player: 0, Upgrade: 9, Host: 2}, "P0 attaches Card9 to Card2"},
-		{
-			CardPutIntoPlay{Player: 1, Card: 9},
-			"P1 puts Card9 into play under their control",
-		},
-		{
-			PlayedFromTopOfDeck{Card: 9, Player: 0},
-			"P0 plays Card9 from the top of P0's deck",
-		},
-		{BonusAemberGained{Player: 0, Card: 9, Amount: 2}, "Card9 has P0 gain 2 bonus Æmber"},
-		{
-			BonusAemberCaptured{Creature: 7, Card: 9, Player: 0, Amount: 2},
-			"Card7 captures 2 bonus Æmber from Card9, instead of P0 gaining it",
-		},
-		{
-			BonusCaptured{Creature: 7, Card: 9, Amount: 1},
-			"Card9 has Card7 bonus capture 1 Æmber",
-		},
-		{BonusDamageDealt{Source: 9, Amount: 1, Target: 2}, "Card9 deals 1 bonus damage to Card2"},
-		{BonusCardDrawn{Player: 0, Card: 9, Amount: 1}, "Card9 has P0 draw 1 bonus card"},
-		{AemberSpentToPlay{Player: 0, Card: 9, Amount: 1}, "P0 loses 1 Æmber to play Card9"},
-		{Reaped{Player: 0, Card: 2}, "P0 reaps with Card2 (+1 Æmber)"},
-		{
-			ReapedStealing{Player: 0, Card: 2, Amount: 1, Cause: 9},
-			"Card9 has P0 steal 1 Æmber reaping with Card2, instead of gaining it",
-		},
-		{
-			ReapedStealing{Player: 0, Card: 2, Cause: 9},
-			"Card9 has P0 steal 0 Æmber reaping with Card2, instead of gaining it",
-		},
-		{
-			ReapedCaptured{Player: 0, Card: 2, Creature: 7},
-			"Card7 captures 1 Æmber reaping with Card2, instead of P0 gaining it",
-		},
-		{ActionAbilityUsed{Player: 1, Card: 2}, "P1 uses Card2's action ability"},
+		"P0 plays Card9 on their right flank",
+		"P0 plays Card9 on their left flank",
+		"P0 plays Card9 into their battleline",
+		"P1 plays artifact Card9",
+		"P0 plays tactic Card9",
+		"P0 attaches Card9 to Card2",
+		"P1 puts Card9 into play under their control",
+		"P0 plays Card9 from the top of P0's deck",
+		"Card9 has P0 gain 2 bonus Æmber",
+		"Card7 captures 2 bonus Æmber from Card9, instead of P0 gaining it",
+		"Card9 has Card7 bonus capture 1 Æmber",
+		"Card9 deals 1 bonus damage to Card2",
+		"Card9 has P0 draw 1 bonus card",
+		"P0 loses 1 Æmber to play Card9",
+		"P0 reaps with Card2 (+1 Æmber)",
+		"Card9 has P0 steal 1 Æmber reaping with Card2, instead of gaining it",
+		"Card9 has P0 steal 0 Æmber reaping with Card2, instead of gaining it",
+		"Card7 captures 1 Æmber reaping with Card2, instead of P0 gaining it",
+		"P1 uses Card2's action ability",
 
 		// Lasting effects. A lasting Æmber gain records the plain AemberGained/
 		// AemberCapturedInsteadOfGain entry under its source-card frame, so only the
 		// draw keeps its own lasting entry (and its event context).
-		{
-			LastingDraw{Player: 1, Amount: 2, On: EventFight},
-			"P1 draws 2 cards (each time a friendly creature fights)",
-		},
-		{
-			AemberGivenAfterForging{Player: 0, To: 1, Amount: 3},
-			"P0 gives 3 Æmber to P1 after forging a key",
-		},
-		{
-			AemberGiven{Giver: 0, Receiver: 1, Amount: 1},
-			"P0 gives 1 Æmber to P1",
-		},
-		{
-			AemberGiven{Giver: 0, Receiver: 1, Amount: 1, Reason: TollUseArtifact},
-			"P0 gives 1 Æmber to P1 to use an artifact",
-		},
+		"P1 draws 2 cards (each time a friendly creature fights)",
+		"P0 gives 3 Æmber to P1 after forging a key",
+		"P0 gives 1 Æmber to P1",
+		"P0 gives 1 Æmber to P1 to use an artifact",
 
 		// Grants, chains, and manual mode.
-		{
-			MayPlayOrUseGranted{
-				Player: 0,
-				Houses: HouseSelector{Match: namedHouse(Brobnar)},
-				Grant:  GrantFight,
-			},
-			"P0's Brobnar creatures may fight this turn",
-		},
-		{
-			MayPlayOrUseGranted{
-				Player: 1,
-				Houses: HouseSelector{Match: anyHouse},
-				Grant:  GrantFight,
-			},
-			"P1's creatures may all fight this turn",
-		},
-		{
-			MayPlayOrUseGranted{
-				Player: 0,
-				Houses: HouseSelector{Match: namedHouse(Dis)},
-				Grant:  GrantUse,
-			},
-			"P0 may use Dis creatures this turn",
-		},
-		{
-			MayPlayOrUseGranted{
-				Player: 0,
-				Houses: HouseSelector{Match: anyHouse},
-				Grant:  GrantUse,
-				Types:  CardTypesOf(Artifact),
-			},
-			"P0 may use friendly artifacts this turn",
-		},
-		{
-			MayPlayOrUseGranted{
-				Player: 0,
-				Houses: HouseSelector{Match: namedHouse(Mars)},
-				Grant:  GrantPlay,
-			},
-			"P0 may play Mars cards this turn",
-		},
-		{
-			MayPlayOrUseGranted{
-				Player: 0,
-				Houses: HouseSelector{Match: namedHouse(Mars)},
-				Grant:  GrantPlay | GrantUse,
-			},
-			"P0 may play or use Mars cards this turn",
-		},
-		{
-			MayPlayOrUseGranted{
-				Player: 0,
-				Houses: HouseSelector{Match: exceptHouse(StarAlliance)},
-				Grant:  GrantPlay,
-				Count:  1,
-			},
-			"P0 may play cards from other houses this turn",
-		},
-		{
-			MayPlayOrUseGranted{
-				Player: 0,
-				Houses: HouseSelector{Controlled: true},
-				Grant:  GrantPlay,
-			},
-			"P0 may play cards from other houses this turn",
-		},
-		{
-			MayUseTraitGranted{Player: 0, Trait: Mutant},
-			"P0 may use friendly Mutant creatures this turn",
-		},
-		{
-			HouseForcedNextTurn{Player: 1, House: Logos},
-			"P1 must choose house Logos next turn",
-		},
-		{
-			HouseForbiddenNextTurn{Player: 1, House: Logos},
-			"P1 cannot choose house Logos next turn",
-		},
-		{
-			HouseWagerArmed{Predictor: 0, Player: 1, House: Logos, Amount: 2},
-			"P0 steals 2 Æmber if P1 chooses house Logos next turn",
-		},
-		{
-			KeywordLostByAll{Keyword: Elusive},
-			"each creature loses elusive for the remainder of the turn",
-		},
-		{ChainsGained{Player: 0, Amount: 2, Total: 5}, "P0 gains 2 chains (5 total)"},
-		{
-			ManualCardMoved{Player: 0, Card: 3, To: ManualPurge},
-			"P0 manually moves Card3 to purge",
-		},
-		{ManualExhaustSet{Card: 3, Exhausted: true}, "Card3 is manually exhausted"},
-		{ManualExhaustSet{Card: 3}, "Card3 is manually readied"},
-		{ManualPlacedInPlay{Player: 0, Card: 3}, "P0 manually puts Card3 into play"},
-		{ManualMatchFull{Player: 1}, "P1 cannot add a card: this match is full"},
-		{ManualCardAdded{Player: 0, Card: 3}, "P0 manually adds Card3 to hand"},
-		{ManualAemberSet{Player: 0, Amount: 7}, "P0 now has 7 Æmber (manual)"},
-		{ManualChainsSet{Player: 1, Amount: 1}, "P1 now has 1 chain (manual)"},
-		{
-			ManualHouseChosen{Player: 0, House: Mars},
-			"P0 manually chooses Mars as their active house",
-		},
-		{
-			ManualKeyForged{Player: 0, Color: KeyColorBlue, Keys: 2, Needed: 3},
-			"P0 manually forges a Blue key (2/3)",
-		},
-		{ManualKeyUnforged{Player: 1, Keys: 0, Needed: 3}, "P1 manually unforges a key (0/3)"},
+		"P0's Brobnar creatures may fight this turn",
+		"P1's creatures may all fight this turn",
+		"P0 may use Dis creatures this turn",
+		"P0 may use friendly artifacts this turn",
+		"P0 may play Mars cards this turn",
+		"P0 may play or use Mars cards this turn",
+		"P0 may play cards from other houses this turn",
+		"P0 may play cards from other houses this turn",
+		"P0 may use friendly Mutant creatures this turn",
+		"P1 must choose house Logos next turn",
+		"P1 cannot choose house Logos next turn",
+		"P0 steals 2 Æmber if P1 chooses house Logos next turn",
+		"each creature loses elusive for the remainder of the turn",
+		"P0 gains 2 chains (5 total)",
+		"P0 manually moves Card3 to purge",
+		"Card3 is manually exhausted",
+		"Card3 is manually readied",
+		"P0 manually puts Card3 into play",
+		"P1 cannot add a card: this match is full",
+		"P0 manually adds Card3 to hand",
+		"P0 now has 7 Æmber (manual)",
+		"P1 now has 1 chain (manual)",
+		"P0 manually chooses Mars as their active house",
+		"P0 manually forges a Blue key (2/3)",
+		"P1 manually unforges a key (0/3)",
 
 		// A restored entry reads back exactly as it was narrated.
-		{RestoredEntry{Line: "P0 gains 1 Æmber"}, "P0 gains 1 Æmber"},
+		"P0 gains 1 Æmber",
 	}
-	for _, c := range cases {
-		if got := c.entry.Text(n); got != c.want {
-			t.Errorf("%T.Text() = %q, want %q", c.entry, got, c.want)
+	if len(want) != len(samples) {
+		t.Fatalf("want has %d entries, LogEntrySamples has %d; keep them aligned",
+			len(want), len(samples))
+	}
+	for i, e := range samples {
+		if got := e.Text(n); got != want[i] {
+			t.Errorf("sample %d: %T.Text() = %q, want %q", i, e, got, want[i])
 		}
 	}
 }
@@ -565,8 +291,8 @@ func TestRecordTextSubjectsToSourceCard(t *testing.T) {
 		},
 		{ShuffledIntoDeck{Player: 1}, "Card7 shuffles P1's deck"},
 		{
-			CardReturnedFromDiscardToHand{Player: 0, Card: 6},
-			"Card7 returns Card6 from P0's discard pile to hand",
+			CardPutFromDiscardIntoHand{Player: 0, Card: 6},
+			"Card7 puts Card6 from P0's discard pile into hand",
 		},
 		{
 			CardPutFromDeckIntoHand{Player: 1, Card: 6},
@@ -765,7 +491,7 @@ func TestRenderEntryMarksIconKeywords(t *testing.T) {
 			KeyForged{Player: 0, Color: KeyColorRed, Keys: 1, Needed: 3},
 			"key-red", "key",
 		},
-		{PlayerStanding{Player: 0, Aember: 4, KeyColors: []KeyColor{KeyColorRed}}, "key", "keys"},
+		{PlayerStanding{Player: 0, Aember: 4, KeyColors: []KeyColor{KeyColorRed}}, "key", "key"},
 		{CardShuffledIntoDeck{Card: 6, Owner: 1}, "zone-deck", "deck"},
 	}
 	for _, c := range iconCases {

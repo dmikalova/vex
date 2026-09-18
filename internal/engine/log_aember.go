@@ -182,13 +182,16 @@ func (e AemberCapturedInsteadOfSteal) Text(n Namer) string {
 
 // AemberExalted narrates Æmber moved from a pool onto a creature as an exalt.
 type AemberExalted struct {
+	Player   int
 	Creature LocalID
 	Amount   int
 }
 
-// Text renders the Æmber exalted onto a creature.
+// Text renders the Æmber exalted onto a creature, subjected to the source card
+// when a card ability exalted it.
 func (e AemberExalted) Text(n Namer) string {
-	return fmt.Sprintf("%s is exalted (%d Æmber placed)", n.Name(e.Creature), e.Amount)
+	return fmt.Sprintf("%s exalts %d Æmber onto %s",
+		subject(n, e.Player), e.Amount, n.Name(e.Creature))
 }
 
 // AemberMovedToPool narrates Æmber taken off a card and put into a pool.
@@ -221,15 +224,14 @@ func (e AemberMovedToCard) Text(n Namer) string {
 		subject(n, e.Player), e.Amount, n.Name(e.From), n.Name(e.To))
 }
 
-// AemberLostToCeiling narrates Æmber that never landed on a card because the
-// card was already holding the most a card may hold.
-type AemberLostToCeiling struct {
-	Card   LocalID
+// AemberLostToMaximum narrates Æmber that never arrived because the holder was
+// already at the most Æmber the engine can store. This is an engine storage
+// limit, not a KeyForge rule, so the entry names the limit rather than a card.
+type AemberLostToMaximum struct {
 	Amount int
 }
 
-// Text renders the Æmber a card was too full to hold.
-func (e AemberLostToCeiling) Text(n Namer) string {
-	return fmt.Sprintf("%s can hold no more Æmber; %d is lost to the ceiling",
-		n.Name(e.Card), e.Amount)
+// Text renders the Æmber the maximum turned away.
+func (e AemberLostToMaximum) Text(Namer) string {
+	return fmt.Sprintf("Maximum amount reached, %d Æmber is lost", e.Amount)
 }

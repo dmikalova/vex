@@ -108,39 +108,47 @@ func TestAemberStolenFromYouCondition(t *testing.T) {
 	}
 }
 
-func TestEnemyCreatureDestroyedCondition(t *testing.T) {
-	c := EnemyCreatureDestroyed{}
-	if got := c.CondText(); got != "if an enemy creature has been destroyed this turn" {
-		t.Errorf("CondText = %q", got)
+// TestCreatureDestroyedThisTurnCondition covers both sides of the merged
+// condition, plus the validation that keeps it to the two sides it can read.
+func TestCreatureDestroyedThisTurnCondition(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		cond CreatureDestroyedThisTurn
+		want string
+		stat TurnStat
+	}{
+		{
+			"enemy", CreatureDestroyedThisTurn{Player: Opponent},
+			"if an enemy creature has been destroyed this turn", EnemyCreaturesDestroyed,
+		},
+		{
+			"friendly", CreatureDestroyedThisTurn{Player: Controller},
+			"if a friendly creature has been destroyed this turn", FriendlyCreaturesDestroyed,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.cond.CondText(); got != tc.want {
+				t.Errorf("CondText = %q, want %q", got, tc.want)
+			}
+			if err := tc.cond.validate(); err != nil {
+				t.Errorf("valid side rejected: %v", err)
+			}
+
+			g := NewGame("A", "B", 1)
+			ctx := &EffectContext{Resolver: g, Controller: 0}
+			if tc.cond.Met(ctx) {
+				t.Error("no creature destroyed yet, condition should be unmet")
+			}
+
+			g.State.TurnHistory[0][tc.stat] = 1
+			if !tc.cond.Met(ctx) {
+				t.Error("a creature destroyed this turn should meet the condition")
+			}
+		})
 	}
 
-	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-	if c.Met(ctx) {
-		t.Error("no creature destroyed yet, condition should be unmet")
-	}
-
-	g.State.TurnHistory[0][EnemyCreaturesDestroyed] = 1
-	if !c.Met(ctx) {
-		t.Error("an enemy creature destroyed this turn should meet the condition")
-	}
-}
-
-func TestFriendlyCreatureDestroyedCondition(t *testing.T) {
-	c := FriendlyCreatureDestroyed{}
-	if got := c.CondText(); got != "if a friendly creature was destroyed this turn" {
-		t.Errorf("CondText = %q", got)
-	}
-
-	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-	if c.Met(ctx) {
-		t.Error("no friendly creature destroyed yet, condition should be unmet")
-	}
-
-	g.State.TurnHistory[0][FriendlyCreaturesDestroyed] = 1
-	if !c.Met(ctx) {
-		t.Error("a friendly creature destroyed this turn should meet the condition")
+	if err := (CreatureDestroyedThisTurn{}).validate(); err == nil {
+		t.Error("an unset side should be rejected")
 	}
 }
 

@@ -84,3 +84,34 @@ func TestExhaustGate(t *testing.T) {
 		}
 	})
 }
+
+// TestReadyOnFirstUse covers Rocket Boots' composed readying: a Conditional on
+// SourceFirstUseThisTurn gating a plain Ready of the source creature. It replaces
+// the former bespoke ReadyIfFirstUse node, so the behaviour it pins is that the
+// creature stands back up only on the use that is its first this turn.
+func TestReadyOnFirstUse(t *testing.T) {
+	e := Conditional{
+		Cond: SourceFirstUseThisTurn{},
+		Then: Ready{Target: Target{Kind: TargetThisCreature}},
+	}
+	want := "if this is the first time {self} has been used this turn, ready {self}"
+	if got := e.Text(); got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	g.State.Cards[src].Exhausted = true
+	g.State.Cards[src].TimesUsedThisTurn = 1
+	e.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	if g.Exhausted(src) {
+		t.Error("first use should ready the creature")
+	}
+
+	g.State.Cards[src].Exhausted = true
+	g.State.Cards[src].TimesUsedThisTurn = 2
+	e.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	if !g.Exhausted(src) {
+		t.Error("later use should not ready the creature")
+	}
+}

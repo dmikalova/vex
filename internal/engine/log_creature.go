@@ -216,13 +216,15 @@ type WardAbsorbed struct {
 	Amount    int
 }
 
-// Text renders the creature whose ward was spent and what the ward stopped.
+// Text renders the creature whose ward was spent and what the ward stopped. The
+// ward "absorbs", matching armor, because it is spent doing so; "prevents" is
+// reserved for a standing effect that refuses the damage without being used up.
 func (e WardAbsorbed) Text(n Namer) string {
 	switch e.Prevented {
 	case wardDamage:
-		return fmt.Sprintf("%s's ward prevents the %d damage", n.Name(e.Creature), e.Amount)
+		return fmt.Sprintf("%s's ward absorbs %s", n.Name(e.Creature), damageAmount(e.Amount))
 	case wardDestruction:
-		return fmt.Sprintf("%s's ward prevents the destruction", n.Name(e.Creature))
+		return fmt.Sprintf("%s's ward absorbs the destruction", n.Name(e.Creature))
 	default:
 		return fmt.Sprintf("%s's ward keeps it in play", n.Name(e.Creature))
 	}

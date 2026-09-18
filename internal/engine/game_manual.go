@@ -166,11 +166,8 @@ func (g *Game) ManualAddCard(def CardDefinition, player int) (LocalID, bool) {
 // ManualAddAmber adjusts player's Æmber pool by delta (clamped at zero), so
 // manual mode can dial each player's Æmber up or down.
 func (g *Game) ManualAddAmber(player, delta int) {
-	n := g.State.Aember[player] + delta
-	if n < 0 {
-		n = 0
-	}
-	g.State.Aember[player] = n
+	n := max(g.Aember(player)+delta, 0)
+	g.SetAember(player, n)
 	g.record(ManualAemberSet{Player: player, Amount: n})
 }
 
@@ -201,25 +198,23 @@ func (g *Game) ManualForgeKey(player int) {
 // ManualForgeKeyColor forges one more key of colour c for player, up to
 // KeysToWin — no cost and no forge triggers.
 func (g *Game) ManualForgeKeyColor(player int, c KeyColor) {
-	if g.State.Keys[player] >= KeysToWin {
+	if g.Keys(player) >= KeysToWin {
 		return
 	}
-	g.State.KeyColors[player][g.State.Keys[player]] = c
-	g.State.Keys[player]++
+	g.State.KeyColors[player][g.Keys(player)] = c
 	g.record(ManualKeyForged{
 		Player: player,
 		Color:  c,
-		Keys:   g.State.Keys[player],
+		Keys:   g.Keys(player),
 		Needed: KeysToWin,
 	})
 }
 
 // ManualUnforgeKey removes player's most recently forged key, if any.
 func (g *Game) ManualUnforgeKey(player int) {
-	if g.State.Keys[player] <= 0 {
+	if g.Keys(player) <= 0 {
 		return
 	}
-	g.State.Keys[player]--
-	g.State.KeyColors[player][g.State.Keys[player]] = KeyColorNone
-	g.record(ManualKeyUnforged{Player: player, Keys: g.State.Keys[player], Needed: KeysToWin})
+	g.State.KeyColors[player][g.Keys(player)-1] = KeyColorNone
+	g.record(ManualKeyUnforged{Player: player, Keys: g.Keys(player), Needed: KeysToWin})
 }

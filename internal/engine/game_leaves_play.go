@@ -89,7 +89,7 @@ func (g *Game) releaseAemberOnLeavePlay(id LocalID) {
 	}
 	if g.TypeOf(id) == Creature {
 		to := 1 - g.controller(id)
-		g.State.Aember[to] += amt
+		g.SetAember(to, g.Aember(to)+amt)
 		g.record(AemberOnCardReleased{Card: id, Amount: amt, To: to})
 		return
 	}
@@ -168,7 +168,7 @@ func (g *Game) returnUpgradesToHand(host LocalID) {
 		g.resetCore(up)
 		o := g.owner(up)
 		g.State.Hand[o].add(up)
-		g.record(CardReturnedToHand{Card: up, Owner: o})
+		g.record(CardPutIntoHand{Card: up, Owner: o})
 	}
 }
 
@@ -509,7 +509,7 @@ func (g *Game) putIntoHand(id LocalID) {
 	for _, half := range g.giganticHalves(id) {
 		o := g.leavePlayDestroyed(half)
 		g.State.Hand[o].add(half)
-		g.record(CardReturnedToHand{Card: half, Owner: o})
+		g.record(CardPutIntoHand{Card: half, Owner: o})
 	}
 }
 

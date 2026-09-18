@@ -97,7 +97,7 @@ func (c PoolAember) Met(ctx *EffectContext) bool {
 	case Even:
 		return mine%2 == 0
 	case Odd:
-		return mine%2 == 1
+		return mine%2 != 0
 	case MoreThanYou, MoreThanOpponent:
 		other := ctx.Controller
 		if c.Player == Controller {
@@ -111,23 +111,37 @@ func (c PoolAember) Met(ctx *EffectContext) bool {
 
 // ControlsMoreCreatures is met while the controller has more creatures in play
 // than the opponent. Trait, when set, restricts the comparison to creatures with
-// that trait (Pismire compares Mutant counts).
+// that trait (Pismire compares Mutant counts). It is the excess-creature Count
+// read as a threshold: "more than the opponent" is an excess of at least one.
 type ControlsMoreCreatures struct {
 	Trait Trait
 }
 
-// CondText renders the condition.
+// excess is the Count this condition is a threshold on — how many more creatures
+// the controller has than the opponent, narrowed to Trait when set. It also
+// supplies the counted noun both wordings repeat.
+func (c ControlsMoreCreatures) excess() ExcessCreatures {
+	return ExcessCreatures{Player: Controller, Trait: c.Trait}
+}
+
+// CondText renders the condition, e.g. "if you control more Mutant creatures than
+// your opponent".
 func (c ControlsMoreCreatures) CondText() string {
-	if c.Trait != traitUnset {
-		return "if you control more " + c.Trait.String() +
-			" creatures than your opponent"
-	}
-	return "if you control more creatures than your opponent"
+	return "if you control more " + c.excess().filter().noun() +
+		"s than your opponent"
+}
+
+// symmetricCondText renders the board-wide third-person form a
+// ConditionalPlayBar needs, e.g. "has more creatures in play than their
+// opponent" (Quixxle Stone).
+func (c ControlsMoreCreatures) symmetricCondText() string {
+	return "has more " + c.excess().filter().noun() +
+		"s in play than their opponent"
 }
 
 // Met reports whether the controller has more creatures in play than the opponent.
 func (c ControlsMoreCreatures) Met(ctx *EffectContext) bool {
-	return ExcessCreatures{Player: Controller, Trait: c.Trait}.Value(ctx) >= 1
+	return CountIs{Count: c.excess(), Is: AtLeast, Amount: 1}.Met(ctx)
 }
 
 // ControlsNamed is met when the controller has a card of a given printed name in
@@ -146,68 +160,6 @@ func (c ControlsNamed) Met(ctx *EffectContext) bool {
 	return InPlay{Player: Controller, Name: c.Name}.Met(ctx)
 }
 
-// ControlsCreaturesOfHouses is met while the controller's creatures in play span
-// at least Amount different houses — Prince Derric, Unifier pays out when three
-// houses are represented.
-type ControlsCreaturesOfHouses struct {
-	// Amount is the number of different houses that must be represented.
-	Amount int
-}
-
-// validate requires a positive Count.
-func (c ControlsCreaturesOfHouses) validate() error {
-	if c.Amount <= 0 {
-		return fmt.Errorf("ControlsCreaturesOfHouses: Count must be positive")
-	}
-	return nil
-}
-
-// CondText renders the condition, e.g. "if you control creatures from 3 or more
-// houses".
-func (c ControlsCreaturesOfHouses) CondText() string {
-	return fmt.Sprintf("if you control creatures from %d or more houses", c.Amount)
-}
-
-// Met reports whether the controller's creatures span at least Amount houses.
-func (c ControlsCreaturesOfHouses) Met(ctx *EffectContext) bool {
-	return HousesAmong{Player: Controller, Type: Creature}.Value(ctx) >= c.Amount
-}
-
-// PlayerControlsFewerHousesThan is met while the chosen player controls creatures
-// from fewer than Amount distinct houses (Proclamation 346E taxes the opponent's
-// keys until they field three houses). It counts houses among creatures only, not
-// artifacts.
-type PlayerControlsFewerHousesThan struct {
-	Player Player
-	Amount int
-}
-
-// validate requires a positive threshold.
-func (c PlayerControlsFewerHousesThan) validate() error {
-	if c.Amount <= 0 {
-		return fmt.Errorf("PlayerControlsFewerHousesThan: Amount must be positive")
-	}
-	return nil
-}
-
-// CondText renders the condition as a "while" clause naming the player and the
-// house count, e.g. "while your opponent does not control creatures from 3 or
-// more different houses".
-func (c PlayerControlsFewerHousesThan) CondText() string {
-	whose := "you do"
-	if c.Player == Opponent {
-		whose = "your opponent does"
-	}
-	return fmt.Sprintf(
-		"while %s not control creatures from %d or more different houses", whose, c.Amount)
-}
-
-// Met counts the distinct houses among the chosen player's creatures and reports
-// whether that count is below the threshold.
-func (c PlayerControlsFewerHousesThan) Met(ctx *EffectContext) bool {
-	return HousesAmong{Player: c.Player, Type: Creature}.Value(ctx) < c.Amount
-}
-
 // Overwhelmed reports whether the controller is overwhelmed — their opponent
 // controls more creatures than they do. "Overwhelmed" is the keyword form of that
 // board state; Numquid the Fair repeats its destruction while overwhelmed.
@@ -218,7 +170,11 @@ func (Overwhelmed) CondText() string { return "if you are overwhelmed" }
 
 // Met reports whether the opponent controls more creatures than the controller.
 func (Overwhelmed) Met(ctx *EffectContext) bool {
-	return ExcessCreatures{Player: Opponent}.Value(ctx) >= 1
+	return CountIs{
+		Count:  ExcessCreatures{Player: Opponent},
+		Is:     AtLeast,
+		Amount: 1,
+	}.Met(ctx)
 }
 
 // HousesRepresented is met when the distinct houses represented among a chosen

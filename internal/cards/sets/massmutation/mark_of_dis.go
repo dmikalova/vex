@@ -18,7 +18,7 @@ var MarkOfDis = set.New(
 	card.Provenance(card.MM, "011"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.DamageThen{
+		card.Trigger.Play, card.DealDamage{
 			Amount: 2,
 			Target: card.Target.Creature,
 			After:  card.IfSurvives,

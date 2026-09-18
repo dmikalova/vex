@@ -8,33 +8,38 @@ package engine
 // purgeFromDiscard moves a card from a player's discard pile to their purge pile.
 // Callers pass a card already in that discard pile.
 func (g *Game) purgeFromDiscard(owner int, id LocalID) {
-	g.State.Discard[owner].remove(id)
-	g.State.Purge[owner].add(id)
-	g.record(CardMoved{Player: g.State.ActivePlayer, Card: id, From: Discard, To: purged})
+	g.purgeFrom(owner, id, Discard)
 }
 
 // purgeFromHand moves a card from a player's hand to their purge pile. The card
 // whose ability purged it is credited through the record's frame. Callers pass a
 // card already in that hand.
 func (g *Game) purgeFromHand(owner int, id LocalID) {
-	g.State.Hand[owner].remove(id)
-	g.State.Purge[owner].add(id)
-	g.record(CardPurgedFromHand{Card: id, Owner: owner})
+	g.moveCard(id,
+		zoneRef{Player: owner, Zone: Hand},
+		zoneRef{Player: owner, Zone: purged},
+		CardPurgedFromHand{Card: id, Owner: owner})
 }
 
 // purgeFromArchives moves a card from a player's archives to their purge pile.
 // Callers pass a card already in those archives.
 func (g *Game) purgeFromArchives(owner int, id LocalID) {
-	g.State.Archives[owner].remove(id)
-	g.State.Purge[owner].add(id)
-	g.record(CardMoved{Player: g.State.ActivePlayer, Card: id, From: Archives, To: purged})
+	g.purgeFrom(owner, id, Archives)
 }
 
 // purgeFromDeck moves a card from a player's deck to their purge pile. Callers
 // pass a card already in that deck (Borr Nit purges one of the cards it revealed
 // off the top).
 func (g *Game) purgeFromDeck(owner int, id LocalID) {
-	g.State.Deck[owner].remove(id)
-	g.State.Purge[owner].add(id)
-	g.record(CardMoved{Player: g.State.ActivePlayer, Card: id, From: Deck, To: purged})
+	g.purgeFrom(owner, id, Deck)
+}
+
+// purgeFrom purges from a zone whose move narrates as a plain relocation. Purging
+// from hand is the exception and records its own entry: a hand is hidden, so the
+// log has to say the card came from one.
+func (g *Game) purgeFrom(owner int, id LocalID, from Zone) {
+	g.moveCard(id,
+		zoneRef{Player: owner, Zone: from},
+		zoneRef{Player: owner, Zone: purged},
+		CardMoved{Player: g.State.ActivePlayer, Card: id, From: from, To: purged})
 }

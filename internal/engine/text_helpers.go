@@ -12,6 +12,16 @@ import (
 // or game state — so they read as a self-contained toolkit apart from the
 // card-shaped rendering in text.go.
 
+// damageAmount renders a quantity of damage for card text. Damage is lowercase
+// everywhere it is dealt, and every renderer that names an amount routes through
+// here so the wording cannot drift between effects.
+func damageAmount(n int) string { return fmt.Sprintf("%d damage", n) }
+
+// dealDamageTo renders the full clause "deal <n> damage to <target>".
+func dealDamageTo(n int, target string) string {
+	return "deal " + damageAmount(n) + " to " + target
+}
+
 // punctuate ends an ability body with a period. A body that already ends in a
 // period is left alone; one that ends in a closing quote (an embedded ability
 // such as Charge!'s granted "Play: ...") takes its period inside the quote, so

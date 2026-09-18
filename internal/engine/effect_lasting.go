@@ -371,6 +371,11 @@ func (e Instead) validate() error {
 	if e.Of.isReaction() {
 		return fmt.Errorf("Instead: Of must be a replacement event")
 	}
+	// Text() names the replaced event by its gerund, so an event without one cannot
+	// be rendered and would print another event's wording.
+	if e.Of.gerund() == "" {
+		return fmt.Errorf("Instead: %d has no gerund to render", e.Of)
+	}
 	if !e.With.valid() {
 		return fmt.Errorf("Instead: replacement must be set")
 	}
@@ -441,24 +446,24 @@ func (e DamageOthersAfterUsingTrait) Resolve(ctx *EffectContext) {
 	})
 }
 
-// ReturnNextActionToHand makes the next action card its controller resolves this
+// PutNextTacticIntoHand makes the next action card its controller resolves this
 // turn return to their hand instead of their discard pile — High Priest Torvus,
 // once exalted, sends its controller's next action back to hand. It registers a
 // one-shot arming the action-play path consumes; the turn's end clears it if no
 // action card resolves.
-type ReturnNextActionToHand struct{}
+type PutNextTacticIntoHand struct{}
 
 // Text renders the effect.
-func (ReturnNextActionToHand) Text() string {
+func (PutNextTacticIntoHand) Text() string {
 	return "after you resolve your next tactic this turn, put it into your " +
 		"hand instead of your discard pile"
 }
 
 // Resolve registers the one-shot redirect on the controller.
-func (ReturnNextActionToHand) Resolve(ctx *EffectContext) {
+func (PutNextTacticIntoHand) Resolve(ctx *EffectContext) {
 	ctx.Resolver.AddLasting(LastingEffect{
-		On:         EventNextActionToHand,
-		Do:         actReturnToHand,
+		On:         EventNextTacticIntoHand,
+		Do:         actPutIntoHand,
 		Controller: int8(ctx.Controller),
 		Once:       true,
 	})

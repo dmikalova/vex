@@ -88,6 +88,17 @@ type style struct {
 	pinnedID  engine.LocalID
 	hasPinned bool
 
+	// logCov is the sampled log coverage the Game log section draws, filled on
+	// demand: playing games is too heavy for OnMount, so the section stays empty
+	// with a button until asked. logSampled guards that one-shot.
+	logCov     logCoverage
+	logSampled bool
+	// drill is the cover bubble whose whole game log is expanded below the hero
+	// gallery, and drillOpen whether one is open (the zero coverBubble is a real
+	// bubble, so openness needs its own flag).
+	drill     coverBubble
+	drillOpen bool
+
 	// dispatch re-renders the gallery from its always-mounted root, bound in
 	// OnMount. The specimen faces raise the hover preview and the held enlargement
 	// by mutating this component's state from inside a nested cardView's own event
@@ -230,7 +241,7 @@ func styleHarness() *game {
 	// Display values, set outright rather than played to.
 	g.g.State.ActivePlayer = 0
 	g.g.State.ActiveHouse = engine.Brobnar
-	g.g.State.Aember = [2]int{7, 3}
+	g.g.State.Aember = [2]int16{7, 3}
 	g.g.State.Chains = [2]int{0, 3}
 	return g
 }
@@ -267,6 +278,8 @@ func (s *style) Render() app.UI {
 		{"attached", "Attached and under", s.attachSection},
 		{"bar", "Player bar", s.barSection},
 		{"motion", "Animations", s.motionSection},
+		{"cardtext", "Card text", s.cardTextSection},
+		{"log", "Game log", s.logSection},
 	}
 	body := []app.UI{s.header(sections)}
 	for _, sec := range sections {

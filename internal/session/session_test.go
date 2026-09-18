@@ -17,10 +17,10 @@ func setup(seed int64, _ [2]string) *engine.Game {
 // pools so a test can compare states by value after a replay.
 func drive(g *engine.Game) {
 	id, _ := g.ChooseCreature(0, 0, "pick one", []engine.LocalID{1, 2})
-	g.State.Aember[0] = int(id)
-	g.State.Aember[1] = g.State.PRNG.Intn(100)
+	g.State.Aember[0] = int16(id)
+	g.State.Aember[1] = int16(g.State.PRNG.Intn(100))
 	i := g.ChooseOption(0, 0, "choose", []string{"x", "y"})
-	g.State.Aember[0] += i * 10
+	g.State.Aember[0] += int16(i * 10)
 }
 
 func newSession() *Session { return New(7, [2]string{}, setup, drive) }

@@ -3,6 +3,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 )
@@ -68,6 +70,26 @@ func (Tool) NextCard(set *string) error {
 	args := []string{"run", "./magefiles/cardlookup", "next-card"}
 	if set != nil && *set != "" {
 		args = append(args, *set)
+	}
+	return sh.RunV("go", args...)
+}
+
+// NodeUsage reports how widely each card-facade node is used. It prints every
+// exported name in internal/card, grouped by the category its declaration block
+// documents, with the number of card definitions, total occurrences, and sets
+// that name it — rarest first, then a summary of the whole facade. Low usage is
+// not a defect on its own (half the card pool is unimplemented); it marks the
+// nodes to check are built from reusable atoms rather than hard-coding one card.
+// Pass -max=<n> to show only the nodes at most n cards use, and
+// -category=<substring> to narrow to one group, e.g.
+// `mage tool:nodeUsage -max=1 -category=damage`.
+func (Tool) NodeUsage(max *int, category *string) error {
+	args := []string{"run", "./magefiles/cardlookup", "node-usage"}
+	if max != nil && *max >= 0 {
+		args = append(args, fmt.Sprintf("-max=%d", *max))
+	}
+	if category != nil && *category != "" {
+		args = append(args, "-category="+*category)
 	}
 	return sh.RunV("go", args...)
 }

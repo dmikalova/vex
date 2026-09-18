@@ -211,6 +211,17 @@ func (e HousesAmong) CountText() string {
 	return "house represented among " + e.scope()
 }
 
+// CountClause renders the clause CountIs puts after "if", e.g. "3 or more houses
+// are represented among friendly creatures". It names the same surveyed set as
+// CountText, so the "for each" and "if" voices cannot drift apart.
+func (e HousesAmong) CountClause(quantity string, plural bool) string {
+	noun, verb := "house", "is"
+	if plural {
+		noun, verb = "houses", "are"
+	}
+	return fmt.Sprintf("%s %s %s represented among %s", quantity, noun, verb, e.scope())
+}
+
 // UnforgedKeys counts the keys a player still has to forge — the measure of how
 // far they are from winning, which Mushroom Man grows on.
 type UnforgedKeys struct{ Player Player }
@@ -296,10 +307,10 @@ func (TraitsOfChosen) CountText() string { return "trait that creature has" }
 
 // BonusIconsOfChosen counts the bonus icons on the card in context (ctx.It) — the
 // card an effect just discarded or revealed. Mindfire steals 1 Æmber for each
-// bonus icon on the card it discarded. Subject names the card in the text so the
+// bonus icon on the card it discarded. Noun names the card in the text so the
 // clause reads "the discarded card" rather than a bare "it".
 type BonusIconsOfChosen struct {
-	Subject Subject
+	Noun ItNoun
 }
 
 // Value returns the number of bonus icons on the context card, or zero when no
@@ -314,7 +325,7 @@ func (e BonusIconsOfChosen) Value(ctx *EffectContext) int {
 // CountText renders the singular noun the "for each" clause repeats, e.g. "bonus
 // icon on the discarded card".
 func (e BonusIconsOfChosen) CountText() string {
-	return "bonus icon on " + e.Subject.noun()
+	return "bonus icon on " + e.Noun.noun()
 }
 
 // CopiesInDiscard counts the cards in the controller's discard pile sharing the

@@ -46,22 +46,10 @@ func (g *Game) EndPhase() { g.State.PhaseEnded = true }
 
 // runPhase carries out the current phase. An open phase whose body is the
 // frontend's own play loop has nothing left to do here; it is only reached once
-// an effect has ended it early.
+// an effect has ended it early, and its table entry has no run.
 func (g *Game) runPhase() {
-	player := g.State.ActivePlayer
-	switch g.State.Phase {
-	case PhaseStartOfTurn:
-		g.startOfTurnPhase(player)
-	case PhaseForge:
-		g.forgePhase(player)
-	case PhaseArchives:
-		g.offerArchives(player)
-	case PhaseReady:
-		g.readyPhase(player)
-	case PhaseDraw:
-		g.drawStep(player)
-	case PhaseEndOfTurn:
-		g.endOfTurnPhase(player)
+	if run := phases[g.State.Phase].run; run != nil {
+		run(g, g.State.ActivePlayer)
 	}
 }
 
@@ -232,7 +220,7 @@ func (g *Game) endOfTurnPhase(player int) {
 	for _, p := range [2]int{player, 1 - player} {
 		g.record(PlayerStanding{
 			Player:    p,
-			Aember:    g.State.Aember[p],
+			Aember:    g.Aember(p),
 			KeyColors: g.KeyColors(p),
 		})
 	}

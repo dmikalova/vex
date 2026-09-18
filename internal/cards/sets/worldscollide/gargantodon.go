@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  16
 //	Traits: Beast
 //
-//	Gargantodon deals 4 Damage when fighting.
+//	Gargantodon deals 4 damage when fighting.
 //	Each Æmber that would be stolen is captured by a creature controlled by the active player instead.
 //	Gargantodon enters play stunned.
 var Gargantodon = set.New(

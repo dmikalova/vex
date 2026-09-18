@@ -24,7 +24,7 @@ func TestGoldKeyImp(t *testing.T) {
 	})
 	g := h.Game()
 
-	g.State.Keys[0] = 2 // has two keys; the third is barred
+	g.State.ForgeCanonicalKeys(0, 2) // has two keys; the third is barred
 	g.State.Aember[0] = engine.KeyCost
 	h.P1.EndTurn() // to P2
 	h.P2.EndTurn() // back to P1: forge phase runs, third key is barred

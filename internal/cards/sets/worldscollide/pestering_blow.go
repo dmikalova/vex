@@ -18,7 +18,7 @@ var PesteringBlow = set.New(
 	card.Provenance(card.WC, "245"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.DamageThen{
+		card.Trigger.Play, card.DealDamage{
 			Amount: 1,
 			After:  card.Always,
 			Target: card.Target.Creature,

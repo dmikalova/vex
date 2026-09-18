@@ -48,9 +48,11 @@ func (e ExcessCreatures) sideCount(ctx *EffectContext, player int) int {
 }
 
 // filter is the identity predicate a counted creature must satisfy — its Trait
-// when set, admitting every creature otherwise.
+// when set, admitting every creature otherwise. Type is stated even though the
+// scan only walks battlelines, so filter().noun() renders "creature" rather than
+// the generic "card".
 func (e ExcessCreatures) filter() CardFilter {
-	return CardFilter{Trait: e.Trait}
+	return CardFilter{Type: Creature, Trait: e.Trait}
 }
 
 // CountText renders the singular noun the "for each" clause repeats.

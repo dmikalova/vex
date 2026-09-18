@@ -132,9 +132,7 @@ func (g *Game) ChooseHouse(player int, house House) error {
 	// reacts to the choice is one window the active player orders (ADR 0013), not a
 	// per-card sequence.
 	choose := g.window()
-	for _, id := range g.allInPlay(player) {
-		choose.add(id, TriggerAfterChooseHouse, 0, false)
-	}
+	choose.addSide(player, TriggerAfterChooseHouse, 0, includeSubject)
 	// A card with TriggersFromDiscard keeps its choose-house ability live in its
 	// owner's discard pile (Relentless Creeper returns itself to hand), so the
 	// discard pile is scanned alongside cards in play — the only window that does.
@@ -149,15 +147,21 @@ func (g *Game) ChooseHouse(player int, house House) error {
 	// window fires for both players' cards, unlike the controller-only
 	// AfterChooseHouse above; the active player still orders it (ADR 0013).
 	public := g.window()
-	for _, p := range [2]int{player, 1 - player} {
-		for _, id := range g.allInPlay(p) {
-			public.add(id, TriggerAfterAnyPlayerChoosesHouse, 0, false)
-		}
-	}
+	public.addSide(player, TriggerAfterAnyPlayerChoosesHouse, 0, includeSubject)
+	public.addSide(1-player, TriggerAfterAnyPlayerChoosesHouse, 0, includeSubject)
 	g.resolveWindow(g.orderTriggered(player, public.pending))
 	g.enterPhase(PhaseArchives)
 	g.runPhases()
 	return nil
+}
+
+// SetActiveHouse makes h the active player's active house for the current turn,
+// changing which house they may play and use without going through a house choice
+// (Book of leQ). It does not re-fire the "after you choose a house" triggers,
+// because no house is being chosen — the active house is simply reassigned.
+func (g *Game) SetActiveHouse(h House) {
+	g.State.ActiveHouse = h
+	g.record(HouseChosen{Player: g.State.ActivePlayer, House: h})
 }
 
 // playerHasHouse reports whether house is one the player may choose — a house in
@@ -636,7 +640,7 @@ func (g *Game) forgeKeyAtExtraCost(player, extra int) bool {
 // Æmber banked on cards that let it be spent when forging (Safe Place), and the
 // Æmber on creatures a spend-as-pool permission covers (Senator Bracchus).
 func (g *Game) spendableAember(player int) int {
-	total := g.State.Aember[player]
+	total := g.Aember(player)
 	for _, id := range g.vaults(player) {
 		total += g.AmberOn(id)
 	}
@@ -651,8 +655,8 @@ func (g *Game) spendableAember(player int) int {
 // vanishing.
 func (g *Game) payKeyCost(player, cost int) {
 	total := cost
-	fromPool := min(cost, g.State.Aember[player])
-	g.State.Aember[player] -= fromPool
+	fromPool := min(cost, g.Aember(player))
+	g.SetAember(player, g.Aember(player)-fromPool)
 	cost -= fromPool
 	for _, id := range g.vaults(player) {
 		if cost == 0 {
@@ -667,7 +671,7 @@ func (g *Game) payKeyCost(player, cost int) {
 	}
 	if gainer, ok := g.forgeAemberGainer(player); ok && total > 0 {
 		beneficiary := g.controller(gainer)
-		g.State.Aember[beneficiary] += total
+		g.SetAember(beneficiary, g.Aember(beneficiary)+total)
 		g.record(AemberGainedFromForging{Card: gainer, From: player, Amount: total})
 	}
 }
@@ -717,13 +721,12 @@ func (g *Game) forgeKeyFreeForced(player int) bool {
 // finishForgeKey records a newly forged key in the colour already picked, fires
 // "after you forge a key" abilities, and checks for the win.
 func (g *Game) finishForgeKey(player int, color KeyColor) {
-	g.State.Keys[player]++
 	g.State.TurnHistory[player][KeysForgedThisTurn]++
-	g.State.KeyColors[player][g.State.Keys[player]-1] = color
+	g.State.KeyColors[player][g.Keys(player)] = color
 	g.record(KeyForged{
 		Player: player,
 		Color:  color,
-		Keys:   g.State.Keys[player],
+		Keys:   g.Keys(player),
 		Needed: KeysToWin,
 	})
 	// Forging opens one window: the forger's own "after you forge a key" abilities,
@@ -734,7 +737,7 @@ func (g *Game) finishForgeKey(player int, color KeyColor) {
 	g.resolveWindow(g.orderTriggered(player, pending))
 	// Forging changes the unforged-key count some creatures draw their power from.
 	g.settleDestroyed(player)
-	if g.State.Keys[player] >= KeysToWin {
+	if g.Keys(player) >= KeysToWin {
 		g.State.Winner = player
 		g.record(GameWon{Player: player})
 	}
@@ -813,7 +816,7 @@ func (g *Game) pickKeyColorChosenBy(forger, chooser int) KeyColor {
 // canonical order.
 func (g *Game) remainingKeyColors(player int) []KeyColor {
 	var used [len(keyColorNames)]bool
-	for i := 0; i < g.State.Keys[player]; i++ {
+	for i := 0; i < g.Keys(player); i++ {
 		used[g.State.KeyColors[player][i]] = true
 	}
 	var out []KeyColor
@@ -829,11 +832,10 @@ func (g *Game) remainingKeyColors(player int) []KeyColor {
 // it is silent: no cost is refunded and no forge abilities fire. It reports whether
 // a key was actually removed, so a gate can hang off the unforge happening.
 func (g *Game) UnforgeKey(player int) bool {
-	if g.State.Keys[player] == 0 {
+	if g.Keys(player) == 0 {
 		return false
 	}
-	g.State.Keys[player]--
-	g.State.KeyColors[player][g.State.Keys[player]] = KeyColor(0)
-	g.record(KeyUnforged{Player: player, Keys: g.State.Keys[player], Needed: KeysToWin})
+	g.State.KeyColors[player][g.Keys(player)-1] = KeyColorNone
+	g.record(KeyUnforged{Player: player, Keys: g.Keys(player), Needed: KeysToWin})
 	return true
 }

@@ -39,6 +39,12 @@ type Chooser interface {
 // keeps behavior deterministic for tests and simulation.
 type FirstChooser struct{}
 
+// FirstChooser deliberately implements only the base Chooser: every optional
+// capability falls back to its engine default, which is what keeps simulation and
+// the bot from answering prompts a human would render. A prompt-totality test
+// (ADR 0045) must scope itself to the human-facing chooser, not to this one.
+var _ Chooser = FirstChooser{}
+
 // ChooseCreature returns the first candidate, or false if the list is empty.
 func (FirstChooser) ChooseCreature(_, _ string, candidates []LocalID) (LocalID, bool) {
 	if len(candidates) == 0 {

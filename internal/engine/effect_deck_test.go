@@ -292,7 +292,7 @@ func TestBonkersComposition(t *testing.T) {
 			},
 		},
 		Conditional{
-			Cond: CardsDestroyedFewerThan{Amount: 2},
+			Cond: Not{Cond: CountIs{Count: CardsDestroyed{}, Is: AtLeast, Amount: 2}},
 			Then: Destroy{Target: Target{Kind: TargetThisCreature}},
 		},
 	}}
@@ -337,7 +337,7 @@ func TestBonkersCompositionSelfDestructs(t *testing.T) {
 			},
 		},
 		Conditional{
-			Cond: CardsDestroyedFewerThan{Amount: 2},
+			Cond: Not{Cond: CountIs{Count: CardsDestroyed{}, Is: AtLeast, Amount: 2}},
 			Then: Destroy{Target: Target{Kind: TargetThisCreature}},
 		},
 	}}.Resolve(ctx)

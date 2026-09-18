@@ -3,7 +3,7 @@ package engine
 import "testing"
 
 func TestReturnNamedToHand(t *testing.T) {
-	e := ReturnNamedToHand{Name: "Urchin"}
+	e := PutNamedIntoHand{Name: "Urchin"}
 	if e.Text() != "put an Urchin from play or from your discard pile into your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -518,4 +518,47 @@ func TestAbductionResolve(t *testing.T) {
 			t.Error("a card archived normally returns to its own controller's hand")
 		}
 	})
+}
+
+// TestPutItIntoHand covers each branch of the effect: its rendered text, the
+// no-context no-op, recovering a destroyed creature from the discard pile, and
+// putting a creature that is still in play into its owner's hand.
+func TestPutItIntoHand(t *testing.T) {
+	if got := (PutItIntoHand{}).Text(); got != "put it into its owner's hand" {
+		t.Errorf("Text = %q, want %q", got, "put it into its owner's hand")
+	}
+
+	// No card in context: the effect does nothing.
+	g := started(t)
+	(PutItIntoHand{}).Resolve(&EffectContext{Resolver: g})
+
+	// A destroyed creature (in the discard) is recovered to its owner's hand.
+	dead := g.AddToBattleline(testCreature("dead", 3), 1)
+	g.DestroyEach(0, []LocalID{dead})
+	if g.inPlay(dead) {
+		t.Fatal("dead should have left play")
+	}
+	(PutItIntoHand{}).Resolve(&EffectContext{Resolver: g, It: dead, HasIt: true})
+	if !handContains(g, 1, dead) {
+		t.Error("destroyed creature should be recovered to its owner's hand")
+	}
+
+	// A creature still in play is returned straight from the battleline.
+	live := g.AddToBattleline(testCreature("live", 3), 1)
+	(PutItIntoHand{}).Resolve(&EffectContext{Resolver: g, It: live, HasIt: true})
+	if g.inPlay(live) {
+		t.Fatal("live should have left play")
+	}
+	if !handContains(g, 1, live) {
+		t.Error("in-play creature should be returned to its owner's hand")
+	}
+}
+
+func handContains(g *Game, player int, id LocalID) bool {
+	for _, h := range g.Hand(player) {
+		if h == id {
+			return true
+		}
+	}
+	return false
 }

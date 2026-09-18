@@ -46,5 +46,9 @@ func (e OverrideStats) Text() string {
 
 // Resolve installs the stat mask over every creature for the duration.
 func (e OverrideStats) Resolve(ctx *EffectContext) {
-	ctx.Resolver.SetStatOverride(int8(e.Power), int8(e.Armor), e.HasPower, e.HasArmor, e.Duration)
+	ctx.Resolver.SetStatOverride(
+		StatMask{Value: int8(e.Power), Set: e.HasPower},
+		StatMask{Value: int8(e.Armor), Set: e.HasArmor},
+		e.Duration,
+	)
 }

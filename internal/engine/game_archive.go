@@ -61,10 +61,7 @@ func (g *Game) selectiveArchivePickup(player int, src LocalID) {
 
 // archiveFromHand moves a card from a player's hand to their archives.
 func (g *Game) archiveFromHand(player int, id LocalID) {
-	if g.State.Hand[player].remove(id) {
-		g.State.Archives[player].add(id)
-		g.record(CardMoved{Player: player, Card: id, From: Hand, To: Archives})
-	}
+	g.archiveFrom(player, id, Hand, CardMoved{Player: player, Card: id, From: Hand, To: Archives})
 }
 
 // archiveEnemyFromHand moves a card from its owner's hand into a different player's
@@ -72,35 +69,36 @@ func (g *Game) archiveFromHand(player int, id LocalID) {
 // card, and the ownership rule returns it home the moment it leaves them.
 func (g *Game) archiveEnemyFromHand(player int, id LocalID) {
 	o := g.owner(id)
-	if g.State.Hand[o].remove(id) {
-		g.State.Archives[player].add(id)
-		g.record(CardAbducted{Player: player, Card: id, Owner: o})
-	}
+	g.moveCard(id,
+		zoneRef{Player: o, Zone: Hand},
+		zoneRef{Player: player, Zone: Archives},
+		CardAbducted{Player: player, Card: id, Owner: o})
 }
 
 func (g *Game) archiveFromDiscard(player int, id LocalID) {
-	if g.State.Discard[player].remove(id) {
-		g.State.Archives[player].add(id)
-		g.record(CardMoved{Player: player, Card: id, From: Discard, To: Archives})
-	}
+	g.archiveFrom(player, id, Discard,
+		CardMoved{Player: player, Card: id, From: Discard, To: Archives})
 }
 
 // archiveFromPurge moves a card from a player's purge pile to their archives —
 // the recovery of a card set aside out of the game (Universal Recycle Bin).
 func (g *Game) archiveFromPurge(player int, id LocalID) {
-	if g.State.Purge[player].remove(id) {
-		g.State.Archives[player].add(id)
-		g.record(CardArchivedFromPurge{Player: player, Card: id})
-	}
+	g.archiveFrom(player, id, purged, CardArchivedFromPurge{Player: player, Card: id})
 }
 
 // archiveFromDeck moves a specific card the controller looked at — one of the top
 // few, not blindly the top one — from a player's deck to their archives.
 func (g *Game) archiveFromDeck(player int, id LocalID) {
-	if g.State.Deck[player].remove(id) {
-		g.State.Archives[player].add(id)
-		g.record(TopOfDeckArchived{Player: player, Card: id})
-	}
+	g.archiveFrom(player, id, Deck, TopOfDeckArchived{Player: player, Card: id})
+}
+
+// archiveFrom archives one of a player's own cards, which is every archive but the
+// abduction from an enemy hand.
+func (g *Game) archiveFrom(player int, id LocalID, from Zone, entry LogEntry) {
+	g.moveCard(id,
+		zoneRef{Player: player, Zone: from},
+		zoneRef{Player: player, Zone: Archives},
+		entry)
 }
 
 // discardArchives moves all of a player's archived cards to their discard pile.

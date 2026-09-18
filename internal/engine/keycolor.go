@@ -30,6 +30,20 @@ func (c KeyColor) String() string {
 // keyColorOrder is the canonical order colours are offered and displayed in.
 var keyColorOrder = [...]KeyColor{KeyColorRed, KeyColorBlue, KeyColorYellow}
 
+// firstKeyColors returns the colours of a player's first n keys forged in
+// canonical order, with a fourth key colourless.
+func firstKeyColors(n int) []KeyColor {
+	out := make([]KeyColor, 0, n)
+	for i := 0; i < n && i < MaxKeys; i++ {
+		if i < len(keyColorOrder) {
+			out = append(out, keyColorOrder[i])
+			continue
+		}
+		out = append(out, KeyColorColorless)
+	}
+	return out
+}
+
 // KeyColorPrompt is the option-chooser prompt shown when forging asks which key
 // colour to forge. It is exported so a frontend (or test harness) can recognise
 // this specific prompt.

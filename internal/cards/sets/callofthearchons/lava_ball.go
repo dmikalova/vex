@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Deal 4 damage to a creature that is not on a flank and 2 damage to each of its neighbors.
+//	Play: Choose a creature that is not on a flank. Deal 4 damage to the chosen creature and 2 damage to each of its neighbors.
 var LavaBall = set.New(
 	"Lava Ball",
 	card.House.Brobnar,

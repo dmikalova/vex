@@ -43,6 +43,18 @@ type bridgeChooser struct {
 	player int
 }
 
+// bridgeChooser answers the prompts card tests exercise, so it satisfies those
+// answering capabilities and deliberately omits PositionChooser (Deploy placement
+// falls back to labeled options) and BadgeChooser (display only) (ADR 0045,
+// step 1).
+var (
+	_ engine.Chooser           = bridgeChooser{}
+	_ engine.OptionChooser     = bridgeChooser{}
+	_ engine.DeclinableChooser = bridgeChooser{}
+	_ engine.Orderer           = bridgeChooser{}
+	_ engine.ReactionChooser   = bridgeChooser{}
+)
+
 // ChooseCreature forwards a creature choice to the test and waits for the click.
 func (b bridgeChooser) ChooseCreature(
 	source, prompt string,

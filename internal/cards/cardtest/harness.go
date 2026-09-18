@@ -33,7 +33,9 @@ type Side struct {
 	Discard  []Entry
 	Archives []Entry
 	Amber    int
-	Keys     int
+	// Keys is how many keys this player has already forged, in the canonical colour
+	// order. Use ForgedKeys instead when the card reads key colour.
+	Keys int
 	// ForgedKeys are the colours of the keys this player has already forged.
 	// Setting it forges that many keys of those colours (for cards that read key
 	// colour, like The Red Baron); use Keys when only the count matters.
@@ -331,15 +333,15 @@ func (h *Harness) placeSide(player int, s Side) {
 		h.bind(e, h.g.AddToArchives(e.def, player))
 	}
 	if s.Amber != 0 {
-		h.g.State.Aember[player] = s.Amber
+		h.g.State.Aember[player] = int16(s.Amber)
 	}
-	if s.Keys != 0 {
-		h.g.State.Keys[player] = s.Keys
+	// The engine derives the key count from the colours, so a bare Keys count is
+	// forged in canonical colour order.
+	if len(s.ForgedKeys) == 0 {
+		h.g.State.ForgeCanonicalKeys(player, s.Keys)
+		return
 	}
 	copy(h.g.State.KeyColors[player][:], s.ForgedKeys)
-	if n := len(s.ForgedKeys); n != 0 {
-		h.g.State.Keys[player] = n
-	}
 }
 
 // placeInPlay puts a creature on the battleline or an artifact in the artifact

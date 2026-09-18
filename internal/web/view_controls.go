@@ -243,32 +243,18 @@ func (g *game) controls() app.UI {
 	if g.forgingKey >= 0 {
 		return app.Div().Class("controls").Body(g.keyForgePanel())
 	}
-	// A labeled option prompt (e.g. "take archives?") shows its choices as buttons.
+	// An engine prompt takes over the dock. Every prompt kind routes through
+	// promptControls, the single seam a totality test proves renders them all
+	// (ADR 0045). The option and position kinds are dispatched here, before the
+	// manual Graft / Place-under target below; the card kinds after it, so their
+	// prior dock priority is unchanged.
 	if g.choosingOption {
-		// A "choose how to use X" verb prompt lifts the chosen creature and draws its
-		// use buttons on it (like an ordinary use), so the dock shows the resting
-		// controls disabled rather than repeating the buttons in the sidebar.
-		if _, ok := g.liftUseTarget(); ok {
-			return app.Div().Class("controls").Body(g.disabledEndTurnBar())
-		}
-		body := []app.UI{
-			g.promptHeader(g.optionPrompt),
-			g.promptSourceHeader(),
-			g.optionChooser(),
-		}
-		// Manual mode adds a Cancel that backs the whole action out — an option prompt
-		// has no decline of its own, so this is the only way out of a stuck one.
-		if g.g.Manual() {
-			body = append(body, btn("Cancel", g.cancelChooser, "btn-secondary"))
-		}
-		return app.Div().Class("controls").Body(body...)
+		ui, _ := g.promptControls(engine.PromptOption)
+		return ui
 	}
-	// Placing a Deploy creature lights the battleline as click targets and asks its
-	// where question on the lifted card (deployActions), exactly like the flank
-	// question, so the dock shows the resting controls disabled rather than a panel
-	// of its own.
 	if g.choosingPosition {
-		return app.Div().Class("controls").Body(g.disabledEndTurnBar())
+		ui, _ := g.promptControls(engine.PromptPosition)
+		return ui
 	}
 	// A manual Graft / Place under is waiting for the player to click the in-play
 	// host to thread the selected card under; the board lights its hosts and the
@@ -289,32 +275,8 @@ func (g *game) controls() app.UI {
 	// While an engine chooser waits, the controls become the prompt itself: a
 	// green call to action to click one of the highlighted cards.
 	if g.choosing {
-		body := []app.UI{
-			g.promptHeader(g.chooserPrompt),
-			g.promptSourceHeader(),
-		}
-		// A bounded out-of-play pick (look at the top N cards) lists its candidates as
-		// buttons here rather than opening the zone viewer, so the whole choice reads
-		// in the action bar.
-		if g.promptAsButtons {
-			body = append(body, g.promptCardButtons())
-		}
-		// An optional prompt ("you may", "up to N") is passed on with Done. Manual mode
-		// adds a Cancel on every prompt — optional or mandatory — that backs the whole
-		// action out, the way out of a prompt with no clickable candidate.
-		if g.chooserDeclinable {
-			body = append(body, btn("Done", g.declineChooser,
-				cx("btn-primary", ifCls(g.isDoneCursor(), "btn-cursor"))))
-		}
-		// An ordering prompt offers Auto-resolve, which answers with a random order
-		// so the player need not arrange abilities whose order does not matter to them.
-		if g.chooserOrdering {
-			body = append(body, btn("Auto-resolve", g.autoResolveOrder, "btn-secondary"))
-		}
-		if g.g.Manual() {
-			body = append(body, btn("Cancel", g.cancelChooser, "btn-secondary"))
-		}
-		return app.Div().Class("controls").Body(body...)
+		ui, _ := g.promptControls(g.cardPromptKind())
+		return ui
 	}
 	if g.phase == phaseHouse {
 		if g.g.Manual() {
@@ -333,6 +295,109 @@ func (g *game) controls() app.UI {
 	body := []app.UI{g.endTurnBar()}
 	if g.g.Manual() {
 		body = append([]app.UI{g.manualPanel()}, body...)
+	}
+	return app.Div().Class("controls").Body(body...)
+}
+
+// promptControls renders the dock cluster for one engine prompt kind, returning
+// the widget and whether the kind is covered. It is the single seam a totality
+// test drives to prove every engine.PromptKind has a rendering (ADR 0045): a new
+// prompt route is a new PromptKind and a case here together, so the test fails
+// until the case is added. controls dispatches its live prompt branches through
+// this, so the mapping the test checks is the one the client actually renders.
+func (g *game) promptControls(kind engine.PromptKind) (app.UI, bool) {
+	switch kind {
+	case engine.PromptOption:
+		return g.optionPromptControls(), true
+	case engine.PromptPosition:
+		return g.positionPromptControls(), true
+	// The card kinds share one cluster; the modifier flags (declinable, ordering,
+	// as-buttons) it reads decide which extra buttons it grows.
+	case engine.PromptCreature,
+		engine.PromptCardOrDecline,
+		engine.PromptReaction,
+		engine.PromptOrder:
+		return g.cardPromptControls(), true
+	case engine.PromptBadge:
+		// A badge preview decorates the candidate card it previews; it grows no dock
+		// cluster of its own, so it is covered by rendering nothing here.
+		return nil, true
+	}
+	return nil, false
+}
+
+// cardPromptKind names which card-prompt kind is up, from the modifier flags the
+// raised prompt set. All card kinds render through cardPromptControls, so this is
+// for routing and honest naming, not a rendering fork.
+func (g *game) cardPromptKind() engine.PromptKind {
+	switch {
+	case g.chooserOrdering:
+		return engine.PromptOrder
+	case g.chooserDeclinable:
+		return engine.PromptCardOrDecline
+	default:
+		return engine.PromptCreature
+	}
+}
+
+// optionPromptControls draws a labeled option prompt (e.g. "take archives?") as
+// its choices.
+func (g *game) optionPromptControls() app.UI {
+	// A "choose how to use X" verb prompt lifts the chosen creature and draws its
+	// use buttons on it (like an ordinary use), so the dock shows the resting
+	// controls disabled rather than repeating the buttons in the sidebar.
+	if _, ok := g.liftUseTarget(); ok {
+		return app.Div().Class("controls").Body(g.disabledEndTurnBar())
+	}
+	body := []app.UI{
+		g.promptHeader(g.optionPrompt),
+		g.promptSourceHeader(),
+		g.optionChooser(),
+	}
+	// Manual mode adds a Cancel that backs the whole action out — an option prompt
+	// has no decline of its own, so this is the only way out of a stuck one.
+	if g.g.Manual() {
+		body = append(body, btn("Cancel", g.cancelChooser, "btn-secondary"))
+	}
+	return app.Div().Class("controls").Body(body...)
+}
+
+// positionPromptControls draws the dock while a Deploy creature is being placed:
+// the battleline lights as click targets and the where question rides on the
+// lifted card (deployActions), exactly like the flank question, so the dock shows
+// the resting controls disabled rather than a panel of its own.
+func (g *game) positionPromptControls() app.UI {
+	return app.Div().Class("controls").Body(g.disabledEndTurnBar())
+}
+
+// cardPromptControls draws a card decision: the controls become the prompt
+// itself, a green call to action to click one of the highlighted cards, plus the
+// buttons the modifier flags add.
+func (g *game) cardPromptControls() app.UI {
+	body := []app.UI{
+		g.promptHeader(g.chooserPrompt),
+		g.promptSourceHeader(),
+	}
+	// A bounded out-of-play pick (look at the top N cards) lists its candidates as
+	// buttons here rather than opening the zone viewer, so the whole choice reads
+	// in the action bar.
+	if g.promptAsButtons {
+		body = append(body, g.promptCardButtons())
+	}
+	// An optional prompt ("you may", "up to N") is passed on with Done. Manual mode
+	// adds a Cancel on every prompt — optional or mandatory — that backs the whole
+	// action out, the way out of a prompt with no clickable candidate.
+	if g.chooserDeclinable {
+		body = append(body, btn("Done", g.declineChooser,
+			cx("btn-primary", ifCls(g.isDoneCursor(), "btn-cursor"))))
+	}
+	// An ordering prompt offers Auto-resolve, which answers with a random order
+	// so the player need not arrange abilities whose order does not matter to them.
+	if g.chooserOrdering {
+		body = append(body, btn("Auto-resolve", g.autoResolveOrder, "btn-secondary"))
+	}
+	if g.g.Manual() {
+		body = append(body, btn("Cancel", g.cancelChooser, "btn-secondary"))
 	}
 	return app.Div().Class("controls").Body(body...)
 }
@@ -547,23 +612,84 @@ func (g *game) housePicker() app.UI {
 	)
 }
 
+// optionKind classifies a labeled option prompt by how its widget is drawn, so
+// the option dispatch is an exhaustive switch over a named kind rather than an
+// if-chain falling through to a silent catch-all (ADR 0045). The kind is derived
+// from the option labels' shape — the seam that survives until ADR 0040's Request
+// carries the kind from the engine — but optionGeneric is an explicit, named
+// rendering, so a new option shape is a new kind and a new case together.
+type optionKind uint8
+
+const (
+	// optionCardName is a "name a card" prompt answered in the typeahead panel, so
+	// the dock shows no per-option widget.
+	optionCardName optionKind = iota
+	// optionKeyColor is a forge prompt shown as themed key-colour buttons.
+	optionKeyColor
+	// optionUseVerb is a reap/fight/action prompt shown as the standard use buttons.
+	optionUseVerb
+	// optionFlank is a move-to-a-flank prompt shown as the two flank buttons.
+	optionFlank
+	// optionHouse is a choose-a-house prompt shown as the house emblem grid.
+	optionHouse
+	// optionGeneric is any other labeled choice, shown as plain buttons.
+	optionGeneric
+)
+
+// optionKinds returns every option-widget kind, in declaration order, for a
+// totality test that proves each has a rendering.
+func optionKinds() []optionKind {
+	return []optionKind{
+		optionCardName,
+		optionKeyColor,
+		optionUseVerb,
+		optionFlank,
+		optionHouse,
+		optionGeneric,
+	}
+}
+
+// classifyOptions names how the current option labels are drawn. optionGeneric is
+// the honest default for a shape none of the specific classifiers claim — a named
+// case, not an unhandled fall-through.
+func (g *game) classifyOptions() optionKind {
+	switch {
+	case g.cardNameOptions():
+		return optionCardName
+	case g.keyColorOptions():
+		return optionKeyColor
+	case g.useVerbOptions():
+		return optionUseVerb
+	case g.flankOptions():
+		return optionFlank
+	case g.houseOptions():
+		return optionHouse
+	default:
+		return optionGeneric
+	}
+}
+
 // optionChooser renders the widget for a labeled multiple-choice prompt. The
 // question itself rides in the header row beside Undo (promptHeader), so a card
 // that words its question differently is not overwritten by a heading the client
-// made up; only the widget varies. When every option is a key colour it shows
-// themed key buttons; when every option is a house it shows a grid of house
-// emblems — a house prompt can offer all seven, and seven full-width rows push the
-// rest of the controls off the screen where a grid does not. When every option is a
-// way of using a creature (a reap/fight/action prompt another card raised) it shows
-// the standard use buttons, so a triggered use reads like a chosen one. Anything
-// else falls back to plain primary buttons.
+// made up; only the widget varies.
 func (g *game) optionChooser() app.UI {
-	// A name-a-card prompt is answered in the typeahead panel over the board, so the
-	// dock shows no widget at all here — a button per card in the database is not one.
-	if g.cardNameOptions() {
-		return app.Div().Class("btn-col")
-	}
-	if g.keyColorOptions() {
+	ui, _ := g.optionControls(g.classifyOptions())
+	return ui
+}
+
+// optionControls draws the widget for one option kind, returning it and whether
+// the kind is covered. It is the single seam a totality test drives to prove
+// every optionKind has a rendering (ADR 0045).
+func (g *game) optionControls(kind optionKind) (app.UI, bool) {
+	switch kind {
+	case optionCardName:
+		// A name-a-card prompt is answered in the typeahead panel over the board, so
+		// the dock shows no widget at all here — a button per card in the database is
+		// not one.
+		return app.Div().Class("btn-col"), true
+	case optionKeyColor:
+		// When every option is a key colour it shows themed key buttons.
 		return app.Div().Class("btn-col").Body(
 			app.Range(g.optionLabels).Slice(func(i int) app.UI {
 				c := keyColorByName(g.optionLabels[i])
@@ -574,9 +700,11 @@ func (g *game) optionChooser() app.UI {
 					g.chooseOptionIdx(i),
 				)
 			}),
-		)
-	}
-	if g.useVerbOptions() {
+		), true
+	case optionUseVerb:
+		// When every option is a way of using a creature (a reap/fight/action prompt
+		// another card raised) it shows the standard use buttons, so a triggered use
+		// reads like a chosen one.
 		var body []app.UI
 		for i, label := range g.optionLabels {
 			// A verb the chosen creature cannot be used for (Narp bars its neighbors
@@ -589,9 +717,10 @@ func (g *game) optionChooser() app.UI {
 			body = append(body, btn(s.text, g.chooseOptionIdx(i),
 				cx(s.class, ifCls(g.isButtonCursor(i), "btn-cursor"))))
 		}
-		return app.Div().Class("btn-col").Body(body...)
-	}
-	if g.flankOptions() {
+		return app.Div().Class("btn-col").Body(body...), true
+	case optionFlank:
+		// A move-to-a-flank prompt (Reassembling Automaton, Harland Mindlock) uses
+		// the same flank buttons as placing a creature.
 		return app.Div().Class("btn-col").Body(
 			btn(engine.FlankLeftLabel, g.chooseOptionIdx(0),
 				cx("btn-primary", "btn-flank", "btn-flank--left",
@@ -599,9 +728,11 @@ func (g *game) optionChooser() app.UI {
 			btn(engine.FlankRightLabel, g.chooseOptionIdx(1),
 				cx("btn-primary", "btn-flank", "btn-flank--right",
 					ifCls(g.isButtonCursor(1), "btn-cursor"))),
-		)
-	}
-	if g.houseOptions() {
+		), true
+	case optionHouse:
+		// When every option is a house it shows a grid of house emblems — a house
+		// prompt can offer all seven, and seven full-width rows push the rest of the
+		// controls off the screen where a grid does not.
 		return app.Div().Class("btn-col").Body(
 			app.Div().Class("house-grid").Body(
 				app.Range(g.optionLabels).Slice(func(i int) app.UI {
@@ -614,20 +745,23 @@ func (g *game) optionChooser() app.UI {
 						Body(houseIcon(h, "icon-house"))
 				}),
 			),
-		)
+		), true
+	case optionGeneric:
+		// Anything else falls back to plain primary buttons.
+		return app.Div().Class("btn-col").Body(
+			app.Range(g.optionLabels).Slice(func(i int) app.UI {
+				// A declining "No" or a hand-shedding "Mulligan" is the
+				// destructive-looking choice, so it reads red.
+				kind := "btn-primary"
+				if isDecliningOption(g.optionLabels[i]) {
+					kind = "btn-danger"
+				}
+				return btn(g.optionLabels[i], g.chooseOptionIdx(i),
+					cx(kind, ifCls(g.isButtonCursor(i), "btn-cursor")))
+			}),
+		), true
 	}
-	return app.Div().Class("btn-col").Body(
-		app.Range(g.optionLabels).Slice(func(i int) app.UI {
-			// A declining "No" or a hand-shedding "Mulligan" is the
-			// destructive-looking choice, so it reads red.
-			kind := "btn-primary"
-			if isDecliningOption(g.optionLabels[i]) {
-				kind = "btn-danger"
-			}
-			return btn(g.optionLabels[i], g.chooseOptionIdx(i),
-				cx(kind, ifCls(g.isButtonCursor(i), "btn-cursor")))
-		}),
-	)
+	return nil, false
 }
 
 // isDecliningOption reports whether a label is the "turn this down" answer: the

@@ -27,7 +27,7 @@ var GujiDinosaurHunter = set.New(
 			Then: card.Conditional{
 				Cond: card.Or{Conditions: []card.Condition{
 					card.ItIsOfTrait{Trait: card.Traits.Dinosaur},
-					card.ItHasAember{},
+					card.HasAember{},
 				}},
 				Then: card.DealDamage{Amount: 6, Target: card.Target.Triggering},
 				Else: card.DealDamage{Amount: 2, Target: card.Target.Triggering},

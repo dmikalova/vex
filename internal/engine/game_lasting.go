@@ -102,62 +102,92 @@ const (
 	// acting player, so a grant that lasts into the opponent's turn (Diplomacy's "each
 	// creature gains 'Before Fight: Exalt this creature'") fires for an enemy attacker
 	// on the opponent's turn too.
-	EventBeforeFight // EventBonusIconBoost is a one-shot arming, not a reaction or replacement: it is
+	EventBeforeFight
+	// EventBonusIconBoost is a one-shot arming, not a reaction or replacement: it is
 	// neither fired in a window nor queried at an outcome, only consumed by the play
 	// path the next time its owner plays a card (Wild Bounty). The play-path icon loop
 	// consumes it via consumeBonusIconBoost and resolves each icon an additional time.
 	EventBonusIconBoost
-	// EventNextActionToHand is a one-shot arming, like EventBonusIconBoost: it is
+	// EventNextTacticIntoHand is a one-shot arming, like EventBonusIconBoost: it is
 	// neither fired in a window nor queried at an outcome, only consumed by the play
-	// path the next time its owner resolves an action card (High Priest Torvus). The
-	// action-play path consumes it via consumeNextActionToHand and returns that card
-	// to its owner's hand instead of their discard pile.
-	EventNextActionToHand
+	// path the next time its owner resolves a Tactic (High Priest Torvus). The
+	// Tactic-play path consumes it via consumeNextTacticIntoHand and puts that card
+	// into its owner's hand instead of their discard pile.
+	EventNextTacticIntoHand
 )
+
+// eventInfo describes one event: whether it is a reaction point (fired after) or
+// a replacement/modifier point (queried during), and how it reads in card text.
+type eventInfo struct {
+	isReaction bool
+	// clause is the reaction's "when" phrase, e.g. "after a creature reaps". Every
+	// reaction carries its own: a shared default would silently print one event's
+	// wording for another.
+	clause string
+	// onOpponentTurn overrides clause when the reaction is rendered from the
+	// opponent's turn, where the acting creature is an enemy one. It is empty for
+	// every event whose phrasing reads the same from either side.
+	onOpponentTurn string
+	// gerund is the "instead of ..." phrase an Instead renders for a replacement
+	// point. It is empty for an event no Instead may target, which Instead.validate
+	// rejects.
+	gerund string
+}
+
+// events describes every event that card text or the registry interprets. One
+// table replaces the parallel switches these fields used to live in, so an event
+// added to the enum cannot be classified in one of them and forgotten in the
+// others; TestEventTableIsTotal proves the table covers the whole enum.
+var events = map[Event]eventInfo{
+	EventCreaturePlayed: {isReaction: true, clause: "each time you play a creature"},
+	EventReap:           {isReaction: true, clause: "after a creature reaps"},
+	EventFight: {
+		isReaction:     true,
+		clause:         "each time a friendly creature fights",
+		onOpponentTurn: "after an enemy creature is used to fight",
+	},
+	EventUsed: {isReaction: true, clause: "each time you use a creature"},
+	EventEnemyCreatureDestroyed: {
+		isReaction: true,
+		clause:     "each time an enemy creature is destroyed",
+	},
+	EventForgeKey: {isReaction: true, clause: "after forging a key"},
+	EventCardEntersPlay: {
+		isReaction: true,
+		clause:     "each time you play a creature or artifact",
+	},
+	EventCardPlayed:          {isReaction: true, clause: "each time you play another card"},
+	EventReapAember:          {gerund: "gaining Æmber from reaping"},
+	EventCreatureDestroyed:   {gerund: "a creature being destroyed"},
+	EventAemberAddedToPool:   {gerund: "Æmber being added to a pool"},
+	EventAemberTakenFromPool: {gerund: "Æmber being taken from a pool"},
+	EventAemberStolen:        {gerund: "Æmber being stolen"},
+	EventCreatureTakesDamage: {},
+	EventBeforeFight:         {},
+	EventBonusIconBoost:      {},
+	EventNextTacticIntoHand:  {},
+}
 
 // isReaction reports whether the event is a reaction point (fired after) rather
 // than a replacement point (queried during).
-func (e Event) isReaction() bool {
-	return e == EventCreaturePlayed || e == EventReap || e == EventFight ||
-		e == EventUsed || e == EventEnemyCreatureDestroyed || e == EventForgeKey ||
-		e == EventCardEntersPlay || e == EventCardPlayed
-}
+func (e Event) isReaction() bool { return events[e].isReaction }
 
 // clause renders the "when" phrase for a reaction, e.g. "each time you play a
 // creature".
-func (e Event) clause() string {
-	switch e {
-	case EventReap:
-		return "after a creature reaps"
-	case EventFight:
-		return "each time a friendly creature fights"
-	case EventEnemyCreatureDestroyed:
-		return "each time an enemy creature is destroyed"
-	case EventForgeKey:
-		return "after forging a key"
-	case EventCardPlayed:
-		return "each time you play another card"
-	default:
-		return "each time you play a creature"
-	}
-}
+func (e Event) clause() string { return events[e].clause }
 
 // gerund renders the "instead of ..." phrase for a replacement, e.g. "gaining
-// Æmber from reaping".
-func (e Event) gerund() string {
-	return "gaining Æmber from reaping"
-}
+// Æmber from reaping". It is empty for an event that is not a replacement point.
+func (e Event) gerund() string { return events[e].gerund }
 
 // clauseOnOpponentTurn renders the reaction's "when" phrase from the opponent's
 // turn, where the acting creature is an enemy one. It differs from clause only for
 // events whose phrasing names the acting side; the rest read the same either way.
 func (e Event) clauseOnOpponentTurn() string {
-	switch e {
-	case EventFight:
-		return "after an enemy creature is used to fight"
-	default:
-		return e.clause()
+	if c := events[e].onOpponentTurn; c != "" {
+		return c
 	}
+	return e.clause()
 }
 
 // lastingAction is what a lasting effect does when it fires or replaces.
@@ -191,11 +221,11 @@ const (
 	// triggering creature captures, the capturer is chosen, so it fizzles when the
 	// active player controls no creature.
 	actCaptureChosen
-	// actReturnToHand is a one-shot arming, not a reaction: it never resolves in a
-	// window, only consumed by the action-play path via consumeNextActionToHand,
-	// which returns the next action card its owner resolves to their hand instead of
+	// actPutIntoHand is a one-shot arming, not a reaction: it never resolves in a
+	// window, only consumed by the Tactic-play path via consumeNextTacticIntoHand,
+	// which puts the next Tactic its owner resolves into their hand instead of
 	// their discard pile (High Priest Torvus).
-	actReturnToHand
+	actPutIntoHand
 	// actDamageOthersOfTrait deals Amount damage to each creature that lacks the
 	// LastingEffect's Trait, on both battlelines — Legion's March's "deal 1 damage
 	// to each non-Dinosaur creature" after a Dinosaur is used.
@@ -385,15 +415,10 @@ func (g *Game) fireLastingBeforeFight(attacker LocalID) {
 // reaction removing itself after it fires.
 func (g *Game) removeLasting(target LastingEffect) {
 	for i := 0; i < int(g.State.LastingCount); i++ {
-		if g.State.Lasting[i] != target {
-			continue
+		if g.State.Lasting[i] == target {
+			g.removeLastingAt(i)
+			return
 		}
-		for j := i; j < int(g.State.LastingCount)-1; j++ {
-			g.State.Lasting[j] = g.State.Lasting[j+1]
-		}
-		g.State.LastingCount--
-		g.State.Lasting[g.State.LastingCount] = LastingEffect{}
-		return
 	}
 }
 
@@ -457,7 +482,11 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 		)
 	case actExalt:
 		g.addAmberOn(subject, int(le.Amount))
-		g.record(AemberExalted{Creature: subject, Amount: int(le.Amount)})
+		g.record(AemberExalted{
+			Player:   actor,
+			Creature: subject,
+			Amount:   int(le.Amount),
+		})
 	case actStun:
 		if g.inPlay(subject) {
 			Stun{Target: Target{Kind: TargetTriggeringCreature}}.Resolve(
@@ -491,9 +520,9 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 		)
 	case actGiveRemainingAember:
 		beneficiary := 1 - actor
-		amount := g.State.Aember[actor]
+		amount := g.Aember(actor)
 		g.SetAember(actor, 0)
-		g.SetAember(beneficiary, g.State.Aember[beneficiary]+amount)
+		g.SetAember(beneficiary, g.Aember(beneficiary)+amount)
 		g.record(AemberGivenAfterForging{
 			Player: actor,
 			To:     beneficiary,
@@ -526,14 +555,13 @@ func (g *Game) lastingReplacement(player int, event Event) (LastingEffect, bool)
 	return LastingEffect{}, false
 }
 
-// consumeBonusIconBoost reports whether player has an armed one-shot bonus-icon
-// boost (Wild Bounty) and, if so, removes it — a boost fires for a single played
-// card. The play-path icon loop uses it to decide whether to resolve each icon an
-// additional time.
-func (g *Game) consumeBonusIconBoost(player int) bool {
+// consumeLastingAction reports whether player has an armed one-shot lasting
+// effect carrying action and, if so, removes it. A one-shot fires for a single
+// card, so finding it and spending it are the same step.
+func (g *Game) consumeLastingAction(player int, action lastingAction) bool {
 	for i := 0; i < int(g.State.LastingCount); i++ {
 		le := g.State.Lasting[i]
-		if int(le.Controller) != player || le.Do != actResolveBonusAgain {
+		if int(le.Controller) != player || le.Do != action {
 			continue
 		}
 		g.removeLastingAt(i)
@@ -542,20 +570,18 @@ func (g *Game) consumeBonusIconBoost(player int) bool {
 	return false
 }
 
-// consumeNextActionToHand reports whether player has an armed one-shot
-// "return your next action card to hand" effect (High Priest Torvus) and, if so,
-// removes it — the redirect applies to a single action card. The action-play path
-// uses it to send that card to hand instead of the discard pile.
-func (g *Game) consumeNextActionToHand(player int) bool {
-	for i := 0; i < int(g.State.LastingCount); i++ {
-		le := g.State.Lasting[i]
-		if int(le.Controller) != player || le.Do != actReturnToHand {
-			continue
-		}
-		g.removeLastingAt(i)
-		return true
-	}
-	return false
+// consumeBonusIconBoost spends player's armed bonus-icon boost (Wild Bounty).
+// The play-path icon loop uses it to decide whether to resolve each icon an
+// additional time.
+func (g *Game) consumeBonusIconBoost(player int) bool {
+	return g.consumeLastingAction(player, actResolveBonusAgain)
+}
+
+// consumeNextTacticIntoHand spends player's armed "put your next Tactic into hand"
+// effect (High Priest Torvus). The Tactic-play path uses it to send that card
+// into hand instead of the discard pile.
+func (g *Game) consumeNextTacticIntoHand(player int) bool {
+	return g.consumeLastingAction(player, actPutIntoHand)
 }
 
 // removeLastingAt drops the lasting effect at index i, compacting the fixed array

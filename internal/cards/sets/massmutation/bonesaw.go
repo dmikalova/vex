@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Demon
 //
-//	If a friendly creature was destroyed this turn, Bonesaw enters play ready.
+//	If a friendly creature has been destroyed this turn, Bonesaw enters play ready.
 var Bonesaw = set.New(
 	"Bonesaw",
 	card.House.Dis,
@@ -20,7 +20,7 @@ var Bonesaw = set.New(
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
 	card.WithEntersPlay(card.Conditional{
-		Cond: card.FriendlyCreatureDestroyed{},
+		Cond: card.CreatureDestroyedThisTurn{Player: card.Controller},
 		Then: card.Ready{Target: card.Target.This},
 	}),
 )

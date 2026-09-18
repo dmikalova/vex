@@ -46,7 +46,7 @@ func TestRedacted(t *testing.T) {
 			P2: ct.Side{},
 		})
 
-		h.Game().State.Keys[0] = 0
+		h.Game().State.ForgeCanonicalKeys(0, 0)
 		h.Game().AddAmberOn(redacted.ID(), 3)
 
 		h.P1.EndTurn()

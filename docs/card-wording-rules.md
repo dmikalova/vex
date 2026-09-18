@@ -129,6 +129,13 @@ One movement verb (`Put`) covers every destination: `into … hand(s)`,
 (Affected: Fear, Arise!, Bad Penny, Faygin, Phoenix Heart, Grasping Vines, World
 Tree, Nepenthe Seed.)
 
+The rule reaches the **code**, not just the printed text: an effect node, a
+facade alias, a log entry, and a `*Game` method that moves a card all say `Put`
+and `Into`, never `Return` and `To`. A name that still says `Return` is how the
+old verb creeps back into new card text, so rename it when you touch it —
+`PutNamedIntoHand`, `PutItIntoHand`, `PutNextTacticIntoHand`, and the mechanic's
+own file `internal/engine/effect_put_into_zone.go`.
+
 ## 5. Result gates use `->`, replacing `If you do`
 
 A conditional consequence that depends on the previous clause succeeding is
@@ -324,20 +331,31 @@ use-time.
 | --------------------- | ----------------------- |
 | Crazy Killing Machine | Bonkers Killing Machine |
 
-## 15. `Damage` vs `damage` (damage-icon casing)
+## 15. `damage` is always lowercase
 
-Capitalize **`Damage`** only where the game _deals_ it — the printed card shows a
-damage icon there: `Deal 2 Damage`, `+2 Damage`. Every other
-use is lowercase.
+Damage is a **common noun**, not a proper one: it is lowercase everywhere, in
+every context — dealing it, healing it, or referring to it.
 
-| Context                       | Casing   | Example                                                  |
-| ----------------------------- | -------- | -------------------------------------------------------- |
-| Dealing damage (icon)         | `Damage` | `Deal 3 Damage to each creature.`                        |
-| Healing / referring to damage | `damage` | `Heal 3 damage from a creature.` / `a damaged creature.` |
+```text
+Deal 3 damage to each creature.
+Heal 3 damage from a creature.
+Bruiser deals 5 damage when fighting.
+Valdr deals +2 damage while attacking an enemy creature on the flank.
+```
 
-The number is what carries the icon, so a creature's fight damage is capitalized
-when it names one (`Bruiser deals 5 Damage when fighting.`) and lowercase when it
-does not (`Spider deals no damage when fighting.`).
+Printed KeyForge cards capitalize the word where a damage **icon** appears, but
+an icon is a layout device, not a spelling: Vactrol renders card text as prose,
+so it takes the prose casing. This is a house-voice choice, not a rule change —
+it alters no card's behavior and is not a
+[divergence](keyforge-divergences.md).
+
+`Æmber` keeps its capital for the opposite reason: it is the proper name of a
+resource, not a common noun.
+
+**The renderer enforces this.** Every amount of damage in card text is rendered
+by `damageAmount` in `internal/engine/text_helpers.go`, so a new effect cannot
+drift back to a capital by formatting its own `"%d Damage"`. Route new damage
+text through that helper.
 
 ## 16. Spelling, qualifiers, and referents
 
@@ -634,7 +652,7 @@ A card that deals one amount of damage to a chosen creature and a larger amount
 instead when that creature meets a condition is authored as a `ChooseCreatureThen`
 whose `Then` is a `Conditional` — the condition picks which amount is dealt —
 rather than a bespoke damage-boost strategy on `DealDamage`. Compound conditions
-compose (`Or{ItIsOfTrait{…}, ItHasAember{}}`) instead of baking each combination
+compose (`Or{ItIsOfTrait{…}, HasAember{}}`) instead of baking each combination
 into a one-off condition, and the rendered form names both amounts and the branch
 plainly.
 

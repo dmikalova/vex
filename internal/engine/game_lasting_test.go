@@ -490,3 +490,38 @@ func TestEventFightIsReaction(t *testing.T) {
 		t.Errorf("clause = %q", EventFight.clause())
 	}
 }
+
+// TestEventTableIsTotal is the guard the event descriptor table exists for: it
+// walks the whole Event enum, from the first real event to the last, and requires
+// every value to be described. An event added to the enum but not to the table
+// fails here instead of silently reading as a replacement point that renders with
+// the generic played-a-creature clause.
+func TestEventTableIsTotal(t *testing.T) {
+	for e := eventUnset + 1; e <= EventNextTacticIntoHand; e++ {
+		if _, ok := events[e]; !ok {
+			t.Errorf("event %d has no table entry", e)
+		}
+	}
+	// The unset zero value is not an event, so it is described by nothing.
+	if _, ok := events[eventUnset]; ok {
+		t.Error("the unset zero value should have no table entry")
+	}
+	if got := len(events); got != int(EventNextTacticIntoHand) {
+		t.Errorf("table describes %d events, the enum holds %d", got, EventNextTacticIntoHand)
+	}
+}
+
+// Only a reaction point carries a rendered clause of its own: a replacement or
+// modifier point is queried at an outcome and never printed as a "when" phrase,
+// so giving one a clause would mean it is rendered somewhere it should not be.
+func TestOnlyReactionsCarryAClause(t *testing.T) {
+	for e := eventUnset + 1; e <= EventNextTacticIntoHand; e++ {
+		info := events[e]
+		if info.isReaction {
+			continue
+		}
+		if info.clause != "" || info.onOpponentTurn != "" {
+			t.Errorf("event %d is not a reaction but carries a clause", e)
+		}
+	}
+}

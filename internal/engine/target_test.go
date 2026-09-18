@@ -1182,8 +1182,8 @@ func TestMostPowerfulIncludesEarlyReturns(t *testing.T) {
 // back to the refinement's own concrete selection.
 func TestItIsAmongNonMembershipRefinement(t *testing.T) {
 	cond := ItIsAmong{
-		Target:  Target{Kind: TargetEachEnemyCreature}.Refine(LeastPowerful),
-		Subject: FoughtCreature,
+		Target: Target{Kind: TargetEachEnemyCreature}.Refine(LeastPowerful),
+		Noun:   FoughtCreature,
 	}
 	g := started(t)
 	weak := g.AddToBattleline(testCreature("weak", 2), 1)

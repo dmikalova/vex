@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Mutant
 //
-//	If you control more Mutant creatures than your opponent, your opponent's keys cost +2 Æmber.
+//	While you control more Mutant creatures than your opponent, your opponent's keys cost +2 Æmber.
 func TestPismire(t *testing.T) {
 	t.Run("taxes the opponent while you control more Mutant creatures", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

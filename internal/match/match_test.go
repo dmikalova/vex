@@ -1,6 +1,7 @@
 package match
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/engine"
@@ -104,5 +105,18 @@ func TestDealSpansAllChosenHouses(t *testing.T) {
 			t.Errorf("player %d deck spans %d houses, want all %d (%v)",
 				p, len(seen), len(houses[p]), houses[p])
 		}
+	}
+}
+
+func TestUnknownSetNameIsAnError(t *testing.T) {
+	// An empty name is the caller declining to choose, not a mistake.
+	if _, _, _, _, _, err := NewWithSets("Alice", "Bob", 7, [2]string{}); err != nil {
+		t.Fatalf("an unnamed set should deal the default set: %v", err)
+	}
+	// A name no set answers to would otherwise deal the default set, and the game
+	// would look fine while ignoring the choice that was made.
+	_, _, _, _, _, err := NewWithSets("Alice", "Bob", 7, [2]string{"", "no such set"})
+	if !errors.Is(err, ErrUnknownSet) {
+		t.Errorf("unknown set name gave %v, want ErrUnknownSet", err)
 	}
 }

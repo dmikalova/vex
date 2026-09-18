@@ -55,7 +55,7 @@ func TestWeasand(t *testing.T) {
 				P2: ct.Side{},
 			})
 			g := h.Game()
-			g.State.Keys[0] = 0
+			g.State.ForgeCanonicalKeys(0, 0)
 			g.State.Aember[0] = engine.KeyCost
 
 			h.Expect(weasand).At(ct.PlayArea)

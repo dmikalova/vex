@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Mutant
 //
-//	If you control more Mutant creatures than your opponent, your opponent's keys cost +2 Æmber.
+//	While you control more Mutant creatures than your opponent, your opponent's keys cost +2 Æmber.
 var Pismire = set.New(
 	"Pismire",
 	card.House.Untamed,

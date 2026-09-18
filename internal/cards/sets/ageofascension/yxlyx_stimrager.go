@@ -22,7 +22,7 @@ var YxlyxStimrager = set.New(
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
 	card.WithAbility(
-		card.Trigger.Fight, card.DamageThen{
+		card.Trigger.Fight, card.DealDamage{
 			Amount: 2,
 			After:  card.Always,
 			Target: card.Target.Creature,

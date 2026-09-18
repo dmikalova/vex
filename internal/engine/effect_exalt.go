@@ -78,7 +78,11 @@ func (e Exalt) resolveGate(ctx *EffectContext) bool {
 		for _, id := range ids {
 			exalted = append(exalted, id)
 			ctx.Resolver.AddAmberOn(id, e.Amount)
-			ctx.Resolver.Record(AemberExalted{Creature: id, Amount: e.Amount})
+			ctx.Resolver.Record(AemberExalted{
+				Player:   ctx.Controller,
+				Creature: id,
+				Amount:   e.Amount,
+			})
 		}
 	}
 	return len(exalted) > 0
@@ -106,6 +110,10 @@ func (e Exalt) resolveOptional(ctx *EffectContext) bool {
 		return false
 	}
 	ctx.Resolver.AddAmberOn(id, e.Amount)
-	ctx.Resolver.Record(AemberExalted{Creature: id, Amount: e.Amount})
+	ctx.Resolver.Record(AemberExalted{
+		Player:   ctx.Controller,
+		Creature: id,
+		Amount:   e.Amount,
+	})
 	return true
 }

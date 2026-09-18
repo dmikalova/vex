@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  12
 //	Traits: Beast
 //
-//	Terrordactyl deals 4 Damage when fighting.
+//	Terrordactyl deals 4 damage when fighting.
 //	Terrordactyl enters play stunned.
 //	Before Fight: Deal 4 damage to each neighbor of the creature Terrordactyl fights.
 var Terrordactyl = set.New(

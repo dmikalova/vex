@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Law
 //
-//	While your opponent does not control creatures from 3 or more different houses, your opponent's keys cost +2 Æmber.
+//	While fewer than 3 houses are represented among enemy creatures, your opponent's keys cost +2 Æmber.
 func TestProclamation346E(t *testing.T) {
 	t.Run("taxes the opponent while they field fewer than three houses", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

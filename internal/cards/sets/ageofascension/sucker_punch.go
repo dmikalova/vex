@@ -20,7 +20,7 @@ var SuckerPunch = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(
-		card.Trigger.Play, card.DamageThen{
+		card.Trigger.Play, card.DealDamage{
 			Amount: 2,
 			After:  card.IfDestroyed,
 			Target: card.Target.EnemyCreature,

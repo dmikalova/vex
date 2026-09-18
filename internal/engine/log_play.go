@@ -54,15 +54,15 @@ func (e ArtifactPlayed) Text(n Namer) string {
 	return fmt.Sprintf("%s plays artifact %s", subject(n, e.Player), n.Name(e.Card))
 }
 
-// ActionPlayed narrates a tactic resolving on its way to the discard pile.
-type ActionPlayed struct {
+// TacticPlayed narrates a tactic resolving on its way to the discard pile.
+type TacticPlayed struct {
 	Player int
 	Card   LocalID
 }
 
 // Text renders the tactic a player played.
-func (e ActionPlayed) Text(n Namer) string {
-	return fmt.Sprintf("%s plays action %s", subject(n, e.Player), n.Name(e.Card))
+func (e TacticPlayed) Text(n Namer) string {
+	return fmt.Sprintf("%s plays tactic %s", subject(n, e.Player), n.Name(e.Card))
 }
 
 // UpgradeAttached narrates an upgrade going onto a creature.

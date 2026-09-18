@@ -12,9 +12,13 @@ result. It is the narrative companion to the more formal records:
   parameterized blueprints until generation time.
 - **`docs/architecture.md`** covers how the engine and card database fit together.
 
-> **Status: design, not yet built.** Today `internal/match` just repeats a house
-> pool and shuffles. Everything below is the intended design; treat it as the plan
-> the implementation should follow, not a description of existing code.
+> **Status: built, minus deck rating.** `internal/deckgen` implements the
+> pipeline described below — house pods, slots, mavericks, legacy cards,
+> enhancements, and the template/materialize seam — and `internal/match` calls it
+> to build the decks a game is played with. The one part still on the drawing
+> board is **§ 6 Scoring and band-targeting**: no rating is computed yet, and
+> `internal/scoring` does not exist. Read that section as plan, the rest as
+> description.
 
 ## 1. Philosophy
 

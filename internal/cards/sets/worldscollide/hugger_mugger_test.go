@@ -26,7 +26,7 @@ func TestHuggerMugger(t *testing.T) {
 			},
 			P2: ct.Side{Amber: 3},
 		})
-		h.Game().State.Keys[1] = 1
+		h.Game().State.ForgeCanonicalKeys(1, 1)
 
 		h.P1.Play(HuggerMugger)
 

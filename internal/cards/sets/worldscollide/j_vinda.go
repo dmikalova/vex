@@ -22,7 +22,7 @@ var JVinda = set.New(
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.Reap, card.DamageThen{
+		card.Trigger.Reap, card.DealDamage{
 			Amount: 1,
 			After:  card.IfDestroyed,
 			Target: card.Target.Creature,

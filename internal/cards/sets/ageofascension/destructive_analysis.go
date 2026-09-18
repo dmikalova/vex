@@ -18,7 +18,7 @@ var DestructiveAnalysis = set.New(
 	card.Provenance(card.AoA, "194"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.DamageThen{
+		card.Trigger.Play, card.DealDamage{
 			Amount: 2,
 			After:  card.Always,
 			Target: card.Target.Creature,

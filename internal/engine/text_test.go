@@ -463,7 +463,10 @@ func TestAfterCreatureScopeFolding(t *testing.T) {
 }
 
 func TestIsFightReapPair(t *testing.T) {
-	ready := ReadyIfFirstUse{Target: Target{Kind: TargetThisCreature}}
+	ready := Conditional{
+		Cond: SourceFirstUseThisTurn{},
+		Then: Ready{Target: Target{Kind: TargetThisCreature}},
+	}
 	reap := Ability{Trigger: TriggerAfterReap, Effect: ready}
 	fight := Ability{Trigger: TriggerAfterFight, Effect: ready}
 	if !isFightReapPair(reap, fight) {
@@ -675,7 +678,7 @@ func TestGeneratedCardText(t *testing.T) {
 				WithTraits(Giant),
 				WithAttackDamage(AttackDamage{Amount: 2, FlankOnly: true}),
 			),
-			"House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  6\nTraits: Giant\n\nValdr deals +2 Damage while attacking an enemy creature on the flank.",
+			"House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  6\nTraits: Giant\n\nValdr deals +2 damage while attacking an enemy creature on the flank.",
 		},
 		{
 			NewCard(
@@ -709,7 +712,7 @@ func TestGeneratedCardText(t *testing.T) {
 				WithPower(8),
 				WithAttackDamage(AttackDamage{Fixed: true, Amount: 5}),
 			),
-			"House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  8\n\nBruiser deals 5 Damage when fighting.",
+			"House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  8\n\nBruiser deals 5 damage when fighting.",
 		},
 		{
 			NewCard(
@@ -720,7 +723,7 @@ func TestGeneratedCardText(t *testing.T) {
 				WithPower(4),
 				WithAttackDamage(AttackDamage{Amount: 2}),
 			),
-			"House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  4\n\nBasher deals +2 Damage when fighting.",
+			"House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  4\n\nBasher deals +2 damage when fighting.",
 		},
 		{
 			NewCard(
@@ -749,17 +752,23 @@ func TestGeneratedCardText(t *testing.T) {
 						Granted: []Ability{
 							{
 								Trigger: TriggerAfterReap,
-								Effect:  ReadyIfFirstUse{Target: Target{Kind: TargetThisCreature}},
+								Effect: Conditional{
+									Cond: SourceFirstUseThisTurn{},
+									Then: Ready{Target: Target{Kind: TargetThisCreature}},
+								},
 							},
 							{
 								Trigger: TriggerAfterFight,
-								Effect:  ReadyIfFirstUse{Target: Target{Kind: TargetThisCreature}},
+								Effect: Conditional{
+									Cond: SourceFirstUseThisTurn{},
+									Then: Ready{Target: Target{Kind: TargetThisCreature}},
+								},
 							},
 						},
 					},
 				),
 			),
-			"House:  Logos\nType:   Upgrade\nRarity: Uncommon\n\nThis creature gains, \"Fight/Reap: If this is the first time this creature was used this turn, ready it.\"",
+			"House:  Logos\nType:   Upgrade\nRarity: Uncommon\n\nThis creature gains, \"Fight/Reap: If this is the first time this creature has been used this turn, ready this creature.\"",
 		},
 		{
 			NewCard(
@@ -1129,17 +1138,23 @@ func TestRenderUpgradeOnCreature(t *testing.T) {
 						Granted: []Ability{
 							{
 								Trigger: TriggerAfterReap,
-								Effect:  ReadyIfFirstUse{Target: Target{Kind: TargetThisCreature}},
+								Effect: Conditional{
+									Cond: SourceFirstUseThisTurn{},
+									Then: Ready{Target: Target{Kind: TargetThisCreature}},
+								},
 							},
 							{
 								Trigger: TriggerAfterFight,
-								Effect:  ReadyIfFirstUse{Target: Target{Kind: TargetThisCreature}},
+								Effect: Conditional{
+									Cond: SourceFirstUseThisTurn{},
+									Then: Ready{Target: Target{Kind: TargetThisCreature}},
+								},
 							},
 						},
 					},
 				),
 			),
-			"Fight/Reap: If this is the first time this creature was used this turn, ready it.",
+			"Fight/Reap: If this is the first time this creature has been used this turn, ready this creature.",
 		},
 		// A granted key-cost change too.
 		{
@@ -1497,7 +1512,7 @@ func TestGrantedAemberCannotBeStolenText(t *testing.T) {
 
 	// A conditional protection renders the "While … , your Æmber cannot be stolen."
 	// form instead.
-	cond := StaticModifier{AemberCannotBeStolen: ThisHasAember{}}
+	cond := StaticModifier{AemberCannotBeStolen: HasAember{Subject: This}}
 	wantCond := "While " + SelfName + " has \u00c6mber on it, your \u00c6mber cannot be stolen."
 	foundCond := false
 	for _, line := range grantedLines(cond, "Upgrade", frame) {

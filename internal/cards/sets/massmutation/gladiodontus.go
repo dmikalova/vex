@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  15
 //	Traits: Mutant
 //
-//	Gladiodontus deals 5 Damage when fighting.
+//	Gladiodontus deals 5 damage when fighting.
 //	Gladiodontus enters play stunned.
 //	Fight/Reap: If this is the first time Gladiodontus has been used this turn, ready and enrage Gladiodontus.
 var Gladiodontus = set.New(

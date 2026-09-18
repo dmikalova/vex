@@ -45,7 +45,7 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 		weak := g.AddToBattleline(testCreature("weak", 2), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		e := DamageThen{
+		e := DealDamage{
 			Amount: 3,
 			After:  IfDestroyed,
 			Target: Target{Kind: TargetChosenEnemyCreature},
@@ -68,7 +68,7 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 		tough := g.AddToBattleline(testCreature("tough", 6), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		DamageThen{
+		DealDamage{
 			Amount: 2,
 			After:  IfDestroyed,
 			Target: Target{Kind: TargetChosenEnemyCreature},
@@ -89,7 +89,7 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 		weak := g.AddToBattleline(testCreature("weak", 1), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		DamageThen{
+		DealDamage{
 			Amount: 3,
 			After:  IfDestroyed,
 			Target: Target{Kind: TargetChosenEnemyCreature},
@@ -105,7 +105,7 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 	t.Run("no target is a no-op", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
-		DamageThen{
+		DealDamage{
 			Amount: 3,
 			After:  IfDestroyed,
 			Target: Target{Kind: TargetChosenEnemyCreature},
@@ -119,13 +119,13 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 	})
 
 	t.Run("validate", func(t *testing.T) {
-		if (DamageThen{After: IfDestroyed, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
+		if (DealDamage{After: IfDestroyed, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
 			t.Error("unset target should be invalid")
 		}
-		if (DamageThen{Target: Target{Kind: TargetChosenCreature}, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
+		if (DealDamage{Target: Target{Kind: TargetChosenCreature}, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
 			t.Error("unset After should be invalid")
 		}
-		if (DamageThen{Target: Target{Kind: TargetChosenCreature}, After: IfDestroyed, Then: GainAember{}}).validate() == nil {
+		if (DealDamage{Target: Target{Kind: TargetChosenCreature}, After: IfDestroyed, Then: GainAember{}}).validate() == nil {
 			t.Error("invalid follow-up should surface")
 		}
 	})
@@ -137,7 +137,7 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 		right := g.AddToBattleline(testCreature("right", 6), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		e := DamageThen{
+		e := DealDamage{
 			Amount: 3,
 			After:  IfDestroyed,
 			Target: Target{Kind: TargetChosenEnemyCreature}.PowerAtMost(2),
@@ -162,7 +162,7 @@ func TestDamageThen(t *testing.T) {
 		tough := g.AddToBattleline(testCreature("tough", 6), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		e := DamageThen{
+		e := DealDamage{
 			Amount: 2,
 			After:  Always,
 			Target: Target{Kind: TargetChosenCreature},
@@ -185,7 +185,7 @@ func TestDamageThen(t *testing.T) {
 		weak := g.AddToBattleline(testCreature("weak", 1), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		DamageThen{
+		DealDamage{
 			Amount: 3,
 			After:  Always,
 			Target: Target{Kind: TargetChosenEnemyCreature},
@@ -199,7 +199,7 @@ func TestDamageThen(t *testing.T) {
 	t.Run("no target is a no-op", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
-		DamageThen{
+		DealDamage{
 			Amount: 3,
 			After:  Always,
 			Target: Target{Kind: TargetChosenEnemyCreature},
@@ -211,10 +211,10 @@ func TestDamageThen(t *testing.T) {
 	})
 
 	t.Run("validate", func(t *testing.T) {
-		if (DamageThen{After: Always, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
+		if (DealDamage{After: Always, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
 			t.Error("unset target should be invalid")
 		}
-		if (DamageThen{Target: Target{Kind: TargetChosenCreature}, After: Always, Then: GainAember{}}).validate() == nil {
+		if (DealDamage{Target: Target{Kind: TargetChosenCreature}, After: Always, Then: GainAember{}}).validate() == nil {
 			t.Error("invalid follow-up should surface")
 		}
 	})
@@ -376,7 +376,7 @@ func TestSpreadCreatureAndNeighbors(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	e := DealDamage{Spread: CreatureAndNeighbors{Amount: 4, Splash: 2}}
-	if e.Text() != "deal 4 damage to a creature and 2 damage to each of its neighbors" {
+	if e.Text() != "choose a creature. Deal 4 damage to the chosen creature and 2 damage to each of its neighbors" {
 		t.Errorf("text = %q", e.Text())
 	}
 	e.Resolve(ctx)
@@ -405,7 +405,8 @@ func TestSpreadCreatureAndNeighbors(t *testing.T) {
 	center := g3.AddToBattleline(testCreature("center", 10), 1)
 	fr := g3.AddToBattleline(testCreature("fr", 10), 1)
 	restricted := DealDamage{Spread: CreatureAndNeighbors{Amount: 4, Splash: 2, NotOnFlank: true}}
-	if restricted.Text() != "deal 4 damage to a creature that is not on a flank and 2 damage to each of its neighbors" {
+	if restricted.Text() != "choose a creature that is not on a flank. "+
+		"Deal 4 damage to the chosen creature and 2 damage to each of its neighbors" {
 		t.Errorf("restricted text = %q", restricted.Text())
 	}
 	restricted.Resolve(&EffectContext{Resolver: g3, Controller: 0})
@@ -444,7 +445,7 @@ func TestSpreadCreatureAndNeighborsAtTarget(t *testing.T) {
 		Splash: 2,
 		Target: Target{Kind: TargetCreatureFought},
 	}}
-	want := "deal 2 damage to the creature {self} fought and 2 damage to each of its neighbors"
+	want := "deal 2 damage to the creature {self} fought and each of its neighbors"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
 	}
@@ -706,7 +707,7 @@ func TestSpreadUpToCreatures(t *testing.T) {
 		e := DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1, WhenDamaged: 3}}
 		if got := e.Text(); got !=
 			"choose up to 3 creatures. Deal 1 damage to each chosen creature. "+
-				"If that creature was already damaged, deal 3 damage instead" {
+				"Deal 3 damage instead to each chosen creature that was already damaged" {
 			t.Errorf("text = %q", got)
 		}
 		e.Resolve(ctx)
@@ -842,7 +843,7 @@ func TestDamageThenIfSurvives(t *testing.T) {
 	g.AddToHand(testCreature("h2", 1), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DamageThen{
+	e := DealDamage{
 		Amount: 3,
 		After:  IfSurvives,
 		Target: Target{Kind: TargetChosenCreature},
@@ -851,10 +852,10 @@ func TestDamageThenIfSurvives(t *testing.T) {
 	if e.Text() != "deal 3 damage to a creature. If it is not destroyed, its owner discards a random card from their hand" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if (DamageThen{After: IfSurvives, Then: DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).validate() == nil {
+	if (DealDamage{After: IfSurvives, Then: DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).validate() == nil {
 		t.Error("unset target should be invalid")
 	}
-	if (DamageThen{Target: Target{Kind: TargetChosenCreature}, After: IfSurvives, Then: DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).validate() != nil {
+	if (DealDamage{Target: Target{Kind: TargetChosenCreature}, After: IfSurvives, Then: DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).validate() != nil {
 		t.Error("a set target with a valid follow-up should pass")
 	}
 
@@ -870,7 +871,7 @@ func TestDamageThenIfSurvives(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	dead := g2.AddToBattleline(testCreature("d", 2), 1)
 	g2.AddToHand(testCreature("keep", 1), 1)
-	(DamageThen{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).Resolve(
+	(DealDamage{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).Resolve(
 		&EffectContext{Resolver: g2, Controller: 0},
 	)
 	if g2.inPlay(dead) {
@@ -882,14 +883,14 @@ func TestDamageThenIfSurvives(t *testing.T) {
 
 	// No creature to target: nothing happens.
 	g3 := NewGame("A", "B", 1)
-	(DamageThen{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).Resolve(
+	(DealDamage{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).Resolve(
 		&EffectContext{Resolver: g3, Controller: 0},
 	)
 }
 
 func TestDamageCreatureAndNeighbor(t *testing.T) {
 	e := DealDamage{Spread: CreatureAndNeighbors{Amount: 3, Splash: 3, Scope: OneNeighbor}}
-	if e.Text() != "deal 3 damage to a creature and 3 damage to a neighbor of that creature" {
+	if e.Text() != "choose a creature. Deal 3 damage to the chosen creature and one of its neighbors" {
 		t.Errorf("text = %q", e.Text())
 	}
 	// A spread that cannot be misconfigured validates cleanly.

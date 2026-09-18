@@ -60,6 +60,48 @@ func TestFailureKeyFoldsIncidentalDetail(t *testing.T) {
 	}
 }
 
+// Folding a struct dump must fold its values, not its shape. Two violations that
+// dump different fields are different bugs, so they must not collapse onto one
+// key and share one corpus entry — that would let the second bug go uncovered.
+func TestFailureKeyKeepsDumpedFieldNames(t *testing.T) {
+	a := failureKey(errors.New("card 3 (Oak) kept state ({Damage:1 Stunned:false})"))
+	b := failureKey(errors.New("card 3 (Oak) kept state ({Damage:1 Warded:false})"))
+	if a == b {
+		t.Error("dumps naming different fields are different bugs and need different keys")
+	}
+	c := failureKey(errors.New("card 3 (Oak) kept state ({Damage:1})"))
+	if a == c {
+		t.Error("dumps of different shapes are different bugs and need different keys")
+	}
+}
+
+// One bug keeps its shortest reproduction. A later soak finding the same bug with
+// a longer script must not bury the minimized entry already on disk.
+func TestSaveCorpusKeepsTheShorterReproduction(t *testing.T) {
+	dir := t.TempDir()
+	// A script that plays out cleanly is left alone by Minimize, so each call files
+	// exactly the bytes it is given and the length rule is what is under test.
+	short := []byte{0, 0, 0, 0, 0, 0, 0, 1}
+	long := []byte{0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5}
+	violation := errors.New("creature 4 (Oak) is in play with 5 power")
+
+	path, err := SaveCorpus(dir, short, violation)
+	if err != nil {
+		t.Fatalf("SaveCorpus: %v", err)
+	}
+	if _, err := SaveCorpus(dir, long, violation); err != nil {
+		t.Fatalf("SaveCorpus: %v", err)
+	}
+
+	got, err := readCorpusFile(path)
+	if err != nil {
+		t.Fatalf("readCorpusFile: %v", err)
+	}
+	if string(got) != string(short) {
+		t.Errorf("entry = %q, want the shorter reproduction %q", got, short)
+	}
+}
+
 // Pruning drops entries whose bug is fixed: a script that plays out cleanly no
 // longer pins anything down.
 func TestPruneCorpusDropsFixedEntries(t *testing.T) {

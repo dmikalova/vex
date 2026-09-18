@@ -30,6 +30,10 @@
 //	                     the `//go:build todo` constraint, in collector-number
 //	                     order — the card to build next.
 //
+//	node-usage           Print every exported name on the card facade, grouped by
+//	                     the category its declaration block documents, with how
+//	                     many card definitions and sets use it.
+//
 //	import-provenance [setSlug|all]
 //	                     Rebuild a set's source catalog (…/provenance/<slug>.json)
 //	                     from the Master Vault decks feed, ASCII-folding names and
@@ -82,6 +86,8 @@ func run(args []string) error {
 		return stub(args[1:])
 	case "next-card":
 		return nextCard(args[1:])
+	case "node-usage":
+		return nodeUsage(args[1:])
 	case "import-provenance":
 		return importProvenance(args[1:])
 	default:
@@ -93,6 +99,7 @@ func usage() error {
 	return fmt.Errorf(
 		"usage: cardlookup <lookup <query> | missing [setSlug] | " +
 			"coverage [-new] | stub <setSlug> | next-card [setSlug] | " +
+			"node-usage [-max=<n>] [-category=<substring>] | " +
 			"import-provenance [setSlug|all]>",
 	)
 }

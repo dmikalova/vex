@@ -1,5 +1,7 @@
 package engine
 
+import "fmt"
+
 // This file holds the counts that read a "... this way" tally an earlier effect
 // recorded in ctx.Produced during the same resolution — the producer/consumer
 // channel a card scales a later amount by. Split out of effect_count.go.
@@ -14,6 +16,17 @@ func (CardsDestroyed) Value(ctx *EffectContext) int { return ctx.Produced.TotalD
 
 // CountText renders the singular noun the "for each" clause repeats.
 func (CardsDestroyed) CountText() string { return "card destroyed this way" }
+
+// CountClause renders the clause CountIs puts after "if", e.g. "fewer than 2
+// cards are destroyed this way" (Bonkers Killing Machine negates an AtLeast count
+// to get that wording).
+func (CardsDestroyed) CountClause(quantity string, plural bool) string {
+	noun, verb := "card", "is"
+	if plural {
+		noun, verb = "cards", "are"
+	}
+	return fmt.Sprintf("%s %s %s destroyed this way", quantity, noun, verb)
+}
 
 // CreaturesDestroyed counts the cards the most recent destruction in this
 // resolution removed from play, rendered as creatures — the "for each creature

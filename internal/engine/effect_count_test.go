@@ -610,7 +610,7 @@ func TestTraitsOfChosen(t *testing.T) {
 // TestBonusIconsOfChosen covers Mindfire: the value is the number of bonus icons
 // on the card in context (ctx.It), zero without one, and the text names the card.
 func TestBonusIconsOfChosen(t *testing.T) {
-	c := BonusIconsOfChosen{Subject: DiscardedCard}
+	c := BonusIconsOfChosen{Noun: DiscardedCard}
 	if got := c.CountText(); got != "bonus icon on the discarded card" {
 		t.Errorf("CountText = %q", got)
 	}

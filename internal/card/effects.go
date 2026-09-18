@@ -53,15 +53,14 @@ type (
 
 // Damage and combat.
 type (
-	// DealDamage deals damage to each creature its Target selects.
+	// DealDamage deals damage to each creature its Target selects. Its Then/After
+	// pair runs a follow-up on the one damaged creature when the follow-up depends
+	// on what this damage did (card.Always / card.IfDestroyed / card.IfSurvives).
 	DealDamage = engine.DealDamage
 	// ForEachHouse resolves Do once per house, binding that house so a nested
 	// "of that house" target (card.Houses.Each) reads it (Gleeful Mayhem).
 	ForEachHouse = engine.ForEachHouse
-	// DamageThen deals damage to a creature, then runs Then on it under After
-	// (card.Always / card.IfDestroyed / card.IfSurvives).
-	DamageThen = engine.DamageThen
-	// DamageAftermath is the After axis of DamageThen (see card.IfDestroyed).
+	// DamageAftermath is the After axis of DealDamage (see card.IfDestroyed).
 	DamageAftermath = engine.DamageAftermath
 	// Spread is a DealDamage strategy that hits several related creatures at once.
 	Spread = engine.Spread
@@ -110,9 +109,9 @@ type (
 	LendTextBoxFromHand = engine.LendTextBoxFromHand
 )
 
-// After branches for card.DamageThen.
+// After branches for card.DealDamage.
 const (
-	// Always runs the DamageThen follow-up whether or not the creature was destroyed.
+	// Always runs the DealDamage follow-up whether or not the creature was destroyed.
 	Always = engine.Always
 	// IfDestroyed runs the follow-up only if the damage destroyed the creature.
 	IfDestroyed = engine.IfDestroyed
@@ -231,8 +230,6 @@ type (
 	ExhaustCreatures = engine.ExhaustCreatures
 	// Ready turns the targeted creatures upright so they can be used again.
 	Ready = engine.Ready
-	// ReadyIfFirstUse readies a creature only when the current use is its first this turn.
-	ReadyIfFirstUse = engine.ReadyIfFirstUse
 	// ReadyCreatures readies up to Max creatures the controller chooses.
 	ReadyCreatures = engine.ReadyCreatures
 	// AddPowerCounter places permanent +1/-1 power counters on a creature.
@@ -263,12 +260,12 @@ type (
 	Filter = engine.CardFilter
 	// PutFromHand puts a chosen card from your hand directly into play.
 	PutFromHand = engine.PutFromHand
-	// ReturnNamedToHand returns a chosen card of a given name to its owner's hand.
-	ReturnNamedToHand = engine.ReturnNamedToHand
-	// ReturnItToHand returns the creature in context ("it") to its owner's hand,
+	// PutNamedIntoHand puts a chosen card of a given name into its owner's hand.
+	PutNamedIntoHand = engine.PutNamedIntoHand
+	// PutItIntoHand puts the creature in context ("it") into its owner's hand,
 	// recovering it from the discard pile when it was already destroyed (Nizak, The
-	// Forgotten returns an enemy destroyed fighting it).
-	ReturnItToHand = engine.ReturnItToHand
+	// Forgotten recovers an enemy destroyed fighting it).
+	PutItIntoHand = engine.PutItIntoHand
 	// Search searches one or more of your own zones — named explicitly in Sources
 	// (e.g. the deck, or the deck and discard pile) — for cards matching a filter:
 	// any card, a named card, a trait, a type, or a house. It reveals what it takes
@@ -565,10 +562,6 @@ type (
 type (
 	// PoolAember gates on one player's Æmber pool (Player + Is + Amount).
 	PoolAember = engine.PoolAember
-	// PlayerControlsFewerHousesThan is met while a player controls creatures from fewer than Amount houses.
-	PlayerControlsFewerHousesThan = engine.PlayerControlsFewerHousesThan
-	// CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this way.
-	CardsDestroyedFewerThan = engine.CardsDestroyedFewerThan
 	// CountIs gates on any Count compared against a threshold (Count + Is + Amount).
 	CountIs = engine.CountIs
 	// ControlsMoreCreatures is met while you control more creatures than the opponent.
@@ -612,8 +605,6 @@ type (
 	// MovedAnyAember is met when a preceding MoveAember relocated at least one Æmber
 	// this resolution (Shadowsaurus takes control only when it moved Æmber).
 	MovedAnyAember = engine.MovedAnyAember
-	// ControlsCreaturesOfHouses is met while your creatures span at least Amount houses.
-	ControlsCreaturesOfHouses = engine.ControlsCreaturesOfHouses
 	// FirstCreaturePlayedThisTurn is met when the card in context is the first
 	// creature played this turn — a once-per-turn charge (Speed Sigil).
 	FirstCreaturePlayedThisTurn = engine.FirstCreaturePlayedThisTurn
@@ -638,10 +629,9 @@ type (
 	ItIsNamed = engine.ItIsNamed
 	// ItIsOfTrait is met when the creature in context has the named trait.
 	ItIsOfTrait = engine.ItIsOfTrait
-	// ItHasAember is met when the creature in context has Æmber on it.
-	ItHasAember = engine.ItHasAember
-	// ThisHasAember is met when the source card itself has Æmber on it.
-	ThisHasAember = engine.ThisHasAember
+	// HasAember is met when its Subject has Æmber on it (default: the card in
+	// context; card.Subject.This asks about the card itself).
+	HasAember = engine.HasAember
 	// AlwaysMet is a condition that is always met, the non-nil "on, unconditionally"
 	// sentinel for a condition field (e.g. a StaticModifier's AemberCannotBeStolen).
 	AlwaysMet = engine.AlwaysMet
@@ -739,10 +729,9 @@ type (
 	KeyColorForged = engine.KeyColorForged
 	// AemberStolenFromYou is met if your opponent stole Æmber from you last turn.
 	AemberStolenFromYou = engine.AemberStolenFromYou
-	// EnemyCreatureDestroyed is met once an enemy creature has been destroyed this turn.
-	EnemyCreatureDestroyed = engine.EnemyCreatureDestroyed
-	// FriendlyCreatureDestroyed is met once a friendly creature has been destroyed this turn.
-	FriendlyCreatureDestroyed = engine.FriendlyCreatureDestroyed
+	// CreatureDestroyedThisTurn is met once a creature on the named side has been
+	// destroyed this turn (Controller for a friendly one, Opponent for an enemy).
+	CreatureDestroyedThisTurn = engine.CreatureDestroyedThisTurn
 	// UsedCreatureToReap is met once you have used a creature to reap this turn.
 	UsedCreatureToReap = engine.UsedCreatureToReap
 	// UsedCreatureToFight is met once you have used a creature to fight this turn.
@@ -860,9 +849,9 @@ type (
 	// DamageOthersAfterUsingTrait, for the rest of your turn, deals damage to each
 	// creature lacking a trait after you use a creature carrying it (Legion's March).
 	DamageOthersAfterUsingTrait = engine.DamageOthersAfterUsingTrait
-	// ReturnNextActionToHand returns the next action card you resolve this turn to
-	// your hand instead of your discard pile (High Priest Torvus).
-	ReturnNextActionToHand = engine.ReturnNextActionToHand
+	// PutNextTacticIntoHand puts the next Tactic you resolve this turn into your
+	// hand instead of your discard pile (High Priest Torvus).
+	PutNextTacticIntoHand = engine.PutNextTacticIntoHand
 	// FuseTriggersForTurn makes each friendly creature's A and B effects each fire on
 	// the other for the rest of your turn (Livia the Elder fuses fight and reap).
 	FuseTriggersForTurn = engine.FuseTriggersForTurn

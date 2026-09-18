@@ -39,7 +39,7 @@ func nizakLike(power int) CardDefinition {
 			Keywords:       []Keyword{Invulnerable},
 			WhileCondition: SourceIsFighting{},
 		}),
-		WithAbility(TriggerAfterDestroyedFighting, ReturnItToHand{}),
+		WithAbility(TriggerAfterDestroyedFighting, PutItIntoHand{}),
 	)
 }
 

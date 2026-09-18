@@ -5,6 +5,9 @@
 package match
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/dmikalova/vactrol/internal/cards"
 	"github.com/dmikalova/vactrol/internal/deckgen"
 	"github.com/dmikalova/vactrol/internal/engine"
@@ -81,20 +84,24 @@ func New(p0Name, p1Name string, seed int64) (*engine.Game, [2][]engine.House) {
 func NewWithMavericks(
 	p0Name, p1Name string, seed int64,
 ) (*engine.Game, [2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID) {
-	g, houses, mavericks, legacies, _ := NewWithSets(p0Name, p1Name, seed, [2]string{})
+	g, houses, mavericks, legacies, _, _ := NewWithSets(p0Name, p1Name, seed, [2]string{})
 	return g, houses, mavericks, legacies
 }
 
 // NewWithSets is NewWithMavericks but each player's deck is generated from a named
-// deck-generation set (as cards.DeckSetNamed resolves it). An empty or unknown
-// name falls back to the default set, so a caller with no choice to make passes
-// the zero value. It also returns each player's static deck Roster (ADR 0025).
+// deck-generation set (as cards.DeckSetNamed resolves it). An empty name means
+// "the default set", so a caller with no choice to make passes the zero value; a
+// name no set answers to is a bug in the caller and errors. It also returns each
+// player's static deck Roster (ADR 0025).
 func NewWithSets(
 	p0Name, p1Name string, seed int64, setNames [2]string,
-) (*engine.Game, [2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID, [2]Roster) {
+) (*engine.Game, [2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID, [2]Roster, error) {
 	g := engine.NewGame(p0Name, p1Name, seed)
-	houses, mavericks, legacies, rosters := SetupDecksFor(g, seed, setNames)
-	return g, houses, mavericks, legacies, rosters
+	houses, mavericks, legacies, rosters, err := SetupDecksFor(g, seed, setNames)
+	if err != nil {
+		return nil, houses, mavericks, legacies, rosters, err
+	}
+	return g, houses, mavericks, legacies, rosters, nil
 }
 
 // SetupDecks generates each player a deck (see internal/deckgen) into their deck
@@ -104,19 +111,27 @@ func NewWithSets(
 func SetupDecks(
 	g *engine.Game, seed int64,
 ) ([2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID) {
-	houses, mavericks, legacies, _ := SetupDecksFor(g, seed, [2]string{})
+	houses, mavericks, legacies, _, _ := SetupDecksFor(g, seed, [2]string{})
 	return houses, mavericks, legacies
 }
 
-// setFor resolves a chosen set name to its deck-generation Set, defaulting an
-// empty or unknown name to the base set.
-func setFor(name string) deckgen.Set {
-	if name != "" {
-		if s, ok := cards.DeckSetNamed(name); ok {
-			return s
-		}
+// ErrUnknownSet reports a set name no deck-generation set answers to. An empty
+// name is not one: it means "the default set".
+var ErrUnknownSet = errors.New("unknown deck-generation set")
+
+// setFor resolves a chosen set name to its deck-generation Set. An empty name is
+// the caller declining to choose and gets the base set; a name that resolves to
+// nothing is a typo or a stale saved game, and silently dealing the default set
+// would hide it behind a game that looks fine.
+func setFor(name string) (deckgen.Set, error) {
+	if name == "" {
+		return cards.DeckSet(), nil
 	}
-	return cards.DeckSet()
+	s, ok := cards.DeckSetNamed(name)
+	if !ok {
+		return deckgen.Set{}, fmt.Errorf("%w: %q", ErrUnknownSet, name)
+	}
+	return s, nil
 }
 
 // SetupDecksFor is SetupDecks with each player's set named explicitly, so a
@@ -125,7 +140,7 @@ func setFor(name string) deckgen.Set {
 // deck list shows the exact cards dealt, immune to later pool changes (ADR 0025).
 func SetupDecksFor(
 	g *engine.Game, seed int64, setNames [2]string,
-) ([2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID, [2]Roster) {
+) ([2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID, [2]Roster, error) {
 	var houses [2][]engine.House
 	var mavericks [2][]engine.LocalID
 	var legacies [2][]engine.LocalID
@@ -140,7 +155,11 @@ func SetupDecksFor(
 	}
 	g.SetNameableNames(names)
 	for player := 0; player < 2; player++ {
-		deck := deckgen.Generate(setFor(setNames[player]), seed+int64(player)+1)
+		set, err := setFor(setNames[player])
+		if err != nil {
+			return houses, mavericks, legacies, rosters, err
+		}
+		deck := deckgen.Generate(set, seed+int64(player)+1)
 		houses[player] = deck.Houses()
 		rosters[player] = rosterOf(deck)
 
@@ -159,5 +178,5 @@ func SetupDecksFor(
 			}
 		}
 	}
-	return houses, mavericks, legacies, rosters
+	return houses, mavericks, legacies, rosters, nil
 }

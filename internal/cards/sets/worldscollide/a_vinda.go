@@ -20,7 +20,7 @@ var AVinda = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithAbility(
-		card.Trigger.Reap, card.DamageThen{
+		card.Trigger.Reap, card.DealDamage{
 			Amount: 1,
 			After:  card.IfDestroyed,
 			Target: card.Target.Creature,

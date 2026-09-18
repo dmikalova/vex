@@ -155,6 +155,20 @@ If the grill does not clearly land in favour of the new node, extend an existing
 one instead. When in doubt — when the extension feels like a cram rather than a
 clean fit — stop and grill rather than pushing it in.
 
+**A node with one consumer is fine; a node that cannot take a second one is not.**
+About half the card pool is unimplemented, and some cards genuinely do a unique
+thing, so "only one card uses it" is never on its own a defect. The test is:
+_if another card did a very similar thing, could it extend this node — a field, a
+`Strategy`, another enum value — or would the node have to be rewritten to be
+composable?_ So write every node, even a single-consumer one, out of atoms: the
+threshold is a `Count` plus a comparison, not a hard-coded `>=`; the subject is a
+field, not a name prefix; the amount is a `Count`, not an `int` literal welded to
+one card's number. A node named after a card, or one whose `Resolve` inlines a
+comparison an existing `Count`/`Condition` already expresses, is the failure this
+rule catches. `mage tool:nodeUsage` lists the facade by category with each node's
+consumer count — use it to find the neighbours a new node should be shaped
+alongside, not as a hit list of "unused" nodes to delete.
+
 Once the node is justified (or you are extending an existing one cleanly):
 
 1. **Shape it for the whole cluster, not the first card.** Name and shape the

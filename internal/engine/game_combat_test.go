@@ -661,8 +661,8 @@ func TestPreFightDamageNarratesSource(t *testing.T) {
 	)
 	g.fight(att, def)
 
-	assault := "imp assaults 2 damage to director"
-	hazardous := "director's hazardous deals 3 damage to imp"
+	assault := "imp deals 2 assault damage to director"
+	hazardous := "director deals 3 hazardous damage to imp"
 	var gotAssault, gotHazardous bool
 	for _, line := range g.LogText() {
 		switch line {

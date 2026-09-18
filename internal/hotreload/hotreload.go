@@ -42,6 +42,10 @@ type Config struct {
 	// before rebuilding, so a rapid burst of edits collapses into a single
 	// rebuild. Zero (the default) rebuilds immediately on the first change.
 	Settle time.Duration
+
+	// lastWalkErr is the most recent watch failure already reported, so a standing
+	// error is printed once rather than at every poll.
+	lastWalkErr string
 }
 
 // skipDirs are directories never worth walking for source changes.
@@ -69,7 +73,9 @@ func Serve(cfg Config) error {
 	}()
 
 	last := cfg.newestModTime()
-	for range time.Tick(cfg.Interval) {
+	ticker := time.NewTicker(cfg.Interval)
+	defer ticker.Stop()
+	for range ticker.C {
 		t := cfg.newestModTime()
 		if !t.After(last) {
 			continue
@@ -125,12 +131,13 @@ func (cfg *Config) start() *exec.Cmd {
 }
 
 // newestModTime is the latest modification time across the watched files under
-// Root, or the zero time when none match.
+// Root, or the zero time when none match. A walk error would otherwise look
+// exactly like "nothing changed", so it is reported instead of discarded.
 func (cfg *Config) newestModTime() time.Time {
 	var latest time.Time
-	_ = filepath.WalkDir(cfg.Root, func(_ string, d fs.DirEntry, err error) error {
+	if err := filepath.WalkDir(cfg.Root, func(_ string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return nil
+			return err
 		}
 		if d.IsDir() {
 			if skipDirs[d.Name()] {
@@ -145,8 +152,19 @@ func (cfg *Config) newestModTime() time.Time {
 			latest = info.ModTime()
 		}
 		return nil
-	})
+	}); err != nil {
+		cfg.reportWalkError(err)
+	}
 	return latest
+}
+
+// reportWalkError prints a walk failure once per distinct message, so a standing
+// permission error does not drown the log at the poll interval.
+func (cfg *Config) reportWalkError(err error) {
+	if msg := err.Error(); msg != cfg.lastWalkErr {
+		cfg.lastWalkErr = msg
+		fmt.Println("hotreload: watching", cfg.Root, "failed:", msg)
+	}
 }
 
 // watches reports whether a file name has a watched extension and is not a Go

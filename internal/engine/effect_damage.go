@@ -32,6 +32,19 @@ type DealDamage struct {
 	// which Per cannot do — Word of Returning deals 1 damage to each enemy creature
 	// "for each Æmber on it", a different amount per creature.
 	PerTarget PerTarget
+	// Then, when set, resolves on the single damaged creature once the damage has
+	// landed, with After deciding which outcomes it runs after. Reach for it — not a
+	// surrounding Then{} — whenever the follow-up depends on what *this* damage did:
+	// only this node can tell whether this hit is what destroyed the creature, and it
+	// snapshots the creature's neighbours before the hit so the follow-up can still
+	// reach them. A follow-up that merely happens next, and would run the same after
+	// any first half, belongs in a surrounding Then{} or Sequence instead.
+	// Setting it narrows the effect to one target, so it cannot combine with Spread,
+	// Per, PerTarget, or AmountFrom.
+	Then Effect
+	// After decides which damage outcomes Then runs after. It is required with Then
+	// and meaningless without it.
+	After DamageAftermath
 }
 
 // PerTarget is the axis along which an amount varies from one target to the next.
@@ -70,6 +83,9 @@ func (damageOnIt) perTargetText() string { return "point of damage on it" }
 
 // validate requires an explicit target, or a Spread that supplies its own.
 func (e DealDamage) validate() error {
+	if err := e.validateAftermath(); err != nil {
+		return err
+	}
 	if e.Spread != nil {
 		if e.Target.valid() || e.Amount != 0 || e.Per != nil || e.AmountFrom != nil {
 			return fmt.Errorf(
@@ -90,6 +106,29 @@ func (e DealDamage) validate() error {
 	return nil
 }
 
+// validateAftermath holds the Then/After pair to the single-target shape it can
+// resolve in: the aftermath asks what happened to one creature, so an effect that
+// spreads, repeats, or varies its amount has no such creature to ask about.
+func (e DealDamage) validateAftermath() error {
+	if e.Then == nil {
+		if e.After != aftermathUnset {
+			return fmt.Errorf("DealDamage: After needs a Then to run")
+		}
+		return nil
+	}
+	switch e.After {
+	case Always, IfDestroyed, IfSurvives:
+	default:
+		return fmt.Errorf("DealDamage: After must be Always, IfDestroyed, or IfSurvives")
+	}
+	if e.Spread != nil || e.Per != nil || e.PerTarget != nil || e.AmountFrom != nil {
+		return fmt.Errorf(
+			"DealDamage: Then cannot combine with Spread, Per, PerTarget, or AmountFrom",
+		)
+	}
+	return validateEffect(e.Then)
+}
+
 // Text renders the effect, e.g. "deal 2 damage to each enemy creature". A "for
 // each" count leads the sentence (rule 9), e.g. "for each friendly creature in
 // play, deal 1 damage to a creature". Armor-ignoring damage adds a trailing clause.
@@ -97,7 +136,7 @@ func (e DealDamage) Text() string {
 	if e.Spread != nil {
 		return e.Spread.spreadText()
 	}
-	amount := fmt.Sprintf("%d damage", e.Amount)
+	amount := damageAmount(e.Amount)
 	if e.AmountFrom != nil {
 		switch e.AmountFrom.(type) {
 		case DamageHealed:
@@ -113,7 +152,23 @@ func (e DealDamage) Text() string {
 	if e.IgnoreArmor {
 		body += ", ignoring armor"
 	}
+	if e.Then != nil {
+		body += e.aftermathText()
+	}
 	return forEach(e.Per, body)
+}
+
+// aftermathText renders the join between the damage clause and its follow-up,
+// e.g. ". If this damage destroys that creature, gain 1 Æmber".
+func (e DealDamage) aftermathText() string {
+	switch e.After {
+	case IfDestroyed:
+		return ". If this damage destroys that creature, " + e.Then.Text()
+	case IfSurvives:
+		return ". If it is not destroyed, " + e.Then.Text()
+	default:
+		return " and " + e.Then.Text()
+	}
 }
 
 // Resolve deals the damage to every selected creature simultaneously, resolving
@@ -125,6 +180,10 @@ func (e DealDamage) Text() string {
 // chosen one would otherwise be a vacuous prompt (Guardian Demon's follow-up when
 // its heal removed no damage).
 func (e DealDamage) Resolve(ctx *EffectContext) {
+	if e.Then != nil {
+		e.resolveAftermath(ctx)
+		return
+	}
 	if e.Spread != nil {
 		if hits := e.Spread.hits(ctx); len(hits) > 0 {
 			owners := make([]int, len(hits))
@@ -238,13 +297,13 @@ func (e DealDamage) dealTo(ctx *EffectContext, amount int, ids []LocalID) {
 	ctx.dealDamage(targets)
 }
 
-// DamageAftermath decides when a DamageThen's follow-up resolves and how its two
-// clauses join in printed text. It has no valid zero value: a DamageThen must name
-// one so the branch is never left ambiguous.
+// DamageAftermath decides when a DealDamage's follow-up resolves and how its two
+// clauses join in printed text. It has no valid zero value: an effect with a Then
+// must name one so the branch is never left ambiguous.
 type DamageAftermath uint8
 
 const (
-	// aftermathUnset is the invalid zero value: a DamageThen must name its After.
+	// aftermathUnset is the invalid zero value: a Then must name its After.
 	aftermathUnset DamageAftermath = iota
 	// Always runs the follow-up whether or not the damage destroyed the creature,
 	// joining the two clauses with "and" (Tyxl Beambuckler).
@@ -257,54 +316,11 @@ const (
 	IfSurvives
 )
 
-// DamageThen deals Amount damage to one chosen creature and then resolves a
-// follow-up effect on it, with After deciding whether the follow-up runs
-// unconditionally, only when the damage destroyed the creature, or only when the
-// creature survived. The creature is placed in context (ctx.It) so Then can refer
-// to it; an Always follow-up on a destroyed creature is a no-op. The aftermath gate
-// is intrinsic — only this node knows whether *this* damage destroyed the creature,
-// and it snapshots the creature's neighbors before the hit — so it stays one node,
-// not Sequence + a generic Conditional.
-type DamageThen struct {
-	Amount int
-	Target Target
-	Then   Effect
-	After  DamageAftermath
-}
-
-// validate requires a target, a named After branch, and a well-formed follow-up.
-func (e DamageThen) validate() error {
-	if !e.Target.valid() {
-		return errUnsetTarget("DamageThen")
-	}
-	switch e.After {
-	case Always, IfDestroyed, IfSurvives:
-	default:
-		return fmt.Errorf("DamageThen: After must be Always, IfDestroyed, or IfSurvives")
-	}
-	return validateEffect(e.Then)
-}
-
-// Text renders the effect; After chooses how the damage clause joins the follow-up,
-// e.g. "deal 1 damage to a creature. If this damage destroys that creature, gain 1
-// Æmber" or "deal 2 damage to a creature and move it to either flank …".
-func (e DamageThen) Text() string {
-	damage := fmt.Sprintf("deal %d damage to %s", e.Amount, e.Target.Text())
-	switch e.After {
-	case IfDestroyed:
-		return damage + ". If this damage destroys that creature, " + e.Then.Text()
-	case IfSurvives:
-		return damage + ". If it is not destroyed, " + e.Then.Text()
-	default:
-		return damage + " and " + e.Then.Text()
-	}
-}
-
-// Resolve deals the damage to the chosen creature, then resolves Then when After's
-// branch holds. IfDestroyed snapshots the creature's neighbors before the damage (a
-// following effect may hit the destroyed creature's former neighbors); the creature
-// is placed in context (ctx.It) for Then to refer to.
-func (e DamageThen) Resolve(ctx *EffectContext) {
+// resolveAftermath deals the damage to the chosen creature, then resolves Then
+// when After's branch holds. IfDestroyed snapshots the creature's neighbors before
+// the damage (a following effect may hit the destroyed creature's former
+// neighbors); the creature is placed in context (ctx.It) for Then to refer to.
+func (e DealDamage) resolveAftermath(ctx *EffectContext) {
 	ids := e.Target.Select(ctx)
 	if len(ids) == 0 {
 		return
@@ -314,7 +330,7 @@ func (e DamageThen) Resolve(ctx *EffectContext) {
 		ctx.Produced.Neighbors = neighbors(ctx, id)
 		captureDepartingSubject(ctx, id)
 	}
-	ctx.dealDamage([]DamageTarget{{ID: id, Amount: e.Amount}})
+	ctx.dealDamage([]DamageTarget{{ID: id, Amount: e.Amount, IgnoreArmor: e.IgnoreArmor}})
 	switch e.After {
 	case IfDestroyed:
 		if resolverInPlay(ctx, id) {
@@ -378,30 +394,26 @@ type CreatureAndNeighbors struct {
 }
 
 // spreadText renders the clause, naming one neighbor or each depending on Scope.
+// The creature taking the base damage is named once and the neighbors hang off it
+// as "its", so the clause never has to say "that creature" twice. A splash equal
+// to the base damage is stated once rather than repeated.
 func (s CreatureAndNeighbors) spreadText() string {
-	if s.Target.Kind != targetUnset {
-		return fmt.Sprintf(
-			"deal %d damage to %s and %d damage to each of its neighbors",
-			s.Amount,
-			s.Target.Text(),
-			s.Splash,
-		)
-	}
+	neighbors := "each of its neighbors"
 	if s.Scope == OneNeighbor {
-		return fmt.Sprintf(
-			"deal %d damage to a creature and %d damage to a neighbor of that creature",
-			s.Amount, s.Splash)
+		neighbors = "one of its neighbors"
 	}
-	creature := "a creature"
-	if s.NotOnFlank {
-		creature = "a creature that is not on a flank"
+	prefix, subject := "choose a creature. Deal ", "the chosen creature"
+	switch {
+	case s.Target.Kind != targetUnset:
+		prefix, subject = "deal ", s.Target.Text()
+	case s.NotOnFlank:
+		prefix = "choose a creature that is not on a flank. Deal "
 	}
-	return fmt.Sprintf(
-		"deal %d damage to %s and %d damage to each of its neighbors",
-		s.Amount,
-		creature,
-		s.Splash,
-	)
+	if s.Amount == s.Splash {
+		return prefix + damageAmount(s.Amount) + " to " + subject + " and " + neighbors
+	}
+	return prefix + damageAmount(s.Amount) + " to " + subject +
+		" and " + damageAmount(s.Splash) + " to " + neighbors
 }
 
 // hits picks the primary creature — a named Target when set, otherwise one the
@@ -456,8 +468,8 @@ type DifferentCreatures struct {
 
 // spreadText renders the clause.
 func (s DifferentCreatures) spreadText() string {
-	return fmt.Sprintf("deal %d damage to a creature and deal %d damage to a different creature",
-		s.First, s.Second)
+	return dealDamageTo(s.First, "a creature") + " and " +
+		dealDamageTo(s.Second, "a different creature")
 }
 
 // hits picks as many distinct creatures as the positional amounts name, each pick
@@ -500,20 +512,22 @@ func (s UpToCreatures) validate() error {
 	return nil
 }
 
-// spreadText renders the clause.
+// spreadText renders the clause. The already-damaged case is phrased as its own
+// subset of the chosen creatures, so the clause never shifts from "each chosen
+// creature" to a singular "that creature" mid-sentence.
 func (s UpToCreatures) spreadText() string {
 	if s.WhenDamaged != 0 {
 		return fmt.Sprintf(
-			"choose up to %d creatures. Deal %d damage to each chosen creature. "+
-				"If that creature was already damaged, deal %d damage instead",
-			s.Count, s.Amount, s.WhenDamaged,
+			"choose up to %d creatures. Deal %s to each chosen creature. "+
+				"Deal %s instead to each chosen creature that was already damaged",
+			s.Count, damageAmount(s.Amount), damageAmount(s.WhenDamaged),
 		)
 	}
 	noun := "creatures"
 	if s.Undamaged {
 		noun = "undamaged creatures"
 	}
-	return fmt.Sprintf("deal %d damage to up to %d %s", s.Amount, s.Count, noun)
+	return fmt.Sprintf("deal %s to up to %d %s", damageAmount(s.Amount), s.Count, noun)
 }
 
 // hits asks for creatures one at a time, up to Count, stopping when the controller
@@ -559,7 +573,7 @@ func (s DivideDamage) validate() error {
 // spreadText renders the clause, e.g. "deal 2 damage for each friendly Brobnar
 // creature, divided among any number of creatures".
 func (s DivideDamage) spreadText() string {
-	amount := fmt.Sprintf("deal %d damage", s.Amount)
+	amount := "deal " + damageAmount(s.Amount)
 	if s.Per != nil {
 		amount += " for each " + s.Per.CountText()
 	}

@@ -7,6 +7,29 @@ import "fmt"
 // entry decides for itself whether it may name the card that moved — each states
 // the zones the move ran between and lets nameMoved apply the one rule.
 
+// A zone move is narrated in one of two voices, and each has one composer below
+// so the wording cannot drift between the entries that share it. Both take their
+// zone words from Zone.noun(), the same source printed card text names zones
+// from.
+
+// putIntoZoneText narrates a card leaving play into one of its owner's zones,
+// e.g. "Card6 is put into P1's hand". No one is named as doing it: a card leaves
+// play into its owner's zone whoever caused it.
+func putIntoZoneText(n Namer, id LocalID, owner int, dest Zone) string {
+	return fmt.Sprintf("%s is put into %s's %s",
+		nameMoved(n, id, inPlay, dest), n.PlayerName(owner), dest.noun())
+}
+
+// playerPutsPrefix renders the opening of a "<player> puts <card> from <their>
+// <zone>" line, where a player moves one of their own cards between two of their
+// zones. It returns the possessive separately for a destination phrase that has
+// to name the owner again.
+func playerPutsPrefix(n Namer, player int, id LocalID, from, to Zone) (prefix, owner string) {
+	who, owner := actorPossessive(n, player)
+	return fmt.Sprintf("%s puts %s from %s %s",
+		who, nameMoved(n, id, from, to), owner, from.noun()), owner
+}
+
 // ArchivesTakenIntoHand narrates a player collecting their archives.
 type ArchivesTakenIntoHand struct {
 	Player int
@@ -220,16 +243,15 @@ func (e CardPutOnTopOfDeck) Text(n Namer) string {
 		nameMoved(n, e.Card, inPlay, Deck), n.PlayerName(e.Owner))
 }
 
-// CardReturnedToHand narrates a card leaving play into its owner's hand.
-type CardReturnedToHand struct {
+// CardPutIntoHand narrates a card leaving play into its owner's hand.
+type CardPutIntoHand struct {
 	Card  LocalID
 	Owner int
 }
 
 // Text renders a card leaving play into its owner's hand.
-func (e CardReturnedToHand) Text(n Namer) string {
-	return fmt.Sprintf("%s is returned to %s's hand",
-		nameMoved(n, e.Card, inPlay, Hand), n.PlayerName(e.Owner))
+func (e CardPutIntoHand) Text(n Namer) string {
+	return putIntoZoneText(n, e.Card, e.Owner, Hand)
 }
 
 // CardPutIntoArchives narrates a card leaving play into its owner's archives.
@@ -240,8 +262,7 @@ type CardPutIntoArchives struct {
 
 // Text renders a card leaving play into its owner's archives.
 func (e CardPutIntoArchives) Text(n Namer) string {
-	return fmt.Sprintf("%s is put into %s's archives",
-		nameMoved(n, e.Card, inPlay, Archives), n.PlayerName(e.Owner))
+	return putIntoZoneText(n, e.Card, e.Owner, Archives)
 }
 
 // CardShuffledIntoDeck narrates a card leaving play into its owner's deck, lost
@@ -313,17 +334,16 @@ func (e CardAbducted) Text(n Namer) string {
 		n.PlayerName(e.Player), nameMoved(n, e.Card, inPlay, Archives), n.PlayerName(e.Owner))
 }
 
-// CardReturnedFromDiscardToHand narrates a card recovered out of a discard pile.
-type CardReturnedFromDiscardToHand struct {
+// CardPutFromDiscardIntoHand narrates a card recovered out of a discard pile.
+type CardPutFromDiscardIntoHand struct {
 	Player int
 	Card   LocalID
 }
 
 // Text renders the card recovered from a discard pile to hand.
-func (e CardReturnedFromDiscardToHand) Text(n Namer) string {
-	who, owner := actorPossessive(n, e.Player)
-	return fmt.Sprintf("%s returns %s from %s discard pile to hand",
-		who, nameMoved(n, e.Card, Discard, Hand), owner)
+func (e CardPutFromDiscardIntoHand) Text(n Namer) string {
+	prefix, _ := playerPutsPrefix(n, e.Player, e.Card, Discard, Hand)
+	return prefix + " into " + Hand.noun()
 }
 
 // CardPutFromDeckIntoHand narrates a card searched out of a deck. Both zones are
@@ -335,9 +355,8 @@ type CardPutFromDeckIntoHand struct {
 
 // Text renders the card searched out of a deck into hand.
 func (e CardPutFromDeckIntoHand) Text(n Namer) string {
-	who, owner := actorPossessive(n, e.Player)
-	return fmt.Sprintf("%s puts %s from %s deck into hand",
-		who, nameMoved(n, e.Card, Deck, Hand), owner)
+	prefix, _ := playerPutsPrefix(n, e.Player, e.Card, Deck, Hand)
+	return prefix + " into " + Hand.noun()
 }
 
 // CardPutFromDiscardOnTopOfDeck narrates a card set back on the deck out of a
@@ -349,9 +368,8 @@ type CardPutFromDiscardOnTopOfDeck struct {
 
 // Text renders the card set from a discard pile back on the deck.
 func (e CardPutFromDiscardOnTopOfDeck) Text(n Namer) string {
-	who, owner := actorPossessive(n, e.Player)
-	return fmt.Sprintf("%s puts %s from %s discard pile on top of %s deck",
-		who, nameMoved(n, e.Card, Discard, Deck), owner, owner)
+	prefix, owner := playerPutsPrefix(n, e.Player, e.Card, Discard, Deck)
+	return prefix + " on top of " + owner + " " + Deck.noun()
 }
 
 // CardPutUnder narrates a card placed under a host (Masterplan, Jargogle,

@@ -16,7 +16,7 @@ var LookOverThere = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.MM, "250"),
 	card.WithAbility(
-		card.Trigger.Play, card.DamageThen{
+		card.Trigger.Play, card.DealDamage{
 			Amount: 2,
 			After:  card.IfSurvives,
 			Target: card.Target.Creature,

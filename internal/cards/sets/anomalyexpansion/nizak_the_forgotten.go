@@ -27,5 +27,5 @@ var NizakTheForgotten = set.New(
 		WhileCondition: card.SourceIsFighting{},
 	}),
 	card.WithAbility(
-		card.Trigger.AfterDestroyedFighting, card.ReturnItToHand{}),
+		card.Trigger.AfterDestroyedFighting, card.PutItIntoHand{}),
 )

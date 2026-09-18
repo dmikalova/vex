@@ -209,9 +209,11 @@ which is itself a finding.
   (machine-local; reset with `go clean -fuzzcache`). A discovered failure is
   automatically **minimized and committed** to `internal/sim/testdata/fuzz/FuzzPlay`,
   where it then runs as an ordinary unit test forever after.
-- **`TestSimulateSeeds`** — a fixed-seed batch of ~300 random games, fast enough to
-  run inside `mage test` on every suite run. This is the property test that shakes
-  the engine continuously; a regression prints the exact script to reproduce.
+- **`TestSimulateSeeds`** — a fixed-seed batch of 5,000 random games, fast enough
+  to run inside `mage test` on every suite run. This is the property test that
+  shakes the engine continuously; a regression prints the exact script to
+  reproduce. The batch is **deterministic on purpose** — the gate never fails on a
+  game no one can replay. Fresh non-deterministic games are the soak's job.
 - **`TestSoak`** — the same games on a time budget, skipped unless `SOAK_DURATION`
   is set (`mage soak` sets it). It runs across `GOMAXPROCS` workers (many games
   per second), and where fuzzing hunts _new_ coverage and stops when it

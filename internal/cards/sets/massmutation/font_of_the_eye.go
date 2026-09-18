@@ -21,7 +21,7 @@ var FontOfTheEye = set.New(
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{
-			Cond: card.EnemyCreatureDestroyed{},
+			Cond: card.CreatureDestroyedThisTurn{Player: card.Opponent},
 			Then: card.CaptureAember{
 				Amount: 1,
 				Target: card.Target.FriendlyCreature,

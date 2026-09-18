@@ -235,7 +235,7 @@ func (o Or) combinedHouses() (string, bool) {
 		houses = append(houses, h.String())
 	}
 	noun := strings.Join(houses, " or ") + " " + typeNoun(shape.Type)
-	return "if " + shape.Subject.noun() + " is " + indefinite(noun), true
+	return "if " + shape.Noun.noun() + " is " + indefinite(noun), true
 }
 
 // Met reports whether any of the conditions is met.
@@ -390,15 +390,17 @@ func (c CountIs) validate() error {
 		return fmt.Errorf("CountIs: Count must be set and render a CountClause")
 	}
 	switch c.Is {
-	case AtLeast, AtMost, Exactly:
+	case AtLeast, AtMost, Exactly, Even, Odd:
 		return nil
 	default:
-		return fmt.Errorf("CountIs: Is must be AtLeast, AtMost, or Exactly")
+		return fmt.Errorf("CountIs: Is must be AtLeast, AtMost, Exactly, Even, or Odd")
 	}
 }
 
 // CondText renders the condition, e.g. "if you used 3 or more creatures this
-// turn", asking the Count for the clause that reads naturally after "if".
+// turn", asking the Count for the clause that reads naturally after "if". Parity
+// says "number" where a threshold says a figure, because a Count counts things;
+// the mass-noun Æmber pool says "amount" on PoolAember for the same reason.
 func (c CountIs) CondText() string {
 	var quantity string
 	switch c.Is {
@@ -406,19 +408,28 @@ func (c CountIs) CondText() string {
 		quantity = fmt.Sprintf("%d or fewer", c.Amount)
 	case Exactly:
 		quantity = fmt.Sprintf("exactly %d", c.Amount)
+	case Even:
+		quantity = "an even number of"
+	case Odd:
+		quantity = "an odd number of"
 	default:
 		quantity = fmt.Sprintf("%d or more", c.Amount)
 	}
 	return "if " + c.Count.(countClauser).CountClause(quantity, c.Amount != 1 || c.Is != Exactly)
 }
 
-// Met compares the count's current value against the threshold.
+// Met compares the count's current value against the threshold. Even and Odd
+// ignore Amount: parity is a property of the value, not a comparison to a figure.
 func (c CountIs) Met(ctx *EffectContext) bool {
 	switch c.Is {
 	case AtMost:
 		return c.Count.Value(ctx) <= c.Amount
 	case Exactly:
 		return c.Count.Value(ctx) == c.Amount
+	case Even:
+		return c.Count.Value(ctx)%2 == 0
+	case Odd:
+		return c.Count.Value(ctx)%2 != 0
 	default:
 		return c.Count.Value(ctx) >= c.Amount
 	}

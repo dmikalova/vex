@@ -16,7 +16,7 @@ import (
 //	Power:  16
 //	Traits: Beast
 //
-//	Gargantodon deals 4 Damage when fighting.
+//	Gargantodon deals 4 damage when fighting.
 //	Each Æmber that would be stolen is captured by a creature controlled by the active player instead.
 //	Gargantodon enters play stunned.
 func TestGargantodon(t *testing.T) {

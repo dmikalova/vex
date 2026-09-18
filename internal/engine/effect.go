@@ -148,7 +148,7 @@ type Produced struct {
 	// CardsRevealed count in a following effect of the same resolution.
 	Revealed int
 	// Destroyed[p] is how many cards player p controlled that this resolution has
-	// destroyed, read whole by CardsDestroyed / CardsDestroyedFewerThan and per
+	// destroyed, read whole by CardsDestroyed and per
 	// side by a ProducedThisWay{Tally: TallyCreaturesDestroyed} (Hecatomb pays each
 	// player for their own dead).
 	Destroyed [2]int

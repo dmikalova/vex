@@ -12,6 +12,7 @@
 # Compiled dev-tool binaries. The mage targets run these via `go run`, so nothing
 # is committed; build them ad hoc into ./bin (ignored) if you want a binary.
 /bin/
+/cardcheck
 /gencomments
 /genprovenance
 /cardlookup

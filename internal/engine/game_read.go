@@ -486,13 +486,13 @@ func (g *Game) TimesUsedThisTurn(id LocalID) int {
 }
 
 // Aember returns a player's Æmber pool.
-func (g *Game) Aember(player int) int { return g.State.Aember[player] }
+func (g *Game) Aember(player int) int { return int(g.State.Aember[player]) }
 
 // AemberProtected is the Resolver entry point for aemberProtected.
 func (g *Game) AemberProtected(player int) bool { return g.aemberProtected(player) }
 
 // Keys returns a player's forged key count.
-func (g *Game) Keys(player int) int { return g.State.Keys[player] }
+func (g *Game) Keys(player int) int { return g.State.KeyCount(player) }
 
 // TurnHistory reads one of the tallies the engine keeps about what a player did
 // during a turn — keys forged, creatures played, enemies killed fighting. See
@@ -514,7 +514,7 @@ func (g *Game) DiscardedThisTurn(player int) []LocalID {
 
 // KeyColors returns the colours of the keys a player has forged, in forge order.
 func (g *Game) KeyColors(player int) []KeyColor {
-	n := g.State.Keys[player]
+	n := g.Keys(player)
 	out := make([]KeyColor, n)
 	copy(out, g.State.KeyColors[player][:n])
 	return out
@@ -783,14 +783,14 @@ func (g *Game) skipsForge(player int) bool {
 // keys (MaxKeys), so a "forge a key" trigger that fires after the fourth forge
 // cannot push the count past the KeyColors slots.
 func (g *Game) keyForgeCapReached(player int) bool {
-	return g.State.Keys[player] >= MaxKeys
+	return g.Keys(player) >= MaxKeys
 }
 
 // forgeKeyNumberBarred reports whether the next key player would forge is barred
 // by a constant Restrictions.NoForgeKeyNumber rule on any card in play — the Key
 // Imps bar a key ordinal for both players, whoever controls the Imp.
 func (g *Game) forgeKeyNumberBarred(player int) bool {
-	next := g.State.Keys[player] + 1
+	next := g.Keys(player) + 1
 	for p := 0; p < 2; p++ {
 		for _, id := range g.allInPlay(p) {
 			if g.cat.def(id).Restricts.NoForgeKeyNumber == next {
@@ -848,7 +848,7 @@ func (g *Game) aemberProtected(player int) bool {
 // card in play bars every player who leads on forged keys from forging (Heart of
 // the Forest).
 func (g *Game) forgeBarredWhileAhead(player int) bool {
-	if g.State.Keys[player] <= g.State.Keys[1-player] {
+	if g.Keys(player) <= g.Keys(1-player) {
 		return false
 	}
 	for controller := 0; controller < 2; controller++ {

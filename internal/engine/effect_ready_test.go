@@ -2,29 +2,6 @@ package engine
 
 import "testing"
 
-func TestReadyIfFirstUse(t *testing.T) {
-	e := ReadyIfFirstUse{Target: Target{Kind: TargetThisCreature}}
-	if got := e.Text(); got != "if this is the first time {self} was used this turn, ready it" {
-		t.Errorf("text = %q", got)
-	}
-
-	g := NewGame("A", "B", 1)
-	src := g.AddToBattleline(testCreature("src", 3), 0)
-	g.State.Cards[src].Exhausted = true
-	g.State.Cards[src].TimesUsedThisTurn = 1
-	e.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
-	if g.Exhausted(src) {
-		t.Error("first use should ready the creature")
-	}
-
-	g.State.Cards[src].Exhausted = true
-	g.State.Cards[src].TimesUsedThisTurn = 2
-	e.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
-	if !g.Exhausted(src) {
-		t.Error("later use should not ready the creature")
-	}
-}
-
 func TestReadyCreatures(t *testing.T) {
 	// Text: leads with the Max count and renders the bare singular noun.
 	e := ReadyCreatures{

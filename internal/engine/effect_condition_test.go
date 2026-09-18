@@ -141,11 +141,11 @@ func TestOpponentHasMoreKeys(t *testing.T) {
 	if c.Met(ctx) {
 		t.Error("0 vs 0 should not be met")
 	}
-	g.State.Keys[1] = 1
+	g.State.ForgeCanonicalKeys(1, 1)
 	if !c.Met(ctx) {
 		t.Error("opponent 1 vs you 0 should be met")
 	}
-	g.State.Keys[0] = 1
+	g.State.ForgeCanonicalKeys(0, 1)
 	if c.Met(ctx) {
 		t.Error("1 vs 1 should not be met")
 	}
@@ -155,7 +155,7 @@ func TestOpponentHasMoreKeys(t *testing.T) {
 	if mine.CondText() != "if you have more forged keys than your opponent" {
 		t.Errorf("CondText = %q", mine.CondText())
 	}
-	g.State.Keys[0] = 2
+	g.State.ForgeCanonicalKeys(0, 2)
 	if !mine.Met(ctx) {
 		t.Error("you 2 vs opponent 1 should be met")
 	}
@@ -499,19 +499,23 @@ func TestSourceHasNoNeighborNamed(t *testing.T) {
 	}
 }
 
-func TestControlsCreaturesOfHouses(t *testing.T) {
+// TestCountIsHousesAmong covers the house-spanning threshold Prince Derric,
+// Unifier gates on, expressed as a CountIs over HousesAmong.
+func TestCountIsHousesAmong(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	c := ControlsCreaturesOfHouses{Amount: 3}
-	if c.CondText() != "if you control creatures from 3 or more houses" {
+	c := CountIs{
+		Count:  HousesAmong{Player: Controller, Type: Creature},
+		Is:     AtLeast,
+		Amount: 3,
+	}
+	want := "if 3 or more houses are represented among friendly creatures"
+	if c.CondText() != want {
 		t.Errorf("CondText = %q", c.CondText())
 	}
 	if err := c.validate(); err != nil {
 		t.Errorf("valid Count rejected: %v", err)
-	}
-	if err := (ControlsCreaturesOfHouses{}).validate(); err == nil {
-		t.Error("non-positive Count should be rejected")
 	}
 
 	g.AddToBattleline(NewCard("b", Brobnar, Creature, Common, WithPower(2)), 0)
@@ -528,7 +532,8 @@ func TestControlsCreaturesOfHouses(t *testing.T) {
 	if c.Met(ctx) != true {
 		t.Error("duplicate house should still leave 3 distinct houses")
 	}
-	if (ControlsCreaturesOfHouses{Amount: 4}).Met(ctx) {
+	four := CountIs{Count: c.Count, Is: AtLeast, Amount: 4}
+	if four.Met(ctx) {
 		t.Error("only 3 distinct houses should not meet a Count of 4")
 	}
 }
@@ -663,8 +668,8 @@ func TestItIs(t *testing.T) {
 	negated := map[string]ItIs{
 		"if it is not a Logos card": {House: namedHouse(Logos)},
 		"if the discarded card is not a Logos card": {
-			House:   namedHouse(Logos),
-			Subject: DiscardedCard,
+			House: namedHouse(Logos),
+			Noun:  DiscardedCard,
 		},
 	}
 	for want, e := range negated {
@@ -946,7 +951,7 @@ func TestOrCondition(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	trait := ItIsOfTrait{Trait: Dinosaur}
-	aember := ItHasAember{}
+	aember := HasAember{}
 	or := Or{Conditions: []Condition{trait, aember}}
 
 	if got := trait.CondText(); got != "if it is a Dinosaur creature" {
@@ -1020,7 +1025,7 @@ func TestOrCombinesNamedHouses(t *testing.T) {
 	// A non-ItIs clause breaks the fold too.
 	nonHouse := Or{Conditions: []Condition{
 		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Dis}},
-		ItHasAember{},
+		HasAember{},
 	}}
 	if got := nonHouse.CondText(); got != "if it is a Dis card or it has Æmber on it" {
 		t.Errorf("non-house text = %q", got)
@@ -1152,7 +1157,7 @@ func TestCountIs(t *testing.T) {
 	if err := (CountIs{Is: AtLeast, Amount: 1}).validate(); err == nil {
 		t.Error("a missing Count should be rejected")
 	}
-	if err := (CountIs{Count: CardsDestroyed{}, Is: AtLeast}).validate(); err == nil {
+	if err := (CountIs{Count: CreaturesDestroyed{}, Is: AtLeast}).validate(); err == nil {
 		t.Error("a Count with no clause should be rejected")
 	}
 	if err := (CountIs{Count: DamageHealed{}, Is: MoreThanYou}).validate(); err == nil {
@@ -1182,6 +1187,37 @@ func TestCountIsMet(t *testing.T) {
 	}
 	if got := (CreaturesUsed{Player: Controller}).CountText(); got != "creature you used this turn" {
 		t.Errorf("count text = %q", got)
+	}
+}
+
+// Parity is a comparison of a count like any other, so CountIs answers Even and
+// Odd rather than leaving them reachable only through PoolAember.
+func TestCountIsParity(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	used := g.AddToBattleline(testCreature("used", 3), 0)
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+	even := CountIs{Count: CreaturesUsed{Player: Controller}, Is: Even}
+	odd := CountIs{Count: CreaturesUsed{Player: Controller}, Is: Odd}
+	for _, c := range []CountIs{even, odd} {
+		if err := c.validate(); err != nil {
+			t.Fatalf("parity comparison rejected: %v", err)
+		}
+	}
+	if got := even.CondText(); got != "if you used an even number of creatures this turn" {
+		t.Errorf("even text = %q", got)
+	}
+	if got := odd.CondText(); got != "if you used an odd number of creatures this turn" {
+		t.Errorf("odd text = %q", got)
+	}
+
+	if !even.Met(ctx) || odd.Met(ctx) {
+		t.Error("zero creatures used is even, not odd")
+	}
+	g.ReapWith(used)
+	if even.Met(ctx) || !odd.Met(ctx) {
+		t.Error("one creature used is odd, not even")
 	}
 }
 
@@ -1525,7 +1561,11 @@ func TestKeyCostChangeWhileCondition(t *testing.T) {
 	proclamation := func() CardDefinition {
 		return NewCard("proc", Sanctum, Artifact, Rare,
 			WithKeyCost(NewKeyCostChange(Opponent, 2).While(
-				PlayerControlsFewerHousesThan{Player: Opponent, Amount: 3})))
+				Not{Cond: CountIs{
+					Count:  HousesAmong{Player: Opponent, Type: Creature},
+					Is:     AtLeast,
+					Amount: 3,
+				}})))
 	}
 
 	t.Run("taxes while the opponent has fewer than three houses", func(t *testing.T) {
@@ -1558,31 +1598,12 @@ func TestKeyCostChangeWhileCondition(t *testing.T) {
 	})
 
 	t.Run("renders a while clause", func(t *testing.T) {
-		want := "While your opponent does not control creatures from 3 or more " +
-			"different houses, your opponent's keys cost +2 Æmber."
+		want := "While fewer than 3 houses are represented among enemy creatures, " +
+			"your opponent's keys cost +2 Æmber."
 		if got := keyCostText(proclamation().KeyCostChanges[0]); got != want {
 			t.Errorf("text = %q, want %q", got, want)
 		}
 	})
-}
-
-// TestPlayerControlsFewerHousesThanCondition exercises the condition's text and
-// validation directly.
-func TestPlayerControlsFewerHousesThanCondition(t *testing.T) {
-	opp := PlayerControlsFewerHousesThan{Player: Opponent, Amount: 3}
-	if got := opp.CondText(); got != "while your opponent does not control creatures from 3 or more different houses" {
-		t.Errorf("CondText = %q", got)
-	}
-	you := PlayerControlsFewerHousesThan{Player: Controller, Amount: 2}
-	if got := you.CondText(); got != "while you do not control creatures from 2 or more different houses" {
-		t.Errorf("CondText = %q", got)
-	}
-	if err := (PlayerControlsFewerHousesThan{Player: Opponent}).validate(); err == nil {
-		t.Error("zero amount should be rejected")
-	}
-	if err := opp.validate(); err != nil {
-		t.Errorf("validate: %v", err)
-	}
 }
 
 // TestOrAmountStealAember covers the linear "steal 1 Æmber, or 2 if …" form

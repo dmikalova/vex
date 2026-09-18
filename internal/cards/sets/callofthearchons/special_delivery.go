@@ -22,7 +22,7 @@ var SpecialDelivery = set.New(
 	card.WithTraits(card.Traits.Item),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.Action, card.DamageThen{
+		card.Trigger.Action, card.DealDamage{
 			Amount: 3,
 			After:  card.IfDestroyed,
 			Target: card.Target.Creature.OnFlank(),

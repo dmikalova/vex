@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Robot
 //
-//	Storm Crawler deals 1 Damage when fighting.
+//	Storm Crawler deals 1 damage when fighting.
 //	After an enemy creature reaps, stun it.
 func TestStormCrawler(t *testing.T) {
 	t.Run("deals only 1 fight damage", func(t *testing.T) {

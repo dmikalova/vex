@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Skirmish.
-//	Roxador deals 2 Damage when fighting.
+//	Roxador deals 2 damage when fighting.
 //	Fight: Stun the creature Roxador fought.
 var Roxador = set.New(
 	"Roxador",

@@ -469,6 +469,37 @@ func battlelineContaining(ctx *EffectContext, id LocalID) []LocalID {
 	return nil
 }
 
+// allCreatures is every creature in play, the controller's battleline first. The
+// battlelines keep their own left-to-right order, which is the order a flank or
+// neighbour target reads positions in, so a base set built here can still be
+// narrowed by position.
+func allCreatures(ctx *EffectContext) []LocalID {
+	return append(
+		ctx.Resolver.Battleline(ctx.Controller),
+		ctx.Resolver.Battleline(ctx.Opponent())...)
+}
+
+// allArtifacts is every artifact in play, the controller's row first.
+func allArtifacts(ctx *EffectContext) []LocalID {
+	return append(
+		ctx.Resolver.Artifacts(ctx.Controller),
+		ctx.Resolver.Artifacts(ctx.Opponent())...)
+}
+
+// allCardsInPlay is every creature in play followed by every artifact in play.
+// Cards group by type before they group by player, so a creature of either side
+// precedes every artifact.
+func allCardsInPlay(ctx *EffectContext) []LocalID {
+	return append(allCreatures(ctx), allArtifacts(ctx)...)
+}
+
+// cardsInPlayOf is one player's creatures followed by their artifacts.
+func cardsInPlayOf(ctx *EffectContext, player int) []LocalID {
+	return append(
+		ctx.Resolver.Battleline(player),
+		ctx.Resolver.Artifacts(player)...)
+}
+
 // selectBase resolves the unfiltered base set chosen by Kind. Chosen kinds return
 // the pool of candidates; Select applies filters and prompts for the choice.
 func (t Target) selectBase(ctx *EffectContext) []LocalID {
@@ -492,18 +523,14 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 		}
 		return nil
 	case TargetEachArtifact, TargetChosenArtifact:
-		return append(
-			ctx.Resolver.Artifacts(ctx.Controller),
-			ctx.Resolver.Artifacts(ctx.Opponent())...)
+		return allArtifacts(ctx)
 	case TargetChosenEnemyArtifact:
 		return ctx.Resolver.Artifacts(ctx.Opponent())
 	case TargetChosenFriendlyArtifact:
 		return ctx.Resolver.Artifacts(ctx.Controller)
 	case TargetChosenUpgrade:
 		var ups []LocalID
-		for _, c := range append(
-			ctx.Resolver.Battleline(ctx.Controller),
-			ctx.Resolver.Battleline(ctx.Opponent())...) {
+		for _, c := range allCreatures(ctx) {
 			ups = append(ups, ctx.Resolver.Upgrades(c)...)
 		}
 		return ups
@@ -512,23 +539,13 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 	case TargetEachFriendlyArtifact:
 		return ctx.Resolver.Artifacts(ctx.Controller)
 	case TargetEachCardInPlay, TargetChosenCreatureOrArtifact:
-		ids := ctx.Resolver.Battleline(ctx.Controller)
-		ids = append(ids, ctx.Resolver.Battleline(ctx.Opponent())...)
-		ids = append(ids, ctx.Resolver.Artifacts(ctx.Controller)...)
-		ids = append(ids, ctx.Resolver.Artifacts(ctx.Opponent())...)
-		return ids
+		return allCardsInPlay(ctx)
 	case TargetEachFriendlyCardInPlay, TargetChosenFriendlyCreatureOrArtifact:
-		return append(
-			ctx.Resolver.Battleline(ctx.Controller),
-			ctx.Resolver.Artifacts(ctx.Controller)...)
+		return cardsInPlayOf(ctx, ctx.Controller)
 	case TargetChosenEnemyCreatureOrArtifact:
-		return append(
-			ctx.Resolver.Battleline(ctx.Opponent()),
-			ctx.Resolver.Artifacts(ctx.Opponent())...)
+		return cardsInPlayOf(ctx, ctx.Opponent())
 	case TargetEachCreature, TargetChosenCreature:
-		return append(
-			ctx.Resolver.Battleline(ctx.Controller),
-			ctx.Resolver.Battleline(ctx.Opponent())...)
+		return allCreatures(ctx)
 	case TargetEachFriendlyCreature, TargetChosenFriendlyCreature:
 		return ctx.Resolver.Battleline(ctx.Controller)
 	case TargetEachEnemyCreature, TargetChosenEnemyCreature:

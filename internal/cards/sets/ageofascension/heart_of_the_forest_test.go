@@ -23,7 +23,7 @@ func TestHeartOfTheForest(t *testing.T) {
 			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(HeartOfTheForest)},
 		})
 		g := h.Game()
-		g.State.Keys[0] = 1 // P1 leads
+		g.State.ForgeCanonicalKeys(0, 1) // P1 leads
 		g.State.Aember[0] = 3 * engine.KeyCost
 		h.P1.EndTurn() // to P2
 		h.P2.EndTurn() // back to P1: forge phase runs, barred while ahead

@@ -2,16 +2,25 @@ package engine
 
 import "math"
 
-// maxCardAember is the most Æmber one card can hold — the range of CardCore.Amber,
-// which is narrower than a pool's int because it is paid for 128 times over in the
-// flat state. A doubling chain (Binate Rupture) can grow a pool past it, so a
-// capture of the whole pool is saturated at this ceiling rather than wrapped.
-const maxCardAember = math.MaxInt16
+// maxAember is the most Æmber one holder — a card or a pool — can carry. It is
+// the range of the int16 the flat state stores Æmber in, which is paid for 128
+// times over across the battleline. A doubling chain (Binate Rupture) is the only
+// thing that can approach it, so a total past it is saturated rather than wrapped.
+const maxAember = math.MaxInt16
 
-// addAmberOn changes the Æmber sitting on a card, saturating at maxCardAember. It
-// clamps only the top: wrapping there would turn a huge pile into negative Æmber
-// that later leaks back into a pool when the card leaves play. Going below zero is
-// a real bug, so it is left to InvariantError to catch rather than hidden here.
+// clampAember saturates an Æmber total at maxAember and records the Æmber the
+// maximum turned away. It clamps only the top: wrapping there would turn a huge
+// pile into negative Æmber that later leaks back out. Going below zero is a real
+// bug, so it is left to InvariantError to catch rather than hidden here.
+func (g *Game) clampAember(total int) int16 {
+	if total > maxAember {
+		g.record(AemberLostToMaximum{Amount: total - maxAember})
+		total = maxAember
+	}
+	return int16(total)
+}
+
+// addAmberOn changes the Æmber sitting on a card, saturating at maxAember.
 // A card that has left play takes no write — an ability that places Æmber on its
 // own source after that source was destroyed (Strange Gizmo forging mid-window)
 // lands on nothing rather than banking Æmber on a card in a discard pile.
@@ -20,12 +29,7 @@ func (g *Game) addAmberOn(id LocalID, delta int) {
 	if c == nil {
 		return
 	}
-	total := int(c.Amber) + delta
-	if total > maxCardAember {
-		g.record(AemberLostToCeiling{Card: id, Amount: total - maxCardAember})
-		total = maxCardAember
-	}
-	c.Amber = int16(total)
+	c.Amber = g.clampAember(int(c.Amber) + delta)
 }
 
 // gainAember adds Æmber from the common supply to a player's pool. It is the
@@ -39,7 +43,7 @@ func (g *Game) gainAember(player, amount int) (LocalID, bool) {
 		g.addAmberOn(capturer, amount)
 		return capturer, true
 	}
-	g.State.Aember[player] += amount
+	g.State.Aember[player] = g.clampAember(int(g.State.Aember[player]) + amount)
 	return 0, false
 }
 

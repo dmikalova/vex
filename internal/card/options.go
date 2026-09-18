@@ -125,7 +125,7 @@ var (
 	}
 	// WithAemberCannotBeStolen keeps the controller's Æmber from being stolen — with
 	// no argument unconditionally, or only while the given condition holds
-	// (card.ThisHasAember{} while the card has Æmber, a card.PoolAember threshold
+	// (card.HasAember{Subject: card.Subject.This} while the card has Æmber, a card.PoolAember threshold
 	// while the pool is deep enough).
 	WithAemberCannotBeStolen = func(cond ...engine.Condition) Option {
 		return gameplay(engine.WithAemberCannotBeStolen(cond...))

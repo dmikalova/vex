@@ -405,6 +405,16 @@ body {
   font-size: 0.8rem;
   font-weight: 700;
 }
+/* standing fault notice; unlike .status-banner it never fades */
+.notice-banner {
+  margin: 0.5rem 0.6rem 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.3rem;
+  background-color: var(--danger);
+  color: var(--ink-on-accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
 .status-banner--a {
   animation: statusFadeA 5s ease-out forwards;
 }
@@ -3994,6 +4004,105 @@ body:has(.sel-cursor--on) .card-tab {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+/* ---- Game log gallery (/style) --------------------------------------------
+   The Game log section draws the client's own log bubbles (.log / .log-group /
+   .log-line, styled elsewhere) as a set-cover gallery, so these rules only lay
+   the gallery out around bubbles that already know how to draw themselves. */
+.style-note {
+  max-width: 40rem;
+  margin: 0 0 0.75rem;
+  color: var(--ink-2);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.style-link {
+  color: var(--ink);
+  text-decoration: underline;
+}
+.style-combiners {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.style-combiner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+}
+.style-combiner-caption {
+  color: var(--ink-2);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.style-combiner-phrase {
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+.style-log-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--ink-2);
+  font-size: 0.85rem;
+}
+.style-log-gallery {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.style-log-bubble {
+  max-width: 22rem;
+  padding: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+.style-log-bubble--open {
+  border-color: var(--p0);
+  box-shadow: 0 0 0 1px var(--p0);
+}
+.style-log-drill {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+  background: var(--surface);
+}
+.style-log-drill-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  color: var(--ink-2);
+  font-size: 0.85rem;
+}
+.style-log-highlight {
+  border-radius: var(--panel-radius);
+  outline: 2px solid var(--p0);
+  outline-offset: 1px;
+}
+.style-log-synthetic {
+  display: flex;
+  max-width: 22rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.35rem;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--panel-radius);
+}
+.style-log-badge {
+  color: var(--ink-2);
+  font-size: 0.7rem;
+  font-style: italic;
 }
 
 /* ---- Reference pages: /rulebook and /glossary -----------------------------

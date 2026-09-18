@@ -46,6 +46,20 @@ type webChooser struct {
 	inChoice bool
 }
 
+// webChooser is the human-facing renderer, so it must satisfy every optional
+// Chooser capability the engine can call; a missing or drifted one would make that
+// prompt silently fall back instead of rendering. These assertions catch that at
+// compile time (ADR 0045, step 1).
+var (
+	_ engine.Chooser           = (*webChooser)(nil)
+	_ engine.OptionChooser     = (*webChooser)(nil)
+	_ engine.PositionChooser   = (*webChooser)(nil)
+	_ engine.DeclinableChooser = (*webChooser)(nil)
+	_ engine.Orderer           = (*webChooser)(nil)
+	_ engine.ReactionChooser   = (*webChooser)(nil)
+	_ engine.BadgeChooser      = (*webChooser)(nil)
+)
+
 // enter marks the start of an engine-facing choice and reports whether it is the
 // outermost one; a delegated inner call sees the flag already set and does not
 // record.

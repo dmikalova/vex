@@ -1,38 +1,5 @@
 package engine
 
-// ReadyIfFirstUse readies a creature only while the current use is its first use
-// this turn. A creature is USED when it reaps, fights, or uses an Action: ability;
-// the use count is advanced before Fight:/Reap: abilities resolve, so the first
-// use is count 1 during this effect.
-//
-// Readying an exhausted creature stands it back up so it can be used again this
-// turn.
-type ReadyIfFirstUse struct {
-	Target Target
-}
-
-// validate requires an explicit target.
-func (e ReadyIfFirstUse) validate() error {
-	if !e.Target.valid() {
-		return errUnsetTarget("ReadyIfFirstUse")
-	}
-	return nil
-}
-
-// Text renders Rocket Boots' conditional readying clause.
-func (e ReadyIfFirstUse) Text() string {
-	return "if this is the first time " + e.Target.Text() + " was used this turn, ready it"
-}
-
-// Resolve readies each selected creature whose current use is its first this turn.
-func (e ReadyIfFirstUse) Resolve(ctx *EffectContext) {
-	for _, id := range e.Target.Select(ctx) {
-		if ctx.Resolver.TimesUsedThisTurn(id) == 1 {
-			ctx.Resolver.SetExhausted(id, false)
-		}
-	}
-}
-
 // ReadyCreatures readies creatures the controller chooses from its Target one at
 // a time, up to a Max count — Commpod's "for each card revealed this way, ready a
 // Mars creature." The controller picks which creature each time; it is mandatory

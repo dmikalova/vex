@@ -33,13 +33,51 @@ func (g *game) save(ctx app.Context) {
 	} else if g.busy {
 		inputs = nil
 	}
-	_ = ctx.LocalStorage().Set(persistKey, snapshot{
+	g.writeSnapshot(ctx, snapshot{
 		Version:  snapshotVersion,
 		Seed:     g.seed,
 		SetNames: g.setNames,
 		Inputs:   append([]input(nil), inputs...),
 		UI:       g.savedUI(),
 	})
+}
+
+// storageFullNotice is the standing message shown once the match can no longer be
+// written. It names the cause, because the player's only remedy is outside the
+// app: free storage, or leave private browsing.
+const storageFullNotice = "This match is no longer being saved — browser storage " +
+	"is full or unavailable. Closing this tab will lose it."
+
+// writeSnapshot persists the match, and on a failed write frees the storage the
+// client can spare and retries once. The expected failure is a full quota: the
+// command log grows with the match, so the write that fails is larger than the
+// snapshot already occupying the slot, and dropping that stale snapshot is
+// usually enough room for the new one. Only a second failure raises the notice.
+func (g *game) writeSnapshot(ctx app.Context, snap snapshot) {
+	store := ctx.LocalStorage()
+	if err := store.Set(persistKey, snap); err == nil {
+		g.clearStorageNotice()
+		return
+	}
+	// The style gallery's scroll memo belongs to another page, and the snapshot in
+	// the slot is the one this write replaces, so neither is worth keeping over the
+	// match itself.
+	store.Del(styleScrollKey)
+	store.Del(persistKey)
+	if err := store.Set(persistKey, snap); err != nil {
+		g.setNotice(storageFullNotice)
+		return
+	}
+	g.clearStorageNotice()
+}
+
+// clearStorageNotice takes the storage notice down once a write succeeds, leaving
+// a notice raised for any other reason alone — the banner holds one message, and a
+// successful save says nothing about an unrelated fault.
+func (g *game) clearStorageNotice() {
+	if g.notice == storageFullNotice {
+		g.clearNotice()
+	}
 }
 
 // savedUI captures the view state to carry across a reload.
@@ -136,12 +174,26 @@ func (g *game) dealMatch(seed int64) {
 	// clear the prompt it left up; clear it here so this deal starts with no stale
 	// prompt (a leftover choosingOption would make the next await match it).
 	g.clearPrompts()
-	eg, houses, mavericks, legacies, rosters := match.NewWithSets(
+	eg, houses, mavericks, legacies, rosters, err := match.NewWithSets(
 		"Player 1",
 		"Player 2",
 		g.seed,
 		g.setNames,
 	)
+	if err != nil {
+		// A set name the deck generator does not know means the picker, or a restored
+		// snapshot, is carrying a set this build no longer ships. Say so and deal the
+		// default set, so the player gets a playable match instead of an empty board
+		// and is told which choice was dropped.
+		g.setNotice(err.Error() + " — dealing the default set instead.")
+		g.setNames = [2]string{}
+		eg, houses, mavericks, legacies, rosters, _ = match.NewWithSets(
+			"Player 1",
+			"Player 2",
+			g.seed,
+			g.setNames,
+		)
+	}
 	g.install(eg, houses, mavericks, legacies, rosters)
 	// Clear the previous game's log grouping and redo history. newMatch resets
 	// the engine log to a single turn-1 header, so stale marks (with larger Start

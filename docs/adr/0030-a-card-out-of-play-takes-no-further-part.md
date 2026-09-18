@@ -127,7 +127,7 @@ generalizes the same idea rather than adding a persistent snapshot:
 - **Captured at the exit boundary.** `captureDepartingSubject(ctx, id)` records a
   card's power, Æmber-on-card, and damage the instant before an effect removes it.
   It is called by the effects that remove a card they will keep referencing —
-  `Destroy` captures every creature it destroys, `DamageThen{IfDestroyed}` captures
+  `Destroy` captures every creature it destroys, `DealDamage{IfDestroyed}` captures
   the creature it deals lethal damage to (alongside the neighbor snapshot it
   already took).
 - **Consulted only once the card is gone.** The scalar readers route through

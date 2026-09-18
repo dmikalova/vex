@@ -8,8 +8,8 @@ import "testing"
 // every enemy's power (a tie still qualifies, and no prompt is made).
 func TestItIsAmongFoughtMostPowerful(t *testing.T) {
 	cond := ItIsAmong{
-		Target:  Target{Kind: TargetEachEnemyCreature}.Refine(MostPowerful),
-		Subject: FoughtCreature,
+		Target: Target{Kind: TargetEachEnemyCreature}.Refine(MostPowerful),
+		Noun:   FoughtCreature,
 	}
 	if got := cond.CondText(); got != "if the fought creature is the most powerful enemy creature" {
 		t.Errorf("CondText = %q", got)

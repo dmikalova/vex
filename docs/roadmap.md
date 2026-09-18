@@ -5,6 +5,13 @@ Vactrol is a digital card game written in **Go**, designed as a clone of **KeyFo
 each step a phase of work with the critical
 concepts and named techniques **bolded** so they can be researched further later.
 
+> **Status: forward-looking notes, not current-state documentation.** This page
+> describes where the project is headed after the KeyForge implementation phase,
+> so it deliberately describes work that does not exist in the tree yet. Do not
+> "correct" it against the code, and do not flag the gap in a cleanup sweep — for
+> how the project works today, read
+> [architecture.md](architecture.md) and [README.md](README.md).
+
 ---
 
 ## 1. Lock the game design & theme

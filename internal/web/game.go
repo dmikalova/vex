@@ -343,6 +343,12 @@ type game struct {
 
 	status string // transient message (usually an action error)
 
+	// notice is a standing message that stays up until the condition behind it is
+	// resolved, unlike status, which fades after 5s. It reports a fault the player
+	// has to act on rather than a rejected click they can simply retry — the save
+	// being lost, or a set name the deck generator does not know.
+	notice string
+
 	// redoLog holds the input segments undo has peeled off the command log, newest
 	// last, so redo can splice one back on. Each segment is a root action plus the
 	// chooser answers it raised. A new live action clears it.
@@ -520,7 +526,7 @@ const persistKey = "vactrol.match"
 // replayed. Because a resume replays the command log rather than deserializing
 // state, a change to how any recorded action resolves also dates every snapshot
 // and counts as such a change.
-const snapshotVersion = 16
+const snapshotVersion = 20
 
 // snapshot is the persisted match (ADR 0039): the seed and sets deterministically
 // re-deal the same cards, and the ordered command log replays to the exact state

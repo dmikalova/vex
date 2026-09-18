@@ -203,6 +203,24 @@ narrated with (a typed entry does not survive JSON), so an old snapshot keeps
 restoring the old wording long after the engine stopped producing it, and the
 change looks like it did not take.
 
+A failed write is not swallowed. `writeSnapshot` frees the storage the client can
+spare — the style gallery's scroll memo and the snapshot the write is replacing —
+retries once, and only then raises a standing notice that the match is no longer
+being saved.
+
+## Two banners: transient status, standing notice
+
+The control dock carries two messages, and they are not interchangeable:
+
+- `setStatus` is a **transient** message that fades after 5s. Use it for a
+  rejected click the player can simply retry.
+- `setNotice` is a **standing** message that stays up until `clearNotice` takes it
+  down. Use it for a fault the player has to act on — storage being full, a set
+  the deck generator does not know — where the 5s fade would let it pass unread.
+
+The banner holds one notice, so a code path that clears a notice clears only its
+own (see `clearStorageNotice`).
+
 ## Tests drive the real client off-browser
 
 `client_test.go` is the harness. It plays the client the way a person does — the

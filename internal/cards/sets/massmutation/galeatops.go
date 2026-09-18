@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  12
 //	Traits: Beast
 //
-//	Galeatops deals 4 Damage when fighting.
+//	Galeatops deals 4 damage when fighting.
 var Galeatops = set.New(
 	"Galeatops",
 	card.House.Saurian,

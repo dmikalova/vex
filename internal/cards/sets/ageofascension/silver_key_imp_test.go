@@ -24,7 +24,7 @@ func TestSilverKeyImp(t *testing.T) {
 	})
 	g := h.Game()
 
-	g.State.Keys[0] = 1 // has one key; the second is barred
+	g.State.ForgeCanonicalKeys(0, 1) // has one key; the second is barred
 	g.State.Aember[0] = engine.KeyCost
 	h.P1.EndTurn() // to P2
 	h.P2.EndTurn() // back to P1: forge phase runs, second key is barred

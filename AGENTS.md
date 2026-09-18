@@ -37,6 +37,13 @@ that first needs it. When you implement or stub a set, scan that file for items
 naming it and build the primitive alongside its first real consumer (the
 `implement-cards` and `stub-cards` skills both point there).
 
+**You sequence approved work; the human does not.** Once work is agreed, do not
+end a turn asking which item to do first or offering a menu of plans. Derive the
+order: dependency first (a shared primitive, renderer helper, or enum fold lands
+before the cards and call sites that consume it), then easiest-win first within a
+tier (the mechanical change with no rules risk before the one needing a judgement
+call). State the order in one line and start.
+
 ## Build, test, and lint through `mage`
 
 Run all build/test/format/coverage tasks through `mage`, not raw `go`
@@ -144,6 +151,15 @@ the `tools` mage namespace, invoked with a colon (`mage tool:stub`):
   card's provenance Ref. Pass `-new` (`mage tool:coverage -new`) to count only the
   cards a set introduces, excluding the ones it reprints from an earlier set.
 
+- `mage tool:nodeUsage` — inventory the card-authoring facade: every exported name
+  in `internal/card`, grouped by the category its declaration block documents,
+  with how many card definitions, total occurrences, and sets use it (rarest
+  first), plus a summary of the whole facade. Use it to find the neighbours a new
+  node should be shaped alongside, and to audit that a thinly-used node is built
+  from reusable atoms. **Low usage is not a defect** — half the card pool is
+  unimplemented. Narrow with `-max=<n>` and `-category=<substring>`, e.g.
+  `mage tool:nodeUsage -max=1 -category=damage`.
+
 - `mage tool:gameSize` — report the in-memory `GameState` size (the cost of one
   undo snapshot), the number of implemented cards, and — after building a fresh
   wasm — the shipped web bundle's size raw and compressed (brotli and gzip, the
@@ -231,6 +247,14 @@ Read it before writing or reshaping code. The load-bearing summary:
 - **Implement the mechanic, not the card** — decompose fused effects,
   parameterize over enums, reuse the shared vocabularies (`Target`, events,
   strategies), and treat a one-off name as a smell.
+- **One consumer is fine; un-extendable is not.** A node only one card uses is
+  not a defect — about half the card pool is unimplemented and some cards are
+  genuinely unique. The test is whether a _second_ card doing a very similar thing
+  could extend it (a field, a `Strategy`, another enum value) or would force a
+  rewrite. So build every node out of atoms even when it has one consumer: a
+  threshold is a `Count` plus a comparison, never a hard-coded `>=`; a subject is
+  a field, never a name prefix. `mage tool:nodeUsage` shows the facade by
+  category with consumer counts.
 - **Refactoring is welcome and preferred over working around code**; keep it
   focused, keep everything green (including 100% `internal/engine` coverage), and
   lean on the tests to catch regressions. To refactor or clean up a whole area
@@ -283,18 +307,22 @@ engine seam. The load-bearing rules that affect how you add anything:
   with the keyword (below).
 - `effect.go` + `effect_*.go` — the effect AST, one file per mechanic
   (`effect_aember.go`, `effect_damage.go`, …). A new effect goes in
-  `effect_<mechanic>.go`. A keyword mechanic whose implementation is a `*Game` gate
-  rather than an effect node keeps that gate in its `effect_<keyword>.go` file too,
-  so the keyword reads as one unit — Alpha's `barredByAlpha`, Omega's
-  `endStepIfOmega`, Deploy's `deployPosition`/`chooseFlank`/`choosePosition`.
+  `effect_<mechanic>.go`. **A mechanic's own gates and reads stay in its file**, so
+  the mechanic reads as one unit even when some of it is a `*Game` method rather
+  than an effect node: Alpha's `barredByAlpha`, Omega's `endStepIfOmega`, Deploy's
+  `deployPosition`/`chooseFlank`/`choosePosition`, copy-stats' `copiedStatsSource`
+  and `CopyStats`, the text box's `grantedTextBoxSources` and `GrantTextBox`. A
+  `*Game` method that is _not_ part of one mechanic's seam goes in the matching
+  `game_*.go` instead (`SetActiveHouse` lives in `game_turn.go`).
 - `mechanic_*.go` — a self-contained ambient game mechanic that is neither an
   effect node nor a `Game`-method area: a small flat state type plus the reads and
   gates that govern it (`mechanic_tide.go`, `mechanic_toll.go`,
   `mechanic_bonus.go`, `mechanic_turnstat.go`, `mechanic_counter.go`,
-  `mechanic_forge_guard.go`). Reach for this so a mechanic clusters here instead of
-  sitting alone as an orphaned concept file. A mechanic already clustered by a
-  family prefix (`house_*`) stays there, and execution-model plumbing (`suspend.go`,
-  ADR 0040) is not a game mechanic and keeps its own concept file.
+  `mechanic_forge_guard.go`, `mechanic_spend_as_pool.go`). Reach for this so a
+  mechanic clusters here instead of sitting alone as an orphaned concept file. A
+  mechanic already clustered by a family prefix (`house_*`) stays there, and
+  execution-model plumbing (`suspend.go`, ADR 0040) is not a game mechanic and
+  keeps its own concept file.
 - Everything else is a small type/data file named after the concept it defines:
   `card.go`, `state.go`, `types.go`, `target.go`, `duration.go`, `destination.go`,
   `resolver.go`, `text.go`. A concept file is a pure value/enum/display type with
@@ -337,8 +365,10 @@ registry and what adding an event costs are in `internal/engine/AGENTS.md`.
 Names must stay within KeyForge's own vocabulary, not generic gaming terms —
 `MostPowerful`, not `Strongest`; `AemberCannotBeStolen`, not
 `AemberTheftImmune` (theft and immunity are not KeyForge words). Use `cannot` for
-a standing restriction or immunity, and reserve `prevent` for armor absorbing
-damage ("prevents damage with its armor"). The full sourcing order (provenance
+a standing restriction or immunity, `absorbs` for a resource that is **spent**
+stopping something (armor absorbing damage, a ward absorbing damage or a
+destruction), and reserve `prevent` for a standing effect that refuses an outcome
+without being used up. The full sourcing order (provenance
 files → existing implementations → closest KeyForge phrasing) is in the naming
 section of [docs/style-guide.md](docs/style-guide.md).
 

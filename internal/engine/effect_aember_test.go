@@ -59,7 +59,7 @@ func TestGainAemberItsController(t *testing.T) {
 
 func TestGainAemberPerCount(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	g.State.Keys[1] = 2 // opponent has forged 2 keys
+	g.State.ForgeCanonicalKeys(1, 2) // opponent has forged 2 keys
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 	e := GainAember{Player: Controller, Amount: 1, Per: ForgedKeys{Player: Opponent}}
 	if e.Text() != "for each forged key your opponent has, gain 1 Æmber" {
@@ -481,7 +481,7 @@ func TestAemberProtectionWhileItHasAember(t *testing.T) {
 	g.State.Aember[1] = 3
 	odoac := g.AddToBattleline(
 		NewCard("odoac", Saurian, Creature, Common,
-			WithPower(5), WithAemberCannotBeStolen(ThisHasAember{})),
+			WithPower(5), WithAemberCannotBeStolen(HasAember{Subject: This})),
 		1,
 	)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
@@ -501,7 +501,7 @@ func TestAemberProtectionWhileItHasAember(t *testing.T) {
 	}
 
 	def := NewCard("odoac", Saurian, Creature, Common,
-		WithPower(5), WithAemberCannotBeStolen(ThisHasAember{}))
+		WithPower(5), WithAemberCannotBeStolen(HasAember{Subject: This}))
 	if !strings.Contains(RenderCardRules(&def),
 		"While odoac has Æmber on it, your Æmber cannot be stolen.") {
 		t.Error("card rules should render the conditional cannot-be-stolen line")

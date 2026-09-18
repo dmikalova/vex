@@ -93,7 +93,7 @@ var mutantHouses = map[engine.House]mutantHouse{
 		power:    1,
 		keywords: []card.KeywordValue{card.Keyword.Elusive},
 	},
-	// Saurian lends its dinosaurs a "exalt to deal 3 damage" play.
+	// Saurian lends its dinosaurs an "exalt to deal 3 damage" play.
 	card.House.Saurian: {
 		prefix: "Dino",
 		suffix: "Saurus",

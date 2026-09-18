@@ -43,6 +43,9 @@ func (e Exhaust) resolveGate(ctx *EffectContext) bool {
 	var last LocalID
 	var did bool
 	for _, id := range e.Target.Select(ctx) {
+		if !ctx.Resolver.Exhausted(id) {
+			ctx.Resolver.Record(CreatureExhausted{Creature: id})
+		}
 		ctx.Resolver.SetExhausted(id, true)
 		last, did = id, true
 	}
@@ -115,9 +118,11 @@ func (e Ready) targetText() string { return e.Target.Text() }
 // Text renders the effect, e.g. "ready this creature".
 func (e Ready) Text() string { return e.verb() + " " + e.targetText() }
 
-// Resolve readies each selected creature.
+// Resolve readies each selected creature, recording each one so the log carries
+// every state change.
 func (e Ready) Resolve(ctx *EffectContext) {
 	for _, id := range e.Target.Select(ctx) {
 		ctx.Resolver.SetExhausted(id, false)
+		ctx.Resolver.Record(CreatureReadied{Creature: id})
 	}
 }

@@ -205,7 +205,7 @@ type CardDefinition struct {
 
 	// AemberCannotBeStolen, while the card is in play, makes its controller's Æmber
 	// impossible for the opponent to steal for as long as the condition holds. An
-	// Always condition protects unconditionally (The Vaultkeeper); ThisHasAember
+	// Always condition protects unconditionally (The Vaultkeeper); HasAember{Subject: This}
 	// protects only while the card itself holds Æmber (Odoac the Patrician); a
 	// PoolAember threshold protects only while the pool is deep enough (Cephaloist).
 	// The zero value (nil condition) protects nothing.
@@ -1110,7 +1110,7 @@ func WithDrawModifierPer(player Player, amount int, per Count) CardOption {
 // WithAemberCannotBeStolen keeps the card's controller's Æmber from being stolen
 // while the card is in play. With no argument the protection is unconditional (The
 // Vaultkeeper); with a condition it holds only while that condition is met —
-// ThisHasAember for Odoac the Patrician, a PoolAember threshold for Cephaloist.
+// HasAember{Subject: This} for Odoac the Patrician, a PoolAember threshold for Cephaloist.
 func WithAemberCannotBeStolen(cond ...Condition) CardOption {
 	c := Condition(AlwaysMet{})
 	if len(cond) > 0 {

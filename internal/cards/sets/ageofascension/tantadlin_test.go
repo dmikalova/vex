@@ -15,7 +15,7 @@ import (
 //	Power:  9
 //	Traits: Tree
 //
-//	Tantadlin deals 2 Damage when fighting.
+//	Tantadlin deals 2 damage when fighting.
 //	Fight: Your opponent discards a random card from their archives.
 func TestTantadlin(t *testing.T) {
 	t.Run("deals only 2 fight damage", func(t *testing.T) {

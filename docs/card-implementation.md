@@ -372,7 +372,7 @@ A Vinda deals one damage and, if it kills, follows up:
 
 ```go
 card.WithAbility(
-  card.Trigger.Reap, card.DamageThen{
+  card.Trigger.Reap, card.DealDamage{
     Amount: 1,
     After:  card.IfDestroyed,
     Target: card.Target.Creature,
@@ -383,7 +383,7 @@ card.WithAbility(
 | Effect                     | What it does                                     |
 | -------------------------- | ------------------------------------------------ |
 | `DealDamage`               | deals damage to each creature the target selects |
-| `DamageThen`               | deals damage, then resolves a follow-up          |
+| `DealDamage`               | deals damage, then resolves a follow-up          |
 | `Heal`                     | removes damage                                   |
 | `LoseArmor`                | strips remaining armor                           |
 | `GainStats`                | grants power or armor for a duration             |
@@ -406,7 +406,7 @@ card.WithAbility(
 | `PerTarget`  | damage scaled per target hit        |
 | `Spread`     | how the damage fans out             |
 
-`DamageThen{After: …}` gates the follow-up on `Always`, `IfDestroyed`, or
+`DealDamage{After: …}` gates the follow-up on `Always`, `IfDestroyed`, or
 `IfSurvives`.
 
 Spreads:
@@ -467,7 +467,7 @@ sees the creature's power, Æmber-on-card, and damage as they were the instant
 before it left play, counters and buffs included, not the zeroed card it becomes.
 This is automatic for `PowerOfChosen`, `AemberOnThis` / `AemberOnIt`, and
 `DamageOnThis` / `DamageOnIt`; compose them freely after a `Destroy` or a
-`DamageThen{After: card.IfDestroyed}`.
+`DealDamage{After: card.IfDestroyed}`.
 
 Only those three mutable dimensions are captured — printed power, house, traits,
 keywords, and bonus icons survive on their own; a departed creature's _granted_
@@ -796,15 +796,14 @@ Psionic Officer Lang example above.
 
 **Pools and keys:**
 
-| Condition             | Asks                                      |
-| --------------------- | ----------------------------------------- |
-| `PoolAember`          | how much Æmber a player has               |
-| `ForgedKey`           | whether a key was forged                  |
-| `HasMoreForgedKeys`   | whether a player leads on keys            |
-| `KeyColorForged`      | whether a given key color is forged       |
-| `AemberStolenFromYou` | whether Æmber was stolen from you         |
-| `ThisHasAember`       | whether Æmber sits on this card           |
-| `ItHasAember`         | whether Æmber sits on the card in context |
+| Condition             | Asks                                |
+| --------------------- | ----------------------------------- |
+| `PoolAember`          | how much Æmber a player has         |
+| `ForgedKey`           | whether a key was forged            |
+| `HasMoreForgedKeys`   | whether a player leads on keys      |
+| `KeyColorForged`      | whether a given key color is forged |
+| `AemberStolenFromYou` | whether Æmber was stolen from you   |
+| `HasAember`           | whether Æmber sits on its `Subject` |
 
 `PoolAember{Player, Is, Amount}` compares with `AtLeast`, `AtMost`, `Exactly`,
 `MoreThanYou`, `MoreThanOpponent`, `Even`, or `Odd`.

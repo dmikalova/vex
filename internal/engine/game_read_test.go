@@ -837,7 +837,7 @@ func TestKeyColorForgedCondition(t *testing.T) {
 		t.Error("no key forged: neither condition should be met")
 	}
 
-	g.State.Keys[0] = 1
+	g.State.ForgeCanonicalKeys(0, 1)
 	g.State.KeyColors[0][0] = KeyColorRed
 	if !own.Met(ctx) {
 		t.Error("your red key forged: own condition should be met")
@@ -846,7 +846,7 @@ func TestKeyColorForgedCondition(t *testing.T) {
 		t.Error("your red key forged: opponent condition should not be met")
 	}
 
-	g.State.Keys[1] = 1
+	g.State.ForgeCanonicalKeys(1, 1)
 	g.State.KeyColors[1][0] = KeyColorBlue
 	if opp.Met(ctx) {
 		t.Error("opponent's blue key forged: red condition should not be met")
@@ -883,7 +883,7 @@ func TestConstantAbilityWhileConditionGranted(t *testing.T) {
 		t.Error("no key forged: Baron should not have the granted reap")
 	}
 
-	g.State.Keys[0] = 1
+	g.State.ForgeCanonicalKeys(0, 1)
 	g.State.KeyColors[0][0] = KeyColorRed
 	if !g.HasTrigger(baron, TriggerAfterReap) {
 		t.Error("your red key forged: Baron should have the granted reap")
@@ -913,7 +913,7 @@ func TestConstantAbilityWhileConditionKeyword(t *testing.T) {
 		t.Error("no key forged: Baron should not have elusive")
 	}
 
-	g.State.Keys[1] = 1
+	g.State.ForgeCanonicalKeys(1, 1)
 	g.State.KeyColors[1][0] = KeyColorRed
 	if !g.hasKeyword(baron, Elusive) {
 		t.Error("opponent's red key forged: Baron should have elusive")
@@ -1258,9 +1258,9 @@ func TestForgeKeyNumberBarred(t *testing.T) {
 	g.AddToBattleline(def, 1) // opponent controls the Imp; it still bars player 0
 
 	g.State.Aember[0] = 3 * KeyCost
-	keysBefore := g.State.Keys[0]
+	keysBefore := g.Keys(0)
 	g.forgeKey(0)
-	if g.State.Keys[0] != keysBefore {
+	if g.Keys(0) != keysBefore {
 		t.Error("the first key should be barred while a NoForgeKeyNumber:1 card is in play")
 	}
 	if g.State.Aember[0] != 3*KeyCost {
@@ -1268,14 +1268,14 @@ func TestForgeKeyNumberBarred(t *testing.T) {
 	}
 
 	g.forgeKeyFree(0)
-	if g.State.Keys[0] != keysBefore {
+	if g.Keys(0) != keysBefore {
 		t.Error("a free forge of a barred ordinal should also be barred")
 	}
 
 	// A second key is not barred by the first-key Imp.
-	g.State.Keys[0] = 1
+	g.State.ForgeCanonicalKeys(0, 1)
 	g.forgeKey(0)
-	if g.State.Keys[0] != 2 {
+	if g.Keys(0) != 2 {
 		t.Error("the second key should forge when only the first is barred")
 	}
 
@@ -1305,11 +1305,11 @@ func TestNoForgeWhileAheadOnKeys(t *testing.T) {
 	t.Run("bars a player who leads on keys", func(t *testing.T) {
 		g := started(t)
 		g.AddArtifact(heart(), 0)
-		g.State.Keys[0] = 1
+		g.State.ForgeCanonicalKeys(0, 1)
 		g.State.Aember[0] = 3 * KeyCost
 		g.forgePhase(0)
-		if g.State.Keys[0] != 1 {
-			t.Errorf("keys = %d, want 1 (barred while ahead)", g.State.Keys[0])
+		if g.Keys(0) != 1 {
+			t.Errorf("keys = %d, want 1 (barred while ahead)", g.Keys(0))
 		}
 	})
 
@@ -1318,25 +1318,25 @@ func TestNoForgeWhileAheadOnKeys(t *testing.T) {
 		g.AddArtifact(heart(), 0)
 		g.State.Aember[0] = 3 * KeyCost
 		g.forgePhase(0)
-		if g.State.Keys[0] != 1 {
-			t.Errorf("keys = %d, want 1 (tied forges)", g.State.Keys[0])
+		if g.Keys(0) != 1 {
+			t.Errorf("keys = %d, want 1 (tied forges)", g.Keys(0))
 		}
 	})
 
 	t.Run("lets a trailing player forge", func(t *testing.T) {
 		g := started(t)
 		g.AddArtifact(heart(), 0)
-		g.State.Keys[1] = 1
+		g.State.ForgeCanonicalKeys(1, 1)
 		g.State.Aember[0] = 3 * KeyCost
 		g.forgePhase(0)
-		if g.State.Keys[0] != 1 {
-			t.Errorf("keys = %d, want 1 (trailing forges)", g.State.Keys[0])
+		if g.Keys(0) != 1 {
+			t.Errorf("keys = %d, want 1 (trailing forges)", g.Keys(0))
 		}
 	})
 
 	t.Run("does not bar without the restriction in play", func(t *testing.T) {
 		g := started(t)
-		g.State.Keys[0] = 1
+		g.State.ForgeCanonicalKeys(0, 1)
 		if g.forgeBarredWhileAhead(0) {
 			t.Error("should not bar with no Heart in play")
 		}

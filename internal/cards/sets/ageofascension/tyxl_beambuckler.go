@@ -22,7 +22,7 @@ var TyxlBeambuckler = set.New(
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
 	card.WithAbility(
-		card.Trigger.Play, card.DamageThen{
+		card.Trigger.Play, card.DealDamage{
 			Amount: 2,
 			After:  card.Always,
 			Target: card.Target.Creature,

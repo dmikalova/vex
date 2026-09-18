@@ -124,7 +124,10 @@ func (e HouseChosen) Text(n Namer) string {
 // ForgeSkipped narrates a forge phase an effect made the player sit out (Miasma).
 type ForgeSkipped struct{ Player int }
 
-// Text renders the forge phase a player had to sit out.
+// Text renders the forge phase a player had to sit out. This names the *phase*,
+// not the act — Miasma removes the whole forge a key phase, so the player never
+// gets the chance. KeyForgePrevented below is the other case: the phase happens
+// and the forge inside it is stopped.
 func (e ForgeSkipped) Text(n Namer) string {
 	return fmt.Sprintf("%s skips their forge a key phase", n.PlayerName(e.Player))
 }
@@ -150,7 +153,9 @@ type KeyForgePrevented struct {
 	By     LocalID
 }
 
-// Text renders the forge a card prevented.
+// Text renders the forge a card prevented. This names the *act* of forging, which
+// happened inside a forge a key phase the player did reach — unlike ForgeSkipped
+// above, where the phase itself never came.
 func (e KeyForgePrevented) Text(n Namer) string {
 	return fmt.Sprintf("%s's forge a key is prevented by %s",
 		n.PlayerName(e.Player), n.Name(e.By))
@@ -209,7 +214,7 @@ type PlayerConceded struct{ Player int }
 
 // Text renders the player who conceded.
 func (e PlayerConceded) Text(n Namer) string {
-	return fmt.Sprintf("%s concedes.", n.PlayerName(e.Player))
+	return fmt.Sprintf("%s concedes", n.PlayerName(e.Player))
 }
 
 // PlayerStanding narrates where a player stands as a turn ends. It states only
@@ -225,9 +230,9 @@ type PlayerStanding struct {
 // Text renders where a player stands.
 func (e PlayerStanding) Text(n Namer) string {
 	return fmt.Sprintf(
-		"%s has %d Æmber and %d keys",
+		"%s has %d Æmber and %s",
 		n.PlayerName(e.Player),
 		e.Aember,
-		len(e.KeyColors),
+		countNoun(len(e.KeyColors), "key"),
 	)
 }

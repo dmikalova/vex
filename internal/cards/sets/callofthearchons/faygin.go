@@ -31,5 +31,5 @@ var Faygin = set.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.Reap, card.ReturnNamedToHand{Name: Urchin.Name}),
+		card.Trigger.Reap, card.PutNamedIntoHand{Name: Urchin.Name}),
 )

@@ -76,6 +76,7 @@ func (g *game) Render() app.UI {
 func (g *game) controlDock() app.UI {
 	return app.Div().Class(cx("control-dock",
 		ifCls(g.sidebarCollapsed, "control-dock--floating"))).Body(
+		app.If(g.notice != "", func() app.UI { return g.noticeBanner() }),
 		app.If(g.status != "", func() app.UI { return g.statusBanner() }),
 		g.controls(),
 	)
@@ -200,4 +201,11 @@ func (g *game) statusBanner() app.UI {
 		ifCls(g.statusGen%2 == 1, "status-banner--b"),
 	)
 	return app.Div().Class(cls).Text(g.status)
+}
+
+// noticeBanner shows the standing notice above the transient status banner. It
+// carries no fade animation: a notice reports a fault that is still true, so it
+// stays legible until clearNotice takes it down.
+func (g *game) noticeBanner() app.UI {
+	return app.Div().Class("notice-banner").Text(g.notice)
 }

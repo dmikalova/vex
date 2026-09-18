@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/dmikalova/vactrol/internal/engine"
 	"github.com/dmikalova/vactrol/internal/match"
@@ -109,6 +110,18 @@ type replayChooser struct {
 	err error
 }
 
+// replayChooser answers every prompt the engine can raise from the recorded log,
+// so it must satisfy every answering capability; it omits BadgeChooser, which is
+// display-only and carries no recorded answer (ADR 0045, step 1).
+var (
+	_ engine.Chooser           = (*replayChooser)(nil)
+	_ engine.OptionChooser     = (*replayChooser)(nil)
+	_ engine.PositionChooser   = (*replayChooser)(nil)
+	_ engine.DeclinableChooser = (*replayChooser)(nil)
+	_ engine.Orderer           = (*replayChooser)(nil)
+	_ engine.ReactionChooser   = (*replayChooser)(nil)
+)
+
 // next returns the input at the cursor and advances it, requiring the recorded
 // kind to match what the engine is asking for — a mismatch means the log has
 // diverged from the engine, which must fail loudly rather than misreplay.
@@ -134,11 +147,51 @@ func (c *replayChooser) fail(err error) {
 	}
 }
 
+// Matching kinds is not enough to prove a replay is faithful: a recorded answer
+// that names a card the engine is not offering, or an index outside the range it
+// is offering, means the replay has drifted from the game that produced the log.
+// The three checks below catch that, so a drifted replay fails where it drifted
+// instead of quietly reconstructing a different match.
+
+// requireCandidate rejects a recorded pick that is not among the cards the engine
+// is offering. A decline names no card, so it is always legal.
+func (c *replayChooser) requireCandidate(in input, cands []engine.LocalID) error {
+	if !in.OK || slices.Contains(cands, in.ID) {
+		return nil
+	}
+	return fmt.Errorf(
+		"web replay: log picked card %d at %d, which the engine did not offer",
+		in.ID, c.pos-1)
+}
+
+// requireIndex rejects a recorded index outside the range the engine is offering.
+func (c *replayChooser) requireIndex(in input, n int) error {
+	if in.Index >= 0 && in.Index < n {
+		return nil
+	}
+	return fmt.Errorf("web replay: log chose index %d at %d, but the engine offered %d",
+		in.Index, c.pos-1, n)
+}
+
+// requirePermutation rejects a recorded ordering that is not a rearrangement of
+// the cards the engine asked to have ordered.
+func (c *replayChooser) requirePermutation(in input, ids []engine.LocalID) error {
+	if len(in.Order) == len(ids) &&
+		slices.Equal(slices.Sorted(slices.Values(in.Order)), slices.Sorted(slices.Values(ids))) {
+		return nil
+	}
+	return fmt.Errorf("web replay: log ordered %v at %d, but the engine asked to order %v",
+		in.Order, c.pos-1, ids)
+}
+
 func (c *replayChooser) ChooseCreature(
 	_, _ string,
-	_ []engine.LocalID,
+	cands []engine.LocalID,
 ) (engine.LocalID, bool) {
 	in, err := c.next(inPick)
+	if err == nil {
+		err = c.requireCandidate(in, cands)
+	}
 	if err != nil {
 		c.fail(err)
 		return 0, false
@@ -148,9 +201,12 @@ func (c *replayChooser) ChooseCreature(
 
 func (c *replayChooser) ChooseCardOrDecline(
 	_, _ string,
-	_ []engine.LocalID,
+	cands []engine.LocalID,
 ) (engine.LocalID, bool) {
 	in, err := c.next(inPick)
+	if err == nil {
+		err = c.requireCandidate(in, cands)
+	}
 	if err != nil {
 		c.fail(err)
 		return 0, false
@@ -158,8 +214,11 @@ func (c *replayChooser) ChooseCardOrDecline(
 	return in.ID, in.OK
 }
 
-func (c *replayChooser) ChooseOption(_, _ string, _ []string) int {
+func (c *replayChooser) ChooseOption(_, _ string, options []string) int {
 	in, err := c.next(inOption)
+	if err == nil {
+		err = c.requireIndex(in, len(options))
+	}
 	if err != nil {
 		c.fail(err)
 		return 0
@@ -176,8 +235,11 @@ func (c *replayChooser) ChoosePosition(_, _ string, _ []engine.LocalID) int {
 	return in.Index
 }
 
-func (c *replayChooser) ChooseReaction(_ string, _ []engine.OrderableReaction) int {
+func (c *replayChooser) ChooseReaction(_ string, reactions []engine.OrderableReaction) int {
 	in, err := c.next(inReaction)
+	if err == nil {
+		err = c.requireIndex(in, len(reactions))
+	}
 	if err != nil {
 		c.fail(err)
 		return 0
@@ -187,6 +249,9 @@ func (c *replayChooser) ChooseReaction(_ string, _ []engine.OrderableReaction) i
 
 func (c *replayChooser) OrderCreatures(_, _ string, ids []engine.LocalID) []engine.LocalID {
 	in, err := c.next(inOrder)
+	if err == nil {
+		err = c.requirePermutation(in, ids)
+	}
 	if err != nil {
 		c.fail(err)
 		return ids
@@ -246,7 +311,10 @@ func replayGame(
 	inputs []input,
 	defs map[string]*engine.CardDefinition,
 ) (*engine.Game, error) {
-	eg, _, _, _, _ := match.NewWithSets("Player 1", "Player 2", seed, sets)
+	eg, _, _, _, _, err := match.NewWithSets("Player 1", "Player 2", seed, sets)
+	if err != nil {
+		return nil, err
+	}
 	rc := &replayChooser{inputs: inputs}
 	eg.SetChooser(0, rc)
 	eg.SetChooser(1, rc)

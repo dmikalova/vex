@@ -733,8 +733,8 @@ func (g *Game) shouldDestroy(id LocalID) bool {
 		}
 	}
 	core := &g.State.Cards[id]
-	return int(core.Damage) >= g.Power(id) ||
-		g.Power(id) <= 0
+	power := g.Power(id)
+	return int(core.Damage) >= power || power <= 0
 }
 
 // artifactShouldSelfDestroy reports whether an artifact carrying a DestroyedWhen

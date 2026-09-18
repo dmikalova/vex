@@ -17,9 +17,9 @@ type ItIs struct {
 	// creature, never on its own entrance (Harmonia, which says "a creature", omits
 	// it and gains from its own play).
 	Other bool
-	// Subject names the card outright when "it" has drifted too far from the trigger
+	// Noun names the card outright when "it" has drifted too far from the trigger
 	// that set it. Unset says "it".
-	Subject Subject
+	Noun ItNoun
 }
 
 // shapeNoun renders the house/type shape the contextual card must match for a
@@ -50,13 +50,13 @@ func (e ItIs) predicate() string {
 // CondText renders the condition, e.g. "if it is a Mars creature" or "if it is of
 // the chosen house".
 func (e ItIs) CondText() string {
-	return "if " + e.Subject.noun() + " is " + e.predicate()
+	return "if " + e.Noun.noun() + " is " + e.predicate()
 }
 
 // negatedText renders the inverted clause a Not wrapper prints, e.g. "if the
 // discarded card is not a Logos card" (Neutron Shark).
 func (e ItIs) negatedText() string {
-	return "if " + e.Subject.noun() + " is not " + e.predicate()
+	return "if " + e.Noun.noun() + " is not " + e.predicate()
 }
 
 // asNamedHouseAlt reports the single named house this clause filters on, together
@@ -111,28 +111,23 @@ func (c ItIsOfTrait) Met(ctx *EffectContext) bool {
 	return ctx.HasIt && ctx.Resolver.HasTrait(ctx.It, c.Trait)
 }
 
-// ItHasAember is met when the creature in context (ctx.It) has any Æmber on it.
-type ItHasAember struct{}
-
-// CondText renders the condition.
-func (ItHasAember) CondText() string { return "if it has \u00c6mber on it" }
-
-// Met reports whether a creature is in context with Æmber on it.
-func (ItHasAember) Met(ctx *EffectContext) bool {
-	return ctx.HasIt && ctx.Resolver.AmberOn(ctx.It) > 0
+// HasAember is met when its Subject has any Æmber on it. The default subject is
+// the card in context (Guji, Dinosaur Hunter asks about the creature it fought);
+// Subject: This asks the same question of the card the ability is printed on
+// (Odoac the Patrician protects its pool only while it holds Æmber).
+type HasAember struct {
+	Subject Subject
 }
 
-// ThisHasAember is met when the source card (ctx.Source) has any Æmber on it — the
-// source-keyed sibling of ItHasAember, for a static gate a card reads about
-// itself (Odoac the Patrician protects its pool only while it holds Æmber).
-type ThisHasAember struct{}
+// CondText renders the condition, naming whichever card the subject is.
+func (c HasAember) CondText() string {
+	return "if " + c.Subject.name() + " has \u00c6mber on it"
+}
 
-// CondText renders the condition, naming the source card.
-func (ThisHasAember) CondText() string { return "if " + SelfName + " has \u00c6mber on it" }
-
-// Met reports whether the source card has Æmber on it.
-func (ThisHasAember) Met(ctx *EffectContext) bool {
-	return ctx.Resolver.AmberOn(ctx.Source) > 0
+// Met reports whether the subject's card has Æmber on it.
+func (c HasAember) Met(ctx *EffectContext) bool {
+	id, ok := c.Subject.card(ctx)
+	return ok && ctx.Resolver.AmberOn(id) > 0
 }
 
 // ItHasBonusIcon is met when the card in context (ctx.It — a just-played card) has
@@ -190,13 +185,13 @@ func (ItIsStunned) Met(ctx *EffectContext) bool {
 // condition, not an ItIs house matcher, because the named house is dynamic and the
 // HouseMatcher facade's Named selector is the fixed-house one.
 type ItIsNotOfNamedHouse struct {
-	// Subject names the card in context outright; unset says "it".
-	Subject Subject
+	// Noun names the card in context outright; unset says "it".
+	Noun ItNoun
 }
 
 // CondText renders the condition, e.g. "if that card is not of the named house".
 func (c ItIsNotOfNamedHouse) CondText() string {
-	return "if " + c.Subject.noun() + " is not of the named house"
+	return "if " + c.Noun.noun() + " is not of the named house"
 }
 
 // Met reports whether a card is in context and is not of the named house.

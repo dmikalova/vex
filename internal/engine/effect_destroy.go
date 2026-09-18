@@ -40,7 +40,7 @@ func (e Destroy) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // resolveGate destroys the selected creatures simultaneously and reports whether
 // any were, so Destroy can be the first half of a Then ("destroy a creature ->
 // ..."). It tallies how many actually left play on the context (read by
-// CardsDestroyedFewerThan), counting after the batch so a save (Armageddon Cloak)
+// CardsDestroyed), counting after the batch so a save (Armageddon Cloak)
 // is not counted.
 func (e Destroy) resolveGate(ctx *EffectContext) bool {
 	return e.destroy(ctx, e.Target.Select(ctx))

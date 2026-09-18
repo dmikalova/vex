@@ -272,7 +272,8 @@ func (g *Game) GiganticRoleOf(id LocalID) GiganticRole {
 	return g.cat.def(id).GiganticRole
 }
 
-// SetAember sets a player's Æmber pool, clamped at zero. Pool Æmber can feed a
+// SetAember sets a player's Æmber pool, clamped to the range a holder can carry.
+// Pool Æmber can feed a
 // creature's power (Marmo Swarm gains +1 power per Æmber in its controller's pool),
 // so lowering a pool can leave a creature with lethal damage; the resolution
 // boundary settles that, not this write (ADR 0029).
@@ -280,7 +281,7 @@ func (g *Game) SetAember(player, amount int) {
 	if amount < 0 {
 		amount = 0
 	}
-	g.State.Aember[player] = amount
+	g.State.Aember[player] = g.clampAember(amount)
 }
 
 // NoteAemberStolenFrom adds to the running tally of Æmber stolen from a player
@@ -382,16 +383,17 @@ func (g *Game) SetSideDamageImmune(player int, d Duration) {
 // SetStatOverride masks every creature's power and/or armor to a fixed value for
 // the duration (The Pale Star: 1 power, 0 armor). It is read live, so a creature
 // that enters later is masked too; the stored counters and armor pool are
-// untouched and revealed again when it lifts.
-func (g *Game) SetStatOverride(power, armor int8, hasPower, hasArmor bool, d Duration) {
+// untouched and revealed again when it lifts. An unset StatMask leaves that stat
+// alone.
+func (g *Game) SetStatOverride(power, armor StatMask, d Duration) {
 	g.addContinuous(ContinuousEffect{
 		Kind:       ContinuousStatOverride,
 		Scope:      ScopeAllCreatures,
 		Controller: int8(g.State.ActivePlayer),
-		Power:      power,
-		Armor:      armor,
-		HasPower:   hasPower,
-		HasArmor:   hasArmor,
+		Power:      power.Value,
+		Armor:      armor.Value,
+		HasPower:   power.Set,
+		HasArmor:   armor.Set,
 	}, d)
 }
 
@@ -738,25 +740,27 @@ func (g *Game) AddPowerCounter(id LocalID, delta int) {
 // PutFromDiscardIntoHand moves a card from its owner's discard pile to their hand.
 func (g *Game) PutFromDiscardIntoHand(id LocalID) {
 	o := g.owner(id)
-	g.State.Discard[o].remove(id)
-	g.State.Hand[o].add(id)
-	g.record(CardReturnedFromDiscardToHand{Player: o, Card: id})
+	g.moveOwnCard(id, o, Discard, Hand, CardPutFromDiscardIntoHand{Player: o, Card: id})
 }
 
 // MoveFromDeckToHand moves a card from its owner's deck to their hand.
 func (g *Game) MoveFromDeckToHand(id LocalID) {
 	o := g.owner(id)
-	g.State.Deck[o].remove(id)
-	g.State.Hand[o].add(id)
-	g.record(CardPutFromDeckIntoHand{Player: o, Card: id})
+	g.moveOwnCard(id, o, Deck, Hand, CardPutFromDeckIntoHand{Player: o, Card: id})
 }
 
 // MoveFromDeckToDiscard moves a card from its owner's deck to their discard pile.
 func (g *Game) MoveFromDeckToDiscard(id LocalID) {
 	o := g.owner(id)
-	g.State.Deck[o].remove(id)
-	g.State.Discard[o].add(id)
-	g.record(CardMoved{Player: o, Card: id, From: Deck, To: Discard})
+	g.moveOwnCard(id, o, Deck, Discard, CardMoved{Player: o, Card: id, From: Deck, To: Discard})
+}
+
+// moveOwnCard moves a card between two of the same player's resting zones.
+func (g *Game) moveOwnCard(id LocalID, player int, from, to Zone, entry LogEntry) {
+	g.moveCard(id,
+		zoneRef{Player: player, Zone: from},
+		zoneRef{Player: player, Zone: to},
+		entry)
 }
 
 // ArchiveFromDeck moves a card from its owner's deck to their archives.
@@ -813,12 +817,13 @@ func (g *Game) MoveFromDeckToTopOfDeck(id LocalID) {
 	g.record(CardPutOnTopOfDeck{Card: id, Owner: o})
 }
 
-// ShuffleFromDiscardIntoDeck moves a card from its owner's discard pile into their
+// shuffleIntoDeckFrom moves a card out of one of its owner's zones into their
 // deck and shuffles. During a shuffle batch the card is collected for a single
-// grouped narration rather than narrated on its own (Not Finished with You).
-func (g *Game) ShuffleFromDiscardIntoDeck(id LocalID) {
+// grouped narration rather than narrated on its own (Not Finished with You), so
+// every source zone narrates the same way.
+func (g *Game) shuffleIntoDeckFrom(id LocalID, from *deckList) {
 	o := g.owner(id)
-	g.State.Discard[o].remove(id)
+	from.remove(id)
 	g.State.Deck[o].add(id)
 	g.Shuffle(o)
 	if g.batchingShuffle {
@@ -828,19 +833,16 @@ func (g *Game) ShuffleFromDiscardIntoDeck(id LocalID) {
 	g.record(CardShuffledIntoDeck{Card: id, Owner: o})
 }
 
+// ShuffleFromDiscardIntoDeck moves a card from its owner's discard pile into their
+// deck and shuffles.
+func (g *Game) ShuffleFromDiscardIntoDeck(id LocalID) {
+	g.shuffleIntoDeckFrom(id, &g.State.Discard[g.owner(id)])
+}
+
 // ShuffleFromHandIntoDeck moves a card from its owner's hand into their deck and
-// shuffles. During a shuffle batch the card is collected for a single grouped
-// narration rather than narrated on its own.
+// shuffles.
 func (g *Game) ShuffleFromHandIntoDeck(id LocalID) {
-	o := g.owner(id)
-	g.State.Hand[o].remove(id)
-	g.State.Deck[o].add(id)
-	g.Shuffle(o)
-	if g.batchingShuffle {
-		g.shuffleBatch = append(g.shuffleBatch, id)
-		return
-	}
-	g.record(CardShuffledIntoDeck{Card: id, Owner: o})
+	g.shuffleIntoDeckFrom(id, &g.State.Hand[g.owner(id)])
 }
 
 // GainChains adds chains to a player, which reduce their draws until shed.

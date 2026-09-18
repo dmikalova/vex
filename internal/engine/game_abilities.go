@@ -314,6 +314,81 @@ func (w *abilityWindow) addAs(src LocalID, trigger Trigger, actor int, it LocalI
 	w.pending = append(w.pending, kept...)
 }
 
+// subjectPolicy says whether a board scan reaches the card the event is about.
+// It is the only axis the board scans differ on, so it is named rather than left
+// as a bare bool at each call site.
+type subjectPolicy uint8
+
+const (
+	// includeSubject lets the subject react to its own event: a creature carrying
+	// "after a creature reaps" fires it on its own reap.
+	includeSubject subjectPolicy = iota
+	// skipSubject withholds the subject, for a trigger whose own-card form is a
+	// separate trigger the gatherer adds itself — "after a creature enters play"
+	// on the bystanders, "enters play" on the creature.
+	skipSubject
+)
+
+// reaches reports whether a board scan bound to subject visits id.
+func (p subjectPolicy) reaches(id, subject LocalID) bool {
+	return p == includeSubject || id != subject
+}
+
+// addBoard collects trigger from every in-play card of both players, bound to
+// subject as "it".
+func (w *abilityWindow) addBoard(trigger Trigger, subject LocalID, policy subjectPolicy) {
+	for player := 0; player < 2; player++ {
+		for _, id := range w.g.allInPlay(player) {
+			if policy.reaches(id, subject) {
+				w.add(id, trigger, subject, true)
+			}
+		}
+	}
+}
+
+// addSide collects trigger from one player's in-play cards, bound to subject as
+// "it".
+func (w *abilityWindow) addSide(
+	player int,
+	trigger Trigger,
+	subject LocalID,
+	policy subjectPolicy,
+) {
+	for _, id := range w.g.allInPlay(player) {
+		if policy.reaches(id, subject) {
+			w.add(id, trigger, subject, true)
+		}
+	}
+}
+
+// addMirrored collects the two halves of a trigger each side reads its own way —
+// "after you play a card" for the player who acted, "after an enemy plays a card"
+// for the other — so the pair is added as one step and cannot drift apart.
+func (w *abilityWindow) addMirrored(player int, friendly, enemy Trigger, subject LocalID) {
+	w.addSide(player, friendly, subject, includeSubject)
+	w.addSide(1-player, enemy, subject, includeSubject)
+}
+
+// emitBoard fires trigger on every in-play card of both players immediately,
+// bound to subject as "it" — addBoard's twin for an event that resolves as it is
+// found rather than joining an ordered window.
+func (g *Game) emitBoard(trigger Trigger, subject LocalID, policy subjectPolicy) {
+	for player := 0; player < 2; player++ {
+		g.emitSide(player, trigger, subject, policy)
+	}
+}
+
+// emitSide is emitBoard for one player's cards, for an event whose reactions must
+// resolve in an order the seat numbers do not give (the acting player's board
+// first, whichever seat that is).
+func (g *Game) emitSide(player int, trigger Trigger, subject LocalID, policy subjectPolicy) {
+	for _, id := range g.allInPlay(player) {
+		if policy.reaches(id, subject) {
+			g.triggerAbilities(id, trigger, subject, true)
+		}
+	}
+}
+
 // firesForSubject reports whether a reaction narrowed by a predicate fixed for the
 // whole window fires for the card and turn in context. A reaction that renders
 // "after you play an artifact" (a Conditional{ItIs} over its whole effect) does not
@@ -400,16 +475,8 @@ func (g *Game) reapReactions(reaper int, reaped LocalID) []triggeredAbility {
 	w := g.window()
 	w.add(reaped, TriggerAfterReap, 0, false)
 	w.add(reaped, TriggerAfterUsedSelf, 0, false)
-	for _, id := range g.allInPlay(reaper) {
-		if id != reaped {
-			w.add(id, TriggerAfterUse, reaped, true)
-		}
-	}
-	for player := 0; player < 2; player++ {
-		for _, id := range g.allInPlay(player) {
-			w.add(id, TriggerAfterCreatureReaps, reaped, true)
-		}
-	}
+	w.addSide(reaper, TriggerAfterUse, reaped, skipSubject)
+	w.addBoard(TriggerAfterCreatureReaps, reaped, includeSubject)
 	return w.pending
 }
 
@@ -417,9 +484,9 @@ func (g *Game) reapReactions(reaper int, reaped LocalID) []triggeredAbility {
 // replacement of that payout (Dimension Door makes it steal instead of gain).
 func (g *Game) gainReapAember(p int, source LocalID) {
 	if le, ok := g.lastingReplacement(p, EventReapAember); ok && le.Do == actSteal {
-		stolen := min(1, g.State.Aember[1-p])
-		g.SetAember(1-p, g.State.Aember[1-p]-stolen)
-		g.SetAember(p, g.State.Aember[p]+stolen)
+		stolen := min(1, g.Aember(1-p))
+		g.SetAember(1-p, g.Aember(1-p)-stolen)
+		g.SetAember(p, g.Aember(p)+stolen)
 		g.record(ReapedStealing{
 			Player: p,
 			Card:   source,
@@ -704,14 +771,7 @@ func (g *Game) resolveUpgradePlay(host, upgrade LocalID, up *CardDefinition) {
 // with the entering creature as the trigger target ("it").
 func (g *Game) emitCreatureEnters(entered LocalID) {
 	g.triggerAbilities(entered, TriggerEntersPlay, 0, false)
-	for player := 0; player < 2; player++ {
-		for _, id := range g.allInPlay(player) {
-			if id == entered {
-				continue
-			}
-			g.triggerAbilities(id, TriggerAfterCreatureEnters, entered, true)
-		}
-	}
+	g.emitBoard(TriggerAfterCreatureEnters, entered, skipSubject)
 }
 
 // emitCreaturePlayed fires the "after a creature is played" reaction on every
@@ -720,14 +780,7 @@ func (g *Game) emitCreatureEnters(entered LocalID) {
 // play path calls it — so a creature put into play by another effect does not, and
 // it reaches the whole board, not only the played creature's neighbours.
 func (g *Game) emitCreaturePlayed(played LocalID) {
-	for player := 0; player < 2; player++ {
-		for _, id := range g.allInPlay(player) {
-			if id == played {
-				continue
-			}
-			g.triggerAbilities(id, TriggerAfterCreaturePlayed, played, true)
-		}
-	}
+	g.emitBoard(TriggerAfterCreaturePlayed, played, skipSubject)
 }
 
 // emitUpgradeEntered fires the "after an upgrade enters play" reaction on every
@@ -735,11 +788,7 @@ func (g *Game) emitCreaturePlayed(played LocalID) {
 // Nel). An upgrade is attached to its host, not itself in the battleline, so no
 // card is skipped.
 func (g *Game) emitUpgradeEntered(upgrade LocalID) {
-	for player := 0; player < 2; player++ {
-		for _, id := range g.allInPlay(player) {
-			g.triggerAbilities(id, TriggerAfterUpgradeEnters, upgrade, true)
-		}
-	}
+	g.emitBoard(TriggerAfterUpgradeEnters, upgrade, includeSubject)
 }
 
 // afterDestroyedReactions gathers, as one ordered window, every reaction to the
@@ -759,11 +808,7 @@ func (g *Game) afterDestroyedReactions(members []LocalID) []triggeredAbility {
 		if g.TypeOf(id) != Creature {
 			continue
 		}
-		for p := 0; p < 2; p++ {
-			for _, c := range g.allInPlay(p) {
-				w.add(c, TriggerAfterCreatureDestroyed, id, true)
-			}
-		}
+		w.addBoard(TriggerAfterCreatureDestroyed, id, includeSubject)
 		// Loot the Bodies' "each time an enemy creature is destroyed: gain Æmber" is a
 		// registry reaction the enemy of the dead creature's controller owns; fold it
 		// into the same window so it orders with the card reactions (ADR 0013).
@@ -789,12 +834,7 @@ func (g *Game) afterDestroyedReactions(members []LocalID) []triggeredAbility {
 func (g *Game) afterPlayReactions(player int, played LocalID) []triggeredAbility {
 	w := g.window()
 	w.addAs(played, TriggerAfterPlay, player, 0, false)
-	for _, id := range g.allInPlay(player) {
-		w.add(id, TriggerAfterCardPlayed, played, true)
-	}
-	for _, id := range g.allInPlay(1 - player) {
-		w.add(id, TriggerAfterEnemyCardPlayed, played, true)
-	}
+	w.addMirrored(player, TriggerAfterCardPlayed, TriggerAfterEnemyCardPlayed, played)
 	return w.pending
 }
 
@@ -810,44 +850,23 @@ func (g *Game) playCreatureReactions(player int, played LocalID) []triggeredAbil
 	w := g.window()
 	w.add(played, TriggerAfterPlay, 0, false)
 	w.add(played, TriggerEntersPlay, 0, false)
-	for p := 0; p < 2; p++ {
-		for _, id := range g.allInPlay(p) {
-			if id != played {
-				w.add(id, TriggerAfterCreatureEnters, played, true)
-			}
-		}
-	}
+	w.addBoard(TriggerAfterCreatureEnters, played, skipSubject)
 	for _, neighbor := range neighbors(&EffectContext{Resolver: g}, played) {
 		w.add(neighbor, TriggerAfterCreaturePlayedAdjacent, played, true)
 	}
-	for p := 0; p < 2; p++ {
-		for _, id := range g.allInPlay(p) {
-			if id != played {
-				w.add(id, TriggerAfterCreaturePlayed, played, true)
-			}
-		}
-	}
-	for _, id := range g.allInPlay(player) {
-		w.add(id, TriggerAfterCardPlayed, played, true)
-	}
-	for _, id := range g.allInPlay(1 - player) {
-		w.add(id, TriggerAfterEnemyCardPlayed, played, true)
-	}
+	w.addBoard(TriggerAfterCreaturePlayed, played, skipSubject)
+	w.addMirrored(player, TriggerAfterCardPlayed, TriggerAfterEnemyCardPlayed, played)
 	return w.pending
 }
 
-// emitActionPlayedBeforeResolve fires "after a Tactic is played but before it
+// emitTacticPlayedBeforeResolve fires "after a Tactic is played but before it
 // resolves" abilities on every in-play card of both players, with the played
 // Tactic as "it". It runs before the Tactic's own Play: effect resolves, so a
 // reaction (Encounter Suit warding its host) acts on the board the Tactic is about
 // to affect. A Tactic either player plays fires it.
-func (g *Game) emitActionPlayedBeforeResolve(player int, played LocalID) {
-	for _, id := range g.allInPlay(player) {
-		g.triggerAbilities(id, TriggerAfterTacticPlayedBeforeResolve, played, true)
-	}
-	for _, id := range g.allInPlay(1 - player) {
-		g.triggerAbilities(id, TriggerAfterTacticPlayedBeforeResolve, played, true)
-	}
+func (g *Game) emitTacticPlayedBeforeResolve(player int, played LocalID) {
+	g.emitSide(player, TriggerAfterTacticPlayedBeforeResolve, played, includeSubject)
+	g.emitSide(1-player, TriggerAfterTacticPlayedBeforeResolve, played, includeSubject)
 }
 
 // triggerAbilities resolves every ability matching the trigger that the card

@@ -1076,12 +1076,20 @@ func conditionalPlayBarText(b ConditionalPlayBar) string {
 
 // symmetricCondText renders a condition in the third-person, board-wide voice a
 // ConditionalPlayBar needs ("a player ... they"), rather than the controller voice
-// of CondText ("if you ...").
+// of CondText ("if you ..."). A condition whose two voices differ by more than the
+// lead word renders its own, so the wording stays with the condition instead of
+// being type-switched on here.
 func symmetricCondText(c Condition) string {
-	if _, ok := c.(ControlsMoreCreatures); ok {
-		return "has more creatures in play than their opponent"
+	if s, ok := c.(symmetricCondTexter); ok {
+		return s.symmetricCondText()
 	}
 	return strings.TrimPrefix(c.CondText(), "if ")
+}
+
+// symmetricCondTexter is the optional capability a Condition implements when its
+// board-wide third-person wording is not its CondText with "if " trimmed.
+type symmetricCondTexter interface {
+	symmetricCondText() string
 }
 
 // trimCondPrefix drops the leading "if " a CondText opens with, so a condition can
@@ -1197,7 +1205,9 @@ func keyCostText(kc KeyCostChange) string {
 		return "While " + SelfName + " is not on a flank, " + sentence + "."
 	}
 	if kc.whileCondition != nil {
-		return capitalizeFirst(kc.whileCondition.CondText()) + ", " + sentence + "."
+		// A .While gate reads as a standing "While ..." clause, so the condition's
+		// own "if " lead is swapped for it (Proclamation 346E).
+		return "While " + trimCondPrefix(kc.whileCondition.CondText()) + ", " + sentence + "."
 	}
 	return capitalizeFirst(sentence) + "."
 }
@@ -1350,7 +1360,7 @@ func keywordText(def *CardDefinition) string {
 }
 
 // attackDamageText renders a creature's custom fight damage, e.g. "Valdr deals +2
-// Damage while attacking an enemy creature on the flank." or "Ether Spider deals
+// damage while attacking an enemy creature on the flank." or "Ether Spider deals
 // no damage when fighting." Returns "" when the creature deals its plain power.
 func attackDamageText(def *CardDefinition) string {
 	ad := def.AttackDamage
@@ -1358,15 +1368,15 @@ func attackDamageText(def *CardDefinition) string {
 	case ad.Fixed && ad.Amount == 0:
 		return def.Name + " deals no damage when fighting."
 	case ad.Fixed:
-		return fmt.Sprintf("%s deals %d Damage when fighting.", def.Name, ad.Amount)
+		return fmt.Sprintf("%s deals %s when fighting.", def.Name, damageAmount(ad.Amount))
 	case ad.Amount != 0 && ad.FlankOnly:
 		return fmt.Sprintf(
-			"%s deals +%d Damage while attacking an enemy creature on the flank.",
+			"%s deals +%d damage while attacking an enemy creature on the flank.",
 			def.Name,
 			ad.Amount,
 		)
 	case ad.Amount != 0:
-		return fmt.Sprintf("%s deals +%d Damage when fighting.", def.Name, ad.Amount)
+		return fmt.Sprintf("%s deals +%d damage when fighting.", def.Name, ad.Amount)
 	default:
 		return ""
 	}

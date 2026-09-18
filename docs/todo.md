@@ -10,9 +10,6 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ### Next focus
 
-- Is there a way to validate that the UI handles and presents all possible game states/prompts? eg if I add a new prompt route, can the UI then automatically fail bc its not handled?
-- On the style page add a section with all of the Log and Text usages rendered out. The easiest wayt to do this might be to create a dedicated preview area that dynamically displays these elements as they are used in the engine (eg show a set of cards that covers every rendering element, and a log that does the same for all log entries)
-- card gallery (and search). Gallery links to cards, and cards can pull in all the relevant rules onto that page
 - In the rulebook have an Accuracy example-binding ratchet — let terms cite a real engine test, then require it for subtle rules over time so that players can interact with the examples and understand the evolving rules context.
 - Be able to set up situation and then run it in the engine UI for playwright
 - rename to Vex
@@ -42,6 +39,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - Changing card.X to instead be e.X eg for engine - is the facade really providing value, or is there anything else we could do to organize the repo better instead of one mega engine?
 - Split out glyphs more in icon.go
 - using property testing to find unused code paths and then force specific tests there
+- card gallery (and search). Gallery links to cards, and cards can pull in all the relevant rules onto that page
 
 ## Things that can be done now
 
@@ -53,7 +51,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - WithAemberCost and Toll could be combined into MustPay
 - decompose all the neighbor stuff
 - Granted: card.FightReap(card.ArchiveGrantingUpgrade{}), should be card.Archive{Target: GrantingUpgrade}
-- Why is DamageThen and ChooseCreatureThen needed? Why can't these just be sequences that pass along the effect context?
+- Why is DealDamage and ChooseCreatureThen needed? Why can't these just be sequences that pass along the effect context?
 - Get rid of bar.go
 - /cards view cuts off side icons - why isn't this rendering like in the engine?
 
@@ -163,9 +161,29 @@ Semgrep (Go rulesets): Detects Go-specific architectural smells like unbuffered 
 - Bonus icons don't resolve if the creature dies while resolving them, and they count as the creature dealing the effect, not the game
 - enhancements across CotA/AoA/WC
 - non-aember default bonus enhancements
-- Austin's house of silicates
+- Austin's house of [silicates](https://discord.com/channels/@me/689656859384348700/1550399744235282533)
 - A full house worth of enhancements (eg you have a normal 36 card deck, but then there are 12 house enhancements of a fourth house that are randomly assigned)
 - Weather effects - eg 4 sided reference card that turns
+- I do think the Stun -> Charge mechanic would be a cool idea. A creature with the Charge keyword can be stunned multiple times and can interact with the amount of Stuns that are on them or other creatures for an effect/are unaffected by the stun or something
+Artifact
+Æmber Battery
+Omni: Remove a stun or stun a friendly creature.
+
+Action
+Electrify
+:aember:
+Charge a creature. Gain an :aember: for each Stun on that creature.
+
+Creature
+Gobble-Zip
+:staralliance:
+1 :power~1: ~ :armor~1:
+Robot • Dynamo
+
+Charge.
+Gobble-Zip gets :power_red: for each Stun on it.
+
+you don't even have to change the way stun works, you could have mechanisms that move stun tokens, and then get big benefits for having more on a creature
 
 ## Bot support
 

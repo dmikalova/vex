@@ -294,8 +294,8 @@ type CreatureResolver interface {
 	SetSideDamageImmune(player int, d Duration)
 	// SetStatOverride masks every creature's power and/or armor to a fixed value for
 	// the duration (The Pale Star), read live and revealing the real values again
-	// when it lifts.
-	SetStatOverride(power, armor int8, hasPower, hasArmor bool, d Duration)
+	// when it lifts. An unset StatMask leaves that stat alone.
+	SetStatOverride(power, armor StatMask, d Duration)
 	// SetExhausted sets a creature's exhausted status.
 	SetExhausted(id LocalID, exhausted bool)
 	// AddAmberOn changes the Æmber sitting on a card.

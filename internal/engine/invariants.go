@@ -13,13 +13,17 @@ func (g *Game) InvariantError() error {
 		if a := g.State.Aember[p]; a < 0 {
 			return fmt.Errorf("player %d has negative Æmber (%d)", p, a)
 		}
-		if k := g.State.Keys[p]; k < 0 || k > MaxKeys {
-			return fmt.Errorf(
-				"player %d has out-of-range key count (%d, want 0..%d)",
-				p,
-				k,
-				MaxKeys,
-			)
+		// The key count is the non-empty prefix of KeyColors, so a gap would hide
+		// forged keys from every reader rather than merely miscount them.
+		for i := g.State.KeyCount(p) + 1; i < MaxKeys; i++ {
+			if c := g.State.KeyColors[p][i]; c != KeyColorNone {
+				return fmt.Errorf(
+					"player %d has a %s key forged after an unforged slot (index %d)",
+					p,
+					c,
+					i,
+				)
+			}
 		}
 		if c := g.State.Chains[p]; c < 0 {
 			return fmt.Errorf("player %d has negative chains (%d)", p, c)

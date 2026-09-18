@@ -100,7 +100,7 @@ func TestConcedeHandsTheGameToTheOpponent(t *testing.T) {
 
 func TestNoPhaseLogAfterGameWon(t *testing.T) {
 	g := NewGame("Alice", "Bob", 1)
-	g.State.Keys[0] = KeysToWin - 1
+	g.State.ForgeCanonicalKeys(0, KeysToWin-1)
 	g.State.Aember[0] = KeyCost
 
 	// Forging the third key wins the game mid-forge-phase, before the loop would
@@ -124,10 +124,10 @@ func TestStartOfTurnAbilitiesResolveBeforeForging(t *testing.T) {
 	g.StartTurn(0)
 
 	// The Æmber arrived in time to pay for the turn's forge.
-	if g.State.Keys[0] != 1 {
+	if g.Keys(0) != 1 {
 		t.Errorf(
 			"keys = %d, want 1 (start-of-turn Æmber should pay for the forge)",
-			g.State.Keys[0],
+			g.Keys(0),
 		)
 	}
 }

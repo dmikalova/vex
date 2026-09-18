@@ -16,7 +16,7 @@ import (
 //	Traits: Beast
 //
 //	Skirmish.
-//	Roxador deals 2 Damage when fighting.
+//	Roxador deals 2 damage when fighting.
 //	Fight: Stun the creature Roxador fought.
 func TestRoxador(t *testing.T) {
 	t.Run("deals only 2 fight damage, takes none, and stuns the defender", func(t *testing.T) {

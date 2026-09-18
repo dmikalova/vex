@@ -22,7 +22,7 @@ var MackTheKnife = set.New(
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive, card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.Action, card.DamageThen{
+		card.Trigger.Action, card.DealDamage{
 			Amount: 1,
 			After:  card.IfDestroyed,
 			Target: card.Target.Creature,

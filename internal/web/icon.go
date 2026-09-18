@@ -12,9 +12,10 @@ import (
 // and Targets. It lives here in the client, not in package engine, because the
 // engine is held at 100% coverage and an in-engine Visitor would force an icon
 // test for every one of the ~150 effect nodes; internal/web is ungated. The
-// totality test (icon_test.go) still walks every card and fails loud when an
-// effect neither maps to a glyph nor sits on the shrinking iconFallbackAllowed
-// list, so a new mechanic cannot ship without a glyph decision.
+// totality test (icon_test.go) still walks every card and fails loud on any
+// effect that falls back to the abstract unknown glyph. There is no allowlist to
+// exempt one: an unmapped mechanic is a bug, and the fix is always to draw a
+// glyph, so a new mechanic cannot ship without a glyph decision.
 
 // decor is a set of edge/overlay treatments applied to a noun glyph to carry a
 // Target's shape without spending a horizontal slot: an enemy tint, a friendly
@@ -469,6 +470,11 @@ func triggerIcon(t engine.Trigger) string {
 func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	switch v := e.(type) {
 	case engine.DealDamage:
+		// A follow-up on the damaged creature draws the two clauses joined, not the
+		// bare damage glyph.
+		if v.Then != nil {
+			return damageThenGlyphs(v.Amount, v.Target, v.Then)
+		}
 		// A Spread carries its own creature targets rather than filling Target, so it
 		// draws its own summary noun; the counts and neighbor split stay in the text.
 		if v.Spread != nil {
@@ -525,11 +531,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.Exhaust:
 		return []glyph{{asset: "exhausted"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.Ready:
-		return []glyph{
-			{asset: "exhausted", decor: decorFriendly},
-			arrowTo(targetGlyph(v.Target)),
-		}, true
-	case engine.ReadyIfFirstUse:
 		return []glyph{
 			{asset: "exhausted", decor: decorFriendly},
 			arrowTo(targetGlyph(v.Target)),
@@ -595,9 +596,9 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-deck"})}, true
 	case engine.ShuffleNamedFromDiscardIntoDeck:
 		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-deck"})}, true
-	case engine.ReturnNamedToHand:
+	case engine.PutNamedIntoHand:
 		return []glyph{{asset: "glyph-return"}}, true
-	case engine.ReturnItToHand:
+	case engine.PutItIntoHand:
 		return []glyph{{asset: "glyph-return"}}, true
 	case engine.PlayFrom, engine.PlayTopOfDeck, engine.PutIntoPlay:
 		return []glyph{{asset: "glyph-play"}}, true
@@ -685,8 +686,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			{asset: "glyph-swap"},
 			{asset: "type-creature", decor: decorChosen},
 		}, true
-	case engine.DamageThen:
-		return damageThenGlyphs(v.Amount, v.Target, v.Then)
 	case engine.Repeat:
 		return effectGlyphs(v.Do)
 	case engine.May:
@@ -1037,7 +1036,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			{asset: "zone-hand", decor: decorEach},
 			arrowTo(glyph{asset: "glyph-play"}),
 		}, true
-	case engine.ReturnNextActionToHand:
+	case engine.PutNextTacticIntoHand:
 		return []glyph{{asset: "type-action"}, arrowTo(glyph{asset: "zone-hand"})}, true
 	case engine.DamageOthersAfterUsingTrait:
 		return []glyph{

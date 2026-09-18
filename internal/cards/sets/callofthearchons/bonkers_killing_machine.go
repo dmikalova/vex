@@ -27,7 +27,11 @@ var BonkersKillingMachine = set.New(
 					},
 				},
 				card.Conditional{
-					Cond: card.CardsDestroyedFewerThan{Amount: 2},
+					Cond: card.Not{Cond: card.CountIs{
+						Count:  card.CardsDestroyed{},
+						Is:     card.AtLeast,
+						Amount: 2,
+					}},
 					Then: card.Destroy{Target: card.Target.This},
 				},
 			},

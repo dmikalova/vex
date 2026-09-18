@@ -98,7 +98,7 @@ func (g *Game) meetsPlayRequirement(player int, def *CardDefinition) bool {
 	if !r.required() {
 		return true
 	}
-	avail := g.State.Aember[player]
+	avail := g.Aember(player)
 	if r.Spend {
 		avail += g.spendAsPoolTotal(player)
 	}

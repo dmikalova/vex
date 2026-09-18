@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This creature gains, "Fight/Reap: If this is the first time this creature was used this turn, ready it."
+//	This creature gains, "Fight/Reap: If this is the first time this creature has been used this turn, ready this creature."
 var RocketBoots = set.New(
 	"Rocket Boots",
 	card.House.Logos,
@@ -16,6 +16,9 @@ var RocketBoots = set.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "158"),
 	card.WithStatic(card.StaticModifier{
-		Granted: card.FightReap(card.ReadyIfFirstUse{Target: card.Target.This}),
+		Granted: card.FightReap(card.Conditional{
+			Cond: card.SourceFirstUseThisTurn{},
+			Then: card.Ready{Target: card.Target.This},
+		}),
 	}),
 )

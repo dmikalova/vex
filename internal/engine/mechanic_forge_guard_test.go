@@ -14,7 +14,7 @@ func keyforgeryCard() CardDefinition {
 			OpponentNamesHouse{},
 			RevealRandomFromHand{},
 			Conditional{
-				Cond: ItIsNotOfNamedHouse{Subject: ThatCard},
+				Cond: ItIsNotOfNamedHouse{Noun: ThatCard},
 				Then: Sequence{Effects: []Effect{
 					Destroy{Target: Target{Kind: TargetThisCreature}},
 					CancelForge{},
@@ -48,10 +48,10 @@ func TestForgeGuardPreventsForge(t *testing.T) {
 	g.State.Aember[0] = 6
 	g.SetChooser(0, optionPicker{idx: 0}) // name Brobnar; the reveal is Logos
 
-	keysBefore := g.State.Keys[0]
+	keysBefore := g.Keys(0)
 	g.forgePhase(0)
 
-	if g.State.Keys[0] != keysBefore {
+	if g.Keys(0) != keysBefore {
 		t.Error("a prevented forge should not forge a key")
 	}
 	if g.State.Aember[0] != 6 {
@@ -73,7 +73,7 @@ func TestForgeGuardAllowsForge(t *testing.T) {
 
 	g.forgePhase(0)
 
-	if g.State.Keys[0] != 1 {
+	if g.Keys(0) != 1 {
 		t.Error("a correct guess should let the forge proceed")
 	}
 	if g.State.Aember[0] != 0 {
@@ -94,7 +94,7 @@ func TestForgeGuardEmptyHand(t *testing.T) {
 
 	g.forgePhase(0)
 
-	if g.State.Keys[0] != 1 {
+	if g.Keys(0) != 1 {
 		t.Error("a guard with an empty hand should not prevent the forge")
 	}
 	if !g.inPlay(kf) {
@@ -113,7 +113,7 @@ func TestForgeGuardOnlyOpponent(t *testing.T) {
 
 	g.forgePhase(0)
 
-	if g.State.Keys[0] != 1 {
+	if g.Keys(0) != 1 {
 		t.Error("a controller's own Keyforgery should not prevent their forge")
 	}
 	if !g.inPlay(kf) {
@@ -131,7 +131,7 @@ func TestForgeGuardOnFreeForge(t *testing.T) {
 
 	g.forgeKeyFree(0)
 
-	if g.State.Keys[0] != 0 {
+	if g.Keys(0) != 0 {
 		t.Error("a prevented free forge should not forge a key")
 	}
 	if g.inPlay(kf) {

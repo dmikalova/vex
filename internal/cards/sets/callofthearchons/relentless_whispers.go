@@ -18,7 +18,7 @@ var RelentlessWhispers = set.New(
 	card.Provenance(card.CotA, "281"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.DamageThen{
+		card.Trigger.Play, card.DealDamage{
 			Amount: 2,
 			After:  card.IfDestroyed,
 			Target: card.Target.Creature,

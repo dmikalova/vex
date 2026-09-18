@@ -264,6 +264,12 @@ func TestInstead(t *testing.T) {
 	if err := (Instead{Of: EventCreaturePlayed, With: Steal}).validate(); err == nil {
 		t.Error("a reaction event should fail as a replacement")
 	}
+	// Without a gerund the sentence has nothing to name the replaced event with, so
+	// it would print some other event's wording. Rejecting it at init keeps that
+	// impossible (ADR 0010).
+	if err := (Instead{Of: EventBeforeFight, With: Steal}).validate(); err == nil {
+		t.Error("a replacement point with no gerund should fail")
+	}
 	if err := (Instead{Of: EventReapAember}).validate(); err == nil {
 		t.Error("an unset replacement should fail")
 	}
@@ -723,34 +729,34 @@ func TestDamageOthersAfterUsingTraitTraitGate(t *testing.T) {
 	}
 }
 
-func TestReturnNextActionToHandText(t *testing.T) {
+func TestPutNextTacticIntoHandText(t *testing.T) {
 	want := "after you resolve your next tactic this turn, put it into your " +
 		"hand instead of your discard pile"
-	if got := (ReturnNextActionToHand{}).Text(); got != want {
+	if got := (PutNextTacticIntoHand{}).Text(); got != want {
 		t.Errorf("text = %q", got)
 	}
 }
 
 // Resolve arms a one-shot redirect the action-play path later consumes.
-func TestReturnNextActionToHandArms(t *testing.T) {
+func TestPutNextTacticIntoHandArms(t *testing.T) {
 	g := started(t)
-	ReturnNextActionToHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-	if !g.consumeNextActionToHand(0) {
+	PutNextTacticIntoHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if !g.consumeNextTacticIntoHand(0) {
 		t.Fatal("redirect was not armed")
 	}
-	if g.consumeNextActionToHand(0) {
+	if g.consumeNextTacticIntoHand(0) {
 		t.Fatal("redirect should be consumed after one read")
 	}
 }
 
 // A redirect owned by one player is not consumed by the other.
-func TestReturnNextActionToHandScopedToController(t *testing.T) {
+func TestPutNextTacticIntoHandScopedToController(t *testing.T) {
 	g := started(t)
-	ReturnNextActionToHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-	if g.consumeNextActionToHand(1) {
+	PutNextTacticIntoHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.consumeNextTacticIntoHand(1) {
 		t.Fatal("opponent should not consume the redirect")
 	}
-	if !g.consumeNextActionToHand(0) {
+	if !g.consumeNextTacticIntoHand(0) {
 		t.Fatal("controller should consume its own redirect")
 	}
 }
@@ -762,7 +768,7 @@ func TestReturnNextActionRedirectsPlayedAction(t *testing.T) {
 	g.StartTurn(0)
 	first := g.AddToHand(NewCard("First Action", Sanctum, Tactic, Common), 0)
 	second := g.AddToHand(NewCard("Second Action", Sanctum, Tactic, Common), 0)
-	g.AddLasting(LastingEffect{On: EventNextActionToHand, Do: actReturnToHand, Once: true})
+	g.AddLasting(LastingEffect{On: EventNextTacticIntoHand, Do: actPutIntoHand, Once: true})
 
 	if err := g.PlayAction(0, handIdxByID(g, 0, first)); err != nil {
 		t.Fatalf("PlayAction first: %v", err)

@@ -78,14 +78,14 @@ func TestScheduleOnLeaveForgesForOpponent(t *testing.T) {
 	if g.State.ScheduledCount != 1 {
 		t.Fatal("clearScheduled should keep the leave-play schedule")
 	}
-	if g.State.Keys[1] != 0 {
-		t.Fatalf("the opponent should not have forged yet, keys = %d", g.State.Keys[1])
+	if g.Keys(1) != 0 {
+		t.Fatalf("the opponent should not have forged yet, keys = %d", g.Keys(1))
 	}
 
 	// The source leaving play fires and removes the schedule.
 	g.fireScheduledOnLeave(src)
-	if g.State.Keys[1] != 1 {
-		t.Errorf("the opponent should have forged one key on leave, keys = %d", g.State.Keys[1])
+	if g.Keys(1) != 1 {
+		t.Errorf("the opponent should have forged one key on leave, keys = %d", g.Keys(1))
 	}
 	if g.State.ScheduledCount != 0 {
 		t.Errorf("the fired schedule should be removed, count = %d", g.State.ScheduledCount)
@@ -125,10 +125,10 @@ func TestFireScheduledOnLeaveSkipsAndCompacts(t *testing.T) {
 
 	g.fireScheduledOnLeave(other)
 
-	if g.State.Keys[1] != 1 {
+	if g.Keys(1) != 1 {
 		t.Errorf(
 			"the opponent should have forged from the matching entry, keys = %d",
-			g.State.Keys[1],
+			g.Keys(1),
 		)
 	}
 	if g.State.ScheduledCount != 1 {
@@ -153,15 +153,15 @@ func TestForgeKeyFreeForcedResolver(t *testing.T) {
 	if !g.ForgeKeyFreeForced(1) {
 		t.Fatal("forcing a free forge should report a key forged")
 	}
-	if g.State.Keys[1] != 1 {
-		t.Errorf("forced forge keys = %d, want 1", g.State.Keys[1])
+	if g.Keys(1) != 1 {
+		t.Errorf("forced forge keys = %d, want 1", g.Keys(1))
 	}
 
 	ForgeKey{Player: Opponent, FreeOfCost: true}.Resolve(
 		&EffectContext{Resolver: g, Source: 0, Controller: 0},
 	)
-	if g.State.Keys[1] != 2 {
-		t.Errorf("the opponent ForgeKey should forge again, keys = %d", g.State.Keys[1])
+	if g.Keys(1) != 2 {
+		t.Errorf("the opponent ForgeKey should forge again, keys = %d", g.Keys(1))
 	}
 }
 
@@ -175,8 +175,8 @@ func TestForgeKeyFreeForcedGuards(t *testing.T) {
 	if barred.forgeKeyFreeForced(1) {
 		t.Error("a barred first key should stop the forced forge")
 	}
-	if barred.State.Keys[1] != 0 {
-		t.Errorf("a barred forced forge should forge nothing, keys = %d", barred.State.Keys[1])
+	if barred.Keys(1) != 0 {
+		t.Errorf("a barred forced forge should forge nothing, keys = %d", barred.Keys(1))
 	}
 
 	guarded := NewGame("A", "B", 1)
@@ -186,8 +186,8 @@ func TestForgeKeyFreeForcedGuards(t *testing.T) {
 	if guarded.forgeKeyFreeForced(1) {
 		t.Error("a before-forge guard should cancel the forced forge on a wrong guess")
 	}
-	if guarded.State.Keys[1] != 0 {
-		t.Errorf("a cancelled forced forge should forge nothing, keys = %d", guarded.State.Keys[1])
+	if guarded.Keys(1) != 0 {
+		t.Errorf("a cancelled forced forge should forge nothing, keys = %d", guarded.Keys(1))
 	}
 }
 

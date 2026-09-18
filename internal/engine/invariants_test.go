@@ -29,9 +29,9 @@ func TestInvariantErrorEconomy(t *testing.T) {
 	}{
 		{"negative aember", func(g *Game) { g.State.Aember[0] = -1 }, "negative Æmber"},
 		{
-			"too many keys",
-			func(g *Game) { g.State.Keys[1] = MaxKeys + 1 },
-			"out-of-range key count",
+			"key forged after a gap",
+			func(g *Game) { g.State.KeyColors[1][MaxKeys-1] = KeyColorRed },
+			"forged after an unforged slot",
 		},
 		{"negative chains", func(g *Game) { g.State.Chains[0] = -1 }, "negative chains"},
 		{"winner out of range", func(g *Game) { g.State.Winner = 2 }, "winner is out of range"},

@@ -21,17 +21,34 @@ const CorpusDir = "testdata/fuzz/FuzzPlay"
 // picks the decks, so minimizing must never trim into it.
 const seedLen = 8
 
-// incidental folds the parts of a violation message that vary between scripts
-// tripping the same bug: the numbers (turn, step, card id, power totals) and any
-// dumped struct, whose booleans differ run to run. The card name is left alone —
-// the same invariant broken on a different card is worth its own corpus entry.
-var incidental = regexp.MustCompile(`[0-9]+|\{[^{}]*\}`)
+// The three patterns below fold the parts of a violation message that vary
+// between scripts tripping the same bug. A struct dump is folded field by field
+// so the field names survive — two violations that dump different fields are
+// different bugs, and collapsing the whole dump to one token would merge them.
+// Folding the dump first keeps its digits from being folded twice.
+var (
+	structDump = regexp.MustCompile(`\{[^{}]*\}`)
+	dumpField  = regexp.MustCompile(`([A-Za-z_][A-Za-z0-9_]*):[^ }]*`)
+	digits     = regexp.MustCompile(`[0-9]+`)
+)
+
+// normalizeViolation strips a violation message down to the bug it names: the
+// numbers (turn, step, card id, power totals) and every dumped struct value are
+// folded away, while the wording, the field names, and the card name are left
+// alone — the same invariant broken on a different card is worth its own corpus
+// entry.
+func normalizeViolation(msg string) string {
+	msg = structDump.ReplaceAllStringFunc(msg, func(dump string) string {
+		return dumpField.ReplaceAllString(dump, "$1:#")
+	})
+	return digits.ReplaceAllString(msg, "#")
+}
 
 // failureKey names the bug behind a violation: the message with its incidental
 // detail folded away, hashed. Two scripts that fail the same way share a key, and
 // so share one corpus file.
 func failureKey(err error) string {
-	sum := sha256.Sum256([]byte(incidental.ReplaceAllString(err.Error(), "#")))
+	sum := sha256.Sum256([]byte(normalizeViolation(err.Error())))
 	return hex.EncodeToString(sum[:])
 }
 
@@ -67,13 +84,22 @@ func failureOf(script []byte) (string, bool) {
 
 // SaveCorpus files a failing script as a regression, minimized and named for the
 // bug it catches rather than for its own bytes, so one bug keeps one entry
-// however many scripts find it.
+// however many scripts find it. An entry already on disk is only replaced by a
+// shorter reproduction, so a later soak cannot bury a minimized script under a
+// longer one that finds the same bug.
 func SaveCorpus(dir string, script []byte, err error) (string, error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}
 	name := filepath.Join(dir, failureKey(err))
-	body := fmt.Sprintf("go test fuzz v1\n[]byte(%q)\n", Minimize(script))
+	minimized := Minimize(script)
+	if existing, readErr := readCorpusFile(
+		name,
+	); readErr == nil &&
+		len(existing) <= len(minimized) {
+		return name, nil
+	}
+	body := fmt.Sprintf("go test fuzz v1\n[]byte(%q)\n", minimized)
 	if writeErr := os.WriteFile(name, []byte(body), 0o644); writeErr != nil {
 		return "", writeErr
 	}

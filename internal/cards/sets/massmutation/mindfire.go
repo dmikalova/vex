@@ -25,7 +25,7 @@ var Mindfire = set.New(
 			},
 			card.StealAember{
 				Amount: 1,
-				Per:    card.BonusIconsOfChosen{Subject: card.Subject.DiscardedCard},
+				Per:    card.BonusIconsOfChosen{Noun: card.ItNoun.DiscardedCard},
 			},
 		}}),
 )

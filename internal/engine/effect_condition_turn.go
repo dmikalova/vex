@@ -106,24 +106,6 @@ func (ItIsYourTurn) Met(ctx *EffectContext) bool {
 	return ctx.Resolver.ActivePlayer() == ctx.Controller
 }
 
-// CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this
-// way — the tally a preceding effect records on the context. Bonkers Killing
-// Machine destroys itself when its house-driven destruction removed fewer than two.
-type CardsDestroyedFewerThan struct {
-	Amount int
-}
-
-// CondText renders the condition, e.g. "if fewer than 2 cards are destroyed this
-// way".
-func (c CardsDestroyedFewerThan) CondText() string {
-	return fmt.Sprintf("if fewer than %d cards are destroyed this way", c.Amount)
-}
-
-// Met reports whether fewer than Amount cards were destroyed this way.
-func (c CardsDestroyedFewerThan) Met(ctx *EffectContext) bool {
-	return ctx.Produced.TotalDestroyed() < c.Amount
-}
-
 // ChoseHouse is met when the controller's active house is House. It is the
 // condition behind an "After you choose <House> as your active house, ..."
 // ability (Jehu the Bureaucrat): the AfterChooseHouse trigger fires for the
@@ -157,36 +139,47 @@ func (AemberStolenFromYou) Met(ctx *EffectContext) bool {
 	return ctx.Resolver.TurnHistory(ctx.Controller, AemberStolenFromLastTurn) > 0
 }
 
-// EnemyCreatureDestroyed is met while at least one enemy creature has been
-// destroyed this turn — Foozle reaps for an extra Æmber once the opponent has
-// lost a creature.
-type EnemyCreatureDestroyed struct{}
-
-// CondText renders the condition.
-func (EnemyCreatureDestroyed) CondText() string {
-	return "if an enemy creature has been destroyed this turn"
+// CreatureDestroyedThisTurn is met while at least one creature on the named side
+// has been destroyed this turn: Opponent for an enemy creature (Foozle reaps for
+// an extra Æmber once the opponent has lost one), Controller for a friendly one
+// (Bonesaw enters play ready once one of yours has died).
+type CreatureDestroyedThisTurn struct {
+	// Player names whose creature must have died — Controller for a friendly
+	// creature, Opponent for an enemy one.
+	Player Player
 }
 
-// Met reports whether the controller has seen an enemy creature destroyed this
-// turn.
-func (EnemyCreatureDestroyed) Met(ctx *EffectContext) bool {
-	return ctx.Resolver.TurnHistory(ctx.Controller, EnemyCreaturesDestroyed) > 0
+// creatureDestroyedSides pairs each side the condition can name with the noun
+// phrase its text uses and the turn tally that answers it, so the wording and the
+// stat cannot drift apart. A side absent here is not a side this condition reads.
+var creatureDestroyedSides = map[Player]struct {
+	subject string
+	stat    TurnStat
+}{
+	Controller: {"a friendly creature", FriendlyCreaturesDestroyed},
+	Opponent:   {"an enemy creature", EnemyCreaturesDestroyed},
 }
 
-// FriendlyCreatureDestroyed is met while at least one of the controller's own
-// creatures has been destroyed this turn — Bonesaw enters play ready if a friendly
-// creature has died this turn.
-type FriendlyCreatureDestroyed struct{}
-
-// CondText renders the condition.
-func (FriendlyCreatureDestroyed) CondText() string {
-	return "if a friendly creature was destroyed this turn"
+// validate requires a side the condition can read: a creature is destroyed from
+// one player's board or the other's, so EachPlayer and the unset zero value are
+// both rejected.
+func (c CreatureDestroyedThisTurn) validate() error {
+	if _, ok := creatureDestroyedSides[c.Player]; !ok {
+		return fmt.Errorf(
+			"CreatureDestroyedThisTurn: Player must be Controller or Opponent")
+	}
+	return nil
 }
 
-// Met reports whether the controller has had a friendly creature destroyed this
-// turn.
-func (FriendlyCreatureDestroyed) Met(ctx *EffectContext) bool {
-	return ctx.Resolver.TurnHistory(ctx.Controller, FriendlyCreaturesDestroyed) > 0
+// CondText renders the condition, e.g. "if an enemy creature has been destroyed
+// this turn".
+func (c CreatureDestroyedThisTurn) CondText() string {
+	return "if " + creatureDestroyedSides[c.Player].subject + " has been destroyed this turn"
+}
+
+// Met reports whether the named side has lost a creature this turn.
+func (c CreatureDestroyedThisTurn) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.TurnHistory(ctx.Controller, creatureDestroyedSides[c.Player].stat) > 0
 }
 
 // UsedCreatureToReap is met while the controller has used a creature to reap at

@@ -177,18 +177,18 @@ func (e PutChosen) resolveMoves(ctx *EffectContext) {
 	}
 }
 
-// ReturnNamedToHand puts a card with a specific name that the controller chooses
+// PutNamedIntoHand puts a card with a specific name that the controller chooses
 // into their hand, taken either from a friendly creature in play or from their
 // discard pile — Faygin recovering an Urchin. The controller chooses among both
 // zones at once; an in-play creature returns to hand (shedding its in-play state)
 // and a discard card is recovered.
-type ReturnNamedToHand struct {
+type PutNamedIntoHand struct {
 	Name string
 }
 
 // Text renders the effect, e.g. "put an Urchin from play or from your discard pile
 // into your hand".
-func (e ReturnNamedToHand) Text() string {
+func (e PutNamedIntoHand) Text() string {
 	return fmt.Sprintf(
 		"put %s from play or from your discard pile into your hand",
 		indefinite(e.Name),
@@ -198,7 +198,7 @@ func (e ReturnNamedToHand) Text() string {
 // Resolve gathers every friendly in-play creature and discard-pile card, then
 // lets the controller pick the named one through the shared Selection vocabulary
 // (Chosen{Name}) and moves it to their hand from whichever zone it is in.
-func (e ReturnNamedToHand) Resolve(ctx *EffectContext) {
+func (e PutNamedIntoHand) Resolve(ctx *EffectContext) {
 	mover := crossZoneMover{
 		Player:  ctx.Controller,
 		Dest:    ToHand,
@@ -208,4 +208,30 @@ func (e ReturnNamedToHand) Resolve(ctx *EffectContext) {
 	for _, id := range (Chosen{Name: e.Name}).pick(ctx, pool) {
 		mover.move(ctx, id)
 	}
+}
+
+// PutItIntoHand puts the creature in context ("it") into its owner's hand,
+// recovering it from the discard pile when it has already been destroyed. It is
+// the reaction counterpart to PutFromPlay, which only reaches a creature still in
+// play: Nizak, The Forgotten returns an enemy destroyed fighting it, and that
+// creature already sits in the discard by the time the reaction resolves.
+type PutItIntoHand struct{}
+
+// Text renders the effect, e.g. "put it into its owner's hand".
+func (e PutItIntoHand) Text() string {
+	return ToHand.clause(Target{Kind: TargetTriggeringCreature}.Text(), false)
+}
+
+// Resolve moves the contextual creature to its owner's hand — from play if it is
+// still there, or recovered from the discard pile if it was already destroyed. It
+// does nothing when no card is in context.
+func (e PutItIntoHand) Resolve(ctx *EffectContext) {
+	if !ctx.HasIt {
+		return
+	}
+	if resolverInPlay(ctx, ctx.It) {
+		ctx.Resolver.PutIntoHand(ctx.It)
+		return
+	}
+	ctx.Resolver.PutFromDiscardIntoHand(ctx.It)
 }

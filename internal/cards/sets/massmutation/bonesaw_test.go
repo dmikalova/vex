@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Demon
 //
-//	If a friendly creature was destroyed this turn, Bonesaw enters play ready.
+//	If a friendly creature has been destroyed this turn, Bonesaw enters play ready.
 func TestBonesaw(t *testing.T) {
 	t.Run(
 		"enters play ready after a friendly creature was destroyed this turn",

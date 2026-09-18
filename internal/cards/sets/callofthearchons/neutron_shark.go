@@ -26,8 +26,8 @@ var NeutronShark = set.New(
 			card.DiscardTop{Player: card.Controller},
 		}},
 		Gate: card.While{Cond: card.Not{Cond: card.ItIs{
-			House:   card.Houses.Named(card.House.Self),
-			Subject: card.Subject.DiscardedCard,
+			House: card.Houses.Named(card.House.Self),
+			Noun:  card.ItNoun.DiscardedCard,
 		}}},
 	}),
 )

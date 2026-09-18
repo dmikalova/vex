@@ -128,21 +128,36 @@ type cardTypes struct {
 	Any engine.CardType
 }
 
-// Subject groups the cards a condition can name instead of saying "it", e.g.
-// card.Subject.DiscardedCard.
-var Subject = subjects{
+// ItNoun groups the nouns a condition can print instead of saying "it", e.g.
+// card.ItNoun.DiscardedCard. It changes only the wording, never which card the
+// condition reads — that is card.Subject.
+var ItNoun = itNouns{
 	DiscardedCard:  engine.DiscardedCard,
 	ThatCard:       engine.ThatCard,
 	FoughtCreature: engine.FoughtCreature,
 }
 
-type subjects struct {
+type itNouns struct {
 	// DiscardedCard names the card an effect just discarded.
-	DiscardedCard engine.Subject
+	DiscardedCard engine.ItNoun
 	// ThatCard names the card an effect just acted on when "it" would be ambiguous.
-	ThatCard engine.Subject
+	ThatCard engine.ItNoun
 	// FoughtCreature names the creature the source is fighting.
-	FoughtCreature engine.Subject
+	FoughtCreature engine.ItNoun
+}
+
+// Subject groups the cards a condition can read, e.g. card.Subject.This. Unlike
+// card.ItNoun it changes the question's referent, not its wording.
+var Subject = subjects{
+	It:   engine.It,
+	This: engine.This,
+}
+
+type subjects struct {
+	// It is the default: the card a trigger or a preceding effect put in context.
+	It engine.Subject
+	// This is the card the ability is printed on.
+	This engine.Subject
 }
 
 // Rarity groups the rarity values, e.g. card.Rarity.Common.

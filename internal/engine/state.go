@@ -354,14 +354,15 @@ type GameState struct {
 	// Purge holds cards set aside out of the game ("purged"); they never return.
 	Purge [2]deckList
 
-	// Aember[p] is the Æmber in player p's pool.
-	Aember [2]int
-	// Keys[p] is how many keys player p has forged.
-	Keys [2]int
+	// Aember[p] is the Æmber in player p's pool, capped at maxAember like the
+	// Æmber on a card, so one maximum governs every Æmber holder.
+	Aember [2]int16
 
-	// KeyColors[p] holds the colour of each key player p has forged, in forge order;
-	// entries [0:Keys[p]] are set, the rest are KeyColorNone. A player picks the
-	// colour as they forge (see pickKeyColor); a fourth key is KeyColorColorless.
+	// KeyColors[p] holds the colour of each key player p has forged, in forge order,
+	// as a non-empty prefix followed by KeyColorNone. It is the only record of how
+	// many keys a player has — KeyCount derives the count from it, so there is no
+	// second copy of the same fact that could drift from the colours. A player picks
+	// the colour as they forge (see pickKeyColor); a fourth key is KeyColorColorless.
 	KeyColors [2][MaxKeys]KeyColor
 
 	// ForgePrevented means a "when your opponent would forge a key" ability
@@ -651,6 +652,28 @@ type GameState struct {
 // value type this is a single flat copy; mutating the result never affects the
 // original.
 func (s GameState) FastCopy() GameState { return s }
+
+// KeyCount reports how many keys a player has forged, as the length of the
+// non-empty prefix of the colours they forged. Deriving it means an unforge is a
+// single write — blanking the last colour — and a count that disagrees with the
+// colours is unrepresentable rather than merely invalid.
+func (s GameState) KeyCount(player int) int {
+	for i, c := range s.KeyColors[player] {
+		if c == KeyColorNone {
+			return i
+		}
+	}
+	return MaxKeys
+}
+
+// ForgeCanonicalKeys sets a player's forged keys to n keys in canonical colour
+// order, replacing whatever they had. The key count is derived from the colours,
+// so a caller that only cares how many keys a player holds still has to name
+// colours; this picks them so it does not have to.
+func (s *GameState) ForgeCanonicalKeys(player, n int) {
+	s.KeyColors[player] = [MaxKeys]KeyColor{}
+	copy(s.KeyColors[player][:], firstKeyColors(n))
+}
 
 // catalog is the read-only registry of card definitions for a match. It is held
 // separately from GameState (by pointer) and never mutated during play, so it is

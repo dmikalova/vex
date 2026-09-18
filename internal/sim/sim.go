@@ -43,6 +43,15 @@ func Simulate(script []byte) error {
 	return err
 }
 
+// Play runs one scripted game to completion and hands the played-out game back so
+// a caller can read its typed log (Game.Log). Recording is on by default, so the
+// log is populated without verbose stdout narration. The error is the first
+// invariant violation, matching Simulate; the game is returned in both cases so a
+// caller that only wants the log can ignore it.
+func Play(script []byte) (*engine.Game, error) {
+	return simulate(script, false)
+}
+
 // simulate is Simulate with the played-out game handed back, so a debug replay can
 // read the game log that led to a failure. With verbose set the game records that
 // log, which a soak or fuzz run does not want to pay for.

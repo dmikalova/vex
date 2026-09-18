@@ -40,12 +40,3 @@ func (e ChangeActiveHouse) Resolve(ctx *EffectContext) {
 	}
 	ctx.Resolver.SetActiveHouse(h)
 }
-
-// SetActiveHouse makes h the active player's active house for the current turn,
-// changing which house they may play and use without going through a house choice
-// (Book of leQ). It does not re-fire the "after you choose a house" triggers,
-// because no house is being chosen — the active house is simply reassigned.
-func (g *Game) SetActiveHouse(h House) {
-	g.State.ActiveHouse = h
-	g.record(HouseChosen{Player: g.State.ActivePlayer, House: h})
-}

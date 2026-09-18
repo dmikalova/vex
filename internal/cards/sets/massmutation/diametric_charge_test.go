@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Deal 1 damage to a creature and 2 damage to each of its neighbors.
+//	Play: Choose a creature. Deal 1 damage to the chosen creature and 2 damage to each of its neighbors.
 func TestDiametricCharge(t *testing.T) {
 	t.Run("deals 1 to a creature and 2 to each neighbor", func(t *testing.T) {
 		var left, mid, right ct.Card

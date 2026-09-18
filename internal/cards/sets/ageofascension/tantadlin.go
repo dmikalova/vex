@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  9
 //	Traits: Tree
 //
-//	Tantadlin deals 2 Damage when fighting.
+//	Tantadlin deals 2 damage when fighting.
 //	Fight: Your opponent discards a random card from their archives.
 var Tantadlin = set.New(
 	"Tantadlin",

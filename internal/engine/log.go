@@ -15,6 +15,24 @@ import (
 // states a bound, past-tense outcome ("Troll takes 2 damage (2 total)"), which is
 // only knowable after resolution. The two renderers share a vocabulary but
 // neither derives from the other.
+//
+// Three rules govern how a new entry is worded. They are the log's own voice, and
+// they are where the log deliberately departs from card text:
+//
+//   - MECHANICS AND KEYWORDS STAY LOWERCASE. A log line is a sentence, not a
+//     title, so it reads "Card2 gains skirmish" and "uses Card2's action
+//     ability". Card text capitalizes a keyword; the log does not, which also
+//     keeps it clear of the casing drift card text has to police.
+//   - THE SOURCE CARD COMES FIRST. "Nexus has P0 gain 2 Æmber" puts the causing
+//     card at the head of the sentence rather than burying it in a trailing
+//     clause, so a reader scanning the left edge sees what acted.
+//   - MINIMIZE LEFT-TO-RIGHT BACKTRACKING. Prefer the phrasing where no noun has
+//     to be re-resolved once read. "X exalts 2 Æmber onto Y" reads straight
+//     through; "X exalts Y with 2 Æmber" makes the reader go back to Y.
+//
+// A rendered entry is persisted prose: the web client stores the log it has
+// already rendered, so changing what an entry renders — or adding and removing
+// entries — requires bumping snapshotVersion in internal/web/game.go.
 
 // Namer resolves the ids an entry carries to the names its reader sees. Entries
 // hold LocalIDs and player numbers rather than baked strings, so a client can

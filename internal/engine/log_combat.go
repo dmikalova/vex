@@ -129,23 +129,24 @@ type AssaultDealt struct {
 	Target LocalID
 }
 
-// Text renders the Assault damage, with "assaults" as its verb.
+// Text renders the Assault damage, naming the keyword as the kind of damage it
+// is rather than inventing a verb, so it reads like every other damage line.
 func (e AssaultDealt) Text(n Namer) string {
-	return fmt.Sprintf("%s assaults %d damage to %s",
+	return fmt.Sprintf("%s deals %d assault damage to %s",
 		n.Name(e.Source), e.Amount, n.Name(e.Target))
 }
 
 // HazardousDealt narrates the pre-fight Hazardous a defender deals its attacker.
-// Hazardous has no verb form, so the keyword is the sentence's subject instead.
 type HazardousDealt struct {
 	Source LocalID
 	Amount int
 	Target LocalID
 }
 
-// Text renders the Hazardous damage, naming the keyword as its subject.
+// Text renders the Hazardous damage, naming the keyword as the kind of damage it
+// is, so the dealing creature stays the subject as in every other damage line.
 func (e HazardousDealt) Text(n Namer) string {
-	return fmt.Sprintf("%s's hazardous deals %d damage to %s",
+	return fmt.Sprintf("%s deals %d hazardous damage to %s",
 		n.Name(e.Source), e.Amount, n.Name(e.Target))
 }
 

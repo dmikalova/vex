@@ -261,13 +261,13 @@ func TestForgeKeyPaysTheSurcharge(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	ForgeKey{Extra: 6}.Resolve(ctx)
-	if g.State.Keys[0] != 0 {
-		t.Fatalf("keys = %d, want 0 — the surcharge is unaffordable", g.State.Keys[0])
+	if g.Keys(0) != 0 {
+		t.Fatalf("keys = %d, want 0 — the surcharge is unaffordable", g.Keys(0))
 	}
 
 	ForgeKey{Extra: 2}.Resolve(ctx)
-	if g.State.Keys[0] != 1 {
-		t.Errorf("keys = %d, want 1", g.State.Keys[0])
+	if g.Keys(0) != 1 {
+		t.Errorf("keys = %d, want 1", g.Keys(0))
 	}
 	if g.State.Aember[0] != 0 {
 		t.Errorf("Æmber = %d, want 0", g.State.Aember[0])
@@ -287,8 +287,8 @@ func TestForgeKeyReducedBelowTheSurcharge(t *testing.T) {
 		ReducedBy: CardsInHand{Player: Controller, House: AnyHouse},
 	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 
-	if g.State.Keys[0] != 1 {
-		t.Errorf("keys = %d, want 1", g.State.Keys[0])
+	if g.Keys(0) != 1 {
+		t.Errorf("keys = %d, want 1", g.Keys(0))
 	}
 	if g.State.Aember[0] != 0 {
 		t.Errorf("Æmber = %d, want 0 — the cost floor is the key cost", g.State.Aember[0])
@@ -779,12 +779,12 @@ func TestSkipForgePhase(t *testing.T) {
 	}
 	g.EndPlayPhase(0)
 
-	keysBefore := g.State.Keys[1]
+	keysBefore := g.Keys(1)
 	g.StartTurn(1)
 	if g.State.SkipForgeNext[1].Value {
 		t.Error("the skip should be consumed when the turn begins")
 	}
-	if g.State.Keys[1] != keysBefore {
+	if g.Keys(1) != keysBefore {
 		t.Error("the opponent should not have forged a key on the skipped turn")
 	}
 }
@@ -808,9 +808,9 @@ func TestSkipsForgeConstant(t *testing.T) {
 	}
 
 	g.State.Aember[0] = 6
-	keysBefore := g.State.Keys[0]
+	keysBefore := g.Keys(0)
 	g.forgePhase(0)
-	if g.State.Keys[0] != keysBefore {
+	if g.Keys(0) != keysBefore {
 		t.Error("a player skipping their forge phase should not forge a key")
 	}
 	if g.State.Aember[0] != 6 {
@@ -853,7 +853,7 @@ func TestForgeAemberGain(t *testing.T) {
 
 	g.State.Aember[0] = 6
 	g.forgeKey(0)
-	if g.State.Keys[0] != 1 {
+	if g.Keys(0) != 1 {
 		t.Fatal("the payer should still forge their key")
 	}
 	if g.State.Aember[0] != 0 {

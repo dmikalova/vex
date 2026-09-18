@@ -102,6 +102,16 @@ func (g *game) setStatus(msg string) {
 	})
 }
 
+// setNotice raises a standing message that stays up until clearNotice takes it
+// down. Use it for a fault the player must act on — the save no longer being
+// written, a set the deck generator does not know — where setStatus's 5s fade
+// would let the fault pass unread.
+func (g *game) setNotice(msg string) { g.notice = msg }
+
+// clearNotice takes the standing notice down, for when the fault behind it is
+// resolved.
+func (g *game) clearNotice() { g.notice = "" }
+
 // markTakeoff records where a card sits in hand as it is played, so flyIntoPlay
 // can start the board card from there. A card with no hand slot on screen (or a
 // render with no page behind it, as on the server) simply does not fly.
@@ -186,12 +196,15 @@ func (g *game) rebuildFromLog() bool {
 	if g.chooser != nil {
 		g.chooser.drain()
 	}
-	eg, houses, mavericks, legacies, rosters := match.NewWithSets(
+	eg, houses, mavericks, legacies, rosters, err := match.NewWithSets(
 		"Player 1",
 		"Player 2",
 		g.seed,
 		g.setNames,
 	)
+	if err != nil {
+		return false
+	}
 	rc := &replayChooser{inputs: g.inputs}
 	eg.SetChooser(0, rc)
 	eg.SetChooser(1, rc)
@@ -344,7 +357,7 @@ func (g *game) computeFlashes() {
 			g.poolParity[p] = !g.poolParity[p]
 			g.poolFlash[p] = true
 		}
-		if g.g.State.Keys[p] > prev.Keys[p] {
+		if g.g.State.KeyCount(p) > prev.KeyCount(p) {
 			g.keyParity[p] = !g.keyParity[p]
 			g.keyFlash[p] = true
 		}

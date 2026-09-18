@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Deal 1 damage to a creature and 2 damage to each of its neighbors.
+//	Play: Choose a creature. Deal 1 damage to the chosen creature and 2 damage to each of its neighbors.
 var DiametricCharge = set.New(
 	"Diametric Charge",
 	card.House.Logos,

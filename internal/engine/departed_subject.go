@@ -17,7 +17,7 @@ type departedSubject struct {
 // play, so a following effect in the same resolution that keeps referencing it (as
 // It or Source) reads its last-known power, Æmber-on-card, and damage instead of
 // its zeroed core. Call it just before the effect removes the card — Destroy
-// captures every creature it is about to destroy, DamageThen{IfDestroyed} captures
+// captures every creature it is about to destroy, DealDamage{IfDestroyed} captures
 // the creature it is about to deal lethal damage to.
 func captureDepartingSubject(ctx *EffectContext, id LocalID) {
 	if ctx.Departed == nil {

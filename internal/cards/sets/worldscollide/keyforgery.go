@@ -25,7 +25,7 @@ var Keyforgery = set.New(
 			card.OpponentNamesHouse{},
 			card.RevealRandomFromHand{},
 			card.Conditional{
-				Cond: card.ItIsNotOfNamedHouse{Subject: card.Subject.ThatCard},
+				Cond: card.ItIsNotOfNamedHouse{Noun: card.ItNoun.ThatCard},
 				Then: card.Sequence{Effects: []card.Effect{
 					card.Destroy{Target: card.Target.This},
 					card.CancelForge{},

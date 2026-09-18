@@ -15,7 +15,7 @@ import (
 //	Power:  12
 //	Traits: Beast
 //
-//	Galeatops deals 4 Damage when fighting.
+//	Galeatops deals 4 damage when fighting.
 func TestGaleatops(t *testing.T) {
 	t.Run("only deals 4 damage when fighting", func(t *testing.T) {
 		var enemy ct.Card

@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Choose up to 2 creatures. Deal 1 damage to each chosen creature. If that creature was already damaged, deal 3 damage instead.
+//	Play: Choose up to 2 creatures. Deal 1 damage to each chosen creature. Deal 3 damage instead to each chosen creature that was already damaged.
 func TestFesteringTouch(t *testing.T) {
 	var clean, hurt ct.Card
 	h := ct.Play(t, ct.Setup{
