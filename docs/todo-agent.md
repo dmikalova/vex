@@ -29,6 +29,66 @@ human's personal list, which agents never write into. Rules:
 
 ---
 
+## Closed effect catalog + a `RulesBearing` marker (ADR 0018)
+
+**Decided** (the human said yes to the marker). Two halves, in this order: the
+catalog first because the marker has nothing to iterate over without it.
+
+1. **Build the closed catalog of `Effect` implementations.** `ruleterm_test.go`
+   currently exempts effects from `TestClosedCatalogsAreComplete` because there is
+   no enumeration of them — there are ~131 implementations and nothing lists them.
+   ADR 0018 makes the rulebook complete _by construction_, so this hole means an
+   effect node can ship a new rule with no rulebook term and the build stays green.
+   The catalog is mechanical to build and also unblocks totality tests for the
+   Visitor passes (the AI/MCTS scoring walk and any future static analysis), which
+   today silently fall through their `default:` for a node nobody added.
+
+2. **Gate rulebook-term enforcement behind a per-node `RulesBearing` marker.** Do
+   _not_ force every node in the catalog to carry a term: `Sequence`,
+   `ChooseHouseThen`, `Conditional` and friends are plumbing — they express no
+   rule a player needs described, and demanding a term for them would produce
+   filler rulebook entries, which is worse than the hole. The marker names the
+   nodes that _do_ carry a rule, and only those are checked for a term.
+
+## `ForgeKey` bakes "purge self" into a shared node
+
+**Decided: strip the purge out of `ForgeKey` and push self-removal up to the two
+cards that actually print it.** Found while diagnosing a sim invariant; not fixed
+in-session because `internal/engine` was contended and the blast radius is 17
+cards' generated text.
+
+What is wrong today, in `internal/engine/effect_forge.go`:
+
+- `Text()` unconditionally appends `" -> purge " + SelfName`.
+- `Resolve()` ends with `if forged { PurgeSource{}.Resolve(ctx) }`.
+
+That is a card's behavior welded into a shared mechanic. The evidence
+(`mage tool:lookup` against the provenance files):
+
+- **Key Charge** (CotA #325) prints "Play: Lose 1 Aember. If you do, you may forge
+  a key at current cost." — **no self-removal at all**. Vactrol currently renders
+  `… -> purge Key Charge.`
+- **Imperial Forge** (WC #222) — no self-removal either.
+- **Epic Quest** (CotA #231) and **[REDACTED]** (AoA #139) say **sacrifice**,
+  which [card-wording-rules.md](card-wording-rules.md) renders as **`Destroy
+<self>`**, not purge.
+
+Nothing in [keyforge-divergences.md](keyforge-divergences.md) licenses the purge,
+so it is a bug, not a recorded divergence.
+
+The work: remove the purge from `ForgeKey.Text()` and `ForgeKey.Resolve()`, add an
+explicit `Destroy <self>` to Epic Quest and [REDACTED], then `mage gen` and fix the
+card tests it moves. The 17 users of `ForgeKey{` are `imperial_forge`,
+`data_forge`, `forging_an_alliance`, `obsidian_forge`, `the_colosseum`, `triumph`,
+`might_makes_right`, `nightforge`, `redacted`, `epic_quest`, `chota_hazri`,
+`key_charge`, `key_abduction`, `key_of_darkness`, `turnkey`, `desire`, `keyfrog` —
+check each against its printed text while you are there.
+
+Trap for whoever picks this up: `redacted.go`'s generated doc comment reads
+"… -> purge [REDACTED]" although the card definition contains no purge. The purge
+comes from inside `ForgeKey.Text()`. Also, `[REDACTED]` is a real card name, not a
+log redaction.
+
 ## gocognit gate: one exclusion left, and the next ratchet step
 
 The engine and web passes are done: the `gocognit` gate's global `min-complexity`
@@ -273,10 +333,13 @@ acceptable; flat pointerless state (ADR 0005) is not negotiable.
     `CommandFight`, `CommandEndTurn` (suspend.go), performed by
     `Game.ApplyAction(Command)` (command_action.go), which mirrors `replay.go`'s
     `dispatchRoot` so that hand-rolled driver can fold into it. The Command struct
-    grew the root fields it needs (`House`, `Hand`, `Left`, `Card2`). **Still
-    missing:** the **13 manual/debug roots** have no Command kind yet — build them
-    with the web migration (below), where the manual-mode decision applies, so the
-    legal-play path never has to see them.
+    grew the root fields it needs (`House`, `Hand`, `Left`, `Card2`). The **13
+    manual/debug roots** now also have Command kinds (`CommandSetManual`,
+    `CommandManual{Move,Ready,Exhaust,Attach,Place,Detach,Amber,Unforge,ForgeColor,Chains,House,AddCard}`)
+    plus the fields they need (`Player`, `Delta`, `Name`), performed by
+    `Game.ApplyManual(cmd, resolveCard)` (command_manual.go), mirroring
+    `replay.go`'s `dispatchManual`. `LegalActions` never offers a manual kind, so
+    the sim never drives manual mode (`TestLegalActionsNeverOffersManualKinds`).
   - **`session.Action` is a fixed closure, not a live driver.** `Stepper` takes one
     `func(*Game)` that must already encode the whole turn loop, and `Session`
     exposes no way to say "run this root action next". A web client needs each
@@ -311,16 +374,29 @@ acceptable; flat pointerless state (ADR 0005) is not negotiable.
     documented fallback and is fully expressible as a run of `CommandPickCard`s.
     The web's single drag-to-order widget is a UI affordance over that run, not a
     missing command kind.
-  - **Manual/debug mode is the open question.** 13 `Manual*` calls edit state with
-    no rule checks and sit entirely outside `Request`/`Command`. Either they become
-    command kinds (and a saved match can contain force-edits) or manual mode is
-    declared a web-only escape hatch that voids the Record.
+  - **Manual/debug mode: command kinds landed; how the SESSION applies them is the
+    open design knot.** The 13 `Manual*` edits now have Command kinds and
+    `Game.ApplyManual` (above). But `internal/session` cannot yet apply one: its
+    `Apply(cmd)` requires `request.IsLegal(cmd)`, and a manual force-edit answers no
+    `Request` — it is an out-of-band poke, not a turn-loop answer. Worked-out design
+    for the web rewrite: (1) `Session.ApplyManual(cmd)` applies the edit directly to
+    the live `s.game` via `game.ApplyManual` (the stepper goroutine is parked in
+    `yield`, so `s.game` is not being touched concurrently) and records it with
+    `barrier=false`; (2) replay (`start`/`Undo`/`Load`) routes each recorded command
+    by kind — manual kinds via `ApplyManual`, everything else via the stepper; (3)
+    the `resolveCard` func for `CommandManualAddCard` is injected into the `Session`
+    (it needs the card pool the engine cannot hold); (4) because an out-of-band edit
+    staled the cached `RequestAction`, `Session.Apply` validates a `RequestAction`
+    command against **live** `s.game.LegalActions(player)` rather than the cached
+    `request.Actions` slice — the stepper's `ChooseAction` does not validate and
+    `ApplyAction` re-checks live, so a manual edit between the yield and the answer
+    is safe.
   - **Undo granularity differs.** Web undo works at root-action boundaries
     (`rootMarks`); `Session.Undo(n)` works at raw command index. Once root actions
     are commands the web still needs its own boundary bookkeeping on top.
-  - **Also update ADR 0039's and ADR 0040's stale opening lines** ("the engine code
-    that realizes it does not exist yet") when this lands.
-  - **PROGRESS (this session): the whole engine-side seam is now complete.** The 11
+  - **Also update ADR 0039's and ADR 0040's stale opening lines** — DONE: both now
+    say the engine seam exists and only the web migration remains.
+  - **PROGRESS (earlier session): the whole engine-side seam is complete.** The 11
     legal root actions have Command kinds + fields (suspend.go), `Game.ApplyAction`
     performs one (command_action.go, mirrors `dispatchRoot`), `Game.LegalActions`
     enumerates the legal set (bound to ApplyAction by
@@ -328,12 +404,40 @@ acceptable; flat pointerless state (ADR 0005) is not negotiable.
     `suspendChooser.ChooseAction` surface that set through the Stepper, and
     `Game.RunMatch` is the canonical turn loop that owns `StartGame` and drives the
     match through `ChooseAction`/`ApplyAction` — all at 100% coverage.
-    **Remaining — only the web migration is left:** add the 13 manual Command kinds
-    (unreachable from `LegalActions`, so the sim never sees them; assert it), point
-    the web client at `internal/session` with `RunMatch` as its `Action`, delete
-    `internal/web/replay.go`, and update ADR 0039/0040's stale opening lines. The
-    web still needs its own root-action undo-boundary bookkeeping on top of
-    `Session.Undo`'s raw-command-index granularity (`rootMarks`).
+  - **PROGRESS (this session): the manual/debug command vocabulary landed too.**
+    The 13 manual Command kinds + fields (suspend.go), `Game.ApplyManual`
+    (command_manual.go), and the sim-safety assertion
+    (`TestLegalActionsNeverOffersManualKinds`) are in at 100% coverage, and the
+    ADR opening lines are corrected. So the **entire engine + ADR side is done**.
+    **Remaining — only the web client rewrite is left, and it is a large,
+    browser-validated epic** (the human gave the green light to use Playwright):
+    - Extend `internal/session` with the manual-command support designed above
+      (`ApplyManual` + replay routing + injected `resolveCard` + live
+      `RequestAction` validation). `internal/session` is ungated — test it well but
+      100% is not required.
+    - Invert the web client's concurrency model: today it drives each root action on
+      a background goroutine and renders prompts through a **live** `webChooser`
+      that posts-and-blocks and records its own `input`s. The session model has no
+      live chooser — prompts surface as `session.Pending()` `Request`s answered by
+      `session.Apply(cmd)`, and `RunMatch` (not the client) owns the turn loop. So
+      every click becomes a `Command` fed to `session.Apply`, and the prompt UI
+      reads `Pending()` instead of `g.choosing`/`chooserCandidates`. This touches
+      game_action.go, game_chooser.go, game_play.go, game_manual.go,
+      game_persist.go, game_setup.go, undo/redo, and the flash/log-group
+      bookkeeping.
+    - Persistence: `save`/`resume` write/read `session.Record` (seed, sets,
+      `[]Command`) instead of the `[]input` snapshot; bump `snapshotVersion`.
+    - Undo/redo: `Session.Undo(n)` works at raw command index; the web still needs
+      its own root-action-boundary bookkeeping (`rootMarks`) on top, plus a redo
+      stack (session has no redo).
+    - Delete `internal/web/replay.go` and rewrite the ~310 web tests that reference
+      `g.inputs`, `replayGame`, `driveReplay`, `rootMarks`, and the `input` type.
+    - Validate with the go-app unit tests AND Playwright (browser). Must build for
+      host AND js/wasm (`mage webWasm`).
+      This was NOT started this session: it is architecturally loaded (the
+      concurrency inversion), can only be fully validated in a browser, and half a
+      rewrite would leave the web package non-compiling. It is a coherent next chunk,
+      ideally driven with the human present for the Playwright loop.
   - **DECIDED (human, this session): build `RequestAction` in the engine.** One
     command vocabulary, not two — a second root-command type beside
     `Request`/`Command` would recreate the two-sources-of-truth problem ADR 0039
@@ -346,9 +450,7 @@ acceptable; flat pointerless state (ADR 0005) is not negotiable.
     the reproduction worth keeping, so the Record must carry the force-edits rather
     than be voided by them. It also opens manual mode as a source for the style
     page's log gallery (ADR 0046). **Constraint: the simulator must never run with
-    manual mode** — `internal/sim` drives legal play only, so the manual command
-    kinds must be unreachable from the sim's driver and a test should assert it.
-    Decide whether that is a build-tag split, a flag on the driver, or a
-    `LegalCommands()` that simply never offers them (preferred: the last, since it
-    keeps one vocabulary and makes the restriction a property of legality rather
-    than of who is asking).
+    manual mode** — RESOLVED as chosen: `LegalActions` simply never offers a manual
+    command kind, so the restriction is a property of legality rather than of who is
+    asking, and one command vocabulary is kept. Asserted by
+    `TestLegalActionsNeverOffersManualKinds`.

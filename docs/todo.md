@@ -8,6 +8,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 - rename to Vex
 
+- Niffle ape missing glyphs
 - Decompose WithEachPlayerAbility
 - golden spiral prompt buttons are on any card I click - should be stuck on mack
 - axiom/troop call - generic choose a  creature for ward and bonus damage in prompt

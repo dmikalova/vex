@@ -1,7 +1,7 @@
 # Build the WebAssembly client and the native server that serves it, then ship
 # both on a minimal distroless image. The server honors $PORT (set by Cloud Run).
 
-FROM golang:1.26 AS build
+FROM golang:1.27 AS build
 WORKDIR /app
 
 COPY go.mod go.sum ./

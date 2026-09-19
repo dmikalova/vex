@@ -28,6 +28,7 @@
 coverage.*
 *.coverprofile
 profile.cov
+.goldmark-lint-cache
 
 # Web client WebAssembly build artifact (regenerate with `mage webWasm`)
 web/app.wasm

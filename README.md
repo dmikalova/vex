@@ -14,7 +14,7 @@ mage test     # run the test suite
 mage cover    # engine test coverage (kept at 100%)
 ```
 
-Requires Go 1.26+.
+Requires Go 1.27+.
 
 ## Layout
 

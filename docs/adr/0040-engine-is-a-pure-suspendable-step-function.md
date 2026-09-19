@@ -1,8 +1,10 @@
 # 40. The engine is a pure suspendable step function
 
 This decision records the target shape of the engine's resolution loop. It guides
-a staged refactor; the engine code that realizes it does not exist yet. It is the
-counterpart to ADR 0039, which makes commands the source of truth.
+a staged refactor. The engine seam that realizes it now exists — the suspendable
+`Stepper` and `Command`/`Request` step function (suspend.go), driven by
+`internal/session`; the web client's migration onto it is the remaining step. It
+is the counterpart to ADR 0039, which makes commands the source of truth.
 
 ## Context
 

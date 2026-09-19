@@ -61,6 +61,43 @@ const (
 	CommandFight
 	// CommandEndTurn ends the active player's play phase and hands off the turn.
 	CommandEndTurn
+
+	// The kinds below are MANUAL/DEBUG roots — a playtester's force-edit that
+	// deliberately bypasses the rules (ADR 0039: "a saved match can contain
+	// force-edits"). Each maps to one engine Manual* method through ApplyManual
+	// (command_manual.go); they are recorded and replayed like any other command so
+	// a match holding force-edits still rebuilds from its log. They are NOT root
+	// actions: LegalActions never offers one, so the sim never drives manual mode
+	// (TestLegalActionsNeverOffersManualKinds). Appended last so no earlier kind's
+	// persisted value shifts. Only the field each names is meaningful.
+
+	// CommandSetManual toggles manual mode; Left is whether to turn it on.
+	CommandSetManual
+	// CommandManualMove moves the card Card to the resting zone Index (a ManualZone).
+	CommandManualMove
+	// CommandManualReady clears the exhausted flag on the card Card.
+	CommandManualReady
+	// CommandManualExhaust sets the exhausted flag on the card Card.
+	CommandManualExhaust
+	// CommandManualAttach threads the card Card2 under the host Card, face down when
+	// Left.
+	CommandManualAttach
+	// CommandManualPlace drops the card Card into play at battleline position Index.
+	CommandManualPlace
+	// CommandManualDetach sends the attached card Card to its owner's hand.
+	CommandManualDetach
+	// CommandManualAmber adjusts Player's Æmber pool by the signed Delta.
+	CommandManualAmber
+	// CommandManualUnforge removes Player's most recently forged key.
+	CommandManualUnforge
+	// CommandManualForgeColor forges a key of colour Index (a KeyColor) for Player.
+	CommandManualForgeColor
+	// CommandManualChains adjusts Player's chain count by the signed Delta.
+	CommandManualChains
+	// CommandManualHouse sets the active player's active house to House.
+	CommandManualHouse
+	// CommandManualAddCard registers the card named Name into Player's hand.
+	CommandManualAddCard
 )
 
 // Command is one player input crossing the engine boundary — an answer to a
@@ -77,6 +114,13 @@ type Command struct {
 	Hand  int     // the Play*/Discard kinds: the hand index to act on.
 	Left  bool    // CommandPlayCreature: place on the left flank.
 	Card2 LocalID // CommandFight: the enemy creature Card fights.
+
+	// Manual/debug fields (see the manual CommandKinds above). Left doubles as the
+	// on/face-down flag for CommandSetManual and CommandManualAttach; Card/Card2/
+	// Index/House carry the manual target the same way they carry a root action's.
+	Player int    // the manual kinds that name a player (Æmber, chains, keys, add).
+	Delta  int    // CommandManualAmber / CommandManualChains: the signed delta.
+	Name   string // CommandManualAddCard: the card definition's name.
 }
 
 // RequestKind tags what sort of decision a Request marks.
