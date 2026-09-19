@@ -427,7 +427,7 @@ func fetchDecksPage(
 			return nil, throttled, fmt.Errorf(
 				"decks feed status %d: %s",
 				resp.StatusCode,
-				strings.TrimSpace(string(body)),
+				string(bytes.TrimSpace(body)),
 			)
 		}
 		var out mvResponse
@@ -892,7 +892,7 @@ func writeCatalog(path string, cards []catalogCard) error {
 		_ = f.Close()
 		return err
 	}
-	if _, err := f.Write([]byte("\n")); err != nil {
+	if _, err := f.WriteString("\n"); err != nil {
 		_ = f.Close()
 		return err
 	}

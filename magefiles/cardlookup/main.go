@@ -46,6 +46,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -389,7 +390,7 @@ func hasBuildTodo(path string) bool {
 	if err != nil {
 		return false
 	}
-	return strings.HasPrefix(strings.TrimSpace(string(data)), "//go:build todo")
+	return strings.HasPrefix(string(bytes.TrimSpace(data)), "//go:build todo")
 }
 
 // coverage prints, per source set, how many cards are covered by an implemented

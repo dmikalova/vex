@@ -141,7 +141,7 @@ func (g *generator) filteredNames() []string {
 // deckHasCard reports whether any pod holds a card of the given name.
 func deckHasCard(deck *Deck, name string) bool {
 	for i := range PodCount {
-		for _, s := range deck.Pods[i].Slots {
+		for _, s := range &deck.Pods[i].Slots {
 			if s.Card.Name == name {
 				return true
 			}
@@ -154,7 +154,7 @@ func deckHasCard(deck *Deck, name string) bool {
 func deckCountMatching(deck *Deck, match func(engine.CardDefinition) bool) int {
 	n := 0
 	for i := range PodCount {
-		for _, s := range deck.Pods[i].Slots {
+		for _, s := range &deck.Pods[i].Slots {
 			if match(s.Card) {
 				n++
 			}
@@ -170,7 +170,7 @@ func deckCountMatching(deck *Deck, match func(engine.CardDefinition) bool) int {
 func (g *generator) filteredCandidates(deck *Deck, fc FilteredCluster) []Card {
 	inDeck := map[string]bool{}
 	for i := range PodCount {
-		for _, s := range deck.Pods[i].Slots {
+		for _, s := range &deck.Pods[i].Slots {
 			inDeck[s.Card.Name] = true
 		}
 	}

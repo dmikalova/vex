@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 // MoveAember moves Æmber off a card the controller picks and deposits it
 // elsewhere — into a player's pool (Selwyn the Fence moves 1 from a friendly card
@@ -82,7 +85,7 @@ func (e MoveAember) Text() string {
 		return fmt.Sprintf("move %s the \u00c6mber from %s to %s, %s",
 			e.Fraction.word(), e.From.Text(), e.destText(), e.Fraction.roundingPhrase())
 	}
-	amount := fmt.Sprintf("%d", e.Amount)
+	amount := strconv.Itoa(e.Amount)
 	if e.All {
 		amount = "all"
 	}

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -106,7 +107,7 @@ func spellCounters(n int) string {
 	if w, ok := counterWords[n]; ok {
 		return w
 	}
-	return fmt.Sprintf("%d", n)
+	return strconv.Itoa(n)
 }
 
 // Resolve places the counters on each selected creature, scaled by Per.

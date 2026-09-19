@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -515,9 +516,9 @@ func renderCardText(def *CardDefinition, withName bool) string {
 		field{"Rarity", string(def.Rarity)},
 	)
 	if def.Type == Creature {
-		fields = append(fields, field{"Power", fmt.Sprintf("%d", def.Power)})
+		fields = append(fields, field{"Power", strconv.Itoa(def.Power)})
 		if def.Armor > 0 {
-			fields = append(fields, field{"Armor", fmt.Sprintf("%d", def.Armor)})
+			fields = append(fields, field{"Armor", strconv.Itoa(def.Armor)})
 		}
 	}
 	if len(def.Bonuses) > 0 {

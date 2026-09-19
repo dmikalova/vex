@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 // Stealing Æmber moves it from the opponent's pool into your own. You can only
 // steal as much Æmber as the opponent actually has. How much is stolen is either
@@ -62,7 +65,7 @@ func (e StealAember) Text() string {
 	}
 	body := forEach(e.Per, verb+object)
 	if e.Or.set() {
-		body += e.Or.tail(fmt.Sprintf("%d", e.Or.Amount))
+		body += e.Or.tail(strconv.Itoa(e.Or.Amount))
 	}
 	return body
 }

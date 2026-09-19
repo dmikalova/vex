@@ -232,7 +232,7 @@ func TestPlaceFilteredMatchNative(t *testing.T) {
 		t.Fatal("expected native placement to succeed")
 	}
 	found := false
-	for _, s := range deck.Pods[0].Slots {
+	for _, s := range &deck.Pods[0].Slots {
 		if s.Card.Name == "UpD" {
 			found = true
 			if s.Maverick {
@@ -254,7 +254,7 @@ func TestPlaceFilteredMatchMaverick(t *testing.T) {
 		t.Fatal("expected maverick placement to succeed")
 	}
 	for i := range PodCount {
-		for _, s := range deck.Pods[i].Slots {
+		for _, s := range &deck.Pods[i].Slots {
 			if s.Card.Name == "UpM" {
 				if !s.Maverick || s.Card.House != deck.Pods[i].House {
 					t.Errorf("UpM not rehoused as maverick: %+v", s)

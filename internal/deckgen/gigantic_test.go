@@ -23,7 +23,7 @@ func giganticBaseCard(name string, h engine.House) Card {
 }
 
 func countRoles(pod HousePod) (bases, arts int) {
-	for _, s := range pod.Slots {
+	for _, s := range &pod.Slots {
 		switch s.Card.GiganticRole {
 		case engine.GiganticBase:
 			bases++

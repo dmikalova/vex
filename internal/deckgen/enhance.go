@@ -24,7 +24,8 @@ func (g *generator) applyEnhancements(deck *Deck) {
 	// defs shallowly, so two slots of the same card share one Bonuses backing array
 	// until this pass gives each its own.
 	for _, s := range slots {
-		s.Card.Bonuses = append([]engine.BonusIcon(nil), s.Card.Bonuses...)
+		s.Card.Bonuses = make([]engine.BonusIcon, len(s.Card.Bonuses))
+		copy(s.Card.Bonuses, s.Card.Bonuses)
 	}
 	var icons []engine.BonusIcon
 	for _, s := range slots {

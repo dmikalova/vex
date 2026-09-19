@@ -254,7 +254,8 @@ func (e chooseFromTopOfDeck) resolve(ctx *EffectContext) {
 	) == 1 {
 		player = ctx.Opponent()
 	}
-	top := append([]LocalID(nil), deckTop(ctx, player, e.amount)...)
+	top := make([]LocalID, len(deckTop(ctx, player, e.amount)))
+	copy(top, deckTop(ctx, player, e.amount))
 	if e.public {
 		if len(top) > 0 {
 			ctx.It, ctx.HasIt = top[0], true

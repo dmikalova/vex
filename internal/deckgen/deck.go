@@ -60,8 +60,8 @@ type Slot struct {
 // Cards returns the deck's 36 card definitions, pod by pod, in order.
 func (d Deck) Cards() []engine.CardDefinition {
 	out := make([]engine.CardDefinition, 0, DeckSize)
-	for _, pod := range d.Pods {
-		for _, s := range pod.Slots {
+	for _, pod := range &d.Pods {
+		for _, s := range &pod.Slots {
 			out = append(out, s.Card)
 		}
 	}
@@ -71,7 +71,7 @@ func (d Deck) Cards() []engine.CardDefinition {
 // Houses returns the deck's three pod Houses, in pod order (sorted by name).
 func (d Deck) Houses() []engine.House {
 	hs := make([]engine.House, 0, PodCount)
-	for _, pod := range d.Pods {
+	for _, pod := range &d.Pods {
 		hs = append(hs, pod.House)
 	}
 	return hs

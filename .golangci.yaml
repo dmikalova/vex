@@ -1,7 +1,11 @@
 version: "2"
 
+run:
+  build-tags:
+    - ruleguard
+
 linters:
-  default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
   enable:
     - bodyclose
     - dupl
@@ -10,6 +14,7 @@ linters:
     - misspell
     - revive
     - unconvert
+
   settings:
     # gocognit measures cognitive (not cyclomatic) complexity: the engine's flat
     # Visitor dispatch switches (ADR 0006) stay cheap while genuinely nested logic
@@ -21,6 +26,13 @@ linters:
     # an honest one cohesive dispatch.
     gocognit:
       min-complexity: 30
+    gocritic:
+      enabled-checks:
+        - ruleguard
+      settings:
+        ruleguard:
+          rules: "ruleguard.go"
+
   exclusions:
     rules:
       # Invalid-zero enum sentinels (…Unset) are intentionally unreferenced: the
@@ -30,6 +42,7 @@ linters:
       - linters:
           - unused
         text: "const \\w+Unset is unused"
+
       # The engine and card facade deliberately use rulebook-first / imperative doc
       # comments (e.g. "// stun a creature ...", "// A Before Fight ability
       # resolves ...") and section-grouped type aliases, rather than the Go-doc
@@ -39,17 +52,20 @@ linters:
       - linters:
           - revive
         text: "should be of the form"
+
       # Set packages carry no package doc comment by design — each holds only
       # self-registering card vars.
       - linters:
           - revive
         path: internal/cards/sets/
         text: "should have a package comment"
+
       # Table-driven tests accrue high cognitive complexity from their case lists,
       # not tangled logic, so exempt test files from the gocognit gate.
       - linters:
           - gocognit
         path: _test\.go
+
       # dupl's every current hit is in a table-driven test, where near-identical
       # case blocks are the idiom, not copy-paste to refactor. Excluding test files
       # leaves zero production hits today, so the gate acts as a ratchet against new
@@ -57,9 +73,10 @@ linters:
       - linters:
           - dupl
         path: _test\.go
+
       # effectGlyphs is deferred to its own glyph-family pass (see docs/todo-agent.md):
       # it is one wide dispatch over the effect AST, so splitting it wants the glyph
       # grouping decided first. Every other function is held at 30.
       - linters:
           - gocognit
-        text: effectGlyphs
+        text: "effectGlyphs"

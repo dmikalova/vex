@@ -404,7 +404,7 @@ func fileName(name string) string {
 			prevSep = false
 		case unicode.IsSpace(r):
 			if !prevSep {
-				b.WriteRune('_')
+				b.WriteByte('_')
 				prevSep = true
 			}
 		default:

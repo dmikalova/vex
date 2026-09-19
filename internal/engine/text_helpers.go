@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -79,7 +80,7 @@ func countWord(n int) string {
 	if n == 1 {
 		return "one"
 	}
-	return fmt.Sprintf("%d", n)
+	return strconv.Itoa(n)
 }
 
 // capitalizeFirst upper-cases the first rune of s.

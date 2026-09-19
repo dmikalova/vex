@@ -617,7 +617,8 @@ func containsID(ids []engine.LocalID, id engine.LocalID) bool {
 // reorder arranges ids to match a script of def-or-handle cards; ids not named in
 // the script keep the engine's order after the named ones.
 func (h *Harness) reorder(ids []engine.LocalID, script []any) []engine.LocalID {
-	remaining := append([]engine.LocalID(nil), ids...)
+	remaining := make([]engine.LocalID, len(ids))
+	copy(remaining, ids)
 	out := make([]engine.LocalID, 0, len(ids))
 	for _, want := range script {
 		for i, id := range remaining {

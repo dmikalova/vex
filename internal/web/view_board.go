@@ -239,7 +239,8 @@ func (g *game) readableZoneIDs(z zoneView) []engine.LocalID {
 	default:
 		return nil
 	}
-	sorted := append([]engine.LocalID(nil), z.ids...)
+	sorted := make([]engine.LocalID, len(z.ids))
+	copy(sorted, z.ids)
 	sort.SliceStable(sorted, func(i, j int) bool {
 		a, b := g.g.Def(sorted[i]), g.g.Def(sorted[j])
 		if a.House != b.House {
@@ -522,7 +523,7 @@ func (g *game) renderRow(
 			app.Div().Class("card-strip").Body(
 				app.Div().Class("row-label").Body(
 					app.Span().Class("row-label-zone").Text(capitalizeFirst(zone)),
-					app.Text(fmt.Sprintf("%d", len(ids))),
+					app.Text(strconv.Itoa(len(ids))),
 					icon(zoneIcon, "row-label-icon"),
 				),
 				app.Range(ids).Slice(func(i int) app.UI {

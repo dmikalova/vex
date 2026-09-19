@@ -189,7 +189,8 @@ func (orderAllChooser) ChooseCreature(_, _ string, c []LocalID) (LocalID, bool) 
 }
 
 func (orderAllChooser) OrderCreatures(_, _ string, ids []LocalID) []LocalID {
-	out := append([]LocalID(nil), ids...)
+	out := make([]LocalID, len(ids))
+	copy(out, ids)
 	for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
 		out[i], out[j] = out[j], out[i]
 	}

@@ -9,6 +9,9 @@ require (
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/magefile/mage v1.17.2
 	github.com/maxence-charriere/go-app/v11 v11.0.5
+	github.com/quasilyte/go-ruleguard/dsl v0.3.23
+	github.com/quasilyte/go-ruleguard/rules v0.0.0-20250925135901-53ee6ef0c75c
+	github.com/quasilyte/uber-rules v0.0.0-20211221122301-454b255c313b
 	github.com/tdewolff/minify/v2 v2.24.17
 	golang.org/x/text v0.42.0
 )

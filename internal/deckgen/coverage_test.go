@@ -50,7 +50,7 @@ func TestSpecialOverlay(t *testing.T) {
 		SpecialRate:   1,
 	})
 	for _, pod := range Generate(set, 1).Pods {
-		for _, s := range pod.Slots {
+		for _, s := range &pod.Slots {
 			if !s.Special || s.Card.Name != "Special" || s.Card.House != pod.House {
 				t.Fatalf("special slot = %+v (pod %v)", s, pod.House)
 			}
@@ -70,7 +70,7 @@ func TestMaverickDraw(t *testing.T) {
 		MaverickRate:  1,
 	})
 	for _, pod := range Generate(set, 1).Pods {
-		for _, s := range pod.Slots {
+		for _, s := range &pod.Slots {
 			if s.Card.House != pod.House {
 				t.Fatalf("maverick not rehoused: %v in pod %v", s.Card.House, pod.House)
 			}

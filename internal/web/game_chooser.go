@@ -158,7 +158,8 @@ func (c *webChooser) OrderCreatures(
 	ids []engine.LocalID,
 ) []engine.LocalID {
 	outer := c.enter()
-	remaining := append([]engine.LocalID(nil), ids...)
+	remaining := make([]engine.LocalID, len(ids))
+	copy(remaining, ids)
 	ordered := make([]engine.LocalID, 0, len(ids))
 	for len(remaining) > 1 {
 		r := c.raise(source, prompt, remaining, false, true)

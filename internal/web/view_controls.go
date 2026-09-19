@@ -572,7 +572,8 @@ func (g *game) pickableHouses() []engine.House {
 	if !g.g.Manual() {
 		houses = g.g.AllowedHouses(p)
 	}
-	sorted := append([]engine.House(nil), houses...)
+	sorted := make([]engine.House, len(houses))
+	copy(sorted, houses)
 	sort.Slice(sorted, func(i, j int) bool {
 		return sorted[i].String() < sorted[j].String()
 	})

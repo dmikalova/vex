@@ -277,7 +277,7 @@ func (g *generator) clusterNames() []string {
 // podClusterFires reports whether a cluster's trigger is met in the pod: for
 // ByLead, that its lead member is present; for ByAnyMember, that any member is.
 func podClusterFires(pod HousePod, ci clusterIndex) bool {
-	for _, s := range pod.Slots {
+	for _, s := range &pod.Slots {
 		name := s.Card.Name
 		if ci.trigger == ByLead {
 			if name == ci.lead {
@@ -399,7 +399,7 @@ func freeClusterSlot(pod *HousePod, ci clusterIndex) int {
 // countMember counts how many of the pod's slots hold the named card.
 func countMember(pod HousePod, name string) int {
 	n := 0
-	for _, s := range pod.Slots {
+	for _, s := range &pod.Slots {
 		if s.Card.Name == name {
 			n++
 		}
@@ -435,7 +435,7 @@ func (g *generator) expandClusters(deck *Deck) {
 // member has been drawn into the deck; for ByLead, that the lead member has.
 func (g *generator) clusterTriggered(deck *Deck, ci clusterIndex) bool {
 	for i := range PodCount {
-		for _, s := range deck.Pods[i].Slots {
+		for _, s := range &deck.Pods[i].Slots {
 			name := s.Card.Name
 			if ci.trigger == ByLead {
 				if name == ci.lead {
@@ -457,7 +457,7 @@ func (g *generator) clusterTriggered(deck *Deck, ci clusterIndex) bool {
 // instead receives another House's member, rehoused as a maverick — the printed-
 // house rule KeyForge uses for a maverick card.
 func (g *generator) ensureClusterMember(pod *HousePod, ci clusterIndex, member Card) {
-	for _, s := range pod.Slots {
+	for _, s := range &pod.Slots {
 		if inCluster(ci, s.Card.Name) {
 			return
 		}

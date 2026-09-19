@@ -22,7 +22,7 @@ const goldmarkLintVersion = "v0.5.3"
 func Lint() error {
 	return sh.RunV("go", "run",
 		"github.com/golangci/golangci-lint/v2/cmd/golangci-lint@"+golangciLintVersion,
-		"run")
+		"run", "--fix")
 }
 
 // Markdownlint auto-fixes what it can and fails only on what it cannot. It runs

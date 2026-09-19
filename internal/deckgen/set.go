@@ -233,7 +233,8 @@ func (s Set) member(name string) bool {
 // pickHouses selects PodCount distinct Houses, weighted and honoring exclusions,
 // and returns them sorted by name.
 func (s Set) pickHouses(r *rand.Rand) []engine.House {
-	remaining := append([]engine.House(nil), s.houses...)
+	remaining := make([]engine.House, len(s.houses))
+	copy(remaining, s.houses)
 	excluded := map[engine.House]bool{}
 	picked := make([]engine.House, 0, PodCount)
 	for len(picked) < PodCount {

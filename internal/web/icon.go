@@ -1,7 +1,7 @@
 package web
 
 import (
-	"fmt"
+	"reflect"
 
 	"github.com/dmikalova/vactrol/internal/engine"
 )
@@ -1514,5 +1514,5 @@ func fallbackGlyphs(engine.Effect) []glyph {
 // effectTypeName is the effect's concrete Go type name (e.g. "engine.DealDamage"),
 // used by the totality test to name an uncovered effect.
 func effectTypeName(e engine.Effect) string {
-	return fmt.Sprintf("%T", e)
+	return reflect.TypeOf(e).String()
 }

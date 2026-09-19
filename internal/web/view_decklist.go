@@ -154,7 +154,7 @@ func (g *game) onDeckToggle(player int) app.EventHandler {
 func (g *game) deckListPopover(player int) app.UI {
 	roster := g.rosters[player]
 	cols := make([]app.UI, 0, len(roster.Houses))
-	for _, hr := range roster.Houses {
+	for _, hr := range &roster.Houses {
 		cards := hr.Cards[:]
 		sort.SliceStable(cards, func(i, j int) bool {
 			if ri, rj := typeRank(cards[i].Def.Type), typeRank(cards[j].Def.Type); ri != rj {

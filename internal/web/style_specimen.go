@@ -2,6 +2,7 @@ package web
 
 import (
 	"hash/fnv"
+	"io"
 	"math/rand"
 	"slices"
 	"strconv"
@@ -42,7 +43,7 @@ var styleSeed int64
 // sequence with every other query on the page.
 func captionSeed(caption string) int64 {
 	h := fnv.New64a()
-	_, _ = h.Write([]byte(caption))
+	_, _ = io.WriteString(h, caption)
 	return int64(h.Sum64())
 }
 

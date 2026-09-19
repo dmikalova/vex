@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
@@ -176,7 +177,7 @@ func (c *cardView) powerCounterToken() app.UI {
 			ifCls(c.PowerFlash && !c.FlashOdd, "icon--pulse-a"),
 			ifCls(c.PowerFlash && c.FlashOdd, "icon--pulse-b")),
 		app.If(n > 1, func() app.UI {
-			return app.Span().Class("card-counter-num").Text(fmt.Sprintf("%d", n))
+			return app.Span().Class("card-counter-num").Text(strconv.Itoa(n))
 		}),
 	)
 }

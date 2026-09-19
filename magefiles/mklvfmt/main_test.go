@@ -1,7 +1,7 @@
 package main
 
 import (
-	"strings"
+	"bytes"
 	"testing"
 )
 
@@ -19,9 +19,9 @@ func f() {
 	if err != nil {
 		t.Fatalf("formatSource returned error: %v", err)
 	}
-	if !strings.Contains(string(got), "P1: ct.Side{") ||
-		!strings.Contains(string(got), "House: card.House.Dis,") ||
-		!strings.Contains(string(got), "Hand:  ct.Cards(ct.Bind(&bonesaw, Bonesaw)),") {
+	if !bytes.Contains(got, []byte("P1: ct.Side{")) ||
+		!bytes.Contains(got, []byte("House: card.House.Dis,")) ||
+		!bytes.Contains(got, []byte("Hand:  ct.Cards(ct.Bind(&bonesaw, Bonesaw)),")) {
 		t.Fatalf("formatted output missing multiline keyed struct literal:\n%s", got)
 	}
 }
@@ -43,9 +43,9 @@ func f() {
 	if err != nil {
 		t.Fatalf("formatSource returned error: %v", err)
 	}
-	if !strings.Contains(string(got), "P1: ct.Side{") ||
-		!strings.Contains(string(got), "House: card.House.Dis,") ||
-		!strings.Contains(string(got), "Hand:  ct.Cards(ct.Bind(&bonesaw, Bonesaw)),") {
+	if !bytes.Contains(got, []byte("P1: ct.Side{")) ||
+		!bytes.Contains(got, []byte("House: card.House.Dis,")) ||
+		!bytes.Contains(got, []byte("Hand:  ct.Cards(ct.Bind(&bonesaw, Bonesaw)),")) {
 		t.Fatalf("formatted output changed already-correct multiline literal:\n%s", got)
 	}
 }

@@ -214,7 +214,7 @@ func serveAsset(w http.ResponseWriter, path, encoding string) bool {
 		w.Header().Set("Content-Encoding", encoding)
 	}
 	w.Header().Set("Content-Length", strconv.FormatInt(info.Size(), 10))
-	_, _ = io.Copy(w, f)
+	_, _ = f.WriteTo(w)
 	return true
 }
 
@@ -303,7 +303,7 @@ func wasmContentLength() string {
 // path here rather than to the go-app handler registered at "/".
 func serveManifest(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/manifest+json")
-	_, _ = w.Write([]byte(webManifest))
+	_, _ = io.WriteString(w, webManifest)
 }
 
 // webManifest mirrors the Handler's name, colors, and icon but sets display to

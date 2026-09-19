@@ -477,7 +477,8 @@ func (m mostPowerfulN) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	if len(ids) <= m.n {
 		return ids
 	}
-	sorted := append([]LocalID(nil), ids...)
+	sorted := make([]LocalID, len(ids))
+	copy(sorted, ids)
 	sort.SliceStable(sorted, func(i, j int) bool {
 		return ctx.Resolver.Power(sorted[i]) > ctx.Resolver.Power(sorted[j])
 	})
@@ -522,7 +523,8 @@ func (m mostPowerfulN) includes(ctx *EffectContext, ids []LocalID, id LocalID) b
 	if len(ids) <= m.n {
 		return true
 	}
-	sorted := append([]LocalID(nil), ids...)
+	sorted := make([]LocalID, len(ids))
+	copy(sorted, ids)
 	sort.SliceStable(sorted, func(i, j int) bool {
 		return ctx.Resolver.Power(sorted[i]) > ctx.Resolver.Power(sorted[j])
 	})

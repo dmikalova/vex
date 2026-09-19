@@ -249,7 +249,8 @@ func (g *Game) SetChooser(player int, c Chooser) { g.choosers[player] = c }
 // choose from. A frontend sets it so a forced active house the player does not
 // have is ignored (cannot overrides must). When unset, any house is allowed.
 func (g *Game) SetPlayerHouses(player int, houses []House) {
-	g.houses[player] = append([]House(nil), houses...)
+	g.houses[player] = make([]House, len(houses))
+	copy(g.houses[player], houses)
 }
 
 // PlayerName returns a player's display name.
@@ -348,7 +349,8 @@ func (g *Game) orderByChoice(controller int, prompt string, ids []LocalID) []Loc
 	if o, ok := g.chooserFor(controller).(Orderer); ok {
 		return o.OrderCreatures("", prompt, ids)
 	}
-	remaining := append([]LocalID(nil), ids...)
+	remaining := make([]LocalID, len(ids))
+	copy(remaining, ids)
 	ordered := make([]LocalID, 0, len(ids))
 	for len(remaining) > 1 {
 		chosen, ok := g.chooserFor(controller).ChooseCreature("", prompt, remaining)

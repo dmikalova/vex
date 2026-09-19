@@ -2,6 +2,7 @@ package card
 
 import (
 	"hash/fnv"
+	"io"
 	"math/rand"
 	"sort"
 	"strings"
@@ -101,7 +102,7 @@ func topTrait(counts map[engine.Trait]int, names map[engine.Trait][]string) engi
 	sort.Strings(seed)
 	h := fnv.New64a()
 	for _, n := range seed {
-		h.Write([]byte(n))
+		io.WriteString(h, n)
 		h.Write([]byte{0})
 	}
 	r := rand.New(rand.NewSource(int64(h.Sum64())))

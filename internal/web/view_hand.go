@@ -1,8 +1,8 @@
 package web
 
 import (
-	"fmt"
 	"sort"
+	"strconv"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
@@ -19,7 +19,7 @@ func (g *game) renderHand() app.UI {
 		app.Div().Class("card-strip").Body(
 			app.Div().Class("row-label").Body(
 				app.Span().Class("row-label-zone").Text("Hand"),
-				app.Text(fmt.Sprintf("%d", len(ids))),
+				app.Text(strconv.Itoa(len(ids))),
 				icon("zone-hand", "row-label-icon"),
 			),
 			app.Range(ids).Slice(func(i int) app.UI { return g.renderHandCard(ids[i]) }),
@@ -49,7 +49,8 @@ func (g *game) sortedArtifacts(p int) []engine.LocalID {
 // view, and the deck list. The deck in particular must not reveal its shuffled
 // order, so it is always sorted.
 func (g *game) sortByHouseTypeName(ids []engine.LocalID) []engine.LocalID {
-	ids = append([]engine.LocalID(nil), ids...)
+	ids = make([]engine.LocalID, len(ids))
+	copy(ids, ids)
 	sort.SliceStable(ids, func(i, j int) bool {
 		a, b := g.g.Def(ids[i]), g.g.Def(ids[j])
 		if a.House != b.House {

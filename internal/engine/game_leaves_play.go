@@ -441,7 +441,8 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 		return
 	}
 	g.resolveDestroyedWindow()
-	members := append([]LocalID(nil), g.destroyingWindow...)
+	members := make([]LocalID, len(g.destroyingWindow))
+	copy(members, g.destroyingWindow)
 	g.discardDestroyWindow()
 	// Close the window before the after-destruction reactions: they are a fresh
 	// event, so a destruction one of them causes opens its own new window.
