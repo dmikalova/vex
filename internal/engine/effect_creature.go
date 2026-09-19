@@ -131,10 +131,18 @@ func (e ChooseCreatureThen) validate() error {
 	return validateEffect(e.Then)
 }
 
-// Text renders the effect, e.g. "choose a creature - fully heal it".
+// Text renders the effect, e.g. "choose a creature. Fully heal it".
 func (e ChooseCreatureThen) Text() string {
-	return "choose " + e.Target.Text() + " - " + e.Then.Text()
+	return leadInSentence("choose "+e.Target.Text(), e.Then.Text())
 }
+
+// hedgedText renders the form a May wraps, where the choice is optional and so
+// its consequence must say so.
+func (e ChooseCreatureThen) hedgedText() string {
+	return hedgedLeadInSentence("choose "+e.Target.Text(), e.Then.Text())
+}
+
+func (ChooseCreatureThen) endsSentence() bool { return true }
 
 // Resolve asks for a creature, records it as "it", then resolves Then. A Target
 // that chooses nothing (no candidate) leaves Then unresolved.
@@ -511,10 +519,10 @@ func (e RepeatedFight) validate() error {
 // time".
 func (e RepeatedFight) Text() string {
 	return fmt.Sprintf(
-		"ready and fight with %s %d times, each time against a different enemy "+
+		"ready and fight with %s %s, each time against a different enemy "+
 			"creature. Resolve these fights one at a time",
 		e.Target.Text(),
-		fixedValue(e.Times),
+		countNoun(fixedValue(e.Times), "time"),
 	)
 }
 

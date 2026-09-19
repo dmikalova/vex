@@ -14,6 +14,13 @@ package engine
 // when fl is flankUnset. The engine never assumes a flank — an effect that puts a
 // creature into play without naming a side always asks (ADR 0010's invalid-zero
 // discipline, applied to placement).
+//
+// Every position is measured against the line as it stands *after* the chooser
+// answers, never the line the prompt was drawn from. Asking crosses a resolution
+// boundary that settles destroyed creatures (ADR 0029), so a line of two can be a
+// line of one by the time the answer arrives, and the right flank the prompt
+// offered is then one slot past the end
+// (TestDeployPositionMeasuresTheLineAfterThePrompt).
 func (g *Game) deployPosition(
 	player int,
 	id LocalID,
@@ -21,25 +28,23 @@ func (g *Game) deployPosition(
 	canDeploy bool,
 ) (pos int, interior bool) {
 	line := g.State.Battleline[player].slice()
-	n := len(line)
-	if n == 0 {
+	if len(line) == 0 {
 		return 0, false
 	}
 	if canDeploy && g.cat.def(id).hasKeyword(Deploy) {
 		choice := g.choosePosition(player, id, "Choose where to deploy "+g.Name(id), line)
+		n := int(g.State.Battleline[player].Count)
+		choice = min(choice, n)
 		return choice, choice > 0 && choice < n
 	}
-	switch fl {
-	case flankLeftmost:
-		return 0, false
-	case flankRightmost:
-		return n, false
-	default: // flankUnset: the play did not dictate a side, so the active player chooses.
-		if g.chooseFlank(id) == flankLeftmost {
-			return 0, false
-		}
-		return n, false
+	if fl == flankUnset {
+		// flankUnset: the play did not dictate a side, so the active player chooses.
+		fl = g.chooseFlank(id)
 	}
+	if fl == flankLeftmost {
+		return 0, false
+	}
+	return int(g.State.Battleline[player].Count), false
 }
 
 // chooseFlank asks the active player which flank a creature entering a non-empty

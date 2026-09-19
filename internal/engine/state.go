@@ -422,7 +422,7 @@ type GameState struct {
 
 	// Play-type bars. CannotPlayTypeThis[p] blocks player p from playing cards of
 	// that type this turn; CannotPlayTypeNext[p] arms that block for p's next turn
-	// (Lifeward bars creatures, Scrambler Storm bars action cards). The zero value
+	// (Lifeward bars creatures, Scrambler Storm bars Tactics). The zero value
 	// (an unset CardType) bars nothing. Like the fight bar, an effect arms it and
 	// StartTurn promotes it to that player's own next turn.
 	CannotPlayTypeThis [2]Bar[CardType]

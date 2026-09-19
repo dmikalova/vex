@@ -87,7 +87,7 @@ interesting, or brings it in line with modern errata.
   the host, so it renders with the standard `This creature gains, "…"` wrapper
   like every other granted-ability upgrade.
 - **Causal Loop** archives 2 cards, not 1. KeyForge reads `Play: Archive a card.
-Archive Causal Loop.`; Vactrol reads `Play: Archive 2 cards from your hand.
+Archive Causal Loop.`; Vactrol reads`Play: Archive 2 cards from your hand.
 Archive Causal Loop.` The card loops a card plus itself back into archives for
   no net gain, so a second card gives the loop something to carry.
 - **Keyforgery** drops the trailing `(no Æmber is spent)` clarifier. Vactrol
@@ -108,7 +108,7 @@ to another creature`. The two branches collapse into one linear sequence:
   (any creature, warded or not) then `Ward` — instead of a bespoke `MoveWard` node,
   so there is one fewer one-off mechanic to carry.
 - **Bait and Switch** reads `Steal 1 Æmber -> if your opponent has more Æmber than
-you, repeat this effect`, not KeyForge's `If your opponent has more Æmber than
+you, repeat this effect`, not KeyForge's`If your opponent has more Æmber than
 you, steal 1 Æmber. Repeat this effect`. Vactrol uniformly writes a self-repeat as
   `<do> -> if <cond>, repeat this effect` (the same shape Numquid the Fair and
   Neutron Shark use), so the steal leads and the condition gates the repeat. The
@@ -130,7 +130,7 @@ you, steal 1 Æmber. Repeat this effect`. Vactrol uniformly writes a self-repeat
   enters-play "deal damage" can destroy it, and its own Destroyed ability then
   resolves in that window).
 - **Harvest Time** reads `Choose a creature. Purge each creature that shares a
-trait with the chosen creature`, not KeyForge's `Choose a trait. Purge each card
+trait with the chosen creature`, not KeyForge's`Choose a trait. Purge each card
 with that trait`. Vactrol reuses the shared choose-a-creature-then-fold-on-a-
   shared-trait mechanic (the same `ChooseCreatureThen` + `SharingTrait` pair
   Extinction uses) instead of a bespoke choose-a-trait purge, so the purge is
@@ -140,7 +140,7 @@ with that trait`. Vactrol reuses the shared choose-a-creature-then-fold-on-a-
   Æmber for each card they controlled that was purged this way.
 - **Old Boomy** reads `Discard cards from the top of your deck until you discard a
 Brobnar card or choose to stop -> deal 2 damage to Old Boomy. Archive each card
-discarded this way`, not KeyForge's `Reveal cards from the top of your deck until
+discarded this way`, not KeyForge's`Reveal cards from the top of your deck until
 you reveal a Brobnar card or choose to stop. Deal 2 damage to Old Boomy if a
 Brobnar card was revealed. Archive each card revealed this way`. Vactrol folds the
   card into the shared deck-dig family (`DiscardUntil`, the same node Sound
@@ -180,7 +180,7 @@ a random card from their hand`, adding a self-discard before KeyForge's lone
   pool and instead pulled into **Xenos Bloodshadow**'s pod one for one, so a Toad
   only ever reaches a deck alongside the Bloodshadow it rides in with.
 - **Rustgnawer** reads `Fight: Destroy an artifact. Resolve the bonus icons on
-it`, not KeyForge's `Fight: Destroy an artifact. If that artifact had an Æmber
+it`, not KeyForge's`Fight: Destroy an artifact. If that artifact had an Æmber
 bonus, you gain that much Æmber`. Instead of refunding only the Æmber bonus,
   Vactrol resolves the whole bonus-icon strip on the destroyed artifact — capture,
   draw, and damage icons resolve too (rule 27). This is a small power increase and
@@ -188,8 +188,8 @@ bonus, you gain that much Æmber`. Instead of refunding only the Æmber bonus,
   Æmber-bonus count node. On the common case (an artifact whose only bonus is
   Æmber) the outcome is identical.
 - **J43G3R V** is mandatory and immediate: it reads `Reap: Reap with 2 non-Star
-Alliance creatures, one at a time` and `Fight: Fight with 2 non-Star Alliance
-creatures, one at a time`, not KeyForge's deferred `After Reap: You may reap with
+Alliance creatures, one at a time`and`Fight: Fight with 2 non-Star Alliance
+creatures, one at a time`, not KeyForge's deferred`After Reap: You may reap with
 up to 2 non-Star Alliance creatures this turn` (and the matching Fight permission).
   The `you may … up to 2 … this turn` permission is dropped in favor of an
   immediate use of the same creatures, one at a time — the same move already made
@@ -204,8 +204,8 @@ up to 2 non-Star Alliance creatures this turn` (and the matching Fight permissio
 - **Boosted B4-RRY** rewords both halves of its `Choose one` to reuse shared
   mechanics. Its take-control half reads `Take control of an enemy artifact. If it
 does not belong to a house on your identity, it belongs to house Shadows until it
-leaves play`, dropping KeyForge's `while under your control` scoping in favor of
-  the same `TakeControl{Forever}` + off-identity `BelongToHouse` pattern Sneklifter
+leaves play`, dropping KeyForge's`while under your control` scoping in favor of
+  the same `TakeControl{UntilCardLeavesPlay}` + off-identity `BelongToHouse` pattern Sneklifter
   uses — the control is permanent, so the house holds until the artifact leaves
   play rather than until control reverts (it never does). Its archives half reads
   `Play a random card from your opponent's archives`, dropping `as if it were
@@ -215,7 +215,7 @@ yours`; the card is played as your own but stays owned by, and returns to, the
 
 - **Animator** reads `Action: Give an artifact three +1 power counters. Move it to
 a flank of its controller's battleline as a creature with versatile for the
-remainder of the turn.` KeyForge's `it belongs to the active house` clause is
+remainder of the turn.`KeyForge's`it belongs to the active house` clause is
   re-expressed as **versatile** (the newer keyword that lets a creature be used as
   if in the active house), so the animated artifact is still usable the turn it is
   animated — a meaning-preserving reword, not a rule change. The three +1 power
@@ -227,7 +227,7 @@ remainder of the turn.` KeyForge's `it belongs to the active house` clause is
 - **Cyber-Clone** copies the purged creature's **printed** power, armor, keywords,
   and traits, not its live stats at the moment of purge. KeyForge reads `it has
 power equal to the purged creature's power, and gains that creature's armor,
-keywords, and traits`; Vactrol reads `Cyber-Clone has power equal to the same
+keywords, and traits`; Vactrol reads`Cyber-Clone has power equal to the same
 creature's printed power and gains its printed armor, keywords, and traits`. The
   purged creature is out of play, so its counters, buffs, and other live
   modifications are gone; only the printed stats from the immutable card catalog

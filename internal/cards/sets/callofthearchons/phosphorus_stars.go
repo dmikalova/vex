@@ -16,7 +16,7 @@ var PhosphorusStars = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "173"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.Stun{
 					Target: card.Target.EachCreature.House(card.Houses.Except(card.House.Self)),

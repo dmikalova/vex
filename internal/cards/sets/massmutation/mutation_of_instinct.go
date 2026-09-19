@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Connected
 //	Bonus:  Æmber
 //
-//	Play: Choose a creature - the chosen creature gains skirmish and the Mutant trait until the start of your next turn.
+//	Play: Choose a creature. The chosen creature gains skirmish and the Mutant trait until the start of your next turn.
 var MutationOfInstinct = set.New(
 	"Mutation of Instinct",
 	card.House.Untamed,

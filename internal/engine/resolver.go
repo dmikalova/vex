@@ -97,8 +97,6 @@ type CreatureReader interface {
 	// PowerCountersOn returns the net +1/-1 power counters on a creature — the tally
 	// Chonkers doubles.
 	PowerCountersOn(id LocalID) int
-	// AemberBonus returns the number of Æmber pips printed on a card.
-	AemberBonus(id LocalID) int
 	// Exhausted reports whether a creature is exhausted.
 	Exhausted(id LocalID) bool
 	// InPlay reports whether a card is still on the board, as opposed to having been
@@ -152,6 +150,10 @@ type CreatureReader interface {
 	HasBonusIcons(id LocalID) bool
 	// BonusIconCount reports how many bonus icons a card prints.
 	BonusIconCount(id LocalID) int
+	// BonusIconCountOf reports how many bonus icons of one kind a card prints; a
+	// zero (unset) kind counts every icon. Follows a gigantic base half to its
+	// linked art half (ADR 0042).
+	BonusIconCountOf(id LocalID, kind BonusIcon) int
 	// HasTrigger reports whether a card has an ability under the trigger, whether
 	// printed on it, granted by an attached upgrade, or granted by a constant
 	// ability.
@@ -186,6 +188,9 @@ type ZoneReader interface {
 	Archives(player int) []LocalID
 	// Purge returns a copy of a player's purged cards.
 	Purge(player int) []LocalID
+	// ZoneOf reports which out-of-play pile a card sits in and whose it is,
+	// reporting ok false for a card in play or in no zone at all.
+	ZoneOf(id LocalID) (player int, zone Zone, ok bool)
 	// TopOfDeck returns the top card of a player's deck without moving it,
 	// reporting whether the deck holds a card.
 	TopOfDeck(player int) (LocalID, bool)
@@ -323,10 +328,12 @@ type CreatureResolver interface {
 	// PutIntoBattlelineAsCreature turns an in-play card (an artifact, Auto-Legionary)
 	// into a creature and moves it onto a flank of its controller's battleline, the
 	// right flank when right is true. The card keeps its exhaustion and any power
-	// counters, and reads as a creature until it leaves play — or, when temporary is
-	// set, only until the current turn ends (Animator), when the ready phase reverts
-	// it to an artifact.
-	PutIntoBattlelineAsCreature(id LocalID, right bool, temporary bool)
+	// counters, and reads as a creature for the window d names: UntilCardLeavesPlay
+	// keeps it a creature until it leaves play (Auto-Legionary), while
+	// RemainderOfPlayerTurn lasts only the current turn (Animator), after which the
+	// ready phase reverts it to an artifact. Any other duration is treated as the
+	// former, since a type change has no other boundary to expire on.
+	PutIntoBattlelineAsCreature(id LocalID, right bool, d Duration)
 	// SetNamedHouse records the house a card named as it entered play, which its
 	// HouseLock then constrains for as long as the card stays in play.
 	SetNamedHouse(id LocalID, house House)
@@ -338,7 +345,7 @@ type CreatureResolver interface {
 	// battleline, an artifact into their artifact row — without changing ownership;
 	// when it later leaves play it still goes to its owner's zone. source is the
 	// card whose lasting effect holds the control, reverted when source leaves play;
-	// a permanent (Forever) control names the seized card itself as source. Control
+	// a permanent (UntilCardLeavesPlay) control names the seized card itself as source. Control
 	// stacks LIFO, so a later take takes precedence and removing it falls back to
 	// the one beneath.
 	TakeControl(id LocalID, controller int, source LocalID)
@@ -391,7 +398,7 @@ type CreatureResolver interface {
 	// traits, keywords, and triggered abilities — either until recipient leaves
 	// play (Mimic Gel) or for the remainder of the turn (Creed of Nurture) when
 	// remainderOfTurn is set. It does not copy name, power, armor, type, or house.
-	GrantTextBox(recipient, source LocalID, remainderOfTurn bool)
+	GrantTextBox(recipient, source LocalID, d Duration)
 	// CopyStats records that recipient copies source's printed stats until recipient
 	// leaves play: its power becomes source's printed power, and it gains source's
 	// printed armor, keywords, and traits — Cyber-Clone copies a creature it purges.

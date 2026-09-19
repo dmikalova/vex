@@ -39,7 +39,7 @@ func TestTeliga(t *testing.T) {
 
 		h.P1.ExpectAmber(1)
 
-		// An action card is not a creature, so it pays nothing.
+		// A Tactic is not a creature, so it pays nothing.
 		h.P2.Play(tactic)
 		h.P1.ExpectAmber(1)
 	})

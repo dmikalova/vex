@@ -16,7 +16,7 @@ var LibraryAccess = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "115"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.ForRemainderOfTurn{
 				On: card.Event.CardPlayed,
 				Do: card.Draw{Amount: 1},

@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: Reveal your opponent's hand, and you may purge a Sanctum card from your opponent's hand.
+//	Play: Reveal your opponent's hand. You may purge a Sanctum card from your opponent's hand.
 func TestImperialTraitor(t *testing.T) {
 	t.Run("purges a chosen Sanctum card from the opponent's hand", func(t *testing.T) {
 		var sanctum, shadows ct.Card

@@ -18,7 +18,7 @@ var LibraryCard = set.New(
 	card.Provenance(card.MM, "105"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.ForRemainderOfTurn{
 				On: card.Event.CardPlayed,
 				Do: card.Draw{Amount: 1},

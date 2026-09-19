@@ -26,10 +26,10 @@ var LordInvidius = set.New(
 		Target:        card.Target.This,
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Reap,
-			Effect: card.Sentences{Effects: []card.Effect{
+			Effect: card.Sequence{Effects: []card.Effect{
 				card.TakeControl{
 					Target:     card.Target.EnemyCreature.OnFlank(),
-					Duration:   card.Duration.Forever,
+					Duration:   card.Duration.UntilCardLeavesPlay,
 					AndExhaust: true,
 				},
 				card.BelongToHouse{

@@ -180,10 +180,11 @@ type Produced struct {
 	// side by a ProducedThisWay{Tally: TallyCardsPurged} (Harvest Time pays each
 	// player for their own losses).
 	Purged [2]int
-	// PurgedAemberBonus is the summed printed Æmber bonus of the cards the most
-	// recent PurgeCard removed this resolution, read by a PurgedAemberBonus count
-	// (Infurnace drains the opponent for the total bonus of the cards it purged).
-	PurgedAemberBonus int
+	// PurgedCards holds the cards the most recent PurgeCard removed this resolution,
+	// read by a PurgedBonusIcons count that totals their printed bonus icons of a
+	// kind (Infurnace drains the opponent 1 for each Æmber bonus icon on the cards it
+	// purged).
+	PurgedCards []LocalID
 	// Discarded holds the cards a DiscardTop discarded, read by a
 	// following ForEachDiscarded that acts on each (Bonkers Killing Machine
 	// destroys a creature or artifact of each discarded card's house).

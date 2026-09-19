@@ -16,7 +16,7 @@ var GatewayToDis = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "59"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.Destroy{Target: card.Target.EachCreature},
 				card.GainChains{Amount: 3},

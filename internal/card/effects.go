@@ -399,16 +399,17 @@ type (
 	PlayFrom = engine.PlayFrom
 	// PlayOrUse immediately either plays a matching card from the controller's hand
 	// or uses a matching card they have in play, in one prompt (CXO Taber's
-	// non-Star Alliance card). Except makes House the house that may not be chosen.
+	// non-Star Alliance card). Except makes House the house that may not be chosen;
+	// Grant narrows the verbs (GrantPlay, GrantUse, or both — the zero value).
 	PlayOrUse = engine.PlayOrUse
 	// PlayFromOpponent plays a card from the opponent's deck (From: card.Deck, its
 	// top card) or archives (From: card.Archives, a random card) as your own play
 	// (Murkens).
 	PlayFromOpponent = engine.PlayFromOpponent
-	// DiscardOpponentArchivesOrDeckTop discards one card from a source you pick
-	// between the opponent's archives (a random card) and their deck top, binding it
-	// as "it" for a following effect (Fidgit).
-	DiscardOpponentArchivesOrDeckTop = engine.DiscardOpponentArchivesOrDeckTop
+	// DiscardFromOpponent discards one card from a source you pick among Sources —
+	// the opponent's archives (a random card) or their deck top — binding it as "it"
+	// for a following effect (Fidgit). One source discards from it with no prompt.
+	DiscardFromOpponent = engine.DiscardFromOpponent
 	// PlayItFromOpponentDiscard plays the card in context (put there by a preceding
 	// discard) from the opponent's discard pile as your own (Fidgit plays it when it
 	// is a Tactic).
@@ -418,7 +419,7 @@ type (
 	PutUnderFromHand = engine.PutUnderFromHand
 	// PlayCardUnder plays the card placed under the resolving card.
 	PlayCardUnder = engine.PlayCardUnder
-	// TriggerGraftedPlayEffect triggers the play effect of an action card grafted
+	// TriggerGraftedPlayEffect triggers the play effect of a Tactic grafted
 	// faceup under the resolving card, leaving it grafted (Infomancer, Memolith).
 	TriggerGraftedPlayEffect = engine.TriggerGraftedPlayEffect
 	// Graft moves a target card in play faceup under the resolving card, out of
@@ -528,9 +529,7 @@ type (
 	// ForEach resolves an effect once for each of a running count, choosing
 	// afresh each time.
 	ForEach = engine.ForEach
-	// Sentences resolves several effects in order, each rendered as its own
-	// sentence rather than joined with ", and".
-	Sentences = engine.Sentences // ChooseOne offers the controller a set of alternative effects to pick from.
+	// ChooseOne offers the controller a set of alternative effects to pick from.
 	ChooseOne = engine.ChooseOne
 	// ChooseHouseThen asks the controller to choose a house, then resolves Then.
 	ChooseHouseThen = engine.ChooseHouseThen
@@ -789,9 +788,6 @@ type (
 	// sides together; its Type names the noun (unset "card", card.Type.Creature
 	// "creature").
 	CardsPurged = engine.CardsPurged
-	// PurgedAemberBonus totals the printed Æmber bonus of the cards the most recent
-	// purge removed (Infurnace).
-	PurgedAemberBonus = engine.PurgedAemberBonus
 
 	// ProducedThisWay counts a "... this way" tally an earlier effect in the same
 	// resolution recorded — creatures destroyed or shuffled home, Æmber lost, or
@@ -830,9 +826,17 @@ type (
 	PowerOfChosen = engine.PowerOfChosen
 	// TraitsOfChosen counts the traits of the creature just chosen.
 	TraitsOfChosen = engine.TraitsOfChosen
-	// BonusIconsOfChosen counts the bonus icons on the card in context — the card
-	// just discarded or revealed (Mindfire). Subject names it in the text.
-	BonusIconsOfChosen = engine.BonusIconsOfChosen
+	// BonusIconsOf counts the bonus icons on the cards its Over subject names —
+	// card.TheCardInContext for the one card just discarded or revealed (Mindfire),
+	// card.ThePurgedCards for a whole purged set (Infurnace). Kind narrows the count
+	// to one icon kind.
+	BonusIconsOf = engine.BonusIconsOf
+	// TheCardInContext is the BonusIconsOf subject naming the single card in
+	// context; its Noun names it in the printed clause.
+	TheCardInContext = engine.TheCardInContext
+	// ThePurgedCards is the BonusIconsOf subject naming every card the most recent
+	// purge removed.
+	ThePurgedCards = engine.ThePurgedCards
 	// CopiesInDiscard counts the copies of this card in your discard pile.
 	CopiesInDiscard = engine.CopiesInDiscard
 )

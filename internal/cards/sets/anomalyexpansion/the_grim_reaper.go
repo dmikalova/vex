@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Robot • Specter
 //
 //	If you are haunted, The Grim Reaper enters play ready.
-//	Reap: Purge an enemy creature, and purge a friendly creature.
+//	Reap: Purge an enemy creature. Purge a friendly creature.
 var TheGrimReaper = set.New(
 	"The Grim Reaper",
 	card.House.Brobnar,

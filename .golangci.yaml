@@ -15,8 +15,8 @@ linters:
     # Visitor dispatch switches (ADR 0006) stay cheap while genuinely nested logic
     # is flagged. 30 holds the engine's genuinely nested seams split (fight,
     # NewCard, hasKeyword, the text renderers, Target.filter, triggeredBy,
-    # RenderAbility, allowedHouses — see docs/todo-agent.md); the remaining
-    # exclusions below are the web renderers deferred to their own passes. Treat
+    # RenderAbility, allowedHouses — see docs/todo-agent.md); the one exclusion
+    # below is the effect glyph family, deferred to its own pass. Treat
     # this as a smoke detector: split a function when a reader gains from it, exempt
     # an honest one cohesive dispatch.
     gocognit:
@@ -57,21 +57,9 @@ linters:
       - linters:
           - dupl
         path: _test\.go
-      # gocognit backlog deferred to their own passes (see docs/todo-agent.md): the
-      # web glyph and rendering seams sit above 30 today. The gate holds every
-      # other function at 30 until those web passes split them.
+      # effectGlyphs is deferred to its own glyph-family pass (see docs/todo-agent.md):
+      # it is one wide dispatch over the effect AST, so splitting it wants the glyph
+      # grouping decided first. Every other function is held at 30.
       - linters:
           - gocognit
         text: effectGlyphs
-      - linters:
-          - gocognit
-        text: installTips
-      - linters:
-          - gocognit
-        text: installKeyShortcuts
-      - linters:
-          - gocognit
-        text: computeFlashes
-      - linters:
-          - gocognit
-        text: renderMarkdown

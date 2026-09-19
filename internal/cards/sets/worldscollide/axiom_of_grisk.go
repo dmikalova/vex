@@ -16,7 +16,7 @@ var AxiomOfGrisk = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, "182"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Ward{Target: card.Target.Creature},
 			card.Destroy{Target: card.Target.EachCreature.WithoutAember()},
 			card.GainChains{Amount: 2},

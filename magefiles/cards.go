@@ -76,12 +76,15 @@ func (Tool) NextCard(set *string) error {
 
 // NodeUsage reports how widely each card-facade node is used. It prints every
 // exported name in internal/card, grouped by the category its declaration block
-// documents, with the number of card definitions, total occurrences, and sets
-// that name it — rarest first, then a summary of the whole facade. Low usage is
-// not a defect on its own (half the card pool is unimplemented); it marks the
-// nodes to check are built from reusable atoms rather than hard-coding one card.
-// Pass -max=<n> to show only the nodes at most n cards use, and
-// -category=<substring> to narrow to one group, e.g.
+// documents, with how many card definitions name it (CARDS) and how many other
+// files reference it (OTHER) — the facade's own internals, the engine, the web
+// client, the tools, and every test. Rarest first, then a summary of the whole
+// facade. A name with no card uses is not dead if OTHER is non-zero: it is type
+// surface, registry plumbing, or an enum family member a card never writes. Low
+// usage is not a defect on its own either (half the card pool is unimplemented);
+// it marks the nodes to check are built from reusable atoms rather than
+// hard-coding one card. Pass -max=<n> to show only the nodes at most n cards use,
+// and -category=<substring> to narrow to one group, e.g.
 // `mage tool:nodeUsage -max=1 -category=damage`.
 func (Tool) NodeUsage(max *int, category *string) error {
 	args := []string{"run", "./magefiles/cardlookup", "node-usage"}

@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Put an enemy creature into its owner's hand, and your opponent discards a random card from their hand.
+//	Play: Put an enemy creature into its owner's hand. Your opponent discards a random card from their hand.
 func TestDoubleDoom(t *testing.T) {
 	t.Run("returns an enemy creature to hand, then a random card is discarded", func(t *testing.T) {
 		var foe ct.Card

@@ -39,9 +39,20 @@ func (g *Game) discardDestroyed(id LocalID) {
 // ward: a caller whose move is a removal attempt owes a ward check and goes
 // through leavePlayInto instead. Only discardDestroyed files directly, because the
 // destruction it completes was already attempted.
+//
+// Teardown fires the card's Leaves Play abilities while it is still listed in
+// play, so a destruction settling inside that window can file the card first —
+// Hysteria returns a creature Strange Gizmo has already destroyed, and the
+// Destroyed window discards it mid-exit. Filing it a second time would put it in
+// two piles at once, so a half teardown already filed is left where it landed
+// (TestFileFromPlaySkipsAHalfTeardownAlreadyFiled).
 func (g *Game) fileFromPlay(id LocalID, file func(half LocalID, owner int)) {
 	for _, half := range g.giganticHalves(id) {
-		file(half, g.leavePlayTeardown(half))
+		owner := g.leavePlayTeardown(half)
+		if _, _, filed := g.ZoneOf(half); filed {
+			continue
+		}
+		file(half, owner)
 	}
 }
 
@@ -154,13 +165,13 @@ func (g *Game) releaseAemberOnLeavePlay(id LocalID) {
 // into a deck, grafted — funnels through here; the resolution boundary that drove
 // the exit settles the board it left (ADR 0029).
 // A change of control is NOT an exit: the card stays in play on the other side, so
-// control uses unlistFromPlay directly and never fires Leaves Play or sheds
+// control uses removeFromPlayRows directly and never fires Leaves Play or sheds
 // counters.
 func (g *Game) removeFromPlay(id LocalID) {
 	g.emitLeavesPlay(id)
 	g.clearCounters(id)
 	g.releaseControlHeldBy(id)
-	g.unlistFromPlay(id)
+	g.removeFromPlayRows(id)
 	// An attached upgrade is listed in its host's upgrade chain, not a battleline
 	// or artifact row, so unlink it there too — otherwise a leave-play mover
 	// (ArchiveFromPlay on "each upgrade on <self>", Away Team) leaves it dangling
@@ -170,7 +181,7 @@ func (g *Game) removeFromPlay(id LocalID) {
 	g.clearControls(id)
 }
 
-// unlistFromPlay removes id from both players' battlelines and artifact rows,
+// removeFromPlayRows removes id from both players' battlelines and artifact rows,
 // without the Leaves Play teardown. It is the shared zone move under both a real
 // exit (removeFromPlay) and a change of control, which pulls a creature from one
 // side to re-add it on the other while it stays in play. A card normally appears
@@ -178,7 +189,7 @@ func (g *Game) removeFromPlay(id LocalID) {
 // ownership stays fixed, so the move must scan both rows. The card may have been
 // buffing what it leaves behind, but the resolution boundary settles that, not
 // this low-level move (ADR 0029).
-func (g *Game) unlistFromPlay(id LocalID) {
+func (g *Game) removeFromPlayRows(id LocalID) {
 	for p := 0; p < 2; p++ {
 		g.State.Battleline[p].remove(id)
 		g.State.Artifacts[p].remove(id)

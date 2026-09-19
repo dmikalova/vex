@@ -26,7 +26,7 @@ var MonumentToLudo = set.New(
 	card.LeadsCluster(clusters.Ludo),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.MoveAemberToSupply{
 				Amount: 1,
 				Target: card.Target.Creature,

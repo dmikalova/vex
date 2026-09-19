@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Bonus:  Æmber
 //
-//	This creature gains, "Before Fight: Move 1 Æmber from this creature to the creature this creature fought."
+//	This creature gains, "Before Fight: Move 1 Æmber from this creature to the creature it fights."
 func TestSirenHorn(t *testing.T) {
 	t.Run("moves 1 Æmber from its host to the creature it fights", func(t *testing.T) {
 		var host, enemy ct.Card

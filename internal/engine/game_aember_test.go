@@ -129,8 +129,8 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 			0,
 		)
 
-		if err := g.PlayAction(0, handIdx(g, 0, "Bonus")); err != nil {
-			t.Fatalf("PlayAction: %v", err)
+		if err := g.PlayTactic(0, handIdx(g, 0, "Bonus")); err != nil {
+			t.Fatalf("PlayTactic: %v", err)
 		}
 
 		if g.Aember(0) != 0 {

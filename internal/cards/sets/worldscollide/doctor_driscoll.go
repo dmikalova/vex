@@ -22,7 +22,7 @@ var DoctorDriscoll = set.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.Heal{
 				Amount: 2,
 				Target: card.Target.Creature,

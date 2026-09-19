@@ -102,7 +102,7 @@ func TestConditionalPlayBarBarsAheadPlayer(t *testing.T) {
 
 	// The bar only blocks creatures: a non-creature is still playable.
 	g.AddToHand(NewCard("act", Brobnar, Tactic, Common), 0)
-	if err := g.PlayAction(0, handIdx(g, 0, "act")); err != nil {
+	if err := g.PlayTactic(0, handIdx(g, 0, "act")); err != nil {
 		t.Errorf("actions should still be playable: %v", err)
 	}
 
@@ -702,7 +702,7 @@ func TestConstantText(t *testing.T) {
 		),
 	)
 	if got := constantText(&blank); got !=
-		"Each artifact's text box is considered blank (except for traits)." {
+		"Each artifact's text box is considered blank, except for traits." {
 		t.Errorf("blank-text constant = %q", got)
 	}
 }
@@ -768,6 +768,64 @@ func TestConstantAssaultGrant(t *testing.T) {
 	}
 	if got := g.assault(far); got != 0 {
 		t.Errorf("distant creature assault = %d, want 0", got)
+	}
+}
+
+// TestUpgradeStatBonusHonoursWhileOnFlankForEveryStat pins that a WhileOnFlank
+// upgrade suspends every stat it grants, not just power and armor. Assault,
+// Hazardous, and Splash used to read Static directly and applied their bonuses
+// wherever the host stood; no printed card combines WhileOnFlank with those stats
+// yet, so nothing caught it.
+func TestUpgradeStatBonusHonoursWhileOnFlankForEveryStat(t *testing.T) {
+	flankOnly := NewCard(
+		"Flank Rig",
+		Sanctum,
+		Upgrade,
+		Common,
+		WithStatic(StaticModifier{
+			PowerBonus:        1,
+			ArmorBonus:        1,
+			AssaultBonus:      2,
+			HazardousBonus:    3,
+			SplashAttackBonus: 4,
+			WhileOnFlank:      true,
+		}),
+	)
+
+	g := NewGame("A", "B", 1)
+	host := g.AddToBattleline(testCreature("host", 3), 0)
+	g.AttachUpgrade(host, g.Register(flankOnly, 0))
+
+	onFlank := map[string]int{
+		"power": g.Power(host), "armor": g.Armor(host), "assault": g.assault(host),
+		"hazardous": g.hazardous(host), "splash": g.splashAttack(host),
+	}
+	want := map[string]int{
+		"power": 4, "armor": 1, "assault": 2, "hazardous": 3, "splash": 4,
+	}
+	for stat, got := range onFlank {
+		if got != want[stat] {
+			t.Errorf("on flank %s = %d, want %d", stat, got, want[stat])
+		}
+	}
+
+	// Flanked on both sides, the upgrade is suspended and grants nothing.
+	off := NewGame("A", "B", 1)
+	off.AddToBattleline(testCreature("left", 3), 0)
+	host = off.AddToBattleline(testCreature("host", 3), 0)
+	off.AddToBattleline(testCreature("right", 3), 0)
+	off.AttachUpgrade(host, off.Register(flankOnly, 0))
+	offFlank := map[string]int{
+		"power": off.Power(host), "armor": off.Armor(host), "assault": off.assault(host),
+		"hazardous": off.hazardous(host), "splash": off.splashAttack(host),
+	}
+	bare := map[string]int{
+		"power": 3, "armor": 0, "assault": 0, "hazardous": 0, "splash": 0,
+	}
+	for stat, got := range offFlank {
+		if got != bare[stat] {
+			t.Errorf("off flank %s = %d, want %d", stat, got, bare[stat])
+		}
 	}
 }
 

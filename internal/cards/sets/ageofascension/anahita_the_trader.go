@@ -23,7 +23,7 @@ var AnahitaTheTrader = set.New(
 		card.Trigger.Reap, card.Then{
 			First: card.TakeControl{
 				Target:     card.Target.FriendlyArtifact,
-				Duration:   card.Duration.Forever,
+				Duration:   card.Duration.UntilCardLeavesPlay,
 				ToOpponent: true,
 			},
 			Result: card.StealAember{Amount: 2},

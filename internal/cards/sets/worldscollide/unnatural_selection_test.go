@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Choose 3 friendly creatures and 3 enemy creatures - destroy each other creature.
+//	Play: Choose 3 friendly creatures and 3 enemy creatures. Destroy each other creature.
 func TestUnnaturalSelection(t *testing.T) {
 	var f0, f1, f2, f3 ct.Card
 	var e0, e1, e2, e3 ct.Card

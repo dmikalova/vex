@@ -82,7 +82,18 @@ func (g *Game) HasBonusIcons(id LocalID) bool {
 // BonusIconCount reports how many bonus icons a card prints, following a gigantic
 // base half to its linked art half (ADR 0042).
 func (g *Game) BonusIconCount(id LocalID) int {
-	return len(g.bonusIconsOf(id))
+	return g.BonusIconCountOf(id, bonusUnset)
+}
+
+// BonusIconCountOf reports how many bonus icons of one kind a card prints — a zero
+// (unset) kind counts every icon — following a gigantic base half to its linked
+// art half (ADR 0042).
+func (g *Game) BonusIconCountOf(id LocalID, kind BonusIcon) int {
+	icons := g.bonusIconsOf(id)
+	if kind == bonusUnset {
+		return len(icons)
+	}
+	return countBonus(icons, kind)
 }
 
 // SharesTrait reports whether two cards have at least one trait in common. A card
@@ -424,21 +435,21 @@ func (g *Game) SetLastingHouse(id LocalID, house House) {
 // (Auto-Legionary, Animator), so the card is pulled from the artifact row and
 // inserted at the chosen flank; it keeps its exhaustion, Æmber, and power counters,
 // and its LastingType makes it read as a creature. Its ArmorRemaining is topped up
-// to its full armor so it can absorb hits as a creature this turn. When temporary is
-// set the conversion lasts only the current turn (Animator): CreatureUntilTurnEnd
-// marks it so the ready phase reverts it to an artifact at end of turn; otherwise it
-// stays a creature until it leaves play (Auto-Legionary).
+// to its full armor so it can absorb hits as a creature this turn. With d set to
+// RemainderOfPlayerTurn the conversion lasts only the current turn (Animator):
+// CreatureUntilTurnEnd marks it so the ready phase reverts it to an artifact at end
+// of turn; otherwise it stays a creature until it leaves play (Auto-Legionary).
 // A repeated use finds the card already a creature in the battleline; removing it
 // from there first makes the second use reposition it to the chosen flank rather
 // than insert a duplicate.
-func (g *Game) PutIntoBattlelineAsCreature(id LocalID, right bool, temporary bool) {
+func (g *Game) PutIntoBattlelineAsCreature(id LocalID, right bool, d Duration) {
 	controller := g.controller(id)
 	if !g.State.Artifacts[controller].remove(id) {
 		g.State.Battleline[controller].remove(id)
 	}
 	c := &g.State.Cards[id]
 	c.LastingType = Creature
-	c.CreatureUntilTurnEnd = temporary
+	c.CreatureUntilTurnEnd = d == RemainderOfPlayerTurn
 	c.ArmorRemaining = int16(g.armor(id))
 	if right {
 		g.State.Battleline[controller].add(id)

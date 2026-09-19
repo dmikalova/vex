@@ -20,7 +20,7 @@ var WormholeTechnician = set.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(
-		card.Trigger.Reap, card.Sentences{
+		card.Trigger.Reap, card.Sequence{
 			Effects: []card.Effect{
 				card.RevealTopOfDeck{Amount: 1},
 				card.Conditional{

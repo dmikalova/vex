@@ -15,7 +15,7 @@ import (
 //	Traits: Power
 //
 //	Versatile.
-//	Action: Destroy Creed of Nurture. Reveal a creature from your hand and choose a creature in play - for the remainder of the turn, the chosen creature gains the text box of the revealed creature.
+//	Action: Destroy Creed of Nurture. Reveal a creature from your hand and choose a creature in play. For the remainder of the turn, the chosen creature gains the text box of the revealed creature.
 func TestCreedOfNurture(t *testing.T) {
 	t.Run("lends a revealed creature's text box to a chosen creature", func(t *testing.T) {
 		var recipient, loaner, defender ct.Card

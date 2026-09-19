@@ -128,9 +128,17 @@ func (d Destination) move(ctx *EffectContext, ids ...LocalID) {
 // its play here rather than in the discard pile. That redirect names no source
 // zone, which is why it works whatever the Tactic was played from
 // (TestResolvingCardRedirectIsPerCard).
+//
+// A source that has reached a pile is neither: it left play before its own ability
+// got to move it, and nothing will ever consume a redirect written for it. Moving
+// it again would take it out of a zone it was never chosen from, so it is skipped,
+// the same call the bulk movers make (TestMoveSourceSkipsCardAlreadyInAPile).
 func (d Destination) moveSource(ctx *EffectContext) {
 	if resolverInPlay(ctx, ctx.Source) {
 		d.move(ctx, ctx.Source)
+		return
+	}
+	if _, _, inPile := ctx.Resolver.ZoneOf(ctx.Source); inPile {
 		return
 	}
 	ctx.Resolver.RedirectResolvingCard(ctx.Source, d)

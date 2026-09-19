@@ -18,7 +18,7 @@ var Equalize = set.New(
 	card.Provenance(card.AoA, "232"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.RedistributeCapturedAember{Side: card.Controller},
 			card.RedistributeCapturedAember{Side: card.Opponent},
 		}}),

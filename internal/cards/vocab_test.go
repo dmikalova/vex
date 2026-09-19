@@ -27,6 +27,15 @@ var universalRetired = []retiredTerm{
 	{regexp.MustCompile(`(?i)\btaps?\b|\btapped\b`), "exhaust"},
 	{regexp.MustCompile(`(?i)\bexiles?\b|\bexiled\b`), "purge, or put into hand/discard"},
 	{regexp.MustCompile(`(?i)\bbounces?\b|\bbounced\b`), "put into hand"},
+	// Not a synonym but the same failure — a hardcoded plural renders "1 cards"
+	// the first time a card passes 1, which is how "1 keys" shipped. Mass nouns
+	// (damage, power, armor, Æmber) are absent: they never take an "s".
+	{
+		regexp.MustCompile(
+			`\b1 (cards|creatures|artifacts|upgrades|keys|chains|counters|times)\b`,
+		),
+		"countNoun",
+	},
 }
 
 // cardTextRetired adds the conventions that govern only printed card text

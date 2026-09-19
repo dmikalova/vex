@@ -64,7 +64,7 @@ func TestPlayFromValidate(t *testing.T) {
 	}
 }
 
-// TestPlayFromOpponentDiscard covers Mimicry: an action played out of the
+// TestPlayFromOpponentDiscard covers Mimicry: a Tactic played out of the
 // opponent's discard pile resolves under the controller's control, counts as the
 // controller's own play, and returns to the top of its owner's discard pile.
 func TestPlayFromOpponentDiscard(t *testing.T) {

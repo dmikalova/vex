@@ -349,6 +349,94 @@ func (g *game) afterAction() {
 // power counters, was stunned or exhausted, or entered play pulses; a player who
 // gained pool Æmber or forged a key pulses their score. The parity maps flip on
 // each flash so the animation replays on repeats (see the flashes field).
+// boardFlashes collects the per-card and per-player pulses for the current board,
+// returning the set of cards in play now.
+func (g *game) boardFlashes(
+	prev *engine.GameState,
+	flashes map[engine.LocalID]cardFlash,
+) map[engine.LocalID]bool {
+	inPlayNow := map[engine.LocalID]bool{}
+	for p := range 2 {
+		for _, id := range g.g.Battleline(p) {
+			inPlayNow[id] = true
+			g.cardFlags(id, prev, flashes)
+		}
+		for _, id := range g.g.Artifacts(p) {
+			inPlayNow[id] = true
+			g.cardFlags(id, prev, flashes)
+		}
+		g.playerFlashes(p, prev)
+	}
+	return inPlayNow
+}
+
+// playerFlashes pulses a player's score and discard pill. Cards leaving play cannot
+// pulse — they are gone from the board — so the destination pulses instead, which
+// is also the feedback for a discard.
+func (g *game) playerFlashes(p int, prev *engine.GameState) {
+	if g.g.State.Aember[p] > prev.Aember[p] {
+		g.poolParity[p] = !g.poolParity[p]
+		g.poolFlash[p] = true
+	}
+	if g.g.State.KeyCount(p) > prev.KeyCount(p) {
+		g.keyParity[p] = !g.keyParity[p]
+		g.keyFlash[p] = true
+	}
+	if g.g.State.Discard[p].Count > prev.Discard[p].Count {
+		g.discardParity[p] = !g.discardParity[p]
+		g.discardFlash[p] = true
+	}
+}
+
+// useFlashes pulses the cards the running action used and disarms each one-shot.
+// A card that left play as a side effect of its own ability cannot pulse in place,
+// so — like the discard, pool, and key pulses — it is skipped rather than flashed
+// somewhere it no longer is.
+func (g *game) useFlashes(
+	inPlayNow map[engine.LocalID]bool,
+	flashes map[engine.LocalID]cardFlash,
+) {
+	mark := func(id engine.LocalID, pick func(*cardFlash) *bool) {
+		if !inPlayNow[id] {
+			return
+		}
+		f := flashes[id]
+		*pick(&f) = true
+		flashes[id] = f
+	}
+	// The two combatants clash, whether or not either took damage.
+	if g.fighting {
+		for _, id := range g.fighters {
+			mark(id, func(f *cardFlash) *bool { return &f.fight })
+		}
+		g.fighting = false
+	}
+	if g.reaping {
+		mark(g.reapID, func(f *cardFlash) *bool { return &f.reap })
+		g.reaping = false
+	}
+	if g.acting {
+		mark(g.actID, func(f *cardFlash) *bool { return &f.act })
+		g.acting = false
+	}
+}
+
+// entryFlashes pulses each card that is newly in play. A card played from hand
+// flies in from its hand slot instead (flyIntoPlay), so it does not also pulse in
+// place.
+func (g *game) entryFlashes(
+	inPlayNow map[engine.LocalID]bool,
+	flashes map[engine.LocalID]cardFlash,
+) {
+	for id := range inPlayNow {
+		if !g.inPlayPrev[id] && (!g.takingOff || id != g.takeoffID) {
+			f := flashes[id]
+			f.enter = true
+			flashes[id] = f
+		}
+	}
+}
+
 func (g *game) computeFlashes() {
 	if !g.prevValid {
 		return
@@ -358,70 +446,9 @@ func (g *game) computeFlashes() {
 		g.flashParity = map[engine.LocalID]bool{}
 	}
 	flashes := map[engine.LocalID]cardFlash{}
-	inPlayNow := map[engine.LocalID]bool{}
-	for p := 0; p < 2; p++ {
-		for _, id := range g.g.Battleline(p) {
-			inPlayNow[id] = true
-			g.cardFlags(id, prev, flashes)
-		}
-		for _, id := range g.g.Artifacts(p) {
-			inPlayNow[id] = true
-			g.cardFlags(id, prev, flashes)
-		}
-		if g.g.State.Aember[p] > prev.Aember[p] {
-			g.poolParity[p] = !g.poolParity[p]
-			g.poolFlash[p] = true
-		}
-		if g.g.State.KeyCount(p) > prev.KeyCount(p) {
-			g.keyParity[p] = !g.keyParity[p]
-			g.keyFlash[p] = true
-		}
-		// Cards leaving play cannot pulse — they are gone from the board — so the
-		// destination pulses instead, which is also the feedback for a discard.
-		if g.g.State.Discard[p].Count > prev.Discard[p].Count {
-			g.discardParity[p] = !g.discardParity[p]
-			g.discardFlash[p] = true
-		}
-	}
-	// The two combatants clash, whether or not either took damage.
-	if g.fighting {
-		for _, id := range g.fighters {
-			if inPlayNow[id] {
-				f := flashes[id]
-				f.fight = true
-				flashes[id] = f
-			}
-		}
-		g.fighting = false
-	}
-	// A card that leaves play as a side effect of its own reap/action ability
-	// cannot pulse in place, so — like the discard/pool/key pulses above — it is
-	// simply skipped rather than flashed somewhere it no longer is.
-	if g.reaping {
-		if inPlayNow[g.reapID] {
-			f := flashes[g.reapID]
-			f.reap = true
-			flashes[g.reapID] = f
-		}
-		g.reaping = false
-	}
-	if g.acting {
-		if inPlayNow[g.actID] {
-			f := flashes[g.actID]
-			f.act = true
-			flashes[g.actID] = f
-		}
-		g.acting = false
-	}
-	for id := range inPlayNow {
-		// A card played from hand flies in from its hand slot instead (flyIntoPlay),
-		// so it does not also pulse in place.
-		if !g.inPlayPrev[id] && (!g.takingOff || id != g.takeoffID) {
-			f := flashes[id]
-			f.enter = true
-			flashes[id] = f
-		}
-	}
+	inPlayNow := g.boardFlashes(prev, flashes)
+	g.useFlashes(inPlayNow, flashes)
+	g.entryFlashes(inPlayNow, flashes)
 	// One parity flip per flashing card drives all its pulses at once.
 	for id, f := range flashes {
 		g.flashParity[id] = !g.flashParity[id]

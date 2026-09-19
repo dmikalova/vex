@@ -18,7 +18,7 @@ var BonkersKillingMachine = set.New(
 	card.Provenance(card.CotA, "128"),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{
+		card.Trigger.Action, card.Sequence{
 			Effects: []card.Effect{
 				card.DiscardTop{Amount: 1, Player: card.EachPlayer},
 				card.ForEachDiscarded{

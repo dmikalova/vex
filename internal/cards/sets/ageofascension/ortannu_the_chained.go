@@ -30,7 +30,7 @@ var OrtannuTheChained = set.New(
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
-		card.Trigger.Reap, card.Sentences{
+		card.Trigger.Reap, card.Sequence{
 			Effects: []card.Effect{
 				card.PutCard{Zones: []card.Zone{card.Discard},
 					Selection:   card.Each{Name: OrtannusBinding.Name},

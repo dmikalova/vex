@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Dinosaur • Soldier
 //
-//	Reap: You may exalt Paraguardian. Ward Paraguardian.
+//	Reap: You may exalt and ward Paraguardian.
 var Paraguardian = set.New(
 	"Paraguardian",
 	card.House.Saurian,
@@ -22,7 +22,7 @@ var Paraguardian = set.New(
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),
 	card.WithAbility(
-		card.Trigger.Reap, card.May{Do: card.Sentences{Effects: []card.Effect{
+		card.Trigger.Reap, card.May{Do: card.Sequence{Effects: []card.Effect{
 			card.Exalt{Target: card.Target.This, Amount: 1},
 			card.Ward{Target: card.Target.This.NeighborsOf()},
 		}}}),

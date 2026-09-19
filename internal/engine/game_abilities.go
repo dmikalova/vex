@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"slices"
 	"strconv"
 )
 
@@ -219,16 +220,27 @@ func (g *Game) Reap(player int, id LocalID) error {
 // fight, and useActionOf each absorb that forced use into the stun recovery
 // on their own, with no active-player or house check of their own.
 func (g *Game) Unstun(player int, id LocalID) error {
+	if err := g.canUnstun(player, id); err != nil {
+		return err
+	}
+	g.reapWith(id)
+	// Boundary: the reap and any lasting reaction it fired can change power
+	// anywhere on the board (ADR 0029).
+	g.settleDestroyed(player)
+	return nil
+}
+
+// canUnstun validates that the creature may spend its use to shed a stun right
+// now: usable this turn (controlled, in play, ready, active house) and actually a
+// stunned creature. It is the gate Unstun performs through and LegalActions offers
+// through, so the two never disagree on which creatures can unstun.
+func (g *Game) canUnstun(player int, id LocalID) error {
 	if err := g.usable(player, id); err != nil {
 		return err
 	}
 	if g.TypeOf(id) != Creature || !g.State.Cards[id].Stunned {
 		return ErrCannotUse
 	}
-	g.reapWith(id)
-	// Boundary: the reap and any lasting reaction it fired can change power
-	// anywhere on the board (ADR 0029).
-	g.settleDestroyed(player)
 	return nil
 }
 
@@ -383,6 +395,52 @@ func (w *abilityWindow) addSide(
 func (w *abilityWindow) addMirrored(player int, friendly, enemy Trigger, subject LocalID) {
 	w.addSide(player, friendly, subject, includeSubject)
 	w.addSide(1-player, enemy, subject, includeSubject)
+}
+
+// addTurnScoped collects a turn-scoped trigger — choosing a house, the start of a
+// turn, or the end of a turn — around the actor whose turn or choice fired it. The
+// actor's own cards fire every ability of the trigger; the other player's cards
+// fire only their EachPlayer-scoped ones, the abilities that watch every player's
+// turn or choice (Snag's Mirror, Gambling Den, Pincerator).
+//
+// The two families resolve the other player's reactions from opposite vantage
+// points, so resolveAsActivePlayer names which. A start/end-of-turn ability is
+// about the turn ("that player draws"), so it resolves as the actor whose turn it
+// is (true). A choose-house ability is about the reacting card ("steal 1 Æmber",
+// "gain 1 Æmber"), so it resolves as its own controller (false) and only reaches
+// the actor through an explicit ByActivePlayer or Opponent target.
+func (w *abilityWindow) addTurnScoped(
+	actor int,
+	trigger Trigger,
+	resolveAsActivePlayer bool,
+) {
+	w.addSide(actor, trigger, 0, includeSubject)
+	for _, id := range w.g.allInPlay(1 - actor) {
+		resolver := w.g.controller(id)
+		if resolveAsActivePlayer {
+			resolver = actor
+		}
+		w.addAsEachPlayer(id, trigger, resolver)
+	}
+}
+
+// addAsEachPlayer is addAs restricted to src's EachPlayer-scoped abilities under
+// the trigger — the abilities that watch every player's turn or choice, so they
+// fire on the other player's turn resolving as resolver (the active player for a
+// turn trigger, src's own controller for a choose-house trigger).
+func (w *abilityWindow) addAsEachPlayer(src LocalID, trigger Trigger, resolver int) {
+	got := w.g.triggeredBy(src, trigger)
+	kept := got[:0]
+	for i := range got {
+		if !got[i].ability.EachPlayer {
+			continue
+		}
+		got[i].actor = int8(resolver)
+		if w.g.firesForSubject(got[i]) {
+			kept = append(kept, got[i])
+		}
+	}
+	w.pending = append(w.pending, kept...)
 }
 
 // emitBoard fires trigger on every in-play card of both players immediately,
@@ -653,21 +711,11 @@ func (g *Game) hasTrigger(id LocalID, trigger Trigger) bool {
 // hasConstantGrantedTrigger reports whether an active constant ability of a card in
 // play grants id an ability under the trigger.
 func (g *Game) hasConstantGrantedTrigger(id LocalID, trigger Trigger) bool {
-	for player := 0; player < 2; player++ {
-		for _, grantor := range g.allInPlay(player) {
-			for _, c := range g.cat.def(grantor).ConstantAbilities {
-				if !g.constantActive(grantor, c) || !g.constantAffects(grantor, c, id) {
-					continue
-				}
-				for _, ab := range c.Granted {
-					if ab.Trigger == trigger {
-						return true
-					}
-				}
-			}
-		}
-	}
-	return false
+	return g.anyActiveConstant(id, func(c ConstantAbility) bool {
+		return slices.ContainsFunc(c.Granted, func(ab Ability) bool {
+			return ab.Trigger == trigger
+		})
+	})
 }
 
 // mayFightOutOfHouse reports whether a fight grant (Brothers in Battle) lets the
@@ -1092,21 +1140,17 @@ func (g *Game) upgradeGrantedTriggers(src LocalID, trigger Trigger) []triggeredA
 // grant src through an active constant ability that affects it, under the trigger.
 func (g *Game) constantGrantedTriggers(src LocalID, trigger Trigger) []triggeredAbility {
 	var out []triggeredAbility
-	for player := 0; player < 2; player++ {
-		for _, grantor := range g.allInPlay(player) {
-			for _, c := range g.cat.def(grantor).ConstantAbilities {
-				if len(c.Granted) == 0 || !g.constantActive(grantor, c) ||
-					!g.constantAffects(grantor, c, src) {
-					continue
-				}
-				for _, ab := range c.Granted {
-					if ab.Trigger == trigger {
-						out = append(
-							out,
-							triggeredAbility{source: src, grantor: grantor, ability: ab},
-						)
-					}
-				}
+	for grantor, c := range g.constantAbilitiesInPlay() {
+		if len(c.Granted) == 0 || !g.constantActive(grantor, c) ||
+			!g.constantAffects(grantor, c, src) {
+			continue
+		}
+		for _, ab := range c.Granted {
+			if ab.Trigger == trigger {
+				out = append(
+					out,
+					triggeredAbility{source: src, grantor: grantor, ability: ab},
+				)
 			}
 		}
 	}
@@ -1348,18 +1392,14 @@ func (g *Game) destroyedAbilities(ids []LocalID) []triggeredAbility {
 // disables every Destroyed ability while it stays in play. It reads board-wide,
 // independent of the disabling ability's Target.
 func (g *Game) triggerDisabled(t Trigger) bool {
-	for p := 0; p < 2; p++ {
-		for _, src := range g.allInPlay(p) {
-			for _, c := range g.cat.def(src).ConstantAbilities {
-				if len(c.DisableTriggers) == 0 || !g.constantActive(src, c) {
-					continue
-				}
-				for _, dt := range c.DisableTriggers {
-					if dt == t {
-						return true
-					}
-				}
-			}
+	// No constantAffects gate: a disabled trigger is a board-wide rule change, so it
+	// reaches every card rather than the source's Target.
+	for src, c := range g.constantAbilitiesInPlay() {
+		if len(c.DisableTriggers) == 0 || !g.constantActive(src, c) {
+			continue
+		}
+		if slices.Contains(c.DisableTriggers, t) {
+			return true
 		}
 	}
 	return false

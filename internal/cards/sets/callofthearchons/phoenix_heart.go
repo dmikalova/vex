@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This creature gains, "Destroyed: Put this creature into its owner's hand, and deal 3 damage to each creature."
+//	This creature gains, "Destroyed: Put this creature into its owner's hand. Deal 3 damage to each creature."
 var PhoenixHeart = set.New(
 	"Phoenix Heart",
 	card.House.Brobnar,

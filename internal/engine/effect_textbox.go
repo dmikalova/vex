@@ -39,15 +39,19 @@ func (g *Game) grantedTextBoxSources(id LocalID) []LocalID {
 	return out
 }
 
-// GrantTextBox gives creature recipient the printed text box of source, either
-// until recipient leaves play or, when remainderOfTurn is set, for the remainder
-// of the turn. It is the CreatureResolver port method both text-box effects share.
-func (g *Game) GrantTextBox(recipient, source LocalID, remainderOfTurn bool) {
+// GrantTextBox gives creature recipient the printed text box of source for the
+// window d names. It is the CreatureResolver port method both text-box effects
+// share. Only two windows are meaningful here and the state holds one field for
+// each: RemainderOfPlayerTurn, which the end of turn clears, and
+// UntilCardLeavesPlay, which the recipient carries until it leaves play. Any
+// other duration is treated as the latter, because a text box has nowhere else
+// to expire.
+func (g *Game) GrantTextBox(recipient, source LocalID, d Duration) {
 	c := g.stateOf(recipient)
 	if c == nil {
 		return
 	}
-	if remainderOfTurn {
+	if d == RemainderOfPlayerTurn {
 		c.TextBoxTurnSourcePlus = uint8(source) + 1
 	} else {
 		c.TextBoxSourcePlus = uint8(source) + 1
@@ -91,7 +95,11 @@ func (e GainTextBox) Resolve(ctx *EffectContext) {
 	}
 	source := sources[0]
 	for _, recipient := range e.Target.Select(ctx) {
-		ctx.Resolver.GrantTextBox(recipient, source, e.RemainderOfTurn)
+		window := UntilCardLeavesPlay
+		if e.RemainderOfTurn {
+			window = RemainderOfPlayerTurn
+		}
+		ctx.Resolver.GrantTextBox(recipient, source, window)
 	}
 }
 
@@ -104,10 +112,13 @@ type LendTextBoxFromHand struct{}
 // Text renders the effect as its whole instruction, naming the two creatures the
 // controller picks and the duration of the loan.
 func (LendTextBoxFromHand) Text() string {
-	return "reveal a creature from your hand and choose a creature in play - " +
-		durationClause(RemainderOfPlayerTurn, "") + ", the chosen creature gains the text box of " +
-		"the revealed creature"
+	return leadInSentence(
+		"reveal a creature from your hand and choose a creature in play",
+		durationClause(RemainderOfPlayerTurn, "")+", the chosen creature gains the text box of "+
+			"the revealed creature")
 }
+
+func (LendTextBoxFromHand) endsSentence() bool { return true }
 
 // Resolve reveals a chosen hand creature, then gives a chosen creature in play its
 // text box for the turn. With no creature in hand there is nothing to reveal, so
@@ -131,7 +142,7 @@ func (LendTextBoxFromHand) Resolve(ctx *EffectContext) {
 	if len(recipients) == 0 {
 		return
 	}
-	ctx.Resolver.GrantTextBox(recipients[0], source, true)
+	ctx.Resolver.GrantTextBox(recipients[0], source, RemainderOfPlayerTurn)
 }
 
 // CreatureGainedTextBox narrates a creature gaining another card's text box.

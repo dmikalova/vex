@@ -24,7 +24,7 @@ const (
 	inHouse inputKind = iota // choose the turn's active house
 	inPlayCreature
 	inPlayArtifact
-	inPlayAction
+	inPlayTactic
 	inPlayUpgrade
 	inDiscard
 	inReap
@@ -342,8 +342,8 @@ func dispatchRoot(
 	case inPlayArtifact:
 		_, err := eg.PlayArtifact(p, in.Hand)
 		return err
-	case inPlayAction:
-		return eg.PlayAction(p, in.Hand)
+	case inPlayTactic:
+		return eg.PlayTactic(p, in.Hand)
 	case inPlayUpgrade:
 		_, err := eg.PlayUpgrade(p, in.Hand)
 		return err

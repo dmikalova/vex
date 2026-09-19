@@ -154,6 +154,14 @@ var (
 			}
 		})
 	}
+	// WithEachPlayerAbility adds an ability whose turn-scoped trigger — choosing a
+	// house, the start of a turn, or the end of a turn — fires for either player's
+	// turn or choice, not only its controller's, resolving as the player whose turn
+	// or choice it was (Snag's Mirror, Gambling Den, Pincerator). It is WithAbility
+	// with the ability's EachPlayer scope set.
+	WithEachPlayerAbility = func(t engine.Trigger, e Effect) Option {
+		return gameplay(engine.WithEachPlayerAbility(t, e))
+	}
 )
 
 // fanOutTrigger expands a composite trigger into the atomic engine triggers it

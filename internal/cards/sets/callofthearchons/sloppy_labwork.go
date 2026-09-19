@@ -17,7 +17,7 @@ var SloppyLabwork = set.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "123"),
 	card.WithBonus(card.Bonus.Aember),
-	card.WithAbility(card.Trigger.Play, card.Sentences{
+	card.WithAbility(card.Trigger.Play, card.Sequence{
 		Effects: []card.Effect{
 			card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
 			card.DiscardCard{

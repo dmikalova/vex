@@ -8,11 +8,12 @@ import (
 )
 
 func TestChaosPortalComposition(t *testing.T) {
-	effect := ChooseHouseThen{Then: Sentences{Effects: []Effect{
+	effect := ChooseHouseThen{Then: Sequence{Effects: []Effect{
 		RevealTopOfDeck{Amount: 1},
 		Conditional{Cond: ItIs{House: chosenHouse}, Then: PlayRevealedCard{}},
 	}}}
-	if got := effect.Text(); got != "choose a house - reveal the top card of your deck. If it is of the chosen house, play it." {
+	if got := effect.Text(); got != "choose a house. Reveal the top card of your deck. "+
+		"If it is of the chosen house, play it." {
 		t.Errorf("text = %q", got)
 	}
 
@@ -285,7 +286,7 @@ func TestBonkersComposition(t *testing.T) {
 	bystander := g.AddToBattleline(testCreature("bystander", 4), 1)
 	ctx := &EffectContext{Resolver: g, Source: source, Controller: 0}
 
-	effect := Sentences{Effects: []Effect{
+	effect := Sequence{Effects: []Effect{
 		DiscardTop{Amount: 1, Player: EachPlayer},
 		ForEachDiscarded{
 			Do: Destroy{
@@ -330,7 +331,7 @@ func TestBonkersCompositionSelfDestructs(t *testing.T) {
 	bystander := g.AddToBattleline(testCreature("bystander", 4), 1)
 	ctx := &EffectContext{Resolver: g, Source: source, Controller: 0}
 
-	Sentences{Effects: []Effect{
+	Sequence{Effects: []Effect{
 		DiscardTop{Amount: 1, Player: EachPlayer},
 		ForEachDiscarded{
 			Do: Destroy{
@@ -403,7 +404,7 @@ func TestEvasionSigilComposition(t *testing.T) {
 	top := g.AddToDeck(NewCard("Brobnar Top", Brobnar, Tactic, Common), 0)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	e := Sentences{Effects: []Effect{
+	e := Sequence{Effects: []Effect{
 		DiscardTop{Amount: 1},
 		Conditional{Cond: ItIs{House: activeHouse}, Then: CancelFight{}},
 	}}
@@ -1184,7 +1185,7 @@ func TestDiscardTopAndForEachDiscardedHouseFilter(t *testing.T) {
 	g.AddToDeck(NewCard("M", Mars, Tactic, Common), 0)
 	g.AddToDeck(NewCard("L2", Logos, Tactic, Common), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	Sentences{Effects: []Effect{
+	Sequence{Effects: []Effect{
 		DiscardTop{Player: Controller, Amount: 3},
 		ForEachDiscarded{House: namedHouse(Logos), Do: GainAember{Player: Controller, Amount: 1}},
 	}}.Resolve(ctx)

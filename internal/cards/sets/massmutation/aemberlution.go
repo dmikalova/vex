@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //
 //	Omega.
-//	Play: Destroy each creature, and each player reveals their hand and puts each creature from their hand into play ready.
+//	Play: Destroy each creature. Each player reveals their hand and puts each creature from their hand into play ready.
 var Aemberlution = set.New(
 	"Aemberlution",
 	card.House.Untamed,

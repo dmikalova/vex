@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Beast • Cat
 //
-//	After a creature is destroyed in a fight with Eunoia, gain 1 Æmber, and heal 2 damage from Eunoia.
+//	After a creature is destroyed in a fight with Eunoia, gain 1 Æmber. Heal 2 damage from Eunoia.
 func TestEunoia(t *testing.T) {
 	t.Run("gains 1 Æmber and heals 2 when an enemy dies fighting it", func(t *testing.T) {
 		var eunoia, foe ct.Card

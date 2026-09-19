@@ -8,12 +8,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 - rename to Vex
 
-- Decompose:
-  - AfterAnyPlayerChoosesHouse
-  - SamePowerAsEitherChosen - how does this even work???
-  - I wonder if TakeControl should be UntilLeavesPlay instead of Duration.Forever? Should all Forever's be until leaves play?
-  - PurgedAemberBonus for Infurnace - eg mindfire could use the same thing too with BonusIconsOfChosen
-- sequence vs sentences wording - eg sequence is obviously game, and sentences is textual, but they're both textual and game
+- Decompose WithEachPlayerAbility
 - golden spiral prompt buttons are on any card I click - should be stuck on mack
 - axiom/troop call - generic choose a  creature for ward and bonus damage in prompt
 - Update card.New to be all opts
@@ -31,7 +26,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - Why is DealDamage and ChooseCreatureThen needed? Why can't these just be sequences that pass along the effect context?
 - Get rid of bar.go
 - /cards view cuts off side icons - why isn't this rendering like in the engine?
-- Do a sweep for defaults and missing explicits - eg destination.go
+- Do a sweep for defaults and missing explicit - eg destination.go
 - Be able to load a test situation from a saved state or scenario file
 - I've noticed that there are some UI sugars in the engine - I was wondering if it makes sense for there to be an intermediate layer - eg the engine handles state changes, the wrapper handles relevant trackers for the UI, and then the UI on top imports the wrapper and renders what it gives. For example, there are badges for counting how much damage is about to be dealt to each creature in a selection like gargantes scrapper. That seems purely UI, but also makes sense near the engine. My concern is performance when there is no UI - eg for MCTS - if MCTS is calculating the badges and never using them then that's potentially lost performance.
 - using shared dictionaries for wasm compression
@@ -118,6 +113,12 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ## Wild ideas
 
+- Tide:
+  - A dial from -3 to +3
+  - Tide turns on its own (high neutral low) - fixes Lacus
+  - Raising the tide pays opponent aember
+  - Shoreline - discarded cards to change the tide go here, raising the tide lets you play one
+  - The tide height turns off creatures lower than its height for both players. Submerged creatures get their tide bonus
 - can splash and splashattack be combined?
 - aember on artifacts goes to opponent?
 - translations

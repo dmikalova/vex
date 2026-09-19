@@ -68,18 +68,16 @@ func (g *Game) startOfTurnPhase(player int) {
 		g.State.Cards[id].AssaultUntilNextTurn = 0
 		g.State.Cards[id].TraitUntilNextTurn = traitUnset
 	}
-	for _, id := range g.allInPlay(player) {
-		g.triggerAbilities(id, TriggerStartOfTurn, 0, false)
-	}
-	// A start-of-turn artifact watches every turn, not only its owner's (Gambling
-	// Den, General Order 24). This window fires for both players' in-play cards, each
-	// resolving as the turn's active player so "they"/"that player" is the player
-	// whose turn is starting, not the artifact's controller.
-	for _, p := range [2]int{player, 1 - player} {
-		for _, id := range g.allInPlay(p) {
-			g.triggerAbilitiesAs(player, id, TriggerAfterAnyPlayerStartOfTurn, 0, false)
-		}
-	}
+	// The active player's cards fire every "at the start of your turn" ability, and
+	// the opponent's fire only their EachPlayer-scoped ones — an artifact that
+	// watches every turn, not only its owner's (Gambling Den, General Order 24) —
+	// each resolving as the active player so "that player" is whoever's turn is
+	// starting. The whole set is one window the active player orders (ADR 0013), and
+	// it runs before the forge phase so an ability that changes what a key costs
+	// still resolves in time.
+	start := g.window()
+	start.addTurnScoped(player, TriggerStartOfTurn, true)
+	g.resolveWindow(g.orderTriggered(player, start.pending))
 	g.settleDestroyed(player)
 }
 
@@ -180,29 +178,16 @@ func (g *Game) readyPhase(player int) {
 // abilities and scheduled effects alike — is gathered up front and ordered as one
 // (ADR 0013).
 func (g *Game) endOfTurnPhase(player int) {
-	var pending []triggeredAbility
-	for _, id := range g.allInPlay(player) {
-		abilities := g.triggeredBy(id, TriggerEndOfTurn)
-		for i := range abilities {
-			abilities[i].actor = int8(player)
-		}
-		pending = append(pending, abilities...)
-	}
-	// An end-of-turn artifact watches every turn, not only its owner's (Pincerator).
-	// This window fires for both players' in-play cards, each resolving as the turn's
-	// active player so "they"/"that player" is the player whose turn is ending, not
-	// the artifact's controller.
-	for _, p := range [2]int{player, 1 - player} {
-		for _, id := range g.allInPlay(p) {
-			abilities := g.triggeredBy(id, TriggerAfterAnyPlayerEndOfTurn)
-			for i := range abilities {
-				abilities[i].actor = int8(player)
-			}
-			pending = append(pending, abilities...)
-		}
-	}
-	pending = append(pending, g.scheduledEndOfTurn(player)...)
-	g.resolveWindow(g.orderTriggered(player, pending))
+	// The active player's cards fire every "at the end of your turn" ability, and
+	// the opponent's fire only their EachPlayer-scoped ones — an artifact that
+	// watches every turn, not only its owner's (Pincerator) — each resolving as the
+	// active player so "that player" is whoever's turn is ending. The whole set,
+	// together with the effects scheduled into this end-of-turn window (Ragnarok's
+	// board wipe), is one window the active player orders (ADR 0013).
+	w := g.window()
+	w.addTurnScoped(player, TriggerEndOfTurn, true)
+	w.pending = append(w.pending, g.scheduledEndOfTurn(player)...)
+	g.resolveWindow(g.orderTriggered(player, w.pending))
 	g.settleDestroyed(player)
 	g.clearScheduled()
 	// Duration-scoped continuous effects (damage immunity, lost keywords, blanked

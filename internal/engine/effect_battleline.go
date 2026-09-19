@@ -227,14 +227,13 @@ func (e TurnIntoCreature) Text() string {
 // Resolve converts each selected card and moves it to the flank the controller
 // chooses.
 func (e TurnIntoCreature) Resolve(ctx *EffectContext) {
-	temporary := e.Duration == RemainderOfPlayerTurn
 	for _, id := range e.Target.Select(ctx) {
 		if !ctx.Resolver.InPlay(id) {
 			continue
 		}
 		right := ctx.ChooseOption(
 			"Choose a flank", []string{FlankLeftLabel, FlankRightLabel}) == 1
-		ctx.Resolver.PutIntoBattlelineAsCreature(id, right, temporary)
+		ctx.Resolver.PutIntoBattlelineAsCreature(id, right, e.Duration)
 		if e.Versatile {
 			ctx.Resolver.GrantKeyword(id, Versatile)
 		}

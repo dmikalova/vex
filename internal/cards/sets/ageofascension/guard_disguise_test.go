@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Destroy Guard Disguise, and if your opponent has 3 Æmber or fewer, steal 3 Æmber.
+//	Action: Destroy Guard Disguise. If your opponent has 3 Æmber or fewer, steal 3 Æmber.
 func TestGuardDisguise(t *testing.T) {
 	t.Run("destroys itself and steals 3 when opponent has 3 or fewer", func(t *testing.T) {
 		var disguise ct.Card

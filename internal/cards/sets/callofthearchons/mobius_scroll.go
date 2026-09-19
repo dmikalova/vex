@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Archive Mobius Scroll from play, and archive up to 2 cards from your hand.
+//	Action: Archive Mobius Scroll from play. Archive up to 2 cards from your hand.
 var MobiusScroll = set.New(
 	"Mobius Scroll",
 	card.House.Logos,

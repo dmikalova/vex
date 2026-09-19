@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Choose a creature - destroy each creature that shares a trait with it. Gain 1 chain.
+//	Play: Choose a creature. Destroy each creature that shares a trait with it. Gain 1 chain.
 var Extinction = set.New(
 	"Extinction",
 	card.House.Mars,
@@ -18,7 +18,7 @@ var Extinction = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.Creature,
-			Then: card.Sentences{Effects: []card.Effect{
+			Then: card.Sequence{Effects: []card.Effect{
 				card.Destroy{Target: card.Target.EachCreature.SharingTrait()},
 				card.GainChains{Amount: 1},
 			}},

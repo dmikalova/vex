@@ -6,11 +6,15 @@ in the repo).
 ## Keep Markdown markdownlint-clean
 
 Run `mage markdownlint` after editing any Markdown and fix what it flags before
-considering the work done — it is part of `mage check`. The config lives in
-`quickmark.toml` (line-length, inline-HTML, and blanks-around-fences/lists are
-deliberately off; do not rely on other rules being off). The human's
-[todo.md](todo.md) is the one file agents never touch, so its lint state is not
-your concern.
+considering the work done — it is part of `mage check`. It runs
+[goldmark-lint](https://github.com/mrueg/goldmark-lint) (a Go port of
+markdownlint, `go run`-pinned so it is always available) with `--fix`, so fixable
+issues are corrected in place and only what cannot be autofixed fails the gate.
+The config lives in `.markdownlint-cli2.yaml` (line-length, inline-HTML, both
+emphasis rules, fenced-code-language, first-line-heading, blanks-around-fences/
+lists, and table-column-style are deliberately off; do not rely on other rules
+being off). The human's [todo.md](todo.md) is the one file agents never touch, so
+its lint state is not your concern.
 
 ## Markdownlint pitfalls (running log)
 

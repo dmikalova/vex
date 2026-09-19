@@ -16,7 +16,7 @@ var AFairGame = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "53"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.DiscardTop{Amount: 1, Player: card.Opponent},
 			card.RevealHand{Player: card.Opponent},
 			card.GainAember{

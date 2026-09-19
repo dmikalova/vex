@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: Destroy one third of all enemy creatures and one third of all friendly creatures (rounding up each time).
+//	Play: Destroy one third of all enemy creatures and one third of all friendly creatures, rounding up each time.
 var Tertiate = set.New(
 	"Tertiate",
 	card.House.Saurian,

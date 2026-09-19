@@ -22,7 +22,7 @@ var DestructiveAnalysis = set.New(
 			Amount: 2,
 			After:  card.Always,
 			Target: card.Target.Creature,
-			Then: card.Sentences{Effects: []card.Effect{
+			Then: card.Sequence{Effects: []card.Effect{
 				card.PurgeCard{
 					Zones:     []card.Zone{card.Archives},
 					Player:    card.Controller,

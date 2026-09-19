@@ -19,8 +19,8 @@ var SnagsMirror = set.New(
 	card.Provenance(card.WC, "117"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
-	card.WithAbility(
-		card.Trigger.AfterAnyPlayerChoosesHouse,
+	card.WithEachPlayerAbility(
+		card.Trigger.AfterChooseHouse,
 		card.CannotChooseHouse{
 			Player:    card.Opponent,
 			Reference: card.JustChosenActiveHouse,

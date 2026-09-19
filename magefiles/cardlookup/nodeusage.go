@@ -24,6 +24,7 @@ type node struct {
 	Name     string
 	Category string
 	Cards    int // card definition files naming it
+	Other    int // other files referencing it: facade internals, engine, web, tools
 }
 
 // nodeUsage reports every exported name on the card facade grouped by the
@@ -57,6 +58,9 @@ func nodeUsage(args []string) error {
 		return err
 	}
 	if err := countNodeUses(nodes); err != nil {
+		return err
+	}
+	if err := countOtherRefs(nodes); err != nil {
 		return err
 	}
 	printNodeUsage(nodes, maxUses, category)
@@ -187,8 +191,96 @@ func countNodeUses(nodes []*node) error {
 	return nil
 }
 
-// printNodeUsage prints the nodes grouped by category, rarest first inside each
-// group so the names to scrutinize lead, then a summary of the whole facade.
+// skippedDirs are the trees that hold no Go reference to the facade: version
+// control, scratch output, the web client's static assets, and prose.
+var skippedDirs = map[string]bool{".git": true, "tmp": true, "web": true, "docs": true}
+
+// countOtherRefs counts, per node, the files that reference it outside the card
+// definitions — the facade's own internals, the engine, the web client, the
+// magefile tools, and every test. A name with no card uses but many of these is
+// not dead: it is type surface (a field or parameter type a card never writes),
+// registry plumbing, or a member of an enum family, so the report must separate
+// "no card reaches for it" from "nothing reaches for it".
+func countOtherRefs(nodes []*node) error {
+	byName := make(map[string]*node, len(nodes))
+	for _, n := range nodes {
+		byName[n.Name] = n
+	}
+	fset := token.NewFileSet()
+	return filepath.WalkDir(".", func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			if skippedDirs[d.Name()] {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, ".go") {
+			return nil
+		}
+		// Card definitions are already counted as card uses; their tests are not.
+		if strings.HasPrefix(path, setsDir) && !strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+		file, err := parser.ParseFile(fset, path, nil, 0)
+		if err != nil {
+			return fmt.Errorf("cardlookup node-usage: %w", err)
+		}
+		for name := range referencedNames(file, strings.HasPrefix(path, facadeDir)) {
+			if n, ok := byName[name]; ok {
+				n.Other++
+			}
+		}
+		return nil
+	})
+}
+
+// referencedNames returns the facade names one file mentions. Outside the facade
+// a mention is a `card.X` selector; inside it the package qualifier is absent, so
+// a bare identifier counts instead — minus the identifiers that only *declare* a
+// name (a type spec, a value spec, a func, or a struct field's own label), which
+// are the name's definition rather than a use of it.
+func referencedNames(file *ast.File, insideFacade bool) map[string]bool {
+	names := map[string]bool{}
+	declared := map[*ast.Ident]bool{}
+	if insideFacade {
+		ast.Inspect(file, func(n ast.Node) bool {
+			switch d := n.(type) {
+			case *ast.TypeSpec:
+				declared[d.Name] = true
+			case *ast.ValueSpec:
+				for _, id := range d.Names {
+					declared[id] = true
+				}
+			case *ast.FuncDecl:
+				declared[d.Name] = true
+			case *ast.Field:
+				for _, id := range d.Names {
+					declared[id] = true
+				}
+			}
+			return true
+		})
+	}
+	ast.Inspect(file, func(n ast.Node) bool {
+		switch e := n.(type) {
+		case *ast.SelectorExpr:
+			if pkg, ok := e.X.(*ast.Ident); ok && pkg.Name == "card" {
+				names[e.Sel.Name] = true
+			}
+		case *ast.Ident:
+			if insideFacade && !declared[e] {
+				names[e.Name] = true
+			}
+		}
+		return true
+	})
+	return names
+}
+
+// printNodeUsage prints the nodes grouped by category, rarest first inside each// group so the names to scrutinize lead, then a summary of the whole facade.
 func printNodeUsage(nodes []*node, maxUses int, category string) {
 	byCategory := map[string][]*node{}
 	for _, n := range nodes {
@@ -215,7 +307,7 @@ func printNodeUsage(nodes []*node, maxUses int, category string) {
 		}
 	}
 
-	fmt.Printf("  %-*s %6s\n", width, "NODE", "CARDS")
+	fmt.Printf("  %-*s %6s %6s\n", width, "NODE", "CARDS", "OTHER")
 	for _, c := range cats {
 		group := byCategory[c]
 		sort.Slice(group, func(i, j int) bool {
@@ -226,19 +318,23 @@ func printNodeUsage(nodes []*node, maxUses int, category string) {
 		})
 		fmt.Printf("\n%s (%d)\n", c, len(group))
 		for _, n := range group {
-			fmt.Printf("  %-*s %6d\n", width, n.Name, n.Cards)
+			fmt.Printf("  %-*s %6d %6d\n", width, n.Name, n.Cards, n.Other)
 		}
 	}
 
-	var zero, single int
+	var zero, single, unreferenced int
 	for _, n := range nodes {
 		switch n.Cards {
 		case 0:
 			zero++
+			if n.Other == 0 {
+				unreferenced++
+			}
 		case 1:
 			single++
 		}
 	}
-	fmt.Printf("\n%d exported names: %d unused, %d used by one card (%d total at most one)\n",
-		len(nodes), zero, single, zero+single)
+	fmt.Printf("\n%d exported names: %d used by no card (%d of those referenced "+
+		"nowhere else either), %d used by one card (%d total at most one)\n",
+		len(nodes), zero, unreferenced, single, zero+single)
 }

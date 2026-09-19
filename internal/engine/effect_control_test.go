@@ -38,12 +38,12 @@ func TestTakeControl(t *testing.T) {
 	}
 }
 
-// TestTakeControlAndExhaust covers Forever control that also exhausts the seized
+// TestTakeControlAndExhaust covers UntilCardLeavesPlay control that also exhausts the seized
 // creature in one effect — Lord Invidius's "take control ... and exhaust it".
 func TestTakeControlAndExhaust(t *testing.T) {
 	take := TakeControl{
 		Target:     Target{Kind: TargetChosenEnemyCreature},
-		Duration:   Forever,
+		Duration:   UntilCardLeavesPlay,
 		AndExhaust: true,
 	}
 	if got := take.Text(); got != "take control of an enemy creature and exhaust it" {
@@ -194,12 +194,15 @@ func TestCapturedAemberGoesToControllersOpponentOnDeath(t *testing.T) {
 }
 
 func TestTakeControlArtifact(t *testing.T) {
-	permArt := TakeControl{Target: Target{Kind: TargetChosenEnemyArtifact}, Duration: Forever}
+	permArt := TakeControl{
+		Target:   Target{Kind: TargetChosenEnemyArtifact},
+		Duration: UntilCardLeavesPlay,
+	}
 	if got := permArt.Text(); got != "take control of an enemy artifact" {
 		t.Errorf("permanent artifact text = %q", got)
 	}
-	if (TakeControl{Duration: Forever}).validate() != nil {
-		t.Error("Forever should be a valid duration")
+	if (TakeControl{Duration: UntilCardLeavesPlay}).validate() != nil {
+		t.Error("UntilCardLeavesPlay should be a valid duration")
 	}
 	if got := (TakeControl{Target: Target{Kind: TargetChosenEnemyCreature}, Duration: UntilThisLeavesPlay}).Text(); got != "take control of an enemy creature until "+SelfName+" leaves play" {
 		t.Errorf("targeted reverting text = %q", got)
@@ -240,7 +243,7 @@ func TestTakeControlArtifact(t *testing.T) {
 	t.Run("ToOpponent gives control away instead of taking it", func(t *testing.T) {
 		giveAway := TakeControl{
 			Target:     Target{Kind: TargetThisCreature},
-			Duration:   Forever,
+			Duration:   UntilCardLeavesPlay,
 			ToOpponent: true,
 		}
 		if got := giveAway.Text(); got != "your opponent gains control of "+SelfName {
@@ -252,7 +255,7 @@ func TestTakeControlArtifact(t *testing.T) {
 		ctx := &EffectContext{Resolver: g, Source: art, Controller: 0}
 		TakeControl{
 			Target:     Target{Kind: TargetThisCreature},
-			Duration:   Forever,
+			Duration:   UntilCardLeavesPlay,
 			ToOpponent: true,
 		}.Resolve(ctx)
 		if g.controller(art) != 1 {
@@ -263,7 +266,7 @@ func TestTakeControlArtifact(t *testing.T) {
 	t.Run("gives a chosen friendly artifact away and reports progress", func(t *testing.T) {
 		give := TakeControl{
 			Target:     Target{Kind: TargetChosenFriendlyArtifact},
-			Duration:   Forever,
+			Duration:   UntilCardLeavesPlay,
 			ToOpponent: true,
 		}
 		if got := give.Text(); got != "your opponent gains control of a friendly artifact" {

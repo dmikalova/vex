@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Knight • Spirit
 //
-//	Reap: Choose a creature - fully heal it. For the remainder of the turn, it cannot be dealt damage.
+//	Reap: Choose a creature. Fully heal it. For the remainder of the turn, it cannot be dealt damage.
 var Protectrix = set.New(
 	"Protectrix",
 	card.House.Sanctum,
@@ -21,7 +21,7 @@ var Protectrix = set.New(
 	card.WithTraits(card.Traits.Knight, card.Traits.Spirit),
 	card.WithAbility(card.Trigger.Reap, card.ChooseCreatureThen{
 		Target: card.Target.Creature,
-		Then: card.Sentences{Effects: []card.Effect{
+		Then: card.Sequence{Effects: []card.Effect{
 			card.Heal{Fully: true, Target: card.Target.Triggering},
 			card.CannotBeDealtDamage{
 				Target:   card.Target.Triggering,

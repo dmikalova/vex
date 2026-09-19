@@ -16,7 +16,7 @@ var CowardsEnd = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "7"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.Destroy{Target: card.Target.EachCreature.Undamaged()},
 				card.GainChains{Amount: 3},

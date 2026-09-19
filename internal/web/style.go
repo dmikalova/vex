@@ -967,7 +967,7 @@ var galleryIcons = []string{
 	"set",
 	"shield",
 	"stun",
-	"type-action",
+	"type-tactic",
 	"type-artifact",
 	"type-creature",
 	"type-upgrade",

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	After your opponent forges a key, destroy Forge Compiler, and ward each friendly creature.
+//	After your opponent forges a key, destroy Forge Compiler. Ward each friendly creature.
 var ForgeCompiler = set.New(
 	"Forge Compiler",
 	card.House.Logos,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Bonus:  Æmber
 //
-//	Play: Choose a creature - if it is a Mutant creature, destroy the chosen creature. Otherwise, deal 2 damage to the chosen creature.
+//	Play: Choose a creature. If it is a Mutant creature, destroy the chosen creature. Otherwise, deal 2 damage to the chosen creature.
 var ParticleSweep = set.New(
 	"Particle Sweep",
 	card.House.StarAlliance,

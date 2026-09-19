@@ -236,6 +236,10 @@ card is the base card plus what landed on it, not the base card alone.
 
 ## 6. Scoring and band-targeting
 
+> **Planned, not built.** `internal/scoring` does not exist yet; this section is
+> the design for deck rating, not a description of running code. See the status
+> note at the top of this page.
+
 Deck rating is a separate concern that generation can _optionally_ consume. It lives
 in its own package (`internal/scoring`) and is shared by two clients: the deck-rating
 path and the procedural self-play **bot** (an MCTS player — heuristics and search,

@@ -15,7 +15,7 @@ type RegisteredCard struct {
 	Provenance   []provenance.Ref
 	Set          provenance.SourceSet
 	Profile      deckgen.GenerationProfile
-	Materializer deckgen.Materializer
+	Materializer Materializer
 }
 
 // registry holds every card built with New. A set package declares each card as

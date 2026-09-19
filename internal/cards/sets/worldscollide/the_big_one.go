@@ -20,7 +20,7 @@ var TheBigOne = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
-		card.Trigger.AfterCreaturePlayed, card.Sentences{Effects: []card.Effect{
+		card.Trigger.AfterCreaturePlayed, card.Sequence{Effects: []card.Effect{
 			card.PlaceCounter{Amount: 1,
 				Kind:   card.Counter.Fuse,
 				Target: card.Target.This,

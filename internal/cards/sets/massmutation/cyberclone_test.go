@@ -15,7 +15,7 @@ import (
 //	Power:  1
 //	Traits: Mutant
 //
-//	Play: Purge another creature, and Cyber-Clone has power equal to the same creature's printed power and gains its printed armor, keywords, and traits.
+//	Play: Purge another creature. Cyber-Clone has power equal to the same creature's printed power and gains its printed armor, keywords, and traits.
 func TestCyberClone(t *testing.T) {
 	t.Run("purges another creature and copies its printed power and armor", func(t *testing.T) {
 		var model ct.Card

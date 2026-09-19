@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Lose all your Æmber, and for each Æmber you lost this way, your opponent loses 3 Æmber.
+//	Play: Lose all your Æmber. For each Æmber you lost this way, your opponent loses 3 Æmber.
 var ShatterStorm = set.New(
 	"Shatter Storm",
 	card.House.Mars,

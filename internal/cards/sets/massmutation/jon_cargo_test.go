@@ -15,7 +15,7 @@ import (
 //	Power:  1
 //	Traits: Robot
 //
-//	Reap: Discard the top card of your deck, reveal your hand, and archive each card of that card's house from your hand.
+//	Reap: Discard the top card of your deck. Reveal your hand. Archive each card of that card's house from your hand.
 func TestJONCargo(t *testing.T) {
 	var jon, top, handMatch1, handMatch2, handOther ct.Card
 	h := ct.Play(t, ct.Setup{

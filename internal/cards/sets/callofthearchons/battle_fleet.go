@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Bonus:  Æmber
 //
-//	Play: Reveal any number of Mars cards from your hand, and for each card revealed this way, draw a card.
+//	Play: Reveal any number of Mars cards from your hand. For each card revealed this way, draw a card.
 var BattleFleet = set.New(
 	"Battle Fleet",
 	card.House.Mars,

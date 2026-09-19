@@ -51,7 +51,7 @@ func TestEndTurnNowIgnoresWonGame(t *testing.T) {
 // TestBookOfLeQComposition renders the composed Book of leQ ability, checking the
 // reveal, active-house, and end-turn nodes fold into the printed rules text.
 func TestBookOfLeQComposition(t *testing.T) {
-	a := Ability{Trigger: TriggerAction, Effect: Sentences{Effects: []Effect{
+	a := Ability{Trigger: TriggerAction, Effect: Sequence{Effects: []Effect{
 		RevealTopOfDeck{Amount: 1},
 		Conditional{
 			Cond: ItIs{House: exceptHouse(StarAlliance)},

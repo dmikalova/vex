@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Choose a house - put each creature of the chosen house from your discard pile into your hand. Gain 1 chain.
+//	Play: Choose a house. Put each creature of the chosen house from your discard pile into your hand. Gain 1 chain.
 var Arise = set.New(
 	"Arise!",
 	card.House.Dis,
@@ -17,7 +17,7 @@ var Arise = set.New(
 	card.Provenance(card.CotA, "54"),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{
-			Then: card.Sentences{
+			Then: card.Sequence{
 				Effects: []card.Effect{
 					card.PutCard{Zones: []card.Zone{card.Discard},
 						Selection: card.Each{

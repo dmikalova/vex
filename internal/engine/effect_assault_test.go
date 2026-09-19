@@ -136,7 +136,7 @@ func TestChooseCreatureGainsSkirmishAndAssault(t *testing.T) {
 			},
 		},
 	}
-	want := "choose a creature - for the remainder of the turn, it gains skirmish and assault equal to its power"
+	want := "choose a creature. For the remainder of the turn, it gains skirmish and assault equal to its power"
 	if got := grant.Text(); got != want {
 		t.Errorf("text = %q, want %q", got, want)
 	}

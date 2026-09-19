@@ -6,9 +6,14 @@ func TestPlayOrUseValidate(t *testing.T) {
 	if err := (PlayOrUse{House: exceptHouse(HouseNone)}).validate(); err == nil {
 		t.Error("Except with no house should not validate")
 	}
+	if err := (PlayOrUse{Grant: GrantFight}).validate(); err == nil {
+		t.Error("a fight grant is not a play-or-use verb")
+	}
 	for _, e := range []PlayOrUse{
 		{House: exceptHouse(StarAlliance)},
 		{House: namedHouse(Mars)},
+		{Grant: GrantPlay},
+		{Grant: GrantUse},
 		{},
 	} {
 		if err := e.validate(); err != nil {
@@ -25,6 +30,8 @@ func TestPlayOrUseText(t *testing.T) {
 		{PlayOrUse{House: exceptHouse(StarAlliance)}, "play or use a non-Star Alliance card"},
 		{PlayOrUse{House: namedHouse(Mars)}, "play or use a Mars card"},
 		{PlayOrUse{}, "play or use a card"},
+		{PlayOrUse{House: namedHouse(Mars), Grant: GrantPlay}, "play a Mars card"},
+		{PlayOrUse{House: namedHouse(Mars), Grant: GrantUse}, "use a Mars card"},
 	}
 	for _, c := range cases {
 		if got := c.e.Text(); got != c.want {
@@ -140,5 +147,47 @@ func TestPlayOrUseDeclined(t *testing.T) {
 
 	if g.Exhausted(mars) {
 		t.Error("declining should use nobody")
+	}
+}
+
+// TestPlayOrUsePlayGrantSkipsInPlay covers a play-only grant: the in-play creature
+// is never offered, only the hand card is played.
+func TestPlayOrUsePlayGrantSkipsInPlay(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("taber", 3), 0)
+	mars := g.AddToBattleline(NewCard("mars", Mars, Creature, Common, WithPower(3)), 0)
+	art := g.AddToHand(NewCard("art", Mars, Artifact, Common), 0)
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{art}})
+
+	PlayOrUse{House: namedHouse(Mars), Grant: GrantPlay}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0, Source: src},
+	)
+
+	if !g.inPlay(art) {
+		t.Error("the hand card should have been played")
+	}
+	if g.Exhausted(mars) {
+		t.Error("a play grant should not offer the in-play creature")
+	}
+}
+
+// TestPlayOrUseUseGrantSkipsHand covers a use-only grant: the hand card is never
+// offered, only the in-play creature is used.
+func TestPlayOrUseUseGrantSkipsHand(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("taber", 3), 0)
+	mars := g.AddToBattleline(NewCard("mars", Mars, Creature, Common, WithPower(3)), 0)
+	art := g.AddToHand(NewCard("art", Mars, Artifact, Common), 0)
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{mars}})
+
+	PlayOrUse{House: namedHouse(Mars), Grant: GrantUse}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0, Source: src},
+	)
+
+	if !g.Exhausted(mars) {
+		t.Error("the in-play creature should have been used")
+	}
+	if !g.State.Hand[0].contains(art) {
+		t.Error("a use grant should not offer the hand card")
 	}
 }

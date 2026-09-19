@@ -30,7 +30,7 @@ var GrumpusTamer = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
-		card.Trigger.Reap, card.Sentences{
+		card.Trigger.Reap, card.Sequence{
 			Effects: []card.Effect{
 				card.Search{
 					Sources: []card.Zone{card.Deck, card.Discard},

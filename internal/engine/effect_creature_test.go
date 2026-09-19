@@ -445,7 +445,7 @@ func TestChooseCreatureThen(t *testing.T) {
 			},
 		}},
 	}
-	want := "choose a creature - fully heal it, and for the remainder of the turn, it cannot be dealt damage"
+	want := "choose a creature. Fully heal it. For the remainder of the turn, it cannot be dealt damage."
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
 	}

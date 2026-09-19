@@ -16,7 +16,7 @@ import (
 //	Traits: Cyborg • Scientist
 //
 //	Elusive.
-//	Reap: Choose a house - reveal the top card of your deck. If it is of the chosen house, archive it, and gain 1 Æmber. Otherwise, discard it.
+//	Reap: Choose a house. Reveal the top card of your deck. If it is of the chosen house, archive it, and gain 1 Æmber. Otherwise, discard it.
 func TestVespilonTheorist(t *testing.T) {
 	t.Run("archives the revealed card of the chosen house", func(t *testing.T) {
 		var theorist, top ct.Card

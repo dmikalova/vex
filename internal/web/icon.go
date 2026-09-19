@@ -443,8 +443,7 @@ func triggerIcon(t engine.Trigger) string {
 		return "damage"
 	case engine.TriggerAfterBonusDraw:
 		return "draw"
-	case engine.TriggerAfterChooseHouse,
-		engine.TriggerAfterAnyPlayerChoosesHouse:
+	case engine.TriggerAfterChooseHouse:
 		return "glyph-choose"
 	case engine.TriggerAfterDiscardFromHand:
 		return "zone-discard"
@@ -454,9 +453,7 @@ func triggerIcon(t engine.Trigger) string {
 		return "shield"
 	case engine.TriggerStartOfTurn,
 		engine.TriggerEndOfTurn,
-		engine.TriggerEndOfReadyStep,
-		engine.TriggerAfterAnyPlayerStartOfTurn,
-		engine.TriggerAfterAnyPlayerEndOfTurn:
+		engine.TriggerEndOfReadyStep:
 		return "phase-turn"
 	default:
 		return "glyph-unknown"
@@ -621,9 +618,13 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			{asset: "zone-discard", decor: decorEnemy},
 			arrowTo(glyph{asset: "glyph-play"}),
 		}, true
-	case engine.DiscardOpponentArchivesOrDeckTop:
+	case engine.DiscardFromOpponent:
+		zone := "zone-deck"
+		if len(v.Sources) > 0 && v.Sources[0] == engine.Archives {
+			zone = "zone-archives"
+		}
 		return []glyph{
-			{asset: "zone-archives", decor: decorEnemy},
+			{asset: zone, decor: decorEnemy},
 			arrowTo(glyph{asset: "zone-discard", decor: decorEnemy}),
 		}, true
 	case engine.PutFromPlay:
@@ -705,8 +706,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return gs, false
 	case engine.Sequence:
 		return composeGlyphs(v.Effects...)
-	case engine.Sentences:
-		return composeGlyphs(v.Effects...)
 	case engine.ChooseOne:
 		return append([]glyph{{asset: "glyph-choose"}}, mustCompose(v.Options...)...), true
 	case engine.Conditional:
@@ -762,7 +761,14 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.MayPlayOrUse:
 		return mayPlayOrUseGlyphs(v), true
 	case engine.PlayOrUse:
-		return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}, true
+		var gs []glyph
+		if v.Grant == 0 || v.Grant&engine.GrantPlay != 0 {
+			gs = append(gs, glyph{asset: "glyph-play"})
+		}
+		if v.Grant == 0 || v.Grant&engine.GrantUse != 0 {
+			gs = append(gs, glyph{asset: "glyph-action"})
+		}
+		return gs, true
 	case engine.CannotBeDealtDamage:
 		return []glyph{{asset: "shield"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.RedirectFightDamage:
@@ -1032,7 +1038,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			arrowTo(glyph{asset: "glyph-play"}),
 		}, true
 	case engine.PutNextTacticIntoHand:
-		return []glyph{{asset: "type-action"}, arrowTo(glyph{asset: "zone-hand"})}, true
+		return []glyph{{asset: "type-tactic"}, arrowTo(glyph{asset: "zone-hand"})}, true
 	case engine.DamageOthersAfterUsingTrait:
 		return []glyph{
 			{asset: "glyph-action"},
@@ -1228,10 +1234,20 @@ func targetGlyph(t engine.Target) glyph {
 		return glyph{asset: "type-creature", decor: decorThis}
 	case engine.TargetTriggeringCreature, engine.TargetTheOtherCreature,
 		engine.TargetTheChosenCreature, engine.TargetCreatureFought,
-		engine.TargetTheFoughtCreature:
+		engine.TargetTheFoughtCreature, engine.TargetTheSameCreature,
+		engine.TargetAttachedHost:
 		return glyph{asset: "type-creature", decor: decorChosen}
 	case engine.TargetEachCreature:
 		return glyph{asset: "type-creature", decor: decorEach}
+	case engine.TargetEachNeighbor, engine.TargetFormerNeighbors:
+		// The strip carries "each creature"; which creatures are neighbors stays in
+		// the rules text, the way the trigger pass folds AfterNeighborFights into the
+		// plain fight glyph.
+		return glyph{asset: "type-creature", decor: decorEach}
+	case engine.TargetEachUpgradeOnThis:
+		return glyph{asset: "type-upgrade", decor: decorEach | decorThis}
+	case engine.TargetGrantingCard:
+		return glyph{asset: "card-back", decor: decorChosen}
 	case engine.TargetEachFriendlyCreature, engine.TargetEachOtherFriendlyCreature:
 		return glyph{asset: "type-creature", decor: decorEach | decorFriendly}
 	case engine.TargetEachEnemyCreature:

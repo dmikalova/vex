@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Bonus:  Æmber
 //
-//	This creature gains, "Before Fight: Move 1 Æmber from this creature to the creature this creature fought."
+//	This creature gains, "Before Fight: Move 1 Æmber from this creature to the creature it fights."
 var SirenHorn = set.New(
 	"Siren Horn",
 	card.House.Saurian,

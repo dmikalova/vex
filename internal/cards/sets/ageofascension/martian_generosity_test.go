@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: Lose all your Æmber, and for each Æmber you lost this way, draw 2 cards.
+//	Play: Lose all your Æmber. For each Æmber you lost this way, draw 2 cards.
 func TestMartianGenerosity(t *testing.T) {
 	t.Run("loses all aember and draws 2 cards for each aember lost", func(t *testing.T) {
 		var top ct.Card

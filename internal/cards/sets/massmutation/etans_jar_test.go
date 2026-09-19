@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Play: Name a card - cards with that name cannot be played until Etan's Jar leaves play.
+//	Play: Name a card. Cards with that name cannot be played until Etan's Jar leaves play.
 func TestEtansJar(t *testing.T) {
 	t.Run("names a card and bars it from being played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

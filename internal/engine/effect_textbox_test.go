@@ -16,11 +16,11 @@ func TestGrantedTextBoxSources(t *testing.T) {
 	if got := g.grantedTextBoxSources(recipient); len(got) != 0 {
 		t.Errorf("no gain should list no sources, got %v", got)
 	}
-	g.GrantTextBox(recipient, src, false)
+	g.GrantTextBox(recipient, src, UntilCardLeavesPlay)
 	if got := g.grantedTextBoxSources(recipient); len(got) != 1 || got[0] != src {
 		t.Errorf("permanent gain = %v, want [%d]", got, src)
 	}
-	g.GrantTextBox(recipient, turnSrc, true)
+	g.GrantTextBox(recipient, turnSrc, RemainderOfPlayerTurn)
 	got := g.grantedTextBoxSources(recipient)
 	if len(got) != 2 || got[0] != src || got[1] != turnSrc {
 		t.Errorf("both gains = %v, want [%d %d]", got, src, turnSrc)
@@ -33,7 +33,7 @@ func TestGrantTextBoxGone(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	gone := g.AddToBattleline(testCreature("gone", 2), 0)
 	g.DestroyEach(0, []LocalID{gone})
-	g.GrantTextBox(gone, src, false) // must not panic and must record nothing
+	g.GrantTextBox(gone, src, UntilCardLeavesPlay) // must not panic and must record nothing
 	if g.State.Cards[gone].TextBoxSourcePlus != 0 {
 		t.Error("granting to a creature no longer in play should do nothing")
 	}
@@ -127,7 +127,7 @@ func TestGainTextBoxTurnExpires(t *testing.T) {
 	source := g.AddToBattleline(testCreature("source", 3, WithTraits(Beast)), 0)
 	recipient := g.AddToBattleline(testCreature("recipient", 2), 0)
 
-	g.GrantTextBox(recipient, source, true)
+	g.GrantTextBox(recipient, source, RemainderOfPlayerTurn)
 	if g.State.Cards[recipient].TextBoxTurnSourcePlus != uint8(source)+1 {
 		t.Error("the turn loan should be recorded")
 	}
@@ -145,8 +145,8 @@ func TestGainTextBoxTurnExpires(t *testing.T) {
 
 // TestLendTextBoxFromHandText renders the whole instruction.
 func TestLendTextBoxFromHandText(t *testing.T) {
-	want := "reveal a creature from your hand and choose a creature in play - " +
-		"for the remainder of the turn, the chosen creature gains the text box of " +
+	want := "reveal a creature from your hand and choose a creature in play. " +
+		"For the remainder of the turn, the chosen creature gains the text box of " +
 		"the revealed creature"
 	if got := (LendTextBoxFromHand{}).Text(); got != want {
 		t.Errorf("text = %q, want %q", got, want)

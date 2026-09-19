@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Destroy each non-Mutant creature, and gain 1 chain.
+//	Play: Destroy each non-Mutant creature. Gain 1 chain.
 func TestKrrrzzzaaap(t *testing.T) {
 	t.Run("destroys each non-Mutant creature and gains a chain", func(t *testing.T) {
 		var mutant, plain ct.Card

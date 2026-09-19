@@ -21,7 +21,7 @@ var ZParticleTracker = set.New(
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Fight,
-			Effect: card.Sentences{
+			Effect: card.Sequence{
 				Effects: []card.Effect{
 					card.Search{
 						Sources: []card.Zone{card.Deck},

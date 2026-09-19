@@ -67,7 +67,7 @@ func typeIconName(t engine.CardType) string {
 	case engine.Artifact:
 		return "type-artifact"
 	case engine.Tactic:
-		return "type-action"
+		return "type-tactic"
 	case engine.Upgrade:
 		return "type-upgrade"
 	}

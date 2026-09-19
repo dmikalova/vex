@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Destroy Guard Disguise, and if your opponent has 3 Æmber or fewer, steal 3 Æmber.
+//	Action: Destroy Guard Disguise. If your opponent has 3 Æmber or fewer, steal 3 Æmber.
 var GuardDisguise = set.New(
 	"Guard Disguise",
 	card.House.Shadows,

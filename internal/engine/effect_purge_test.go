@@ -611,40 +611,6 @@ func TestMayPurgeCreatureDeclinable(t *testing.T) {
 	})
 }
 
-func TestPurgedAemberBonusCount(t *testing.T) {
-	if got := (PurgedAemberBonus{}).CountText(); got != "the total Æmber bonus of the purged cards" {
-		t.Errorf("count text = %q", got)
-	}
-
-	g := NewGame("A", "B", 1)
-	two := g.Register(
-		NewCard("two", Shadows, Creature, Common, WithBonus(BonusAember, BonusAember)),
-		0,
-	)
-	one := g.Register(
-		NewCard("one", Shadows, Creature, Common, WithBonus(BonusAember)),
-		0,
-	)
-	none := g.Register(NewCard("none", Shadows, Creature, Common), 0)
-	g.State.Discard[0].add(two)
-	g.State.Discard[0].add(one)
-	g.State.Discard[0].add(none)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-
-	// Default chooser purges the first two (bonuses 2 and 1).
-	PurgeCard{
-		Zones:     []Zone{Discard},
-		Player:    ChosenPlayer,
-		Selection: Chosen{},
-		Quantity:  Takes{N: Fixed(2)},
-	}.Resolve(
-		ctx,
-	)
-	if got := (PurgedAemberBonus{}).Value(ctx); got != 3 {
-		t.Errorf("purged bonus = %d, want 3", got)
-	}
-}
-
 func TestPurgeSource(t *testing.T) {
 	if got := (PurgeSource{}).Text(); got != "purge "+SelfName {
 		t.Errorf("text = %q", got)
@@ -676,8 +642,8 @@ func TestPurgeSource(t *testing.T) {
 				0,
 			)
 
-			if err := g.PlayAction(0, idx); err != nil {
-				t.Fatalf("PlayAction: %v", err)
+			if err := g.PlayTactic(0, idx); err != nil {
+				t.Fatalf("PlayTactic: %v", err)
 			}
 
 			if !g.State.Purge[0].contains(id) {

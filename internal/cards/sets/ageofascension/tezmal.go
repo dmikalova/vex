@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Imp
 //
 //	Elusive.
-//	Reap: Choose a house - your opponent cannot choose that house as their active house during their next turn.
+//	Reap: Choose a house. Your opponent cannot choose that house as their active house during their next turn.
 var Tezmal = set.New(
 	"Tezmal",
 	card.House.Dis,

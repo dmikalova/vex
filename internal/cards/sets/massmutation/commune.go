@@ -18,7 +18,7 @@ var Commune = set.New(
 	card.Provenance(card.MM, "380"),
 	card.WithKeywords(card.Keyword.Omega),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.LoseAember{
 					Player: card.Controller,

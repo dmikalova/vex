@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This creature gains, "After this creature is used, destroy this creature."
+//	This creature gains, "After this creature is used, destroy it."
 var ContainmentField = set.New(
 	"Containment Field",
 	card.House.Mars,

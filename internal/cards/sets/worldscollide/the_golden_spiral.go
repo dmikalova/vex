@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Traits: Location
 //
-//	Action: Choose a friendly creature - exalt the chosen creature. Ready and use the chosen creature.
+//	Action: Choose a friendly creature. Exalt the chosen creature. Ready and use the chosen creature.
 var TheGoldenSpiral = set.New(
 	"The Golden Spiral",
 	card.House.Saurian,
@@ -20,7 +20,7 @@ var TheGoldenSpiral = set.New(
 	card.WithAbility(
 		card.Trigger.Action, card.ChooseCreatureThen{
 			Target: card.Target.FriendlyCreature,
-			Then: card.Sentences{Effects: []card.Effect{
+			Then: card.Sequence{Effects: []card.Effect{
 				card.Exalt{
 					Target: card.Target.TheChosenCreature,
 					Amount: 1,

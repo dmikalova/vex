@@ -693,3 +693,27 @@ func TestUpgradeReleasesAemberOnLeavingHost(t *testing.T) {
 		})
 	}
 }
+
+// TestFileFromPlaySkipsAHalfTeardownAlreadyFiled pins that a card its own
+// teardown already filed is left where it landed. Teardown fires Leaves Play
+// abilities while the card is still listed in play, so a destruction resolving
+// inside that window reaches the discard pile first (Hysteria returning a
+// creature Strange Gizmo has already destroyed). Filing it again would put it in
+// two piles at once, which the conservation invariant catches as "in 2 places".
+func TestFileFromPlaySkipsAHalfTeardownAlreadyFiled(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	def := NewCard("Turnkey", Brobnar, Creature, Common, WithPower(3), WithAbility(
+		TriggerLeavesPlay,
+		Destroy{Target: Target{Kind: TargetThisCreature}},
+	))
+	id := g.AddToBattleline(def, 0)
+
+	g.putIntoHand(id)
+
+	if !g.State.Discard[0].contains(id) {
+		t.Fatal("the Leaves Play destruction must file the card into the discard pile")
+	}
+	if g.State.Hand[0].contains(id) {
+		t.Error("a card its own teardown already filed must not also reach the hand")
+	}
+}

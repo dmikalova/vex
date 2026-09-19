@@ -87,7 +87,11 @@ resolves an opponent's Play abilities.
 **Tactic** (vs the **Action** ability):
 A **Tactic** is the one-shot card type — KeyForge's "action card", renamed so the
 word "Action" is free for the "Action:" ability, which is used directly from a
-card already in play. See ADR 0009.
+card already in play. See ADR 0009. So "action" in this tree means a genuine
+`Action:` ability (`ActionAbilityUsed`, `Trigger.Action`, the `glyph-action`
+asset) or ordinary English ("the running action", "a result gate turns on an
+action succeeding") — never the card type, which is `PlayTactic`, `inPlayTactic`,
+and the `type-tactic` asset.
 _Avoid_: calling the card type "Action".
 
 **Omni**:
@@ -244,9 +248,10 @@ _Avoid_: validate, check state.
 Taking control moves a card to your play area and makes you its controller;
 ownership never changes and still decides where the card returns when it leaves
 play. When two effects change the same thing on a card (its controller, its
-house), the most recently applied one wins. A `Forever` control (Sneklifter's
-seized artifact) lasts the rest of the game; if a later, timed effect overrides
-it, the `Forever` effect governs again once that timed effect expires.
+house), the most recently applied one wins. An `UntilCardLeavesPlay` control
+(Sneklifter's seized artifact) holds until the seized card leaves play; if a later,
+timed effect overrides it, the `UntilCardLeavesPlay` effect governs again once that
+timed effect expires.
 
 ## The game log
 

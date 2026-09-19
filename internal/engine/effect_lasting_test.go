@@ -737,7 +737,7 @@ func TestPutNextTacticIntoHandText(t *testing.T) {
 	}
 }
 
-// Resolve arms a one-shot redirect the action-play path later consumes.
+// Resolve arms a one-shot redirect the Tactic-play path later consumes.
 func TestPutNextTacticIntoHandArms(t *testing.T) {
 	g := started(t)
 	PutNextTacticIntoHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
@@ -761,17 +761,17 @@ func TestPutNextTacticIntoHandScopedToController(t *testing.T) {
 	}
 }
 
-// With the redirect armed, the next action card the controller plays returns to
+// With the redirect armed, the next Tactic the controller plays returns to
 // their hand instead of their discard pile, and only that one card.
-func TestReturnNextActionRedirectsPlayedAction(t *testing.T) {
+func TestPutNextTacticIntoHandRedirectsPlayedTactic(t *testing.T) {
 	g := NewGame("Alice", "Bob", 1)
 	g.StartTurn(0)
 	first := g.AddToHand(NewCard("First Action", Sanctum, Tactic, Common), 0)
 	second := g.AddToHand(NewCard("Second Action", Sanctum, Tactic, Common), 0)
 	g.AddLasting(LastingEffect{On: EventNextTacticIntoHand, Do: actPutIntoHand, Once: true})
 
-	if err := g.PlayAction(0, handIdxByID(g, 0, first)); err != nil {
-		t.Fatalf("PlayAction first: %v", err)
+	if err := g.PlayTactic(0, handIdxByID(g, 0, first)); err != nil {
+		t.Fatalf("PlayTactic first: %v", err)
 	}
 	if !g.State.Hand[0].contains(first) {
 		t.Error("first action should have returned to hand")
@@ -781,8 +781,8 @@ func TestReturnNextActionRedirectsPlayedAction(t *testing.T) {
 	}
 
 	// The redirect fired once: the next action discards normally.
-	if err := g.PlayAction(0, handIdxByID(g, 0, second)); err != nil {
-		t.Fatalf("PlayAction second: %v", err)
+	if err := g.PlayTactic(0, handIdxByID(g, 0, second)); err != nil {
+		t.Fatalf("PlayTactic second: %v", err)
 	}
 	if !g.State.Discard[0].contains(second) {
 		t.Error("second action should discard normally after the redirect is spent")

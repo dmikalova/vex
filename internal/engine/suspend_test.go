@@ -48,6 +48,14 @@ func TestRequestLegalCommands(t *testing.T) {
 			[]Command{{Kind: CommandReaction, Index: 0}, {Kind: CommandReaction, Index: 1}},
 		},
 		{
+			"action",
+			Request{Kind: RequestAction, Actions: []Command{
+				{Kind: CommandReap, Card: 3},
+				{Kind: CommandEndTurn},
+			}},
+			[]Command{{Kind: CommandReap, Card: 3}, {Kind: CommandEndTurn}},
+		},
+		{
 			"unknown kind",
 			Request{Kind: RequestKind(99)},
 			nil,
@@ -134,6 +142,35 @@ func TestStepperDrivesEachCapability(t *testing.T) {
 	// Advancing past completion is a no-op that reports done again.
 	if _, done, _ := s.Advance(Command{Kind: CommandOption}); !done {
 		t.Fatal("Advance after done did not report done")
+	}
+}
+
+// A Stepper surfaces the turn loop's suspension point: ChooseAction yields a
+// RequestAction carrying the whole legal set, and the answered root Command comes
+// back to the action to perform.
+func TestStepperYieldsActionRequest(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	actions := []Command{{Kind: CommandReap, Card: 7}, {Kind: CommandEndTurn}}
+	var got Command
+	action := func(g *Game) {
+		got = g.chooserFor(0).(ActionChooser).ChooseAction(actions)
+	}
+	s := NewStepper(g, action)
+
+	req, done := s.Start()
+	if done || req.Kind != RequestAction || req.Player != 0 {
+		t.Fatalf("first request = %+v done=%v, want a player-0 action request", req, done)
+	}
+	if !reflect.DeepEqual(req.Actions, actions) {
+		t.Fatalf("request actions = %v, want %v", req.Actions, actions)
+	}
+
+	_, done, _ = s.Advance(Command{Kind: CommandEndTurn})
+	if !done {
+		t.Fatal("the action did not finish after the answer")
+	}
+	if got != (Command{Kind: CommandEndTurn}) {
+		t.Fatalf("ChooseAction returned %+v, want CommandEndTurn", got)
 	}
 }
 

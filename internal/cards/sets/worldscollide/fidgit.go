@@ -22,8 +22,8 @@ var Fidgit = set.New(
 	card.WithTraits(card.Traits.Faerie, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
-			card.DiscardOpponentArchivesOrDeckTop{},
+		card.Trigger.Reap, card.Sequence{Effects: []card.Effect{
+			card.DiscardFromOpponent{Sources: []card.Zone{card.Archives, card.Deck}},
 			card.Conditional{
 				Cond: card.ItIs{Type: card.Type.Tactic, Noun: card.ItNoun.ThatCard},
 				Then: card.PlayItFromOpponentDiscard{},

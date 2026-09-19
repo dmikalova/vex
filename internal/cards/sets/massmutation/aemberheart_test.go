@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Action: Choose a friendly creature - exalt and ward the chosen creature, and fully heal the chosen creature.
+//	Action: Choose a friendly creature. Exalt and ward the chosen creature. Fully heal the chosen creature.
 func TestAemberheart(t *testing.T) {
 	t.Run("exalts, wards, and fully heals a friendly creature", func(t *testing.T) {
 		var ally ct.Card

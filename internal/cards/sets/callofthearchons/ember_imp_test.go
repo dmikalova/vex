@@ -37,7 +37,7 @@ func TestEmberImp(t *testing.T) {
 		h.P1.Play(b)
 
 		// The third play of the turn is barred.
-		if err := h.Game().PlayAction(0, 0); !errors.Is(err, engine.ErrCardPlayLimit) {
+		if err := h.Game().PlayTactic(0, 0); !errors.Is(err, engine.ErrCardPlayLimit) {
 			t.Errorf("third play = %v, want ErrCardPlayLimit", err)
 		}
 		h.Expect(c).At(ct.Hand)

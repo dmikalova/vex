@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Shuffle 2 friendly creatures into their owners' decks, and shuffle 2 enemy creatures into their owners' decks.
+//	Play: Shuffle 2 friendly creatures into their owners' decks. Shuffle 2 enemy creatures into their owners' decks.
 var LostInTheWoods = set.New(
 	"Lost in the Woods",
 	card.House.Untamed,

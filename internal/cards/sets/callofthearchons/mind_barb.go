@@ -17,7 +17,7 @@ var MindBarb = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "67"),
 	card.WithBonus(card.Bonus.Aember),
-	card.WithAbility(card.Trigger.Play, card.Sentences{
+	card.WithAbility(card.Trigger.Play, card.Sequence{
 		Effects: []card.Effect{
 			card.DiscardCard{
 				Player:    card.Controller,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	This creature gains, "After a player chooses Dis as their active house, archive Painmail, and destroy this creature."
+//	This creature gains, "After a player chooses Dis as their active house, archive Painmail. Destroy this creature."
 var Painmail = set.New(
 	"Painmail",
 	card.House.Dis,
@@ -19,7 +19,8 @@ var Painmail = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
-			Trigger: card.Trigger.AfterAnyPlayerChoosesHouse,
+			Trigger:    card.Trigger.AfterChooseHouse,
+			EachPlayer: true,
 			Effect: card.Conditional{
 				Cond: card.ChoseHouse{House: card.House.Dis},
 				Then: card.Sequence{Effects: []card.Effect{

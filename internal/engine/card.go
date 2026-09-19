@@ -647,6 +647,14 @@ func (c ConstantAbility) target() Target {
 type Ability struct {
 	Trigger Trigger
 	Effect  Effect
+	// EachPlayer widens a turn-scoped trigger — choosing a house, the start of a
+	// turn, or the end of a turn — so it fires for either player's turn or choice,
+	// not only its controller's. The card resolves as the player whose turn or
+	// choice it was, so its text reads "each player"/"a player" rather than "you"
+	// (Snag's Mirror, Gambling Den, Pincerator). The zero value watches only the
+	// controller's own turn or choice; the field is meaningless for any other
+	// trigger.
+	EachPlayer bool
 }
 
 // hasKeyword reports whether the definition has the given keyword.
@@ -1180,5 +1188,18 @@ func WithPlayRequirement(r PlayRequirement) CardOption {
 func WithAbility(trigger Trigger, effect Effect) CardOption {
 	return func(c *CardDefinition) {
 		c.Abilities = append(c.Abilities, Ability{Trigger: trigger, Effect: effect})
+	}
+}
+
+// WithEachPlayerAbility adds an ability whose turn-scoped trigger — choosing a
+// house, the start of a turn, or the end of a turn — fires for either player's
+// turn or choice, not only its controller's (Snag's Mirror, Gambling Den,
+// Pincerator). It is WithAbility with the ability's EachPlayer scope set.
+func WithEachPlayerAbility(trigger Trigger, effect Effect) CardOption {
+	return func(c *CardDefinition) {
+		c.Abilities = append(
+			c.Abilities,
+			Ability{Trigger: trigger, Effect: effect, EachPlayer: true},
+		)
 	}
 }

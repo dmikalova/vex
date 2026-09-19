@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: If you played exactly 1 card this turn, gain 3 Æmber, and you cannot play cards for the remainder of the turn.
+//	Play: If you played exactly 1 card this turn, gain 3 Æmber. You cannot play cards for the remainder of the turn.
 func TestTreasureMap(t *testing.T) {
 	t.Run(
 		"pays out when it is the first card played, then shuts the turn down",

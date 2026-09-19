@@ -27,7 +27,7 @@ var RhetorGallim = set.New(
 			Duration: card.Duration.OpponentNextTurn,
 		}),
 	card.WithAbility(
-		card.Trigger.Reap, card.May{Do: card.Sentences{Effects: []card.Effect{
+		card.Trigger.Reap, card.May{Do: card.Sequence{Effects: []card.Effect{
 			card.Exalt{
 				Target: card.Target.This,
 				Amount: 1,

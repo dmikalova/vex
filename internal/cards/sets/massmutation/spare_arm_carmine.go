@@ -20,7 +20,7 @@ var SpareArmCarmine = set.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(
-		card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Reap, card.Sequence{Effects: []card.Effect{
 			card.StealAember{Amount: 1},
 			card.Conditional{
 				Cond: card.ControlsMoreCreatures{Trait: card.Traits.Mutant},

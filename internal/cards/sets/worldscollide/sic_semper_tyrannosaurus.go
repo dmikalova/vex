@@ -16,7 +16,7 @@ var SicSemperTyrannosaurus = set.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "209"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.MoveAember{
 					All:  true,

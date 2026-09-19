@@ -80,7 +80,9 @@ func TestNeighborsOfCreatureFought(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0, It: mid, HasIt: true}
 
 	e := Stun{Target: Target{Kind: TargetCreatureFought}.NeighborsOf()}
-	want := "stun each neighbor of the creature " + SelfName + " fights"
+	// The effect renders the past; fightTense puts a Before Fight: ability's line
+	// in the present (TestBeforeFightTargetReadsInPresentTense).
+	want := "stun each neighbor of the creature " + SelfName + " fought"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
 	}

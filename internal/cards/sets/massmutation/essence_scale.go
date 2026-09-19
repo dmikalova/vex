@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Bonus:  Æmber
 //	Traits: Item
 //
-//	Action: Choose a friendly creature - destroy the chosen creature. Ready and use a friendly creature of that card's house.
+//	Action: Choose a friendly creature. Destroy the chosen creature. Ready and use a friendly creature of that card's house.
 var EssenceScale = set.New(
 	"Essence Scale",
 	card.House.Dis,
@@ -22,7 +22,7 @@ var EssenceScale = set.New(
 	card.WithAbility(
 		card.Trigger.Action, card.ChooseCreatureThen{
 			Target: card.Target.FriendlyCreature,
-			Then: card.Sentences{Effects: []card.Effect{
+			Then: card.Sequence{Effects: []card.Effect{
 				card.Destroy{Target: card.Target.TheChosenCreature},
 				card.OnChooseCreature{
 					Target: card.Target.FriendlyCreature.House(card.Houses.Contextual),

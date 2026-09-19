@@ -18,7 +18,7 @@ var UnitedAction = set.New(
 	card.Provenance(card.WC, "343"),
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.MayPlayOrUse{
 				Houses: card.GrantHouses.Controlled,
 				Grant:  card.GrantPlay,

@@ -23,7 +23,7 @@ var SaurusRex = set.New(
 		Cond: card.SourceInCenterOfBattleline{},
 		Then: card.May{Do: card.Then{
 			First: card.Exalt{Target: card.Target.This, Amount: 1},
-			Result: card.Sentences{
+			Result: card.Sequence{
 				Effects: []card.Effect{
 					card.Search{
 						Sources: []card.Zone{card.Deck},

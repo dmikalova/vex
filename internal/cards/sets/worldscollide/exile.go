@@ -21,6 +21,6 @@ var Exile = set.New(
 		card.Trigger.Play, card.TakeControl{
 			Target:     card.Target.FriendlyCreature,
 			ToOpponent: true,
-			Duration:   card.Duration.Forever,
+			Duration:   card.Duration.UntilCardLeavesPlay,
 		}),
 )

@@ -24,7 +24,7 @@ var PeaceAccord = set.New(
 			Amount: 2,
 		}),
 	card.WithAbility(
-		card.Trigger.AfterCreatureFights, card.Sentences{Effects: []card.Effect{
+		card.Trigger.AfterCreatureFights, card.Sequence{Effects: []card.Effect{
 			card.LoseAember{
 				Player: card.ItsOwner,
 				Amount: 4,

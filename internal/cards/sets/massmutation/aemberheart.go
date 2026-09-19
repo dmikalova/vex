@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Action: Choose a friendly creature - exalt and ward the chosen creature, and fully heal the chosen creature.
+//	Action: Choose a friendly creature. Exalt and ward the chosen creature. Fully heal the chosen creature.
 var Aemberheart = set.New(
 	"Aemberheart",
 	card.House.Sanctum,

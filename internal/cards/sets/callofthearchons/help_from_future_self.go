@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Connected
 //	Bonus:  Æmber
 //
-//	Play: Search your deck and discard pile for a Timetraveller, reveal it, and put it into your hand, and shuffle your discard pile into your deck.
+//	Play: Search your deck and discard pile for a Timetraveller, reveal it, and put it into your hand. Shuffle your discard pile into your deck.
 var HelpFromFutureSelf = set.New(
 	"Help from Future Self",
 	card.House.Logos,

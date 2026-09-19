@@ -22,7 +22,7 @@ var EnsignElSamra = set.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.RevealChosenFromHand{},
 			card.ResolveBonusIcons{Target: card.Target.Triggering},
 		}}),

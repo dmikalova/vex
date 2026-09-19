@@ -342,7 +342,7 @@ func TestRaiseKeyCost(t *testing.T) {
 	if err := (RaiseKeyCost{
 		Player:   Opponent,
 		Amount:   3,
-		Duration: Forever,
+		Duration: UntilCardLeavesPlay,
 	}).validate(); err == nil {
 		t.Error("a duration the surcharge cannot express should not validate")
 	}
@@ -659,7 +659,7 @@ func TestLowerKeyCostText(t *testing.T) {
 	if err := (LowerKeyCost{
 		Player:   EachPlayer,
 		Amount:   2,
-		Duration: Forever,
+		Duration: UntilCardLeavesPlay,
 	}).validate(); err == nil {
 		t.Error("a duration the drop cannot express should not validate")
 	}

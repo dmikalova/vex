@@ -22,7 +22,7 @@ var TeleporterChiefTink = set.New(
 	card.WithTraits(card.Traits.Alien),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.Swap{With: card.Target.OtherFriendlyCreature},
 			card.OnChooseCreature{
 				Target: card.Target.TheOtherCreature,

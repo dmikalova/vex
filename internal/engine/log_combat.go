@@ -41,7 +41,10 @@ var fightKeywordWords = []struct {
 	{FightPoison, "poison"},
 }
 
-// annotate renders a combatant as "<name> (<n> power, <keyword>, …)".
+// annotate renders a combatant as "<name> (<n> power, <keyword>, …)". These are
+// the log's only parentheses, and they are structure rather than an aside: the
+// fight line carries both combatants' stats and keywords, so spelling them out
+// would turn one line into three.
 func (k FightKeywords) annotate(name string, power int) string {
 	parts := []string{fmt.Sprintf("%d power", power)}
 	for _, kw := range fightKeywordWords {
@@ -114,9 +117,13 @@ type DamageTaken struct {
 	Total    int
 }
 
-// Text renders the damage that landed, and the creature's new total.
+// Text renders the damage that landed, and the creature's new total. The total is
+// stated only when it differs from the hit, since the first hit is its own total.
 func (e DamageTaken) Text(n Namer) string {
-	return fmt.Sprintf("%s takes %d damage (%d total)",
+	if e.Total == e.Amount {
+		return fmt.Sprintf("%s takes %d damage", n.Name(e.Creature), e.Amount)
+	}
+	return fmt.Sprintf("%s takes %d damage and now has %d damage",
 		n.Name(e.Creature), e.Amount, e.Total)
 }
 

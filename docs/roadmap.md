@@ -49,12 +49,16 @@ does, and makes translation a matter of adding a new text backend.
 The engine must be **deterministic** (seed in → identical game out) and built for speed.
 Separate a **Card Blueprint** (parameterized generative template) from a **Card Instance**
 (a concrete card in a match). Runtime state lives in a flat,
-**pointerless `GameState` struct** using **fixed-capacity arrays**
+
+## pointerless `GameState` struct** using **fixed-capacity arrays
+
 (e.g. `[2][10]CardInstance`) so it can be copied
 by value in nanoseconds with **zero heap allocation / no GC pressure** — critical for later
 simulation work. Dynamic/temporary effects (e.g. "gains a trigger until end of turn") are
 handled by a **Modifier system** layered over the static definition plus an end-of-turn
-**cleanup phase**, never by mutating the base card. A read-only **card catalog**
+
+## cleanup phase**, never by mutating the base card. A read-only **card catalog
+
 (`map[string]CardDefinition`) provides O(1) lookups.
 
 ## 4. Procedurally generate cards (Director + power budget)
@@ -133,7 +137,9 @@ on clients.
 ## 10. Stand up the deck-rating system
 
 Turn simulation output into an automated rating system analogous to KeyForge's community
-**AERC** (base traits like expected Flux, board control, effective power) and **SAS**
+
+## AERC** (base traits like expected Flux, board control, effective power) and **SAS
+
 (**S**ynergy **A**and antisynergy **S**ystem). The engine measures each card's contribution
 to the win rate to assign base trait values, then mines for **synergy pairs** (positive
 multipliers) and **antisynergies** (negative modifiers) that feed back into deck generation
@@ -183,7 +189,9 @@ sit at ~50% vs the gauntlet, they're balanced against each other without ever pl
 directly. Each release only needs ~1.5–2M sims (internal draft balance + global constructed
 alignment). For ongoing tweaks, treat balance like **CI/CD**: compute a change's
 **blast radius** (only re-sim decks that use the changed card), run
-**differential/regression tests**
+
+## differential/regression tests
+
 with small sample gates that escalate on variance, apply **Bayesian updating** with the prior
 run as the statistical prior, and **version the meta** (Gauntlet v4, etc.) so old sets don't
 shift underfoot. Store only compact win/loss telemetry (~100–200 bytes/game) and reconstruct

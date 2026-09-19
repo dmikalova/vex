@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Destroy each enemy creature except the most powerful enemy creature. Destroy each friendly creature except the most powerful friendly creature. Ready and fight with a friendly creature.
+//	Play: Destroy each enemy creature except the most powerful enemy creature and each friendly creature except the most powerful friendly creature. Ready and fight with a friendly creature.
 var ChampionsChallenge = set.New(
 	"Champion's Challenge",
 	card.House.Brobnar,
@@ -16,7 +16,7 @@ var ChampionsChallenge = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "6"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Destroy{
 				Target: card.Target.EachEnemyCreature.Refine(card.Except(card.MostPowerful)),
 			},

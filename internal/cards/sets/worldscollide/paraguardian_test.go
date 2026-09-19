@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Dinosaur • Soldier
 //
-//	Reap: You may exalt Paraguardian. Ward Paraguardian.
+//	Reap: You may exalt and ward Paraguardian.
 func TestParaguardian(t *testing.T) {
 	t.Run("exalts itself and wards its neighbors when accepted", func(t *testing.T) {
 		var para, left, right ct.Card

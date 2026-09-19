@@ -158,7 +158,7 @@ This is a bounded, opt-in exception, not a hole in the model:
 - **Opt-in per card.** A card carries the exception only by setting the
   `TriggersFromDiscard` field (`WithTriggersFromDiscard()`); every other card is
   unaffected. The guard reads `if !g.inPlay(src) && def.Type != Tactic &&
-!g.activeInDiscard(src) { return false }`, where `activeInDiscard` is true only
+!g.activeInDiscard(src) { return false }`, where`activeInDiscard` is true only
   for a `TriggersFromDiscard` card sitting in its owner's discard pile.
 - **Scanned at one window only.** The choose-house window is the sole site that
   gathers these abilities: after adding the in-play sources, `ChooseHouse` scans

@@ -20,7 +20,7 @@ var AmbassadorLiu = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant, card.Traits.Politician),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.DiscardCard{
 				Player:    card.Controller,
 				Zones:     []card.Zone{card.Hand},

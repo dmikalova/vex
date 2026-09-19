@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human
 //
-//	Play/Fight/Reap: You may choose a creature - heal 3 damage from it, and ward it.
+//	Play/Fight/Reap: Choose a creature. Heal 3 damage from it. Ward it.
 var MedicIngram = set.New(
 	"Medic Ingram",
 	card.House.StarAlliance,
@@ -20,7 +20,7 @@ var MedicIngram = set.New(
 	card.InCluster(card.Pulled(ingramsBlasterCluster, 1, 1.25)),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
-	card.WithAbility(card.Trigger.PlayFightReap, card.May{Do: card.ChooseCreatureThen{
+	card.WithAbility(card.Trigger.PlayFightReap, card.ChooseCreatureThen{
 		Target: card.Target.Creature,
 		Then: card.Sequence{Effects: []card.Effect{
 			card.Heal{
@@ -29,5 +29,5 @@ var MedicIngram = set.New(
 			},
 			card.Ward{Target: card.Target.Triggering},
 		}},
-	}}),
+	}),
 )

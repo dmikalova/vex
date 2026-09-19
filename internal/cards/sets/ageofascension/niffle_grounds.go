@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Bonus:  Æmber
 //	Traits: Location
 //
-//	Action: Choose a creature - for the remainder of the turn, it loses taunt and elusive.
+//	Action: Choose a creature. For the remainder of the turn, it loses taunt and elusive.
 var NiffleGrounds = set.New(
 	"Niffle Grounds",
 	card.House.Untamed,

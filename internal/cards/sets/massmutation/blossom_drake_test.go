@@ -16,7 +16,7 @@ import (
 //	Traits: Dragon
 //
 //	Blossom Drake gains +1 power for each artifact in play.
-//	Each artifact's text box is considered blank (except for traits).
+//	Each artifact's text box is considered blank, except for traits.
 func TestBlossomDrake(t *testing.T) {
 	t.Run("gets +1 power for each artifact in play", func(t *testing.T) {
 		var drake ct.Card

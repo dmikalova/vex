@@ -18,7 +18,7 @@ var TheCommonCold = set.New(
 	card.Provenance(card.CotA, "336"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.DealDamage{
 					Amount: 1,

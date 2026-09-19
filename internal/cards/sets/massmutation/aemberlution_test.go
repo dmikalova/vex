@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //
 //	Omega.
-//	Play: Destroy each creature, and each player reveals their hand and puts each creature from their hand into play ready.
+//	Play: Destroy each creature. Each player reveals their hand and puts each creature from their hand into play ready.
 func TestAemberlution(t *testing.T) {
 	t.Run(
 		"destroys every creature, then both players hatch their hand creatures ready",

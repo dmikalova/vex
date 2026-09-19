@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Human
 //
-//	Play/Fight/Reap: You may choose a creature - heal 3 damage from it, and ward it.
+//	Play/Fight/Reap: Choose a creature. Heal 3 damage from it. Ward it.
 func TestMedicIngram(t *testing.T) {
 	t.Run("heals a creature 3 and wards it when played", func(t *testing.T) {
 		var wounded ct.Card

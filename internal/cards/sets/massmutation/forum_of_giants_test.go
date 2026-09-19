@@ -15,7 +15,7 @@ import (
 //	Bonus:  Æmber
 //	Traits: Location
 //
-//	At the start of your turn, choose the most powerful creature - its controller gains 1 Æmber.
+//	At the start of your turn, choose the most powerful creature. Its controller gains 1 Æmber.
 func TestForumOfGiants(t *testing.T) {
 	t.Run("the controller of the single most powerful creature gains", func(t *testing.T) {
 		var mine, theirs ct.Card

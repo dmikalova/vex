@@ -20,7 +20,7 @@ var ThePaleStar = set.New(
 	card.WithTraits(card.Traits.Power),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.This},
 			card.OverrideStats{
 				Power:    1,

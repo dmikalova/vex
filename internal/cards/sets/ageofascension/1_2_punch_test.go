@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Choose an enemy creature - if that creature was already stunned, destroy it. Otherwise, stun it.
+//	Play: Choose an enemy creature. If that creature was already stunned, destroy it. Otherwise, stun it.
 func TestCard12Punch(t *testing.T) {
 	t.Run("stuns an unstunned enemy creature", func(t *testing.T) {
 		var foe ct.Card

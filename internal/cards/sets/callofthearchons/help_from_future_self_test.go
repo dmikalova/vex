@@ -14,7 +14,7 @@ import (
 //	Rarity: Connected
 //	Bonus:  Æmber
 //
-//	Play: Search your deck and discard pile for a Timetraveller, reveal it, and put it into your hand, and shuffle your discard pile into your deck.
+//	Play: Search your deck and discard pile for a Timetraveller, reveal it, and put it into your hand. Shuffle your discard pile into your deck.
 func TestHelpFromFutureSelf(t *testing.T) {
 	var tt, buried ct.Card
 	h := ct.Play(t, ct.Setup{

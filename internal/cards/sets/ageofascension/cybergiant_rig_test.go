@@ -15,7 +15,7 @@ import (
 //	Bonus:  Æmber
 //
 //	This creature gains, "At the end of your turn, give this creature a -1 power counter."
-//	Play: Fully heal this creature, and for each damage healed this way, give this creature a +1 power counter.
+//	Play: Fully heal this creature. For each damage healed this way, give this creature a +1 power counter.
 func TestCybergiantRig(t *testing.T) {
 	var host ct.Card
 	h := ct.Play(t, ct.Setup{

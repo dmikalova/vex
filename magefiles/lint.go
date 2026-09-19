@@ -5,7 +5,6 @@ package main
 import (
 	"fmt"
 	"os/exec"
-	"strings"
 
 	"github.com/magefile/mage/sh"
 )
@@ -14,6 +13,11 @@ import (
 // Run via `go run` so it never enters the module's own dependency graph.
 const golangciLintVersion = "v2.13.2"
 
+// goldmarkLintVersion pins the markdown linter, run via `go run` so — unlike the
+// old brew-installed quickmark — it is always available and the gate can never
+// silently pass without checking Markdown.
+const goldmarkLintVersion = "v0.5.3"
+
 // Lint runs golangci-lint using the pinned version.
 func Lint() error {
 	return sh.RunV("go", "run",
@@ -21,39 +25,15 @@ func Lint() error {
 		"run")
 }
 
-// Markdownlint runs quickmark over every non-ignored markdown file except
-// docs/todo.md. That file is the human's personal scratch list — freeform, often
-// mid-edit, and never kept lint-clean — and agents never write into it (see the
-// repo AGENTS.md), so holding it to the doc lint standard would only ever fail the
-// gate on the human's placeholders. Install qmark (`brew install quickmark-cli` or
-// see https://github.com/ekropotin/quickmark) before running — unlike
-// golangci-lint it is not a Go module mage can pin via `go run`, so environments
-// without it (e.g. CI images that haven't installed it yet) skip with a warning
-// instead of failing the whole gate.
+// Markdownlint auto-fixes what it can and fails only on what it cannot. It runs
+// goldmark-lint (a Go port of markdownlint) with --fix, so fixable issues are
+// corrected in place — the same "format first, then check" contract as Fmt — and
+// only genuinely unfixable violations exit non-zero. Scope, disabled rules, and
+// the docs/todo.md exclusion live in .markdownlint-cli2.yaml.
 func Markdownlint() error {
-	if _, err := exec.LookPath("qmark"); err != nil {
-		fmt.Println("qmark not found on PATH, skipping markdown lint")
-		return nil
-	}
-	// Match qmark's own default scope — tracked plus untracked files, minus
-	// anything .gitignore excludes — so a new uncommitted doc is still linted.
-	out, err := sh.Output(
-		"git", "ls-files", "--cached", "--others", "--exclude-standard", "*.md",
-	)
-	if err != nil {
-		return err
-	}
-	var files []string
-	for _, f := range strings.Split(strings.TrimSpace(out), "\n") {
-		if f == "" || f == "docs/todo.md" {
-			continue
-		}
-		files = append(files, f)
-	}
-	if len(files) == 0 {
-		return nil
-	}
-	return sh.RunV("qmark", files...)
+	return sh.RunV("go", "run",
+		"github.com/mrueg/goldmark-lint/cmd/goldmark-lint@"+goldmarkLintVersion,
+		"--fix", "**/*.md")
 }
 
 // Semgrep runs the semgrep static analyzer over the tree with its curated Go

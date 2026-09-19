@@ -25,13 +25,19 @@ func (e Destroy) verb() string       { return "destroy" }
 func (e Destroy) targetText() string { return e.Target.Text() }
 
 // Text renders the effect, e.g. "destroy each creature with power 3 or lower", or
-// "choose a creature - destroy …" when the target's refinement leads with a choice.
+// "choose a creature. Destroy …" when the target's refinement leads with a choice.
 func (e Destroy) Text() string {
 	body := e.verb() + " " + e.targetText()
 	if lead, ok := e.Target.leadIn(); ok {
-		return lead + " - " + body
+		return leadInSentence(lead, body)
 	}
 	return body
+}
+
+// endsSentence reports the choice-led form, whose consequence closes a sentence.
+func (e Destroy) endsSentence() bool {
+	_, ok := e.Target.leadIn()
+	return ok
 }
 
 // Resolve destroys each selected creature, letting the controller order them.

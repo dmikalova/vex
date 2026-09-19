@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Law
 //
-//	At the start of each player's turn, if there are no creatures in play, destroy General Order 24. Otherwise, choose a friendly creature - destroy each creature of that card's house.
+//	At the start of each player's turn, if there are no creatures in play, destroy General Order 24. Otherwise, choose a friendly creature. Destroy each creature of that card's house.
 
 // TestGeneralOrder24DestroysChosenHouse fires the artifact at the start of the
 // opponent's turn: they choose one of their creatures and every creature of that

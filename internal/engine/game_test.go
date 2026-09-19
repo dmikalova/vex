@@ -63,8 +63,8 @@ func TestPlayTypeMismatchErrors(t *testing.T) {
 	if _, err := g.PlayArtifact(0, 0); !errors.Is(err, ErrWrongType) {
 		t.Errorf("PlayArtifact err = %v, want ErrWrongType", err)
 	}
-	if err := g.PlayAction(0, 0); !errors.Is(err, ErrWrongType) {
-		t.Errorf("PlayAction err = %v, want ErrWrongType", err)
+	if err := g.PlayTactic(0, 0); !errors.Is(err, ErrWrongType) {
+		t.Errorf("PlayTactic err = %v, want ErrWrongType", err)
 	}
 	if _, err := g.PlayUpgrade(0, 0); !errors.Is(err, ErrWrongType) {
 		t.Errorf("PlayUpgrade err = %v, want ErrWrongType", err)
@@ -163,14 +163,14 @@ func TestPlayArtifactAndAction(t *testing.T) {
 	g.AddToBattleline(testCreature("friend", 4), 0)
 	g.AddToBattleline(testCreature("foe", 2), 1)
 	g.AddToHand(exBattleFury(), 0)
-	if err := g.PlayAction(0, handIdx(g, 0, "Battle Fury")); err != nil {
-		t.Fatalf("PlayAction: %v", err)
+	if err := g.PlayTactic(0, handIdx(g, 0, "Battle Fury")); err != nil {
+		t.Fatalf("PlayTactic: %v", err)
 	}
 	if len(g.Battleline(1)) != 0 {
 		t.Error("foe should be destroyed by the ready-and-fight")
 	}
 	if len(g.Discard(0)) == 0 {
-		t.Error("action card should be in discard")
+		t.Error("the Tactic should be in discard")
 	}
 }
 

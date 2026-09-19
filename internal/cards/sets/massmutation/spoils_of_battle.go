@@ -18,7 +18,7 @@ var SpoilsOfBattle = set.New(
 	card.Provenance(card.MM, "197"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.CaptureAember{
 				Amount: 1,
 				Target: card.Target.FriendlyCreature,

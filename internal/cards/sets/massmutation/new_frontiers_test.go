@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Bonus:  Æmber
 //
-//	Play: Choose a house - reveal the top 3 cards of your deck. Archive each card of the chosen house and discard the others.
+//	Play: Choose a house. Reveal the top 3 cards of your deck. Archive each card of the chosen house and discard the others.
 func TestNewFrontiers(t *testing.T) {
 	t.Run("archives the chosen house and discards the others", func(t *testing.T) {
 		var logos1, other, logos2 ct.Card

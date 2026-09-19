@@ -22,8 +22,8 @@ var SciOfficerQincan = set.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Alien, card.Traits.Proximan, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Elusive),
-	card.WithAbility(
-		card.Trigger.AfterAnyPlayerChoosesHouse, card.Conditional{
+	card.WithEachPlayerAbility(
+		card.Trigger.AfterChooseHouse, card.Conditional{
 			Cond: card.ActiveHouseMatchesNoCardsInPlay{},
 			Then: card.StealAember{Amount: 1},
 		}),

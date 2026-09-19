@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: Lose all your Æmber, and for each Æmber you lost this way, draw 2 cards.
+//	Play: Lose all your Æmber. For each Æmber you lost this way, draw 2 cards.
 var MartianGenerosity = set.New(
 	"Martian Generosity",
 	card.House.Mars,

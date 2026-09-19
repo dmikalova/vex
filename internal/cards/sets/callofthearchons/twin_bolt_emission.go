@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Deal 2 damage to a creature and deal 2 damage to a different creature.
+//	Play: Deal 2 damage to a creature and 2 damage to a different creature.
 var TwinBoltEmission = set.New(
 	"Twin Bolt Emission",
 	card.House.Logos,

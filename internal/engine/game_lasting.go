@@ -1,5 +1,7 @@
 package engine
 
+import "slices"
+
 // This file holds LASTING EFFECTS: "for the remainder of the turn" effects that
 // attach to a later game event. Three flavors share the same flat registry:
 //
@@ -308,10 +310,27 @@ type LastingEffect struct {
 	HasSource bool
 }
 
+// filters reports whether the record narrows which subject it fires for. A record
+// that filters is only safe to read through a scan that honours every one of these
+// fields; matchingLasting is the only scan that does.
+func (le LastingEffect) filters() bool {
+	return le.House.filters() || le.Type != TypeUnset || le.Trait != traitUnset ||
+		le.HasSubject || le.HasExcept
+}
+
 // maxLasting bounds how many lasting effects can be active at once — generous for
 // the handful of "remainder of the turn" cards, and a fixed size keeps the state a
 // flat value.
 const maxLasting = 8
+
+// replacementEvents are the events whose outcome a lasting record replaces rather
+// than reacts to. lastingReplacement matches one on controller and event alone, so
+// a record carrying a subject filter would be applied to subjects it was never
+// meant to reach. AddLasting refuses such a record at the door rather than letting
+// it match by accident (TestAddLastingRejectsFilteredReplacement); a replacement
+// that genuinely needs to discriminate needs lastingReplacement taught the filters
+// first.
+var replacementEvents = []Event{EventReapAember}
 
 // AddLasting registers a lasting effect owned by le.Controller for the rest of
 // their turn, dropping it silently when the registry is full. It is the single
@@ -319,6 +338,9 @@ const maxLasting = 8
 // into the play or reap path; the record's own fields (Once, House, Type, Except)
 // narrow when it fires.
 func (g *Game) AddLasting(le LastingEffect) {
+	if le.filters() && slices.Contains(replacementEvents, le.On) {
+		panic("engine: lasting record on a replacement event cannot carry subject filters")
+	}
 	if int(g.State.LastingCount) >= maxLasting {
 		return
 	}
@@ -347,6 +369,9 @@ func (g *Game) clearLasting(player int) {
 // event for subject, applying the house, type, subject, and except filters. It is
 // the shared gather behind lastingReactions, which turns the matches into window
 // entries that order alongside the card abilities firing on the same event.
+//
+// This is the only one of the registry's three scans that honours every filter. It
+// does not consume Once — the window does, once the reaction actually fires.
 func (g *Game) matchingLasting(event Event, actor int, subject LocalID) []LastingEffect {
 	var pending []LastingEffect
 	for i := 0; i < int(g.State.LastingCount); i++ {
@@ -400,6 +425,12 @@ func (g *Game) lastingReactions(event Event, actor int, subject LocalID) []trigg
 // the granting player's next turn, so an enemy creature exalts when it fights on the
 // opponent's turn too — which is why this matches on the subject alone rather than
 // on the acting player the way the event windows gather their reactions.
+//
+// Matching on the subject alone means it also skips House, Type, Trait, Except, and
+// Once. It resolves the reaction directly rather than through a window, so nothing
+// downstream consumes Once either: a one-shot Before-Fight record would fire every
+// fight. No card installs one, and the narrower fix is to route this through the
+// window path rather than to re-derive the filters here.
 func (g *Game) fireLastingBeforeFight(attacker LocalID) {
 	actor := g.controller(attacker)
 	for i := 0; i < int(g.State.LastingCount); i++ {
@@ -546,6 +577,10 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 // its outcome is being replaced this turn. The whole record is returned, not just
 // its action, so the site can name the card that installed it when it narrates the
 // replaced outcome.
+//
+// It matches on controller and event alone and returns the first such record. That
+// is safe only because a replacement record may not carry filters, which AddLasting
+// enforces — see replacementEvents.
 func (g *Game) lastingReplacement(player int, event Event) (LastingEffect, bool) {
 	for i := 0; i < int(g.State.LastingCount); i++ {
 		if le := g.State.Lasting[i]; int(le.Controller) == player && le.On == event {

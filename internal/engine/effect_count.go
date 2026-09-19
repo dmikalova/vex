@@ -326,27 +326,76 @@ func (TraitsOfChosen) Value(ctx *EffectContext) int {
 // CountText renders the singular noun the "for each" clause repeats.
 func (TraitsOfChosen) CountText() string { return "trait that creature has" }
 
-// BonusIconsOfChosen counts the bonus icons on the card in context (ctx.It) — the
-// card an effect just discarded or revealed. Mindfire steals 1 Æmber for each
-// bonus icon on the card it discarded. Noun names the card in the text so the
-// clause reads "the discarded card" rather than a bare "it".
-type BonusIconsOfChosen struct {
-	Noun ItNoun
+// BonusIconsOf counts the bonus icons on the cards its Over subject names — the
+// one card an effect just discarded or revealed (Mindfire steals for each bonus
+// icon on the card it discarded), or a whole "this way" set (Infurnace drains for
+// each Æmber bonus icon on the cards it purged). Kind narrows the count to one
+// icon kind; the zero value counts every kind.
+type BonusIconsOf struct {
+	Over BonusIconSubject
+	Kind BonusIcon
 }
 
-// Value returns the number of bonus icons on the context card, or zero when no
-// card is in context.
-func (e BonusIconsOfChosen) Value(ctx *EffectContext) int {
-	if !ctx.HasIt {
-		return 0
+// BonusIconSubject is the axis a BonusIconsOf varies along: which cards it reads
+// and the noun its "for each" clause names them by. A new subject is a new member
+// here, not a new count.
+type BonusIconSubject interface {
+	// bonusIconCards lists the cards to total, empty when there are none.
+	bonusIconCards(ctx *EffectContext) []LocalID
+	// bonusIconNoun names them in the printed clause, e.g. "the purged cards".
+	bonusIconNoun() string
+}
+
+// Value totals the count's icon kind across the subject's cards.
+func (e BonusIconsOf) Value(ctx *EffectContext) int {
+	total := 0
+	for _, id := range e.Over.bonusIconCards(ctx) {
+		total += ctx.Resolver.BonusIconCountOf(id, e.Kind)
 	}
-	return ctx.Resolver.BonusIconCount(ctx.It)
+	return total
 }
 
 // CountText renders the singular noun the "for each" clause repeats, e.g. "bonus
 // icon on the discarded card".
-func (e BonusIconsOfChosen) CountText() string {
-	return "bonus icon on " + e.Noun.noun()
+func (e BonusIconsOf) CountText() string {
+	return bonusIconClause(e.Kind, e.Over.bonusIconNoun())
+}
+
+// TheCardInContext is the BonusIconSubject naming the single card an effect just
+// put in context (ctx.It). Noun names it in the text, so the clause reads "the
+// discarded card" rather than a bare "it".
+type TheCardInContext struct {
+	Noun ItNoun
+}
+
+func (TheCardInContext) bonusIconCards(ctx *EffectContext) []LocalID {
+	if !ctx.HasIt {
+		return nil
+	}
+	return []LocalID{ctx.It}
+}
+
+func (s TheCardInContext) bonusIconNoun() string { return s.Noun.noun() }
+
+// ThePurgedCards is the BonusIconSubject naming every card the most recent purge
+// removed this resolution.
+type ThePurgedCards struct{}
+
+func (ThePurgedCards) bonusIconCards(ctx *EffectContext) []LocalID {
+	return ctx.Produced.PurgedCards
+}
+
+func (ThePurgedCards) bonusIconNoun() string { return "the purged cards" }
+
+// bonusIconClause renders the singular noun a "for each bonus icon" clause repeats
+// over a subject — "bonus icon on the discarded card", or "Æmber bonus icon on the
+// purged cards" when a kind narrows it.
+func bonusIconClause(kind BonusIcon, subject string) string {
+	icon := "bonus icon"
+	if kind != bonusUnset {
+		icon = kind.String() + " bonus icon"
+	}
+	return icon + " on " + subject
 }
 
 // CopiesInDiscard counts the cards in the controller's discard pile sharing the

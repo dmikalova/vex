@@ -16,7 +16,7 @@ var Smite = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.AoA, "224"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.OnChooseCreature{
 				Target: card.Target.FriendlyCreature,
 				Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}},

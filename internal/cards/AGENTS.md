@@ -146,14 +146,15 @@ to seed it. `set.New(...)`:
 - **A card with several abilities lists them in printed order: ongoing lines
   first, the `Play`/`Action` line last.** A card prints its always-on or
   recurring ability (a `WithConstant` line, or a `WithAbility(card.Trigger.StartOfTurn,
-…)` / `EndOfTurn` line) above its `Play:`/`Action:` ability, so author the
+…)`/`EndOfTurn`line) above its`Play:`/`Action:` ability, so author the
   `With*` calls in that same top-to-bottom order (Wretched Doll: its
   start-of-turn sweep is written before its `Play` doom-counter). Each ability is
   its own `WithConstant`/`WithAbility` call; do not fuse two printed lines into one.
-- **One ability that reads as several sentences is one `card.Sentences`,** not
-  several abilities: `card.Sentences{Effects: []card.Effect{…}}` renders its
-  effects space-joined on a single line under one trigger. Reach for two
-  `WithAbility` calls only when the card genuinely prints two ability lines.
+- **One ability that reads as several sentences is one `card.Sequence`,** not
+  several abilities: `card.Sequence{Effects: []card.Effect{…}}` renders each
+  effect as its own sentence under one trigger, joining only what folds or what
+  an enclosing condition scopes. Reach for two `WithAbility` calls only when the
+  card genuinely prints two ability lines.
 
 Run `mage fmt` after editing (golines aligns the fields; it does not add the line
 breaks, so the one-field-per-line layout above is the author's responsibility).
@@ -316,7 +317,7 @@ comment) and the engine tests (the `Text()` assertions live in
     with `h.P1.ClickCard(x)` or `h.P1.ClickOption("...")`, and assert the prompt
     with `h.P1.ExpectPrompt("...").Source("Card")`. A sole candidate auto-resolves.
   - Assert with `h.Expect(defOrHandle).Damage/Power/Armor/AmberOn/Exhausted/
-Ready/Stunned/At(zone)` (chainable) and `h.P1.ExpectAmber/ExpectKeys`. Reach
+Ready/Stunned/At(zone)`(chainable) and`h.P1.ExpectAmber/ExpectKeys`. Reach
     the raw engine via `h.Game()` for anything the fluent API doesn't cover.
 - Set test packages import `card` (for `card.House.X`) and `ct`
   (`internal/cards/cardtest`); they use the public engine API and exported card

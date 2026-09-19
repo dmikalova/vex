@@ -17,7 +17,7 @@ import (
 //
 //	After you play an Untamed tactic, ready Dark Harbinger.
 func TestDarkHarbinger(t *testing.T) {
-	t.Run("readies after you play an Untamed action card", func(t *testing.T) {
+	t.Run("readies after you play an Untamed Tactic", func(t *testing.T) {
 		var harbinger ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
@@ -33,14 +33,14 @@ func TestDarkHarbinger(t *testing.T) {
 		h.P1.Reap(harbinger)
 		h.Expect(harbinger).Exhausted()
 
-		// Rapid Evolution is an Untamed action card; it needs a target creature.
+		// Rapid Evolution is an Untamed Tactic; it needs a target creature.
 		h.P1.Play(RapidEvolution)
 		h.P1.ClickCard(harbinger)
 
 		h.Expect(harbinger).Ready()
 	})
 
-	t.Run("does not ready after a non-action card is played", func(t *testing.T) {
+	t.Run("does not ready after a non-Tactic is played", func(t *testing.T) {
 		var harbinger, ally ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{

@@ -13,7 +13,7 @@ import (
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This creature gains, "Fight/Reap: If this is the first time this creature has been used this turn, ready this creature."
+//	This creature gains, "Fight/Reap: If this is the first time this creature has been used this turn, ready it."
 func TestRocketBoots(t *testing.T) {
 	t.Run("readies the host only the first time it is used each turn", func(t *testing.T) {
 		var host, foe ct.Card

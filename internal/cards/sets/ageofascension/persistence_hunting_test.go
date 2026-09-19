@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Choose a house - exhaust each enemy creature of the chosen house.
+//	Play: Choose a house. Exhaust each enemy creature of the chosen house.
 func TestPersistenceHunting(t *testing.T) {
 	t.Run("exhausts each enemy creature of the chosen house", func(t *testing.T) {
 		var foe1, foe2 ct.Card

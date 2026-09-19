@@ -20,7 +20,7 @@ var Eureka = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.GainAember{Player: card.Controller, Amount: 2},
 				card.ArchiveCard{

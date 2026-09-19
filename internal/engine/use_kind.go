@@ -1,5 +1,7 @@
 package engine
 
+import "slices"
+
 // A card that "cannot reap" is barred from one way of using it while every other
 // way stays open — Tireless Crocag fights and uses its Action: normally. That is
 // narrower than the timed, player-wide Restrict restrictions in
@@ -69,18 +71,9 @@ func (g *Game) cannotBeUsedTo(id LocalID, kind UseKind) bool {
 // barredByConstantAbility reports whether an active constant ability of a card in
 // play bars id from this way of being used (Narp bars its neighbors from reaping).
 func (g *Game) barredByConstantAbility(id LocalID, kind UseKind) bool {
-	for p := 0; p < 2; p++ {
-		for _, src := range g.allInPlay(p) {
-			for _, c := range g.cat.def(src).ConstantAbilities {
-				for _, k := range c.CannotBeUsedTo {
-					if k == kind && g.constantActive(src, c) && g.constantAffects(src, c, id) {
-						return true
-					}
-				}
-			}
-		}
-	}
-	return false
+	return g.anyActiveConstant(id, func(c ConstantAbility) bool {
+		return slices.Contains(c.CannotBeUsedTo, kind)
+	})
 }
 
 // CannotBeUsedTo reports whether this way of using the card is barred by a

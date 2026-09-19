@@ -32,7 +32,7 @@ var Hyde = set.New(
 	card.LeadsCluster(hydeCluster),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
-	card.WithAbility(card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
+	card.WithAbility(card.Trigger.Reap, card.Sequence{Effects: []card.Effect{
 		card.Draw{Amount: 1},
 		card.Conditional{
 			Cond: card.ControlsNamed{Name: Velum.Name},

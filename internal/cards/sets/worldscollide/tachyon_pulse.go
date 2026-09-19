@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: Destroy each artifact, and exhaust each creature with an upgrade.
+//	Play: Destroy each artifact. Exhaust each creature with an upgrade.
 var TachyonPulse = set.New(
 	"Tachyon Pulse",
 	card.House.StarAlliance,

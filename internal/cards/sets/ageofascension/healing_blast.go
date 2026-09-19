@@ -18,7 +18,7 @@ var HealingBlast = set.New(
 	card.Provenance(card.AoA, "219"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Heal{Fully: true, Target: card.Target.Creature},
 			card.Conditional{
 				Cond: card.CountIs{

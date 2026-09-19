@@ -22,7 +22,7 @@ var OrbOfWonder = set.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Then{
 			First: card.Destroy{Target: card.Target.This},
-			Result: card.Sentences{
+			Result: card.Sequence{
 				Effects: []card.Effect{
 					card.Search{Sources: []card.Zone{card.Deck}, Dest: card.To.Hand},
 					card.Shuffle{},

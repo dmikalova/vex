@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: Remove a ward from a creature, and ward a creature.
+//	Play: Remove a ward from a creature. Ward a creature.
 func TestHunterOrHunted(t *testing.T) {
 	t.Run("removes a ward from one creature and wards another", func(t *testing.T) {
 		var warded, target ct.Card

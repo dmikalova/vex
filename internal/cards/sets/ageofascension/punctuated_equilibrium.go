@@ -16,7 +16,7 @@ var PunctuatedEquilibrium = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "363"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.DiscardHand{Player: card.EachPlayer},
 				card.RefillHand{Player: card.EachPlayer},

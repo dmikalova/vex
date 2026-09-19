@@ -22,7 +22,7 @@ var CodeMonkey = set.New(
 	card.WithTraits(card.Traits.Ai, card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Deploy),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.ArchiveFromPlay{
 				Target: card.Target.EachCreature.Neighboring(),
 			},

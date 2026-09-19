@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Put an enemy creature into its owner's hand, and your opponent discards a random card from their hand.
+//	Play: Put an enemy creature into its owner's hand. Your opponent discards a random card from their hand.
 var DoubleDoom = set.New(
 	"Double Doom",
 	card.House.Dis,

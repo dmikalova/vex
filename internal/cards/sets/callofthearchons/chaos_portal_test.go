@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Action: Choose a house - reveal the top card of your deck. If it is of the chosen house, play it.
+//	Action: Choose a house. Reveal the top card of your deck. If it is of the chosen house, play it.
 func TestChaosPortal(t *testing.T) {
 	t.Run("plays the top card when it is of the chosen house", func(t *testing.T) {
 		var top ct.Card

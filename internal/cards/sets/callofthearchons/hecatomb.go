@@ -18,7 +18,7 @@ var Hecatomb = set.New(
 	card.Provenance(card.CotA, "63"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Destroy{
 				Target: card.Target.EachCreature.House(card.Houses.Named(card.House.Self)),
 			},

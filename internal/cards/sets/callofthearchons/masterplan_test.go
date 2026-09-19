@@ -17,7 +17,7 @@ import (
 //
 //	Versatile.
 //	Play: Put a card from your hand facedown under Masterplan.
-//	Action: Play the card under Masterplan, and destroy Masterplan.
+//	Action: Play the card under Masterplan. Destroy Masterplan.
 func TestMasterplan(t *testing.T) {
 	t.Run("play puts a card from hand facedown under it", func(t *testing.T) {
 		var masterplan, buried ct.Card

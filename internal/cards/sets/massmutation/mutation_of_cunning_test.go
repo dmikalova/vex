@@ -14,7 +14,7 @@ import (
 //	Rarity: Connected
 //	Bonus:  Æmber
 //
-//	Play: Choose a creature - the chosen creature gains elusive and the Mutant trait until the start of your next turn.
+//	Play: Choose a creature. The chosen creature gains elusive and the Mutant trait until the start of your next turn.
 func TestMutationOfCunning(t *testing.T) {
 	var beast ct.Card
 	h := ct.Play(t, ct.Setup{

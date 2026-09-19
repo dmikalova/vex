@@ -16,7 +16,7 @@ var TautauVapors = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, "139"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.Draw{Amount: 2},
 				card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},

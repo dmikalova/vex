@@ -15,8 +15,12 @@ type May struct {
 }
 
 // Text renders the effect, e.g. "you may destroy another friendly creature -> fully
-// heal Chuff Ape".
+// heal Chuff Ape". A choice-led child renders its hedged form, so the consequence
+// sentence does not read as mandatory.
 func (e May) Text() string {
+	if h, ok := e.Do.(hedgedLeadIn); ok {
+		return "you may " + h.hedgedText()
+	}
 	return "you may " + e.Do.Text()
 }
 

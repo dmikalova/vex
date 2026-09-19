@@ -24,7 +24,7 @@ var Crassosaurus = set.New(
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.CaptureFromAnyPlayer{Amount: 10},
 			card.Conditional{
 				Cond: card.Not{Cond: card.CountIs{

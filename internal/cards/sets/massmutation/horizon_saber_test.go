@@ -16,7 +16,7 @@ import (
 //	Armor:  2
 //	Traits: Robot
 //
-//	Play/Fight/Reap: Search your deck and discard pile for a card, reveal it, and put it into your archives, and shuffle your discard pile into your deck.
+//	Play/Fight/Reap: Search your deck and discard pile for a card, reveal it, and put it into your archives. Shuffle your discard pile into your deck.
 func TestHorizonSaber(t *testing.T) {
 	var saber, target, buried ct.Card
 	h := ct.Play(t, ct.Setup{

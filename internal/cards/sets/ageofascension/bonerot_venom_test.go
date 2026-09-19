@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Bonus:  Æmber
 //
-//	This creature gains, "After this creature is used, deal 2 damage to this creature."
+//	This creature gains, "After this creature is used, deal 2 damage to it."
 func TestBonerotVenom(t *testing.T) {
 	t.Run("deals 2 damage to its host after the host reaps", func(t *testing.T) {
 		var host ct.Card

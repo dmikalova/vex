@@ -15,7 +15,7 @@ var Patronage = set.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.MM, "227"),
-	card.WithAbility(card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+	card.WithAbility(card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 		card.MoveAember{
 			From:     card.Target.Creature,
 			Fraction: card.HalfRoundedUp,

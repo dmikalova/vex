@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Bonus:  Æmber
 //
-//	Play: Reveal any number of Mars cards from your hand, and for each card revealed this way, draw a card.
+//	Play: Reveal any number of Mars cards from your hand. For each card revealed this way, draw a card.
 func TestBattleFleet(t *testing.T) {
 	t.Run("draws a card for each Mars card revealed from hand", func(t *testing.T) {
 		var d1, d2, m1, m2 ct.Card

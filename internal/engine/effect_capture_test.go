@@ -601,7 +601,7 @@ func TestDistributeCapture(t *testing.T) {
 // TestCrassosaurusSelfPurge covers the composed Play ability: after the capture,
 // the creature purges itself only when it captured fewer than 10 Æmber.
 func TestCrassosaurusSelfPurge(t *testing.T) {
-	play := Sentences{Effects: []Effect{
+	play := Sequence{Effects: []Effect{
 		CaptureFromAnyPlayer{Amount: 10},
 		Conditional{
 			Cond: Not{Cond: CountIs{Count: AemberOnThis{}, Is: AtLeast, Amount: 10}},

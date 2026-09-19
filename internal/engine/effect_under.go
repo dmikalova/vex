@@ -45,8 +45,8 @@ func chooseUnderCard(
 // PutUnderFromHand has the controller choose a card from their hand and place it
 // under the resolving card, face up or face down. Masterplan and Jargogle place
 // theirs facedown; Graft always places its card faceup. Type restricts the choice
-// to cards of that type; the zero value allows any card, and Tactic is the "action
-// card" a graft-from-hand takes (Infomancer, Memolith). It does nothing with an
+// to cards of that type; the zero value allows any card, and Tactic is the card
+// a graft-from-hand takes (Infomancer, Memolith). It does nothing with an
 // empty hand.
 type PutUnderFromHand struct {
 	// FaceDown places the chosen card hidden from the opponent, viewable only by
@@ -66,7 +66,7 @@ func (e PutUnderFromHand) noun() string {
 	return "card"
 }
 
-// Text renders the effect, e.g. "put an action card from your hand faceup under
+// Text renders the effect, e.g. "put a Tactic card from your hand faceup under
 // {self}".
 func (e PutUnderFromHand) Text() string {
 	face := "faceup"
@@ -92,7 +92,7 @@ func (e PutUnderFromHand) Resolve(ctx *EffectContext) {
 	ctx.Resolver.PutCardUnder(ctx.Controller, id, ctx.Source, e.FaceDown)
 }
 
-// TriggerGraftedPlayEffect triggers the Play effect of an action card grafted
+// TriggerGraftedPlayEffect triggers the Play effect of a Tactic grafted
 // faceup under the resolving card — Infomancer's Reap and Memolith's Action.
 // Unlike PlayCardUnder the grafted card does not move: only its Play abilities
 // resolve, in place, and the card stays grafted (a tactic resolves its own Play

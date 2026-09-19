@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestCardList(t *testing.T) {
 	var z deckList
@@ -83,5 +86,126 @@ func TestTurnLogSaturates(t *testing.T) {
 	log.reset()
 	if log.Count != 0 {
 		t.Errorf("count after reset = %d, want 0", log.Count)
+	}
+}
+
+// narration is how the log covers changes to one GameState field.
+type narration int
+
+const (
+	// narratedDirectly: a change to the field has a log entry of its own, so a
+	// player watching the log sees the change itself.
+	narratedDirectly narration = iota
+	// narratedByCause: the field is bookkeeping for a lasting effect or a turn
+	// bar. The log names the card that armed it and narrates the outcome when it
+	// bites; the flag flipping is not itself an outcome (ADR 0011).
+	narratedByCause
+	// narratedNever: deliberately silent.
+	narratedNever
+)
+
+// fieldNarration classifies every GameState field. It exists to force a decision
+// rather than to describe one: TestEveryStateFieldDeclaresItsNarration fails when
+// a field is added without an entry here, so "does this change need a log entry?"
+// is answered when the field is written instead of being discovered as a missing
+// line in a game (Exhaust and ReadyIfFirstUse were both found that way).
+var fieldNarration = map[string]narration{
+	"Cards":          narratedDirectly,
+	"UsagesThisTurn": narratedDirectly,
+	"Battleline":     narratedDirectly,
+	"Hand":           narratedDirectly,
+	"Deck":           narratedDirectly,
+	"Discard":        narratedDirectly,
+	"Artifacts":      narratedDirectly,
+	"Archives":       narratedDirectly,
+	"Purge":          narratedDirectly,
+	"Aember":         narratedDirectly,
+	"KeyColors":      narratedDirectly,
+	"Chains":         narratedDirectly,
+	"ActivePlayer":   narratedDirectly,
+	"ActiveHouse":    narratedDirectly,
+	"Tide":           narratedDirectly,
+	"Turn":           narratedDirectly,
+	"Winner":         narratedDirectly,
+	"Phase":          narratedDirectly,
+	"Counters":       narratedDirectly,
+	"CounterCount":   narratedDirectly,
+	"Controls":       narratedDirectly,
+	"ControlCount":   narratedDirectly,
+
+	"ForgePrevented":              narratedByCause,
+	"PhaseEnded":                  narratedByCause,
+	"CannotFight":                 narratedByCause,
+	"CannotFightNext":             narratedByCause,
+	"CannotPlayTypeThis":          narratedByCause,
+	"CannotPlayTypeNext":          narratedByCause,
+	"CannotUse":                   narratedByCause,
+	"CannotUseNext":               narratedByCause,
+	"CannotReap":                  narratedByCause,
+	"CannotReapNext":              narratedByCause,
+	"CannotReapHouse":             narratedByCause,
+	"CannotReapHouseNext":         narratedByCause,
+	"CreaturesCannot":             narratedByCause,
+	"CreaturesCannotNext":         narratedByCause,
+	"SkipForge":                   narratedByCause,
+	"SkipForgeNext":               narratedByCause,
+	"Scheduled":                   narratedByCause,
+	"ScheduledCount":              narratedByCause,
+	"KeyCostBump":                 narratedByCause,
+	"KeyCostBumpNext":             narratedByCause,
+	"KeyCostPerHouse":             narratedByCause,
+	"KeyCostPerHouseNext":         narratedByCause,
+	"MayFightHouse":               narratedByCause,
+	"MayFightAny":                 narratedByCause,
+	"MayUseHouse":                 narratedByCause,
+	"MayPlayHouse":                narratedByCause,
+	"MayUseArtifactsAnyHouse":     narratedByCause,
+	"MayUseTrait":                 narratedByCause,
+	"TurnHistory":                 narratedByCause,
+	"Lasting":                     narratedByCause,
+	"LastingCount":                narratedByCause,
+	"Continuous":                  narratedByCause,
+	"ContinuousCount":             narratedByCause,
+	"AlsoTriggers":                narratedByCause,
+	"AlsoTriggersCount":           narratedByCause,
+	"PlayedThisTurn":              narratedByCause,
+	"DiscardedThisTurn":           narratedByCause,
+	"PlayPermissionsUsedThisTurn": narratedByCause,
+	"OffHousePermits":             narratedByCause,
+	"OffHousePermitCount":         narratedByCause,
+	"NonActivePlaysUsedThisTurn":  narratedByCause,
+	"FirstTurnPlayLimit":          narratedByCause,
+	"HouseConstraints":            narratedByCause,
+	"HouseConstraintCount":        narratedByCause,
+	"HouseConstraintsNext":        narratedByCause,
+	"HouseConstraintCountNext":    narratedByCause,
+	"FightDamageRedirect":         narratedByCause,
+	"FightCancelled":              narratedByCause,
+	"FightersPlus":                narratedByCause,
+
+	// The match RNG is state so a snapshot replays bit-exact (ADR 0039); its
+	// advancing is not an outcome anyone can observe.
+	"PRNG": narratedNever,
+}
+
+// TestEveryStateFieldDeclaresItsNarration is the ratchet behind "every state
+// change is logged". It cannot prove the log is complete, but it can stop the
+// gap from being introduced silently: a new GameState field fails the build until
+// fieldNarration says how the log covers it.
+func TestEveryStateFieldDeclaresItsNarration(t *testing.T) {
+	typ := reflect.TypeOf(GameState{})
+	for i := range typ.NumField() {
+		name := typ.Field(i).Name
+		if _, ok := fieldNarration[name]; !ok {
+			t.Errorf(
+				"GameState.%s has no fieldNarration entry; decide whether a change "+
+					"to it needs its own log entry", name,
+			)
+		}
+	}
+	for name := range fieldNarration {
+		if _, ok := typ.FieldByName(name); !ok {
+			t.Errorf("fieldNarration names %q, which GameState no longer has", name)
+		}
 	}
 }

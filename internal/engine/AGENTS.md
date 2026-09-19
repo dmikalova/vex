@@ -64,15 +64,16 @@ recorded as ADRs — read them for the full rationale and the rejected alternati
   implementation of the port, kept apart from the interface declarations);
   `text.go` → `text_helpers.go` (the card-agnostic string helpers, kept apart from
   the card-shaped renderers).
-- **Composite — `Sequence`, `Sentences`, `Conditional`, `ChooseHouseThen`,
+- **Composite — `Sequence`, `Conditional`, `ChooseHouseThen`,
   `Repeat`, …** compose child `Effect`s and recurse `validateEffect` into them.
   Prefer composing small nodes over one fused node (root `AGENTS.md`: "decompose
-  fused effects"). The two ordered composites differ only in how they _read_:
-  `Sequence` conjoins its children into one compound instruction ("a, and b"),
-  `Sentences` renders each child as its own sentence ("A. B."). Pick by how the
-  printed card reads. Do **not** wrap individual children to change their
-  punctuation — there is no per-child sentence wrapper, and a genuinely mixed card
-  nests instead: `Sentences{A, Sequence{B, C}}` reads "A. B, and C."
+  fused effects"). `Sequence` is the only ordered composite: it breaks its
+  children into their own sentences by default ("A. B."), and derives the
+  exceptions — a run of folding children conjoins into one instruction ("destroy
+  a creature and an artifact"), and a `Conditional` gate keeps its own consequence
+  joined so the gate visibly covers every clause. There is no per-child sentence
+  wrapper and no second list node to choose between; how a card reads follows from
+  its effects, not from which composite the author picked.
 - **Strategy — the `Chooser` family, and the `Refinement` / `Count` / `Condition`
   trio.** See the next section; this is used heavily and should keep being the
   first tool reached for when behavior varies along an axis.
@@ -375,7 +376,7 @@ to the owner, and artifacts never reverting) are ADR 0028.
 
 To take control, push one entry through `takeControl(id, controller, source)` — it
 handles creatures and artifacts alike. `source` is the card whose leaving play ends
-the grant; a **Forever** grant names the seized card itself as `source`, so it
+the grant; an **UntilCardLeavesPlay** grant names the seized card itself as `source`, so it
 lapses only when the card leaves play. A take first supersedes its own source's
 earlier entry on the card (`supersedeControl` drops the matching `(card, source)`
 pair), so re-taking replaces rather than stacks — this bounds the stack to the
@@ -469,7 +470,7 @@ no `Logf`: the engine cannot write a sentence into the log at all.
 - **A `Text` method reuses the shared phrasing, it does not re-roll it.**
   `log.go` holds the helpers every entry draws on — `namedCards` for a list of card
   names, `because(text, on)` to suffix an event clause, `nameMoved` for a card
-  crossing zones — and `text.go` holds `countNoun`/`plural` for "1 card" vs
+  crossing zones — and `text_helpers.go` holds `countNoun`/`plural` for "1 card" vs
   "3 cards" and `indefinite` for "a"/"an". Never hand-roll a `card(s)` placeholder,
   a `noun + "s"` plural, or a bare `"a " + noun`. When an entry is another entry
   plus context, build the base entry and render it: `LastingAemberGained.Text` is
@@ -551,6 +552,35 @@ described; do not "fix" them into a regression of a constraint.
   role split (by capability). Add a `Game` method to the matching `game_*.go`; if
   an area outgrows its file, split the file, don't grow the type's responsibilities
   silently.
+
+## Before you add: check the surface that already exists
+
+The `1 keys` bug — a hand-rolled plural, because `countNoun` already existed and
+was not found — is the failure this catalog prevents. A helper, a log phrase, or a
+read you are about to write is usually already here. Each entry names the
+**authority file** (enumerate it; do not trust this list to be complete) and the
+load-bearing names you must not re-invent.
+
+- **Word a number or a name — `text_helpers.go`.** `countNoun(n, noun)` for
+  "1 key" vs "2 keys" (never `noun+"s"`, never a bare `if n == 1`), `plural(n, noun)`,
+  `indefinite(noun)` for "a"/"an". Enumerate: `grep -n '^func ' internal/engine/text_helpers.go`.
+- **Word a log line — `log.go`.** `namedCards` (a list of card names),
+  `because(text, on)` (suffix an event clause), `nameMoved(n, id, from, to)` (a
+  card crossing zones, silent on hidden ones). Never format a `Namer.Name` into a
+  string at the call site. A new line is a new `LogEntry` variant in the matching
+  `log_<family>.go` — find the family first: `grep -rln 'Namer) string' internal/engine/log_*.go`.
+- **Settle destruction — `game_settle.go` / `game_leaves_play.go`.** Anything that
+  can lower power ends in `settleDestroyed`; any exit funnels `removeFromPlay`. Do
+  not re-derive destruction inline (see "Power is dynamic" above).
+- **Read legality or a derived stat — `game_read.go`, `game_play.go`,
+  `game_abilities.go`.** `Power(id)`, `CanPlay`/`CanDiscard`/`CanUse`. Add a read to
+  the matching `game_*.go` and its `Resolver` role; enumerate the role before
+  adding a method.
+- **Assert a new outcome narrates — `internal/sim`.** The step-narration invariant
+  fails when a step changes state without recording a `LogEntry`, so a new
+  state-changing outcome needs its log line, not only its mutation.
+
+Then work the decision order below.
 
 ## Adding a mechanic: the decision order
 

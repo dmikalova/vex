@@ -20,7 +20,7 @@ var NogiSmartfist = set.New(
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Giant, card.Traits.Scientist),
 	card.WithAbility(
-		card.Trigger.Fight, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Fight, card.Sequence{Effects: []card.Effect{
 			card.Draw{Amount: 2},
 			card.DiscardCard{
 				Player:    card.Controller,

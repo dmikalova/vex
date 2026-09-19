@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Dinosaur • Thief
 //
-//	Action: Move all Æmber from an enemy creature to your opponent's pool. If there was any Æmber on that creature, take control of it, and that creature belongs to house Shadows.
+//	Action: Move all Æmber from an enemy creature to your opponent's pool. If there was any Æmber on that creature, take control of it, and it belongs to house Shadows.
 var Shadowsaurus = set.New(
 	"Shadowsaurus",
 	card.House.Shadows,
@@ -22,7 +22,7 @@ var Shadowsaurus = set.New(
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Thief),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.MoveAember{
 				All:  true,
 				From: card.Target.EnemyCreature,
@@ -34,7 +34,7 @@ var Shadowsaurus = set.New(
 				Then: card.Sequence{Effects: []card.Effect{
 					card.TakeControl{
 						Target:   card.Target.Triggering,
-						Duration: card.Duration.Forever,
+						Duration: card.Duration.UntilCardLeavesPlay,
 					},
 					card.BelongToHouse{
 						Target:   card.Target.Triggering,

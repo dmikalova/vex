@@ -70,7 +70,7 @@ guess which branch is missing:
 
 2. **Find the uncovered line, not the function.** The `-func` view gives a
    percentage; the profile itself gives the line. Each block line is
-   `file:startLine.col,endLine.col numStmts count` — a trailing ` 0` is an
+   `file:startLine.col,endLine.col numStmts count` — a trailing `0` is an
    unexecuted block. Filter to the function's line range:
 
    ```sh

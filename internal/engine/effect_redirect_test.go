@@ -9,7 +9,7 @@ func TestRedirectFightDamage(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
 	e := RedirectFightDamage{Target: Target{Kind: TargetChosenCreature}}
-	want := "choose a creature - {self} deals its fight damage to the chosen creature instead of to the creature it is fighting"
+	want := "choose a creature. {self} deals its fight damage to the chosen creature instead of to the creature it is fighting"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
 	}

@@ -15,7 +15,7 @@ import (
 //
 //	This creature gains, "After a Tactic is played but before it resolves, ward this creature."
 func TestEncounterSuit(t *testing.T) {
-	t.Run("wards its host after an action card is played", func(t *testing.T) {
+	t.Run("wards its host after a Tactic is played", func(t *testing.T) {
 		var host ct.Card
 		action := ct.Tactic(ct.OfHouse(card.House.StarAlliance))
 		h := ct.Play(t, ct.Setup{
@@ -37,7 +37,7 @@ func TestEncounterSuit(t *testing.T) {
 		h.P1.Play(action)
 
 		if !h.Game().Warded(host.ID()) {
-			t.Error("the host should be warded after an action card is played")
+			t.Error("the host should be warded after a Tactic is played")
 		}
 	})
 

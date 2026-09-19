@@ -10,7 +10,7 @@ import (
 func keyforgeryCard() CardDefinition {
 	return NewCard("Keyforgery", Shadows, Artifact, Rare, WithAbility(
 		TriggerBeforeOpponentForgesKey,
-		Sentences{Effects: []Effect{
+		Sequence{Effects: []Effect{
 			OpponentNamesHouse{},
 			RevealRandomFromHand{},
 			Conditional{

@@ -17,7 +17,7 @@ import (
 //	Armor:  1
 //	Traits: Dinosaur • Thief
 //
-//	Action: Move all Æmber from an enemy creature to your opponent's pool. If there was any Æmber on that creature, take control of it, and that creature belongs to house Shadows.
+//	Action: Move all Æmber from an enemy creature to your opponent's pool. If there was any Æmber on that creature, take control of it, and it belongs to house Shadows.
 func TestShadowsaurus(t *testing.T) {
 	t.Run("moves the Æmber and seizes the emptied creature as Shadows",
 		func(t *testing.T) {

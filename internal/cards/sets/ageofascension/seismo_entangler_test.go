@@ -15,7 +15,7 @@ import (
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Action: Choose a house - your opponent cannot use creatures of the chosen house to reap during their next turn.
+//	Action: Choose a house. Your opponent cannot use creatures of the chosen house to reap during their next turn.
 func TestSeismoEntangler(t *testing.T) {
 	t.Run("bars the chosen house from reaping on the opponent's next turn", func(t *testing.T) {
 		var seismo, foe ct.Card

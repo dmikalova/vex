@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Choose a creature - for each Æmber in your pool, give the chosen creature a +1 power counter.
+//	Play: Choose a creature. For each Æmber in your pool, give the chosen creature a +1 power counter.
 func TestRapidEvolution(t *testing.T) {
 	t.Run("stacks every counter on the one chosen creature", func(t *testing.T) {
 		var target, bystander ct.Card

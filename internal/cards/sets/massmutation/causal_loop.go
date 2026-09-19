@@ -16,7 +16,7 @@ var CausalLoop = set.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "083"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.ArchiveCard{
 					Zone:      card.Hand,

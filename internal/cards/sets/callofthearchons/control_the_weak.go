@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Choose a house - your opponent must choose that house as their active house during their next turn.
+//	Play: Choose a house. Your opponent must choose that house as their active house during their next turn.
 var ControlTheWeak = set.New(
 	"Control the Weak",
 	card.House.Dis,

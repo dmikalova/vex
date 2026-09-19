@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Bonus:  Æmber
 //	Traits: Location
 //
-//	At the start of your turn, deal 1 damage to a friendly creature, and deal 1 damage to an enemy creature.
+//	At the start of your turn, deal 1 damage to a friendly creature. Deal 1 damage to an enemy creature.
 var TheFloorIsLava = set.New(
 	"The Floor is Lava",
 	card.House.Brobnar,

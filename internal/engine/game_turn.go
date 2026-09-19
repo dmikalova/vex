@@ -144,8 +144,13 @@ func (g *Game) ChooseHouse(player int, house House) error {
 	// the trigger of a card that has left play mid-window (ADR 0030). Every card that
 	// reacts to the choice is one window the active player orders (ADR 0013), not a
 	// per-card sequence.
+	//
+	// A house choice is public, so cards on either side may react to it: the
+	// chooser's cards fire every "after you choose a house" ability, and the
+	// opponent's fire only their EachPlayer-scoped ones (Snag's Mirror bars the
+	// chooser's opponent from the same house next turn).
 	choose := g.window()
-	choose.addSide(player, TriggerAfterChooseHouse, 0, includeSubject)
+	choose.addTurnScoped(player, TriggerAfterChooseHouse, false)
 	// A card with TriggersFromDiscard keeps its choose-house ability live in its
 	// owner's discard pile (Relentless Creeper returns itself to hand), so the
 	// discard pile is scanned alongside cards in play — the only window that does.
@@ -155,14 +160,6 @@ func (g *Game) ChooseHouse(player int, house House) error {
 		}
 	}
 	g.resolveWindow(g.orderTriggered(player, choose.pending))
-	// A house choice is public, so cards on either side may react to it (Snag's
-	// Mirror bars the chooser's opponent from the same house next turn). This
-	// window fires for both players' cards, unlike the controller-only
-	// AfterChooseHouse above; the active player still orders it (ADR 0013).
-	public := g.window()
-	public.addSide(player, TriggerAfterAnyPlayerChoosesHouse, 0, includeSubject)
-	public.addSide(1-player, TriggerAfterAnyPlayerChoosesHouse, 0, includeSubject)
-	g.resolveWindow(g.orderTriggered(player, public.pending))
 	g.enterPhase(PhaseArchives)
 	g.runPhases()
 	return nil

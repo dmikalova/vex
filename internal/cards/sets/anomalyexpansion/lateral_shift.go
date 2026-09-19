@@ -17,7 +17,7 @@ var LateralShift = set.New(
 	card.Rarity.Special,
 	card.Provenance(card.WC, "A03"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.RevealHand{Player: card.Opponent},
 			card.PlayFrom{From: card.Hand, Player: card.Opponent},
 		}}),

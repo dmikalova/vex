@@ -20,7 +20,7 @@ var Hexpion = set.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Robot),
 	card.WithAbility(
-		card.Trigger.Destroyed, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Destroyed, card.Sequence{Effects: []card.Effect{
 			card.ArchiveFromPlay{Target: card.Target.This},
 			card.ArchiveCard{Zone: card.Deck, Selection: card.Top{}},
 		}}),

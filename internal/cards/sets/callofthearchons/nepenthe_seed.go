@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Versatile.
-//	Action: Destroy Nepenthe Seed, and put a card from your discard pile into your hand.
+//	Action: Destroy Nepenthe Seed. Put a card from your discard pile into your hand.
 var NepentheSeed = set.New(
 	"Nepenthe Seed",
 	card.House.Untamed,

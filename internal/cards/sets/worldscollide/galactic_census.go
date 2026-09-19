@@ -18,7 +18,7 @@ var GalacticCensus = set.New(
 	card.Provenance(card.WC, "332"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Conditional{
 				Cond: card.HousesRepresented{
 					Among:  card.HousesAmong{Player: card.EachPlayer, Type: card.Type.Creature},

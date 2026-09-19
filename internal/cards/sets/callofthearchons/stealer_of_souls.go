@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Demon
 //
-//	After a creature is destroyed in a fight with Stealer of Souls, purge it, and gain 1 Æmber.
+//	After a creature is destroyed in a fight with Stealer of Souls, purge it. Gain 1 Æmber.
 var StealerOfSouls = set.New(
 	"Stealer of Souls",
 	card.House.Dis,

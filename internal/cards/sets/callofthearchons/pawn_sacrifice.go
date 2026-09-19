@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Destroy a friendly creature -> deal 3 damage to a creature and deal 3 damage to a different creature.
+//	Play: Destroy a friendly creature -> deal 3 damage to a creature and 3 damage to a different creature.
 var PawnSacrifice = set.New(
 	"Pawn Sacrifice",
 	card.House.Shadows,

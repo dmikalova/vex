@@ -8,8 +8,9 @@ import "fmt"
 // it takes each chosen creature or artifact. A creature enters the controller's
 // battleline and its control reverts when the source card leaves play (Harland
 // Mindlock); an artifact enters the controller's artifact row permanently
-// (Sneklifter). The Duration says which — UntilThisLeavesPlay pairs with creatures,
-// Forever with artifacts — and drives the rendered "until ... leaves play"
+// (Sneklifter). The Duration says which — UntilThisLeavesPlay reverts when the
+// source leaves play, UntilCardLeavesPlay holds until the seized card itself
+// leaves — and drives the rendered "until ... leaves play"
 // clause. Ownership stays fixed and still decides which pile the card returns to
 // when it leaves play. The last card taken is left in context (ctx.It) so a
 // following effect can act on it. ToOpponent gives control away instead of taking
@@ -19,9 +20,10 @@ type TakeControl struct {
 	// Target picks which cards to take. The zero value means "this creature" — the
 	// host of the resolving Upgrade (Collar of Subordination).
 	Target Target
-	// Duration says which reversion applies: UntilThisLeavesPlay for creatures,
-	// Forever for artifacts. ToOpponent hands the card to the opponent instead of
-	// taking it (Spangler Box).
+	// Duration says which reversion applies: UntilThisLeavesPlay reverts when the
+	// source leaves play, UntilCardLeavesPlay holds until the seized card itself
+	// leaves. ToOpponent hands the card to the opponent instead of taking it
+	// (Spangler Box).
 	Duration   Duration
 	ToOpponent bool
 	// AndExhaust exhausts the seized creature as part of the same effect, rendering
@@ -32,15 +34,17 @@ type TakeControl struct {
 // validate requires one of the supported durations.
 func (e TakeControl) validate() error {
 	switch e.Duration {
-	case UntilThisLeavesPlay, Forever:
+	case UntilThisLeavesPlay, UntilCardLeavesPlay:
 		return nil
 	default:
-		return fmt.Errorf("TakeControl: duration must be UntilThisLeavesPlay or Forever")
+		return fmt.Errorf(
+			"TakeControl: duration must be UntilThisLeavesPlay or UntilCardLeavesPlay",
+		)
 	}
 }
 
 // Text renders the control change. A reverting form names the card whose leaving
-// play reverts it; a Forever form omits the "until ... leaves play" clause.
+// play reverts it; an UntilCardLeavesPlay form omits the "until ... leaves play" clause.
 // ToOpponent renders as the opponent gaining control rather than the resolving
 // player taking it.
 func (e TakeControl) Text() string {
@@ -51,7 +55,7 @@ func (e TakeControl) Text() string {
 		return "your opponent gains control of " + e.Target.Text()
 	}
 	text := "take control of " + e.Target.Text()
-	if e.Duration != Forever {
+	if e.Duration != UntilCardLeavesPlay {
 		text += " " + durationClause(UntilThisLeavesPlay, SelfName)
 	}
 	if e.AndExhaust {
@@ -89,11 +93,11 @@ func (e TakeControl) resolveGate(ctx *EffectContext) bool {
 	}
 	moved := false
 	for _, id := range e.Target.Select(ctx) {
-		// A Forever control never reverts to a leaving source, so it anchors to the
-		// seized card itself; an UntilThisLeavesPlay control anchors to the resolving
-		// card and reverts when that card leaves play.
+		// An UntilCardLeavesPlay control never reverts to a leaving source, so it anchors
+		// to the seized card itself; an UntilThisLeavesPlay control anchors to the
+		// resolving card and reverts when that card leaves play.
 		source := ctx.Source
-		if e.Duration == Forever {
+		if e.Duration == UntilCardLeavesPlay {
 			source = id
 		}
 		ctx.Resolver.TakeControl(id, newController, source)

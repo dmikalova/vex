@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Shapeshifter • Mutant
 //
-//	Play: Choose another creature - give Mimic Gel +1 power counters equal to its power, and Mimic Gel gains the text box of the chosen creature.
+//	Play: Choose another creature. Give Mimic Gel +1 power counters equal to its power. Mimic Gel gains the text box of the chosen creature.
 var MimicGel = set.New(
 	"Mimic Gel",
 	card.House.Logos,

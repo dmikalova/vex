@@ -124,8 +124,8 @@ func TestPlayedThisTurn(t *testing.T) {
 	if _, err := g.PlayArtifact(0, handIdxByID(g, 0, artifact)); err != nil {
 		t.Fatalf("PlayArtifact: %v", err)
 	}
-	if err := g.PlayAction(0, handIdxByID(g, 0, action)); err != nil {
-		t.Fatalf("PlayAction: %v", err)
+	if err := g.PlayTactic(0, handIdxByID(g, 0, action)); err != nil {
+		t.Fatalf("PlayTactic: %v", err)
 	}
 	if _, err := g.PlayUpgrade(0, handIdxByID(g, 0, upgrade)); err != nil {
 		t.Fatalf("PlayUpgrade: %v", err)
@@ -601,8 +601,8 @@ func TestResolvingCardRedirectIsPerCard(t *testing.T) {
 		0,
 	)
 
-	if err := g.PlayAction(0, idx); err != nil {
-		t.Fatalf("PlayAction: %v", err)
+	if err := g.PlayTactic(0, idx); err != nil {
+		t.Fatalf("PlayTactic: %v", err)
 	}
 
 	if !g.State.Archives[0].contains(inner) {

@@ -16,7 +16,7 @@ var ThrowingStars = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.AoA, "279"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.DealDamage{Spread: card.UpToCreatures{Creatures: 3, Amount: 1}},
 			card.GainAember{
 				Player: card.Controller,

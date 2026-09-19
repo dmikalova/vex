@@ -18,7 +18,7 @@ func TestSequenceEffect(t *testing.T) {
 	if got := (Sequence{}).Text(); got != "" {
 		t.Errorf("empty sequence text = %q, want empty", got)
 	}
-	if seq.Text() != "gain 1 Æmber, and gain 2 Æmber" {
+	if seq.Text() != "gain 1 Æmber. Gain 2 Æmber." {
 		t.Errorf("sequence text = %q", seq.Text())
 	}
 	seq.Resolve(ctx)
@@ -27,8 +27,8 @@ func TestSequenceEffect(t *testing.T) {
 	}
 }
 
-func TestSentencesRendersEachChildAsItsOwnSentence(t *testing.T) {
-	seq := Sentences{Effects: []Effect{
+func TestSequenceRendersEachChildAsItsOwnSentence(t *testing.T) {
+	seq := Sequence{Effects: []Effect{
 		DiscardTop{Amount: 1, Player: Opponent},
 		RevealHand{Player: Opponent},
 		GainAember{
@@ -41,8 +41,151 @@ func TestSentencesRendersEachChildAsItsOwnSentence(t *testing.T) {
 	if got := seq.Text(); got != want {
 		t.Errorf("sequence text = %q, want %q", got, want)
 	}
-	if got := (Sentences{}).Text(); got != "" {
+	if got := (Sequence{}).Text(); got != "" {
 		t.Errorf("empty text = %q, want empty", got)
+	}
+}
+
+// TestSequenceBreaksBeforeConditional pins R2 of the sentence-break ruleset: a
+// Conditional child opens its own sentence even inside a gate, where the default
+// break is suppressed and its neighbours stay conjoined.
+func TestSequenceBreaksBeforeConditional(t *testing.T) {
+	cond := Conditional{
+		Cond: PoolAember{Player: Opponent, Amount: 3, Is: AtMost},
+		Then: StealAember{Amount: 3},
+	}
+	cases := []struct {
+		name    string
+		effects []Effect
+		gated   bool
+		want    string
+	}{{
+		name:    "a trailing Conditional starts a sentence",
+		effects: []Effect{GainAember{Player: Controller, Amount: 1}, cond},
+		want: "gain 1 Æmber. If your opponent has 3 Æmber or fewer, " +
+			"steal 3 Æmber.",
+	}, {
+		name:    "a gate still breaks before its inner Conditional",
+		effects: []Effect{GainAember{Player: Controller, Amount: 1}, cond},
+		gated:   true,
+		want: "gain 1 Æmber. If your opponent has 3 Æmber or fewer, " +
+			"steal 3 Æmber.",
+	}, {
+		name:    "a leading Conditional in a gate conjoins what follows",
+		effects: []Effect{cond, GainAember{Player: Controller, Amount: 1}},
+		gated:   true,
+		want: "if your opponent has 3 Æmber or fewer, steal 3 Æmber, " +
+			"and gain 1 Æmber",
+	}, {
+		name: "clauses in a gate after the break still take a serial comma",
+		effects: []Effect{
+			cond,
+			GainAember{Player: Controller, Amount: 1},
+			Draw{Amount: 1},
+			GainChains{Amount: 1},
+		},
+		gated: true,
+		want: "if your opponent has 3 Æmber or fewer, steal 3 Æmber, gain 1 Æmber, " +
+			"draw a card, and gain 1 chain",
+	}}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			seq := Sequence{Effects: tc.effects}
+			got := seq.Text()
+			if tc.gated {
+				got = seq.gatedText()
+			}
+			if got != tc.want {
+				t.Errorf("Text() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// TestConditionalKeepsItsSequenceJoined pins R5: a Conditional's branch renders
+// gated, so the condition visibly covers every clause instead of trailing a
+// sentence that reads as unconditional.
+func TestConditionalKeepsItsSequenceJoined(t *testing.T) {
+	cond := Conditional{
+		Cond: PoolAember{Player: Opponent, Amount: 3, Is: AtMost},
+		Then: Sequence{Effects: []Effect{
+			StealAember{Amount: 1},
+			GainChains{Amount: 1},
+		}},
+	}
+	want := "if your opponent has 3 Æmber or fewer, steal 1 Æmber, and gain 1 chain"
+	if got := cond.Text(); got != want {
+		t.Errorf("Text() = %q, want %q", got, want)
+	}
+}
+
+// TestSequenceBreaksAfterLeadIn pins R3 of the sentence-break ruleset: a clause
+// that opened with a choice has already ended a sentence, so the clause after it
+// starts a new one instead of running a conjunction past the full stop.
+func TestSequenceBreaksAfterLeadIn(t *testing.T) {
+	led := ChooseCreatureThen{
+		Target: Target{Kind: TargetChosenCreature},
+		Then:   Stun{Target: Target{Kind: TargetTriggeringCreature}},
+	}
+	seq := Sequence{Effects: []Effect{led, GainAember{Player: Controller, Amount: 1}}}
+	want := "choose a creature. Stun it. Gain 1 Æmber."
+	if got := seq.Text(); got != want {
+		t.Errorf("Text() = %q, want %q", got, want)
+	}
+
+	// A clause with no lead-in still conjoins its neighbour inside a gate.
+	plain := Sequence{Effects: []Effect{
+		Stun{Target: Target{Kind: TargetEachEnemyCreature}},
+		GainAember{Player: Controller, Amount: 1},
+	}}
+	if got := plain.gatedText(); got != "stun each enemy creature, and gain 1 Æmber" {
+		t.Errorf("plain Text() = %q", got)
+	}
+}
+
+// TestMayHedgesALeadIn pins R6: under a May the consequence of a choice carries
+// the hedge, so breaking the lead-in into its own sentence cannot leave the
+// consequence reading as mandatory.
+func TestMayHedgesALeadIn(t *testing.T) {
+	led := ChooseCreatureThen{
+		Target: Target{Kind: TargetChosenCreature},
+		Then:   Stun{Target: Target{Kind: TargetTriggeringCreature}},
+	}
+	if got := (May{Do: led}).Text(); got != "you may choose a creature. If you do, stun it" {
+		t.Errorf("hedged Text() = %q", got)
+	}
+
+	// An effect with no lead-in keeps the plain optional wording.
+	bare := May{Do: Stun{Target: Target{Kind: TargetEachEnemyCreature}}}
+	if got := bare.Text(); got != "you may stun each enemy creature" {
+		t.Errorf("bare Text() = %q", got)
+	}
+}
+
+// TestLeadInEffectsEndTheirSentence covers every effect that renders a choice and
+// its consequence as two sentences, so each reports that it closed one.
+func TestLeadInEffectsEndTheirSentence(t *testing.T) {
+	enders := []sentenceEnder{
+		ChooseCreatureThen{},
+		ChooseHouseThen{},
+		RedirectFightDamage{},
+		LendTextBoxFromHand{},
+		NameCard{},
+		Destroy{Target: Target{Kind: TargetEachCreature}.Refine(SamePowerAsChosen)},
+	}
+	for _, e := range enders {
+		if !e.endsSentence() {
+			t.Errorf("%T should end its sentence", e)
+		}
+	}
+	// A destroy with no choice-led refinement is an ordinary clause.
+	if (Destroy{Target: Target{Kind: TargetEachCreature}}).endsSentence() {
+		t.Error("a plain Destroy should not end a sentence")
+	}
+
+	hedged := ChooseHouseThen{Then: GainAember{Player: Controller, Amount: 1}}
+	if got := (May{Do: hedged}).Text(); got != "you may choose a house. If you do, gain 1 Æmber" {
+		t.Errorf("hedged house Text() = %q", got)
 	}
 }
 
@@ -62,7 +205,7 @@ func TestSequenceCombinesSameTarget(t *testing.T) {
 		Exhaust{Target: Target{Kind: TargetEachEnemyCreature}},
 		GainAember{Player: Controller, Amount: 1},
 	}}
-	want := "stun " + SelfName + ", exhaust each enemy creature, and gain 1 Æmber"
+	want := "stun " + SelfName + ". Exhaust each enemy creature. Gain 1 Æmber."
 	if got := mixed.Text(); got != want {
 		t.Errorf("mixed text = %q, want %q", got, want)
 	}
@@ -150,8 +293,8 @@ func TestSequenceNounListDeclines(t *testing.T) {
 			Destination: ToTopOfDeck,
 		},
 	}}
-	want := "put a tactic from your discard pile into your hand, and " +
-		"put an artifact from your discard pile on top of your deck"
+	want := "put a tactic from your discard pile into your hand. " +
+		"Put an artifact from your discard pile on top of your deck."
 	if got := tails.Text(); got != want {
 		t.Errorf("tails text = %q, want %q", got, want)
 	}
@@ -190,7 +333,7 @@ func TestSequenceExaltFoldsOnlyWhenSingle(t *testing.T) {
 		Ready{Target: target},
 		Exalt{Target: target, Amount: 2},
 	}}
-	want := "ready each creature, and exalt each creature 2 times"
+	want := "ready each creature. Exalt each creature 2 times."
 	if got := repeated.Text(); got != want {
 		t.Errorf("repeated exalt text = %q, want %q", got, want)
 	}
@@ -273,19 +416,19 @@ func TestSequenceResolveOptionalWithoutAChoice(t *testing.T) {
 	}
 }
 
-// Sentences carries the same leading-choice rule as Sequence: "you may destroy a
+// A Sequence's leading choice governs the whole run: "you may destroy a
 // creature. Gain 1 Æmber" is answered by clicking the creature, and declining
 // passes on the later sentences too.
-func TestSentencesDeclinable(t *testing.T) {
-	led := Sentences{Effects: []Effect{
+func TestSequenceDeclineSkipsLaterSentences(t *testing.T) {
+	led := Sequence{Effects: []Effect{
 		Destroy{Target: Target{Kind: TargetChosenEnemyCreature}},
 		GainAember{Player: Controller, Amount: 1},
 	}}
 	if !led.declinable() {
-		t.Error("sentences leading with a chosen Destroy should be declinable")
+		t.Error("a sequence leading with a chosen Destroy should be declinable")
 	}
-	if (Sentences{}).declinable() {
-		t.Error("empty sentences should not be declinable")
+	if (Sequence{}).declinable() {
+		t.Error("an empty sequence should not be declinable")
 	}
 
 	accepted := NewGame("A", "B", 1)
@@ -322,11 +465,11 @@ func housesRung(n int) Conditional {
 	}
 }
 
-// TestSentencesFoldsThresholdLadder pins Galactic Census's wording: a run of
+// TestSequenceFoldsThresholdLadder pins Galactic Census's wording: a run of
 // rungs over the same board survey names that survey once, and every later rung
 // is a bare "gain 1 more if there are N or more".
-func TestSentencesFoldsThresholdLadder(t *testing.T) {
-	ladder := Sentences{Effects: []Effect{housesRung(3), housesRung(5), housesRung(6)}}
+func TestSequenceFoldsThresholdLadder(t *testing.T) {
+	ladder := Sequence{Effects: []Effect{housesRung(3), housesRung(5), housesRung(6)}}
 	want := "if there are 3 or more houses represented among creatures in play, gain 1 Æmber. " +
 		"Gain 1 more if there are 5 or more. Gain 1 more if there are 6 or more."
 	if got := ladder.Text(); got != want {
@@ -334,10 +477,12 @@ func TestSentencesFoldsThresholdLadder(t *testing.T) {
 	}
 }
 
-// TestSentencesLadderDeclines walks every reason a Conditional is not a ladder
+// TestSequenceLadderDeclines walks every reason a Conditional is not a ladder
 // rung, so a card that merely looks like one keeps its full text.
-func TestSentencesLadderDeclines(t *testing.T) {
+func TestSequenceLadderDeclines(t *testing.T) {
 	full := "if there are 3 or more houses represented among creatures in play, gain 1 Æmber."
+	// A lone clause is a fragment whose caller supplies the period.
+	lone := strings.TrimSuffix(full, ".")
 	otherSubject := housesRung(5)
 	otherSubject.Cond = HousesRepresented{
 		Among:  HousesAmong{Player: Controller, Type: Creature},
@@ -356,7 +501,7 @@ func TestSentencesLadderDeclines(t *testing.T) {
 		second  Effect
 		wantFix string
 	}{
-		{"a lone rung", nil, full},
+		{"a lone rung", nil, lone},
 		{"a different survey", otherSubject, "among friendly creatures"},
 		{"a two-way branch", withElse, "Otherwise"},
 		{"a scaled gain", perRung, "for each"},
@@ -373,8 +518,8 @@ func TestSentencesLadderDeclines(t *testing.T) {
 			if tc.second != nil {
 				effects = append(effects, tc.second)
 			}
-			got := Sentences{Effects: effects}.Text()
-			if !strings.HasPrefix(got, full) {
+			got := Sequence{Effects: effects}.Text()
+			if !strings.HasPrefix(got, lone) {
 				t.Errorf("text = %q, want it to open with the unfolded rung", got)
 			}
 			if !strings.Contains(got, tc.wantFix) {

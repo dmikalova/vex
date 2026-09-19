@@ -20,7 +20,7 @@ var OldBoomy = set.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Goblin, card.Traits.Scientist),
 	card.WithAbility(
-		card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Reap, card.Sequence{Effects: []card.Effect{
 			card.Then{
 				First: card.DiscardUntil{
 					Player:  card.Controller,

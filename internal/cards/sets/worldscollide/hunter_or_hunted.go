@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: Remove a ward from a creature, and ward a creature.
+//	Play: Remove a ward from a creature. Ward a creature.
 var HunterOrHunted = set.New(
 	"Hunter or Hunted?",
 	card.House.Shadows,

@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Choose a creature - purge each creature that shares a trait with it. For each card they controlled that was purged this way, each player gains 1 Æmber.
+//	Play: Choose a creature. Purge each creature that shares a trait with it. For each card they controlled that was purged this way, each player gains 1 Æmber.
 var HarvestTime = set.New(
 	"Harvest Time",
 	card.House.Dis,
@@ -18,7 +18,7 @@ var HarvestTime = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.Creature,
-			Then: card.Sentences{Effects: []card.Effect{
+			Then: card.Sequence{Effects: []card.Effect{
 				card.PurgeCreature{Target: card.Target.EachCreature.SharingTrait()},
 				card.GainAember{
 					Player: card.EachPlayer,

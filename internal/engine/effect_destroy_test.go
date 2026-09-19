@@ -179,7 +179,7 @@ func TestDestroySamePower(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	e := Destroy{Target: Target{Kind: TargetEachCreature}.Refine(SamePowerAsChosen)}
-	if e.Text() != "choose a creature - destroy each creature with the same power as the chosen creature" {
+	if e.Text() != "choose a creature. Destroy each creature with the same power as the chosen creature" {
 		t.Errorf("text = %q", e.Text())
 	}
 	// The default chooser picks a (power 3); every power-3 creature is destroyed.
@@ -213,7 +213,7 @@ func TestDestroySamePowerEitherChosen(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	e := Destroy{Target: Target{Kind: TargetEachCreature}.Refine(SamePowerAsEitherChosen)}
-	want := "choose a friendly creature and an enemy creature - destroy each " +
+	want := "choose a friendly creature and an enemy creature. Destroy each " +
 		"creature with the same power as either of the chosen creatures"
 	if got := e.Text(); got != want {
 		t.Errorf("text = %q", got)

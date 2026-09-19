@@ -201,7 +201,7 @@ func (e CreaturesCannot) Resolve(ctx *EffectContext) {
 }
 
 // CannotPlay bars a player from playing cards for the Duration — Lifeward stops
-// creatures and Scrambler Storm stops action cards through the affected player's
+// creatures and Scrambler Storm stops Tactics through the affected player's
 // next turn, while Treasure Map stops every card for the rest of the current turn.
 // It mirrors CannotFight: a Player, a Duration, and here the card Type that is
 // barred, which when left unset bars every type.

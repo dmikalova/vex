@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	This creature gains, "After a player chooses Dis as their active house, archive Painmail, and destroy this creature."
+//	This creature gains, "After a player chooses Dis as their active house, archive Painmail. Destroy this creature."
 func TestPainmail(t *testing.T) {
 	t.Run("choosing Dis archives Painmail and destroys the host", func(t *testing.T) {
 		var pain, host ct.Card

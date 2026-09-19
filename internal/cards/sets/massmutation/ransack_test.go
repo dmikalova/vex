@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Steal 1 Æmber, and discard the top card of your deck -> if the discarded card is a Shadows card, repeat this effect.
+//	Play: Steal 1 Æmber. Discard the top card of your deck. -> if the discarded card is a Shadows card, repeat this effect.
 func TestRansack(t *testing.T) {
 	t.Run("steals and repeats while the discarded card is a Shadows card", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

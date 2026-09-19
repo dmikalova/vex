@@ -88,9 +88,15 @@ func continuousSpecimens() []specimen {
 }
 
 // targetType and durationType are the reflect types the effect walk collects.
+// conditionType and countType are the two interface types it collects instead by
+// implementation: unlike Target and Duration they are not one concrete type, so
+// the walk matches any value declared as the interface (a Conditional's Cond, a
+// scaled effect's Per) and reads its own CondText/CountText.
 var (
-	targetType   = reflect.TypeOf(engine.Target{})
-	durationType = reflect.TypeOf(engine.Duration(0))
+	targetType    = reflect.TypeOf(engine.Target{})
+	durationType  = reflect.TypeOf(engine.Duration(0))
+	conditionType = reflect.TypeOf((*engine.Condition)(nil)).Elem()
+	countType     = reflect.TypeOf((*engine.Count)(nil)).Elem()
 )
 
 // walkEffectValues calls visit for every value reachable through an effect's
@@ -142,6 +148,30 @@ func walkEffectDurations(e engine.Effect, fn func(engine.Duration)) {
 	})
 }
 
+// walkEffectConditions calls fn for every Condition an effect gates on — a
+// Conditional's Cond and any condition nested inside it — matched by the field's
+// interface type so a new condition is covered without listing it here.
+func walkEffectConditions(e engine.Effect, fn func(engine.Condition)) {
+	walkEffectValues(reflect.ValueOf(e), func(v reflect.Value) {
+		if v.Kind() == reflect.Interface && v.Type() == conditionType &&
+			!v.IsNil() && v.CanInterface() {
+			fn(v.Interface().(engine.Condition))
+		}
+	})
+}
+
+// walkEffectCounts calls fn for every Count an effect scales by — a Per or Times
+// clause — matched by the field's interface type. A Fixed count prints nothing
+// (its magnitude shows as a plain number), so callers drop the empty CountText.
+func walkEffectCounts(e engine.Effect, fn func(engine.Count)) {
+	walkEffectValues(reflect.ValueOf(e), func(v reflect.Value) {
+		if v.Kind() == reflect.Interface && v.Type() == countType &&
+			!v.IsNil() && v.CanInterface() {
+			fn(v.Interface().(engine.Count))
+		}
+	})
+}
+
 // defTargetsPhrase reports whether a card has an ability effect that targets the
 // given noun phrase, the predicate the target-shape specimens select on.
 func defTargetsPhrase(d *engine.CardDefinition, phrase string) bool {
@@ -162,30 +192,9 @@ func defTargetsPhrase(d *engine.CardDefinition, phrase string) bool {
 // gallery shows exactly the target phrasings the client has to draw. Every phrase
 // comes from a real card, so none is a gap.
 func targetShapeSpecimens() []specimen {
-	all := cards.All()
-	phraseSet := map[string]bool{}
-	for i := range all {
-		for _, ab := range all[i].Abilities {
-			walkEffectTargets(ab.Effect, func(t engine.Target) {
-				if p := t.Text(); p != "" {
-					phraseSet[p] = true
-				}
-			})
-		}
-	}
-	phrases := make([]string, 0, len(phraseSet))
-	for p := range phraseSet {
-		phrases = append(phrases, p)
-	}
-	sort.Strings(phrases)
-	out := make([]specimen, 0, len(phrases))
-	for _, p := range phrases {
-		p := p
-		out = append(out, randomMatch(p, func(d *engine.CardDefinition) bool {
-			return defTargetsPhrase(d, p)
-		}))
-	}
-	return out
+	return phraseSpecimens(func(e engine.Effect, add func(string)) {
+		walkEffectTargets(e, func(t engine.Target) { add(t.Text()) })
+	}, defTargetsPhrase)
 }
 
 // defUsesDuration reports whether a card has an ability effect carrying the given
@@ -214,6 +223,88 @@ func durationSpecimens() []specimen {
 		dur := dur
 		out = append(out, randomMatch(dur.String(), func(d *engine.CardDefinition) bool {
 			return defUsesDuration(d, dur)
+		}))
+	}
+	return out
+}
+
+// defHasConditionPhrase reports whether a card gates an ability on the given
+// rendered condition clause, the predicate the condition specimens select on.
+func defHasConditionPhrase(d *engine.CardDefinition, phrase string) bool {
+	found := false
+	for _, ab := range d.Abilities {
+		walkEffectConditions(ab.Effect, func(c engine.Condition) {
+			if c.CondText() == phrase {
+				found = true
+			}
+		})
+	}
+	return found
+}
+
+// conditionSpecimens returns one real card per distinct "if ..." clause the pool
+// gates on, gathered from effect conditions rather than a list written here, so
+// the gallery shows exactly the condition phrasings the client draws. Every
+// phrase comes from a real card, so none is a gap.
+func conditionSpecimens() []specimen {
+	return phraseSpecimens(func(e engine.Effect, add func(string)) {
+		walkEffectConditions(e, func(c engine.Condition) { add(c.CondText()) })
+	}, defHasConditionPhrase)
+}
+
+// defHasCountPhrase reports whether a card scales an effect by the given "for
+// each ..." clause, the predicate the count specimens select on.
+func defHasCountPhrase(d *engine.CardDefinition, phrase string) bool {
+	found := false
+	for _, ab := range d.Abilities {
+		walkEffectCounts(ab.Effect, func(c engine.Count) {
+			if c.CountText() == phrase {
+				found = true
+			}
+		})
+	}
+	return found
+}
+
+// countSpecimens returns one real card per distinct "for each ..." clause the
+// pool scales by, gathered from effect counts. A Fixed count renders no clause
+// and is dropped, so every specimen shown is a scaling count carried by a real
+// card.
+func countSpecimens() []specimen {
+	return phraseSpecimens(func(e engine.Effect, add func(string)) {
+		walkEffectCounts(e, func(c engine.Count) { add(c.CountText()) })
+	}, defHasCountPhrase)
+}
+
+// phraseSpecimens is the shared shape of the target/condition/count galleries:
+// gather every non-empty phrase the pool renders through gather, then draw one
+// random real card per phrase via has. It keeps the three data-driven sections
+// from repeating the same collect-sort-match loop.
+func phraseSpecimens(
+	gather func(engine.Effect, func(string)),
+	has func(*engine.CardDefinition, string) bool,
+) []specimen {
+	all := cards.All()
+	phraseSet := map[string]bool{}
+	for i := range all {
+		for _, ab := range all[i].Abilities {
+			gather(ab.Effect, func(p string) {
+				if p != "" {
+					phraseSet[p] = true
+				}
+			})
+		}
+	}
+	phrases := make([]string, 0, len(phraseSet))
+	for p := range phraseSet {
+		phrases = append(phrases, p)
+	}
+	sort.Strings(phrases)
+	out := make([]specimen, 0, len(phrases))
+	for _, p := range phrases {
+		p := p
+		out = append(out, randomMatch(p, func(d *engine.CardDefinition) bool {
+			return has(d, p)
 		}))
 	}
 	return out
@@ -258,7 +349,7 @@ func combinerList() app.UI {
 // target-shape and duration rows walk every card's effect tree by reflection and
 // the page re-renders in full on every hover.
 type cardTextSpecimens struct {
-	triggers, continuous, targetShapes, durations []specimen
+	triggers, continuous, targetShapes, durations, conditions, counts []specimen
 }
 
 // cardTextSpecs returns the cached specimens, computing them on first use. The
@@ -271,6 +362,8 @@ func (s *style) cardTextSpecs() *cardTextSpecimens {
 			continuous:   continuousSpecimens(),
 			targetShapes: targetShapeSpecimens(),
 			durations:    durationSpecimens(),
+			conditions:   conditionSpecimens(),
+			counts:       countSpecimens(),
 		}
 	}
 	return s.cardText
@@ -297,6 +390,10 @@ func (s *style) cardTextSection() app.UI {
 		s.specimenRow(specs.targetShapes),
 		app.H3().Class("style-h3").Text("Durations"),
 		s.specimenRow(specs.durations),
+		app.H3().Class("style-h3").Text("Conditions"),
+		s.specimenRow(specs.conditions),
+		app.H3().Class("style-h3").Text("Counts"),
+		s.specimenRow(specs.counts),
 		app.H3().Class("style-h3").Text("Combiners"),
 		combinerList(),
 	)

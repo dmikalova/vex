@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Bonus:  Æmber
 //
-//	Play: Look at the top 3 cards of your deck and put them back in any order, and draw a card.
+//	Play: Look at the top 3 cards of your deck and put them back in any order. Draw a card.
 func TestLayOfTheLand(t *testing.T) {
 	var top1, top2, top3 ct.Card
 	h := ct.Play(t, ct.Setup{

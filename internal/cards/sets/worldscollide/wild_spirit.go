@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Bonus:  Æmber
 //
-//	This creature gains, "Reap: this creature captures 1 Æmber from your opponent."
+//	This creature gains, "Reap: This creature captures 1 Æmber from your opponent."
 var WildSpirit = set.New(
 	"Wild Spirit",
 	card.House.Untamed,

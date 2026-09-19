@@ -15,7 +15,7 @@ import (
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	After your opponent forges a key, destroy Forge Compiler, and ward each friendly creature.
+//	After your opponent forges a key, destroy Forge Compiler. Ward each friendly creature.
 func TestForgeCompiler(t *testing.T) {
 	t.Run(
 		"destroys itself and wards friendly creatures after the opponent forges",

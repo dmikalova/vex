@@ -27,7 +27,7 @@ var BearFlute = set.New(
 	card.LeadsCluster(bearFluteCluster),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.Heal{
 				Fully:  true,
 				Target: card.Target.Creature.Named(AncientBear.Name),

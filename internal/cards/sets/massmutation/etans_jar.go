@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Play: Name a card - cards with that name cannot be played until Etan's Jar leaves play.
+//	Play: Name a card. Cards with that name cannot be played until Etan's Jar leaves play.
 var EtansJar = set.New(
 	"Etan's Jar",
 	card.House.Dis,

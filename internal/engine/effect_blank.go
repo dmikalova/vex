@@ -10,7 +10,7 @@ type BlankEnemyText struct{}
 // Text renders the effect as its printed clause.
 func (BlankEnemyText) Text() string {
 	return durationClause(StartOfPlayerNextTurn, "") +
-		", enemy creatures' text boxes are considered blank (except for traits)"
+		", enemy creatures' text boxes are " + consideredBlank
 }
 
 // Resolve blanks the opponent's creatures until the controller's next turn.

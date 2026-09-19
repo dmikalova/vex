@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Mutant
 //
-//	Play: Purge another creature, and Cyber-Clone has power equal to the same creature's printed power and gains its printed armor, keywords, and traits.
+//	Play: Purge another creature. Cyber-Clone has power equal to the same creature's printed power and gains its printed armor, keywords, and traits.
 var CyberClone = set.New(
 	"Cyber-Clone",
 	card.House.Logos,

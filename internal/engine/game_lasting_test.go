@@ -2,6 +2,43 @@ package engine
 
 import "testing"
 
+// TestAddLastingRejectsFilteredReplacement pins that a lasting record on a
+// replacement event may not narrow which subject it applies to. lastingReplacement
+// matches on controller and event alone, so a filtered record would quietly replace
+// outcomes it was never meant to reach; AddLasting refuses it at the door instead.
+// A replacement that genuinely needs to discriminate needs lastingReplacement
+// taught the filters first.
+func TestAddLastingRejectsFilteredReplacement(t *testing.T) {
+	for name, le := range map[string]LastingEffect{
+		"subject": {On: EventReapAember, Do: actSteal, HasSubject: true, Subject: 3},
+		"except":  {On: EventReapAember, Do: actSteal, HasExcept: true, Except: 3},
+		"type":    {On: EventReapAember, Do: actSteal, Type: Creature},
+		"trait":   {On: EventReapAember, Do: actSteal, Trait: Beast},
+		"house": {
+			On:    EventReapAember,
+			Do:    actSteal,
+			House: HouseMatcher{Kind: MatchNamedHouse, House: Mars},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Errorf("AddLasting(%s-filtered replacement) did not panic", name)
+				}
+			}()
+			g := NewGame("A", "B", 1)
+			g.AddLasting(le)
+		})
+	}
+
+	// The unfiltered record is what Dimension Door installs, and it still registers.
+	g := NewGame("A", "B", 1)
+	g.AddLasting(LastingEffect{On: EventReapAember, Do: actSteal})
+	if _, ok := g.lastingReplacement(0, EventReapAember); !ok {
+		t.Error("unfiltered replacement was not registered")
+	}
+}
+
 // TestLastingActionDescriptions pins the short labels the ordering prompt shows
 // when several reactions fire at once (ADR 0013).
 func TestLastingActionDescriptions(t *testing.T) {

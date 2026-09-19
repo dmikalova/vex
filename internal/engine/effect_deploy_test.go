@@ -114,3 +114,29 @@ func names(g *Game, ids []LocalID) string {
 	}
 	return out
 }
+
+// TestDeployPositionMeasuresTheLineAfterThePrompt pins that a flank position is
+// measured against the battleline as it stands after the chooser answers, not the
+// line the prompt was drawn from. Asking crosses a resolution boundary that
+// settles destroyed creatures (ADR 0029), so a creature already at lethal damage
+// reaches its discard pile while the prompt is up. A right flank measured before
+// the prompt would then name a slot one past the end of the line, which the
+// insert cannot reach.
+func TestDeployPositionMeasuresTheLineAfterThePrompt(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.SetChooser(0, optionPicker{idx: 1}) // the right flank
+	doomed := g.AddToBattleline(testCreature("Doomed", 1), 0)
+	g.State.Cards[doomed].Damage = 1
+	entering := g.Register(testCreature("Entering", 3), 0)
+
+	pos, interior := g.deployPosition(0, entering, flankUnset, false)
+
+	if g.State.Battleline[0].Count != 0 {
+		t.Fatalf("battleline holds %d creatures, want the doomed one settled away by the prompt",
+			g.State.Battleline[0].Count)
+	}
+	if pos != 0 || interior {
+		t.Errorf("deployPosition = (%d, %v), want (0, false) — the line is empty by now",
+			pos, interior)
+	}
+}

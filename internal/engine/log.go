@@ -12,11 +12,11 @@ import (
 //
 // The log narrates RESOLVED OUTCOMES, not card text. A card's Text() renders an
 // unbound, present-tense imperative ("Deal 2 damage to a creature"); a log line
-// states a bound, past-tense outcome ("Troll takes 2 damage (2 total)"), which is
-// only knowable after resolution. The two renderers share a vocabulary but
-// neither derives from the other.
+// states a bound, past-tense outcome ("Troll takes 2 damage and now has 2
+// damage"), which is only knowable after resolution. The two renderers share a
+// vocabulary but neither derives from the other.
 //
-// Three rules govern how a new entry is worded. They are the log's own voice, and
+// Four rules govern how a new entry is worded. They are the log's own voice, and
 // they are where the log deliberately departs from card text:
 //
 //   - MECHANICS AND KEYWORDS STAY LOWERCASE. A log line is a sentence, not a
@@ -29,6 +29,12 @@ import (
 //   - MINIMIZE LEFT-TO-RIGHT BACKTRACKING. Prefer the phrasing where no noun has
 //     to be re-resolved once read. "X exalts 2 Æmber onto Y" reads straight
 //     through; "X exalts Y with 2 Æmber" makes the reader go back to Y.
+//   - NO PARENTHETICALS. A running total is spelled out ("takes 3 damage and now
+//     has 4 damage", "forges a Red key and now has 1 of 3 keys"), and a suffix
+//     that qualified the whole line is folded into the verb ("manually sets their
+//     pool to 7 Æmber"). Suppress the tail when it would restate the amount, so a
+//     first gain reads "gains 2 chains" rather than "gains 2 chains and now has 2
+//     chains". FightKeywords.annotate is the one exemption, argued there.
 //
 // A rendered entry is persisted prose: the web client stores the log it has
 // already rendered, so changing what an entry renders — or adding and removing

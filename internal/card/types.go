@@ -423,9 +423,6 @@ type spendScopes struct {
 var Trigger = triggers{
 	Action:                         engine.TriggerAction,
 	AfterAemberStolenFromYou:       engine.TriggerAfterAemberStolenFromYou,
-	AfterAnyPlayerChoosesHouse:     engine.TriggerAfterAnyPlayerChoosesHouse,
-	AfterAnyPlayerStartOfTurn:      engine.TriggerAfterAnyPlayerStartOfTurn,
-	AfterAnyPlayerEndOfTurn:        engine.TriggerAfterAnyPlayerEndOfTurn,
 	AfterArmorPrevents:             engine.TriggerAfterArmorPrevents,
 	AfterAssaultDestroys:           engine.TriggerAfterAssaultDestroys,
 	AfterBonusDamage:               engine.TriggerAfterBonusDamage,
@@ -513,18 +510,22 @@ type triggers struct {
 	AfterArmorPrevents engine.Trigger
 	// AfterCardPlayed fires after the controller plays a card.
 	AfterCardPlayed engine.Trigger
-	// EndOfTurn fires at the end of the controller's turn.
+	// EndOfTurn fires at the end of the controller's turn. As an EachPlayer-scoped
+	// ability (card.WithEachPlayerAbility) it fires at the end of every player's
+	// turn, resolving as the player whose turn is ending (Pincerator).
 	EndOfTurn engine.Trigger
-	// StartOfTurn fires at the start of the controller's turn, before they forge.
+	// StartOfTurn fires at the start of the controller's turn, before they forge. As
+	// an EachPlayer-scoped ability (card.WithEachPlayerAbility) it fires at the start
+	// of every player's turn, resolving as the player whose turn is starting
+	// (Gambling Den, General Order 24).
 	StartOfTurn engine.Trigger
 	// EndOfReadyStep fires at the end of the controller's "ready cards" step, after
 	// every card has readied (Greater Oxtet).
 	EndOfReadyStep engine.Trigger
-	// AfterChooseHouse fires after the controller chooses their active house.
+	// AfterChooseHouse fires after the controller chooses their active house. As an
+	// EachPlayer-scoped ability (card.WithEachPlayerAbility) it fires after either
+	// player's choice, resolving as the chooser (Snag's Mirror).
 	AfterChooseHouse engine.Trigger
-	// AfterAnyPlayerChoosesHouse fires after either player chooses their active
-	// house, whoever's turn it is (Snag's Mirror).
-	AfterAnyPlayerChoosesHouse engine.Trigger
 	// AfterCreatureDestroyed fires after any creature is destroyed, with the
 	// destroyed creature as "it"; it fires only for cards that survive the batch.
 	AfterCreatureDestroyed engine.Trigger
@@ -564,15 +565,6 @@ type triggers struct {
 	// controller, with the number stolen in that theft available as a count
 	// (Molephin).
 	AfterAemberStolenFromYou engine.Trigger
-	// AfterAnyPlayerStartOfTurn fires at the start of every player's turn — its own
-	// controller's and the opponent's — resolving as the player whose turn is
-	// starting, so "they"/"that player" is that active player (Gambling Den, General
-	// Order 24).
-	AfterAnyPlayerStartOfTurn engine.Trigger
-	// AfterAnyPlayerEndOfTurn fires at the end of every player's turn — its own
-	// controller's and the opponent's — resolving as the player whose turn is
-	// ending, so "they"/"that player" is that active player (Pincerator).
-	AfterAnyPlayerEndOfTurn engine.Trigger
 	// LeavesPlay fires as this card leaves play by any route ("Leaves Play:").
 	LeavesPlay engine.Trigger
 	// AfterTacticPlayedBeforeResolve fires after a Tactic is played, by either

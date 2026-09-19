@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Steal 1 Æmber, and discard the top card of your deck -> if the discarded card is a Shadows card, repeat this effect.
+//	Play: Steal 1 Æmber. Discard the top card of your deck. -> if the discarded card is a Shadows card, repeat this effect.
 var Ransack = set.New(
 	"Ransack",
 	card.House.Shadows,

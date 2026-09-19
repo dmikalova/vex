@@ -77,8 +77,8 @@ type MayPlayOrUse struct {
 The node folds `GrantFight`, `GrantFightAnyHouse`, `MayActFriendlyHouse`,
 `MayPlayOffHouse`, and `MayUseFriendlyArtifacts` into one. Its `Resolve` records the
 grant through a single resolver seam (`GrantMayPlayOrUse(player, Houses, Grant,
-Types, Count)`), and a single `MayPlayOrUseGranted{Player, Houses, Grant, Types,
-Count}` log record narrates it — replacing `FightGrantedForHouse` and its siblings.
+Types, Count)`), and a single`MayPlayOrUseGranted{Player, Houses, Grant, Types,
+Count}`log record narrates it — replacing`FightGrantedForHouse` and its siblings.
 The per-player state slots (`MayFightHouse`, `MayUseHouse`, `MayPlayHouse`, the
 off-house permit, the any-house artifact flag) remain flat, comparable state
 (ADR 0005); the ready phase clears them exactly as today.

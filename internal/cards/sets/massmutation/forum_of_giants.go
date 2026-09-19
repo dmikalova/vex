@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Bonus:  Æmber
 //	Traits: Location
 //
-//	At the start of your turn, choose the most powerful creature - its controller gains 1 Æmber.
+//	At the start of your turn, choose the most powerful creature. Its controller gains 1 Æmber.
 var ForumOfGiants = set.New(
 	"Forum of Giants",
 	card.House.Saurian,

@@ -69,7 +69,7 @@ are only partially implemented; the later sets ride along only as legacy cards.
   package and cards — `DeckSets()` picks it up, gives it a pool, and folds it into
   every other set's legacy pool with no wiring.
 - Legacy and maverick stay cleanly distinct: maverick rehouses (`def.House =
-slotHouse`) and routes through `Materialize` (ADR 0004); legacy keeps its House
+slotHouse`) and routes through`Materialize` (ADR 0004); legacy keeps its House
   and is a pool-membership decision made in `fillSlot`. They combine freely, as the
   design always intended (a legacy-maverick is emergent).
 - `fillSlot` now draws an extra RNG value per slot for the legacy roll, which

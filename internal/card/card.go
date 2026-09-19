@@ -109,7 +109,7 @@ type builder struct {
 	prov         []provenance.Ref
 	set          provenance.SourceSet
 	profile      deckgen.GenerationProfile
-	materializer deckgen.Materializer
+	materializer Materializer
 }
 
 func gameplay(o engine.CardOption) Option { return func(b *builder) { b.opts = append(b.opts, o) } }

@@ -18,7 +18,7 @@ var Ragnarok = set.New(
 	card.Provenance(card.WC, "47"),
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.Restrict{
 					Player:   card.Controller,

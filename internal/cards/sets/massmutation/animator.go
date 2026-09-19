@@ -18,7 +18,7 @@ var Animator = set.New(
 	card.Provenance(card.MM, "100"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.AddPowerCounter{Target: card.Target.Artifact, Amount: 3},
 			card.TurnIntoCreature{
 				Target:    card.Target.TheChosenCreature,

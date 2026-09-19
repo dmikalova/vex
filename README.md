@@ -62,8 +62,8 @@ Card-authoring conventions live in
 Commit hooks are managed by [lefthook](https://github.com/evilmartians/lefthook),
 extending the shared base config in
 [`dmikalova/github-meta`](https://github.com/dmikalova/github-meta). Install the
-tooling once (`lefthook`, `commitlint`, `gitleaks`, `typos`, `quickmark`, `mage`),
-then run `lefthook install`. Commits follow
+tooling once (`lefthook`, `commitlint`, `gitleaks`, `typos`, `goldmark-lint`,
+`mage`), then run `lefthook install`. Commits follow
 [Conventional Commits](https://www.conventionalcommits.org/) (enforced by
 commitlint), which also drives semantic-release versioning on deploy.
 

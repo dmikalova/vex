@@ -90,7 +90,7 @@ when that condition ends.
 **Design decided (per ADR 0033):**
 
 - Author it as a `ConstantAbility` composed over a `CounterInPlay{Kind, Target:
-This}` read (per ADR 0024), computed **live at read time** the way `Power`/`Armor`
+This}`read (per ADR 0024), computed **live at read time** the way`Power`/`Armor`
   fold `constantBonus` — **never** a `LastingType` write. It reverts for free: the
   next `TypeOf` read simply no longer sees the grant.
 - Grow `TypeOf` one step **after** the `HostPlus`/`LastingType` checks: ask whether
@@ -135,7 +135,8 @@ in-play cards. Curse of Forgery needs the **own-forge** variant:
 
 ## House wager — generalize over polarity and payoff
 
-**Trigger set:** whichever set first stands up **Allusions of Grandeur**
+## Trigger set:** whichever set first stands up **Allusions of Grandeur
+
 (Discovery #255 / Vault Masters 2024 #296 / 2025 #264 / 2026 #227 — all
 Unfathomable, all unimplemented). Build the generalization with that card, and
 refactor Snaglet onto it in the same change, so a second live consumer pins the
@@ -196,7 +197,9 @@ houseMatches, Then: <payoff>}` body. The body genuinely parameterizes over polar
 ## DiscardUntil — grow the from-hand-at-random source, Player, and hand-size stop
 
 **Trigger set:** whichever set first stands up a consuming card — either
-**High Street Churn** (Ekwidon, Æmber Skies #104) or **Catch and Release**
+
+## High Street Churn** (Ekwidon, Æmber Skies #104) or **Catch and Release
+
 (Unfathomable, Winds of Exchange #369 and reprints). Build each axis alongside
 its first real card.
 
@@ -239,7 +242,7 @@ exists (they would be uncovered).
   separate composed effects**, not part of `DiscardUntil`: High Street Churn is
   `MustChooseHouse` (restricted to the opponent's identity houses) → `DiscardUntil`
   → `RefillHand`; Catch and Release is `ReturnEachCreatureToHand` → per-player
-  `DiscardUntil{hand-size}` → `GainChains`. Compose them with `Sentences`.
+  `DiscardUntil{hand-size}` → `GainChains`. Compose them with `Sequence`.
 
 ## InExcessOf — a floored "in excess of" Count combinator
 
@@ -278,7 +281,7 @@ Minus}` for three reasons, all still binding:
 **Design decided:**
 
 - Introduce `InExcessOf{Count Count, Of Count}` — `Value` = `max(0, Count.Value −
-Of.Value)`, floored at 0 so it can never feed a negative into `scaled`. The `Of`
+Of.Value)`, floored at 0 so it can never feed a negative into`scaled`. The`Of`
   side may be a `Fixed` (Change Agent's "in excess of 5") or another `Count`
   (creature-vs-creature). It carries a bespoke `CountText()` ("in excess of" idiom),
   not a mechanical join of the two children.

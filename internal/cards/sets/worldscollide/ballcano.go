@@ -16,7 +16,7 @@ var Ballcano = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, "3"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.DealDamage{
 				Target: card.Target.EachCreature,
 				Amount: 4,

@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Dinosaur • Politician
 //
-//	Reap: You may exalt Draco Praeco, and choose a house - enrage each creature of the chosen house.
+//	Reap: You may exalt Draco Praeco. Choose a house. Enrage each creature of the chosen house.
 func TestDracoPraeco(t *testing.T) {
 	t.Run("exalting then choosing a house enrages that house", func(t *testing.T) {
 		var draco, brob, unt ct.Card

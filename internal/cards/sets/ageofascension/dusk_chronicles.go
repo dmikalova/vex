@@ -18,7 +18,7 @@ var DuskChronicles = set.New(
 	card.Provenance(card.AoA, "268"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.Conditional{
 					Cond: card.PoolAember{Player: card.Opponent, Is: card.MoreThanYou},

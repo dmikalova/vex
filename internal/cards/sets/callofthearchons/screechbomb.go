@@ -20,7 +20,7 @@ var Screechbomb = set.New(
 	card.WithTraits(card.Traits.Weapon),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{
+		card.Trigger.Action, card.Sequence{
 			Effects: []card.Effect{
 				card.Destroy{Target: card.Target.This},
 				card.LoseAember{

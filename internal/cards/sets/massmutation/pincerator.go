@@ -19,8 +19,8 @@ var Pincerator = set.New(
 	card.Provenance(card.MM, "289"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
-	card.WithAbility(
-		card.Trigger.AfterAnyPlayerEndOfTurn, card.DealDamage{
+	card.WithEachPlayerAbility(
+		card.Trigger.EndOfTurn, card.DealDamage{
 			Amount: 1,
 			Target: card.Target.EachCreature.OnFlank(),
 		}),

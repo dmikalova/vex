@@ -53,9 +53,9 @@ only when no entry remains.
 (read on every "friendly"/"enemy" check), refreshed whenever a grant is pushed or
 popped. The stack is consulted only when control changes.
 
-A **Forever** grant (an artifact taken for good) names the seized card _itself_ as
-its `Source`, so no leaving source reverts it; it is shed only when the card leaves
-play. That unifies the permanent and reverting cases: every exit funnels through
+An **UntilCardLeavesPlay** grant (an artifact taken for good) names the seized card
+_itself_ as its `Source`, so no leaving source reverts it; it is shed only when the
+card leaves play. That unifies the permanent and reverting cases: every exit funnels through
 `removeFromPlay`, which calls `releaseControlHeldBy(id)` to revert what the leaving
 card controlled and `clearControls(id)` to drop the leaving card's own entries.
 `putIntoPlay` under a non-owner pushes a self-sourced entry the same way.

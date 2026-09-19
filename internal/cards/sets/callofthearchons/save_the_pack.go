@@ -16,7 +16,7 @@ var SaveThePack = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "333"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.Destroy{Target: card.Target.EachCreature.Damaged()},
 				card.GainChains{Amount: 1},

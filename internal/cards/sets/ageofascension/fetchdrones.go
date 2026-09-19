@@ -18,7 +18,7 @@ var Fetchdrones = set.New(
 	card.Provenance(card.AoA, "144"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.DiscardTop{
 				Player: card.Controller,
 				Amount: 2,

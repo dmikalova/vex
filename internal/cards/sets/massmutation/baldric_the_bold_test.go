@@ -16,7 +16,7 @@ import (
 //	Armor:  2
 //	Traits: Human • Knight
 //
-//	Before Fight: If the fought creature is the most powerful enemy creature, gain 2 Æmber.
+//	Before Fight: If the fights creature is the most powerful enemy creature, gain 2 Æmber.
 func TestBaldricTheBold(t *testing.T) {
 	t.Run("gains 2 Æmber fighting the most powerful enemy creature", func(t *testing.T) {
 		var baldric, big, small ct.Card

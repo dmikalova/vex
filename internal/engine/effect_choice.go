@@ -54,12 +54,19 @@ type ChooseHouseThen struct {
 	Then Effect
 }
 
-// Text renders the effect, e.g. "choose a house - stun each creature of the
-// chosen house". The dash keeps the choice and its consequence visibly bound
-// without the mechanical-sounding ", then".
+// Text renders the effect, e.g. "choose a house. Stun each creature of the
+// chosen house".
 func (e ChooseHouseThen) Text() string {
-	return "choose a house - " + e.Then.Text()
+	return leadInSentence("choose a house", e.Then.Text())
 }
+
+// hedgedText renders the form a May wraps, where the choice is optional and so
+// its consequence must say so.
+func (e ChooseHouseThen) hedgedText() string {
+	return hedgedLeadInSentence("choose a house", e.Then.Text())
+}
+
+func (ChooseHouseThen) endsSentence() bool { return true }
 
 // Resolve asks for a house, stores it on the context, then resolves Then.
 func (e ChooseHouseThen) Resolve(ctx *EffectContext) {

@@ -23,7 +23,7 @@ var EvasionSigil = set.New(
 		Target: card.Target.EachCreature,
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.BeforeFight,
-			Effect: card.Sentences{
+			Effect: card.Sequence{
 				Effects: []card.Effect{
 					card.DiscardTop{Amount: 1},
 					card.Conditional{

@@ -22,7 +22,7 @@ var QuestorJarta = set.New(
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.Reap, card.May{Do: card.Sentences{Effects: []card.Effect{
+		card.Trigger.Reap, card.May{Do: card.Sequence{Effects: []card.Effect{
 			card.Exalt{
 				Target: card.Target.This,
 				Amount: 1,

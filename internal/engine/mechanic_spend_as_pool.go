@@ -68,12 +68,12 @@ func (g *Game) creatureSpendableAsPool(player int, id LocalID) bool {
 			return true
 		}
 	}
-	for _, src := range g.allInPlay(controller) {
-		for _, c := range g.cat.def(src).ConstantAbilities {
-			if c.SpendAemberOnCard.allows(player, controller) &&
-				g.constantActive(src, c) && g.constantAffects(src, c, id) {
-				return true
-			}
+	// Only the controller's cards are scanned: the permission is granted by the
+	// side that owns the creature the Æmber sits on.
+	for src, c := range g.constantAbilitiesOf(controller) {
+		if c.SpendAemberOnCard.allows(player, controller) &&
+			g.constantActive(src, c) && g.constantAffects(src, c, id) {
+			return true
 		}
 	}
 	return false

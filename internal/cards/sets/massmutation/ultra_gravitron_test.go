@@ -17,7 +17,7 @@ import (
 //	Traits: Robot
 //
 //	Play: Archive the top 5 cards of your deck.
-//	Fight/Reap: Discard a card from your archives -> purge a creature, and resolve that card's bonus icons.
+//	Fight/Reap: Discard a card from your archives -> purge a creature. Resolve that card's bonus icons.
 func TestUltraGravitron(t *testing.T) {
 	t.Run("play archives the top 5 cards of the deck", func(t *testing.T) {
 		var ug ct.Card

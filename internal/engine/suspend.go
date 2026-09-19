@@ -31,15 +31,52 @@ const (
 	CommandPosition
 	// CommandReaction selects which pending reaction resolves next by Index.
 	CommandReaction
+
+	// The kinds below are ROOT ACTIONS — the other half of ADR 0039's "a root
+	// action OR one answer to a choice". A root Command is a play the active player
+	// initiates rather than an answer the engine pulled mid-resolution; ApplyAction
+	// performs one and LegalActions enumerates the legal set (command_action.go).
+	// They are appended after the answer kinds so the answer kinds' persisted values
+	// do not shift. Only the field each names is meaningful.
+
+	// CommandChooseHouse names the turn's active house in House.
+	CommandChooseHouse
+	// CommandPlayCreature plays the hand creature at Hand onto a flank (Left).
+	CommandPlayCreature
+	// CommandPlayArtifact plays the hand artifact at Hand.
+	CommandPlayArtifact
+	// CommandPlayTactic plays the hand Tactic at Hand.
+	CommandPlayTactic
+	// CommandPlayUpgrade plays the hand upgrade at Hand.
+	CommandPlayUpgrade
+	// CommandDiscardFromHand discards the active-house hand card at Hand.
+	CommandDiscardFromHand
+	// CommandReap reaps with the creature Card.
+	CommandReap
+	// CommandUnstun spends the stunned creature Card's use to shed the stun.
+	CommandUnstun
+	// CommandUseAction uses the "Action:" ability of the creature or artifact Card.
+	CommandUseAction
+	// CommandFight fights the enemy creature Card2 with the creature Card.
+	CommandFight
+	// CommandEndTurn ends the active player's play phase and hands off the turn.
+	CommandEndTurn
 )
 
 // Command is one player input crossing the engine boundary — an answer to a
-// Request (ADR 0039). It is a flat comparable value so a match's inputs can be
-// recorded, replayed, and compared. Only the field its Kind names is meaningful.
+// Request or a root action (ADR 0039). It is a flat comparable value so a match's
+// inputs can be recorded, replayed, and compared. Only the field its Kind names is
+// meaningful; the root-action fields stay zero for the answer kinds.
 type Command struct {
 	Kind  CommandKind
 	Card  LocalID
 	Index int
+
+	// Root-action fields (see the root CommandKinds above).
+	House House   // CommandChooseHouse: the active house to name.
+	Hand  int     // the Play*/Discard kinds: the hand index to act on.
+	Left  bool    // CommandPlayCreature: place on the left flank.
+	Card2 LocalID // CommandFight: the enemy creature Card fights.
 }
 
 // RequestKind tags what sort of decision a Request marks.
@@ -56,6 +93,13 @@ const (
 	RequestPosition
 	// RequestReaction asks which pending Reactions resolves next.
 	RequestReaction
+
+	// RequestAction asks the active player for their next ROOT action, chosen from
+	// the legal set the engine gathered into Actions (ADR 0039). It is appended
+	// after the mid-resolution kinds so their persisted values do not shift. Where
+	// they each yield mid-resolution to answer one choice, this one yields BETWEEN
+	// actions, so the canonical turn loop can ask what the player does next.
+	RequestAction
 )
 
 // Request marks a decision point: which player owes a decision and in what
@@ -71,6 +115,9 @@ type Request struct {
 	Cards     []LocalID
 	Options   []string
 	Reactions []OrderableReaction
+	// Actions is the legal root-action set a RequestAction offers (ADR 0039). It is
+	// the whole legal set, so LegalCommands returns it verbatim.
+	Actions []Command
 }
 
 // StepInfo reports what an Advance step observed — whether it crossed an
@@ -95,6 +142,8 @@ func (r Request) LegalCommands() []Command {
 		return indexCommands(CommandPosition, len(r.Cards)+1)
 	case RequestReaction:
 		return indexCommands(CommandReaction, len(r.Reactions))
+	case RequestAction:
+		return r.Actions
 	default:
 		return nil
 	}
@@ -145,6 +194,10 @@ type suspendChooser struct {
 	// via runtime.Goexit rather than leaking parked on an answer that never comes.
 	cancel <-chan struct{}
 }
+
+// A suspendChooser installs every optional capability, including the turn loop's
+// ActionChooser, so the driving side is offered every kind of decision.
+var _ ActionChooser = (*suspendChooser)(nil)
 
 // yield sends req and blocks until the driving side answers with a Command. If the
 // Stepper is closed while yield is parked, cancel fires and the goroutine unwinds
@@ -208,6 +261,16 @@ func (c *suspendChooser) ChooseReaction(prompt string, reactions []OrderableReac
 	return c.yield(Request{
 		Player: c.player, Kind: RequestReaction, Prompt: prompt, Reactions: reactions,
 	}).Index
+}
+
+// ChooseAction yields the active player's legal root-action set and returns the
+// root Command they answer with. It is the turn loop's suspension point (ADR 0039):
+// where the other capabilities yield mid-resolution to answer one choice, this one
+// yields between actions to ask what the player does next. The legal set travels in
+// the Request so the driving side can render and validate the answer, which is a
+// root Command ApplyAction performs.
+func (c *suspendChooser) ChooseAction(actions []Command) Command {
+	return c.yield(Request{Player: c.player, Kind: RequestAction, Actions: actions})
 }
 
 // Stepper runs one engine action to completion on a goroutine, suspending it at

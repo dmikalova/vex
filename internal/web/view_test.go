@@ -1071,7 +1071,7 @@ func TestArtifactHidesPowerUntilItBecomesACreature(t *testing.T) {
 		t.Error("an artifact should not show a power stat")
 	}
 
-	c.g.g.PutIntoBattlelineAsCreature(id, true, false)
+	c.g.g.PutIntoBattlelineAsCreature(id, true, engine.UntilCardLeavesPlay)
 	if !strings.Contains(statHTML(), "power.svg") {
 		t.Error("a card turned into a creature should show its power")
 	}

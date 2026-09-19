@@ -17,7 +17,7 @@ var InformationExchange = set.New(
 	card.Provenance(card.WC, "136"),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.Sentences{Effects: []card.Effect{
+		card.Sequence{Effects: []card.Effect{
 			card.StealAember{Amount: 1},
 			card.Conditional{
 				Cond: card.AemberStolenFromYou{},

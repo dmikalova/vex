@@ -120,12 +120,15 @@ type ChainsGained struct {
 // Text renders the chains put on a player, and their total. Under a card ability
 // the card that imposed them is named too, as a pool change is (ADR 0011).
 func (e ChainsGained) Text(n Namer) string {
+	gained := fmt.Sprintf("%s gains %d %s", n.PlayerName(e.Player), e.Amount, chainNoun(e.Amount))
 	if s, ok := framedSource(n); ok {
-		return fmt.Sprintf("%s has %s gain %d %s (%d total)",
-			s, n.PlayerName(e.Player), e.Amount, chainNoun(e.Amount), e.Total)
+		gained = fmt.Sprintf("%s has %s gain %d %s",
+			s, n.PlayerName(e.Player), e.Amount, chainNoun(e.Amount))
 	}
-	return fmt.Sprintf("%s gains %d %s (%d total)",
-		n.PlayerName(e.Player), e.Amount, chainNoun(e.Amount), e.Total)
+	if e.Total == e.Amount {
+		return gained
+	}
+	return fmt.Sprintf("%s and now has %d %s", gained, e.Total, chainNoun(e.Total))
 }
 
 // ManualCardMoved narrates manual mode putting a card in a zone directly.
@@ -194,7 +197,7 @@ type ManualAemberSet struct {
 
 // Text renders the pool manual mode dialled a player to.
 func (e ManualAemberSet) Text(n Namer) string {
-	return fmt.Sprintf("%s now has %d Æmber (manual)", n.PlayerName(e.Player), e.Amount)
+	return fmt.Sprintf("%s manually sets their pool to %d Æmber", n.PlayerName(e.Player), e.Amount)
 }
 
 // ManualChainsSet narrates manual mode dialling a chain count to a number.
@@ -205,7 +208,7 @@ type ManualChainsSet struct {
 
 // Text renders the chain count manual mode dialled a player to.
 func (e ManualChainsSet) Text(n Namer) string {
-	return fmt.Sprintf("%s now has %d %s (manual)",
+	return fmt.Sprintf("%s manually sets their chains to %d %s",
 		n.PlayerName(e.Player), e.Amount, chainNoun(e.Amount))
 }
 
@@ -231,7 +234,7 @@ type ManualKeyForged struct {
 
 // Text renders the key manual mode forged, with its colour.
 func (e ManualKeyForged) Text(n Namer) string {
-	return fmt.Sprintf("%s manually forges a %s key (%d/%d)",
+	return fmt.Sprintf("%s manually forges a %s key and now has %d of %d keys",
 		n.PlayerName(e.Player), e.Color, e.Keys, e.Needed)
 }
 
@@ -244,6 +247,6 @@ type ManualKeyUnforged struct {
 
 // Text renders the key manual mode took back.
 func (e ManualKeyUnforged) Text(n Namer) string {
-	return fmt.Sprintf("%s manually unforges a key (%d/%d)",
+	return fmt.Sprintf("%s manually unforges a key and now has %d of %d keys",
 		n.PlayerName(e.Player), e.Keys, e.Needed)
 }

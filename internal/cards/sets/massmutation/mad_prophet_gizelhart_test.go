@@ -16,7 +16,7 @@ import (
 //	Armor:  3
 //	Traits: Leader • Priest
 //
-//	Action: If Mad Prophet Gizelhart is in the center of your battleline, fully heal each non-Mutant creature. For each creature healed this way, gain 1 Æmber.
+//	Action: If Mad Prophet Gizelhart is in the center of your battleline, fully heal each non-Mutant creature, and for each creature healed this way, gain 1 Æmber.
 func TestMadProphetGizelhart(t *testing.T) {
 	t.Run(
 		"centered: fully heals each non-Mutant creature and gains 1 per creature healed",

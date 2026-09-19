@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Power
 //
 //	Versatile.
-//	Action: Destroy Creed of Nature. Choose a creature - for the remainder of the turn, it gains skirmish and assault equal to its power.
+//	Action: Destroy Creed of Nature. Choose a creature. For the remainder of the turn, it gains skirmish and assault equal to its power.
 var CreedOfNature = set.New(
 	"Creed of Nature",
 	card.House.Untamed,
@@ -20,7 +20,7 @@ var CreedOfNature = set.New(
 	card.WithTraits(card.Traits.Power),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{
+		card.Trigger.Action, card.Sequence{
 			Effects: []card.Effect{
 				card.Destroy{Target: card.Target.This},
 				card.ChooseCreatureThen{

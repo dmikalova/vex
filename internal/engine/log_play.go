@@ -144,7 +144,7 @@ type Reaped struct {
 
 // Text renders the reap and the Æmber it put in the pool.
 func (e Reaped) Text(n Namer) string {
-	return fmt.Sprintf("%s reaps with %s (+1 Æmber)", n.PlayerName(e.Player), n.Name(e.Card))
+	return fmt.Sprintf("%s reaps with %s and gains 1 Æmber", n.PlayerName(e.Player), n.Name(e.Card))
 }
 
 // ReapedStealing narrates a reap that a replacement turned into a steal (Dimension

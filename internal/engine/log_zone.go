@@ -330,7 +330,7 @@ type CardAbducted struct {
 
 // Text renders the abduction, naming the abducted card's owner.
 func (e CardAbducted) Text(n Namer) string {
-	return fmt.Sprintf("%s abducts %s (owned by %s) into their archives",
+	return fmt.Sprintf("%s abducts %s, owned by %s, into their archives",
 		n.PlayerName(e.Player), nameMoved(n, e.Card, InPlay, Archives), n.PlayerName(e.Owner))
 }
 

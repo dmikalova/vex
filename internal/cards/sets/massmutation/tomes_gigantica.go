@@ -23,7 +23,7 @@ var TomesGigantica = set.New(
 	card.Houseless(),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.Search{
 					Sources: []card.Zone{card.Deck, card.Discard},

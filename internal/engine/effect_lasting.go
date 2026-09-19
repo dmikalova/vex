@@ -448,11 +448,11 @@ func (e DamageOthersAfterUsingTrait) Resolve(ctx *EffectContext) {
 	})
 }
 
-// PutNextTacticIntoHand makes the next action card its controller resolves this
+// PutNextTacticIntoHand makes the next Tactic its controller resolves this
 // turn return to their hand instead of their discard pile — High Priest Torvus,
-// once exalted, sends its controller's next action back to hand. It registers a
-// one-shot arming the action-play path consumes; the turn's end clears it if no
-// action card resolves.
+// once exalted, sends its controller's next Tactic back to hand. It registers a
+// one-shot arming the Tactic-play path consumes; the turn's end clears it if no
+// Tactic resolves.
 type PutNextTacticIntoHand struct{}
 
 // Text renders the effect.

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  3
 //	Traits: Leader • Priest
 //
-//	Action: If Mad Prophet Gizelhart is in the center of your battleline, fully heal each non-Mutant creature. For each creature healed this way, gain 1 Æmber.
+//	Action: If Mad Prophet Gizelhart is in the center of your battleline, fully heal each non-Mutant creature, and for each creature healed this way, gain 1 Æmber.
 var MadProphetGizelhart = set.New(
 	"Mad Prophet Gizelhart",
 	card.House.Sanctum,
@@ -24,7 +24,7 @@ var MadProphetGizelhart = set.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{
 			Cond: card.SourceInCenterOfBattleline{},
-			Then: card.Sentences{
+			Then: card.Sequence{
 				Effects: []card.Effect{
 					card.Heal{
 						Fully:  true,

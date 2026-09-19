@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Choose a creature - remove a ward from the chosen creature, and deal 3 damage to the chosen creature, ignoring armor.
+//	Play: Choose a creature. Remove a ward from the chosen creature. Deal 3 damage to the chosen creature, ignoring armor.
 var HadronCollision = set.New(
 	"Hadron Collision",
 	card.House.StarAlliance,

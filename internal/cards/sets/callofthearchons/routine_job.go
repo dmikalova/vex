@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Steal 1 Æmber, and for each copy of Routine Job in your discard pile, steal 1 Æmber.
+//	Play: Steal 1 Æmber. For each copy of Routine Job in your discard pile, steal 1 Æmber.
 var RoutineJob = set.New("Routine Job",
 	card.House.Shadows, card.Type.Tactic, card.Rarity.Rare,
 	card.Provenance(card.CotA, "282"),

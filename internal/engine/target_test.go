@@ -2,6 +2,51 @@ package engine
 
 import "testing"
 
+// TestTargetKindsAreRealAndRendered walks every target kind so a newly added one
+// cannot slip in unrendered. TargetKind has no String, so the rendering under test
+// is the phrase a card would print.
+func TestTargetKindsAreRealAndRendered(t *testing.T) {
+	if len(TargetKinds()) != int(targetKindCount)-1 {
+		t.Errorf("TargetKinds len = %d, want %d", len(TargetKinds()), targetKindCount-1)
+	}
+	for _, k := range TargetKinds() {
+		if k == targetUnset || k >= targetKindCount {
+			t.Errorf("TargetKinds included the sentinel %d", k)
+		}
+		target := Target{Kind: k}
+		phrase, special := target.specialKindText()
+		if !special {
+			phrase = target.quantifiedPhrase("creature")
+		}
+		if phrase == "" {
+			t.Errorf("target kind %d renders as empty", k)
+		}
+	}
+}
+
+// TestContextReferencesAreExactlyTheSpecialTextKinds pins the partition
+// isContextReference names: a kind resolves from the resolution context if and
+// only if it renders as a definite phrase through specialKindText. Three switches
+// in target.go and target_select.go draw this line independently, so a new kind
+// added to one and not the others fails here rather than rendering "a creature"
+// for a card that meant "the chosen creature".
+func TestContextReferencesAreExactlyTheSpecialTextKinds(t *testing.T) {
+	for _, k := range TargetKinds() {
+		target := Target{Kind: k}
+		_, special := target.specialKindText()
+		if got := isContextReference(k); got != special {
+			t.Errorf(
+				"target kind %d: isContextReference = %v, specialKindText ok = %v",
+				k, got, special,
+			)
+		}
+		// A card the context already holds is never a card the player picks.
+		if special && target.isChosen() {
+			t.Errorf("target kind %d is both a context reference and chosen", k)
+		}
+	}
+}
+
 func TestTargetSelect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 1), 0)
@@ -374,7 +419,7 @@ func TestAnyOfPowerTiers(t *testing.T) {
 
 	// Text names both extremes.
 	if got := (Target{Kind: TargetEachCreature}).Refine(tiers).
-		Text(); got != "each creature with the lowest power and each creature with the highest power" {
+		Text(); got != "each creature with the lowest or highest power" {
 		t.Errorf("text = %q", got)
 	}
 
@@ -407,6 +452,47 @@ func TestAnyOfPowerTiers(t *testing.T) {
 		Select(&EffectContext{Resolver: g1, Controller: 0})
 	if len(all) != 1 || all[0] != only {
 		t.Errorf("single-power set = %v, want [%d]", all, only)
+	}
+}
+
+// framedRank is a Refinement framed around a frame of its own, so AnyOf's
+// mismatched-frame path has two framed members that cannot share one frame.
+type framedRank struct{ word string }
+
+func (r framedRank) clause(phrase string) string { return framedClauseText(r, phrase) }
+
+func (framedRank) clauseFrame(phrase string) (head, tail string) {
+	return phrase + " of", "rank"
+}
+
+func (r framedRank) clauseWord() string { return r.word }
+
+func (framedRank) refine(_ *EffectContext, ids []LocalID) []LocalID { return ids }
+
+// TestAnyOfFoldsSharedClauseFrame pins when AnyOf states its frame once. Only
+// members framed alike fold; anything else repeats the whole noun phrase, which
+// is why the fold is a capability a Refinement opts into rather than a string
+// comparison over rendered clauses.
+func TestAnyOfFoldsSharedClauseFrame(t *testing.T) {
+	each := Target{Kind: TargetEachCreature}
+
+	// One member has nothing to share a frame with.
+	if text := each.Refine(AnyOf(LowestPower)).
+		Text(); text != "each creature with the lowest power" {
+		t.Errorf("single member text = %q", text)
+	}
+
+	// A framed refinement still renders its own clause when it stands alone.
+	if text := each.Refine(HighestPower).
+		Text(); text != "each creature with the highest power" {
+		t.Errorf("standalone text = %q", text)
+	}
+
+	// Members framed differently each render in full, joined with "and" because
+	// each is already a complete noun phrase.
+	if text := each.Refine(AnyOf(LowestPower, framedRank{word: "high"})).
+		Text(); text != "each creature with the lowest power and each creature of high rank" {
+		t.Errorf("mismatched frame text = %q", text)
 	}
 }
 
@@ -1204,7 +1290,7 @@ func TestPortionPerSideRefinement(t *testing.T) {
 	tgt := (Target{Kind: TargetEachCreature}).Refine(PortionPerSide(ThirdRoundedUp))
 
 	want := "one third of all enemy creatures and one third of all friendly " +
-		"creatures (rounding up each time)"
+		"creatures, rounding up each time"
 	if got := tgt.Text(); got != want {
 		t.Errorf("text = %q", got)
 	}

@@ -66,7 +66,7 @@ func TestChooseHouseThen(t *testing.T) {
 	e := ChooseHouseThen{
 		Then: Stun{Target: Target{Kind: TargetEachEnemyCreature}.House(chosenHouse)},
 	}
-	if e.Text() != "choose a house - stun each enemy creature of the chosen house" {
+	if e.Text() != "choose a house. Stun each enemy creature of the chosen house" {
 		t.Errorf("text = %q", e.Text())
 	}
 	// Mars is the fourth house (option index 3).

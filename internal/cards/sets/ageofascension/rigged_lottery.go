@@ -18,7 +18,7 @@ var RiggedLottery = set.New(
 	card.Provenance(card.AoA, "309"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.DiscardTop{Player: card.EachPlayer, Amount: 5},
 			card.ForEachDiscarded{
 				House: card.Houses.Named(card.House.Self),

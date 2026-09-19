@@ -16,7 +16,7 @@ var Mindfire = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.MM, "012"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.DiscardCard{
 				Player:    card.Opponent,
 				Zones:     []card.Zone{card.Hand},
@@ -25,7 +25,9 @@ var Mindfire = set.New(
 			},
 			card.StealAember{
 				Amount: 1,
-				Per:    card.BonusIconsOfChosen{Noun: card.ItNoun.DiscardedCard},
+				Per: card.BonusIconsOf{
+					Over: card.TheCardInContext{Noun: card.ItNoun.DiscardedCard},
+				},
 			},
 		}}),
 )

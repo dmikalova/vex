@@ -140,7 +140,7 @@ ChooseHouse`. A choice among several candidates pauses — answer with
   `h.P1.ClickCard(x)` / `h.P1.ClickOption("...")` and assert it with
   `h.P1.ExpectPrompt("...").Source("Card")`. A sole candidate auto-resolves.
 - Assert with `h.Expect(defOrHandle).Damage/Power/Armor/AmberOn/Exhausted/Ready/
-Stunned/At(zone)` and `h.P1.ExpectAmber/ExpectKeys`. Drop to `h.Game()` for
+Stunned/At(zone)`and`h.P1.ExpectAmber/ExpectKeys`. Drop to`h.Game()` for
   anything the fluent API doesn't cover.
 
 **What to test here:**
@@ -282,7 +282,7 @@ mage fuzzClean    # reset the local fuzz corpus if it gets stale
 ```
 
 The debug and trace replays take flags the same way — `mage debug -script=<hex>
--tail=200`, `mage trace -count=25 -out=tmp/sim/mine.log`.
+-tail=200`,`mage trace -count=25 -out=tmp/sim/mine.log`.
 
 ## Profiling and the local regression baseline
 

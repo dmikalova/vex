@@ -302,8 +302,8 @@ func (g *game) play(ctx app.Context, _ app.Event) {
 			func() error { _, err := g.g.PlayArtifact(p, idx); return playTypeError(err, def.Type) },
 		)
 	case engine.Tactic:
-		g.record(input{Kind: inPlayAction, Hand: idx})
-		g.runAction(ctx, func() error { return playTypeError(g.g.PlayAction(p, idx), def.Type) })
+		g.record(input{Kind: inPlayTactic, Hand: idx})
+		g.runAction(ctx, func() error { return playTypeError(g.g.PlayTactic(p, idx), def.Type) })
 	case engine.Upgrade:
 		g.record(input{Kind: inPlayUpgrade, Hand: idx})
 		g.runAction(

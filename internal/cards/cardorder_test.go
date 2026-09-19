@@ -75,7 +75,8 @@ var optionRank = map[string]int{
 	"WithTauntReachingNeighborsNeighbors":   19,
 	"WithTriggersFromDiscard":               19,
 	// Standard abilities	.
-	"WithAbility": 20,
+	"WithAbility":           20,
+	"WithEachPlayerAbility": 20,
 	// Generative template last: it replaces the face with a materialized variant,
 	// so it wraps everything the face declares above it.
 	"Template": 21,

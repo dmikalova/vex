@@ -18,7 +18,7 @@ var BookOfLeQ = set.New(
 	card.Provenance(card.WC, "325"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{
+		card.Trigger.Action, card.Sequence{
 			Effects: []card.Effect{
 				card.RevealTopOfDeck{Amount: 1},
 				card.Conditional{

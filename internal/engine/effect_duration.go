@@ -26,7 +26,7 @@ type ForDuration struct {
 // a restriction, a key surcharge — passes that subject's possessive so the clause
 // agrees with the sentence ("during their next turn", not "during your opponent's
 // next turn"). source names the card whose leaving ends an UntilThisLeavesPlay
-// window. Forever and the unset sentinel carry no standing clause and render "".
+// window. UntilCardLeavesPlay and the unset sentinel carry no standing clause and render "".
 func windowClause(d Duration, whose, source string) string {
 	switch d {
 	case RemainderOfPlayerTurn:
@@ -39,7 +39,7 @@ func windowClause(d Duration, whose, source string) string {
 		return "until the end of " + whose + " next turn"
 	case UntilThisLeavesPlay:
 		return "until " + source + " leaves play"
-	default: // Forever and the unset sentinel carry no standing clause
+	default: // UntilCardLeavesPlay and the unset sentinel carry no standing clause
 		return ""
 	}
 }

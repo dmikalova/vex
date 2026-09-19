@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Choose a friendly creature and an enemy creature - destroy each creature with the same power as either of the chosen creatures.
+//	Play: Choose a friendly creature and an enemy creature. Destroy each creature with the same power as either of the chosen creatures.
 var QuintrinoFlux = set.New(
 	"Quintrino Flux",
 	card.House.StarAlliance,

@@ -359,7 +359,7 @@ func TestCannotPlayCreatures(t *testing.T) {
 	); len(
 		got,
 	) != 1 ||
-		got[0] != "You cannot play more than 1 cards each turn." {
+		got[0] != "You cannot play more than 1 card each turn." {
 		t.Errorf("controller card limit text = %v", got)
 	}
 	if got := restrictionText(
@@ -367,7 +367,7 @@ func TestCannotPlayCreatures(t *testing.T) {
 	); len(
 		got,
 	) != 1 ||
-		got[0] != "Each player cannot play more than 1 cards each turn." {
+		got[0] != "Each player cannot play more than 1 card each turn." {
 		t.Errorf("each-player card limit text = %v", got)
 	}
 
@@ -402,7 +402,7 @@ func TestCannotPlayCreatures(t *testing.T) {
 	}
 	// Non-creature plays are unaffected.
 	g.AddToHand(NewCard("act", Brobnar, Tactic, Common), 0)
-	if err := g.PlayAction(0, handIdx(g, 0, "act")); err != nil {
+	if err := g.PlayTactic(0, handIdx(g, 0, "act")); err != nil {
 		t.Errorf("actions should still be playable: %v", err)
 	}
 }

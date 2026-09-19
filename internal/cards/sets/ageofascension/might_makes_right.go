@@ -18,7 +18,7 @@ var MightMakesRight = set.New(
 	card.Provenance(card.AoA, "43"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.DestroyChosen{Target: card.Target.EachFriendlyCreature},
 			card.Conditional{
 				Cond: card.CountIs{

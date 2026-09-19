@@ -22,7 +22,7 @@ var OratorHissaro = set.New(
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
 	card.WithKeywords(card.Keyword.Deploy),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Sequence{Effects: []card.Effect{
 				card.Ready{Target: card.Target.EachCreature.Neighboring()},
 				card.Exalt{

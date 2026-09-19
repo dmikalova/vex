@@ -16,7 +16,7 @@ var PowerOfFire = set.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "26"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Then{
 				First: card.Destroy{Target: card.Target.FriendlyCreature},
 				Result: card.LoseAember{

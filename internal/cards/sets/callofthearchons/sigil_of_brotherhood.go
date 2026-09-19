@@ -21,7 +21,7 @@ var SigilOfBrotherhood = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Power),
 	card.WithKeywords(card.Keyword.Versatile),
-	card.WithAbility(card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+	card.WithAbility(card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 		card.Destroy{Target: card.Target.This},
 		card.MayPlayOrUse{Houses: card.GrantHouses.Named(card.House.Self), Grant: card.GrantUse},
 	}}),

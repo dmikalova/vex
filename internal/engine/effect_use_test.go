@@ -180,8 +180,8 @@ func TestUseEvenUnusableOffersAnyArtifact(t *testing.T) {
 	}
 }
 
-func TestUseInSentences(t *testing.T) {
-	seq := Sentences{Effects: []Effect{
+func TestUseInSequence(t *testing.T) {
+	seq := Sequence{Effects: []Effect{
 		Destroy{Target: Target{Kind: TargetThisCreature}},
 		Use{
 			Max:    2,

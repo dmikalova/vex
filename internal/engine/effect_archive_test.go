@@ -892,8 +892,8 @@ func TestArchiveSource(t *testing.T) {
 			0,
 		)
 
-		if err := g.PlayAction(0, idx); err != nil {
-			t.Fatalf("PlayAction: %v", err)
+		if err := g.PlayTactic(0, idx); err != nil {
+			t.Fatalf("PlayTactic: %v", err)
 		}
 
 		if !g.State.Archives[0].contains(id) {

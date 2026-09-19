@@ -96,15 +96,23 @@ card.WithAbility(card.Trigger.PlayFightReap, card.PlayFrom{
 
 **Turn structure:**
 
-| Trigger                      | Fires                                |
-| ---------------------------- | ------------------------------------ |
-| `StartOfTurn`                | at its controller's turn start       |
-| `EndOfTurn`                  | at its controller's turn end         |
-| `EndOfReadyStep`             | after the ready step                 |
-| `AfterChooseHouse`           | after its controller chooses a house |
-| `AfterAnyPlayerChoosesHouse` | after either player chooses a house  |
-| `AfterAnyPlayerStartOfTurn`  | at either player's turn start        |
-| `AfterAnyPlayerEndOfTurn`    | at either player's turn end          |
+| Trigger            | Fires                                |
+| ------------------ | ------------------------------------ |
+| `StartOfTurn`      | at its controller's turn start       |
+| `EndOfTurn`        | at its controller's turn end         |
+| `EndOfReadyStep`   | after the ready step                 |
+| `AfterChooseHouse` | after its controller chooses a house |
+
+`StartOfTurn`, `EndOfTurn`, and `AfterChooseHouse` are controller-scoped by
+default — they watch only their own controller's turn or choice. To widen one to
+_every_ player's turn or choice (Gambling Den at the start of each player's turn,
+Pincerator at the end of each player's turn, Snag's Mirror after a player chooses
+a house), author the ability with `card.WithEachPlayerAbility` instead of
+`card.WithAbility`, or set `EachPlayer: true` on an `Ability` literal. An
+each-player start/end-of-turn ability resolves as the active player ("that
+player"); an each-player choose-house ability resolves as its own controller and
+reaches the chooser only through an explicit `ByActivePlayer` or `Opponent`
+target.
 
 **Reactions to the board:**
 
@@ -659,16 +667,16 @@ Routing steps (`[]card.TopAct`):
 
 Playing:
 
-| Effect                             | What it does                             |
-| ---------------------------------- | ---------------------------------------- |
-| `PlayTopOfDeck`                    | plays the top card of a deck             |
-| `PlayRevealedCard`                 | plays a card an earlier step revealed    |
-| `PutRevealedCard`                  | moves a revealed card instead of playing |
-| `PlayFrom`                         | plays a card out of a named zone         |
-| `PlayOrUse`                        | plays or uses one matching card          |
-| `PlayFromOpponent`                 | plays a card from the opponent's zones   |
-| `PlayItFromOpponentDiscard`        | plays the card in context from discard   |
-| `DiscardOpponentArchivesOrDeckTop` | discards one of the opponent's cards     |
+| Effect                      | What it does                             |
+| --------------------------- | ---------------------------------------- |
+| `PlayTopOfDeck`             | plays the top card of a deck             |
+| `PlayRevealedCard`          | plays a card an earlier step revealed    |
+| `PutRevealedCard`           | moves a revealed card instead of playing |
+| `PlayFrom`                  | plays a card out of a named zone         |
+| `PlayOrUse`                 | plays or uses one matching card          |
+| `PlayFromOpponent`          | plays a card from the opponent's zones   |
+| `PlayItFromOpponentDiscard` | plays the card in context from discard   |
+| `DiscardFromOpponent`       | discards one of the opponent's cards     |
 
 Revealing hands: `RevealHand`, `RevealChosenFromHand`, `RevealRandomFromHand`.
 
@@ -683,7 +691,7 @@ Spangler Box grafts a creature under itself, then hands itself to the opponent:
 card.WithAbility(
   card.Trigger.Action, card.Sequence{Effects: []card.Effect{
     card.Graft{Target: card.Target.Creature},
-    card.TakeControl{Target: card.Target.This, ToOpponent: true, Duration: card.Duration.Forever},
+    card.TakeControl{Target: card.Target.This, ToOpponent: true, Duration: card.Duration.UntilCardLeavesPlay},
   }}),
 ```
 
@@ -735,7 +743,7 @@ Verbs for `OnChooseCreature`: `ReadyVerb`, `ReapVerb`, `FightVerb`, `UseVerb`,
 United Action grants out-of-house play, then bans using cards this turn:
 
 ```go
-card.Sentences{Effects: []card.Effect{
+card.Sequence{Effects: []card.Effect{
   card.MayPlayOrUse{Houses: card.GrantHouses.Controlled, Grant: card.GrantPlay},
   card.Restrict{Player: card.Controller, Action: card.Restricted.Use, Duration: card.Duration.RemainderOfPlayerTurn},
 }}
@@ -789,8 +797,7 @@ card.WithAbility(
 
 | Node                                 | Use                                                               |
 | ------------------------------------ | ----------------------------------------------------------------- |
-| `Sequence`                           | several effects in order, joined with ", and"                     |
-| `Sentences`                          | several effects rendered as separate sentences on one line        |
+| `Sequence`                           | several effects in order, each its own sentence unless folded     |
 | `May`                                | the whole effect is optional                                      |
 | `Then{First, Result}`                | the `A -> B` result gate — `Result` only if `First` did something |
 | `Conditional{Cond, Then, Otherwise}` | gated on a condition                                              |
@@ -974,19 +981,19 @@ card.DealDamage{
 
 **"This way" tallies** — what an earlier step in the same resolution produced.
 
-| Count                   | Counts                            |
-| ----------------------- | --------------------------------- |
-| `CardsDestroyed`        | cards destroyed this way          |
-| `CreaturesDestroyed`    | creatures destroyed this way      |
-| `PowerDestroyedThisWay` | total power destroyed this way    |
-| `CardsPurged`           | cards purged this way             |
-| `PurgedAemberBonus`     | Æmber bonus icons purged this way |
-| `CardsRevealed`         | cards revealed this way           |
-| `CardsShuffledIntoDeck` | cards shuffled back this way      |
-| `CreaturesHealed`       | creatures healed this way         |
-| `DamageHealed`          | damage healed this way            |
-| `DamagePrevented`       | damage prevented this way         |
-| `ProducedThisWay`       | any `card.Tally` this way         |
+| Count                   | Counts                          |
+| ----------------------- | ------------------------------- |
+| `CardsDestroyed`        | cards destroyed this way        |
+| `CreaturesDestroyed`    | creatures destroyed this way    |
+| `PowerDestroyedThisWay` | total power destroyed this way  |
+| `CardsPurged`           | cards purged this way           |
+| `PurgedBonusIcons`      | bonus icons on the purged cards |
+| `CardsRevealed`         | cards revealed this way         |
+| `CardsShuffledIntoDeck` | cards shuffled back this way    |
+| `CreaturesHealed`       | creatures healed this way       |
+| `DamageHealed`          | damage healed this way          |
+| `DamagePrevented`       | damage prevented this way       |
+| `ProducedThisWay`       | any `card.Tally` this way       |
 
 `ProducedThisWay{Tally, Player}` covers `card.Tally.CreaturesDestroyed`,
 `.CreaturesShuffledIntoDeck`, `.AemberLost`, `.CardsReturned`, `.CardsPurged`.
@@ -1018,7 +1025,7 @@ card.ForDuration{
 | `StartOfPlayerNextTurn` | that player's next turn begins |
 | `EndOfPlayerNextTurn`   | that player's next turn ends   |
 | `UntilThisLeavesPlay`   | this card leaves play          |
-| `Forever`               | the game ends                  |
+| `UntilCardLeavesPlay`   | the affected card leaves play  |
 
 Players an effect names:
 

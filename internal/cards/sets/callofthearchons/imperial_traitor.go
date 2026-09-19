@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: Reveal your opponent's hand, and you may purge a Sanctum card from your opponent's hand.
+//	Play: Reveal your opponent's hand. You may purge a Sanctum card from your opponent's hand.
 var ImperialTraitor = set.New(
 	"Imperial Traitor",
 	card.House.Shadows,

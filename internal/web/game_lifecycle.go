@@ -478,7 +478,10 @@ func (g *game) clearToast() {
 
 // installKeyShortcuts wires a document-level keydown listener so common actions
 // have a single-key shortcut (see onKey). It listens on the document because the
-// board has no single focused element to receive the keys.
+// board has no single focused element to receive the keys. Which group of
+// shortcuts is live depends on what is on screen: the card picker and the
+// new-game set picker each take the keys while they are up, and the board takes
+// the rest.
 func (g *game) installKeyShortcuts() {
 	if g.keyFunc != nil {
 		return
@@ -488,74 +491,82 @@ func (g *game) installKeyShortcuts() {
 			return nil
 		}
 		e := args[0]
-		// The card picker owns Tab/Enter/arrows/Escape while it is open, even with
-		// the caret in its search box (where the text-input guard below would
-		// otherwise skip them), so the list is driven from the keyboard and Tab
-		// cannot escape the modal into the board behind it.
-		if g.pickerOpen {
-			key := e.Get("key").String()
-			switch key {
-			case "Tab", "Enter", "ArrowUp", "ArrowDown", "Escape":
-				e.Call("preventDefault")
-				shift := e.Get("shiftKey").Bool()
-				g.dispatch(
-					func(ctx app.Context) { g.onPickerKey(ctx, key, shift) },
-				)
-				return nil
-			}
-			return nil
+		switch {
+		case g.pickerOpen:
+			g.pickerKey(e)
+		case g.awaitingSetup:
+			g.setupKey(e)
+		case isTextInput(e.Get("target")) || e.Get("altKey").Bool():
+			// Typing in a field, or holding Alt for a browser menu: not ours.
+		default:
+			g.boardKey(e)
 		}
-		// While the new-game set picker is up it is a strip of ordinary buttons, so
-		// the browser owns Tab (move focus between sets) and Enter/Space (activate the
-		// focused one). Only the shortcut sheet (?) and backing out (Escape) are taken
-		// here; everything else falls through untouched so native focus still works.
-		if g.awaitingSetup {
-			switch e.Get("key").String() {
-			case "Escape":
-				// Close the shortcut sheet if it is up; otherwise back out of the picker,
-				// but only when there is a game behind it to return to (not on first load).
-				if g.keysOpen {
-					g.dispatch(func(ctx app.Context) { g.closeKeys(ctx, app.Event{}) })
-				} else if g.g != nil {
-					g.dispatch(func(ctx app.Context) { g.dismiss(ctx) })
-				}
-			case "?":
-				g.dispatch(func(ctx app.Context) { g.toggleKeys(ctx, app.Event{}) })
-			}
-			return nil
-		}
-		if isTextInput(e.Get("target")) || e.Get("altKey").Bool() {
-			return nil
-		}
-		key := e.Get("key").String()
-		if e.Get("ctrlKey").Bool() || e.Get("metaKey").Bool() {
-			// Ctrl/Cmd+Z undo; Ctrl/Cmd+Shift+Z redo.
-			if key == "z" || key == "Z" {
-				if e.Get("shiftKey").Bool() {
-					g.dispatch(
-						func(ctx app.Context) { g.redoAction(ctx, app.Event{}) },
-					)
-				} else {
-					g.dispatch(func(ctx app.Context) { g.undoAction(ctx, app.Event{}) })
-				}
-			}
-			// Ctrl/Cmd+G opens the new-game set picker.
-			if key == "g" || key == "G" {
-				e.Call("preventDefault")
-				g.dispatch(func(ctx app.Context) { g.openSetup(ctx, app.Event{}) })
-			}
-			return nil
-		}
-		// Tab and the arrows move the selection, so the browser must not also move
-		// focus or scroll the page with them.
-		if navigates(key) {
-			e.Call("preventDefault")
-		}
-		shift := e.Get("shiftKey").Bool()
-		g.dispatch(func(ctx app.Context) { g.onKey(ctx, key, shift) })
 		return nil
 	})
 	app.Window().Get("document").Call("addEventListener", "keydown", g.keyFunc)
+}
+
+// pickerKey handles the keys the card picker owns while it is open, even with the
+// caret in its search box (where boardKey's text-input guard would otherwise skip
+// them), so the list is driven from the keyboard and Tab cannot escape the modal
+// into the board behind it. Every other key is swallowed.
+func (g *game) pickerKey(e app.Value) {
+	key := e.Get("key").String()
+	switch key {
+	case "Tab", "Enter", "ArrowUp", "ArrowDown", "Escape":
+		e.Call("preventDefault")
+		shift := e.Get("shiftKey").Bool()
+		g.dispatch(func(ctx app.Context) { g.onPickerKey(ctx, key, shift) })
+	}
+}
+
+// setupKey handles the keys the new-game set picker takes. The picker is a strip
+// of ordinary buttons, so the browser owns Tab (move focus between sets) and
+// Enter/Space (activate the focused one). Only the shortcut sheet (?) and backing
+// out (Escape) are taken here; everything else falls through untouched so native
+// focus still works.
+func (g *game) setupKey(e app.Value) {
+	switch e.Get("key").String() {
+	case "Escape":
+		// Close the shortcut sheet if it is up; otherwise back out of the picker,
+		// but only when there is a game behind it to return to (not on first load).
+		if g.keysOpen {
+			g.dispatch(func(ctx app.Context) { g.closeKeys(ctx, app.Event{}) })
+		} else if g.g != nil {
+			g.dispatch(func(ctx app.Context) { g.dismiss(ctx) })
+		}
+	case "?":
+		g.dispatch(func(ctx app.Context) { g.toggleKeys(ctx, app.Event{}) })
+	}
+}
+
+// boardKey handles the shortcuts that drive the board itself: the Ctrl/Cmd
+// history and new-game chords, then the plain single keys onKey interprets.
+func (g *game) boardKey(e app.Value) {
+	key := e.Get("key").String()
+	if e.Get("ctrlKey").Bool() || e.Get("metaKey").Bool() {
+		// Ctrl/Cmd+Z undo; Ctrl/Cmd+Shift+Z redo.
+		if key == "z" || key == "Z" {
+			if e.Get("shiftKey").Bool() {
+				g.dispatch(func(ctx app.Context) { g.redoAction(ctx, app.Event{}) })
+			} else {
+				g.dispatch(func(ctx app.Context) { g.undoAction(ctx, app.Event{}) })
+			}
+		}
+		// Ctrl/Cmd+G opens the new-game set picker.
+		if key == "g" || key == "G" {
+			e.Call("preventDefault")
+			g.dispatch(func(ctx app.Context) { g.openSetup(ctx, app.Event{}) })
+		}
+		return
+	}
+	// Tab and the arrows move the selection, so the browser must not also move
+	// focus or scroll the page with them.
+	if navigates(key) {
+		e.Call("preventDefault")
+	}
+	shift := e.Get("shiftKey").Bool()
+	g.dispatch(func(ctx app.Context) { g.onKey(ctx, key, shift) })
 }
 
 // installScrollTracking keeps the lifted card copy over the card it was lifted
@@ -698,67 +709,84 @@ func (g *game) installTips() {
 		return
 	}
 	doc := app.Window().Get("document")
-	// show fills the floating label from el's data-tip and places it centred above
-	// el — flipping below when it would leave the top of the window, and clamped so
-	// it never runs off either side.
-	show := func(el app.Value) {
-		tip := el.Get("dataset").Get("tip")
-		if !tip.Truthy() {
-			return
-		}
-		float := doc.Call("getElementById", "tip-float")
-		if !float.Truthy() {
-			return
-		}
-		float.Set("textContent", tip.String())
-		float.Get("classList").Call("add", "tip-float--on")
-		style := float.Get("style")
-		r := el.Call("getBoundingClientRect")
-		mid := r.Get("left").Float() + r.Get("width").Float()/2
+	g.installHoverTips(doc)
+	g.installTouchTips(doc)
+	passive := map[string]any{"passive": true}
+	doc.Call("addEventListener", "pointerover", g.tipOverFunc, passive)
+	doc.Call("addEventListener", "pointerout", g.tipOutFunc, passive)
+	doc.Call("addEventListener", "pointerdown", g.tipDownFunc, passive)
+	doc.Call("addEventListener", "pointermove", g.tipMoveFunc, passive)
+	doc.Call("addEventListener", "pointerup", g.tipUpFunc, passive)
+	doc.Call("addEventListener", "pointercancel", g.tipUpFunc, passive)
+	g.installSelCursor(doc, passive)
+}
+
+// showTip fills the floating label from el's data-tip and places it centred above
+// el — flipping below when it would leave the top of the window, and clamped so
+// it never runs off either side.
+func showTip(doc, el app.Value) {
+	tip := el.Get("dataset").Get("tip")
+	if !tip.Truthy() {
+		return
+	}
+	float := doc.Call("getElementById", "tip-float")
+	if !float.Truthy() {
+		return
+	}
+	float.Set("textContent", tip.String())
+	float.Get("classList").Call("add", "tip-float--on")
+	style := float.Get("style")
+	r := el.Call("getBoundingClientRect")
+	mid := r.Get("left").Float() + r.Get("width").Float()/2
+	style.Set("left", px(mid))
+	style.Set("top", px(r.Get("top").Float()-tipGap))
+	style.Set("transform", "translate(-50%, -100%)")
+	// Now that the label has a measured box, clamp it inside the window.
+	const margin = 8.0
+	fr := float.Call("getBoundingClientRect")
+	vw := app.Window().Get("innerWidth").Float()
+	if left := fr.Get("left").Float(); left < margin {
+		mid += margin - left
 		style.Set("left", px(mid))
-		style.Set("top", px(r.Get("top").Float()-tipGap))
-		style.Set("transform", "translate(-50%, -100%)")
-		// Now that the label has a measured box, clamp it inside the window.
-		const margin = 8.0
-		fr := float.Call("getBoundingClientRect")
-		vw := app.Window().Get("innerWidth").Float()
-		if left := fr.Get("left").Float(); left < margin {
-			mid += margin - left
-			style.Set("left", px(mid))
-		} else if right := fr.Get("right").Float(); right > vw-margin {
-			mid -= right - (vw - margin)
-			style.Set("left", px(mid))
-		}
-		if fr.Get("top").Float() < margin {
-			style.Set("top", px(r.Get("bottom").Float()+tipGap))
-			style.Set("transform", "translate(-50%, 0)")
-		}
+	} else if right := fr.Get("right").Float(); right > vw-margin {
+		mid -= right - (vw - margin)
+		style.Set("left", px(mid))
 	}
-	hide := func() {
-		if float := doc.Call("getElementById", "tip-float"); float.Truthy() {
-			float.Get("classList").Call("remove", "tip-float--on")
-		}
+	if fr.Get("top").Float() < margin {
+		style.Set("top", px(r.Get("bottom").Float()+tipGap))
+		style.Set("transform", "translate(-50%, 0)")
 	}
-	// tipUnder returns the data-tip element under a viewport point, or a null value
-	// when the point is off every tip.
-	tipUnder := func(x, y float64) app.Value {
-		el := doc.Call("elementFromPoint", x, y)
-		if !el.Truthy() {
-			return app.Null()
-		}
-		return el.Call("closest", "[data-tip]")
+}
+
+// hideTip lowers the floating label.
+func hideTip(doc app.Value) {
+	if float := doc.Call("getElementById", "tip-float"); float.Truthy() {
+		float.Get("classList").Call("remove", "tip-float--on")
 	}
-	// Mouse hover raises the label; touch drives the handlers below instead, so the
-	// hover pair ignores a non-mouse pointer. A pointerout whose pointer is still on
-	// a tip (moving onto a child, or across to the next tip) leaves the label up —
-	// the matching pointerover re-places it — so only leaving tips entirely hides.
+}
+
+// tipUnder returns the data-tip element under a viewport point, or a null value
+// when the point is off every tip.
+func tipUnder(doc app.Value, x, y float64) app.Value {
+	el := doc.Call("elementFromPoint", x, y)
+	if !el.Truthy() {
+		return app.Null()
+	}
+	return el.Call("closest", "[data-tip]")
+}
+
+// installHoverTips builds the mouse-hover pair. Touch drives installTouchTips
+// instead, so this pair ignores a non-mouse pointer. A pointerout whose pointer is
+// still on a tip (moving onto a child, or across to the next tip) leaves the label
+// up — the matching pointerover re-places it — so only leaving tips entirely hides.
+func (g *game) installHoverTips(doc app.Value) {
 	g.tipOverFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
 		if len(args) == 0 || args[0].Get("pointerType").String() != "mouse" {
 			return nil
 		}
 		if t := args[0].Get("target"); t.Truthy() {
 			if el := t.Call("closest", "[data-tip]"); el.Truthy() {
-				show(el)
+				showTip(doc, el)
 			}
 		}
 		return nil
@@ -771,25 +799,21 @@ func (g *game) installTips() {
 			rel.Call("closest", "[data-tip]").Truthy() {
 			return nil
 		}
-		hide()
+		hideTip(doc)
 		return nil
 	})
+}
+
+// installTouchTips builds the press-drag-release trio, which keeps the label under
+// a finger dragged along the bar for as long as the press lasts.
+func (g *game) installTouchTips(doc app.Value) {
 	g.tipDownFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
 		if len(args) == 0 {
 			return nil
 		}
-		// A pinned deck list closes when the tap lands outside any deck icon, so a
-		// touchscreen can dismiss it the way a click-away or hover-out would.
-		if g.deckOpen != ([2]bool{}) {
-			if t := args[0].Get("target"); !t.Truthy() ||
-				!t.Call("closest", ".deck-tip").Truthy() {
-				g.deckOpen = [2]bool{}
-				if g.dispatch != nil {
-					g.dispatch(nil)
-				}
-			}
-		}
+		g.closeDeckOnTapAway(args[0])
 		tip := tipUnder(
+			doc,
 			args[0].Get("clientX").Float(),
 			args[0].Get("clientY").Float(),
 		)
@@ -797,7 +821,7 @@ func (g *game) installTips() {
 			return nil
 		}
 		g.tipTracking = true
-		show(tip)
+		showTip(doc, tip)
 		return nil
 	})
 	g.tipMoveFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
@@ -805,14 +829,15 @@ func (g *game) installTips() {
 			return nil
 		}
 		tip := tipUnder(
+			doc,
 			args[0].Get("clientX").Float(),
 			args[0].Get("clientY").Float(),
 		)
 		if !tip.Truthy() {
-			hide()
+			hideTip(doc)
 			return nil
 		}
-		show(tip)
+		showTip(doc, tip)
 		return nil
 	})
 	g.tipUpFunc = app.FuncOf(func(_ app.Value, _ []app.Value) any {
@@ -820,17 +845,24 @@ func (g *game) installTips() {
 			return nil
 		}
 		g.tipTracking = false
-		hide()
+		hideTip(doc)
 		return nil
 	})
-	passive := map[string]any{"passive": true}
-	doc.Call("addEventListener", "pointerover", g.tipOverFunc, passive)
-	doc.Call("addEventListener", "pointerout", g.tipOutFunc, passive)
-	doc.Call("addEventListener", "pointerdown", g.tipDownFunc, passive)
-	doc.Call("addEventListener", "pointermove", g.tipMoveFunc, passive)
-	doc.Call("addEventListener", "pointerup", g.tipUpFunc, passive)
-	doc.Call("addEventListener", "pointercancel", g.tipUpFunc, passive)
-	g.installSelCursor(doc, passive)
+}
+
+// closeDeckOnTapAway unpins a deck list when the press lands outside every deck
+// icon, so a touchscreen can dismiss it the way a click-away or hover-out would.
+func (g *game) closeDeckOnTapAway(e app.Value) {
+	if g.deckOpen == ([2]bool{}) {
+		return
+	}
+	if t := e.Get("target"); t.Truthy() && t.Call("closest", ".deck-tip").Truthy() {
+		return
+	}
+	g.deckOpen = [2]bool{}
+	if g.dispatch != nil {
+		g.dispatch(nil)
+	}
 }
 
 // OnResize re-places the lifted card copy, which is positioned from a measurement

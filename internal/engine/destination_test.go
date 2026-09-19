@@ -46,3 +46,28 @@ func TestMoveFromDeckRowsAreDistinct(t *testing.T) {
 		})
 	}
 }
+
+// TestMoveSourceSkipsCardAlreadyInAPile pins that a source that has already
+// reached a pile is neither moved again nor left carrying a resolving-card
+// redirect. A card destroyed before its own ability got to move it is in no zone
+// a move could take it out of, and no redirect written for it will ever be
+// consumed, so the write would be permanent in-play garbage on an out-of-play
+// card (ForgeKey purging its source after Chota Hazri already died).
+func TestMoveSourceSkipsCardAlreadyInAPile(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	id := g.Register(NewCard("gone", Untamed, Tactic, Common), 0)
+	g.State.Discard[0].add(id)
+
+	ctx := &EffectContext{Resolver: g, Controller: 0, Source: id}
+	toPurged.moveSource(ctx)
+
+	if !g.State.Discard[0].contains(id) {
+		t.Error("a source already in a pile must stay where it landed")
+	}
+	if g.State.Purge[0].contains(id) {
+		t.Error("a source already in a pile must not be moved out of it again")
+	}
+	if dest := g.State.Cards[id].ResolvingDest; dest != (Destination{}) {
+		t.Errorf("ResolvingDest = %+v, want unset: nothing will ever consume it", dest)
+	}
+}

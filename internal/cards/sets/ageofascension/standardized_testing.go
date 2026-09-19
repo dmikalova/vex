@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Destroy each creature with the lowest power and each creature with the highest power.
+//	Play: Destroy each creature with the lowest or highest power.
 var StandardizedTesting = set.New(
 	"Standardized Testing",
 	card.House.Logos,

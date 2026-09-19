@@ -26,10 +26,9 @@ const (
 	// TargetTriggeringCreature selects the creature that caused the trigger ("it").
 	TargetTriggeringCreature
 	// TargetCreatureFought selects the creature the source fought, named in full.
-	// A Fight: ability resolves after the fight, so the bare form reads in the past
-	// ("the creature <self> fought"). A Before Fight ability that reaches past it —
-	// Lord Golgotha damaging its neighbors — resolves before the fight, so the
-	// neighbor-decorated form reads in the present ("the creature <self> fights").
+	// It renders in the past ("the creature <self> fought") because a Fight: ability
+	// resolves after the fight; the renderer puts it in the present for a Before
+	// Fight: ability, which resolves before the fight (see fightTense).
 	TargetCreatureFought
 	// TargetEachCreature selects every creature in play.
 	TargetEachCreature
@@ -140,7 +139,38 @@ const (
 	// renders them as "each upgrade on <self>" — Away Team archives its own upgrades
 	// when it is destroyed.
 	TargetEachUpgradeOnThis
+	// targetKindCount bounds the enumeration. It is not a real kind.
+	targetKindCount
 )
+
+// TargetKinds returns every real target kind, so a caller can enumerate them
+// rather than maintain its own list that a newly added kind would fall out of.
+func TargetKinds() []TargetKind {
+	all := make([]TargetKind, 0, int(targetKindCount)-1)
+	for k := targetUnset + 1; k < targetKindCount; k++ {
+		all = append(all, k)
+	}
+	return all
+}
+
+// isContextReference reports whether a kind names a card the resolution context
+// already holds — ctx.It, ctx.Upgrade, ctx.Grantor, the source card, a snapshot a
+// preceding effect left behind — rather than a set to be found by scanning the
+// board. It is the line three switches in this file draw independently: a context
+// reference resolves without a search, renders through specialKindText as a
+// definite phrase ("the chosen creature") instead of a quantified one ("each enemy
+// creature"), and is never something the player picks. The partition is pinned by
+// TestContextReferencesAreExactlyTheSpecialTextKinds.
+func isContextReference(k TargetKind) bool {
+	switch k {
+	case TargetThisCreature, TargetTriggeringCreature, TargetCreatureFought,
+		TargetTheOtherCreature, TargetTheSameCreature, TargetTheChosenCreature,
+		TargetAttachedHost, TargetGrantingCard, TargetFormerNeighbors,
+		TargetEachNeighbor, TargetEachUpgradeOnThis, TargetTheFoughtCreature:
+		return true
+	}
+	return false
+}
 
 // Target describes which cards an effect applies to. Kind picks the base set;
 // the optional filters added by WithTrait and PowerAtMost narrow that set and
@@ -641,10 +671,7 @@ func (t Target) specialKindText() (string, bool) {
 	case TargetTriggeringCreature:
 		return t.decorateNeighbors("it"), true
 	case TargetCreatureFought:
-		if t.withNeighbors || t.neighborsOf {
-			return t.decorateNeighbors("the creature " + SelfName + " fights"), true
-		}
-		return "the creature " + SelfName + " fought", true
+		return t.decorateNeighbors("the creature " + SelfName + " fought"), true
 	case TargetTheOtherCreature:
 		return "the other creature", true
 	case TargetTheSameCreature:
@@ -713,6 +740,8 @@ func (t Target) quantifiedPhrase(noun string) string {
 		phrase = "an " + noun
 	case TargetChosenUpgrade:
 		phrase = "an " + noun
+	case TargetChosenCreatureOrArtifact:
+		phrase = indefinite(noun)
 	case TargetChosenEnemyArtifact, TargetChosenEnemyCreatureOrArtifact:
 		phrase = "an enemy " + noun
 	case TargetChosenFriendlyArtifact:

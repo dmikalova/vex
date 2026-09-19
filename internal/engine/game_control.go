@@ -18,16 +18,16 @@ const maxControlEntries = 64
 // (GameState.Controls), ordered by when it was applied. The current controller of
 // a card is the Controller of its most recently pushed entry; earlier entries are
 // the fallback a later one reverts to when it is removed (LIFO). An entry is
-// dropped when its Source leaves play — a Forever control names the seized card
-// itself as Source, so it lasts as long as the card stays in play. Ownership is
-// immutable and decided separately.
+// dropped when its Source leaves play — an UntilCardLeavesPlay control names the
+// seized card itself as Source, so it lasts as long as the card stays in play.
+// Ownership is immutable and decided separately.
 type ControlEntry struct {
 	// Card is the seized card.
 	Card LocalID
 	// Controller is the player index (0 or 1) this effect hands the card to.
 	Controller uint8
 	// Source is the card whose lasting effect holds the control; when Source leaves
-	// play the entry is dropped. A Forever control names Card itself as its Source.
+	// play the entry is dropped. An UntilCardLeavesPlay control names Card itself as its Source.
 	Source LocalID
 }
 
@@ -35,8 +35,8 @@ type ControlEntry struct {
 // controller's play area — a creature into their battleline, an artifact into
 // their artifact row — without changing ownership. Ownership is immutable in
 // KeyForge and still decides the out-of-play zone the card returns to. source is
-// the card whose leaving play ends the control; a Forever control names the seized
-// card itself as source, so it lasts until the card leaves play. Control stacks
+// the card whose leaving play ends the control; an UntilCardLeavesPlay control names the
+// seized card itself as source, so it lasts until the card leaves play. Control stacks
 // LIFO: a later take takes precedence, and removing it falls back to the entry
 // beneath (see releaseControlHeldBy).
 func (g *Game) takeControl(id LocalID, controller int, source LocalID) {
@@ -90,10 +90,7 @@ func (g *Game) controllerFromStack(id LocalID) int {
 // control stack; the caller pushes or pops the stack entry that justifies the move
 // and settles once the whole batch has moved.
 func (g *Game) placeUnderController(id LocalID, controller int) {
-	for p := 0; p < 2; p++ {
-		g.State.Battleline[p].remove(id)
-		g.State.Artifacts[p].remove(id)
-	}
+	g.removeFromPlayRows(id)
 	if controller != g.owner(id) {
 		g.State.Cards[id].ControlPlus = uint8(controller + 1)
 	} else {
@@ -109,7 +106,7 @@ func (g *Game) placeUnderController(id LocalID, controller int) {
 // releaseControlHeldBy drops every control effect the given source holds over
 // other cards and re-derives each affected card's controller from the entry
 // beneath — the LIFO fallback. It is the leave-play half of a control effect:
-// control lasts exactly as long as its source stays in play. A Forever control
+// control lasts exactly as long as its source stays in play. An UntilCardLeavesPlay control
 // names the seized card itself as its source, so it is shed by clearControls when
 // that card leaves play, not here. Every affected card is still in play — a card
 // sheds its own control entries when it leaves (clearControls) — so re-deriving

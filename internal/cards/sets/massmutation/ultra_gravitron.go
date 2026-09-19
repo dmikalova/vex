@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Robot
 //
 //	Play: Archive the top 5 cards of your deck.
-//	Fight/Reap: Discard a card from your archives -> purge a creature, and resolve that card's bonus icons.
+//	Fight/Reap: Discard a card from your archives -> purge a creature. Resolve that card's bonus icons.
 var UltraGravitron = set.Gigantic(
 	"Ultra Gravitron",
 	card.House.Logos,

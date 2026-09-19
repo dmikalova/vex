@@ -154,7 +154,7 @@ func (p *Player) Play(card any) {
 			func() error { _, err := p.h.g.PlayArtifact(p.index, idx); return err },
 		)
 	case engine.Tactic:
-		p.h.run("Play "+name, func() error { return p.h.g.PlayAction(p.index, idx) })
+		p.h.run("Play "+name, func() error { return p.h.g.PlayTactic(p.index, idx) })
 	case engine.Upgrade:
 		p.h.run(
 			"Play "+name,

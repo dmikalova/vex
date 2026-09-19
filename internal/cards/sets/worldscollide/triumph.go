@@ -24,7 +24,7 @@ var Triumph = set.New(
 				Type:   card.Type.Creature,
 				None:   true,
 			},
-			Then: card.Sentences{Effects: []card.Effect{
+			Then: card.Sequence{Effects: []card.Effect{
 				card.Exalt{
 					Target: card.Target.EachFriendlyCreature,
 					Amount: 1,

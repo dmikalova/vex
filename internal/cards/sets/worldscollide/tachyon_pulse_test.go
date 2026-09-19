@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: Destroy each artifact, and exhaust each creature with an upgrade.
+//	Play: Destroy each artifact. Exhaust each creature with an upgrade.
 func TestTachyonPulse(t *testing.T) {
 	t.Run("destroys each artifact and exhausts each upgraded creature", func(t *testing.T) {
 		var artifact, upgraded, plain ct.Card

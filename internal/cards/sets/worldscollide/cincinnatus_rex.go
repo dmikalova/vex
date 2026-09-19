@@ -28,7 +28,7 @@ var CincinnatusRex = set.New(
 		None:   true,
 	}),
 	card.WithAbility(
-		card.Trigger.Fight, card.May{Do: card.Sentences{Effects: []card.Effect{
+		card.Trigger.Fight, card.May{Do: card.Sequence{Effects: []card.Effect{
 			card.Exalt{
 				Target: card.Target.This,
 				Amount: 1,

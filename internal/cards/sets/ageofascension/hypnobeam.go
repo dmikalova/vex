@@ -18,6 +18,6 @@ var Hypnobeam = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.TakeControl{
 			Target:   card.Target.EnemyCreature,
-			Duration: card.Duration.Forever,
+			Duration: card.Duration.UntilCardLeavesPlay,
 		}),
 )

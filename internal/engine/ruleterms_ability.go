@@ -214,7 +214,10 @@ reach it). It fires on every card in play whoever played the Tactic.`,
 			Definition: "An ability that resolves at the end of its controller's turn, after cards ready and they draw.",
 			Body: `An End of Turn ability resolves during the end of its controller's turn,
 after cards ready and the controller draws (Shaffles drains the opponent at
-each turn's end).`,
+each turn's end). An each-player End of Turn ability instead resolves at the end
+of every player's turn — its own controller's and the opponent's — resolving as
+the player whose turn is ending, so "that player" is that active player rather
+than the card's controller (Pincerator).`,
 		},
 		{
 			Section:    SectionAbility,
@@ -222,27 +225,10 @@ each turn's end).`,
 			Definition: "An ability that resolves at the start of its controller's turn, before they forge.",
 			Body: `A Start of Turn ability resolves at the start of its controller's turn,
 before they forge, so an ability that changes what a key costs still has time
-to.`,
-		},
-		{
-			Section:    SectionAbility,
-			Title:      "At the Start of Each Player's Turn",
-			Definition: "An ability that resolves at the start of every player's turn, resolving as the player whose turn it is.",
-			Body: `This ability resolves at the start of every player's turn, its own
-controller's and the opponent's, resolving as the player whose turn is starting so
-"they"/"that player" is that active player rather than the card's controller
-(Gambling Den, General Order 24). It is the whole-board companion to Start of Turn,
-which fires only on its own controller's turn.`,
-		},
-		{
-			Section:    SectionAbility,
-			Title:      "At the End of Each Player's Turn",
-			Definition: "An ability that resolves at the end of every player's turn, resolving as the player whose turn it is.",
-			Body: `This ability resolves at the end of every player's turn, its own
-controller's and the opponent's, resolving as the player whose turn is ending so
-"they"/"that player" is that active player rather than the card's controller
-(Pincerator). It is the whole-board companion to End of Turn, which fires only on
-its own controller's turn.`,
+to. An each-player Start of Turn ability instead resolves at the start of every
+player's turn — its own controller's and the opponent's — resolving as the player
+whose turn is starting, so "that player" is that active player rather than the
+card's controller (Gambling Den, General Order 24).`,
 		},
 		{
 			Section:    SectionAbility,
@@ -255,10 +241,12 @@ from hand to grow).`,
 		{
 			Section:    SectionAbility,
 			Title:      "After a Player Chooses a House",
-			Definition: "An ability that resolves after any player chooses their active house, whoever's turn it is.",
-			Body: `This ability resolves after any player chooses their active house,
-whether the choice was made by its controller or their opponent (Snag's Mirror
-bars the chooser's opponent from that same house during their next turn).`,
+			Definition: "An ability that resolves after a player chooses their active house, its own controller's choice by default or either player's when it watches each player.",
+			Body: `This ability resolves after a player chooses their active house. By
+default it watches only its own controller's choice; an each-player one watches
+either player's choice — its controller's or the opponent's — and resolves as the
+chooser (Snag's Mirror bars the chooser's opponent from that same house during
+their next turn).`,
 		},
 		{
 			Section:    SectionAbility,

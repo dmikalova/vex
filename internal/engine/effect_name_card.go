@@ -10,13 +10,14 @@ package engine
 // their opponent's deck list.
 type NameCard struct{}
 
-// Text renders the effect. The bar lasts until the source leaves play, so the dash
-// binds the naming to its lasting consequence, the way ChooseHouseThen binds a
-// house choice to what it does.
+// Text renders the effect as the naming and its lasting consequence, two
+// sentences the way every other lead-in choice reads.
 func (NameCard) Text() string {
-	return "name a card - cards with that name cannot be played " +
-		durationClause(UntilThisLeavesPlay, SelfName)
+	return leadInSentence("name a card", "cards with that name cannot be played "+
+		durationClause(UntilThisLeavesPlay, SelfName))
 }
+
+func (NameCard) endsSentence() bool { return true }
 
 // Resolve asks the controller to name a card and records it on the source. A name
 // no card in the match carries is a legal but idle choice — nothing of that name

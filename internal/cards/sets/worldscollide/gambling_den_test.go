@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Location
 //
-//	At the start of each player's turn, you may choose a house - reveal the top card of your deck. If it is of the chosen house, gain 2 Æmber. Otherwise, lose 2 Æmber.
+//	At the start of each player's turn, you may choose a house. If you do, reveal the top card of your deck. If it is of the chosen house, gain 2 Æmber. Otherwise, lose 2 Æmber.
 
 // TestGamblingDenGainOnMatch fires the artifact at the start of the opponent's
 // turn: they name the house their revealed top card belongs to and gain 2 Æmber.

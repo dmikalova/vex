@@ -69,10 +69,10 @@ func TestRehouseMovesEverySelfHouseReference(t *testing.T) {
 	text := RenderCardText(&def)
 	for _, want := range []string{
 		"Untamed cards from your hand",
-		"stun each Untamed creature",
+		"Stun each Untamed creature",
 		"you may play one Untamed card",
 		"must choose Untamed",
-		"exhaust each Brobnar creature",
+		"Exhaust each Brobnar creature",
 	} {
 		if !strings.Contains(text, want) {
 			t.Errorf("rehoused text is missing %q:\n%s", want, text)

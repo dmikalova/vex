@@ -252,8 +252,8 @@ func TestArchiveCardUnderResolveMovesToOwnerArchives(t *testing.T) {
 	}
 }
 
-// TestPutUnderFromHandTypeText renders the "action card" noun a Tactic filter
-// gives (Infomancer, Memolith graft an action card).
+// TestPutUnderFromHandTypeText renders the "tactic card" noun a Tactic filter
+// gives (Infomancer, Memolith graft a Tactic).
 func TestPutUnderFromHandTypeText(t *testing.T) {
 	got := (PutUnderFromHand{Type: Tactic}).Text()
 	want := "put a tactic card from your hand faceup under {self}"
@@ -262,23 +262,23 @@ func TestPutUnderFromHandTypeText(t *testing.T) {
 	}
 }
 
-// TestPutUnderFromHandTypeOnlyOffersMatchingType grafts only an action card when
+// TestPutUnderFromHandTypeOnlyOffersMatchingType grafts only a Tactic when
 // Type is Tactic, leaving a creature in hand untouched even though it is the only
 // other hand card.
 func TestPutUnderFromHandTypeOnlyOffersMatchingType(t *testing.T) {
 	g := started(t)
 	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
 	g.AddToHand(NewCard("Creature", Brobnar, Creature, Common, WithPower(2)), 0)
-	action := g.AddToHand(NewCard("Action", Brobnar, Tactic, Common), 0)
+	tactic := g.AddToHand(NewCard("Tactic", Brobnar, Tactic, Common), 0)
 
 	PutUnderFromHand{Type: Tactic}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0, Source: host},
 	)
 
-	if got := g.Under(host); len(got) != 1 || got[0] != action {
-		t.Errorf("under = %v, want the action card [%d]", got, action)
+	if got := g.Under(host); len(got) != 1 || got[0] != tactic {
+		t.Errorf("under = %v, want the Tactic [%d]", got, tactic)
 	}
-	if g.UnderFaceDown(action) {
+	if g.UnderFaceDown(tactic) {
 		t.Error("a graft from hand places the card faceup")
 	}
 }

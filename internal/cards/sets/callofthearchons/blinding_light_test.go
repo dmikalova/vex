@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Choose a house - stun each creature of the chosen house.
+//	Play: Choose a house. Stun each creature of the chosen house.
 func TestBlindingLight(t *testing.T) {
 	t.Run("stuns each creature of the chosen house, sparing the rest", func(t *testing.T) {
 		var marsFoe, shadowFoe ct.Card

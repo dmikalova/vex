@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Choose a creature - fully heal it, and for the remainder of the turn, it belongs to house Sanctum and cannot be dealt damage.
+//	Play: Choose a creature. Fully heal it. For the remainder of the turn, it belongs to house Sanctum and cannot be dealt damage.
 func TestGoldenAura(t *testing.T) {
 	t.Run("fully heals the chosen creature", func(t *testing.T) {
 		var target ct.Card

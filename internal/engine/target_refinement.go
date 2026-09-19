@@ -91,8 +91,8 @@ func (n except) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 // AnyOf is a Refinement that keeps every creature any one of its Refinements
 // keeps — the union over the selected set. It composes the tier selectors to take
 // several extremes at once: AnyOf(LowestPower, HighestPower) is "each creature
-// with the lowest power and each creature with the highest power" (Standardized
-// Testing). The union preserves the original order and keeps each creature once.
+// with the lowest or highest power" (Standardized Testing). The union preserves
+// the original order and keeps each creature once.
 func AnyOf(refinements ...Refinement) Refinement {
 	return anyOf{refinements: refinements}
 }
@@ -100,14 +100,63 @@ func AnyOf(refinements ...Refinement) Refinement {
 // anyOf implements the AnyOf combinator.
 type anyOf struct{ refinements []Refinement }
 
-// clause joins each member's clause with " and ", e.g. "each creature with the
-// lowest power and each creature with the highest power".
+// clause states a shared frame once when every member is framed alike, joining
+// only the varying words with "or" — inside one noun phrase "and" would read as a
+// creature meeting both rules. Members that cannot share a frame render in full
+// and join with "and", where each is already a complete noun phrase and "or"
+// would read as a choice between the two groups.
 func (a anyOf) clause(phrase string) string {
+	if folded, ok := foldFramedClauses(a.refinements, phrase); ok {
+		return folded
+	}
 	clauses := make([]string, len(a.refinements))
 	for i, r := range a.refinements {
 		clauses[i] = r.clause(phrase)
 	}
 	return strings.Join(clauses, " and ")
+}
+
+// framedClause is the optional capability of a Refinement whose clause is a fixed
+// frame around one varying word — "each creature with the" + "lowest" + "power" —
+// so a combinator can state the frame once and list only the words that differ.
+type framedClause interface {
+	clauseFrame(phrase string) (head, tail string)
+	clauseWord() string
+}
+
+// framedClauseText assembles a framed Refinement's own clause, so its frame is
+// written once and cannot drift from what a combinator folds it into.
+func framedClauseText(f framedClause, phrase string) string {
+	head, tail := f.clauseFrame(phrase)
+	return head + " " + f.clauseWord() + " " + tail
+}
+
+// foldFramedClauses states a shared frame once and lists only the varying words,
+// so AnyOf(LowestPower, HighestPower) reads "each creature with the lowest or
+// highest power" rather than repeating the subject per member. It declines unless
+// there are at least two members and every one is framed alike; members framed
+// differently have nothing to share, so they render in full.
+// Pinned by TestAnyOfFoldsSharedClauseFrame.
+func foldFramedClauses(refinements []Refinement, phrase string) (string, bool) {
+	if len(refinements) < 2 {
+		return "", false
+	}
+	var head, tail string
+	words := make([]string, 0, len(refinements))
+	for i, r := range refinements {
+		f, ok := r.(framedClause)
+		if !ok {
+			return "", false
+		}
+		h, t := f.clauseFrame(phrase)
+		if i == 0 {
+			head, tail = h, t
+		} else if h != head || t != tail {
+			return "", false
+		}
+		words = append(words, f.clauseWord())
+	}
+	return head + " " + joinOr(words) + " " + tail, true
 }
 
 // refine keeps every creature any member keeps, preserving the original order and
@@ -131,74 +180,70 @@ func (a anyOf) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	return kept
 }
 
-// SamePowerAsChosen is a Refinement that keeps every creature sharing the power of
-// one the controller chooses from the set — the chosen creature included — so a
-// Destroy paired with it wipes out a whole power bracket (Dance of Doom). A
-// declined choice selects nothing. It leads with "choose a creature" so the
-// printed phrase reads left to right, the choice before its consequence.
-var SamePowerAsChosen Refinement = samePowerAsChosen{}
+// SamePowerAsChosen keeps every creature sharing the power of one the controller
+// chooses from the set — the chosen creature included — so a Destroy paired with
+// it wipes out a whole power bracket (Dance of Doom). A declined choice selects
+// nothing. It leads with "choose a creature" so the printed phrase reads left to
+// right, the choice before its consequence.
+var SamePowerAsChosen Refinement = samePowerAsChosen{picks: []powerPick{
+	{prompt: "Choose a creature", side: eitherSide},
+}}
 
-// samePowerAsChosen implements the SamePowerAsChosen refinement.
-type samePowerAsChosen struct{}
+// SamePowerAsEitherChosen is the two-pick form of SamePowerAsChosen: the controller
+// chooses one friendly and one enemy creature, and it keeps every creature sharing
+// the power of either — both chosen creatures included — so a Destroy paired with
+// it wipes out both power brackets at once (Quintrino Flux). Both picks are made
+// before the set narrows, so the kept set is computed from the board as it stands
+// before any destruction. A declined pick contributes no power. It leads with the
+// pair of choices so the printed phrase reads left to right.
+var SamePowerAsEitherChosen Refinement = samePowerAsChosen{picks: []powerPick{
+	{prompt: "Choose a friendly creature", side: friendlySide},
+	{prompt: "Choose an enemy creature", side: enemySide},
+}}
 
-// lead renders the choice ahead of the effect's verb.
-func (samePowerAsChosen) lead() string { return "choose a creature" }
+// samePowerAsChosen keeps every creature whose power matches one of a set the
+// controller chooses. Each pick names a prompt and the battleline it draws from,
+// so one pick over both sides is Dance of Doom and a friendly-plus-enemy pair is
+// Quintrino Flux. Every pick is made before the set narrows, so the kept set
+// unions the chosen powers over the board as it stands, and a declined pick
+// contributes no power.
+type samePowerAsChosen struct{ picks []powerPick }
 
-// clause renders "<phrase> with the same power as the chosen creature".
-func (samePowerAsChosen) clause(phrase string) string {
-	return phrase + " with the same power as the chosen creature"
+// powerPick is one creature choice a samePowerAsChosen makes: prompt is what the
+// chooser sees, side is the battleline the candidates come from.
+type powerPick struct {
+	prompt string
+	side   creatureSide
 }
 
-// refine picks a creature and keeps every one in the set with matching power.
-func (samePowerAsChosen) refine(ctx *EffectContext, ids []LocalID) []LocalID {
-	chosen, ok := ctx.ChooseCreature("Choose a creature", ids)
-	if !ok {
-		return nil
+// lead renders the picks ahead of the effect's verb, e.g. "choose a creature" or
+// "choose a friendly creature and an enemy creature".
+func (s samePowerAsChosen) lead() string {
+	nouns := make([]string, len(s.picks))
+	for i, p := range s.picks {
+		nouns[i] = p.side.noun()
 	}
-	power := ctx.Resolver.Power(chosen)
-	out := make([]LocalID, 0, len(ids))
-	for _, id := range ids {
-		if ctx.Resolver.Power(id) == power {
-			out = append(out, id)
-		}
+	return "choose " + strings.Join(nouns, " and ")
+}
+
+// clause names the creatures the kept power is measured against — singular for one
+// pick, "either of the chosen creatures" for more.
+func (s samePowerAsChosen) clause(phrase string) string {
+	if len(s.picks) == 1 {
+		return phrase + " with the same power as the chosen creature"
 	}
-	return out
-}
-
-// SamePowerAsEitherChosen is the two-choice sibling of SamePowerAsChosen: the
-// controller chooses one friendly and one enemy creature from the set, and it
-// keeps every creature sharing the power of either — both chosen creatures
-// included — so a Destroy paired with it wipes out both power brackets at once
-// (Quintrino Flux). Both creatures are chosen before the set is narrowed, so the
-// kept set is computed from the board as it stands before any destruction. A
-// declined choice contributes no power. It leads with the pair of choices so the
-// printed phrase reads left to right, the choices before their consequence.
-var SamePowerAsEitherChosen Refinement = samePowerAsEitherChosen{}
-
-// samePowerAsEitherChosen implements the SamePowerAsEitherChosen refinement.
-type samePowerAsEitherChosen struct{}
-
-// lead renders both choices ahead of the effect's verb.
-func (samePowerAsEitherChosen) lead() string {
-	return "choose a friendly creature and an enemy creature"
-}
-
-// clause renders "<phrase> with the same power as either of the chosen creatures".
-func (samePowerAsEitherChosen) clause(phrase string) string {
 	return phrase + " with the same power as either of the chosen creatures"
 }
 
-// refine chooses one friendly and one enemy creature, then keeps every creature
-// in the set matching either chosen power. Both choices are made first, so the
-// kept set unions the two power brackets from the pre-narrowing board.
-func (samePowerAsEitherChosen) refine(ctx *EffectContext, ids []LocalID) []LocalID {
-	friendly, enemy := creaturesBySide(ctx, ids)
+// refine makes every pick, then keeps each creature whose power matches any chosen
+// creature's. The picks are made first, so the kept set unions their power brackets
+// from the pre-narrowing board.
+func (s samePowerAsChosen) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	powers := map[int]bool{}
-	if fc, ok := ctx.ChooseCreature("Choose a friendly creature", friendly); ok {
-		powers[ctx.Resolver.Power(fc)] = true
-	}
-	if ec, ok := ctx.ChooseCreature("Choose an enemy creature", enemy); ok {
-		powers[ctx.Resolver.Power(ec)] = true
+	for _, p := range s.picks {
+		if chosen, ok := ctx.ChooseCreature(p.prompt, p.side.creatures(ctx, ids)); ok {
+			powers[ctx.Resolver.Power(chosen)] = true
+		}
 	}
 	if len(powers) == 0 {
 		return nil
@@ -210,6 +255,44 @@ func (samePowerAsEitherChosen) refine(ctx *EffectContext, ids []LocalID) []Local
 		}
 	}
 	return out
+}
+
+// creatureSide names the battleline a powerPick draws its candidates from.
+type creatureSide uint8
+
+const (
+	// eitherSide draws from both battlelines (Dance of Doom's single choice).
+	eitherSide creatureSide = iota
+	// friendlySide draws from the controller's battleline (Quintrino Flux).
+	friendlySide
+	// enemySide draws from the opponent's battleline (Quintrino Flux).
+	enemySide
+)
+
+// noun renders the side in a "choose ..." lead, e.g. "a creature", "a friendly
+// creature", or "an enemy creature".
+func (s creatureSide) noun() string {
+	switch s {
+	case friendlySide:
+		return "a friendly creature"
+	case enemySide:
+		return "an enemy creature"
+	default:
+		return "a creature"
+	}
+}
+
+// creatures narrows the candidate ids to the side this pick draws from.
+func (s creatureSide) creatures(ctx *EffectContext, ids []LocalID) []LocalID {
+	friendly, enemy := creaturesBySide(ctx, ids)
+	switch s {
+	case friendlySide:
+		return friendly
+	case enemySide:
+		return enemy
+	default:
+		return ids
+	}
 }
 
 // creaturesBySide splits ids into the controller's creatures and the opponent's,
@@ -290,11 +373,12 @@ func PortionPerSide(f Fraction) Refinement { return portionPerSide{f: f} }
 type portionPerSide struct{ f Fraction }
 
 // clause renders the printed phrase from the fraction, ignoring the base noun,
-// e.g. "one third of all enemy creatures and one third of all friendly creatures
-// (rounding up each time)".
+// e.g. "one third of all enemy creatures and one third of all friendly creatures,
+// rounding up each time". The rounding trails both sides as one clause, so the
+// rule is stated once rather than repeated per side.
 func (p portionPerSide) clause(string) string {
 	return fmt.Sprintf(
-		"one %s of all enemy creatures and one %s of all friendly creatures (%s each time)",
+		"one %s of all enemy creatures and one %s of all friendly creatures, %s each time",
 		p.f.word(), p.f.word(), p.f.roundingPhrase(),
 	)
 }
@@ -529,9 +613,15 @@ var HighestPower Refinement = highestPower{}
 type highestPower struct{}
 
 // clause renders "<phrase> with the highest power".
-func (highestPower) clause(phrase string) string {
-	return phrase + " with the highest power"
+func (r highestPower) clause(phrase string) string { return framedClauseText(r, phrase) }
+
+// clauseFrame frames the power tier so AnyOf can fold it with another tier.
+func (highestPower) clauseFrame(phrase string) (head, tail string) {
+	return phrase + " with the", "power"
 }
+
+// clauseWord names the tier this refinement keeps.
+func (highestPower) clauseWord() string { return "highest" }
 
 // refine keeps every creature whose power equals the set's maximum, so a set with
 // a single power keeps all of it. An empty set selects nothing.
@@ -563,9 +653,15 @@ var LowestPower Refinement = lowestPower{}
 type lowestPower struct{}
 
 // clause renders "<phrase> with the lowest power".
-func (lowestPower) clause(phrase string) string {
-	return phrase + " with the lowest power"
+func (r lowestPower) clause(phrase string) string { return framedClauseText(r, phrase) }
+
+// clauseFrame frames the power tier so AnyOf can fold it with another tier.
+func (lowestPower) clauseFrame(phrase string) (head, tail string) {
+	return phrase + " with the", "power"
 }
+
+// clauseWord names the tier this refinement keeps.
+func (lowestPower) clauseWord() string { return "lowest" }
 
 // refine keeps every creature whose power equals the set's minimum, so a set with
 // a single power keeps all of it. An empty set selects nothing.

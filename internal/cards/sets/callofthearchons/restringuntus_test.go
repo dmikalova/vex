@@ -17,7 +17,7 @@ import (
 //	Power:  1
 //	Traits: Demon
 //
-//	Play: Choose a house - your opponent cannot choose that house as their active house until Restringuntus leaves play.
+//	Play: Choose a house. Your opponent cannot choose that house as their active house until Restringuntus leaves play.
 func TestRestringuntus(t *testing.T) {
 	t.Run("bars the named house from the opponent until it leaves play", func(t *testing.T) {
 		var restringuntus ct.Card

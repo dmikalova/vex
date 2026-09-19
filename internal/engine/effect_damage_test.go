@@ -484,7 +484,7 @@ func TestSpreadDifferentCreatures(t *testing.T) {
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
 		e := DealDamage{Spread: DifferentCreatures{First: 2, Second: 2}}
-		if e.Text() != "deal 2 damage to a creature and deal 2 damage to a different creature" {
+		if e.Text() != "deal 2 damage to a creature and 2 damage to a different creature" {
 			t.Errorf("text = %q", e.Text())
 		}
 		e.Resolve(ctx)

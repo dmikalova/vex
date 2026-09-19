@@ -19,7 +19,7 @@ var GizelhartsZealot = set.New(
 	card.Provenance(card.MM, "136"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
-	card.WithEntersPlay(card.Sentences{Effects: []card.Effect{
+	card.WithEntersPlay(card.Sequence{Effects: []card.Effect{
 		card.Ready{Target: card.Target.This},
 		card.Enrage{Target: card.Target.This},
 	}}),

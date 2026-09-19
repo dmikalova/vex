@@ -62,8 +62,6 @@ var afterTriggerText = map[Trigger]func(Effect) (string, bool){
 	TriggerAfterCardPlayed:             func(e Effect) (string, bool) { return afterYouActOnText("play", e) },
 	TriggerAfterUse:                    func(e Effect) (string, bool) { return afterYouActOnText("use", e) },
 	TriggerAfterDiscardFromHand:        func(e Effect) (string, bool) { return afterYouActOnText("discard", e) },
-	TriggerAfterChooseHouse:            afterChooseHouseText,
-	TriggerAfterAnyPlayerChoosesHouse:  afterAnyPlayerChooseHouseText,
 	TriggerAfterCreaturePlayedAdjacent: afterCreaturePlayedAdjacentText,
 	TriggerAfterCreatureReaps:          afterCreatureReapsText,
 	TriggerAfterCreatureDestroyed:      afterCreatureDestroyedText,
@@ -72,8 +70,31 @@ var afterTriggerText = map[Trigger]func(Effect) (string, bool){
 }
 
 // RenderAbility renders a single triggered ability to its printed card line,
-// e.g. "After you forge a key, deal 2 damage to each enemy creature."
+// e.g. "After you forge a key, deal 2 damage to each enemy creature." A subject
+// the line names twice in one sentence collapses to "it" on the later mentions,
+// so the line reads as prose rather than a restated noun.
 func RenderAbility(a Ability) string {
+	return collapseRepeatedSubject(fightTense(a.Trigger, renderAbility(a)))
+}
+
+// fightTense puts a reference to the fought creature in the tense its trigger
+// implies. Target renders the past, since a Fight: ability resolves after the
+// fight; a Before Fight: ability resolves before it, so the same reference must
+// read in the present — Siren Horn moves Æmber "to the creature it fights".
+// Pinned by TestBeforeFightTargetReadsInPresentTense.
+func fightTense(trigger Trigger, line string) string {
+	if trigger != TriggerBeforeFight {
+		return line
+	}
+	return strings.ReplaceAll(line, " fought", " fights")
+}
+
+func renderAbility(a Ability) string {
+	if a.Trigger == TriggerAfterChooseHouse {
+		if s, ok := afterChooseHouseText(a); ok {
+			return punctuate(capitalizeFirst(s))
+		}
+	}
 	if fold, ok := afterTriggerText[a.Trigger]; ok {
 		if s, ok := fold(a.Effect); ok {
 			return punctuate(capitalizeFirst(s))
@@ -85,12 +106,32 @@ func RenderAbility(a Ability) string {
 		}
 		return SelfName + " enters play " + enterStateWord(a.Effect) + "."
 	}
-	prefix, capitalize := a.Trigger.prefix()
+	prefix, capitalize := abilityPrefix(a)
 	body := a.Effect.Text()
 	if capitalize {
 		body = capitalizeFirst(body)
 	}
 	return prefix + punctuate(body)
+}
+
+// abilityPrefix returns the printed prefix for an ability. It is scope-aware for
+// the turn-scoped triggers: an EachPlayer-scoped start-of-turn, end-of-turn, or
+// choose-house ability reads "each player"/"a player" rather than "you", because
+// it fires on either player's turn or choice (Gambling Den, Pincerator, Snag's
+// Mirror). Every other trigger — and the controller-scoped form of these — uses
+// the trigger's own prefix.
+func abilityPrefix(a Ability) (text string, capitalizeEffect bool) {
+	if a.EachPlayer {
+		switch a.Trigger {
+		case TriggerStartOfTurn:
+			return "At the start of each player's turn, ", false
+		case TriggerEndOfTurn:
+			return "At the end of each player's turn, ", false
+		case TriggerAfterChooseHouse:
+			return "After a player chooses an active house, ", false
+		}
+	}
+	return a.Trigger.prefix()
 }
 
 // afterYouActOnText folds an "after you <verb> a card" reaction gated only on the
@@ -252,15 +293,33 @@ func afterEnemyPlaysCreatureOnFlankText(e Effect) (string, bool) {
 		fl.sideName() + " flank, " + cond.Then.Text(), true
 }
 
-// afterChooseHouseText folds an AfterChooseHouse ability, whose effect is a
-// Conditional gated on the chosen house (a ChoseHouse condition), into the
-// natural "after you choose <House> as your active house, <then>" wording (Jehu
-// the Bureaucrat's "after you choose Sanctum as your active house, gain 2
-// Æmber"). Any other effect shape reports false and renders with the ordinary
+// afterChooseHouseText folds an AfterChooseHouse ability whose effect is a
+// Conditional gated on the chosen house into its natural "after ... chooses
+// <House> ..." wording, scoped by whether the ability watches every player.
+//
+// A controller-scoped ability gated on a ChoseHouse condition reads "after you
+// choose <House> as your active house, <then>" (Jehu the Bureaucrat's "after you
+// choose Sanctum as your active house, gain 2 Æmber"). An EachPlayer-scoped one
+// reads "after a player chooses <House> as their active house, <then>" (the house
+// plants' "after a player chooses Brobnar as their active house, gain 1 Æmber"),
+// or, gated on an ActiveHouseMatchesNoCardsInPlay condition, "after a player
+// chooses an active house which matches no cards in play, <then>" (Sci. Officer
+// Qincan). Any other effect shape reports false and renders with the ordinary
 // prefix.
-func afterChooseHouseText(e Effect) (string, bool) {
-	cond, ok := e.(Conditional)
+func afterChooseHouseText(a Ability) (string, bool) {
+	cond, ok := a.Effect.(Conditional)
 	if !ok {
+		return "", false
+	}
+	if a.EachPlayer {
+		switch c := cond.Cond.(type) {
+		case ChoseHouse:
+			return "after a player chooses " + c.House.String() +
+				" as their active house, " + cond.Then.Text(), true
+		case ActiveHouseMatchesNoCardsInPlay:
+			return "after a player chooses an active house " +
+				c.CondText() + ", " + cond.Then.Text(), true
+		}
 		return "", false
 	}
 	ch, ok := cond.Cond.(ChoseHouse)
@@ -268,29 +327,6 @@ func afterChooseHouseText(e Effect) (string, bool) {
 		return "", false
 	}
 	return "after you choose " + ch.House.String() + " as your active house, " + cond.Then.Text(), true
-}
-
-// afterAnyPlayerChooseHouseText folds an AfterAnyPlayerChoosesHouse ability whose
-// effect is a Conditional gated on the chosen house — a ChoseHouse condition, into
-// "after a player chooses <House> as their active house, <then>" (the house
-// plants' "after a player chooses Brobnar as their active house, gain 1 Æmber"),
-// or an ActiveHouseMatchesNoCardsInPlay condition, into "after a player chooses an
-// active house which matches no cards in play, <then>" (Sci. Officer Qincan). Any
-// other effect shape reports false and renders with the ordinary prefix.
-func afterAnyPlayerChooseHouseText(e Effect) (string, bool) {
-	cond, ok := e.(Conditional)
-	if !ok {
-		return "", false
-	}
-	switch c := cond.Cond.(type) {
-	case ChoseHouse:
-		return "after a player chooses " + c.House.String() +
-			" as their active house, " + cond.Then.Text(), true
-	case ActiveHouseMatchesNoCardsInPlay:
-		return "after a player chooses an active house " +
-			c.CondText() + ", " + cond.Then.Text(), true
-	}
-	return "", false
 }
 
 // entersPlayConditionalText folds an "enters play" ability whose effect is gated
@@ -311,7 +347,7 @@ func entersPlayConditionalText(e Effect) (string, bool) {
 
 // enterStateWord renders the state an "enters play" ability leaves its creature in,
 // e.g. Stun -> "stunned", so the ability reads "<name> enters play stunned." A
-// Sentences of state effects joins its words with "and" (Gizelhart's Zealot enters
+// Sequence of state effects joins its words with "and" (Gizelhart's Zealot enters
 // play ready and enraged). An effect without a dedicated enter word falls back to
 // its ordinary text.
 func enterStateWord(e Effect) string {
@@ -322,7 +358,7 @@ func enterStateWord(e Effect) string {
 		return "ready"
 	case Enrage:
 		return "enraged"
-	case Sentences:
+	case Sequence:
 		words := make([]string, len(ef.Effects))
 		for i, sub := range ef.Effects {
 			words[i] = enterStateWord(sub)
@@ -339,6 +375,26 @@ func enterStateWord(e Effect) string {
 func abilityTextWithNames(line, self, card string) string {
 	line = strings.ReplaceAll(line, SelfName, self)
 	return strings.ReplaceAll(line, CardName, card)
+}
+
+// grantedAbilityText renders one ability a card grants another, resolving its
+// self-references to "this creature" — the creature that gains it. It collapses a
+// repeated subject only after that substitution, because the self-reference is
+// what repeats (Rocket Boots' "ready it", Siren Horn's "the creature it fights").
+// It then capitalizes the body after the trigger prefix, because RenderAbility
+// capitalizes before the substitution and "{self}" is not a letter: a body opening
+// on the self-reference would otherwise print lowercase where every other granted
+// body prints capitalized (Wild Spirit and Operations Officer Yshi against
+// Observe-u-Max).
+// Pinned by TestGrantedAbilityCapitalizesSelfReference.
+func grantedAbilityText(ab Ability, card string) string {
+	line := collapseRepeatedSubject(
+		abilityTextWithNames(RenderAbility(ab), "this creature", card),
+	)
+	if i := strings.Index(line, ": "); i >= 0 {
+		return line[:i+2] + capitalizeFirst(line[i+2:])
+	}
+	return capitalizeFirst(line)
 }
 
 // abilityLines renders a card's triggered abilities, one printed line each,
@@ -544,16 +600,19 @@ func upgradeGrantLines(def *CardDefinition, hosted bool) []string {
 
 // houseOverrideLine renders an Upgrade's house-override clause, folding in the
 // abilities the Upgrade grants so they read as one sentence, or "" when the
-// Upgrade overrides no house — `This creature belongs to Logos and this creature
-// gains "Reap: Draw a card."` (Academy Training). Because it carries the grants,
-// callers must not also print them through grantedText.
+// Upgrade overrides no house — `This creature belongs to Logos and gains "Reap:
+// Draw a card."` (Academy Training). The grants' subject is elided rather than
+// repeated: they share the clause's subject, so "and gains" reads as one sentence
+// where "and this creature gains" restates a noun the reader just met.
+// Because it carries the grants, callers must not also print them through
+// grantedText.
 func houseOverrideLine(def *CardDefinition) string {
 	m := def.Static
 	if m.HouseOverride == HouseNone {
 		return ""
 	}
 	line := "This creature belongs to " + m.HouseOverride.String()
-	frame := func(body string) string { return `this creature gains "` + body + `"` }
+	frame := func(body string) string { return `gains "` + body + `"` }
 	for _, g := range grantedLines(m, def.Name, frame) {
 		line += " and " + g
 	}
@@ -959,7 +1018,7 @@ func destructionReplacementText(def *CardDefinition) string {
 		cond = " and " + strings.TrimPrefix(r.Cond.CondText(), "if ")
 	}
 	return "If this creature would be destroyed" + cond + ", instead " + strings.ReplaceAll(
-		r.With.Text(),
+		gatedConsequence(r.With),
 		SelfName,
 		def.Name,
 	)
@@ -990,13 +1049,15 @@ func grantedLines(m StaticModifier, upgrade string, frame func(string) string) [
 		ab := m.Granted[i]
 		if i+1 < len(m.Granted) && isFightReapPair(ab, m.Granted[i+1]) {
 			body := capitalizeFirst(
-				abilityTextWithNames(ab.Effect.Text(), "this creature", upgrade),
+				collapseRepeatedSubject(
+					abilityTextWithNames(ab.Effect.Text(), "this creature", upgrade),
+				),
 			)
 			lines = append(lines, frame(`Fight/Reap: `+body+`.`))
 			i++ // the partner prints as part of this line
 			continue
 		}
-		body := abilityTextWithNames(RenderAbility(ab), "this creature", upgrade)
+		body := grantedAbilityText(ab, upgrade)
 		lines = append(lines, frame(body))
 	}
 	if s := keyCostText(m.KeyCostChange); s != "" {
@@ -1041,7 +1102,7 @@ func constantFlagLines(def *CardDefinition, c ConstantAbility) []string {
 		lines = append(lines, t.String()+" effects cannot trigger.")
 	}
 	if c.BlankText {
-		lines = append(lines, who+"'s text box is considered blank (except for traits).")
+		lines = append(lines, who+"'s text box is "+consideredBlank+".")
 	}
 	if c.RemovesTraits {
 		lines = append(lines, who+" loses each of its traits.")
@@ -1138,7 +1199,7 @@ func constantGrantedText(def *CardDefinition) []string {
 		}
 		subject := capitalizeFirst(strings.ReplaceAll(c.target().Text(), SelfName, def.Name))
 		for _, ab := range c.Granted {
-			body := abilityTextWithNames(RenderAbility(ab), "this creature", def.Name)
+			body := grantedAbilityText(ab, def.Name)
 			if c.WhileInCenter {
 				lines = append(lines, "While "+def.Name+
 					" is in the center of your battleline, it gains, \""+body+`"`)
@@ -1235,7 +1296,11 @@ func restrictionText(r Restrictions, isUpgrade bool) []string {
 		}
 		lines = append(
 			lines,
-			fmt.Sprintf("%s cannot play more than %d cards each turn.", who, l.Amount),
+			fmt.Sprintf(
+				"%s cannot play more than %s each turn.",
+				who,
+				countNoun(l.Amount, "card"),
+			),
 		)
 	}
 	if t := r.Toll; t.Amount > 0 {

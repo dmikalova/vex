@@ -18,7 +18,7 @@ var Resurgence = set.New(
 	card.Provenance(card.MM, "375"),
 	card.WithEnhance(card.Bonus.Draw),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.PutCard{Zones: []card.Zone{card.Discard},
 				Selection:   card.Chosen{Type: card.Type.Creature},
 				Destination: card.To.Hand,

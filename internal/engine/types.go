@@ -516,17 +516,26 @@ const (
 	TriggerEntersPlay
 	// An End of Turn ability resolves during the end of its controller's turn,
 	// after cards ready and the controller draws (Shaffles drains the opponent at
-	// each turn's end).
+	// each turn's end). An EachPlayer-scoped one watches every player's turn — its
+	// own controller's and the opponent's — resolving as the player whose turn is
+	// ending, so "that player" is the turn's active player, not the card's
+	// controller (Pincerator).
 	TriggerEndOfTurn
 	// A Start of Turn ability resolves at the start of its controller's turn,
 	// before they forge, so an ability that changes what a key costs still has time
-	// to.
+	// to. An EachPlayer-scoped one watches every player's turn — its own
+	// controller's and the opponent's — resolving as the player whose turn is
+	// starting, so "that player" is the turn's active player, not the card's
+	// controller (Gambling Den, General Order 24).
 	TriggerStartOfTurn
-	// This ability resolves after its controller chooses their active house at the
-	// start of the turn — the only "choose a house" step it watches. Changing houses
+	// This ability resolves after a player chooses their active house at the start
+	// of the turn — the only "choose a house" step it watches. Changing houses
 	// mid-turn by another effect is not this start-of-turn choice and does not fire
 	// it. The ability names the house it cares about (Jehu the Bureaucrat gains Æmber
-	// only when Sanctum is chosen), which need not be the card's own house.
+	// only when Sanctum is chosen), which need not be the card's own house. It
+	// resolves after its own controller's choice by default; an EachPlayer-scoped one
+	// watches either player's choice and resolves as the chooser (Snag's Mirror bars
+	// the chooser's opponent from repeating a house).
 	TriggerAfterChooseHouse
 	// This ability resolves after your opponent plays a card (Teliga gains its
 	// controller Æmber whenever the opponent plays a card).
@@ -582,28 +591,12 @@ const (
 	// cards" step, after every card has readied (Greater Oxtet purges a card from
 	// hand to grow). It is a phase-boundary trigger like Start/End of Turn.
 	TriggerEndOfReadyStep
-	// This ability resolves after any player chooses their active house — its own
-	// controller or the opponent — with the chosen house available as the context
-	// house (Snag's Mirror bars the opponent from repeating a house).
-	TriggerAfterAnyPlayerChoosesHouse
 	// This ability resolves after Æmber is stolen from its controller, with the
 	// number of Æmber stolen in that single theft available to the effect as a
 	// count (Molephin deals 1 damage to each enemy creature for each Æmber stolen).
 	// It fires on the victim's in-play cards; a theft from the other player does
 	// not fire it.
 	TriggerAfterAemberStolenFromYou
-	// This ability resolves at the start of every player's turn — its own
-	// controller's and the opponent's — resolving as the player whose turn is
-	// starting, so "they"/"that player" is the turn's active player, not the card's
-	// controller (Gambling Den, General Order 24). It is the whole-board companion
-	// to TriggerStartOfTurn, which fires only on its own controller's turn.
-	TriggerAfterAnyPlayerStartOfTurn
-	// This ability resolves at the end of every player's turn — its own
-	// controller's and the opponent's — resolving as the player whose turn is
-	// ending, so "they"/"that player" is the turn's active player, not the card's
-	// controller (Pincerator). It is the whole-board companion to TriggerEndOfTurn,
-	// which fires only on its own controller's turn.
-	TriggerAfterAnyPlayerEndOfTurn
 	// This ability resolves after a Tactic is played, before that Tactic's own
 	// effect resolves, so a reaction can act on the board the Tactic is about to
 	// affect (Encounter Suit wards its host before the Tactic can reach it). It
@@ -724,12 +717,6 @@ func (t Trigger) String() string {
 		return "Start of Turn"
 	case TriggerEndOfReadyStep:
 		return "End of Ready Step"
-	case TriggerAfterAnyPlayerChoosesHouse:
-		return "After a Player Chooses a House"
-	case TriggerAfterAnyPlayerStartOfTurn:
-		return "At the Start of Each Player's Turn"
-	case TriggerAfterAnyPlayerEndOfTurn:
-		return "At the End of Each Player's Turn"
 	case TriggerLeavesPlay:
 		return "Leaves Play"
 	case TriggerEntersPlay:
@@ -817,12 +804,6 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "At the start of your turn, ", false
 	case TriggerEndOfReadyStep:
 		return `At the end of your "ready cards" step, `, false
-	case TriggerAfterAnyPlayerStartOfTurn:
-		return "At the start of each player's turn, ", false
-	case TriggerAfterAnyPlayerEndOfTurn:
-		return "At the end of each player's turn, ", false
-	case TriggerAfterAnyPlayerChoosesHouse:
-		return "After a player chooses an active house, ", false
 	case TriggerAfterTacticPlayedBeforeResolve:
 		return "After a Tactic is played but before it resolves, ", false
 	case TriggerAfterBonusDamage:

@@ -18,7 +18,7 @@ var KeyAbduction = set.New(
 	card.Provenance(card.CotA, "166"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.PutFromPlay{
 				Target:      card.Target.EachCreature.House(card.Houses.Named(card.House.Self)),
 				Destination: card.To.Hand,

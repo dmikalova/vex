@@ -16,7 +16,7 @@ import (
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Choose a house - your opponent must choose that house as their active house during their next turn.
+//	Play: Choose a house. Your opponent must choose that house as their active house during their next turn.
 func TestControlTheWeak(t *testing.T) {
 	t.Run("forces the opponent's active house on their next turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  8
 //	Traits: Demon
 //
-//	Play/Fight/Reap: Discard your hand, and your opponent purges 2 random cards from their hand.
+//	Play/Fight/Reap: Discard your hand. Your opponent purges 2 random cards from their hand.
 var Tormax = set.Gigantic(
 	"Tormax",
 	card.House.Dis,

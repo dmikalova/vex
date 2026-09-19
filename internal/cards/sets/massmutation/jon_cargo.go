@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Robot
 //
-//	Reap: Discard the top card of your deck, reveal your hand, and archive each card of that card's house from your hand.
+//	Reap: Discard the top card of your deck. Reveal your hand. Archive each card of that card's house from your hand.
 var JONCargo = set.New(
 	"J.O.N. Cargo",
 	card.House.StarAlliance,

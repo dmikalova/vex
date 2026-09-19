@@ -526,7 +526,7 @@ const persistKey = "vactrol.match"
 // replayed. Because a resume replays the command log rather than deserializing
 // state, a change to how any recorded action resolves also dates every snapshot
 // and counts as such a change.
-const snapshotVersion = 20
+const snapshotVersion = 21
 
 // snapshot is the persisted match (ADR 0039): the seed and sets deterministically
 // re-deal the same cards, and the ordered command log replays to the exact state

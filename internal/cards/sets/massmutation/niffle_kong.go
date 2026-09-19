@@ -25,8 +25,8 @@ func isNiffleCreature(d card.Definition) bool {
 //	Armor:  2
 //	Traits: Mutant • Niffle
 //
-//	Play: Search your deck and discard pile for any number of Niffle creatures, reveal them, and put them into your hand, and shuffle your deck.
-//	Fight/Reap: You may destroy a friendly Niffle creature -> deal 3 damage to a creature, steal 1 Æmber, and destroy an enemy artifact.
+//	Play: Search your deck and discard pile for any number of Niffle creatures, reveal them, and put them into your hand. Shuffle your deck.
+//	Fight/Reap: You may destroy a friendly Niffle creature -> deal 3 damage to a creature. Steal 1 Æmber. Destroy an enemy artifact.
 var NiffleKong = set.Gigantic(
 	"Niffle Kong",
 	card.House.Untamed,

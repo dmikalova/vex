@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Law
 //
-//	At the start of each player's turn, if there are no friendly creatures in play, destroy General Order 24. Otherwise, choose a friendly creature - destroy each creature of that card's house.
+//	At the start of each player's turn, if there are no friendly creatures in play, destroy General Order 24. Otherwise, choose a friendly creature. Destroy each creature of that card's house.
 var GeneralOrder24 = set.New(
 	"General Order 24",
 	card.House.StarAlliance,
@@ -17,8 +17,8 @@ var GeneralOrder24 = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "333"),
 	card.WithTraits(card.Traits.Law),
-	card.WithAbility(
-		card.Trigger.AfterAnyPlayerStartOfTurn, card.Conditional{
+	card.WithEachPlayerAbility(
+		card.Trigger.StartOfTurn, card.Conditional{
 			Cond: card.CardsInPlay{Player: card.Controller, Type: card.Type.Creature, None: true},
 			Then: card.Destroy{Target: card.Target.This},
 			Else: card.ChooseCreatureThen{

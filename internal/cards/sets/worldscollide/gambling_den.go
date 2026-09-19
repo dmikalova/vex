@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Bonus:  Æmber
 //	Traits: Location
 //
-//	At the start of each player's turn, you may choose a house - reveal the top card of your deck. If it is of the chosen house, gain 2 Æmber. Otherwise, lose 2 Æmber.
+//	At the start of each player's turn, you may choose a house. If you do, reveal the top card of your deck. If it is of the chosen house, gain 2 Æmber. Otherwise, lose 2 Æmber.
 var GamblingDen = set.New(
 	"Gambling Den",
 	card.House.Shadows,
@@ -19,10 +19,10 @@ var GamblingDen = set.New(
 	card.Provenance(card.WC, "268"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Location),
-	card.WithAbility(
-		card.Trigger.AfterAnyPlayerStartOfTurn, card.May{
+	card.WithEachPlayerAbility(
+		card.Trigger.StartOfTurn, card.May{
 			Do: card.ChooseHouseThen{
-				Then: card.Sentences{
+				Then: card.Sequence{
 					Effects: []card.Effect{
 						card.RevealTopOfDeck{Amount: 1},
 						card.Conditional{

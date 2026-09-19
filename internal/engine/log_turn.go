@@ -172,7 +172,7 @@ type KeyForged struct {
 
 // Text renders the forged key, naming its colour.
 func (e KeyForged) Text(n Namer) string {
-	return fmt.Sprintf("%s forges a %s key (%d/%d)",
+	return fmt.Sprintf("%s forges a %s key and now has %d of %d keys",
 		n.PlayerName(e.Player), e.Color, e.Keys, e.Needed)
 }
 
@@ -186,7 +186,8 @@ type KeyUnforged struct {
 
 // Text renders a key taken back, and the count it leaves behind.
 func (e KeyUnforged) Text(n Namer) string {
-	return fmt.Sprintf("%s unforges a key (%d/%d)", n.PlayerName(e.Player), e.Keys, e.Needed)
+	return fmt.Sprintf("%s unforges a key and now has %d of %d keys",
+		n.PlayerName(e.Player), e.Keys, e.Needed)
 }
 
 // ChainShed narrates a chain coming off because it actually cost the player a
@@ -198,7 +199,8 @@ type ChainShed struct {
 
 // Text renders a chain coming off, and how many are left.
 func (e ChainShed) Text(n Namer) string {
-	return fmt.Sprintf("%s sheds a chain (%d remaining)", n.PlayerName(e.Player), e.Remaining)
+	return fmt.Sprintf("%s sheds a chain and now has %d %s",
+		n.PlayerName(e.Player), e.Remaining, chainNoun(e.Remaining))
 }
 
 // GameWon narrates the third key.

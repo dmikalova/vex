@@ -13,7 +13,7 @@ func TestOmegaEndsStep(t *testing.T) {
 	)
 	// A second card left in hand would be playable if the step had not ended.
 	g.AddToHand(testCreature("leftover", 3), 0)
-	if err := g.PlayAction(0, handIdxByID(g, 0, omega)); err != nil {
+	if err := g.PlayTactic(0, handIdxByID(g, 0, omega)); err != nil {
 		t.Fatalf("play Omega action: %v", err)
 	}
 	if g.State.Phase != PhaseEndOfTurn {

@@ -48,8 +48,10 @@ in at exactly three seams:
 All three seams gate on `!textBlanked(id)`: a blanked text box ignores a gained
 text box just as it ignores the creature's own.
 
-`GrantTextBox(recipient, source, remainderOfTurn)` is the one `CreatureResolver`
-port method both effects share; it writes the appropriate field and logs
+`GrantTextBox(recipient, source, d)` is the one `CreatureResolver` port method
+both effects share; `d` is a `Duration` — `RemainderOfPlayerTurn` or
+`UntilCardLeavesPlay`, one per state field — and the method writes the
+corresponding field and logs
 `CreatureGainedTextBox`. `GainTextBox` is the effect node Mimic Gel drives
 (`Source` is `TheChosenCreature`); `LendTextBoxFromHand` is the composed effect
 Creed of Nurture drives (reveal a hand creature, choose a creature in play, lend

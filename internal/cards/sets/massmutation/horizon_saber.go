@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Robot
 //
-//	Play/Fight/Reap: Search your deck and discard pile for a card, reveal it, and put it into your archives, and shuffle your discard pile into your deck.
+//	Play/Fight/Reap: Search your deck and discard pile for a card, reveal it, and put it into your archives. Shuffle your discard pile into your deck.
 var HorizonSaber = set.Gigantic(
 	"Horizon Saber",
 	card.House.Logos,

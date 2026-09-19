@@ -42,7 +42,7 @@ func TestDurationStringDefaultsEmpty(t *testing.T) {
 // TestDurationClauseIsTotal pins the standard turn-window clause of every real
 // duration, so the single-sourced phrasing cannot drift and a newly added duration
 // cannot silently fall through durationClause's default to the wrong phrase — a new
-// value not listed here fails the lookup. Forever carries no standing clause and
+// value not listed here fails the lookup. UntilCardLeavesPlay carries no standing clause and
 // renders empty. The source token is threaded through so UntilThisLeavesPlay names
 // the card whose leaving ends the effect.
 func TestDurationClauseIsTotal(t *testing.T) {
@@ -52,7 +52,7 @@ func TestDurationClauseIsTotal(t *testing.T) {
 		StartOfPlayerNextTurn: "until the start of your next turn",
 		EndOfPlayerNextTurn:   "until the end of your next turn",
 		UntilThisLeavesPlay:   "until {self} leaves play",
-		Forever:               "",
+		UntilCardLeavesPlay:   "",
 	}
 	for _, d := range Durations() {
 		expected, ok := want[d]
@@ -74,7 +74,7 @@ func TestDurationClauseIsTotal(t *testing.T) {
 // to the effect's own subject ("their next turn") rather than the controller's
 // absolute frame. Like durationClause, it must be total — a newly added duration
 // not pinned here fails the lookup, so it cannot fall through windowClause's default
-// to the wrong phrase. Forever renders empty; UntilThisLeavesPlay names the card
+// to the wrong phrase. UntilCardLeavesPlay renders empty; UntilThisLeavesPlay names the card
 // whose leaving ends the effect.
 func TestWindowClauseIsTotal(t *testing.T) {
 	want := map[Duration]string{
@@ -83,7 +83,7 @@ func TestWindowClauseIsTotal(t *testing.T) {
 		StartOfPlayerNextTurn: "until the start of their next turn",
 		EndOfPlayerNextTurn:   "until the end of their next turn",
 		UntilThisLeavesPlay:   "until {self} leaves play",
-		Forever:               "",
+		UntilCardLeavesPlay:   "",
 	}
 	for _, d := range Durations() {
 		expected, ok := want[d]

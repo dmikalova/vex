@@ -466,10 +466,12 @@ type DifferentCreatures struct {
 	Second int
 }
 
-// spreadText renders the clause.
+// spreadText renders the clause, stating the verb once and letting the second
+// amount stand alone — "deal 2 damage to a creature and 2 damage to a different
+// creature" — so it reads the same whether or not the amounts match.
 func (s DifferentCreatures) spreadText() string {
 	return dealDamageTo(s.First, "a creature") + " and " +
-		dealDamageTo(s.Second, "a different creature")
+		damageAmount(s.Second) + " to a different creature"
 }
 
 // hits picks as many distinct creatures as the positional amounts name, each pick
@@ -518,16 +520,22 @@ func (s UpToCreatures) validate() error {
 func (s UpToCreatures) spreadText() string {
 	if s.WhenDamaged != 0 {
 		return fmt.Sprintf(
-			"choose up to %d creatures. Deal %s to each chosen creature. "+
+			"choose up to %s. Deal %s to each chosen creature. "+
 				"Deal %s instead to each chosen creature that was already damaged",
-			s.Creatures, damageAmount(s.Amount), damageAmount(s.WhenDamaged),
+			countNoun(s.Creatures, "creature"),
+			damageAmount(s.Amount),
+			damageAmount(s.WhenDamaged),
 		)
 	}
-	noun := "creatures"
+	noun := "creature"
 	if s.Undamaged {
-		noun = "undamaged creatures"
+		noun = "undamaged creature"
 	}
-	return fmt.Sprintf("deal %s to up to %d %s", damageAmount(s.Amount), s.Creatures, noun)
+	return fmt.Sprintf(
+		"deal %s to up to %s",
+		damageAmount(s.Amount),
+		countNoun(s.Creatures, noun),
+	)
 }
 
 // hits asks for creatures one at a time, up to Creatures, stopping when the controller

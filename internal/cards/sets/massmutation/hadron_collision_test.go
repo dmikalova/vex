@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Choose a creature - remove a ward from the chosen creature, and deal 3 damage to the chosen creature, ignoring armor.
+//	Play: Choose a creature. Remove a ward from the chosen creature. Deal 3 damage to the chosen creature, ignoring armor.
 func TestHadronCollision(t *testing.T) {
 	t.Run("removes a ward and deals 3 damage that armor cannot prevent", func(t *testing.T) {
 		var foe ct.Card

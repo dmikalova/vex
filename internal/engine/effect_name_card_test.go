@@ -42,7 +42,7 @@ func (outOfRangeOptionChooser) ChooseOption(_, _ string, options []string) int {
 }
 
 func TestNameCardText(t *testing.T) {
-	want := "name a card - cards with that name cannot be played until " +
+	want := "name a card. Cards with that name cannot be played until " +
 		SelfName + " leaves play"
 	if got := (NameCard{}).Text(); got != want {
 		t.Fatalf("Text() = %q, want %q", got, want)

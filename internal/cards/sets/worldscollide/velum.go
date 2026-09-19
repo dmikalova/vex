@@ -21,7 +21,7 @@ var Velum = set.New(
 	card.InCluster(hydeCluster),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
-	card.WithAbility(card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
+	card.WithAbility(card.Trigger.Reap, card.Sequence{Effects: []card.Effect{
 		card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
 		card.Conditional{
 			Cond: card.ControlsNamed{Name: HydeName},

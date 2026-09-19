@@ -19,8 +19,8 @@ var TechivorePulpate = set.New(
 	card.Provenance(card.WC, "341"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Jelly),
-	card.WithAbility(
-		card.Trigger.AfterAnyPlayerChoosesHouse,
+	card.WithEachPlayerAbility(
+		card.Trigger.AfterChooseHouse,
 		card.Destroy{Target: card.Target.EachArtifact.House(card.Houses.Active)},
 	),
 )

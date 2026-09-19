@@ -15,7 +15,7 @@ import (
 //	Traits: Item
 //
 //	Versatile.
-//	Action: Destroy Nepenthe Seed, and put a card from your discard pile into your hand.
+//	Action: Destroy Nepenthe Seed. Put a card from your discard pile into your hand.
 func TestNepentheSeed(t *testing.T) {
 	t.Run("sacrifices itself and returns a card from the discard pile to hand", func(t *testing.T) {
 		var ghost ct.Card

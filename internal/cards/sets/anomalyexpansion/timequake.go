@@ -18,7 +18,7 @@ var Timequake = set.New(
 	card.Provenance(card.WC, "A09"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.ShuffleIntoDeck{
 				Player:    card.Controller,
 				From:      []card.Zone{card.InPlay},

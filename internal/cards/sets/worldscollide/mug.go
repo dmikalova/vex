@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Choose a creature - move 1 Æmber from it to your pool. Deal 2 damage to it.
+//	Play: Choose a creature. Move 1 Æmber from it to your pool. Deal 2 damage to it.
 var Mug = set.New(
 	"Mug",
 	card.House.Shadows,
@@ -20,7 +20,7 @@ var Mug = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.Creature,
-			Then: card.Sentences{Effects: []card.Effect{
+			Then: card.Sequence{Effects: []card.Effect{
 				card.MoveAember{
 					Amount: 1,
 					From:   card.Target.Triggering,

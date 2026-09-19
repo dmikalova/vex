@@ -221,7 +221,7 @@ func playCard(g *engine.Game, player int, id engine.LocalID, d *decoder) error {
 	case engine.Artifact:
 		_, err = g.PlayArtifact(player, idx)
 	case engine.Tactic:
-		err = g.PlayAction(player, idx)
+		err = g.PlayTactic(player, idx)
 	case engine.Upgrade:
 		_, err = g.PlayUpgrade(player, idx)
 	}

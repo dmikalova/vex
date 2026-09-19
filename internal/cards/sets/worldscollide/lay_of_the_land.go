@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Bonus:  Æmber
 //
-//	Play: Look at the top 3 cards of your deck and put them back in any order, and draw a card.
+//	Play: Look at the top 3 cards of your deck and put them back in any order. Draw a card.
 var LayOfTheLand = set.New(
 	"Lay of the Land",
 	card.House.StarAlliance,

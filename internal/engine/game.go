@@ -127,6 +127,16 @@ type BadgeChooser interface {
 	PreviewBadge(badge SelectionBadge)
 }
 
+// ActionChooser is an optional Chooser capability: choosing the active player's
+// next ROOT action from the legal set (ADR 0039) — the suspension point a canonical
+// turn loop asks through, where the other capabilities answer one choice within an
+// action. It has no engine default: a Chooser that does not implement it
+// (FirstChooser, the bot, the sim) drives root actions its own way rather than
+// through the loop, so only an interactive driver installs one.
+type ActionChooser interface {
+	ChooseAction(actions []Command) Command
+}
+
 // Game bundles the flat GameState with the read-only Catalog and the surrounding
 // engine services (player names, choosers, RNG, log). Cloning a state for MCTS
 // only needs GameState.FastCopy; this wrapper is the live match harness.

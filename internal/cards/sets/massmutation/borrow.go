@@ -18,10 +18,10 @@ var Borrow = set.New(
 	card.Provenance(card.MM, "263"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.TakeControl{
 				Target:   card.Target.EnemyArtifact,
-				Duration: card.Duration.Forever,
+				Duration: card.Duration.UntilCardLeavesPlay,
 			},
 			card.BelongToHouse{
 				Target:   card.Target.Triggering,

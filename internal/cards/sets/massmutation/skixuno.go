@@ -22,7 +22,7 @@ var Skixuno = set.New(
 	card.WithTraits(card.Traits.Demon),
 	card.WithKeywords(card.Keyword.Omega),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.EachCreature.Other()},
 			card.AddPowerCounter{
 				Target: card.Target.This,

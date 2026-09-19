@@ -18,7 +18,7 @@ var Poltergeist = set.New(
 	card.Provenance(card.CotA, "69"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Use{
 				Max:          1,
 				Target:       card.Target.EachArtifact,

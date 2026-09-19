@@ -20,7 +20,7 @@ var Gebuk = set.New(
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast),
 	card.WithAbility(
-		card.Trigger.Destroyed, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Destroyed, card.Sequence{Effects: []card.Effect{
 			card.DiscardTop{Amount: 1, Player: card.Controller},
 			card.Conditional{
 				Cond: card.ItIs{Type: card.Type.Creature},

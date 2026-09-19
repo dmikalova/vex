@@ -15,7 +15,7 @@ import (
 //	Bonus:  Æmber
 //	Traits: Weapon
 //
-//	Action: Choose a creature - enrage it, and give it a +1 power counter.
+//	Action: Choose a creature. Enrage it. Give it a +1 power counter.
 func TestIrestaff(t *testing.T) {
 	t.Run("enrages a creature and gives it a +1 power counter", func(t *testing.T) {
 		var troll ct.Card

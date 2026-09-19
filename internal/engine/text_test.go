@@ -82,11 +82,11 @@ func TestEntersPlayAbilityText(t *testing.T) {
 	if want := SelfName + " enters play enraged."; enrage != want {
 		t.Errorf("enters-play enrage = %q, want %q", enrage, want)
 	}
-	// A Sentences of state effects joins its words with "and" (Gizelhart's Zealot).
+	// A Sequence of state effects joins its words with "and" (Gizelhart's Zealot).
 	both := RenderAbility(
 		Ability{
 			Trigger: TriggerEntersPlay,
-			Effect: Sentences{Effects: []Effect{
+			Effect: Sequence{Effects: []Effect{
 				Ready{Target: Target{Kind: TargetThisCreature}},
 				Enrage{Target: Target{Kind: TargetThisCreature}},
 			}},
@@ -768,7 +768,7 @@ func TestGeneratedCardText(t *testing.T) {
 					},
 				),
 			),
-			"House:  Logos\nType:   Upgrade\nRarity: Uncommon\n\nThis creature gains, \"Fight/Reap: If this is the first time this creature has been used this turn, ready this creature.\"",
+			"House:  Logos\nType:   Upgrade\nRarity: Uncommon\n\nThis creature gains, \"Fight/Reap: If this is the first time this creature has been used this turn, ready it.\"",
 		},
 		{
 			NewCard(
@@ -909,7 +909,7 @@ func TestGeneratedCardText(t *testing.T) {
 					},
 				),
 			),
-			"House:  Mars\nType:   Upgrade\nRarity: Rare\n\nThis creature gains, \"After you play a Mars creature, ready this creature, and for the remainder of the turn, this creature belongs to house Mars.\"",
+			"House:  Mars\nType:   Upgrade\nRarity: Rare\n\nThis creature gains, \"After you play a Mars creature, ready this creature. For the remainder of the turn, this creature belongs to house Mars.\"",
 		},
 		{
 			NewCard(
@@ -1154,7 +1154,7 @@ func TestRenderUpgradeOnCreature(t *testing.T) {
 					},
 				),
 			),
-			"Fight/Reap: If this is the first time this creature has been used this turn, ready this creature.",
+			"Fight/Reap: If this is the first time this creature has been used this turn, ready it.",
 		},
 		// A granted key-cost change too.
 		{
@@ -1238,7 +1238,7 @@ func TestUpgradeGrantLinesHouseOverrideWithGrant(t *testing.T) {
 			Granted:       []Ability{{Trigger: TriggerAfterReap, Effect: Draw{Amount: 1}}},
 		}))
 	lines := upgradeGrantLines(&def, true)
-	want := `This creature belongs to Logos and this creature gains "Reap: Draw a card."`
+	want := `This creature belongs to Logos and gains "Reap: Draw a card."`
 	if len(lines) == 0 || lines[0] != want {
 		t.Errorf("grant lines = %v, want first %q", lines, want)
 	}
@@ -1547,5 +1547,88 @@ func TestGrantedAemberCannotBeStolenText(t *testing.T) {
 	}
 	if !foundCond {
 		t.Errorf("grantedLines missing %q; got %v", wantCond, grantedLines(cond, "Upgrade", frame))
+	}
+}
+
+// TestGrantedAbilityCapitalizesSelfReference pins that a granted body opening on
+// the self-reference prints capitalized like every other granted body. The
+// substitution runs after RenderAbility's capitalization and "{self}" is not a
+// letter, so Wild Spirit and Operations Officer Yshi used to print a lowercase
+// "this creature captures …" where Observe-u-Max printed a capital one.
+func TestGrantedAbilityCapitalizesSelfReference(t *testing.T) {
+	opens := Ability{
+		Trigger: TriggerAfterReap,
+		Effect: CaptureAember{
+			Amount: 1,
+			Source: Opponent,
+			Target: Target{Kind: TargetThisCreature},
+		},
+	}
+	want := "Reap: This creature captures 1 \u00c6mber from your opponent."
+	if got := grantedAbilityText(opens, "Horn"); got != want {
+		t.Errorf("granted text = %q, want %q", got, want)
+	}
+
+	// A body with no trigger prefix capitalizes its first letter instead.
+	noPrefix := Ability{Trigger: TriggerEntersPlay, Effect: Draw{Amount: 1}}
+	if got := grantedAbilityText(noPrefix, "Horn"); got != capitalizeFirst(got) {
+		t.Errorf("prefixless granted text = %q, want it capitalized", got)
+	}
+}
+
+// TestBeforeFightTargetReadsInPresentTense pins that a reference to the fought
+// creature follows its trigger's tense, not the neighbor decoration that used to
+// stand in for it: a Before Fight: ability resolves before the fight, so Siren
+// Horn moves Æmber "to the creature it fights", while a Fight: ability keeps the
+// past.
+func TestBeforeFightTargetReadsInPresentTense(t *testing.T) {
+	fought := Target{Kind: TargetCreatureFought}
+	before := Ability{
+		Trigger: TriggerBeforeFight,
+		Effect:  Stun{Target: fought},
+	}
+	want := "Before Fight: Stun the creature " + SelfName + " fights."
+	if got := RenderAbility(before); got != want {
+		t.Errorf("before-fight ability = %q, want %q", got, want)
+	}
+
+	after := Ability{Trigger: TriggerAfterFight, Effect: Stun{Target: fought}}
+	wantAfter := "Fight: Stun the creature " + SelfName + " fought."
+	if got := RenderAbility(after); got != wantAfter {
+		t.Errorf("fight ability = %q, want %q", got, wantAfter)
+	}
+}
+
+// TestCollapsesRepeatedSubject pins that a sentence names a card once and then
+// refers back to it, and pins the three cases that must not collapse: a possessive
+// mention (Pain Reaction), a mention in a later sentence, and a mention inside a
+// quoted ability, which is its own sentence and may not borrow the outer subject.
+func TestCollapsesRepeatedSubject(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{
+			"If there was any Æmber on that creature, take control of it, and that creature belongs to house Shadows.",
+			"If there was any Æmber on that creature, take control of it, and it belongs to house Shadows.",
+		},
+		{
+			"After this creature is used, destroy this creature.",
+			"After this creature is used, destroy it.",
+		},
+		{
+			"If this damage destroys that creature, deal 2 damage to that creature's neighbors.",
+			"If this damage destroys that creature, deal 2 damage to that creature's neighbors.",
+		},
+		{
+			"Ready this creature. Destroy this creature.",
+			"Ready this creature. Destroy this creature.",
+		},
+		{
+			`This creature gains, "Reap: Ward this creature."`,
+			`This creature gains, "Reap: Ward this creature."`,
+		},
+	}
+	for _, c := range cases {
+		if got := collapseRepeatedSubject(c.in); got != c.want {
+			t.Errorf("collapseRepeatedSubject(%q) = %q, want %q", c.in, got, c.want)
+		}
 	}
 }

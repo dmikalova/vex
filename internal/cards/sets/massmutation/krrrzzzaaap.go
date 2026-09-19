@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Destroy each non-Mutant creature, and gain 1 chain.
+//	Play: Destroy each non-Mutant creature. Gain 1 chain.
 var Krrrzzzaaap = set.New(
 	"Krrrzzzaaap!!!",
 	card.House.Logos,

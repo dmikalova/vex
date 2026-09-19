@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Dinosaur • Politician
 //
-//	Reap: You may exalt Draco Praeco, and choose a house - enrage each creature of the chosen house.
+//	Reap: You may exalt Draco Praeco. Choose a house. Enrage each creature of the chosen house.
 var DracoPraeco = set.New(
 	"Draco Praeco",
 	card.House.Saurian,

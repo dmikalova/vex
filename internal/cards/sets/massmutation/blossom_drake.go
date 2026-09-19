@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dragon
 //
 //	Blossom Drake gains +1 power for each artifact in play.
-//	Each artifact's text box is considered blank (except for traits).
+//	Each artifact's text box is considered blank, except for traits.
 var BlossomDrake = set.New(
 	"Blossom Drake",
 	card.House.Untamed,

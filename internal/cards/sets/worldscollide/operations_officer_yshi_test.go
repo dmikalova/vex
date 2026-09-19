@@ -17,8 +17,8 @@ import (
 //	Traits: Spirit
 //
 //	Taunt.
-//	Each neighboring creature gains, "Reap: this creature captures 1 Æmber from your opponent."
-//	Each neighboring creature gains, "Fight: this creature captures 1 Æmber from your opponent."
+//	Each neighboring creature gains, "Reap: This creature captures 1 Æmber from your opponent."
+//	Each neighboring creature gains, "Fight: This creature captures 1 Æmber from your opponent."
 func TestOperationsOfficerYshi(t *testing.T) {
 	t.Run("a neighbor captures 1 Æmber when it reaps", func(t *testing.T) {
 		var neighbor ct.Card

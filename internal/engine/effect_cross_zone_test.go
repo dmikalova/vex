@@ -99,8 +99,8 @@ func TestCrossZoneMoverReachesUpgradesInPlay(t *testing.T) {
 	if !slices.Equal(got, []LocalID{up, host}) {
 		t.Fatalf("gather = %v, want [%d %d] (upgrade ahead of its host)", got, up, host)
 	}
-	if z := mover.originOf(ctx, up); z != InPlay {
-		t.Errorf("originOf(upgrade) = %v, want InPlay", z)
+	if z, ok := mover.originOf(ctx, up); z != InPlay || !ok {
+		t.Errorf("originOf(upgrade) = (%v, %v), want (InPlay, true)", z, ok)
 	}
 
 	mover.move(ctx, up)
@@ -112,5 +112,38 @@ func TestCrossZoneMoverReachesUpgradesInPlay(t *testing.T) {
 	}
 	if n := len(g.Upgrades(host)); n != 0 {
 		t.Errorf("host still carries %d upgrades, want the moved one detached", n)
+	}
+}
+
+// TestCrossZoneMoveSkipsCardThatLeftItsSourceZones pins that a pick which has
+// left every source zone since it was picked is skipped, not moved from where it
+// no longer is. A power settle inside the batch can destroy one of the picks and
+// a granted "Destroyed:" ability can file it somewhere that is not a source zone
+// (Biomatrix Backup archives Inka the Spider while Song of Spring shuffles the
+// hand, discard pile, and battleline into the deck). Without the skip, originOf
+// falls through to the last source and the card is moved out of a zone it left,
+// leaving it in two places at once.
+func TestCrossZoneMoveSkipsCardThatLeftItsSourceZones(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	id := g.AddToBattleline(NewCard("Inka", Untamed, Creature, Common, WithPower(3)), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	mover := crossZoneMover{
+		Player:  0,
+		Dest:    ToDeckShuffled,
+		Sources: []Zone{Hand, Discard, InPlay},
+	}
+
+	// The card leaves play into the archives — no source zone — after being picked.
+	g.PutIntoArchives(id)
+	if z, ok := mover.originOf(ctx, id); ok {
+		t.Fatalf("originOf = (%v, true), want ok false for a card in no source zone", z)
+	}
+
+	mover.move(ctx, id)
+	if !g.State.Archives[0].contains(id) {
+		t.Error("a pick that left every source zone must stay where it landed")
+	}
+	if g.State.Deck[0].contains(id) {
+		t.Error("a pick that left every source zone must not also reach the destination")
 	}
 }

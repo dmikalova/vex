@@ -18,7 +18,7 @@ var HiddenStash = set.New(
 	card.Provenance(card.CotA, "271"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.RevealHand{Player: card.Opponent},
 			card.ArchiveCard{
 				From:      card.Opponent,

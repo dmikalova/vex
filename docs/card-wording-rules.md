@@ -378,7 +378,7 @@ text through that helper.
   governs text, not code.
 - **`<Trait>` references read like house references** — a trait filter names the
   trait as a plain adjective on the noun (`Scientist creature`, `Knight
-creature`), exactly as houses do (`Mars creature`, `Sanctum creature`). Neither
+creature`), exactly as houses do (`Mars creature`,`Sanctum creature`). Neither
   carries a `trait` qualifier.
 - **`during their next turn`** — not `on their next turn`.
 - **`the chosen creature`** — the standard referent for a creature just chosen
@@ -386,7 +386,7 @@ creature`), exactly as houses do (`Mars creature`, `Sanctum creature`). Neither
 - **`it` names a card, `this` names an event.** `it` is reserved for the card in
   context, so a clause whose subject is an event says `this` instead: Æmber
   Conduction Unit reads `if this is the first time a creature has reaped this
-turn`, not `if it is …`. Without the split a card that gates on both reads
+turn`, not`if it is …`. Without the split a card that gates on both reads
   `if it is an enemy creature, if it is the first time …`, where the two `it`s
   look like one referent.
 
@@ -491,7 +491,7 @@ immediate form needs none of that: the effect resolves, the player picks a card
 from hand, and it is played there and then.
 
 The general rule: **`... you may play an X card this turn` renders as `Play an X
-card`.** Both `you may` and `this turn` go — a play with no legal card in hand
+card`.** Both`you may`and`this turn` go — a play with no legal card in hand
 simply does nothing, so the permission needs no explicit opt-out. The rule extends
 to a grant that may be spent on **playing or using** a card. Taber's _"You may
 play or use a non-Star Alliance card this turn"_ becomes:
@@ -588,7 +588,7 @@ cannot use this card unless <condition>.`; on an upgrade — where "this card" i
 the upgrade, not the thing being used — the subject becomes the host creature:
 `This creature cannot be used unless <condition>.` The condition itself always
 reads from the controller's point of view (`you have discarded a card from your
-hand this turn`), replacing KeyForge's third-person `its controller has
+hand this turn`), replacing KeyForge's third-person`its controller has
 discarded a card this turn`.
 
 | Original (upgrade)                                                                   | Curated                                                                                   |
@@ -624,7 +624,7 @@ form names what is being resolved, so behavior and text cannot drift.
 A named part of the turn is a **phase**, never a **step** — Vactrol has one word
 for a segment of the turn ([ADR 0012](adr/0012-first-class-turn-phases.md) makes
 the turn phases first-class). Card and rules text that refers to the `"forge a
-key"` or `"draw cards"` part of the turn writes `phase`, where KeyForge writes
+key"`or`"draw cards"`part of the turn writes`phase`, where KeyForge writes
 `step`.
 
 | Original                                | Curated                                  |
@@ -732,7 +732,7 @@ during the `"draw cards"` phase. The subject names whose hand — `your hand siz
 A per-count scale prefixes `For each <count>`: `For each friendly Sin creature
 your hand size is 1 more.` (Greed). A flank/center restriction prefixes
 `While <self> is …,`: `While Streke is not on a flank, your opponent's hand size
-is 1 less.` (Streke); `While Zenzizenzizenzic is in the center of the battleline,
+is 1 less.`(Streke);`While Zenzizenzizenzic is in the center of the battleline,
 your hand size is 2 more.` (Zenzizenzizenzic).
 
 This is a phrasing reword — the effect, a continuous end-of-turn hand-size
@@ -745,7 +745,7 @@ modifier, is unchanged — so it carries no divergence-register entry.
 A targeted effect that lasts until its creature or artifact leaves play does not
 say so: every targeted effect already ends when its subject leaves play, so the
 clause would only restate the default. Borrow reads `Take control of an enemy
-artifact. It belongs to house Shadows.`, not `… until it leaves play`. (Affected:
+artifact. It belongs to house Shadows.`, not`… until it leaves play`. (Affected:
 Borrow, Sneklifter, Boosted B4-RRY, Lord Invidius.)
 
 ---
@@ -760,6 +760,74 @@ card the sentence before it named, and the shorter phrase keeps every such targe
 on one template. Essence Scale reads `Choose a friendly creature - destroy the
 chosen creature. Ready and use a friendly creature of that card's house.`
 (Affected: Essence Scale.)
+
+---
+
+## 36. No parentheses in card text
+
+Card text never uses parentheses. A parenthetical is an aside, and the Rules
+voice has no asides: every clause is either an instruction the player carries out
+or a qualifier on one, so it belongs in the sentence. A qualifier that trails the
+clause it narrows takes a comma; one that applies to several clauses is stated
+once at the end rather than repeated per clause.
+
+| Original                                                                                                    | Curated                                                                                                    |
+| ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `enemy creatures' text boxes are considered blank (except for traits)`                                      | `enemy creatures' text boxes are considered blank, except for traits`                                      |
+| `Destroy one third of all enemy creatures and one third of all friendly creatures (rounding up each time).` | `Destroy one third of all enemy creatures and one third of all friendly creatures, rounding up each time.` |
+
+Reminder text is a separate case and is removed outright, not re-punctuated
+(rule 1); so is a count cap (rule 30).
+
+---
+
+## 37. A sentence names a card once, then refers back to it
+
+Within one sentence, a card named a second time becomes `it`. Restating the noun
+reads as a new subject and makes the reader check whether a second card is meant.
+Where the repeated noun is the subject of a conjoined verb phrase, it is dropped
+outright rather than replaced.
+
+| Original                                                                                | Curated                                                                      |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `If this is the first time this creature has been used this turn, ready this creature.` | `If this is the first time this creature has been used this turn, ready it.` |
+| `Move 1 Æmber from this creature to the creature this creature fights.`                 | `Move 1 Æmber from this creature to the creature it fights.`                 |
+| `take control of it, and that creature belongs to house Shadows`                        | `take control of it, and it belongs to house Shadows`                        |
+| `This creature belongs to Logos and this creature gains "Reap: Draw a card."`           | `This creature belongs to Logos and gains "Reap: Draw a card."`              |
+
+Three mentions stay spelled out. A **possessive** does, because `it` carries no
+case and would attach to the nearest preceding noun — Pain Reaction's
+`deal 2 damage to each of that creature's neighbors` would read as the damage's
+neighbors. A mention in a **later sentence** does, since the pronoun's antecedent
+does not carry across a full stop. And a mention inside a **quoted granted
+ability** does, because the quoted ability is its own text and may not borrow the
+granting card's subject: `This creature gains, "Reap: Ward this creature."`
+
+A **card's own name** is never collapsed, even repeated in one sentence. It is
+often preceded by another creature, so
+`After a creature is destroyed in a fight with Chonkers, give it +1 power counters`
+would hand `it` to the creature that was destroyed.
+
+The renderer applies this, so a card definition never spells it out: see
+`collapseRepeatedSubject` in `internal/engine/text_helpers.go`, pinned by
+`TestCollapsesRepeatedSubject`.
+
+---
+
+## 38. A reference to the fought creature takes its trigger's tense
+
+`Fight:` resolves after the fight, so it names `the creature <self> fought`.
+`Before Fight:` resolves before the fight, so the same reference reads
+`the creature <self> fights` — the past tense would claim a fight that has not
+happened.
+
+| Trigger         | Curated                                                      |
+| --------------- | ------------------------------------------------------------ |
+| `Fight:`        | `Stun the creature Roxador fought.`                          |
+| `Before Fight:` | `Move 1 Æmber from this creature to the creature it fights.` |
+
+The renderer applies this too: `fightTense` in `internal/engine/text.go`, pinned
+by `TestBeforeFightTargetReadsInPresentTense`.
 
 ---
 

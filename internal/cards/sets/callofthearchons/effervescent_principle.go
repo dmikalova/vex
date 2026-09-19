@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Each player loses half of their Æmber, rounded down, and gain 1 chain.
+//	Play: Each player loses half of their Æmber, rounded down. Gain 1 chain.
 var EffervescentPrinciple = set.New(
 	"Effervescent Principle",
 	card.House.Logos,

@@ -35,7 +35,7 @@ var ChainGang = set.New(
 			Then: card.Ready{Target: card.Target.This},
 		}),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{
+		card.Trigger.Action, card.Sequence{
 			Effects: []card.Effect{
 				card.StealAember{Amount: 1},
 				card.ShuffleIntoDeck{

@@ -17,7 +17,7 @@ var TotalRecall = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "179"),
 	card.WithBonus(card.Bonus.Aember),
-	card.WithAbility(card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+	card.WithAbility(card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 		card.GainAember{
 			Player: card.Controller,
 			Amount: 1,

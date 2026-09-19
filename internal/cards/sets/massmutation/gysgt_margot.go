@@ -20,7 +20,7 @@ var GySgtMargot = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(
-		card.Trigger.FightReap, card.Sentences{
+		card.Trigger.FightReap, card.Sequence{
 			Effects: []card.Effect{
 				card.DealDamage{Amount: 2, Target: card.Target.EnemyCreature},
 				card.Ward{Target: card.Target.FriendlyCreature},

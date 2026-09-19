@@ -97,9 +97,9 @@ func (g *Game) tollOwed(player int, action TollAction) int {
 	return owed
 }
 
-// PlayAction plays an action card: its Æmber bonus and "Play:" abilities resolve,
+// PlayTactic plays a Tactic: its Æmber bonus and "Play:" abilities resolve,
 // then it goes to the discard pile.
-func (g *Game) PlayAction(player, handIndex int) error {
+func (g *Game) PlayTactic(player, handIndex int) error {
 	id, err := g.validateHandPlay(player, handIndex, Tactic)
 	if err != nil {
 		return err

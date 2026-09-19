@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Steal 1 Æmber, and for each copy of Routine Job in your discard pile, steal 1 Æmber.
+//	Play: Steal 1 Æmber. For each copy of Routine Job in your discard pile, steal 1 Æmber.
 func TestRoutineJob(t *testing.T) {
 	t.Run("steals 1 with no copies in the discard pile", func(t *testing.T) {
 		var job ct.Card

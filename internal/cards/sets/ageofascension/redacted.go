@@ -20,7 +20,7 @@ var REDACTED = set.New(
 	card.WithAbility(
 		card.Trigger.AfterChooseHouse, card.Conditional{
 			Cond: card.ChoseHouse{House: card.House.Self},
-			Then: card.Sentences{Effects: []card.Effect{
+			Then: card.Sequence{Effects: []card.Effect{
 				card.PlaceAemberOnThis{Amount: 1},
 				card.Conditional{
 					Cond: card.CountIs{

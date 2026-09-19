@@ -41,8 +41,8 @@ func TestAlphaMustBeFirst(t *testing.T) {
 	if err := g.CanPlay(0, alpha); !errors.Is(err, ErrAlphaNotFirst) {
 		t.Errorf("Alpha after acting (CanPlay) = %v, want ErrAlphaNotFirst", err)
 	}
-	if err := g.PlayAction(0, handIdxByID(g, 0, alpha)); !errors.Is(err, ErrAlphaNotFirst) {
-		t.Errorf("Alpha after acting (PlayAction) = %v, want ErrAlphaNotFirst", err)
+	if err := g.PlayTactic(0, handIdxByID(g, 0, alpha)); !errors.Is(err, ErrAlphaNotFirst) {
+		t.Errorf("Alpha after acting (PlayTactic) = %v, want ErrAlphaNotFirst", err)
 	}
 }
 

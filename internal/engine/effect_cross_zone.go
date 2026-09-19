@@ -49,16 +49,19 @@ func (m crossZoneMover) gather(ctx *EffectContext, keep func(LocalID) bool) []Lo
 	return out
 }
 
-// originOf reports which source zone holds a picked card, checking each source but
-// the last and assuming the last when none matched.
-func (m crossZoneMover) originOf(ctx *EffectContext, id LocalID) Zone {
-	last := len(m.Sources) - 1
-	for _, z := range m.Sources[:last] {
+// originOf reports which source zone holds a picked card. It reports ok false when
+// the card has left every source zone since it was picked — a power settle inside
+// the batch can destroy one of the picks (Inka the Spider, archived by Biomatrix
+// Backup while Song of Spring shuffles) — because moving it out of a zone it is no
+// longer in would put it in two places at once
+// (TestCrossZoneMoveSkipsCardThatLeftItsSourceZones).
+func (m crossZoneMover) originOf(ctx *EffectContext, id LocalID) (Zone, bool) {
+	for _, z := range m.Sources {
 		if m.inZone(ctx, z, id) {
-			return z
+			return z, true
 		}
 	}
-	return m.Sources[last]
+	return zoneUnset, false
 }
 
 // inZone reports whether a card sits in one source zone. It asks zoneCards rather
@@ -69,9 +72,12 @@ func (m crossZoneMover) inZone(ctx *EffectContext, z Zone, id LocalID) bool {
 }
 
 // move sends one picked card to Dest through the shared move matrix, keyed on the
-// zone the card came from (ADR 0031).
+// zone the card came from (ADR 0031). A pick that has since left every source zone
+// is skipped rather than moved from where it no longer is.
 func (m crossZoneMover) move(ctx *EffectContext, id LocalID) {
-	m.Dest.moveFrom(ctx, m.originOf(ctx, id), m.Player, id)
+	if from, ok := m.originOf(ctx, id); ok {
+		m.Dest.moveFrom(ctx, from, m.Player, id)
+	}
 }
 
 // resolverCardsInPlay lists every card a player has in play: their creatures,

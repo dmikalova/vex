@@ -29,29 +29,18 @@ human's personal list, which agents never write into. Rules:
 
 ---
 
-## gocognit gate: web renderers deferred to their own passes
+## gocognit gate: one exclusion left, and the next ratchet step
 
-The engine pass is done: the `gocognit` gate's global `min-complexity` is now 30,
-with every genuinely nested engine/deckgen/cardtest seam split (fight, NewCard,
-hasKeyword, the text.go renderers, Target.Text, Target.filter, triggeredBy,
-RenderAbility, Harness.location, allowedHouses) and 100% coverage held. What
-remains are the web renderers, kept exempted by name in the `.golangci.yaml`
-`exclusions` `text:` list until each gets its own pass:
+The engine and web passes are done: the `gocognit` gate's global `min-complexity`
+is 30, with every genuinely nested engine/deckgen/cardtest/web seam split (fight,
+NewCard, hasKeyword, the text.go renderers, Target.Text, Target.filter,
+triggeredBy, RenderAbility, Harness.location, allowedHouses, `renderMarkdown`,
+`computeFlashes`, `installKeyShortcuts`, `installTips`) and 100% coverage held.
+One exclusion remains in the `.golangci.yaml` `exclusions` `text:` list:
 
 - `effectGlyphs` (internal/web/icon.go, 90) — glyph dispatch; wants its own
   glyph-family grilling session (see docs/todo.md "Split out glyphs more in
   icon.go"). Split along glyph families, then delete its exclusion.
-- `installTips` (internal/web/game_lifecycle.go, 49) — tip installation; split by
-  tip group, then delete its exclusion.
-- `installKeyShortcuts` (internal/web/game_lifecycle.go, 39) — keyboard-shortcut
-  registration; split by shortcut group, then delete its exclusion.
-- `computeFlashes` (internal/web/game_action.go, 31) — per-event flash selection;
-  split by flash source, then delete its exclusion.
-- `renderMarkdown` (internal/web/markdown.go, 31) — inline markdown rendering;
-  split by span kind, then delete its exclusion.
-
-When these are split, lower the global toward the tool default and re-check for
-any new stragglers one at a time.
 
 ## Post-Mass-Mutation cleanup sweep
 
@@ -75,56 +64,41 @@ checking each card's printed text with `mage tool:lookup` first.** A retired ite
 here claimed three cards shared one fix and none of them did: one was already a
 single each-player effect and needed no fold, one spells both halves out on the
 printed card deliberately and must not be folded, and only the third was the
-shape the item described.
-
-- **Towards deleting `card.Sentences{}` (foundation only).** The goal is for
-  `card.Sequence` to work out its own sentence breaks so a card implementation has
-  exactly one text representation. `help_from_future_self` (`…put it into your
-hand, and shuffle your discard pile into your deck` — a dangling conjunction
-  joining two complete operations) is the motivating case. Full delivery is out of
-  scope for this sweep; **lay the foundation**: give `Sequence.Text()` a notion of
-  whether a rendered clause is a full sentence, and use it for the obvious cases.
-  Do not remove `Sentences{}` yet.
-- **Card-text fan-in: find the remaining ungrouped repeats.** The
-  creature/artifact/upgrade trigger fan-in already exists; the sweep did not find
-  a case where it fails. Hunt for the other renderers that join whole clauses
-  instead of grouping the varying noun.
+shape the item described. The same trap retired the card-text fan-in sweep: an
+affix search reported a dozen candidates and all but three were either
+already-folded output or an asymmetric rule that must repeat (Savage Clash spares
+the most powerful enemy and the **least** powerful friendly).
 
 ### Game log
 
 Every change to a rendered log string requires bumping `snapshotVersion`
-([internal/web/game.go](../internal/web/game.go), currently 19), because persisted
-logs store rendered prose. **Do these as one batch so the version bumps once.**
+([internal/web/game.go](../internal/web/game.go), currently 21), because persisted
+logs store rendered prose. **Bumping it costs nothing** — a stale snapshot is
+flushed and the next deal is fresh — so change a log string when it is wrong and
+bump. Do not batch unrelated log work to keep the number low.
 
 The log's voice rules — lowercase mechanics, source card first, no left-to-right
-backtracking — are now written into `internal/engine/log.go`'s file doc comment,
-so a new entry is written to them. Keep that comment as the authority; the items
-below are what is still unapplied.
+backtracking, no parentheticals — are written into `internal/engine/log.go`'s file
+doc comment, so a new entry is written to them. Keep that comment as the
+authority; the items below are what is still unapplied.
 
 Items:
 
-- **Finish the "action" audit.** The log entry, its emitter, and the play path
-  are renamed to Tactic (`TacticPlayed`, `playTacticCard`,
-  `emitTacticPlayedBeforeResolve`, `consumeNextTacticToHand`). What remains is the
-  rest of the tree: every identifier and comment still saying "action" must be
-  either a genuine `Action:` ability or renamed to Tactic. `ActionAbilityUsed` and
-  `Trigger.Action` are correct as they stand — they name the `Action:` ability.
-- **Bonus-icon entries keep an explicit "bonus", with one shared helper.** The
-  four entries (`log_bonus.go:22` Æmber, `:57` capture, `:71` damage, `:84` draw)
-  should share a framing helper, but each verb's wording is peculiar — `bonus
-draw` was deliberate. **INVESTIGATE**: propose a template plus its rendering for
-  **each** of the four bonus icons, keeping "bonus" explicit, and bring them back
-  together before implementing.
-- **Audit every remaining parenthetical in the log.** The exalt one is gone. The
-  only place a parenthetical has seemed reasonable is fights, and that is itself
-  slated for rework — so treat a parenthetical as a defect unless argued.
-- **Make "every state change is logged" a tested invariant.** `Exhaust` and
-  `ReadyIfFirstUse` now emit their entries, which closes the two known gaps — but
-  nothing stops the next one. Walk the state transitions and assert an entry.
-  Expect a few legitimate exceptions; the point is to discover what they are and
-  push the test as far as it goes before reaching for an escape hatch.
-- **Improve `countNoun`'s discoverability.** The `1 keys` bug existed because the
-  helper was there and not found. See the engine-implementation doc item below.
+- **"Every state change is logged": half landed, half needs a decision.**
+  `TestEveryStateFieldDeclaresItsNarration` ([internal/engine/state_test.go](../internal/engine/state_test.go))
+  now classifies all 72 `GameState` fields through `fieldNarration` — narrated
+  directly, narrated by the card that caused it, or never (only `PRNG`) — and a
+  new field fails the build until it is classified. That is the ratchet; it does
+  not prove the log is complete.
+  **INVESTIGATE the played-game half.** A version that plays whole games and
+  fails when a step changes the state without appending an entry was written and
+  **deleted**, because it could not fail: at the granularity the sim driver
+  exposes (`StartTurn` / `doAction` / `EndPlayPhase`) each step already emits many
+  entries, so suppressing `CardsDrawn` — or every entry in a whole phase — still
+  passed. The check only has teeth per mutation, which needs a hook the engine
+  does not have. Decide where that hook goes and what it may cost (it must not
+  burden MCTS rollouts; `mage profile` measures) before writing it again. Do not
+  re-add a step-level version: a test that cannot fail is worse than none.
 
 ### Zone movement: one mechanism per KeyForge verb
 
@@ -148,9 +122,11 @@ One piece is deliberately left open:
   `TestEachCardInPlayReachesUpgrades`), and the creature-or-artifact kinds were
   split onto row-only `creaturesAndArtifacts` / `creaturesAndArtifactsOf` because
   they name their types. What is left is `Game.allInPlay` (`game_read.go`), still
-  row-only with ~14 callers in ability scanning, phase processing, and invariants.
-  Decide per caller whether an upgrade belongs in that scan; do **not** change it
-  wholesale.
+  row-only with **69 callers across 18 files** in ability scanning, phase
+  processing, combat restrictions, key-cost calculation, and invariants. Decide
+  per caller whether an upgrade belongs in that scan; do **not** change it
+  wholesale. At that size, expect to split the callers into two named helpers
+  rather than to review all 69 in one sitting.
 
 ### Conditions and counts: atoms, not wrappers
 
@@ -192,77 +168,46 @@ acceptable; flat pointerless state (ADR 0005) is not negotiable.
   `Subject` to that one condition then** — the enum and its `card`/`name` helpers
   are already in place, so it is a one-node change.
 
-### Effect composition
-
-- **Collapse a repeated subject to a pronoun in the renderer.** Folding
-  `ReadyIfFirstUse` into `Conditional{SourceFirstUseThisTurn, Ready{This}}` cost
-  Rocket Boots its pronoun: the composed text reads "If this is the first time
-  this creature has been used this turn, ready **this creature**", where the
-  bespoke node hard-coded "ready **it**". The composition is right and stays; what
-  is missing is a renderer pass that replaces a subject already named earlier in
-  the same sentence with "it". Build it alongside the conjoined-`It*`-condition
-  collapse below — both are the same job: the renderer, not the node, decides how
-  a repeated subject reads.
-- **`PlayOrUse` and friends are decomposable.** The instinct that a single combined
-  prompt is the mechanic does not mean the _node_ must be bespoke: the axis is a
-  grant of `Play || Use`. Reshape `PlayOrUse` (`effect_play_or_use.go`) and
-  `DiscardOpponentArchivesOrDeckTop` (`effect_discard_opponent_source.go`) so the
-  permitted-verb set is a value, not a node name. `PutItIntoHand`
-  (now in `effect_put_into_zone.go`) is a silent runtime zone probe — it folds
-  into the follow-the-creature rule above rather than into a visible choice.
-- **Tide is next-set work** — `TideIsHigh` having no consumer is expected; leave it.
-
 ### Engine folds
 
 - **No implemented card puts an upgrade into play.** `putIntoPlay` has only
   `Creature` and `Artifact` arms, so the two `AfterUpgradeEnters` cards (Armory
   Officer Nel, Commander Dhrxgar) can never fire from a put-into-play. Fine now;
   a trap for the first card that needs it.
-- **One lasting-registry scan. INVESTIGATE**: three scans exist — reactions
-  (`game_lasting.go:320`), replacements (`:520`), and a bespoke Before-Fight scan
-  (`:373`). Approved in principle; bring back **worked examples of each scan and
-  what the tension is** (Before-Fight matches by subject rather than owning actor;
-  replacements return one record) so the unified matcher does not become a
-  branchy mini-language.
-- **Start-of-turn and end-of-turn order abilities the same way.** End-of-turn
-  gathers one ordered window (`game_phase.go:194`); start-of-turn fires per-card
-  then does a separate cross-player loop (`:71`, `:91`). **Decision: the ordering
-  logic is the same for both; the only difference is the window (start or end).**
-  Governed by ADR 0013 — update it if the fold changes what it describes.
-- **One in-play traversal, and prefer the mutation-safe one.**
-  `game_read.go:583`, `:601`, `:1054` each know the two physical zones, and 15+
-  scans repeat it. **INVESTIGATE the tradeoff** the human raised: can we just use
-  the single mutation-safe (snapshot) implementation everywhere and drop the
-  callback variant? Report the allocation cost on the hot paths (MCTS load — use
-  `mage profile`) before deciding.
-- **Upgrade teardown shares its prefix.** Four paths
-  (`game_leaves_play.go:150`, `:163`, `:180`, `:278`) repeat detach / release
-  control / clear counters / reset. Fold the prefix; wrappers keep only
-  destination and logging. **INVESTIGATE**: the blocker raised was event
-  attribution — produce a concrete example of what attribution is used for, then
-  show the fold preserving it (expected to need only a minor extension).
-- **`TargetKind` has three interpretations. INVESTIGATE**: `isChosen`
-  (`target_select.go:165`), a large text switch (`target.go:534`), and the
-  base-set switch. Target is deliberately broad, so find the clean lines to cut
-  across rather than forcing one opaque descriptor table, and propose them.
-- **Stat aggregation folds.** Power (`game_read.go:103`), armor (`:154`), and the
-  repeated printed/upgrade/temporary/constant/blanking logic (`:312`, `:327`,
-  `:345`). Prefer narrow helpers (`upgradeStatBonus`, `constantStatBonus`) over
-  one generic stat switch; **double-check** that Power, armor, Assault, Hazardous
-  and Splash really share the pipeline before merging.
-- **Constant-ability traversal folds — except blanking. INVESTIGATE**: four scans
-  (`game_read.go:189`, `:261`, `:282`, `:300`) share scan-allInPlay / check-active
-  / check-affects, but `constantBlanksText` deliberately avoids recursive source
-  blanking. Find a path that keeps that distinction explicit rather than hiding it
-  behind a mode flag, and report.
+- **One in-play traversal. Mostly landed; only `allInPlay` is left.** The "15+
+  scans repeat it" claim in the old wording was wrong — a sweep for
+  `State.Artifacts[` found the two-zone knowledge in only four places, and three
+  are now folded: `choosableHouses` goes through `allInPlay`, and
+  `placeUnderController` goes through `removeFromPlayRows` (the shared remove
+  under both a real exit and a change of control — its doc comment already
+  claimed control used it, which was untrue until the fold). The tradeoff the
+  human raised (drop the callback variant for the mutation-safe snapshot one) is
+  **moot**: there is no callback variant; every traversal already returns a fresh
+  slice (`allInPlay`, `battlelineCopy`, `resolverCardsInPlay`). What remains is
+  `inPlay`, which keeps its own two-zone loop on purpose — it is a `contains`
+  predicate over both players and allocates nothing, so routing it through
+  `allInPlay` would add a slice to a hot path. Measure with `mage profile` before
+  changing that.
+- **`fireLastingBeforeFight` cannot honour `Once`.** It resolves reactions
+  directly rather than through a trigger window, and the window
+  (`game_abilities.go`) is the only place that consumes `Once` and removes the
+  record. So a one-shot Before-Fight record would fire on every fight. No card
+  installs one today. **Decided:** when one does, route this scan through the
+  window path so it inherits both `Once` and the ordering prompt — do **not**
+  re-derive the filters inside the Before-Fight scan, which would give the
+  registry a second, divergent matcher. The scan's doc comment records this.
 - **Boolean clusters become small comparable option structs.** `SetStatOverride`
-  is done (it takes two `StatMask` values now). Still open:
-  `PutIntoBattlelineAsCreature(…, right, temporary bool)` (`resolver.go:329`),
-  `GrantTextBox(…, remainderOfTurn bool)` (`:394` — a `Duration` would say more
-  than a bool), and `mitigateDamage(…, ignoreArmor bool, …)`
-  (`game_combat.go:505`). Safe as long as the structs do **not** enter
-  `GameState`. While doing these, **sweep for the other call sites** that would
-  read better as comparable records.
+  is done (it takes two `StatMask` values now), and so are the two bools that
+  encoded a timing window: `PutIntoBattlelineAsCreature` and `GrantTextBox` both
+  take a `Duration` now (`RemainderOfPlayerTurn` or `UntilCardLeavesPlay`), which
+  reused the existing vocabulary instead of inventing an option struct —
+  `TurnIntoCreature` had a `Duration` field all along and was flattening it to a
+  bool at the port boundary. Still open: `mitigateDamage(…, ignoreArmor bool, …)`
+  (`game_combat.go`). Note it is **one** bool, not a cluster, and both call sites
+  pass a named `ignoreArmor` variable rather than a literal, so it reads fine
+  today; do it only as part of a wider damage-options change, not on its own.
+  While doing these, **sweep for the other call sites** that would read better as
+  comparable records.
 - **`ZoneResolver` and `CreatureResolver` role placement.** `ZoneResolver`
   (`resolver.go:455`) has grown into a grab-bag (ordinary moves, play-from-zone,
   bonus icons, under-cards, shuffles, archive/purge); `CreatureResolver` holds
@@ -307,25 +252,6 @@ acceptable; flat pointerless state (ADR 0005) is not negotiable.
 
 ### Tooling and hygiene
 
-- **HUMAN: untrack `cardcheck` and `err.txt`.** Both files are **deleted from the
-  working tree** and `/cardcheck` is now in `.gitignore`, so the next commit drops
-  them from the index. No agent action remains — agents do not run git write
-  commands (see AGENTS.md), so this is recorded here only so it is not forgotten.
-  Nothing in the tree was found writing `err.txt`; it looks like a one-off stray
-  redirect.
-- **Replace `qmark`.** The quickmark markdown linter is a brew-installed Rust
-  binary that `mage check` silently skips when absent (`magefiles/lint.go:25`),
-  and it has a known emphasis-scanner bug (see repo memory). **INVESTIGATE** a
-  better markdown linter — ideally Go, ideally something `golangci-lint` or a
-  `go run`-pinned tool can provide — and migrate, so the gate stops being able to
-  pass without checking Markdown.
-- **`docs/deck-generation.md` status block is fixed** — it now says the pipeline
-  is built and marks § 6 (scoring and band-targeting) as the only design-only
-  part. What remains: `internal/scoring` does not exist at all, so if § 6 is not
-  going to happen soon, consider moving it to `docs/roadmap.md` rather than
-  leaving a whole section of a "how it works" doc describing nothing.
-- **`docs/roadmap.md` is labelled** as forward-looking notes rather than
-  current-state documentation, so a sweep should leave it alone. Nothing to do.
 - **`internal/session` vs web replay. Investigated twice; BLOCKED on an engine
   gap, and the gap is now measured.** `internal/session` is the newer,
   ADR-0040-blessed driver: it is built on the
@@ -337,24 +263,49 @@ acceptable; flat pointerless state (ADR 0005) is not negotiable.
   **The decision stands: migrate the web client onto `internal/session` and delete
   `internal/web/replay.go`.** What the second investigation established is _why it
   cannot start yet_:
-  - **The engine's command vocabulary only implements half of ADR 0039.** The ADR
-    says a command is "a root action _or_ one answer to a choice", but
-    `engine.CommandKind` has only the answer half — `CommandPickCard`,
-    `CommandDecline`, `CommandOption`, `CommandPosition`, `CommandReaction`. Of
-    `replay.go`'s 27 `inputKind` values, **4** map onto a `Command`. The 11 real
-    root actions (`ChooseHouse`, `PlayCreature`/`Artifact`/`Action`/`Upgrade`,
-    `DiscardFromHand`, `Reap`, `Unstun`, `UseAction`, `Fight`, end-turn) and the 13
-    manual/debug roots have no representation at all.
+  - **The root-action Command vocabulary now exists — half landed.** ADR 0039 says
+    a command is "a root action _or_ one answer to a choice"; `engine.CommandKind`
+    used to have only the answer half (`CommandPickCard`, `CommandDecline`,
+    `CommandOption`, `CommandPosition`, `CommandReaction`). The **11 legal root
+    actions** now have a Command representation and a dispatcher:
+    `CommandChooseHouse`, `CommandPlayCreature`/`Artifact`/`Tactic`/`Upgrade`,
+    `CommandDiscardFromHand`, `CommandReap`, `CommandUnstun`, `CommandUseAction`,
+    `CommandFight`, `CommandEndTurn` (suspend.go), performed by
+    `Game.ApplyAction(Command)` (command_action.go), which mirrors `replay.go`'s
+    `dispatchRoot` so that hand-rolled driver can fold into it. The Command struct
+    grew the root fields it needs (`House`, `Hand`, `Left`, `Card2`). **Still
+    missing:** the **13 manual/debug roots** have no Command kind yet — build them
+    with the web migration (below), where the manual-mode decision applies, so the
+    legal-play path never has to see them.
   - **`session.Action` is a fixed closure, not a live driver.** `Stepper` takes one
     `func(*Game)` that must already encode the whole turn loop, and `Session`
     exposes no way to say "run this root action next". A web client needs each
     click to be the next command. So root actions must become a suspension point:
     the turn loop yields a `RequestAction`, the client answers with a root
     `Command`.
-  - **Legality enumeration exists but is not collected.** `CanPlay`, `CanDiscard`,
-    and `CanUse` already gate each root action (`internal/sim/sim.go:159-169` walks
-    them), so `Request.LegalCommands()` for a root request is assemblable from
-    parts that exist — no new rules work, just a gatherer.
+  - **Legality enumeration is now collected.** `Game.LegalActions(player) []Command`
+    (command_action.go) gathers the legal root-action set from the gates that
+    already exist (`CanPlay`, `CanDiscard`, `canUseTo`, `FightTargets`,
+    `CanUseArtifact`, `canUnstun`): the house-choice set when
+    `Phase == PhaseChooseHouse` (No House when the allowed set is empty), and in
+    `PhasePlay` a creature play per meaningful flank, a discard, reap, a
+    `CommandFight` per legal target, an Action, a stunned creature's `CommandUnstun`,
+    each artifact Action, and `CommandEndTurn`. The stun path offers only Unstun
+    (any use just sheds the stun) and an empty battleline offers one flank (both
+    place identically). The contract is pinned by
+    `TestLegalActionsAreAllApplicable`: every command `LegalActions` offers,
+    `ApplyAction` on the same state accepts.
+  - **The canonical turn loop now exists.** `Game.RunMatch(firstPlayer)`
+    (command_action.go) deals the game and drives it to a winner: it asks the
+    active player's `ActionChooser` for their next root action from
+    `LegalActions` and performs it via `ApplyAction`, over and over, handing off a
+    turn an effect ended without a paired `StartTurn` (Omega, Book of leQ) between
+    actions. **DECIDED (human): the turn loop owns `StartGame`** — so the mulligan
+    prompts surface through the same suspending choosers as every later decision
+    and become recorded answers; the loop takes `firstPlayer` as a parameter. It is
+    the standing `Action` a real match hands the session, so a client no longer
+    hand-rolls a turn driver. Covered by `TestRunMatchDrivesToWinnerThroughEndedTurn`
+    (walks setup, a house choice, a play, the Omega hand-off, and the win).
   - **`Orderer` is NOT a blocker.** `suspendChooser` does not implement it, so an
     order prompt degrades to repeated `ChooseCreature` — which is the engine's
     documented fallback and is fully expressible as a run of `CommandPickCard`s.
@@ -369,6 +320,20 @@ acceptable; flat pointerless state (ADR 0005) is not negotiable.
     are commands the web still needs its own boundary bookkeeping on top.
   - **Also update ADR 0039's and ADR 0040's stale opening lines** ("the engine code
     that realizes it does not exist yet") when this lands.
+  - **PROGRESS (this session): the whole engine-side seam is now complete.** The 11
+    legal root actions have Command kinds + fields (suspend.go), `Game.ApplyAction`
+    performs one (command_action.go, mirrors `dispatchRoot`), `Game.LegalActions`
+    enumerates the legal set (bound to ApplyAction by
+    `TestLegalActionsAreAllApplicable`), `RequestAction` + `Request.Actions` +
+    `suspendChooser.ChooseAction` surface that set through the Stepper, and
+    `Game.RunMatch` is the canonical turn loop that owns `StartGame` and drives the
+    match through `ChooseAction`/`ApplyAction` — all at 100% coverage.
+    **Remaining — only the web migration is left:** add the 13 manual Command kinds
+    (unreachable from `LegalActions`, so the sim never sees them; assert it), point
+    the web client at `internal/session` with `RunMatch` as its `Action`, delete
+    `internal/web/replay.go`, and update ADR 0039/0040's stale opening lines. The
+    web still needs its own root-action undo-boundary bookkeeping on top of
+    `Session.Undo`'s raw-command-index granularity (`rootMarks`).
   - **DECIDED (human, this session): build `RequestAction` in the engine.** One
     command vocabulary, not two — a second root-command type beside
     `Request`/`Command` would recreate the two-sources-of-truth problem ADR 0039
@@ -387,59 +352,3 @@ acceptable; flat pointerless state (ADR 0005) is not negotiable.
     `LegalCommands()` that simply never offers them (preferred: the last, since it
     keeps one vocabulary and makes the restriction a property of legality rather
     than of who is asking).
-- **An engine-implementation doc, mirroring card-implementation.md.
-  INVESTIGATE**: the `1 keys` bug happened because `countNoun` existed and was not
-  found. Decide whether the fix is a new engine-side capability catalog (the
-  helpers, log entry types, text helpers, and invariants an engine change should
-  reach for) or a section in an existing doc, and propose it.
-
-## Text & log style gallery (ADR 0046)
-
-Decided in a grilling session: give `/style` a section showing an example of
-every kind of rendered card text and game-log line, sampled from real games and
-anchored to an enumerable engine catalog. Build in dependency order — the engine
-catalog is the keystone the rest consumes, so it lands first. Stages are each
-independently green.
-
-- **Stages 1 and 2 are done.** Stage 1: `engine.LogEntrySamples()` is the exported
-  catalog (one value per `LogEntry` variant), `TestLogEntrySamplesTotality` fails
-  the build if a `Text(Namer)` type has no sample, and `TestLogEntryText` consumes
-  the catalog. Stage 2: `sim.Play(script)` hands back a played game; `sampleLog`
-  ([internal/web/style_log_sample.go](../internal/web/style_log_sample.go)) plays
-  seeded scripts, retains games that add a new kind, and greedily set-covers their
-  bubbles, reporting the kinds no game produced (24 of 130 in a 300-game run — the
-  manual-edit entries, concede, restore, and rare unimplemented-card effects) for
-  the synthetic fallback. Tested in `style_log_sample_test.go`.
-- **Stage 3 — the two `/style` sections (web, ungated). Game log is done; card
-  text is partly done.**
-  - _Game log_ (**done**): `logSection`
-    ([internal/web/style_log_section.go](../internal/web/style_log_section.go))
-    lazily samples games on a button click (wasm-safe), draws the set-cover hero
-    gallery with production `logBlockView`, drills into a clicked bubble's full
-    game log with the bubble highlighted, and renders every unobserved kind from
-    its `LogEntrySamples()` instance badged "synthetic — not observed in N games".
-    Tested in `style_log_section_test.go`.
-  - _Card text_ (**partly done**): `cardTextSection`
-    ([internal/web/style_cardtext_section.go](../internal/web/style_cardtext_section.go))
-    shows one specimen per **trigger kind** (ranging `engine.Triggers()`, printed
-    only), one per **continuous ability** field (constant/granted, key cost,
-    Æmber bonus, Æmber-cannot-be-stolen, spendable Æmber, forge Æmber, upgrade),
-    one per **target shape** (distinct `Target.Text()` phrase gathered from every
-    ability effect by a reflection walk, `walkEffectTargets`, so it is data-driven
-    and gapless), one per **duration** (ranging `engine.Durations()`, captioned by
-    `Duration.String()`, a real card carrying that window found via the same
-    reflection walk `walkEffectDurations`; gaps drawn where no loaded card uses a
-    window), and a **Combiners** subsection of constructed minimal pairs
-    (`combinerRows`) isolating the article (`a`/`an`) and single-vs-collective
-    quantifier helpers. Real cards matched over `cards.All()`, gaps drawn not
-    skipped, terms linked to `/rulebook`. Tested in `style_cardtext_section_test.go`.
-    Duration needed a small engine surface — `engine.Durations()` + a canonical
-    `Duration.String()` short label — because there is **no** single printed
-    duration phrase: the same window renders differently per effect and flips
-    prefix/suffix, so the caption names the window and the card shows the phrasing.
-    **Still to add**: `Condition`/`Count` composition — the last axis with no
-    card-side text hook yet. Expose an enumerable/renderable hook on the engine
-    side, then add a subsection in the same "walk `def.Abilities[].Effect`,
-    enumerate, randomMatch" shape.
-  - Tests assert coverage (every catalogued kind sampled-or-flagged) and no-panic
-    render — never markup or wording (ADR 0014).

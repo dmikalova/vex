@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Human • Knight
 //
-//	Before Fight: If the fought creature is the most powerful enemy creature, gain 2 Æmber.
+//	Before Fight: If the fights creature is the most powerful enemy creature, gain 2 Æmber.
 var BaldricTheBold = set.New(
 	"Baldric the Bold",
 	card.House.Sanctum,

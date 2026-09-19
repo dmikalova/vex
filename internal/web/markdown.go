@@ -16,58 +16,73 @@ import (
 
 // renderMarkdown turns a Markdown body into block-level nodes: headings, unordered
 // lists, and paragraphs, each with inline formatting applied.
+// mdList consumes the "- " block starting at lines[i] — a run of items, each of
+// which continuation lines extend — and returns it with the index just past it.
+func mdList(lines []string, i int) (app.UI, int) {
+	var items []app.UI
+	var cur strings.Builder
+	flush := func() {
+		if cur.Len() > 0 {
+			items = append(items, app.Li().Body(inlineMarkdown(cur.String())...))
+			cur.Reset()
+		}
+	}
+	for i < len(lines) {
+		t := strings.TrimSpace(lines[i])
+		if t == "" {
+			break
+		}
+		if item, ok := strings.CutPrefix(t, "- "); ok {
+			flush()
+			cur.WriteString(item)
+		} else {
+			cur.WriteByte(' ')
+			cur.WriteString(t)
+		}
+		i++
+	}
+	flush()
+	return app.Ul().Class("doc-ul").Body(items...), i
+}
+
+// mdParagraph consumes the paragraph starting at lines[i] — lines joined with
+// spaces until a blank line, heading, or list item — and returns it with the index
+// just past it.
+func mdParagraph(lines []string, i int) (app.UI, int) {
+	var para strings.Builder
+	for i < len(lines) {
+		t := strings.TrimSpace(lines[i])
+		if t == "" || headingLevel(t) > 0 || strings.HasPrefix(t, "- ") {
+			break
+		}
+		if para.Len() > 0 {
+			para.WriteByte(' ')
+		}
+		para.WriteString(t)
+		i++
+	}
+	return app.P().Class("doc-p").Body(inlineMarkdown(para.String())...), i
+}
+
 func renderMarkdown(body string) []app.UI {
 	var out []app.UI
 	lines := strings.Split(strings.ReplaceAll(body, "\r\n", "\n"), "\n")
 	for i := 0; i < len(lines); {
 		line := strings.TrimSpace(lines[i])
+		var block app.UI
 		switch {
 		case line == "":
 			i++
+			continue
 		case headingLevel(line) > 0:
 			lvl := headingLevel(line)
-			out = append(out, mdHeading(lvl, strings.TrimSpace(line[lvl:])))
-			i++
+			block, i = mdHeading(lvl, strings.TrimSpace(line[lvl:])), i+1
 		case strings.HasPrefix(line, "- "):
-			var items []app.UI
-			var cur strings.Builder
-			flush := func() {
-				if cur.Len() > 0 {
-					items = append(items, app.Li().Body(inlineMarkdown(cur.String())...))
-					cur.Reset()
-				}
-			}
-			for i < len(lines) {
-				t := strings.TrimSpace(lines[i])
-				if t == "" {
-					break
-				}
-				if item, ok := strings.CutPrefix(t, "- "); ok {
-					flush()
-					cur.WriteString(item)
-				} else {
-					cur.WriteByte(' ')
-					cur.WriteString(t)
-				}
-				i++
-			}
-			flush()
-			out = append(out, app.Ul().Class("doc-ul").Body(items...))
+			block, i = mdList(lines, i)
 		default:
-			var para strings.Builder
-			for i < len(lines) {
-				t := strings.TrimSpace(lines[i])
-				if t == "" || headingLevel(t) > 0 || strings.HasPrefix(t, "- ") {
-					break
-				}
-				if para.Len() > 0 {
-					para.WriteByte(' ')
-				}
-				para.WriteString(t)
-				i++
-			}
-			out = append(out, app.P().Class("doc-p").Body(inlineMarkdown(para.String())...))
+			block, i = mdParagraph(lines, i)
 		}
+		out = append(out, block)
 	}
 	return out
 }

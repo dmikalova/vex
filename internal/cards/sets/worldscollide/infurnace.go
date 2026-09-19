@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Demon
 //
-//	Play: Purge up to 2 cards from a discard pile. Your opponent loses Æmber equal to the total Æmber bonus of the purged cards.
+//	Play: Purge 2 cards from a discard pile. For each Æmber bonus icon on the purged cards, your opponent loses 1 Æmber.
 var Infurnace = set.New(
 	"Infurnace",
 	card.House.Dis,
@@ -20,16 +20,17 @@ var Infurnace = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.PurgeCard{
 				Zones:     []card.Zone{card.Discard},
 				Player:    card.ChosenPlayer,
-				Selection: card.Chosen{Optional: true},
-				Quantity:  card.UpTo{N: card.Fixed(2)},
+				Selection: card.Chosen{},
+				Quantity:  card.Takes{N: card.Fixed(2)},
 			},
 			card.LoseAember{
-				Player:  card.Opponent,
-				EqualTo: card.PurgedAemberBonus{},
+				Player: card.Opponent,
+				Amount: 1,
+				Per:    card.BonusIconsOf{Over: card.ThePurgedCards{}, Kind: card.Bonus.Aember},
 			},
 		}},
 	),

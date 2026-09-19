@@ -8,7 +8,9 @@ import "fmt"
 // distinguishes a bonus icon from the same effect produced by an ability. Each
 // line is worded for the effect it narrates rather than forced into one template,
 // because "bonus" attaches to a different word in each: the verb for a capture
-// ("bonus capture"), the noun for damage, Æmber, and a draw.
+// ("bonus capture"), the noun for damage, Æmber, and a draw. A proposal to move
+// capture onto the noun for consistency was considered and declined — do not fold
+// these into a shared helper.
 
 // BonusAemberGained narrates an Æmber bonus icon gaining its player 1 Æmber.
 type BonusAemberGained struct {

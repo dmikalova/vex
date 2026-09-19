@@ -16,7 +16,7 @@ var HitAndRun = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, "238"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.DealDamage{
 				Amount: 2,
 				Target: card.Target.Creature,

@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: Choose a creature - for each Æmber in your pool, deal 1 damage to the chosen creature.
+//	Play: Choose a creature. For each Æmber in your pool, deal 1 damage to the chosen creature.
 func TestSackOfCoins(t *testing.T) {
 	t.Run("deals 1 damage per aember in your pool", func(t *testing.T) {
 		var foe ct.Card

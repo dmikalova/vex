@@ -23,8 +23,9 @@ enforces them: it rejects a choice that isn't the forced house (unless the playe
 doesn't have that house, in which case cannot-overrides-must lets any house
 through), rejects the forbidden house, and pays off the wager once a house locks
 in. The "after you choose a house" trigger window (`TriggerAfterChooseHouse`)
-already fires for every card in play, which is how Snag's Mirror reads the house a
-player just chose.
+fires for every card in play — the chooser's own abilities and every other card's
+each-player-scoped ones — which is how Snag's Mirror (an `EachPlayer` ability)
+reads the house a player just chose.
 
 Four problems pushed this to a decision:
 
@@ -44,10 +45,10 @@ Four problems pushed this to a decision:
    `playerHasHouse` checks only the three houses on the Archon identity card, but a
    player may also choose the house of any card they currently control (rulebook
    lines 454, 2355): a controlled off-house creature or artifact adds its house to
-   the choice. That also means a *must* for a house the player neither has on their
+   the choice. That also means a _must_ for a house the player neither has on their
    identity card nor controls is void — a maverick Pitlord forcing Dis in a
    deck without Dis. And nothing modelled the case where every choosable house is
-   forbidden: the player then has *no active house* (rulebook line 788), a valid
+   forbidden: the player then has _no active house_ (rulebook line 788), a valid
    outcome the single slots could not express.
 
 ## Decision
@@ -71,13 +72,13 @@ creature's houses _now_), and computes the allowed set:
   the battleline or an artifact in the artifact row; an attached upgrade or a card
   under a host does not contribute a house. This set is read at choice time: a
   controlled card that has since left play no longer contributes its house.
-- Remove every *cannot* house. **Cannot overrides must**: a house that is both
+- Remove every _cannot_ house. **Cannot overrides must**: a house that is both
   required and barred is barred.
-- The surviving *musts* are the required houses that are still choosable and not
+- The surviving _musts_ are the required houses that are still choosable and not
   forbidden. If any survive, the allowed set is exactly those houses and the player
-  picks any one of them — *must A, must B* leaves *{A, B}* (either is legal);
-  *must A, must B, cannot A* leaves *{B}*.
-- A *must* naming a house that is forbidden (cannot overrides must) **or no longer
+  picks any one of them — _must A, must B_ leaves _{A, B}_ (either is legal);
+  _must A, must B, cannot A_ leaves _{B}_.
+- A _must_ naming a house that is forbidden (cannot overrides must) **or no longer
   choosable** does not survive. A must for a house the player neither has on their
   identity card nor controls is void — a maverick Pitlord forcing Dis in a deck
   without Dis, or a Mark of Dis "must choose D" after the controlled house-D
@@ -88,7 +89,7 @@ creature's houses _now_), and computes the allowed set:
   has **no active house** this turn (rulebook line 788). This is a valid resolved
   outcome, not an error. The player makes the choice explicitly: the client presents
   a **No House** option they must click, so the state is unmistakable rather than
-  silently auto-resolved. Choosing No House *is* their house choice for the phase —
+  silently auto-resolved. Choosing No House _is_ their house choice for the phase —
   it consumes an armed wager (Snaglet, which then pays nothing) and opens the
   after-choose-house window, where house-keyed reactions (Snag's Mirror, Qincan)
   find no chosen house and no-op. The player then enters their main phase, may play

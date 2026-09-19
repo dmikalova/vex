@@ -26,7 +26,7 @@ var SmilingRuth = set.New(
 			Cond: card.ForgedKey{Player: card.Controller},
 			Then: card.TakeControl{
 				Target:   card.Target.EnemyCreature.OnFlank(),
-				Duration: card.Duration.Forever,
+				Duration: card.Duration.UntilCardLeavesPlay,
 			},
 		}),
 )

@@ -20,7 +20,7 @@ var Rustgnawer = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Beast, card.Traits.Insect),
 	card.WithAbility(
-		card.Trigger.Fight, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Fight, card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.Artifact},
 			card.ResolveBonusIcons{Target: card.Target.Triggering},
 		}}),

@@ -19,8 +19,8 @@ var GiantGnawbill = set.New(
 	card.Provenance(card.WC, "390"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast),
-	card.WithAbility(
-		card.Trigger.AfterAnyPlayerChoosesHouse,
+	card.WithEachPlayerAbility(
+		card.Trigger.AfterChooseHouse,
 		card.ByActivePlayer{
 			Do: card.Destroy{Target: card.Target.Artifact.House(card.Houses.Active)},
 		},

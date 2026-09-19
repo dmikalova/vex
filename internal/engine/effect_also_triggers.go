@@ -88,18 +88,14 @@ func (g *Game) additionalTriggers(src LocalID, firing Trigger) []Trigger {
 			out = append(out, t)
 		}
 	}
-	for player := 0; player < 2; player++ {
-		for _, grantor := range g.allInPlay(player) {
-			for _, c := range g.cat.def(grantor).ConstantAbilities {
-				if len(c.AlsoTriggers) == 0 || !g.constantActive(grantor, c) ||
-					!g.constantAffects(grantor, c, src) {
-					continue
-				}
-				for _, m := range c.AlsoTriggers {
-					if m.Onto == firing {
-						add(m.From)
-					}
-				}
+	for grantor, c := range g.constantAbilitiesInPlay() {
+		if len(c.AlsoTriggers) == 0 || !g.constantActive(grantor, c) ||
+			!g.constantAffects(grantor, c, src) {
+			continue
+		}
+		for _, m := range c.AlsoTriggers {
+			if m.Onto == firing {
+				add(m.From)
 			}
 		}
 	}

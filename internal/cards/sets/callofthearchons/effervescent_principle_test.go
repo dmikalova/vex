@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Each player loses half of their Æmber, rounded down, and gain 1 chain.
+//	Play: Each player loses half of their Æmber, rounded down. Gain 1 chain.
 func TestEffervescentPrinciple(t *testing.T) {
 	h := ct.Play(t, ct.Setup{
 		P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(EffervescentPrinciple), Amber: 5},

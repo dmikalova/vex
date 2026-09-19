@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Beast • Cat
 //
-//	After a creature is destroyed in a fight with Eunoia, gain 1 Æmber, and heal 2 damage from Eunoia.
+//	After a creature is destroyed in a fight with Eunoia, gain 1 Æmber. Heal 2 damage from Eunoia.
 var Eunoia = set.New(
 	"Eunoia",
 	card.House.Untamed,

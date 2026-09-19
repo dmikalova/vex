@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Bonus:  Æmber
 //
-//	Play: Choose a creature - if it is a Mutant creature, destroy the chosen creature. Otherwise, deal 2 damage to the chosen creature.
+//	Play: Choose a creature. If it is a Mutant creature, destroy the chosen creature. Otherwise, deal 2 damage to the chosen creature.
 func TestParticleSweep(t *testing.T) {
 	t.Run("destroys a Mutant creature instead of damaging it", func(t *testing.T) {
 		var foe ct.Card

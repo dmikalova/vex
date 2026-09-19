@@ -628,10 +628,11 @@ func TestTraitsOfChosen(t *testing.T) {
 	}
 }
 
-// TestBonusIconsOfChosen covers Mindfire: the value is the number of bonus icons
-// on the card in context (ctx.It), zero without one, and the text names the card.
-func TestBonusIconsOfChosen(t *testing.T) {
-	c := BonusIconsOfChosen{Noun: DiscardedCard}
+// TestBonusIconsOfCardInContext covers Mindfire: the value is the number of bonus
+// icons on the card in context (ctx.It), zero without one, and the text names the
+// card.
+func TestBonusIconsOfCardInContext(t *testing.T) {
+	c := BonusIconsOf{Over: TheCardInContext{Noun: DiscardedCard}}
 	if got := c.CountText(); got != "bonus icon on the discarded card" {
 		t.Errorf("CountText = %q", got)
 	}
@@ -647,6 +648,52 @@ func TestBonusIconsOfChosen(t *testing.T) {
 	}
 	if got := c.Value(&EffectContext{Resolver: g, It: id, HasIt: true}); got != 2 {
 		t.Errorf("Value = %d, want 2", got)
+	}
+	// The shared kind-filtered atom the purged-bonus count also draws from counts
+	// only the named kind, not every icon.
+	if got := g.BonusIconCountOf(id, BonusAember); got != 1 {
+		t.Errorf("BonusIconCountOf(Æmber) = %d, want 1", got)
+	}
+}
+
+// TestBonusIconsOfPurgedCards covers Infurnace: the same count over the purged-set
+// subject totals those cards' bonus icons, narrowed to one kind (Æmber, the Draw
+// icon excluded) or every kind when unset.
+func TestBonusIconsOfPurgedCards(t *testing.T) {
+	purged := BonusIconsOf{Over: ThePurgedCards{}, Kind: BonusAember}
+	if got := purged.CountText(); got != "Æmber bonus icon on the purged cards" {
+		t.Errorf("count text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	two := g.Register(
+		NewCard("two", Shadows, Creature, Common, WithBonus(BonusAember, BonusAember)),
+		0,
+	)
+	mixed := g.Register(
+		NewCard("mixed", Shadows, Creature, Common, WithBonus(BonusAember, BonusDraw)),
+		0,
+	)
+	none := g.Register(NewCard("none", Shadows, Creature, Common), 0)
+	g.State.Discard[0].add(two)
+	g.State.Discard[0].add(mixed)
+	g.State.Discard[0].add(none)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// Default chooser purges the first two: 3 Æmber icons, with the Draw icon
+	// excluded by the kind filter.
+	PurgeCard{
+		Zones:     []Zone{Discard},
+		Player:    ChosenPlayer,
+		Selection: Chosen{},
+		Quantity:  Takes{N: Fixed(2)},
+	}.Resolve(ctx)
+	if got := purged.Value(ctx); got != 3 {
+		t.Errorf("purged Æmber icons = %d, want 3", got)
+	}
+	// An unset kind counts every icon: 2 Æmber + (1 Æmber + 1 Draw) = 4.
+	if got := (BonusIconsOf{Over: ThePurgedCards{}}).Value(ctx); got != 4 {
+		t.Errorf("purged icons = %d, want 4", got)
 	}
 }
 
@@ -671,7 +718,9 @@ func TestPowerOfChosen(t *testing.T) {
 		AmountFrom: PowerOfChosen{},
 		Target:     Target{Kind: TargetCreatureFought}.NeighborsOf(),
 	}
-	want := "deal damage equal to its power to each neighbor of the creature {self} fights"
+	// The effect renders the past; fightTense puts a Before Fight: ability's line
+	// in the present (TestBeforeFightTargetReadsInPresentTense).
+	want := "deal damage equal to its power to each neighbor of the creature {self} fought"
 	if got := e.Text(); got != want {
 		t.Errorf("Text = %q, want %q", got, want)
 	}

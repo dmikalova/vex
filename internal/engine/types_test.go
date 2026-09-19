@@ -126,8 +126,10 @@ func TestKeywords(t *testing.T) {
 
 // TestTriggers pins the trigger catalog against its rulebook surface: Triggers
 // omits the unset zero, every real trigger names itself, and the two implicit
-// triggers (EntersPlay, AfterChooseHouse) name themselves but are unprinted, so
-// they head no rulebook entry.
+// triggers (EntersPlay, AfterChooseHouse) name themselves but are unprinted in
+// their controller-scoped form, so the printed-trigger completeness check does
+// not require a heading for them (choose-house still keeps a voluntary term for
+// its each-player scope).
 func TestTriggers(t *testing.T) {
 	all := Triggers()
 	if len(all) != int(triggerCount)-1 {

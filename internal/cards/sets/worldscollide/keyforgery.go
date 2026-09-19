@@ -21,7 +21,7 @@ var Keyforgery = set.New(
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.BeforeOpponentForgesKey,
-		card.Sentences{Effects: []card.Effect{
+		card.Sequence{Effects: []card.Effect{
 			card.OpponentNamesHouse{},
 			card.RevealRandomFromHand{},
 			card.Conditional{

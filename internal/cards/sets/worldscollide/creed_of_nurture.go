@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Power
 //
 //	Versatile.
-//	Action: Destroy Creed of Nurture. Reveal a creature from your hand and choose a creature in play - for the remainder of the turn, the chosen creature gains the text box of the revealed creature.
+//	Action: Destroy Creed of Nurture. Reveal a creature from your hand and choose a creature in play. For the remainder of the turn, the chosen creature gains the text box of the revealed creature.
 var CreedOfNurture = set.New(
 	"Creed of Nurture",
 	card.House.Untamed,
@@ -20,7 +20,7 @@ var CreedOfNurture = set.New(
 	card.WithTraits(card.Traits.Power),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{
+		card.Trigger.Action, card.Sequence{
 			Effects: []card.Effect{
 				card.Destroy{Target: card.Target.This},
 				card.LendTextBoxFromHand{},

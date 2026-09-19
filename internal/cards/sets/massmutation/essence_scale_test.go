@@ -15,7 +15,7 @@ import (
 //	Bonus:  Æmber
 //	Traits: Item
 //
-//	Action: Choose a friendly creature - destroy the chosen creature. Ready and use a friendly creature of that card's house.
+//	Action: Choose a friendly creature. Destroy the chosen creature. Ready and use a friendly creature of that card's house.
 func TestEssenceScale(t *testing.T) {
 	t.Run(
 		"destroys a friendly creature, then readies and uses another of its house",

@@ -776,18 +776,29 @@ func TestAfterChooseHouseRendering(t *testing.T) {
 	}
 
 	// Effect shapes that are not a Conditional{ChoseHouse} do not fold.
-	if _, ok := afterChooseHouseText(GainAember{Player: Controller, Amount: 1}); ok {
+	if _, ok := afterChooseHouseText(
+		Ability{
+			Trigger: TriggerAfterChooseHouse,
+			Effect:  GainAember{Player: Controller, Amount: 1},
+		},
+	); ok {
 		t.Error("a non-conditional effect should not fold")
 	}
 	if _, ok := afterChooseHouseText(
-		Conditional{Cond: ControlsMoreCreatures{}, Then: GainAember{Player: Controller, Amount: 1}},
+		Ability{Trigger: TriggerAfterChooseHouse, Effect: Conditional{
+			Cond: ControlsMoreCreatures{},
+			Then: GainAember{Player: Controller, Amount: 1},
+		}},
 	); ok {
 		t.Error("a conditional without ChoseHouse should not fold")
 	}
 }
 
-func TestAfterAnyPlayerChooseHouseRendering(t *testing.T) {
-	a := Ability{Trigger: TriggerAfterAnyPlayerChoosesHouse, Effect: Conditional{
+// TestEachPlayerChooseHouseRendering covers the each-player scope of the folded
+// choose-house trigger: an EachPlayer ability reads "after a player chooses ..."
+// where the controller-scoped form reads "after you choose ...".
+func TestEachPlayerChooseHouseRendering(t *testing.T) {
+	a := Ability{Trigger: TriggerAfterChooseHouse, EachPlayer: true, Effect: Conditional{
 		Cond: ChoseHouse{House: Brobnar},
 		Then: GainAember{Player: Controller, Amount: 1},
 	}}
@@ -797,12 +808,31 @@ func TestAfterAnyPlayerChooseHouseRendering(t *testing.T) {
 		t.Errorf("render = %q", got)
 	}
 
+	// A conditionless each-player choose-house ability does not fold, so it renders
+	// through the generic each-player prefix (Giant Gnawbill, Techivore Pulpate).
+	if got := RenderAbility(Ability{
+		Trigger:    TriggerAfterChooseHouse,
+		EachPlayer: true,
+		Effect:     GainAember{Player: Controller, Amount: 1},
+	}); got != "After a player chooses an active house, gain 1 Æmber." {
+		t.Errorf("conditionless each-player render = %q", got)
+	}
+
 	// Effect shapes that are not a Conditional{ChoseHouse} do not fold.
-	if _, ok := afterAnyPlayerChooseHouseText(GainAember{Player: Controller, Amount: 1}); ok {
+	if _, ok := afterChooseHouseText(
+		Ability{
+			Trigger:    TriggerAfterChooseHouse,
+			EachPlayer: true,
+			Effect:     GainAember{Player: Controller, Amount: 1},
+		},
+	); ok {
 		t.Error("a non-conditional effect should not fold")
 	}
-	if _, ok := afterAnyPlayerChooseHouseText(
-		Conditional{Cond: ControlsMoreCreatures{}, Then: GainAember{Player: Controller, Amount: 1}},
+	if _, ok := afterChooseHouseText(
+		Ability{Trigger: TriggerAfterChooseHouse, EachPlayer: true, Effect: Conditional{
+			Cond: ControlsMoreCreatures{},
+			Then: GainAember{Player: Controller, Amount: 1},
+		}},
 	); ok {
 		t.Error("a conditional without ChoseHouse should not fold")
 	}
@@ -1327,7 +1357,7 @@ func TestFirstCreaturePlayedThisTurn(t *testing.T) {
 	second := g.AddToHand(NewCard("Second", Brobnar, Creature, Common, WithPower(2)), 0)
 	tactic := g.AddToHand(NewCard("Warm Up", Brobnar, Tactic, Common), 0)
 
-	if err := g.PlayAction(0, handIdxByID(g, 0, tactic)); err != nil {
+	if err := g.PlayTactic(0, handIdxByID(g, 0, tactic)); err != nil {
 		t.Fatalf("play tactic: %v", err)
 	}
 	if cond.Met(&EffectContext{Resolver: g, Controller: 0, It: first, HasIt: true}) {
@@ -1358,7 +1388,7 @@ func TestNoCreaturesPlayedThisTurn(t *testing.T) {
 	}
 
 	tactic := g.AddToHand(NewCard("Warm Up", Brobnar, Tactic, Common), 0)
-	if err := g.PlayAction(0, handIdxByID(g, 0, tactic)); err != nil {
+	if err := g.PlayTactic(0, handIdxByID(g, 0, tactic)); err != nil {
 		t.Fatalf("play tactic: %v", err)
 	}
 	if !cond.Met(ctx) {

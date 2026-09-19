@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Choose a creature - destroy each creature with the same power as the chosen creature.
+//	Play: Choose a creature. Destroy each creature with the same power as the chosen creature.
 var DanceOfDoom = set.New(
 	"Dance of Doom",
 	card.House.Dis,

@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Choose a house - archive each creature of the chosen house from your discard pile. Gain 1 chain.
+//	Play: Choose a house. Archive each creature of the chosen house from your discard pile. Gain 1 chain.
 func TestGrimReminder(t *testing.T) {
 	t.Run("archives each creature of the chosen house from your discard pile", func(t *testing.T) {
 		var disCreature, otherHouse, disTactic ct.Card

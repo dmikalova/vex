@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: Choose a house - for the remainder of the turn, each friendly creature of the chosen house may fight.
+//	Play: Choose a house. For the remainder of the turn, each friendly creature of the chosen house may fight.
 func TestBrothersInBattle(t *testing.T) {
 	t.Run(
 		"lets friendly creatures of the chosen house fight out of the active house",

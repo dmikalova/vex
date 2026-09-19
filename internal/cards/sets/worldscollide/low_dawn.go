@@ -17,7 +17,7 @@ var LowDawn = set.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "377"),
 	card.WithBonus(card.Bonus.Aember),
-	card.WithAbility(card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+	card.WithAbility(card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 		card.Conditional{
 			Cond: card.CardsInDiscardAtLeast{
 				House:  card.Houses.Named(card.House.Self),

@@ -28,7 +28,7 @@ var Mastermindy = set.New(
 			Target: card.Target.This,
 		}),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.StealAember{
 				Amount: 1,
 				Per:    card.CountersOnThis{Kind: card.Counter.Scheme},

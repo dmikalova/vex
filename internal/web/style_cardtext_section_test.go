@@ -62,6 +62,8 @@ func TestCardTextSectionRenders(t *testing.T) {
 	specs := append(triggerSpecimens(), continuousSpecimens()...)
 	specs = append(specs, targetShapeSpecimens()...)
 	specs = append(specs, durationSpecimens()...)
+	specs = append(specs, conditionSpecimens()...)
+	specs = append(specs, countSpecimens()...)
 	for _, sp := range specs {
 		if ui := s.styleCard(sp); ui == nil {
 			t.Errorf("styleCard for %q rendered nil", sp.Caption)
@@ -113,6 +115,52 @@ func TestDurationSpecimensCoverDurations(t *testing.T) {
 		if sp.found() && !defUsesDuration(sp.Def, durs[i]) {
 			t.Errorf(
 				"card %q does not use the duration %q it was matched for",
+				sp.Def.Name,
+				sp.Caption,
+			)
+		}
+	}
+}
+
+// TestConditionSpecimensAreRealCards checks the condition gallery is data-driven:
+// every "if ..." clause it shows was read off a real card, so each specimen
+// resolves to a card rather than a gap and that card really gates on the clause.
+func TestConditionSpecimensAreRealCards(t *testing.T) {
+	specs := conditionSpecimens()
+	if len(specs) == 0 {
+		t.Fatal("no condition specimens; expected clauses from the card pool")
+	}
+	for _, sp := range specs {
+		if !sp.found() {
+			t.Errorf("condition clause %q has no card, but was gathered from one", sp.Caption)
+			continue
+		}
+		if !defHasConditionPhrase(sp.Def, sp.Caption) {
+			t.Errorf(
+				"card %q does not gate on the clause %q it was matched for",
+				sp.Def.Name,
+				sp.Caption,
+			)
+		}
+	}
+}
+
+// TestCountSpecimensAreRealCards checks the count gallery is data-driven: every
+// "for each ..." clause it shows was read off a real card, so each specimen
+// resolves to a card rather than a gap and that card really scales by the clause.
+func TestCountSpecimensAreRealCards(t *testing.T) {
+	specs := countSpecimens()
+	if len(specs) == 0 {
+		t.Fatal("no count specimens; expected clauses from the card pool")
+	}
+	for _, sp := range specs {
+		if !sp.found() {
+			t.Errorf("count clause %q has no card, but was gathered from one", sp.Caption)
+			continue
+		}
+		if !defHasCountPhrase(sp.Def, sp.Caption) {
+			t.Errorf(
+				"card %q does not scale by the clause %q it was matched for",
 				sp.Def.Name,
 				sp.Caption,
 			)

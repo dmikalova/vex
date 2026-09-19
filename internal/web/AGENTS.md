@@ -171,7 +171,7 @@ engine raises its `ChoosePosition` prompt (`choosingPosition`). The creature is
 lifted while the prompt is up and its placement verbs sit on the lifted card
 (`deployActions`), like the flank question but extended for a creature that may
 enter anywhere: ordered left-to-right `[left flank] [deploy left] [deploy right]
-[right flank]`, the ends answer at once and the interior `deploy left`/`deploy
+[right flank]`, the ends answer at once and the interior`deploy left`/`deploy
 right` arm which side of a clicked battleline creature it lands on (the line
 lights its creatures as the click targets). With no other friendly creatures in
 play there is only one placement, so `ChoosePosition` answers itself and no

@@ -40,18 +40,23 @@ const (
 	// play (Collar of Subordination's control change), rather than expiring at a
 	// turn boundary. The leave-play teardown honors it.
 	UntilThisLeavesPlay
-	// Forever never lifts: the effect it establishes lasts for the rest of the
-	// game (Sneklifter's control of a seized artifact). It registers no teardown.
+	// UntilCardLeavesPlay lasts until the affected card itself leaves play, rather
+	// than until the effect's own source does (Sneklifter's control of a seized
+	// artifact). It registers no timed teardown: the effect anchors to the affected
+	// card and is shed only when that card leaves play, so it holds for as long as the
+	// card stays in play. It is the sibling of UntilThisLeavesPlay, which anchors
+	// instead to the source card whose effect established it.
 	//
 	// Design rule — "the latest ability wins": when two effects change the same
 	// thing on the same card (control, house), the most recently applied one is in
 	// force. Control is a single last-write-wins field, so a later take-control
-	// simply overrides a Forever one. If a *timed* override is ever layered over a
-	// Forever effect, its expiry must fall back to the Forever effect rather than to
-	// the owner's default — the Forever effect still governs once the timed one
-	// lifts. (Today artifact control is only ever Forever, so no such timed override
-	// exists yet; this rule is the invariant to preserve when one is added.)
-	Forever
+	// simply overrides an UntilCardLeavesPlay one. If a *timed* override is ever
+	// layered over an UntilCardLeavesPlay effect, its expiry must fall back to that
+	// effect rather than to the owner's default — the UntilCardLeavesPlay effect still
+	// governs once the timed one lifts. (Today artifact control is only ever
+	// UntilCardLeavesPlay, so no such timed override exists yet; this rule is the
+	// invariant to preserve when one is added.)
+	UntilCardLeavesPlay
 	// durationCount is the exclusive upper bound Durations ranges to. It is not a
 	// real duration; keep it last.
 	durationCount
@@ -88,8 +93,8 @@ func (d Duration) String() string {
 		return "Through your next turn"
 	case UntilThisLeavesPlay:
 		return "Until this leaves play"
-	case Forever:
-		return "Forever"
+	case UntilCardLeavesPlay:
+		return "Until it leaves play"
 	default:
 		return ""
 	}

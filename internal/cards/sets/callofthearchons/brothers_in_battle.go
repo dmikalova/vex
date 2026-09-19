@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: Choose a house - for the remainder of the turn, each friendly creature of the chosen house may fight.
+//	Play: Choose a house. For the remainder of the turn, each friendly creature of the chosen house may fight.
 var BrothersInBattle = set.New(
 	"Brothers in Battle",
 	card.House.Brobnar,

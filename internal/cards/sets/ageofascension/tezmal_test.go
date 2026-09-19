@@ -18,7 +18,7 @@ import (
 //	Traits: Imp
 //
 //	Elusive.
-//	Reap: Choose a house - your opponent cannot choose that house as their active house during their next turn.
+//	Reap: Choose a house. Your opponent cannot choose that house as their active house during their next turn.
 func TestTezmal(t *testing.T) {
 	h := ct.Play(t, ct.Setup{
 		P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Tezmal)},

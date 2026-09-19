@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant • Hunter
 //
 //	Elusive.
-//	Action: Choose a creature - if it is a Dinosaur creature or it has Æmber on it, deal 6 damage to it. Otherwise, deal 2 damage to it.
+//	Action: Choose a creature. If it is a Dinosaur creature or it has Æmber on it, deal 6 damage to it. Otherwise, deal 2 damage to it.
 var GujiDinosaurHunter = set.New(
 	"Guji Dinosaur Hunter",
 	card.House.Brobnar,

@@ -18,7 +18,7 @@ var OrbitalBombardment = set.New(
 	card.Provenance(card.CotA, "172"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{
+		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.RevealHand{
 					Player: card.Controller,

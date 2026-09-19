@@ -342,11 +342,22 @@ type Conditional struct {
 
 // Text joins the condition and the gated effect.
 func (e Conditional) Text() string {
-	body := e.Cond.CondText() + ", " + e.Then.Text()
+	body := e.Cond.CondText() + ", " + gatedConsequence(e.Then)
 	if e.Else == nil {
 		return body
 	}
-	return body + ". Otherwise, " + e.Else.Text()
+	return body + ". Otherwise, " + gatedConsequence(e.Else)
+}
+
+// gatedConsequence renders a clause that is scoped by an enclosing one — a
+// Conditional's branch, a replacement's "instead …". A Sequence renders its gated
+// form, whose clauses stay joined so the scope visibly covers all of them rather
+// than trailing a sentence that reads as standing on its own.
+func gatedConsequence(branch Effect) string {
+	if seq, ok := branch.(Sequence); ok {
+		return seq.gatedText()
+	}
+	return branch.Text()
 }
 
 // Resolve runs Then when Cond is met, otherwise Else if one is set.

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Connected
 //	Bonus:  Æmber
 //
-//	Play: Choose a creature - the chosen creature gains assault 3 and the Mutant trait until the start of your next turn.
+//	Play: Choose a creature. The chosen creature gains assault 3 and the Mutant trait until the start of your next turn.
 var MutationOfFury = set.New(
 	"Mutation of Fury",
 	card.House.Untamed,

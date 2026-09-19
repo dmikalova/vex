@@ -20,10 +20,10 @@ var Sneklifter = set.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.TakeControl{
 				Target:   card.Target.EnemyArtifact,
-				Duration: card.Duration.Forever,
+				Duration: card.Duration.UntilCardLeavesPlay,
 			},
 			card.Conditional{
 				Cond: card.ItIsOffIdentity{},

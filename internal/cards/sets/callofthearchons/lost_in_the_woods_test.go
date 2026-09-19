@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Shuffle 2 friendly creatures into their owners' decks, and shuffle 2 enemy creatures into their owners' decks.
+//	Play: Shuffle 2 friendly creatures into their owners' decks. Shuffle 2 enemy creatures into their owners' decks.
 func TestLostInTheWoods(t *testing.T) {
 	t.Run("shuffles 2 friendly and 2 enemy creatures into their owners' decks", func(t *testing.T) {
 		var ally1, ally2, foe1, foe2 ct.Card

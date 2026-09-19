@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Put a friendly ready Mars creature into its owner's hand -> put a Mars creature with a different name from your hand into play, and ready it.
+//	Action: Put a friendly ready Mars creature into its owner's hand -> put a Mars creature with a different name from your hand into play. Ready it.
 func TestSwapWidget(t *testing.T) {
 	t.Run("returns a ready Mars creature and swaps in a differently named one", func(t *testing.T) {
 		var widget, tunk, sameName, blypyp ct.Card

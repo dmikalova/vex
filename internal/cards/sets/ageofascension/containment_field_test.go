@@ -13,7 +13,7 @@ import (
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This creature gains, "After this creature is used, destroy this creature."
+//	This creature gains, "After this creature is used, destroy it."
 func TestContainmentField(t *testing.T) {
 	t.Run("destroys its host after the host reaps", func(t *testing.T) {
 		var host ct.Card

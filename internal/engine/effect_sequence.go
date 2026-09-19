@@ -29,28 +29,126 @@ type foldable interface {
 	foldable() bool
 }
 
-// Text joins the child effect texts, folding each run of combinables that shares
-// a verb or a target into a single "verb and verb ... target" or "verb target and
-// target ..." phrase.
-func (e Sequence) Text() string {
+// Text renders each clause as its own sentence — the Rules voice is one
+// instruction per sentence (ADR 0019), so joining is something clauses earn by
+// folding rather than the default. Folds run first, so a folded run is one
+// clause: "destroy an artifact, a creature, and an upgrade" stays one sentence.
+func (e Sequence) Text() string { return e.text(true) }
+
+// gatedText renders the sequence as a Conditional's consequence, where the
+// default break is suppressed so the gate visibly covers every clause:
+// Shadowsaurus must not read "take control of it. That creature belongs to house
+// Shadows", whose second sentence looks unconditional. The explicit breaks still
+// fire, because grammar outranks house style — Triumph still starts a sentence at
+// its inner Conditional. Pinned by TestConditionalKeepsItsSequenceJoined.
+func (e Sequence) gatedText() string { return e.text(false) }
+
+// text renders the children, breaking between every clause when breakByDefault
+// and only at the explicit breaks otherwise.
+func (e Sequence) text(breakByDefault bool) string {
 	parts := make([]string, 0, len(e.Effects))
+	opensSentence := make([]bool, 0, len(e.Effects))
+	add := func(part string, opens bool) {
+		parts, opensSentence = append(parts, part), append(opensSentence, opens)
+	}
 	for i := 0; i < len(e.Effects); {
+		opens := opensOwnSentence(e.Effects, i) || (breakByDefault && i > 0)
+		if rungs, next := foldThresholdLadder(e.Effects, i); next > i+1 {
+			for j, rung := range rungs {
+				add(rung, opens || j > 0)
+			}
+			i = next
+			continue
+		}
 		if phrase, next, ok := foldNounList(e.Effects, i); ok {
-			parts = append(parts, phrase)
+			add(phrase, opens)
 			i = next
 			continue
 		}
 		c, ok := peekCombinable(e.Effects, i)
 		if !ok {
-			parts = append(parts, e.Effects[i].Text())
+			add(e.Effects[i].Text(), opens)
 			i++
 			continue
 		}
 		phrase, next := foldCombinable(e.Effects, i, c)
-		parts = append(parts, phrase)
+		add(phrase, opens)
 		i = next
 	}
-	return joinSequenceParts(parts)
+	return splitBeforeConditionals(parts, opensSentence)
+}
+
+// sentenceEnder is an effect whose own text finishes a sentence, so whatever
+// follows it in a Sequence opens a new one rather than being conjoined. A
+// choice-led clause is the case: "choose a creature. Destroy the chosen creature,
+// and gain 1 Æmber" would run a conjunction on past a full stop.
+type sentenceEnder interface {
+	endsSentence() bool
+}
+
+// opensOwnSentence reports whether the effect at i starts a new sentence: it is a
+// Conditional (R2), or the clause before it already closed one (R3).
+func opensOwnSentence(effects []Effect, i int) bool {
+	if _, isCond := effects[i].(Conditional); isCond {
+		return true
+	}
+	if i == 0 {
+		return false
+	}
+	prev, ok := effects[i-1].(sentenceEnder)
+	return ok && prev.endsSentence()
+}
+
+// leadInSentence renders a choice and its consequence as two sentences — "choose a
+// creature. Destroy the chosen creature" — rather than joining them with a dash.
+// The lead keeps its case for whatever prefixes it (a trigger, an enclosing
+// clause); the consequence opens a sentence, so it is capitalized. The trailing
+// period is left to the caller, as for any other effect fragment.
+func leadInSentence(lead, body string) string {
+	return punctuate(lead) + " " + capitalizeFirst(body)
+}
+
+// hedgedLeadIn is the optional capability of a choice-led effect to render under
+// a May. Breaking the lead-in into its own sentence would otherwise leave the
+// consequence a bare imperative that reads as mandatory, so the hedge moves onto
+// it: "you may choose a house. If you do, reveal the top card of your deck."
+type hedgedLeadIn interface {
+	hedgedText() string
+}
+
+// hedgedLeadInSentence is leadInSentence for an optional choice, carrying the
+// hedge onto the consequence.
+func hedgedLeadInSentence(lead, body string) string {
+	return punctuate(lead) + " If you do, " + body
+}
+
+// splitBeforeConditionals renders the folded parts, starting a new sentence at
+// every part flagged as opening one. Conjoining a Conditional — "destroy <self>,
+// and if your opponent has 3 Æmber or fewer, steal 3 Æmber" — makes the reader
+// hold two structures at once, and a Conditional carrying an Else renders its own
+// "Otherwise, …" sentence that cannot be conjoined at all. A run with nothing to
+// split stays an unpunctuated fragment, so its caller still supplies the period.
+func splitBeforeConditionals(parts []string, opensSentence []bool) string {
+	runs := make([][]string, 0, len(parts))
+	for i, part := range parts {
+		if i == 0 || opensSentence[i] {
+			runs = append(runs, []string{part})
+			continue
+		}
+		runs[len(runs)-1] = append(runs[len(runs)-1], part)
+	}
+	sentences := make([]string, len(runs))
+	for i, run := range runs {
+		sentences[i] = joinSequenceParts(run)
+	}
+	if len(sentences) < 2 {
+		return joinSequenceParts(sentences)
+	}
+	text := punctuate(sentences[0])
+	for _, s := range sentences[1:] {
+		text += " " + punctuate(capitalizeFirst(s))
+	}
+	return text
 }
 
 // nounListable is an effect whose text is a fixed head, an indefinite noun, and a
@@ -90,11 +188,11 @@ func foldNounList(effects []Effect, i int) (string, int, bool) {
 	return head.listHead() + " " + indefinite(oxfordAnd(nouns)) + " " + head.listTail(), j, true
 }
 
-// joinSequenceParts joins a Sequence's rendered children into one compound
+// joinSequenceParts joins the clauses of one sentence into a compound
 // instruction: "a", "a, and b", "a, b, and c" — a serial (Oxford) comma once
-// there are three or more, never the run-on "a, and b, and c". A card whose rules
-// are separate statements wants Sentences instead, which punctuates each child
-// rather than conjoining.
+// there are three or more, never the run-on "a, and b, and c". Clauses only reach
+// here by folding or by sitting inside a gate; every other clause is its own
+// sentence.
 func joinSequenceParts(parts []string) string {
 	return serialJoin(parts, ", and ")
 }
@@ -222,33 +320,6 @@ func (e Sequence) validate() error {
 	return nil
 }
 
-// Sentences resolves several effects in order exactly as a Sequence does, but
-// renders each as its own sentence instead of joining them with ", and". It is
-// the shape a card takes when its rules are separate statements rather than one
-// compound instruction: Sigil of Brotherhood reads "Destroy Sigil of Brotherhood.
-// Until the end of the turn, you may use friendly Sanctum creatures", not
-// "destroy Sigil of Brotherhood, and until the end of the turn ...". Nest a
-// Sequence inside one child to conjoin just that part.
-type Sentences struct {
-	Effects []Effect
-}
-
-// Text renders each child as its own sentence, after folding any threshold ladder
-// among them. The first is left uncapitalized because whatever precedes it — a
-// trigger prefix, an enclosing clause — decides its case; every later child opens
-// a sentence, so it is capitalized here.
-func (e Sentences) Text() string {
-	parts := foldLadders(e.Effects)
-	if len(parts) == 0 {
-		return ""
-	}
-	text := punctuate(parts[0])
-	for _, part := range parts[1:] {
-		text += " " + punctuate(capitalizeFirst(part))
-	}
-	return text
-}
-
 // ladderRung is a condition that compares a counted subject against a threshold.
 // A run of Conditionals whose rungs count the same subject is a threshold ladder —
 // Galactic Census pays again at 3, 5, and 6 houses — and naming the subject in
@@ -269,18 +340,6 @@ type ladderRung interface {
 // Æmber". It reports "" when it is not in that shape, and is then not folded.
 type ladderRepeating interface {
 	repeatedText() string
-}
-
-// foldLadders renders each effect's sentence, collapsing every threshold ladder it
-// finds. Effects outside a ladder render unchanged.
-func foldLadders(effects []Effect) []string {
-	parts := make([]string, 0, len(effects))
-	for i := 0; i < len(effects); {
-		run, next := foldThresholdLadder(effects, i)
-		parts = append(parts, run...)
-		i = next
-	}
-	return parts
 }
 
 // foldThresholdLadder folds the ladder starting at i, reporting its sentences and
@@ -327,31 +386,4 @@ func ladderRungAt(eff Effect) (subject, threshold, repeat string, ok bool) {
 		return "", "", "", false
 	}
 	return rung.ladderSubject(), rung.ladderThreshold(), repeat, true
-}
-
-// Resolve resolves each child effect in order.
-func (e Sentences) Resolve(ctx *EffectContext) {
-	for _, child := range e.Effects {
-		child.Resolve(ctx)
-	}
-}
-
-// declinable reports that the sentences lead with a single clickable choice, so a
-// May wrapping them is driven by that click rather than a separate Yes/No.
-func (e Sentences) declinable() bool { return leadsWithACardChoice(e.Effects) }
-
-// resolveOptional asks the leading choice declinably; the later sentences resolve
-// only when it is taken.
-func (e Sentences) resolveOptional(ctx *EffectContext) bool {
-	return resolveLeadingCardChoice(ctx, e.Effects)
-}
-
-// validate surfaces the first configuration error among the child effects.
-func (e Sentences) validate() error {
-	for _, child := range e.Effects {
-		if err := validateEffect(child); err != nil {
-			return err
-		}
-	}
-	return nil
 }

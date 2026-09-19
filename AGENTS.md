@@ -175,11 +175,15 @@ the `tools` mage namespace, invoked with a colon (`mage tool:stub`):
 
 - `mage tool:nodeUsage` — inventory the card-authoring facade: every exported name
   in `internal/card`, grouped by the category its declaration block documents,
-  with how many card definitions use it (rarest first), plus a summary of the
-  whole facade. Use it to find the neighbours a new
+  with how many card definitions use it (`CARDS`, rarest first) and how many other
+  files reference it (`OTHER` — the facade's internals, engine, web, tools, tests),
+  plus a summary of the whole facade. Use it to find the neighbours a new
   node should be shaped alongside, and to audit that a thinly-used node is built
   from reusable atoms. **Low usage is not a defect** — half the card pool is
-  unimplemented. Narrow with `-max=<n>` and `-category=<substring>`, e.g.
+  unimplemented — and **`CARDS` 0 with a non-zero `OTHER` is not dead code**: it is
+  type surface, registry plumbing, or an enum family member a card never writes by
+  name. Only both columns at zero means nothing reaches for it. Narrow with
+  `-max=<n>` and `-category=<substring>`, e.g.
   `mage tool:nodeUsage -max=1 -category=damage`.
 
 - `mage tool:gameSize` — report the in-memory `GameState` size (the cost of one

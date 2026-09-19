@@ -147,13 +147,12 @@ func (e PurgeCard) sides(ctx *EffectContext) []int {
 // resolveGate purges up to count matching cards from each named zone — the cards
 // one at a time for a Chosen Selection, with a "Done" opt-out for an Optional
 // Selection, and every match at once for an Each Selection — records the tally and
-// the total Æmber bonus, pays each owner when GainOwnerAember, and reports whether
+// the purged cards, pays each owner when GainOwnerAember, and reports whether
 // any card was purged (so a Then can gate on it). A purge that took exactly one
 // card puts it in context (ctx.It) so a following effect can name it — Custom Virus
 // destroys each creature sharing a trait with it.
 func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 	purged := 0
-	bonus := 0
 	var last LocalID
 	for _, side := range e.sides(ctx) {
 		mover := e.mover(side)
@@ -164,11 +163,11 @@ func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 				break
 			}
 			for _, id := range ids {
-				bonus += ctx.Resolver.AemberBonus(id)
 				mover.move(ctx, id)
 				purged++
 				last = id
 				ctx.Produced.Purged[side]++
+				ctx.Produced.PurgedCards = append(ctx.Produced.PurgedCards, id)
 				if e.GainOwnerAember {
 					ctx.Resolver.GainAember(side, 1)
 				}
@@ -178,7 +177,6 @@ func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 	if purged == 1 {
 		ctx.It, ctx.HasIt = last, true
 	}
-	ctx.Produced.PurgedAemberBonus = bonus
 	return purged > 0
 }
 
@@ -288,22 +286,6 @@ func (c CardsPurged) CountText() string {
 	}
 	return noun + " purged this way"
 }
-
-// PurgedAemberBonus totals the printed Æmber bonus of the cards the most recent
-// PurgeCard removed this resolution — Infurnace's opponent loses Æmber equal to the
-// total Æmber bonus of the cards it purged. It reads as a whole phrase, not a "for
-// each" tally, so a LoseAember with EqualTo names the count directly.
-type PurgedAemberBonus struct{}
-
-// Value reads the summed bonus the preceding purge recorded.
-func (PurgedAemberBonus) Value(
-	ctx *EffectContext,
-) int {
-	return ctx.Produced.PurgedAemberBonus
-}
-
-// CountText renders the phrase the loss is measured against.
-func (PurgedAemberBonus) CountText() string { return "the total Æmber bonus of the purged cards" }
 
 // PurgeSource purges the card whose ability this is (Library Access purges
 // itself), wherever that card is — in play, or mid-play and in no zone at all.

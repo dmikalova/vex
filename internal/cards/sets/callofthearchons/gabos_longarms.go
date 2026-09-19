@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Demon
 //
-//	Before Fight: Choose a creature - Gabos Longarms deals its fight damage to the chosen creature instead of to the creature it is fighting.
+//	Before Fight: Choose a creature. Gabos Longarms deals its fight damage to the chosen creature instead of to the creature it is fighting.
 var GabosLongarms = set.New(
 	"Gabos Longarms",
 	card.House.Dis,

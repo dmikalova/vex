@@ -12,7 +12,7 @@ func TestActiveHouseMatchesNoCardsInPlay(t *testing.T) {
 	}
 
 	// The ability folds into a single readable sentence under its trigger.
-	a := Ability{Trigger: TriggerAfterAnyPlayerChoosesHouse, Effect: Conditional{
+	a := Ability{Trigger: TriggerAfterChooseHouse, EachPlayer: true, Effect: Conditional{
 		Cond: c,
 		Then: StealAember{Amount: 1},
 	}}

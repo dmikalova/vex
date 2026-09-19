@@ -22,7 +22,7 @@ var RecklessRizzo = set.New(
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.StealAember{Amount: 2},
 			card.LoseKeywords{
 				Target:   card.Target.This,

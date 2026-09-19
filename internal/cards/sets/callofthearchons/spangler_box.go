@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Graft a creature from play, and your opponent gains control of Spangler Box.
+//	Action: Graft a creature from play. Your opponent gains control of Spangler Box.
 //	Destroyed: Put each card under Spangler Box into play under its owner's control.
 var SpanglerBox = set.New(
 	"Spangler Box",
@@ -24,7 +24,7 @@ var SpanglerBox = set.New(
 			card.TakeControl{
 				Target:     card.Target.This,
 				ToOpponent: true,
-				Duration:   card.Duration.Forever,
+				Duration:   card.Duration.UntilCardLeavesPlay,
 			},
 		}}),
 	card.WithAbility(

@@ -16,7 +16,7 @@ import (
 //	Power:  3
 //	Traits: Human • Witch
 //
-//	Play: Lose 1 Æmber, and forge a key at current cost -> purge Chota Hazri.
+//	Play: Lose 1 Æmber. Forge a key at current cost -> purge Chota Hazri.
 func TestChotaHazri(t *testing.T) {
 	t.Run("loses 1 Æmber to forge a key at current cost", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

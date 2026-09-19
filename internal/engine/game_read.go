@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"iter"
 	"slices"
 )
 
@@ -62,11 +63,6 @@ func (g *Game) DeckList(player int) []string {
 	return names
 }
 
-// AemberBonus returns the number of Æmber pips printed on a card.
-func (g *Game) AemberBonus(id LocalID) int {
-	return countBonus(g.cat.def(id).Bonuses, BonusAember)
-}
-
 // House returns the house a card currently belongs to. A temporary "belongs to
 // house" effect applies only while the card remains in play; everywhere else the
 // card keeps its printed house.
@@ -124,10 +120,7 @@ func (g *Game) Power(id LocalID) int {
 	defer func() { g.powerComputing = g.powerComputing[:len(g.powerComputing)-1] }()
 	core := &g.State.Cards[id]
 	p := g.cat.def(id).Power
-	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		m := g.staticOn(id, up)
-		p += g.scaleStatic(m, m.PowerBonus, id)
-	}
+	p += g.upgradeStatBonus(id, func(m StaticModifier) int { return m.PowerBonus })
 	p += int(core.PowerCounters)
 	p += int(core.TempPowerBonus)
 	p += g.constantBonus(id, func(c ConstantAbility) int { return c.PowerBonus })
@@ -153,10 +146,7 @@ func (g *Game) PowerCountersOn(id LocalID) int {
 // armor returns a creature's armor value including attached upgrades.
 func (g *Game) armor(id LocalID) int {
 	a := g.cat.def(id).Armor
-	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		m := g.staticOn(id, up)
-		a += g.scaleStatic(m, m.ArmorBonus, id)
-	}
+	a += g.upgradeStatBonus(id, func(m StaticModifier) int { return m.ArmorBonus })
 	a += int(g.State.Cards[id].TempArmorBonus)
 	a += g.constantBonus(id, func(c ConstantAbility) int { return c.ArmorBonus })
 	// A creature copying another card's printed stats (Cyber-Clone) gains that card's
@@ -183,27 +173,72 @@ func (g *Game) Armor(id LocalID) int {
 // counts, so "for each point of armor it lost this way" measures just this way.
 func (g *Game) ArmorStripped(id LocalID) int { return int(g.State.Cards[id].ArmorStripped) }
 
-// constantBonus sums the constant-ability contributions to creature id from every
-// card in play, using pick to read the relevant bonus (power or armor) from each
-// source's constant ability.
-func (g *Game) constantBonus(id LocalID, pick func(ConstantAbility) int) int {
-	sum := 0
-	for p := 0; p < 2; p++ {
-		for _, src := range g.allInPlay(p) {
-			for _, c := range g.cat.def(src).ConstantAbilities {
-				b := pick(c)
-				if b == 0 || !g.constantActive(src, c) || !g.constantAffects(src, c, id) {
-					continue
+// constantAbilitiesInPlay iterates every constant ability printed on a card either
+// player has in play, yielding the card that prints it and the ability itself.
+// ConstantAbility carries a dozen independent capabilities and each reader asks
+// about one of them, so this walk is shared by a dozen callers across the engine.
+//
+// It deliberately applies no gates. The gates are what the callers disagree on:
+// most want constantActive and constantAffects, a board-wide rule such as
+// triggerDisabled skips constantAffects because it changes the rules for everyone,
+// and constantBlanksText must not call constantActive at all (that would recurse
+// through textBlanked — see its doc comment). Folding the gates in here would make
+// those differences invisible, so they stay written out at each call site.
+func (g *Game) constantAbilitiesInPlay() iter.Seq2[LocalID, ConstantAbility] {
+	return func(yield func(LocalID, ConstantAbility) bool) {
+		for p := range 2 {
+			for src, c := range g.constantAbilitiesOf(p) {
+				if !yield(src, c) {
+					return
 				}
-				if c.Per != nil {
-					b *= c.Per.Value(g.constantContext(src))
-				}
-				if c.PerTarget != nil {
-					b *= c.PerTarget.perTargetValue(g.constantContext(src), id)
-				}
-				sum += b
 			}
 		}
+	}
+}
+
+// constantAbilitiesOf is constantAbilitiesInPlay narrowed to the cards one player
+// has in play, for the reads whose rule is per-player rather than board-wide.
+func (g *Game) constantAbilitiesOf(player int) iter.Seq2[LocalID, ConstantAbility] {
+	return func(yield func(LocalID, ConstantAbility) bool) {
+		for _, src := range g.allInPlay(player) {
+			for _, c := range g.cat.def(src).ConstantAbilities {
+				if !yield(src, c) {
+					return
+				}
+			}
+		}
+	}
+}
+
+// anyActiveConstant reports whether a constant ability in play both satisfies want
+// and reaches id. This is the shape of every yes/no constant-ability read — the
+// caller supplies only the capability it cares about, and the two standard gates
+// are applied here.
+func (g *Game) anyActiveConstant(id LocalID, want func(ConstantAbility) bool) bool {
+	for src, c := range g.constantAbilitiesInPlay() {
+		if want(c) && g.constantActive(src, c) && g.constantAffects(src, c, id) {
+			return true
+		}
+	}
+	return false
+}
+
+// constantBonus sums what the constant abilities in play add to one numeric stat
+// of id, pick reading that stat off each ability.
+func (g *Game) constantBonus(id LocalID, pick func(ConstantAbility) int) int {
+	sum := 0
+	for src, c := range g.constantAbilitiesInPlay() {
+		b := pick(c)
+		if b == 0 || !g.constantActive(src, c) || !g.constantAffects(src, c, id) {
+			continue
+		}
+		if c.Per != nil {
+			b *= c.Per.Value(g.constantContext(src))
+		}
+		if c.PerTarget != nil {
+			b *= c.PerTarget.perTargetValue(g.constantContext(src), id)
+		}
+		sum += b
 	}
 	return sum
 }
@@ -259,16 +294,12 @@ func (g *Game) textBlanked(id LocalID) bool {
 // nothing, so its blank is skipped — a constant BlankText reaches artifacts, never
 // a creature source, so the registry check alone breaks any recursion.
 func (g *Game) constantBlanksText(id LocalID) bool {
-	for p := 0; p < 2; p++ {
-		for _, src := range g.allInPlay(p) {
-			if g.continuousActive(ContinuousTextBlank, src) {
-				continue
-			}
-			for _, c := range g.cat.def(src).ConstantAbilities {
-				if c.BlankText && g.constantAffects(src, c, id) {
-					return true
-				}
-			}
+	for src, c := range g.constantAbilitiesInPlay() {
+		if !c.BlankText || g.continuousActive(ContinuousTextBlank, src) {
+			continue
+		}
+		if g.constantAffects(src, c, id) {
+			return true
 		}
 	}
 	return false
@@ -280,17 +311,7 @@ func (g *Game) constantBlanksText(id LocalID) bool {
 // own active gates via constantActive (blank, off-flank, WhileCondition), since a
 // trait-removing source is itself a creature that can be blanked or conditioned.
 func (g *Game) constantRemovesTraits(id LocalID) bool {
-	for p := 0; p < 2; p++ {
-		for _, src := range g.allInPlay(p) {
-			for _, c := range g.cat.def(src).ConstantAbilities {
-				if c.RemovesTraits && g.constantActive(src, c) &&
-					g.constantAffects(src, c, id) {
-					return true
-				}
-			}
-		}
-	}
-	return false
+	return g.anyActiveConstant(id, func(c ConstantAbility) bool { return c.RemovesTraits })
 }
 
 // constantSelectiveArchivePickup reports whether player controls an active card in
@@ -298,11 +319,9 @@ func (g *Game) constantRemovesTraits(id LocalID) bool {
 // returning that source card. Like triggerDisabled it reads player-wide, ignoring
 // Target: the source's mere presence changes the pickup rule for its controller.
 func (g *Game) constantSelectiveArchivePickup(player int) (LocalID, bool) {
-	for _, src := range g.allInPlay(player) {
-		for _, c := range g.cat.def(src).ConstantAbilities {
-			if c.SelectiveArchivePickup && g.constantActive(src, c) {
-				return src, true
-			}
+	for src, c := range g.constantAbilitiesOf(player) {
+		if c.SelectiveArchivePickup && g.constantActive(src, c) {
+			return src, true
 		}
 	}
 	return 0, false
@@ -314,9 +333,7 @@ func (g *Game) assault(id LocalID) int {
 	if !g.textBlanked(id) {
 		a = g.cat.def(id).Assault
 	}
-	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		a += g.cat.def(up).Static.AssaultBonus
-	}
+	a += g.upgradeStatBonus(id, func(m StaticModifier) int { return m.AssaultBonus })
 	a += int(g.State.Cards[id].TempAssaultBonus)
 	a += int(g.State.Cards[id].AssaultUntilNextTurn)
 	a += g.constantBonus(id, func(c ConstantAbility) int { return c.AssaultBonus })
@@ -329,9 +346,7 @@ func (g *Game) hazardous(id LocalID) int {
 	if !g.textBlanked(id) {
 		h = g.cat.def(id).Hazardous
 	}
-	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		h += g.cat.def(up).Static.HazardousBonus
-	}
+	h += g.upgradeStatBonus(id, func(m StaticModifier) int { return m.HazardousBonus })
 	h += g.constantBonus(id, func(c ConstantAbility) int { return c.HazardousBonus })
 	return h
 }
@@ -347,9 +362,7 @@ func (g *Game) splashAttack(id LocalID) int {
 	if !g.textBlanked(id) {
 		s = g.cat.def(id).SplashAttack
 	}
-	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		s += g.cat.def(up).Static.SplashAttackBonus
-	}
+	s += g.upgradeStatBonus(id, func(m StaticModifier) int { return m.SplashAttackBonus })
 	return s
 }
 
@@ -450,18 +463,9 @@ func (g *Game) keywordFromNeighborUpgrades(id LocalID, k Keyword) bool {
 // keywordFromConstantAbilities reports whether any in-play card's constant ability
 // grants the keyword to this creature while active and affecting it.
 func (g *Game) keywordFromConstantAbilities(id LocalID, k Keyword) bool {
-	for p := 0; p < 2; p++ {
-		for _, src := range g.allInPlay(p) {
-			for _, c := range g.cat.def(src).ConstantAbilities {
-				for _, kw := range c.Keywords {
-					if kw == k && g.constantActive(src, c) && g.constantAffects(src, c, id) {
-						return true
-					}
-				}
-			}
-		}
-	}
-	return false
+	return g.anyActiveConstant(id, func(c ConstantAbility) bool {
+		return slices.Contains(c.Keywords, k)
+	})
 }
 
 // staticOn returns the continuous modifier an attached upgrade currently applies
@@ -483,6 +487,21 @@ func (g *Game) scaleStatic(m StaticModifier, bonus int, host LocalID) int {
 		return bonus
 	}
 	return bonus * m.Per.perTargetValue(g.constantContext(host), host)
+}
+
+// upgradeStatBonus sums what the upgrades attached to host contribute to one stat,
+// pick reading that stat off each modifier. Every stat goes through here so none
+// can skip a modifier's own gates: staticOn suspends a WhileOnFlank upgrade off the
+// flank, and scaleStatic applies its Per count. Assault, Hazardous, and Splash used
+// to read Static directly and silently ignored both
+// (TestUpgradeStatBonusHonoursWhileOnFlankForEveryStat).
+func (g *Game) upgradeStatBonus(host LocalID, pick func(StaticModifier) int) int {
+	sum := 0
+	for up, ok := g.firstUpgrade(host); ok; up, ok = g.nextUpgrade(up) {
+		m := g.staticOn(host, up)
+		sum += g.scaleStatic(m, pick(m), host)
+	}
+	return sum
 }
 
 // Damage returns the damage currently on a creature.
@@ -940,10 +959,7 @@ func (g *Game) choosableHouses(player int) []House {
 			add(h)
 		}
 	}
-	for _, id := range g.State.Battleline[player].slice() {
-		add(g.House(id))
-	}
-	for _, id := range g.State.Artifacts[player].slice() {
+	for _, id := range g.allInPlay(player) {
 		add(g.House(id))
 	}
 	return out

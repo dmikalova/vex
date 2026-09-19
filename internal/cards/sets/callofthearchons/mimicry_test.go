@@ -15,7 +15,7 @@ import (
 //
 //	Play: Play a tactic from your opponent's discard pile.
 func TestMimicry(t *testing.T) {
-	t.Run("plays an action from the opponent's discard and puts it on top", func(t *testing.T) {
+	t.Run("plays a Tactic from the opponent's discard and puts it on top", func(t *testing.T) {
 		var copied, buried, prey ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{

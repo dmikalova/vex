@@ -18,11 +18,14 @@ func (e RedirectFightDamage) validate() error {
 	return nil
 }
 
-// Text renders the effect, e.g. "choose a creature - Gabos Longarms deals its
+// Text renders the effect, e.g. "choose a creature. Gabos Longarms deals its
 // fight damage to the chosen creature instead of to the creature it is fighting".
 func (e RedirectFightDamage) Text() string {
-	return "choose " + e.Target.Text() + " - " + SelfName + " deals its fight damage to the chosen creature instead of to the creature it is fighting"
+	return leadInSentence("choose "+e.Target.Text(), SelfName+
+		" deals its fight damage to the chosen creature instead of to the creature it is fighting")
 }
+
+func (RedirectFightDamage) endsSentence() bool { return true }
 
 // Resolve records the chosen creature as the target of the attacker's fight
 // damage for the fight in progress.

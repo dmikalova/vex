@@ -15,8 +15,8 @@ import (
 //	Power:  20
 //	Traits: Mutant
 //
-//	Play: Deusillus captures all your opponent's Æmber, and deal 5 damage to an enemy creature.
-//	Fight/Reap: Move 1 Æmber from Deusillus to the common supply, and deal 2 damage to each enemy creature.
+//	Play: Deusillus captures all your opponent's Æmber. Deal 5 damage to an enemy creature.
+//	Fight/Reap: Move 1 Æmber from Deusillus to the common supply. Deal 2 damage to each enemy creature.
 func TestDeusillus(t *testing.T) {
 	t.Run(
 		"play captures all the opponent's Æmber and deals 5 to an enemy creature",

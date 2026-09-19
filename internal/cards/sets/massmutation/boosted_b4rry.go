@@ -25,10 +25,10 @@ var BoostedB4RRY = set.Gigantic(
 	card.WithAbility(
 		card.Trigger.PlayFightReap, card.ChooseOne{
 			Options: []card.Effect{
-				card.Sentences{Effects: []card.Effect{
+				card.Sequence{Effects: []card.Effect{
 					card.TakeControl{
 						Target:   card.Target.EnemyArtifact,
-						Duration: card.Duration.Forever,
+						Duration: card.Duration.UntilCardLeavesPlay,
 					},
 					card.Conditional{
 						Cond: card.ItIsOffIdentity{},
