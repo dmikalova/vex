@@ -350,29 +350,26 @@ func TestContainsAndIndexOfID(t *testing.T) {
 
 func TestRarityMarks(t *testing.T) {
 	for _, tc := range []struct {
-		rarity   engine.Rarity
-		mark     rarityMark
-		diamonds int
+		rarity engine.Rarity
+		mark   rarityMark
+		icon   string
 	}{
-		{engine.Common, rarityCommon, 1},
-		{engine.Uncommon, rarityUncommon, 2},
-		{engine.Rare, rarityRare, 3},
-		{engine.Special, raritySpecial, 4},
-		{engine.Connected, rarityConnected, 0},
+		{engine.Common, rarityCommon, "rarity-triangle"},
+		{engine.Uncommon, rarityUncommon, "rarity-square"},
+		{engine.Rare, rarityRare, "rarity-pentagon"},
+		{engine.Special, raritySpecial, "rarity-hexagon"},
+		{engine.Connected, rarityConnected, "rarity-connected"},
 	} {
 		got := rarityMarkOf(tc.rarity)
 		if got != tc.mark {
 			t.Errorf("rarityMarkOf(%v) = %v, want %v", tc.rarity, got, tc.mark)
 		}
-		if n := got.diamonds(); n != tc.diamonds {
-			t.Errorf("%v diamonds = %d, want %d", tc.rarity, n, tc.diamonds)
+		if name := got.iconName(); name != tc.icon {
+			t.Errorf("%v iconName = %q, want %q", tc.rarity, name, tc.icon)
 		}
 	}
-	if !rarityConnected.isConnected() || rarityCommon.isConnected() {
-		t.Error("isConnected is wrong")
-	}
-	if n := len(rarityDiamonds(3)); n != 3 {
-		t.Errorf("rarityDiamonds(3) rendered %d icons", n)
+	if name := rarityNone.iconName(); name != "" {
+		t.Errorf("rarityNone iconName = %q, want empty", name)
 	}
 }
 

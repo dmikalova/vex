@@ -42,17 +42,21 @@ func TestPlaceCounter(t *testing.T) {
 	safe := g.AddToBattleline(testCreature("safe", 3), 1)
 	ctx := &EffectContext{Resolver: g, Source: mark, Controller: 0}
 
-	place := PlaceCounter{Kind: CounterDoom, Target: Target{Kind: TargetEachEnemyCreature}}
-	if got := (PlaceCounter{Kind: CounterDoom, Target: Target{Kind: TargetChosenCreature}}).Text(); got != "put a doom counter on a creature" {
+	place := PlaceCounter{
+		Amount: 1,
+		Kind:   CounterDoom,
+		Target: Target{Kind: TargetEachEnemyCreature},
+	}
+	if got := (PlaceCounter{Amount: 1, Kind: CounterDoom, Target: Target{Kind: TargetChosenCreature}}).Text(); got != "put a doom counter on a creature" {
 		t.Errorf("text = %q", got)
 	}
 	if got := (PlaceCounter{Kind: CounterDoom, Target: Target{Kind: TargetChosenCreature}, Amount: 2}).Text(); got != "put 2 doom counters on a creature" {
 		t.Errorf("plural text = %q", got)
 	}
-	if err := (PlaceCounter{Target: Target{Kind: TargetChosenCreature}}).validate(); err == nil {
+	if err := (PlaceCounter{Amount: 1, Target: Target{Kind: TargetChosenCreature}}).validate(); err == nil {
 		t.Error("PlaceCounter without a kind should not validate")
 	}
-	if err := (PlaceCounter{Kind: CounterDoom}).validate(); err == nil {
+	if err := (PlaceCounter{Amount: 1, Kind: CounterDoom}).validate(); err == nil {
 		t.Error("PlaceCounter without a target should not validate")
 	}
 	if err := place.validate(); err != nil {
@@ -356,7 +360,7 @@ func TestVineappleTreeGrowthCycle(t *testing.T) {
 		WithAbility(TriggerAfterPlayerForgesKey,
 			RemoveCounters{Kind: CounterGrowth, Target: Target{Kind: TargetThisCreature}}),
 		WithAbility(TriggerAction,
-			PlaceCounter{Kind: CounterGrowth, Target: Target{Kind: TargetThisCreature}}))
+			PlaceCounter{Amount: 1, Kind: CounterGrowth, Target: Target{Kind: TargetThisCreature}}))
 
 	g := NewGame("A", "B", 1)
 	id := g.AddArtifact(tree, 0)
@@ -396,7 +400,7 @@ func TestVineappleTreeGrowthCycle(t *testing.T) {
 // TestPlaceCounterPer covers Book of Malefaction's reaction: a Per count scales
 // the counters placed "for each Æmber stolen" and leads the rendered sentence.
 func TestPlaceCounterPer(t *testing.T) {
-	e := PlaceCounter{
+	e := PlaceCounter{Amount: 1,
 		Kind:   CounterWarrant,
 		Target: Target{Kind: TargetThisCreature},
 		Per:    AemberStolenThisEvent{},

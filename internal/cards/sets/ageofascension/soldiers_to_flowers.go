@@ -19,7 +19,7 @@ var SoldiersToFlowers = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.PurgeCard{
-			Zone:   card.Discard,
+			Zones:  []card.Zone{card.Discard},
 			Player: card.EachPlayer,
 			Selection: card.Each{
 				House: card.Houses.Named(card.House.Self),

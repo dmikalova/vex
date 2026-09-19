@@ -3,8 +3,12 @@ package engine
 import "testing"
 
 func TestReturnNamedToHand(t *testing.T) {
-	e := PutNamedIntoHand{Name: "Urchin"}
-	if e.Text() != "put an Urchin from play or from your discard pile into your hand" {
+	e := PutCard{
+		Zones:       []Zone{InPlay, Discard},
+		Selection:   Chosen{Name: "Urchin"},
+		Destination: ToHand,
+	}
+	if e.Text() != "put an Urchin from play or your discard pile into your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
 
@@ -226,11 +230,13 @@ func TestMoveFromPlayValidate(t *testing.T) {
 	if err := (PutFromPlay{Destination: ToHand}).validate(); err == nil {
 		t.Error("an unset target should be rejected")
 	}
-	if err := (PutFromPlay{Target: this, Destination: ToArchives, WithUpgrades: true}).validate(); err == nil {
-		t.Error("WithUpgrades should be rejected for a non-hand destination")
-	}
-	if err := (PutFromPlay{Target: this, Destination: ToHand, WithUpgrades: true}).validate(); err != nil {
-		t.Errorf("WithUpgrades to hand should be valid, got %v", err)
+	// WithUpgrades sends an upgrade wherever its host is going, so it is no longer
+	// tied to the hand; TestPutFromPlayTakesUpgradesToAnyDestination moves them.
+	for _, d := range []Destination{ToHand, ToTopOfDeck, ToDeckShuffled, ToArchives} {
+		e := PutFromPlay{Target: this, Destination: d, WithUpgrades: true}
+		if err := e.validate(); err != nil {
+			t.Errorf("WithUpgrades to destination %d should be valid, got %v", d.zone, err)
+		}
 	}
 }
 
@@ -261,6 +267,46 @@ func TestPutFromPlayWithUpgrades(t *testing.T) {
 	}
 }
 
+// TestPutFromPlayTakesUpgradesToAnyDestination pins that an upgrade follows its
+// host wherever the host is going, not only to the hand. The upgrade is a card in
+// play in its own right, so it takes the same exit its host takes; the only reason
+// it would land in the discard pile instead is the host's own move shedding it,
+// which is exactly what WithUpgrades pre-empts.
+func TestPutFromPlayTakesUpgradesToAnyDestination(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		dest Destination
+		in   func(*Game, LocalID) bool
+	}{
+		{"archives", ToArchives, func(g *Game, id LocalID) bool { return g.State.Archives[0].contains(id) }},
+		{"top of deck", ToTopOfDeck, func(g *Game, id LocalID) bool { return g.State.Deck[0].contains(id) }},
+		{"shuffled into deck", ToDeckShuffled, func(g *Game, id LocalID) bool { return g.State.Deck[0].contains(id) }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewGame("A", "B", 1)
+			src := g.AddToBattleline(testCreature("src", 3), 0)
+			up := attachUpgrade(g, src, NewCard("plating", Mars, Upgrade, Common))
+			ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+			PutFromPlay{
+				Target:       Target{Kind: TargetThisCreature},
+				Destination:  tc.dest,
+				WithUpgrades: true,
+			}.Resolve(ctx)
+
+			if !tc.in(g, src) {
+				t.Error("the creature did not reach the destination")
+			}
+			if !tc.in(g, up) {
+				t.Error("the upgrade should follow its host, not shed to the discard pile")
+			}
+			if len(g.Discard(0)) != 0 {
+				t.Errorf("nothing should be discarded; discard = %v", g.Discard(0))
+			}
+		})
+	}
+}
+
 func TestPutChosen(t *testing.T) {
 	eachArt := Target{Kind: TargetEachArtifact}
 	// Text renders "up to N" with the plural noun for each destination.
@@ -271,7 +317,7 @@ func TestPutChosen(t *testing.T) {
 		ToArchives:     "put up to 3 artifacts into their owners' archives",
 	}
 	for dest, want := range cases {
-		e := PutChosen{Amount: 3, UpTo: true, Target: eachArt, Destination: dest}
+		e := PutChosen{Quantity: UpTo{N: Fixed(3)}, Target: eachArt, Destination: dest}
 		if got := e.Text(); got != want {
 			t.Errorf("text(%d) = %q, want %q", dest.zone, got, want)
 		}
@@ -279,26 +325,32 @@ func TestPutChosen(t *testing.T) {
 
 	// Without UpTo the count is mandatory, so "up to" drops out; a single card
 	// reads as the indefinite noun.
-	mandatory := PutChosen{Amount: 2, Target: eachArt, Destination: ToDeckShuffled}
+	mandatory := PutChosen{
+		Quantity:    Takes{N: Fixed(2)},
+		Target:      eachArt,
+		Destination: ToDeckShuffled,
+	}
 	if got := mandatory.Text(); got != "shuffle 2 artifacts into their owners' decks" {
 		t.Errorf("mandatory text = %q", got)
 	}
-	one := PutChosen{Amount: 1, Target: eachArt, Destination: ToHand}
+	one := PutChosen{Quantity: Takes{N: Fixed(1)}, Target: eachArt, Destination: ToHand}
 	if got := one.Text(); got != "put an artifact into its owner's hand" {
 		t.Errorf("single text = %q", got)
 	}
 
-	// validate rejects an unset target, a non-positive Count, and a bad destination.
-	if err := (PutChosen{Amount: 3, Destination: ToHand}).validate(); err == nil {
+	// validate rejects an unset target and a bad destination. It no longer rejects
+	// a non-positive count: an unset Quantity is a legal one-card move, and a
+	// Quantity has no way to say a negative number.
+	if err := (PutChosen{Quantity: Takes{N: Fixed(3)}, Destination: ToHand}).validate(); err == nil {
 		t.Error("unset target should be rejected")
 	}
-	if err := (PutChosen{Target: eachArt, Destination: ToHand}).validate(); err == nil {
-		t.Error("non-positive Count should be rejected")
+	if err := (PutChosen{Target: eachArt, Destination: ToHand}).validate(); err != nil {
+		t.Errorf("an unset Quantity should move one card: %v", err)
 	}
-	if err := (PutChosen{Amount: 1, Target: eachArt, Destination: ToBottomOfDeck}).validate(); err == nil {
+	if err := (PutChosen{Quantity: Takes{N: Fixed(1)}, Target: eachArt, Destination: ToBottomOfDeck}).validate(); err == nil {
 		t.Error("unsupported destination should be rejected")
 	}
-	if err := (PutChosen{Amount: 3, Target: eachArt, Destination: ToHand}).validate(); err != nil {
+	if err := (PutChosen{Quantity: Takes{N: Fixed(3)}, Target: eachArt, Destination: ToHand}).validate(); err != nil {
 		t.Errorf("valid PutChosen = %v", err)
 	}
 
@@ -307,7 +359,7 @@ func TestPutChosen(t *testing.T) {
 	a2 := g.AddArtifact(exAutocannon(), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 	// Only two artifacts exist, so the loop stops when none remain (below Count).
-	PutChosen{Amount: 3, UpTo: true, Target: eachArt, Destination: ToHand}.Resolve(ctx)
+	PutChosen{Quantity: UpTo{N: Fixed(3)}, Target: eachArt, Destination: ToHand}.Resolve(ctx)
 	if g.inPlay(a1) || g.inPlay(a2) {
 		t.Error("both artifacts should have left play")
 	}
@@ -332,8 +384,7 @@ func TestPutChosen(t *testing.T) {
 	art := g2.AddArtifact(exAutocannon(), 0)
 	g2.SetChooser(0, optionPicker{idx: 1}) // index 0 is the artifact, 1 is "Done"
 	PutChosen{
-		Amount:      3,
-		UpTo:        true,
+		Quantity:    UpTo{N: Fixed(3)},
 		Target:      eachArt,
 		Destination: ToHand,
 	}.Resolve(
@@ -355,7 +406,7 @@ func TestPutChosenSkipsACardSettledOutOfPlay(t *testing.T) {
 	alive := g.AddToBattleline(testCreature("alive", 3), 1)
 	g.SetChooser(0, FirstChooser{})
 	PutChosen{
-		Amount:      2,
+		Quantity:    Takes{N: Fixed(2)},
 		Target:      Target{Kind: TargetEachEnemyCreature},
 		Destination: ToArchives.Yours(),
 	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
@@ -381,7 +432,7 @@ func TestPutChosenGroupsShufflesByOwnerInLog(t *testing.T) {
 	b1 := g.AddToBattleline(testCreature("b1", 3), 1)
 	g.SetChooser(0, FirstChooser{})
 	PutChosen{
-		Amount:      3,
+		Quantity:    Takes{N: Fixed(3)},
 		Target:      Target{Kind: TargetEachCreature},
 		Destination: ToDeckShuffled,
 	}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
@@ -456,8 +507,7 @@ func TestAbductionText(t *testing.T) {
 	}
 
 	many := PutChosen{
-		Amount:      3,
-		UpTo:        true,
+		Quantity:    UpTo{N: Fixed(3)},
 		Target:      Target{Kind: TargetEachEnemyCreature},
 		Destination: ToArchives.Yours(),
 	}

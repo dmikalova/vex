@@ -1,6 +1,7 @@
 package worldscollide
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/card"
@@ -37,7 +38,11 @@ func TestSnagsMirror(t *testing.T) {
 
 	h.P2.EndTurn() // back to P1, promoting the forbidden house
 
-	if err := h.Game().ChooseHouse(0, card.House.Sanctum); err != engine.ErrHouseNotAllowed {
+	if err := h.Game().
+		ChooseHouse(0, card.House.Sanctum); !errors.Is(
+		err,
+		engine.ErrHouseNotAllowed,
+	) {
 		t.Errorf("P1 choosing Sanctum = %v, want ErrHouseNotAllowed", err)
 	}
 	h.P1.ChooseHouse(card.House.Dis) // any other house is allowed

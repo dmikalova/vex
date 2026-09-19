@@ -5,12 +5,12 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Tormax
 //
 //	House:  Dis
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  8
 //	Traits: Demon
 //
-//	Play/Fight/Reap: Discard your hand, and purge 2 random cards from your opponent's hand.
+//	Play/Fight/Reap: Discard your hand, and your opponent purges 2 random cards from their hand.
 var Tormax = set.Gigantic(
 	"Tormax",
 	card.House.Dis,
@@ -22,9 +22,10 @@ var Tormax = set.Gigantic(
 		card.Trigger.PlayFightReap, card.Sequence{Effects: []card.Effect{
 			card.DiscardHand{Player: card.Controller},
 			card.PurgeCard{
-				Zone:      card.Hand,
+				Zones:     []card.Zone{card.Hand},
 				Player:    card.Opponent,
-				Selection: card.Random{Count: 2},
+				Selection: card.Random{},
+				Quantity:  card.Takes{N: card.Fixed(2)},
 			},
 		}}),
 )

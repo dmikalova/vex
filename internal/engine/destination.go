@@ -9,6 +9,14 @@ import "fmt"
 // enemy card, so Yours is meaningful on the archives alone. The deck has three
 // separate destinations (its top, its bottom, and shuffled in), so "the deck"
 // alone is never a destination; a card always names which.
+// Play is deliberately not a Destination, so PutIntoPlay stays outside this
+// matrix. Two reasons, and the second is the structural one: entering play runs a
+// lifecycle (flank choice, exhaustion, armor, the enters-play window every
+// AfterCreatureEnters card watches) where every arm here runs at most the
+// leave-play teardown; and the matrix exists because the SOURCE zone decides the
+// call, while putIntoPlay is source-agnostic — it calls removeFromAnyZone itself,
+// so play would be a column with one row. Folding it in would buy no sharing and
+// cost the matrix its one property, that it only moves cards between piles.
 type Destination struct {
 	// zone is the zone half of the destination.
 	zone destinationZone
@@ -133,12 +141,13 @@ func (d Destination) moveSource(ctx *EffectContext) {
 // source-by-destination move matrix behind the movement verbs (ADR 0031). owner
 // names whose copy of a pile zone the card sits in; the from-play resolvers ignore
 // it because a card in play has no owning pile. Only the pairs a verb actually
-// produces are listed: purge from a hand, a discard pile, or play; discard from a
-// hand or archives; archive from a hand, a discard pile, a deck, or play; into a
-// hand from a deck, a discard pile, or play; shuffled into a deck from a hand, a
-// discard pile, or play; and on top of a deck from play or a discard pile. archive
-// also has a purge-pile source (Universal Recycle Bin recovering a card set aside
-// for good).
+// produces are listed: purge from a hand, a discard pile, a deck, the archives, or
+// play; discard from a hand, the archives, or a deck; archive from a hand, a
+// discard pile, a deck, the purge pile, or play (Universal Recycle Bin recovers a
+// card set aside for good); into a hand from a deck, a discard pile, or play;
+// shuffled into a deck from a hand, a discard pile, or play; on top of a deck from
+// play or a discard pile; and on the bottom of a deck from that same deck, the
+// leftover of a look (DeckDest.IntoBottomOfDeck).
 func (d Destination) moveFrom(ctx *EffectContext, from Zone, owner int, id LocalID) {
 	switch d.zone {
 	case destPurged:
@@ -155,11 +164,16 @@ func (d Destination) moveFrom(ctx *EffectContext, from Zone, owner int, id Local
 			ctx.Resolver.PurgeFromPlay(id)
 		}
 	case destDiscard:
-		if from == Archives {
+		switch from {
+		case Archives:
 			ctx.Resolver.DiscardCardFromArchives(owner, id)
-			return
+		case Deck:
+			ctx.Resolver.MoveFromDeckToDiscard(id)
+		default: // Hand
+			ctx.Resolver.DiscardCardFromHand(owner, id)
 		}
-		ctx.Resolver.DiscardCardFromHand(owner, id)
+	case destBottomOfDeck:
+		ctx.Resolver.PutDeckCardOnBottom(id)
 	case destTopOfDeck:
 		switch from {
 		case Discard:
@@ -217,3 +231,8 @@ func (d Destination) movable() bool {
 		return false
 	}
 }
+
+// valid reports whether the destination names a zone, so a move effect can reject
+// the invalid zero value at init rather than silently treating it as the hand
+// (ADR 0010).
+func (d Destination) valid() bool { return d.zone != destUnset }

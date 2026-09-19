@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //
 //	Alpha.
-//	Play: For each Æmber in your pool, gain 1 Æmber, and for each Æmber in your opponent's pool, your opponent gains 1 Æmber.
+//	Play: Each player gains Æmber equal to the Æmber in their pool.
 func TestBinateRupture(t *testing.T) {
 	t.Run("each player gains aember equal to the aember in their pool", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

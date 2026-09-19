@@ -23,9 +23,9 @@ var Philophosaurus = set.New(
 		card.Trigger.Reap, card.May{Do: card.LookAtTopOfDeck{
 			Amount: 3,
 			Then: []card.TopAct{
-				card.ChooseAndMove{Count: 1, Dest: card.Into.Archives},
-				card.ChooseAndMove{Count: 1, Dest: card.Into.Hand},
-				card.ChooseAndMove{Count: 1, Dest: card.Into.Discard},
+				card.ChooseAndMove{Cards: 1, Dest: card.Into.Archives},
+				card.ChooseAndMove{Cards: 1, Dest: card.Into.Hand},
+				card.ChooseAndMove{Cards: 1, Dest: card.Into.Discard},
 			},
 		}}),
 )

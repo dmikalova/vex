@@ -29,7 +29,7 @@ var VineappleTree = set.New(
 			Target: card.Target.This,
 		}),
 	card.WithAbility(
-		card.Trigger.Action, card.PlaceCounter{
+		card.Trigger.Action, card.PlaceCounter{Amount: 1,
 			Kind:   card.Counter.Growth,
 			Target: card.Target.This,
 		}),

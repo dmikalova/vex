@@ -40,7 +40,7 @@ func (e GainAember) validate() error {
 // sentence (rule 9), e.g. "for each key your opponent has forged, gain 1 Æmber".
 func (e GainAember) Text() string {
 	if e.EqualTo != nil {
-		return e.gainVerb() + " Æmber equal to " + e.EqualTo.CountText()
+		return e.gainVerb() + " Æmber equal to " + equalToText(e.EqualTo, e.Player)
 	}
 	phrase := fmt.Sprintf("gain %d Æmber", e.Amount)
 	switch e.Player {
@@ -66,6 +66,22 @@ func (e GainAember) gainVerb() string {
 		return "each player gains"
 	default:
 		return "gain"
+	}
+}
+
+// repeatedText renders the gain as a repetition of an identical one already
+// stated — "gain 1 more" — for the later rungs of a threshold ladder. A gain whose
+// size is not a plain number, or whose subject gainVerb cannot name, has no such
+// form and declines with "".
+func (e GainAember) repeatedText() string {
+	if e.EqualTo != nil || e.Per != nil {
+		return ""
+	}
+	switch e.Player {
+	case Controller, Opponent, EachPlayer:
+		return fmt.Sprintf("%s %d more", e.gainVerb(), e.Amount)
+	default:
+		return ""
 	}
 }
 

@@ -1054,7 +1054,7 @@ func TestAndCondition(t *testing.T) {
 	trait := ItIsOfTrait{Trait: Mutant}
 	and := And{Conditions: []Condition{friendly, trait}}
 
-	if got := and.CondText(); got != "if it is a friendly creature and it is a Mutant creature" {
+	if got := and.CondText(); got != "if it is a friendly Mutant creature" {
 		t.Errorf("and text = %q", got)
 	}
 
@@ -1084,6 +1084,79 @@ func TestAndCondition(t *testing.T) {
 	}
 	if err := and.validate(); err != nil {
 		t.Errorf("a well-formed And should validate: %v", err)
+	}
+}
+
+// TestAndCollapsesItShapeClauses pins the noun-phrase fold: conditions that all
+// describe the shape of the card in context read as one phrase, and an And that
+// mixes in anything else keeps the literal "and" join.
+func TestAndCollapsesItShapeClauses(t *testing.T) {
+	cases := []struct {
+		name  string
+		conds []Condition
+		want  string
+	}{{
+		name:  "scope and trait",
+		conds: []Condition{ItIsFriendly{}, ItIsOfTrait{Trait: Cat}},
+		want:  "if it is a friendly Cat creature",
+	}, {
+		name:  "an enemy scope takes the right article",
+		conds: []Condition{ItIsEnemy{}, ItIsOfTrait{Trait: Cat}},
+		want:  "if it is an enemy Cat creature",
+	}, {
+		name: "a house joins the phrase",
+		conds: []Condition{
+			ItIsFriendly{},
+			ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Mars}, Type: Creature},
+		},
+		want: "if it is a friendly Mars creature",
+	}, {
+		name: "clauses that disagree on the noun do not collapse",
+		conds: []Condition{
+			ItIsFriendly{},
+			ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Mars}, Type: Artifact},
+		},
+		want: "if it is a friendly creature and it is a Mars artifact",
+	}, {
+		name:  "a non-shape clause blocks the collapse",
+		conds: []Condition{ItIsEnemy{}, ItIsYourTurn{}},
+		want:  "if it is an enemy creature and it is your turn",
+	}, {
+		name: "a clause with no adjective blocks the collapse",
+		conds: []Condition{
+			ItIsFriendly{},
+			ItIs{House: HouseMatcher{Kind: MatchChosenHouse}},
+		},
+		want: "if it is a friendly creature and it is of the chosen house",
+	}, {
+		name: "a clause naming another card blocks the collapse",
+		conds: []Condition{
+			ItIsFriendly{},
+			ItIs{
+				House: HouseMatcher{Kind: MatchNamedHouse, House: Mars},
+				Type:  Creature,
+				Other: true,
+			},
+		},
+		want: "if it is a friendly creature and it is another Mars creature",
+	}, {
+		name: "a clause that renames it blocks the collapse",
+		conds: []Condition{
+			ItIsFriendly{},
+			ItIs{
+				House: HouseMatcher{Kind: MatchNamedHouse, House: Mars},
+				Type:  Creature,
+				Noun:  ThatCard,
+			},
+		},
+		want: "if it is a friendly creature and that card is a Mars creature",
+	}}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := (And{Conditions: tc.conds}).CondText(); got != tc.want {
+				t.Errorf("CondText() = %q, want %q", got, tc.want)
+			}
+		})
 	}
 }
 
@@ -1526,6 +1599,11 @@ func TestMoveAemberRecordsMovedTally(t *testing.T) {
 func TestMovedAnyAember(t *testing.T) {
 	if got := (MovedAnyAember{}).CondText(); got != "if you moved any Æmber this way" {
 		t.Errorf("CondText = %q", got)
+	}
+	// Naming the source card keeps a following "it" off the Æmber (Shadowsaurus).
+	named := MovedAnyAember{Noun: ThatCreature}
+	if got := named.CondText(); got != "if there was any Æmber on that creature" {
+		t.Errorf("named CondText = %q", got)
 	}
 	g := NewGame("A", "B", 1)
 	if (MovedAnyAember{}).Met(&EffectContext{Resolver: g, Produced: Produced{AemberMoved: 0}}) {

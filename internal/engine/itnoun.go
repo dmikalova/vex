@@ -20,6 +20,10 @@ const (
 	// FoughtCreature names the creature the source is fighting — Baldric the Bold
 	// asks about "the fought creature", not "it".
 	FoughtCreature
+	// ThatCreature names the creature an effect just acted on, when the effect
+	// between the two put something else in focus that "it" would otherwise attach
+	// to — Shadowsaurus moves Æmber off a creature, so "it" would read as the Æmber.
+	ThatCreature
 )
 
 // noun renders the wording choice as the phrase a condition puts in front of "is".
@@ -31,6 +35,8 @@ func (n ItNoun) noun() string {
 		return "that card"
 	case FoughtCreature:
 		return "the fought creature"
+	case ThatCreature:
+		return "that creature"
 	default:
 		return "it"
 	}

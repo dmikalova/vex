@@ -24,7 +24,7 @@ var GreaterOxtet = set.New(
 	card.WithAbility(
 		card.Trigger.EndOfReadyStep, card.Then{
 			First: card.PurgeCard{
-				Zone:      card.Hand,
+				Zones:     []card.Zone{card.Hand},
 				Player:    card.Controller,
 				Selection: card.Chosen{},
 			},

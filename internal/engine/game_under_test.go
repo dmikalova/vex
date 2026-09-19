@@ -199,3 +199,25 @@ func TestGraftUnderTakesBothGiganticHalves(t *testing.T) {
 		t.Fatalf("state unsound after graft: %v", err)
 	}
 }
+
+// Grafting is a removal attempt like any other, so a ward absorbs it and the
+// creature stays in play. The check lives in the shared leavePlayInto funnel
+// rather than in GraftUnder, so this pins that graft still goes through it.
+func TestGraftUnderIsAbsorbedByWard(t *testing.T) {
+	g := started(t)
+	c := g.AddToBattleline(testCreature("c", 3), 0)
+	host := g.AddToBattleline(testCreature("Host", 4), 0)
+	g.State.Cards[c].Warded = true
+
+	g.GraftUnder(c, host)
+
+	if !g.inPlay(c) {
+		t.Error("ward should absorb the graft and leave the creature in play")
+	}
+	if len(g.underOf(host)) != 0 {
+		t.Error("nothing should have been grafted under the host")
+	}
+	if g.Warded(c) {
+		t.Error("absorbing the graft should spend the ward")
+	}
+}

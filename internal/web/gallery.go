@@ -789,13 +789,14 @@ func (g *gallery) setChips() app.UI {
 	)
 }
 
-// rarityChipMarks is a rarity's marks for its filter chip: one diamond per rarity
-// rank (Common 1 … Special 4), or the single connected mark for Connected.
+// rarityChipMarks is a rarity's mark for its filter chip: the single rarity shape,
+// so the chips match the shapes on the card face and deck list.
 func rarityChipMarks(r engine.Rarity) []app.UI {
-	if r == engine.Connected {
-		return []app.UI{icon("rarity-connected", "icon-inline", "icon-outline")}
+	name := rarityMarkOf(r).iconName()
+	if name == "" {
+		return nil
 	}
-	return rarityDiamonds(rarityMarkOf(r).diamonds())
+	return []app.UI{icon(name, "icon-inline", "icon-outline")}
 }
 
 func (g *gallery) keywordChips() app.UI {

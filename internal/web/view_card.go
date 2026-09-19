@@ -84,7 +84,7 @@ func (g *game) inPlay(id engine.LocalID) bool {
 // kindLabel is a card's foot label: its type (e.g. "Creature"). Traits render
 // separately as their own body line (traitLabel).
 func kindLabel(def *engine.CardDefinition) string {
-	return def.Type.String()
+	return engine.CardTypeLabel(def)
 }
 
 // traitLabel renders a card's traits in KeyForge order (e.g. "Human • Knight"),

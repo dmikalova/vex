@@ -59,6 +59,20 @@ func (e ItIs) negatedText() string {
 	return "if " + e.Noun.noun() + " is not " + e.predicate()
 }
 
+// itAdjective offers the house word this clause filters on, so an And collapses
+// "it is friendly and it is a Mars creature" into "a friendly Mars creature". It
+// declines for a clause that names something other than "it", excludes the source
+// card ("another" is not an adjective), or has no prefix house to contribute.
+func (e ItIs) itAdjective() string {
+	if e.Noun != 0 || e.Other {
+		return ""
+	}
+	adj, _ := e.House.adjective()
+	return adj
+}
+
+func (e ItIs) itNoun() string { return typeNoun(e.Type) }
+
 // asNamedHouseAlt reports the single named house this clause filters on, together
 // with the rest of its shape (its type, subject, and other flag with the house
 // cleared). An Or of such clauses sharing a shape combines their houses into one
@@ -105,6 +119,10 @@ type ItIsOfTrait struct{ Trait Trait }
 func (c ItIsOfTrait) CondText() string {
 	return "if it is a " + c.Trait.String() + " creature"
 }
+
+func (c ItIsOfTrait) itAdjective() string { return c.Trait.String() }
+
+func (ItIsOfTrait) itNoun() string { return "creature" }
 
 // Met reports whether a creature is in context and has the trait.
 func (c ItIsOfTrait) Met(ctx *EffectContext) bool {

@@ -212,6 +212,16 @@ var PowerLessThan = engine.PowerLessThan
 // card.Target.Creature.Refine(card.PowerLessThanSource()) (Dreadbone Decimus).
 var PowerLessThanSource = engine.PowerLessThanSource
 
+// PowerAtLeast is a Refinement that keeps every creature whose power reaches a
+// minimum. Prefer the Target axis of the same name; reach for this one only to
+// union power against another axis inside a card.AnyOf (Regrettable Meteor).
+var PowerAtLeast = engine.PowerAtLeast
+
+// OfTrait is a Refinement that keeps every creature with a trait. Prefer the
+// Target axis card.Target.EachCreature.WithTrait; reach for this one only to union
+// a trait against another axis inside a card.AnyOf (Regrettable Meteor).
+var OfTrait = engine.OfTrait
+
 // Stunned is the set of stunned creatures, used as a fight restriction: pass it to
 // card.WithFightRestriction to limit a creature to fighting only stunned creatures
 // (Bigtwig).

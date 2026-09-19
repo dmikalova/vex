@@ -10,7 +10,7 @@ import (
 // Horizon Saber
 //
 //	House:  Logos
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Special
 //	Power:  11
 //	Armor:  2

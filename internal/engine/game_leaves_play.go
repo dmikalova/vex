@@ -30,10 +30,29 @@ func (g *Game) resetCore(id LocalID) { g.State.Cards[id] = CardCore{} }
 // why purgeFromPlay and the bounce and archive paths do check it. Pinned by
 // TestDiscardDestroyedIgnoresWard and TestWardAbsorbsDestructionAndPurgeSeparately.
 func (g *Game) discardDestroyed(id LocalID) {
+	g.fileFromPlay(id, func(half LocalID, o int) { g.State.Discard[o].add(half) })
+}
+
+// fileFromPlay tears down each half of the gigantic id belongs to (ADR 0042) and
+// hands each to file with its owner, so a destination only says which pile the
+// card lands in and what the log calls it. It is the FILING step, downstream of
+// ward: a caller whose move is a removal attempt owes a ward check and goes
+// through leavePlayInto instead. Only discardDestroyed files directly, because the
+// destruction it completes was already attempted.
+func (g *Game) fileFromPlay(id LocalID, file func(half LocalID, owner int)) {
 	for _, half := range g.giganticHalves(id) {
-		o := g.leavePlayTeardown(half)
-		g.State.Discard[o].add(half)
+		file(half, g.leavePlayTeardown(half))
 	}
+}
+
+// leavePlayInto is fileFromPlay preceded by the one ward check a removal attempt
+// owes. The check is per attempt, not per half, so a warded gigantic absorbs the
+// whole removal and neither half leaves.
+func (g *Game) leavePlayInto(id LocalID, file func(half LocalID, owner int)) {
+	if g.absorbedByWard(id, wardLeavePlay, 0) {
+		return
+	}
+	g.fileFromPlay(id, file)
 }
 
 // purgeFromPlay moves a card from play to its owner's purge pile (set aside out of
@@ -46,14 +65,10 @@ func (g *Game) discardDestroyed(id LocalID) {
 // destruction and which a later "Destroyed:" ability then wards again absorbs this
 // purge with the fresh ward.
 func (g *Game) purgeFromPlay(id LocalID) {
-	if g.absorbedByWard(id, wardLeavePlay, 0) {
-		return
-	}
-	for _, half := range g.giganticHalves(id) {
-		o := g.leavePlayTeardown(half)
+	g.leavePlayInto(id, func(half LocalID, o int) {
 		g.State.Purge[o].add(half)
 		g.record(CardPurged{Card: half})
-	}
+	})
 }
 
 // absorbedByWard reports whether a warded creature's ward absorbs a removal from
@@ -92,6 +107,15 @@ func (g *Game) absorbedByWard(id LocalID, prevented wardPrevented, amount int) b
 // already an invariant violation (see checkStaleInPlayState) that -tags assert
 // runs never trip. A sweep would be cleanup for a state that cannot occur. If a
 // card ever does orphan an upgrade, that invariant fires first.
+// An attached upgrade leaves play through here too, not through a chain-only
+// counterpart. It is a card in play in its own right, so shedding it releases the
+// Æmber sitting on it whichever pile it lands in — discarded with its host,
+// returned to hand, or archived. removeFromPlay already unlinks it from its host's
+// chain (detachUpgrade), so the one path serves a card in a row and a card on a
+// chain alike, and emitLeavesPlay is a no-op for it because an upgrade's abilities
+// are granted to its host rather than held by itself
+// (TestUpgradeAbilitiesBelongToItsHost). A hand-inlined counterpart is what once
+// let an upgrade carry its Æmber away (TestUpgradeReleasesAemberOnLeavingHost).
 func (g *Game) leavePlayTeardown(id LocalID) int {
 	o := g.owner(id)
 	g.removeFromPlay(id)
@@ -193,56 +217,21 @@ func (g *Game) leavesPlayWindow(id LocalID) []triggeredAbility {
 	return pending
 }
 
-// upgradeTeardown performs the shared teardown an upgrade gets when it leaves its
-// host, whether it is discarded or returned to hand: it detaches from the chain,
-// sheds what it was holding, releases any Æmber on it, and resets its per-match
-// state. It returns the owner so the caller can file it in the right zone. This
-// is leavePlayTeardown's counterpart for a card that leaves play from a chain
-// rather than from a row — hand-inlining the steps is what once let an upgrade
-// carry its Æmber into the discard (TestUpgradeReleasesAemberOnLeavingHost).
-func (g *Game) upgradeTeardown(up LocalID) int {
-	o := g.owner(up)
-	g.detachUpgrade(up)
-	g.releaseControlHeldBy(up)
-	g.clearCounters(up)
-	g.releaseAemberOnLeavePlay(up)
-	g.resetCore(up)
-	return o
-}
-
 // discardUpgrades moves a card's attached upgrades to their owner's discard pile.
 // A card that leaves play — destroyed or relocated — sheds its upgrades this way;
 // they do not follow it to hand, deck, or archives.
 func (g *Game) discardUpgrades(id LocalID) {
 	for _, up := range g.upgradesOf(id) {
-		g.State.Discard[g.upgradeTeardown(up)].add(up)
+		g.State.Discard[g.leavePlayTeardown(up)].add(up)
 		g.record(UpgradeDiscarded{Upgrade: up, Host: id})
-	}
-}
-
-// returnUpgradesToHand detaches each upgrade attached to a host still in play and
-// puts it into its owner's hand instead of the discard pile — Transporter Platform
-// returns a creature and its upgrades together. Call it before the host leaves
-// play, so its upgrades are already gone when the host's own move would shed them.
-func (g *Game) returnUpgradesToHand(host LocalID) {
-	for _, up := range g.upgradesOf(host) {
-		o := g.upgradeTeardown(up)
-		g.State.Hand[o].add(up)
-		g.record(CardPutIntoHand{Card: up, Owner: o})
 	}
 }
 
 // archiveUpgrade detaches an attached upgrade from its host and puts it into its
 // owner's archives — Ghostform grants its host "Fight/Reap: Archive Ghostform",
-// which sends the upgrade itself to the archives. An attached upgrade is not
-// listed in a battleline or artifact row, so it must be unlinked from its host's
-// chain rather than routed through the ordinary leave-play path.
+// which sends the upgrade itself to the archives.
 func (g *Game) archiveUpgrade(up LocalID) {
-	g.detachUpgrade(up)
-	g.releaseControlHeldBy(up)
-	g.clearCounters(up)
-	g.resetCore(up)
-	o := g.owner(up)
+	o := g.leavePlayTeardown(up)
 	g.State.Archives[o].add(up)
 	g.record(CardPutIntoArchives{Card: up, Owner: o})
 }
@@ -549,42 +538,30 @@ func (g *Game) destroyBatch(controller int, ids []LocalID) {
 // deck, clearing the per-match state it accrued while in play. A gigantic's two
 // halves leave together (ADR 0042).
 func (g *Game) putOnTopOfDeck(id LocalID) {
-	if g.absorbedByWard(id, wardLeavePlay, 0) {
-		return
-	}
-	for _, half := range g.giganticHalves(id) {
-		o := g.leavePlayTeardown(half)
+	g.leavePlayInto(id, func(half LocalID, o int) {
 		g.State.Deck[o].addFront(half)
 		g.record(CardPutOnTopOfDeck{Card: half, Owner: o})
-	}
+	})
 }
 
 // putIntoHand removes a card from play and places it into its owner's hand,
 // clearing the per-match state it accrued while in play. A gigantic's two halves
 // leave together (ADR 0042).
 func (g *Game) putIntoHand(id LocalID) {
-	if g.absorbedByWard(id, wardLeavePlay, 0) {
-		return
-	}
-	for _, half := range g.giganticHalves(id) {
-		o := g.leavePlayTeardown(half)
+	g.leavePlayInto(id, func(half LocalID, o int) {
 		g.State.Hand[o].add(half)
 		g.record(CardPutIntoHand{Card: half, Owner: o})
-	}
+	})
 }
 
 // putIntoArchives removes a card from play and places it into its owner's
 // archives, clearing the per-match state it accrued while in play. A gigantic's
 // two halves leave together (ADR 0042).
 func (g *Game) putIntoArchives(id LocalID) {
-	if g.absorbedByWard(id, wardLeavePlay, 0) {
-		return
-	}
-	for _, half := range g.giganticHalves(id) {
-		o := g.leavePlayTeardown(half)
+	g.leavePlayInto(id, func(half LocalID, o int) {
 		g.State.Archives[o].add(half)
 		g.record(CardPutIntoArchives{Card: half, Owner: o})
-	}
+	})
 }
 
 // putIntoArchivesEach archives a snapshot of in-play cards simultaneously, then
@@ -604,44 +581,15 @@ func (g *Game) putIntoArchivesEach(controller int, ids []LocalID) {
 // deck, clearing the per-match state it accrued while in play. A gigantic's two
 // halves leave together (ADR 0042).
 func (g *Game) putIntoDeckShuffled(id LocalID) {
-	if g.absorbedByWard(id, wardLeavePlay, 0) {
-		return
-	}
-	for _, half := range g.giganticHalves(id) {
-		o := g.leavePlayTeardown(half)
+	g.leavePlayInto(id, func(half LocalID, o int) {
 		g.State.Deck[o].add(half)
 		g.Shuffle(o)
 		if g.batchingShuffle {
 			g.shuffleBatch = append(g.shuffleBatch, half)
-			continue
+			return
 		}
 		g.record(CardShuffledIntoDeck{Card: half, Owner: o})
-	}
-}
-
-// shuffleFriendlyInPlayIntoDeck shuffles every card a player controls in play —
-// each creature and artifact, and every upgrade attached to them — into their
-// deck, and returns how many cards were shuffled into each owner's deck, indexed
-// by player. A card the controller played but does not own is shuffled into its
-// owner's deck (the ownership rule below), so it is tallied under that owner, not
-// the controller — Timequake draws only for the cards that returned to the
-// controller's own deck. An upgrade is detached first so it is shuffled back into
-// the deck rather than shed to the discard pile. The caller opens a shuffle batch
-// around it, so the whole sweep narrates as one grouped line.
-func (g *Game) shuffleFriendlyInPlayIntoDeck(player int) [2]int {
-	var moved [2]int
-	for _, host := range append(g.Battleline(player), g.Artifacts(player)...) {
-		for _, up := range g.upgradesOf(host) {
-			owner := g.owner(up)
-			g.detachUpgrade(up)
-			g.putIntoDeckShuffled(up)
-			moved[owner]++
-		}
-		owner := g.owner(host)
-		g.putIntoDeckShuffled(host)
-		moved[owner]++
-	}
-	return moved
+	})
 }
 
 // Only three zones of yours may hold a card your opponent owns: your battleline,
@@ -655,12 +603,8 @@ func (g *Game) shuffleFriendlyInPlayIntoDeck(player int) [2]int {
 // Uxlyx the Zookeeper all abduct this way. Nothing is marked on the card: the
 // ownership rule above sends it home the moment it leaves those archives.
 func (g *Game) PutIntoYourArchives(id LocalID, player int) {
-	if g.absorbedByWard(id, wardLeavePlay, 0) {
-		return
-	}
-	for _, half := range g.giganticHalves(id) {
-		o := g.leavePlayTeardown(half)
+	g.leavePlayInto(id, func(half LocalID, o int) {
 		g.State.Archives[player].add(half)
 		g.record(CardAbducted{Player: player, Card: half, Owner: o})
-	}
+	})
 }

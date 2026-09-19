@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"slices"
 	"testing"
 )
@@ -17,7 +18,7 @@ func TestNoActiveHouseWhenAllForbidden(t *testing.T) {
 	if got := g.AllowedHouses(0); len(got) != 0 {
 		t.Fatalf("allowed = %v, want none", got)
 	}
-	if err := g.ChooseHouse(0, Mars); err != ErrHouseNotAllowed {
+	if err := g.ChooseHouse(0, Mars); !errors.Is(err, ErrHouseNotAllowed) {
 		t.Errorf("choosing a barred house = %v, want ErrHouseNotAllowed", err)
 	}
 	if err := g.ChooseHouse(0, HouseNone); err != nil {
@@ -31,7 +32,7 @@ func TestNoHouseRejectedWhenHouseAvailable(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetPlayerHouses(0, []House{Mars, Logos, Untamed})
 	g.State.ActivePlayer = 0
-	if err := g.ChooseHouse(0, HouseNone); err != ErrHouseNotAllowed {
+	if err := g.ChooseHouse(0, HouseNone); !errors.Is(err, ErrHouseNotAllowed) {
 		t.Errorf("No House with houses available = %v, want ErrHouseNotAllowed", err)
 	}
 }

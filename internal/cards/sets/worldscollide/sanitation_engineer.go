@@ -26,6 +26,5 @@ var SanitationEngineer = set.New(
 			Player:    card.Controller,
 			Zones:     []card.Zone{card.Hand},
 			Selection: card.Chosen{},
-			Amount:    1,
 		}),
 )

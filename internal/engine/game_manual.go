@@ -37,6 +37,24 @@ func (z ManualZone) String() string {
 	return "unknown"
 }
 
+// zone returns the resting zone a manual destination lands in. ManualZone stays
+// its own type rather than becoming a Destination because its ordinals are
+// persisted in saved games (web/replay.go reads one back as an int).
+func (z ManualZone) zone() Zone {
+	switch z {
+	case ManualDeckTop, ManualDeckBottom:
+		return Deck
+	case ManualDiscard:
+		return Discard
+	case ManualArchives:
+		return Archives
+	case ManualPurge:
+		return Purged
+	default:
+		return Hand
+	}
+}
+
 // Manual reports whether manual mode is on.
 func (g *Game) Manual() bool { return g.manual }
 
@@ -51,60 +69,52 @@ func (g *Game) SetManual(on bool) { g.manual = on }
 // (TestManualMoveReleasesAember). Manual mode grants permission to take an action
 // that would normally need a card to authorize it; it does not change the action.
 func (g *Game) ManualMove(id LocalID, dest ManualZone) {
-	o := g.owner(id)
-	g.removeFromAnyZone(id)
-	switch dest {
-	case ManualHand:
-		g.State.Hand[o].add(id)
-	case ManualDeckTop:
-		g.State.Deck[o].addFront(id)
-	case ManualDeckBottom:
-		g.State.Deck[o].add(id)
-	case ManualDiscard:
-		g.State.Discard[o].add(id)
-	case ManualArchives:
-		g.State.Archives[o].add(id)
-	case ManualPurge:
-		g.State.Purge[o].add(id)
-	}
-	g.record(ManualCardMoved{Player: o, Card: id, To: dest})
+	g.manualRelocate(id, func(card LocalID, o int) {
+		if dest == ManualDeckTop {
+			g.State.Deck[o].addFront(card)
+		} else {
+			g.pile(zoneRef{Player: o, Zone: dest.zone()}).add(card)
+		}
+		g.record(ManualCardMoved{Player: o, Card: card, To: dest})
+	})
 }
 
-// removeFromAnyZone removes id from whatever holds it. A card in play gets the
-// standard leave-play teardown — manual mode grants permission to take an action
-// a card effect would normally have to authorize, it does not change what the
-// action does — so a laden creature hands its Æmber back just as it would if an
-// effect had removed it. A card in a resting zone is simply unlisted.
-func (g *Game) removeFromAnyZone(id LocalID) {
-	o := g.owner(id)
+// manualRelocate takes id out of whatever holds it and hands it, with its owner,
+// to file. A card in play leaves through the ordinary leavePlayInto funnel, so a
+// manual move is a removal attempt like any other and a **ward absorbs it**, the
+// card staying put and file never running. That is deliberate: manual mode exists
+// to let a playtester exercise the real engine paths, and it has its own buttons
+// for clearing a ward when the ward is what is in the way. A gigantic is relocated
+// as a whole, so file runs once per half (ADR 0042). A card in a resting zone is
+// simply unlisted, with no teardown and nothing to absorb it.
+// Pinned by TestManualMoveIsAbsorbedByWard.
+func (g *Game) manualRelocate(id LocalID, file func(card LocalID, owner int)) {
 	if g.inPlay(id) {
-		for _, half := range g.giganticHalves(id) {
-			g.leavePlayTeardown(half)
-		}
+		g.leavePlayInto(id, file)
 		return
 	}
-	g.State.Hand[o].remove(id)
-	g.State.Deck[o].remove(id)
-	g.State.Discard[o].remove(id)
-	g.State.Archives[o].remove(id)
-	g.State.Purge[o].remove(id)
+	file(id, g.removeFromRestingZones(id))
 }
 
 // ManualAttachUnder removes a card from wherever it rests or sits in play and
-// places it under host, face up (graft) or face down (place under). Like every
-// manual operation it performs no rule checks; a card taken from play sheds its
-// upgrades and per-match state on the way under (removeFromAnyZone).
+// places it under host, face up (graft) or face down (place under). A card taken
+// from play sheds its upgrades and per-match state on the way under, and a ward
+// absorbs the move as it would any other removal (manualRelocate).
 func (g *Game) ManualAttachUnder(host, id LocalID, faceDown bool) {
-	o := g.owner(id)
-	g.removeFromAnyZone(id)
-	g.AttachUnder(host, id, faceDown)
-	g.record(CardPutUnder{Player: o, Card: id, Host: host, FaceDown: faceDown})
+	g.manualRelocate(id, func(card LocalID, o int) {
+		g.AttachUnder(host, card, faceDown)
+		g.record(CardPutUnder{Player: o, Card: card, Host: host, FaceDown: faceDown})
+	})
 }
 
 // ManualDetachToHand sends a selected upgrade or under-card to its owner's hand,
 // detaching it from its host first and shedding its per-match state. It is the
 // manual counterpart to "return to hand" for an attached card; a card that is
 // neither an upgrade nor placed under a host is left where it is.
+//
+// Releasing the card's Æmber is not a rule check manual mode may skip — it is
+// what stops the Æmber being destroyed outright, which no zone edit should do.
+// Pinned by TestUpgradeReleasesAemberOnLeavingHost.
 func (g *Game) ManualDetachToHand(id LocalID) {
 	if _, ok := g.detachUpgrade(id); !ok {
 		if _, ok := g.detachUnder(id); !ok {
@@ -112,6 +122,7 @@ func (g *Game) ManualDetachToHand(id LocalID) {
 		}
 	}
 	o := g.owner(id)
+	g.releaseAemberOnLeavePlay(id)
 	g.resetCore(id)
 	g.State.Hand[o].add(id)
 	g.record(ManualCardMoved{Player: o, Card: id, To: ManualHand})
@@ -128,24 +139,20 @@ func (g *Game) ManualSetExhausted(id LocalID, exhausted bool) {
 // normal play flow — no play effects, no bonus Æmber. A creature enters its
 // owner's battleline before index (0 the left flank, the line length the right
 // flank), so a playtester can deploy it anywhere; anything else enters the
-// artifact row. The card sheds its old zone first (removeFromAnyZone).
+// artifact row. The card sheds its old zone first (manualRelocate), which for a
+// card already in play means a ward absorbs the reposition.
 func (g *Game) ManualPlaceInPlay(id LocalID, index int) {
-	o := g.owner(id)
-	g.removeFromAnyZone(id)
-	g.State.Cards[id].ArmorRemaining = int16(g.Def(id).Armor)
-	if g.Def(id).Type == Creature {
-		line := &g.State.Battleline[o]
-		if index < 0 {
-			index = 0
+	g.manualRelocate(id, func(card LocalID, o int) {
+		g.State.Cards[card].ArmorRemaining = int16(g.Def(card).Armor)
+		if g.Def(card).Type == Creature {
+			line := &g.State.Battleline[o]
+			at := min(max(index, 0), int(line.Count))
+			line.insertAt(at, card)
+		} else {
+			g.State.Artifacts[o].add(card)
 		}
-		if index > int(line.Count) {
-			index = int(line.Count)
-		}
-		line.insertAt(index, id)
-	} else {
-		g.State.Artifacts[o].add(id)
-	}
-	g.record(ManualPlacedInPlay{Player: o, Card: id})
+		g.record(ManualPlacedInPlay{Player: o, Card: card})
+	})
 }
 
 // ManualAddCard registers def as a new card owned by player and places it in

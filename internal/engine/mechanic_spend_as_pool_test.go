@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"strings"
 	"testing"
 )
@@ -126,10 +127,10 @@ func TestSpendAsPoolPaysPlayRequirement(t *testing.T) {
 		g.SetAember(0, 1)
 		id := g.AddToHand(truebaru, 0)
 
-		if err := g.CanPlay(0, id); err != ErrPlayRequirement {
+		if err := g.CanPlay(0, id); !errors.Is(err, ErrPlayRequirement) {
 			t.Errorf("CanPlay = %v, want %v", err, ErrPlayRequirement)
 		}
-		if _, err := g.PlayCreature(0, 0, false); err != ErrPlayRequirement {
+		if _, err := g.PlayCreature(0, 0, false); !errors.Is(err, ErrPlayRequirement) {
 			t.Errorf("Playcreature = %v, want %v", err, ErrPlayRequirement)
 		}
 	})

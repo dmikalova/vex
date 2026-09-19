@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Cadet Allison
 //
 //	House:  Star Alliance
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  8
 //	Traits: Human
@@ -23,7 +23,7 @@ var CadetAllison = set.Gigantic(
 			First: card.DiscardCard{
 				Player:    card.Controller,
 				Zones:     []card.Zone{card.Hand},
-				Selection: card.Random{Count: 1},
+				Selection: card.Random{},
 			},
 			Result: card.ChangeActiveHouse{To: card.TheContextualHouse},
 		}),

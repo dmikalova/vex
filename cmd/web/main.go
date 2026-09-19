@@ -371,18 +371,39 @@ const boardScript = `<script>
 
   // Publish the floating dock's live width as --dock-reserve so the lower player
   // bar ends at the dock's current edge, not at the widest a prompt could open it
-  // to. A ResizeObserver tracks the dock as its content changes size; a
-  // MutationObserver re-finds it whenever go-app re-renders it, and clears the
-  // reserve when it is gone. Only a floating (fixed) dock reserves room — spanned
-  // across the bottom in portrait it is static and the bar keeps the full width.
+  // to, and set each covered board strip's --reserve so a row only keeps scroll
+  // room where the dock actually overlaps it. A ResizeObserver tracks the dock as
+  // its content changes size; a MutationObserver re-finds it whenever go-app
+  // re-renders it, and clears the reserve when it is gone; a resize listener
+  // re-measures when the viewport (and so the strips' geometry) changes. Only a
+  // floating (fixed) dock reserves room — spanned across the bottom in portrait it
+  // is static and both the bar and every strip keep the full width.
   var root = document.documentElement;
   function syncDockReserve() {
     var dock = document.querySelector('.control-dock--floating');
-    var reserve = 0;
-    if (dock && getComputedStyle(dock).position === 'fixed') {
-      reserve = dock.getBoundingClientRect().width;
+    var box = (dock && getComputedStyle(dock).position === 'fixed')
+      ? dock.getBoundingClientRect() : null;
+    root.style.setProperty('--dock-reserve', (box ? box.width : 0) + 'px');
+    // A strip the floating dock overlaps reserves scroll room past its last card so
+    // that card comes to rest lined up with the lower player bar — which ends the
+    // same inset (the dock's gap from the screen edge) short of the dock — rather
+    // than hiding under it. A row the dock does not reach, or any strip when the
+    // dock is not floating (docked in the sidebar, or spanned across the bottom in
+    // portrait), clears its --reserve and falls back to the strip's normal end
+    // inset. The overlap is stable under horizontal scroll (the strip's box does
+    // not move), so this need not run on it.
+    var pad = box ? (window.innerWidth - box.right) : 0;
+    var strips = document.querySelectorAll(
+      '.app--sidebar-collapsed .board-row > .card-strip');
+    for (var i = 0; i < strips.length; i++) {
+      var r = strips[i].getBoundingClientRect();
+      if (box && r.bottom > box.top && r.top < box.bottom) {
+        strips[i].style.setProperty(
+          '--reserve', (Math.max(0, r.right - box.left) + pad) + 'px');
+      } else {
+        strips[i].style.removeProperty('--reserve');
+      }
     }
-    root.style.setProperty('--dock-reserve', reserve + 'px');
   }
   var dockSize = new ResizeObserver(syncDockReserve);
   new MutationObserver(function () {
@@ -391,6 +412,7 @@ const boardScript = `<script>
     if (dock) { dockSize.observe(dock); }
     syncDockReserve();
   }).observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener('resize', syncDockReserve);
   syncDockReserve();
 
   // Drag hand cards onto the board: seed the drag (Firefox needs data on it) and

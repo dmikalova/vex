@@ -10,7 +10,7 @@ import (
 // Ultra Gravitron
 //
 //	House:  Logos
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  10
 //	Armor:  3

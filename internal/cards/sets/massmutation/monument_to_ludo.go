@@ -16,7 +16,7 @@ const praefectusLudoName = "Praefectus Ludo"
 //	Rarity: Common
 //	Traits: Location
 //
-//	Action: If Praefectus Ludo is in your discard pile, move 2 Æmber from a creature to the common supply. Otherwise, move 1 Æmber from a creature to the common supply.
+//	Action: Move 1 Æmber from a creature to the common supply. If Praefectus Ludo is in your discard pile, move 1 Æmber from the chosen creature to the common supply.
 var MonumentToLudo = set.New(
 	"Monument to Ludo",
 	card.House.Saurian,
@@ -26,15 +26,18 @@ var MonumentToLudo = set.New(
 	card.LeadsCluster(clusters.Ludo),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
-		card.Trigger.Action, card.Conditional{
-			Cond: card.NamedCardInDiscard{Name: praefectusLudoName},
-			Then: card.MoveAemberToSupply{
-				Amount: 2,
-				Target: card.Target.Creature,
-			},
-			Else: card.MoveAemberToSupply{
+		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+			card.MoveAemberToSupply{
 				Amount: 1,
 				Target: card.Target.Creature,
+				Bind:   true,
 			},
-		}),
+			card.Conditional{
+				Cond: card.NamedCardInDiscard{Name: praefectusLudoName},
+				Then: card.MoveAemberToSupply{
+					Amount: 1,
+					Target: card.Target.TheChosenCreature,
+				},
+			},
+		}}),
 )

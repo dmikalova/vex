@@ -16,7 +16,7 @@ import (
 //	Traits: Human • Witch
 //
 //	Skirmish.
-//	After a creature enters play, if it is a friendly creature and it is a Cat creature, ward it.
+//	After a creature enters play, if it is a friendly Cat creature, ward it.
 //	Fight: Ready a friendly Beast creature.
 func TestMercyMalkinQueen(t *testing.T) {
 	t.Run("wards a friendly Cat that enters play", func(t *testing.T) {

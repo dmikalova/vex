@@ -1,5 +1,7 @@
 package engine
 
+import "runtime"
+
 // This file holds the engine's suspendable step function (ADR 0040): the seam
 // that lets resolution YIELD for a decision instead of PULLING one from a blocking
 // Chooser. It is additive — the synchronous Chooser path stays for MCTS rollouts
@@ -138,12 +140,28 @@ type suspendChooser struct {
 	player   int
 	requests chan<- Request
 	commands <-chan Command
+	// cancel is closed by Stepper.Close to release this goroutine when its Stepper
+	// is abandoned mid-action (an undo or replay deals a fresh game); yield unwinds
+	// via runtime.Goexit rather than leaking parked on an answer that never comes.
+	cancel <-chan struct{}
 }
 
-// yield sends req and blocks until the driving side answers with a Command.
+// yield sends req and blocks until the driving side answers with a Command. If the
+// Stepper is closed while yield is parked, cancel fires and the goroutine unwinds
+// (Goexit runs its defers), so an abandoned action leaves no goroutine behind.
 func (c *suspendChooser) yield(req Request) Command {
-	c.requests <- req
-	return <-c.commands
+	select {
+	case c.requests <- req:
+	case <-c.cancel:
+		runtime.Goexit()
+	}
+	select {
+	case cmd := <-c.commands:
+		return cmd
+	case <-c.cancel:
+		runtime.Goexit()
+		return Command{} // unreachable: Goexit does not return
+	}
 }
 
 // ChooseCreature yields a card pick and returns the answered card.
@@ -201,6 +219,7 @@ type Stepper struct {
 	g        *Game
 	requests chan Request
 	commands chan Command
+	cancel   chan struct{}
 	done     bool
 }
 
@@ -212,14 +231,31 @@ func NewStepper(g *Game, action func(*Game)) *Stepper {
 		g:        g,
 		requests: make(chan Request),
 		commands: make(chan Command),
+		cancel:   make(chan struct{}),
 	}
-	g.SetChooser(0, &suspendChooser{player: 0, requests: s.requests, commands: s.commands})
-	g.SetChooser(1, &suspendChooser{player: 1, requests: s.requests, commands: s.commands})
+	g.SetChooser(0, &suspendChooser{
+		player: 0, requests: s.requests, commands: s.commands, cancel: s.cancel,
+	})
+	g.SetChooser(1, &suspendChooser{
+		player: 1, requests: s.requests, commands: s.commands, cancel: s.cancel,
+	})
 	go func() {
 		action(g)
 		close(s.requests)
 	}()
 	return s
+}
+
+// Close releases the action goroutine if it is still parked at a decision, so a
+// Stepper abandoned mid-action (an undo or replay that deals a fresh game) does
+// not leak the goroutine and the Game snapshot it captured. It is idempotent and a
+// no-op once the action has finished on its own (TestStepperCloseReleasesGoroutine).
+func (s *Stepper) Close() {
+	if s.done {
+		return
+	}
+	s.done = true
+	close(s.cancel)
 }
 
 // Start returns the first Request the action reaches, or done=true if the action

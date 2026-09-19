@@ -10,6 +10,10 @@ type ItIsFriendly struct{}
 // CondText renders the condition, e.g. "if it is a friendly creature".
 func (ItIsFriendly) CondText() string { return "if it is a friendly creature" }
 
+func (ItIsFriendly) itAdjective() string { return "friendly" }
+
+func (ItIsFriendly) itNoun() string { return "creature" }
+
 // Met reports whether a card is in context and its controller is the ability's
 // controller.
 func (ItIsFriendly) Met(ctx *EffectContext) bool {

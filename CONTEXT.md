@@ -61,8 +61,10 @@ first player; the new hand must be kept.
 
 **First turn rule**:
 On the first player's first turn only, that player may play or discard just one
-card from their hand. Using creatures is unaffected, and a card the played card
-lets its controller play does not count against the limit.
+card from their hand of their own volition. Using creatures is unaffected, and a
+card effect can let them play more — a card another card plays for them, or a
+grant to play a card (Subject Kirby, Captain Val Jericho), does not count against
+the limit.
 
 **Reveal**:
 To make a card in a hidden zone publicly known. Revealing is the only way a card

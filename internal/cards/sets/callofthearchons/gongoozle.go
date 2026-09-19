@@ -24,7 +24,7 @@ var Gongoozle = set.New(
 		Then: card.DiscardCard{
 			Player:    card.ItsOwner,
 			Zones:     []card.Zone{card.Hand},
-			Selection: card.Random{Count: 1},
+			Selection: card.Random{},
 		},
 	}),
 )

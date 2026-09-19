@@ -10,7 +10,7 @@ import (
 // Cadet Allison
 //
 //	House:  Star Alliance
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  8
 //	Traits: Human

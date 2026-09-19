@@ -1,6 +1,7 @@
 package callofthearchons
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/card"
@@ -33,7 +34,11 @@ func TestRestringuntus(t *testing.T) {
 		h.P1.ClickOption("Mars")
 
 		h.P1.EndTurn()
-		if err := h.Game().ChooseHouse(1, card.House.Mars); err != engine.ErrHouseNotAllowed {
+		if err := h.Game().
+			ChooseHouse(1, card.House.Mars); !errors.Is(
+			err,
+			engine.ErrHouseNotAllowed,
+		) {
 			t.Errorf("choosing the barred house = %v, want ErrHouseNotAllowed", err)
 		}
 		h.P2.ChooseHouse(card.House.Logos) // any other house is allowed

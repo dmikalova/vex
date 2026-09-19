@@ -487,7 +487,7 @@ func (s DifferentCreatures) hits(ctx *EffectContext) []DamageTarget {
 	return out
 }
 
-// UpToCreatures deals Amount to up to Count different creatures the controller
+// UpToCreatures deals Amount to up to Creatures different creatures the controller
 // chooses one at a time, declining any of them with Done — Throwing Stars deals 1
 // damage to up to 3 creatures. Undamaged narrows the choice to creatures that have
 // no damage on them (Unsuspecting Prey). WhenDamaged, when set, deals that larger
@@ -495,7 +495,7 @@ func (s DifferentCreatures) hits(ctx *EffectContext) []DamageTarget {
 // (Festering Touch deals 1, or 3 to an already-damaged creature). A DealDamage
 // Spread.
 type UpToCreatures struct {
-	Count       int
+	Creatures   int
 	Amount      int
 	Undamaged   bool
 	WhenDamaged int
@@ -503,8 +503,8 @@ type UpToCreatures struct {
 
 // validate requires room for at least one creature.
 func (s UpToCreatures) validate() error {
-	if s.Count < 1 {
-		return fmt.Errorf("UpToCreatures: Count must be at least 1, got %d", s.Count)
+	if s.Creatures < 1 {
+		return fmt.Errorf("UpToCreatures: Creatures must be at least 1, got %d", s.Creatures)
 	}
 	if s.WhenDamaged != 0 && s.Undamaged {
 		return fmt.Errorf("UpToCreatures: WhenDamaged cannot combine with Undamaged")
@@ -520,17 +520,17 @@ func (s UpToCreatures) spreadText() string {
 		return fmt.Sprintf(
 			"choose up to %d creatures. Deal %s to each chosen creature. "+
 				"Deal %s instead to each chosen creature that was already damaged",
-			s.Count, damageAmount(s.Amount), damageAmount(s.WhenDamaged),
+			s.Creatures, damageAmount(s.Amount), damageAmount(s.WhenDamaged),
 		)
 	}
 	noun := "creatures"
 	if s.Undamaged {
 		noun = "undamaged creatures"
 	}
-	return fmt.Sprintf("deal %s to up to %d %s", damageAmount(s.Amount), s.Count, noun)
+	return fmt.Sprintf("deal %s to up to %d %s", damageAmount(s.Amount), s.Creatures, noun)
 }
 
-// hits asks for creatures one at a time, up to Count, stopping when the controller
+// hits asks for creatures one at a time, up to Creatures, stopping when the controller
 // declines or none remain. Undamaged narrows the pool through the shared
 // Target.Undamaged() refinement. WhenDamaged raises the amount for a creature that
 // already carries damage before this batch resolves.
@@ -539,7 +539,7 @@ func (s UpToCreatures) hits(ctx *EffectContext) []DamageTarget {
 	if s.Undamaged {
 		pool = pool.Undamaged()
 	}
-	picked := pickCards(ctx, "Choose a creature", s.Count, true, func() []LocalID {
+	picked := pickCards(ctx, "Choose a creature", s.Creatures, true, func() []LocalID {
 		return pool.Select(ctx)
 	})
 	out := make([]DamageTarget, 0, len(picked))

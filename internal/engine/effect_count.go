@@ -33,6 +33,27 @@ func scaled(base int, per Count, ctx *EffectContext) int {
 	return base * per.Value(ctx)
 }
 
+// eachPlayerEqualTo is a Count with a third-person "equal to ..." form, for an
+// EachPlayer effect that re-bases it onto whoever is being paid: Binate Rupture
+// reads "each player gains Æmber equal to the Æmber in their pool", never "in
+// your pool". It is a separate string from CountText because that one is the bare
+// noun a "for each" clause repeats and so carries no article.
+type eachPlayerEqualTo interface {
+	eachPlayerEqualToText() string
+}
+
+// equalToText renders a count in the equal-to position, in the third person when
+// the effect pays each player and the count has such a form.
+func equalToText(c Count, player Player) string {
+	if player != EachPlayer {
+		return c.CountText()
+	}
+	if each, ok := c.(eachPlayerEqualTo); ok {
+		return each.eachPlayerEqualToText()
+	}
+	return c.CountText()
+}
+
 // Fixed is a Count of a constant number — a repetition that always runs the same
 // number of times whatever the board (RepeatedFight fights a fixed number of
 // times). It lets every Times field be a Count, whether or not the count scales.

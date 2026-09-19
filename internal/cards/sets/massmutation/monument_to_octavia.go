@@ -19,7 +19,7 @@ var monumentToOctaviaCluster = card.Cluster{
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Action: If Cornicen Octavia is in your discard pile, a friendly creature captures 2 Æmber from your opponent. Otherwise, a friendly creature captures 1 Æmber from your opponent.
+//	Action: A friendly creature captures 1 Æmber from your opponent. If Cornicen Octavia is in your discard pile, it captures 1 Æmber from your opponent.
 var MonumentToOctavia = set.New(
 	"Monument to Octavia",
 	card.House.Saurian,
@@ -29,17 +29,19 @@ var MonumentToOctavia = set.New(
 	card.LeadsCluster(monumentToOctaviaCluster),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
-		card.Trigger.Action, card.Conditional{
-			Cond: card.NamedCardInDiscard{Name: CornicenOctavia.Name},
-			Then: card.CaptureAember{
-				Amount: 2,
-				Target: card.Target.FriendlyCreature,
-				Source: card.Opponent,
-			},
-			Else: card.CaptureAember{
+		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+			card.CaptureAember{
 				Amount: 1,
 				Target: card.Target.FriendlyCreature,
 				Source: card.Opponent,
 			},
-		}),
+			card.Conditional{
+				Cond: card.NamedCardInDiscard{Name: CornicenOctavia.Name},
+				Then: card.CaptureAember{
+					Amount: 1,
+					Target: card.Target.Triggering,
+					Source: card.Opponent,
+				},
+			},
+		}}),
 )

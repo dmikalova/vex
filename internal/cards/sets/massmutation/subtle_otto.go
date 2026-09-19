@@ -23,6 +23,6 @@ var SubtleOtto = set.New(
 		card.Trigger.Play, card.DiscardCard{
 			Player:    card.Opponent,
 			Zones:     []card.Zone{card.Hand},
-			Selection: card.Random{Count: 1},
+			Selection: card.Random{},
 		}),
 )

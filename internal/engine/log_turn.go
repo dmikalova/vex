@@ -79,35 +79,35 @@ func (e CardsReadied) Text(n Namer) string {
 // deck reads as one.
 type CardsDrawn struct {
 	Player int
-	Count  int
+	Cards  int
 	Hand   int
 }
 
 // Text renders the refill, or the hand it stood at when nothing was drawn.
 func (e CardsDrawn) Text(n Namer) string {
-	if e.Count == 0 {
+	if e.Cards == 0 {
 		return fmt.Sprintf("%s draws nothing, holding %d", n.PlayerName(e.Player), e.Hand)
 	}
 	return fmt.Sprintf("%s draws %s, up to %d in hand",
-		n.PlayerName(e.Player), countNoun(e.Count, "card"), e.Hand)
+		n.PlayerName(e.Player), countNoun(e.Cards, "card"), e.Hand)
 }
 
 // CardsDrawnBy narrates a draw caused by a card's ability mid-turn (Candle Unit),
 // crediting the card from the record's frame so the line reads "Candle Unit has
-// Player 1 draw 1 card" rather than a bare draw. Count is how many cards were
+// Player 1 draw 1 card" rather than a bare draw. Cards is how many cards were
 // actually drawn.
 type CardsDrawnBy struct {
 	Player int
-	Count  int
+	Cards  int
 }
 
 // Text renders the attributed draw, naming the source card and the drawer.
 func (e CardsDrawnBy) Text(n Namer) string {
 	if s, ok := framedSource(n); ok {
 		return fmt.Sprintf("%s has %s draw %s",
-			s, n.PlayerName(e.Player), countNoun(e.Count, "card"))
+			s, n.PlayerName(e.Player), countNoun(e.Cards, "card"))
 	}
-	return fmt.Sprintf("%s draws %s", n.PlayerName(e.Player), countNoun(e.Count, "card"))
+	return fmt.Sprintf("%s draws %s", n.PlayerName(e.Player), countNoun(e.Cards, "card"))
 }
 
 // HouseChosen narrates the active house a player picked for the turn.

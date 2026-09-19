@@ -1,12 +1,16 @@
 package engine
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestSearchForName(t *testing.T) {
 	e := Search{
 		Sources: []Zone{Deck, Discard},
 		Filter:  CardFilter{Name: "Timetraveller"},
 		Reveal:  true,
+		Dest:    ToHand,
 	}
 	if e.Text() != "search your deck and discard pile for a Timetraveller, reveal it, and put it into your hand" {
 		t.Errorf("text = %q", e.Text())
@@ -137,6 +141,7 @@ func TestSearchForNameAll(t *testing.T) {
 		Filter:  CardFilter{Name: "Ancient Bear"},
 		Any:     true,
 		Reveal:  true,
+		Dest:    ToHand,
 	}
 	want := "search your deck and discard pile for any number of Ancient Bears, reveal them, and put them into your hand"
 	if e.Text() != want {
@@ -170,18 +175,24 @@ func TestSearchDeck(t *testing.T) {
 	if (Search{}).validate() == nil {
 		t.Error("a search with no source zone should be invalid")
 	}
-	if (Search{Sources: []Zone{Deck}}).validate() != nil {
-		t.Error("a search naming its zone should be valid")
+	if (Search{Sources: []Zone{Deck}}).validate() == nil {
+		t.Error("a search with no destination should be invalid")
 	}
-	if got := (Search{Sources: []Zone{Deck}}).Text(); got !=
+	if (Search{Sources: []Zone{Deck}, Dest: ToDeckShuffled}).validate() == nil {
+		t.Error("a search to an unsupported destination should be invalid")
+	}
+	if (Search{Sources: []Zone{Deck}, Dest: ToHand}).validate() != nil {
+		t.Error("a search naming its zone and destination should be valid")
+	}
+	if got := (Search{Sources: []Zone{Deck}, Dest: ToHand}).Text(); got !=
 		"search your deck for a card and put it into your hand" {
 		t.Errorf("unrestricted text = %q", got)
 	}
-	if got := (Search{Sources: []Zone{Deck}, House: namedHouse(Saurian), Reveal: true}).Text(); got !=
+	if got := (Search{Sources: []Zone{Deck}, House: namedHouse(Saurian), Reveal: true, Dest: ToHand}).Text(); got !=
 		"search your deck for a Saurian card, reveal it, and put it into your hand" {
 		t.Errorf("house text = %q", got)
 	}
-	if got := (Search{Sources: []Zone{Deck}, Filter: CardFilter{Type: Upgrade}, Reveal: true}).Text(); got !=
+	if got := (Search{Sources: []Zone{Deck}, Filter: CardFilter{Type: Upgrade}, Reveal: true, Dest: ToHand}).Text(); got !=
 		"search your deck for an upgrade, reveal it, and put it into your hand" {
 		t.Errorf("filter text = %q", got)
 	}
@@ -196,6 +207,7 @@ func TestSearchDeck(t *testing.T) {
 	Search{
 		Sources: []Zone{Deck},
 		House:   namedHouse(Saurian),
+		Dest:    ToHand,
 	}.Resolve(
 		&EffectContext{Resolver: g, Source: src, Controller: 0},
 	)
@@ -216,6 +228,7 @@ func TestSearchDeck(t *testing.T) {
 	Search{
 		Sources: []Zone{Deck},
 		Filter:  CardFilter{Type: Upgrade},
+		Dest:    ToHand,
 	}.Resolve(
 		&EffectContext{Resolver: gf, Source: sf, Controller: 0},
 	)
@@ -231,7 +244,12 @@ func TestSearchDeck(t *testing.T) {
 	s2 := g2.AddToBattleline(testCreature("orb-holder", 1), 0)
 	only := g2.Register(NewCard("whatever", Logos, Tactic, Common), 0)
 	g2.State.Deck[0].add(only)
-	Search{Sources: []Zone{Deck}}.Resolve(&EffectContext{Resolver: g2, Source: s2, Controller: 0})
+	Search{
+		Sources: []Zone{Deck},
+		Dest:    ToHand,
+	}.Resolve(
+		&EffectContext{Resolver: g2, Source: s2, Controller: 0},
+	)
 	if !g2.State.Hand[0].contains(only) {
 		t.Error("the sole deck card should be put into hand")
 	}
@@ -244,6 +262,7 @@ func TestSearchDeck(t *testing.T) {
 	Search{
 		Sources: []Zone{Deck},
 		House:   namedHouse(Saurian),
+		Dest:    ToHand,
 	}.Resolve(
 		&EffectContext{Resolver: g3, Source: s3, Controller: 0},
 	)
@@ -567,7 +586,7 @@ func TestSearchValidateShuffleBeforePlacing(t *testing.T) {
 		ShuffleBeforePlacing: true,
 		Dest:                 ToHand,
 	}
-	if err := bad.validate(); err != errSearchShuffleNotTopOfDeck {
+	if err := bad.validate(); !errors.Is(err, errSearchShuffleNotTopOfDeck) {
 		t.Errorf("validate = %v, want %v", err, errSearchShuffleNotTopOfDeck)
 	}
 	ok := Search{

@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Choose a creature - ward the chosen creature, and you may exalt the chosen creature -> ward the chosen creature.
+//	Play: Choose a creature - ward the chosen creature, and you may exalt the chosen creature -> ward each neighbor of the chosen creature.
 var DefenseInitiative = set.New(
 	"Defense Initiative",
 	card.House.Saurian,

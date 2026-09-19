@@ -19,7 +19,7 @@ func isNiffleCreature(d card.Definition) bool {
 // Niffle Kong
 //
 //	House:  Untamed
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  12
 //	Armor:  2
@@ -47,6 +47,7 @@ var NiffleKong = set.Gigantic(
 					},
 					Any:    true,
 					Reveal: true,
+					Dest:   card.To.Hand,
 				},
 				card.Shuffle{},
 			},

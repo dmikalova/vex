@@ -30,7 +30,7 @@ var TroopCall = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{
-				card.PutFromDiscard{
+				card.PutCard{Zones: []card.Zone{card.Discard},
 					Selection: card.Each{
 						Type:  card.Type.Creature,
 						Trait: card.Traits.Niffle,

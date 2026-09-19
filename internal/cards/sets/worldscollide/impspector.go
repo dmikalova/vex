@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Imp
 //
-//	Destroyed: Purge a random card from your opponent's hand.
+//	Destroyed: Your opponent purges a random card from their hand.
 var Impspector = set.New(
 	"Impspector",
 	card.House.Dis,
@@ -21,8 +21,8 @@ var Impspector = set.New(
 	card.WithTraits(card.Traits.Imp),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.PurgeCard{
-			Zone:      card.Hand,
+			Zones:     []card.Zone{card.Hand},
 			Player:    card.Opponent,
-			Selection: card.Random{Count: 1},
+			Selection: card.Random{},
 		}),
 )

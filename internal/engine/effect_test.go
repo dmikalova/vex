@@ -32,32 +32,39 @@ func TestEffectValidation(t *testing.T) {
 		t.Errorf("conditional with a valid effect should pass, got %v", err)
 	}
 	if err := validateEffect(
-		PutFromDiscard{Selection: Chosen{}, Destination: ToBottomOfDeck},
+		PutCard{Selection: Chosen{}, Destination: ToHand},
+	); err == nil {
+		t.Error("PutFromDiscard with no source zone should be rejected")
+	}
+	if err := validateEffect(
+		PutCard{Zones: []Zone{Discard}, Selection: Chosen{}, Destination: ToBottomOfDeck},
 	); err == nil {
 		t.Error(
 			"PutFromDiscard to an unsupported destination should be rejected",
 		)
 	}
 	if err := validateEffect(
-		PutFromDiscard{Selection: Chosen{}, Destination: ToTopOfDeck},
+		PutCard{Zones: []Zone{Discard}, Selection: Chosen{}, Destination: ToTopOfDeck},
 	); err != nil {
 		t.Errorf(
 			"PutFromDiscard to the top of the deck should pass, got %v",
 			err,
 		)
 	}
-	if err := validateEffect(PutFromDiscard{Destination: ToHand}); err == nil {
+	if err := validateEffect(
+		PutCard{Zones: []Zone{Discard}, Destination: ToHand},
+	); err == nil {
 		t.Error("PutFromDiscard with no selection should be rejected")
 	}
 	// Purge must name its player and selection.
 	if err := validateEffect(PurgeCard{}); err == nil {
 		t.Error("a Purge with no player should be rejected")
 	}
-	if err := validateEffect(PurgeCard{Zone: Discard, Player: ChosenPlayer}); err == nil {
+	if err := validateEffect(PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer}); err == nil {
 		t.Error("a Purge with no selection should be rejected")
 	}
 	if err := validateEffect(
-		PurgeCard{Zone: Discard, Player: ChosenPlayer, Selection: Chosen{Type: Creature}},
+		PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer, Selection: Chosen{Type: Creature}},
 	); err != nil {
 		t.Errorf(
 			"a Purge naming its player and selection should pass, got %v",
@@ -75,7 +82,7 @@ func TestEffectValidation(t *testing.T) {
 	}
 	if err := validateEffect(
 		Then{
-			First:  PurgeCard{Zone: Discard, Player: ChosenPlayer, Selection: Chosen{}},
+			First:  PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer, Selection: Chosen{}},
 			Result: bad,
 		},
 	); err == nil {
@@ -84,7 +91,7 @@ func TestEffectValidation(t *testing.T) {
 	if err := validateEffect(
 		Then{
 			First: PurgeCard{
-				Zone:      Discard,
+				Zones:     []Zone{Discard},
 				Player:    ChosenPlayer,
 				Selection: Chosen{Type: Creature},
 			},
@@ -118,8 +125,8 @@ func TestRequiredTargetValidation(t *testing.T) {
 		},
 		{
 			"DiscardCard",
-			DiscardCard{Zones: []Zone{Hand}, Selection: Random{Count: 1}},
-			DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{Count: 1}},
+			DiscardCard{Zones: []Zone{Hand}, Selection: Random{}},
+			DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{}},
 		},
 		{"Reveal", RevealHand{}, RevealHand{Player: Controller}},
 	}

@@ -19,14 +19,14 @@ var Resurgence = set.New(
 	card.WithEnhance(card.Bonus.Draw),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
-			card.PutFromDiscard{
+			card.PutCard{Zones: []card.Zone{card.Discard},
 				Selection:   card.Chosen{Type: card.Type.Creature},
 				Destination: card.To.Hand,
 				Bind:        true,
 			},
 			card.Conditional{
 				Cond: card.ItIsOfTrait{Trait: card.Traits.Mutant},
-				Then: card.PutFromDiscard{
+				Then: card.PutCard{Zones: []card.Zone{card.Discard},
 					Selection:   card.Chosen{Type: card.Type.Creature, Another: true},
 					Destination: card.To.Hand,
 				},

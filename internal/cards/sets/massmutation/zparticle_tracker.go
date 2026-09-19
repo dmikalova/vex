@@ -27,6 +27,7 @@ var ZParticleTracker = set.New(
 						Sources: []card.Zone{card.Deck},
 						Filter:  card.Filter{Type: card.Type.Upgrade},
 						Reveal:  true,
+						Dest:    card.To.Hand,
 					},
 					card.Shuffle{},
 				},

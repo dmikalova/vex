@@ -17,6 +17,6 @@ var UnsuspectingPrey = set.New(
 	card.Provenance(card.WC, "368"),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
-			Spread: card.UpToCreatures{Count: 3, Amount: 2, Undamaged: true},
+			Spread: card.UpToCreatures{Creatures: 3, Amount: 2, Undamaged: true},
 		}),
 )

@@ -28,6 +28,6 @@ var Tantadlin = set.New(
 		card.Trigger.Fight, card.DiscardCard{
 			Player:    card.Opponent,
 			Zones:     []card.Zone{card.Archives},
-			Selection: card.Random{Count: 1},
+			Selection: card.Random{},
 		}),
 )

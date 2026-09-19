@@ -25,7 +25,7 @@ var CustomVirus = set.New(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.This},
 			card.PurgeCard{
-				Zone:      card.Hand,
+				Zones:     []card.Zone{card.Hand},
 				Player:    card.Controller,
 				Selection: card.Chosen{Type: card.Type.Creature},
 			},

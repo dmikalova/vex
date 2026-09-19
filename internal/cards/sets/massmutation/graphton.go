@@ -23,6 +23,5 @@ var Graphton = set.New(
 		card.Trigger.Reap, card.ArchiveCard{
 			Zone:      card.Deck,
 			Selection: card.Top{},
-			Amount:    1,
 		}),
 )

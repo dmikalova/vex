@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Ascendant Hester
 //
 //	House:  Sanctum
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Special
 //	Power:  8
 //	Traits: Knight • Spirit

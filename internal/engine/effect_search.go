@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -45,29 +46,29 @@ type Search struct {
 	// finds on top of the deck lands them atop an already-shuffled deck (Digging Up
 	// the Monster). It is only meaningful with Dest ToTopOfDeck.
 	ShuffleBeforePlacing bool
-	// Dest is where found cards go; the zero value puts them into the hand.
+	// Dest is where found cards go; it must be set to one of ToHand, ToTopOfDeck,
+	// or ToArchives.
 	Dest Destination
 }
 
-// validate requires at least one source zone: a search must name the zones it
-// looks through, so Search with no Sources is a definition error rather than a
-// silent "search the deck".
+// validate requires at least one source zone and a supported destination: a search
+// must name the zones it looks through (Search with no Sources is a definition
+// error rather than a silent "search the deck") and where its finds go (an unset
+// destination is a definition error rather than a silent "put them into the hand").
 func (e Search) validate() error {
 	if len(e.Sources) == 0 {
 		return errUnsetZone("Search")
 	}
-	if e.ShuffleBeforePlacing && e.dest() != ToTopOfDeck {
+	if !e.Dest.valid() {
+		return errUnsetDestination("Search")
+	}
+	if e.Dest != ToHand && e.Dest != ToTopOfDeck && e.Dest != ToArchives {
+		return fmt.Errorf("Search: unsupported destination %d", e.Dest.zone)
+	}
+	if e.ShuffleBeforePlacing && e.Dest != ToTopOfDeck {
 		return errSearchShuffleNotTopOfDeck
 	}
 	return nil
-}
-
-// dest returns the destination, defaulting to the controller's hand.
-func (e Search) dest() Destination {
-	if e.Dest == (Destination{}) {
-		return ToHand
-	}
-	return e.Dest
 }
 
 // revealsFound reports whether a taken card is shown to both players.
@@ -90,7 +91,7 @@ func (e Search) zonesPhrase() string {
 // destPhrase renders where the search puts the cards it takes, always one of the
 // controller's own zones.
 func (e Search) destPhrase() string {
-	switch e.dest() {
+	switch e.Dest {
 	case ToArchives:
 		return "your archives"
 	case ToTopOfDeck:
@@ -147,7 +148,7 @@ func (e Search) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // resolveGate searches and reports whether it took anything, so a Then can hang a
 // follow-up off the search succeeding (Bear Flute reshuffles only if it did).
 func (e Search) resolveGate(ctx *EffectContext) bool {
-	mover := crossZoneMover{Player: ctx.Controller, Dest: e.dest(), Sources: e.Sources}
+	mover := crossZoneMover{Player: ctx.Controller, Dest: e.Dest, Sources: e.Sources}
 	if e.ShuffleBeforePlacing {
 		return e.resolveShuffleBeforePlacing(ctx, mover)
 	}

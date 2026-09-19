@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"slices"
 	"strings"
 	"testing"
@@ -88,7 +89,14 @@ func TestConditionalPlayBarBarsAheadPlayer(t *testing.T) {
 		t.Fatal("the player with more creatures should be barred from playing creatures")
 	}
 	g.AddToHand(testCreature("newbie", 2), 0)
-	if _, err := g.PlayCreature(0, handIdx(g, 0, "newbie"), false); err != ErrCannotPlayCreature {
+	if _, err := g.PlayCreature(
+		0,
+		handIdx(g, 0, "newbie"),
+		false,
+	); !errors.Is(
+		err,
+		ErrCannotPlayCreature,
+	) {
 		t.Errorf("Playcreature = %v, want ErrCannotPlaycreature", err)
 	}
 
@@ -502,10 +510,10 @@ func TestCannotBeUsedToFromConstantAbility(t *testing.T) {
 	right := g.AddToBattleline(testCreature("right", 3), 0)
 	far := g.AddToBattleline(testCreature("far", 3), 0)
 
-	if err := g.CanUseTo(0, left, ReapUse); err != ErrCannotUse {
+	if err := g.CanUseTo(0, left, ReapUse); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("left neighbor reap = %v, want ErrCannotUse", err)
 	}
-	if err := g.CanUseTo(0, right, ReapUse); err != ErrCannotUse {
+	if err := g.CanUseTo(0, right, ReapUse); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("right neighbor reap = %v, want ErrCannotUse", err)
 	}
 	if err := g.CanUseTo(0, far, ReapUse); err != nil {
@@ -1355,4 +1363,50 @@ func TestNoForgeWhileAheadOnKeys(t *testing.T) {
 			t.Errorf("lines = %v, want to contain %q", lines, want)
 		}
 	})
+}
+
+// ZoneOf reports the out-of-play pile a card sits in and whose it is, for either
+// player, and false for a card that is in play or unknown.
+func TestZoneOf(t *testing.T) {
+	g := started(t)
+	cases := []struct {
+		name  string
+		add   func(CardDefinition, int) LocalID
+		owner int
+		want  Zone
+	}{
+		{"discard", g.AddToDiscard, 0, Discard},
+		{"hand", g.AddToHand, 0, Hand},
+		{"archives", g.AddToArchives, 1, Archives},
+		{"deck", g.AddToDeck, 1, Deck},
+	}
+	for _, c := range cases {
+		id := c.add(testCreature(c.name, 1), c.owner)
+		if p, z, ok := g.ZoneOf(id); !ok || p != c.owner || z != c.want {
+			t.Errorf("ZoneOf(%s) = (%d, %v, %v), want (%d, %v, true)",
+				c.name, p, z, ok, c.owner, c.want)
+		}
+	}
+	// A purged card is reported from the purge pile.
+	purged := g.Register(testCreature("purged", 1), 0)
+	g.State.Purge[0].add(purged)
+	if p, z, ok := g.ZoneOf(purged); !ok || p != 0 || z != Purged {
+		t.Errorf("ZoneOf(purged) = (%d, %v, %v), want (0, Purged, true)", p, z, ok)
+	}
+	// A card in play sits in no out-of-play pile.
+	if p, z, ok := g.ZoneOf(g.AddToBattleline(testCreature("inplay", 1), 0)); ok {
+		t.Errorf("ZoneOf(in-play) = (%d, %v, %v), want ok false", p, z, ok)
+	}
+}
+
+// AtCheck reports whether a pool of Æmber meets a player's current key cost.
+func TestAtCheck(t *testing.T) {
+	g := started(t)
+	cost := g.CurrentKeyCost(0)
+	if g.AtCheck(0, cost-1) {
+		t.Errorf("AtCheck(0, %d) = true, want false at cost %d", cost-1, cost)
+	}
+	if !g.AtCheck(0, cost) {
+		t.Errorf("AtCheck(0, %d) = false, want true at cost %d", cost, cost)
+	}
 }

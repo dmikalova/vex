@@ -74,21 +74,15 @@ func (PlayTopOfDeck) Resolve(ctx *EffectContext) {
 // speaks from a granted ability's card-neutral perspective ("its controller's
 // deck"), resolving against the creature's controller — the only sensible default
 // for an ability every creature gains (Evasion Sigil). Amount discards that many
-// top cards per deck; the zero value discards one. An empty deck discards nothing.
+// top cards per deck. An empty deck discards nothing.
 type DiscardTop struct {
 	Player Player
-	// Amount is how many top cards of each named deck to discard; the zero value
-	// discards one.
+	// Amount is how many top cards of each named deck to discard. It must be set.
 	Amount int
 }
 
-// count is Amount with the zero value treated as one.
-func (e DiscardTop) count() int {
-	if e.Amount < 1 {
-		return 1
-	}
-	return e.Amount
-}
+// validate requires a positive Amount, so a forgotten field cannot pass for one.
+func (e DiscardTop) validate() error { return positiveCount("DiscardTop", "Amount", e.Amount) }
 
 // decks names the decks the discard acts on: both under EachPlayer, the
 // controller's when Player is unset (a granted ability's perspective), else the
@@ -120,11 +114,11 @@ func (e DiscardTop) deckPhrase() string {
 
 // Text renders the effect from the chosen player's perspective.
 func (e DiscardTop) Text() string {
-	if e.count() == 1 {
+	if e.Amount == 1 {
 		return "discard the top card of " + e.deckPhrase()
 	}
 	return fmt.Sprintf(
-		"discard the top %d cards of %s", e.count(), e.deckPhrase())
+		"discard the top %d cards of %s", e.Amount, e.deckPhrase())
 }
 
 // Resolve discards the top cards of each named deck, recording them on the context
@@ -133,7 +127,7 @@ func (e DiscardTop) Text() string {
 func (e DiscardTop) Resolve(ctx *EffectContext) {
 	resetDiscardedThisWay(ctx)
 	for _, player := range e.decks(ctx) {
-		for range e.count() {
+		for range e.Amount {
 			if id, ok := ctx.Resolver.DiscardTopOfDeck(player); ok {
 				recordDiscardedThisWay(ctx, id)
 			}
@@ -305,14 +299,6 @@ func (tr *topRead) choose(ctx *EffectContext, count int, prompt string, move fun
 	}
 }
 
-// positiveCount rejects a non-positive routing count: routing zero cards is meaningless.
-func positiveCount(name string, count int) error {
-	if count < 1 {
-		return fmt.Errorf("%s: Count must be at least 1", name)
-	}
-	return nil
-}
-
 // TopAct is one routing step over the cards a chooseFromTopOfDeck read. It renders
 // its own text clause, moves (or reorders/shuffles) some of the still-read cards
 // seeing only what earlier steps left, and reports whether it is terminal — a
@@ -351,21 +337,29 @@ func (d DeckDest) validate() error {
 	return nil
 }
 
-// mover returns the resolver call that moves one card from player's deck to d —
-// the single deck-routing dispatch shared by ChooseAndMove and PutRevealedCard.
-func (d DeckDest) mover(ctx *EffectContext, player int) func(LocalID) {
+// destination maps a deck routing to the shared Destination, so deck routing and
+// every other movement verb dispatch through one source-by-destination matrix
+// (ADR 0031) instead of keeping a second, deck-only table of resolver calls.
+func (d DeckDest) destination() Destination {
 	switch d {
 	case IntoArchives:
-		return ctx.Resolver.ArchiveFromDeck
+		return ToArchives
 	case IntoDiscard:
-		return ctx.Resolver.MoveFromDeckToDiscard
+		return toDiscard
 	case IntoPurge:
-		return func(id LocalID) { purgeFrom(ctx, Deck, player, id) }
+		return toPurged
 	case IntoBottomOfDeck:
-		return ctx.Resolver.PutDeckCardOnBottom
+		return ToBottomOfDeck
 	default: // IntoHand
-		return ctx.Resolver.MoveFromDeckToHand
+		return ToHand
 	}
+}
+
+// mover returns the call that moves one card from player's deck to d — the single
+// deck-routing dispatch shared by ChooseAndMove and PutRevealedCard.
+func (d DeckDest) mover(ctx *EffectContext, player int) func(LocalID) {
+	dest := d.destination()
+	return func(id LocalID) { dest.moveFrom(ctx, Deck, player, id) }
 }
 
 // choosePrompt is the pick prompt a ChooseAndMove step shows for routing to d.
@@ -416,10 +410,10 @@ func (d DeckDest) act(object string) string {
 	}
 }
 
-// ChooseAndMove takes Count of the read cards the controller chooses and sends them
+// ChooseAndMove takes Cards of the read cards the controller chooses and sends them
 // to Dest — their hand, archives, discard pile, or the purge pile.
 type ChooseAndMove struct {
-	Count int
+	Cards int
 	Dest  DeckDest
 }
 
@@ -427,30 +421,30 @@ type ChooseAndMove struct {
 func (a ChooseAndMove) clause() string {
 	switch a.Dest {
 	case IntoArchives:
-		return fmt.Sprintf("archive %d", a.Count)
+		return fmt.Sprintf("archive %d", a.Cards)
 	case IntoDiscard:
-		return fmt.Sprintf("discard %d", a.Count)
+		return fmt.Sprintf("discard %d", a.Cards)
 	case IntoPurge:
-		if a.Count == 1 {
+		if a.Cards == 1 {
 			return "purge a card revealed this way"
 		}
-		return fmt.Sprintf("purge %d cards revealed this way", a.Count)
+		return fmt.Sprintf("purge %d cards revealed this way", a.Cards)
 	case IntoBottomOfDeck:
-		return fmt.Sprintf("put %d on the bottom of your deck", a.Count)
+		return fmt.Sprintf("put %d on the bottom of your deck", a.Cards)
 	default:
-		return fmt.Sprintf("put %d into your hand", a.Count)
+		return fmt.Sprintf("put %d into your hand", a.Cards)
 	}
 }
 
 // validate rejects a non-positive Count.
-func (a ChooseAndMove) validate() error { return positiveCount("ChooseAndMove", a.Count) }
+func (a ChooseAndMove) validate() error { return positiveCount("ChooseAndMove", "Cards", a.Cards) }
 
 // terminal reports false: a move takes only Count cards, not the rest.
 func (ChooseAndMove) terminal() bool { return false }
 
 // apply moves the chosen cards from the deck to Dest through the shared dispatch.
 func (a ChooseAndMove) apply(ctx *EffectContext, tr *topRead) {
-	tr.choose(ctx, a.Count, a.Dest.choosePrompt(), a.Dest.mover(ctx, tr.player))
+	tr.choose(ctx, a.Cards, a.Dest.choosePrompt(), a.Dest.mover(ctx, tr.player))
 }
 
 // ReorderRest puts the read cards no earlier step took back on top in any order the
@@ -678,9 +672,14 @@ func (CancelFight) Text() string { return "the fight does not occur" }
 // Resolve cancels the current fight.
 func (CancelFight) Resolve(ctx *EffectContext) { ctx.Resolver.CancelCurrentFight() }
 
-// resolverInPlay reports whether id appears in either player's battleline or
-// artifact row using only Resolver reads.
+// resolverInPlay reports whether id is in play using only Resolver reads: in
+// either player's battleline or artifact row, or attached as an upgrade to a card
+// that is. It must agree with Game.inPlay — a Target that hands a removal an
+// upgrade this predicate calls out of play makes the removal silently fizzle.
 func resolverInPlay(ctx *EffectContext, id LocalID) bool {
+	if host, ok := ctx.Resolver.HostOf(id); ok {
+		id = host
+	}
 	for p := 0; p < 2; p++ {
 		for _, candidate := range ctx.Resolver.Battleline(p) {
 			if candidate == id {
@@ -823,7 +822,7 @@ func discardedNoun(t CardType) string {
 // Resolve moves the contextual card from the discard pile to hand.
 func (e PutDiscardedIntoHand) Resolve(ctx *EffectContext) {
 	if ctx.HasIt {
-		ctx.Resolver.PutFromDiscardIntoHand(ctx.It)
+		ToHand.moveFrom(ctx, Discard, ctx.Resolver.Owner(ctx.It), ctx.It)
 	}
 }
 

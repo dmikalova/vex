@@ -69,9 +69,9 @@ interesting, or brings it in line with modern errata.
   creature ends on a flank).
 - **Hypnotic Command** leans on the base rule that the active player makes all
   decisions, so `an enemy creature captures …` needs no explicit `choose`.
-- **Phase Shift**, **Kirby**, and **Taber** play (or, for Taber, play or use)
-  their off-house card immediately rather than granting a permission for later in
-  the turn (rule 21).
+- **Phase Shift**, **both Kirbys** (Com. Officer Kirby and Subject Kirby), and
+  **Taber** play (or, for Taber, play or use) their off-house card immediately
+  rather than granting a permission for later in the turn (rule 21).
 - **Trust No One** is a `Choose one:` rather than a forced `If … Otherwise …`. The
   conditional branch ("if there are no friendly creatures in play, steal 1 Æmber
   per house among enemy creatures") still gates on the empty board, so it does
@@ -86,6 +86,10 @@ interesting, or brings it in line with modern errata.
   that type to `Tactic` (rule 19) and fires every granted upgrade ability through
   the host, so it renders with the standard `This creature gains, "…"` wrapper
   like every other granted-ability upgrade.
+- **Causal Loop** archives 2 cards, not 1. KeyForge reads `Play: Archive a card.
+Archive Causal Loop.`; Vactrol reads `Play: Archive 2 cards from your hand.
+Archive Causal Loop.` The card loops a card plus itself back into archives for
+  no net gain, so a second card gives the loop something to carry.
 - **Keyforgery** drops the trailing `(no Æmber is spent)` clarifier. Vactrol
   prevents the forge before any Æmber leaves the pool, so the clause states a
   consequence the mechanic already guarantees; the Rules voice omits such

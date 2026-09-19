@@ -24,7 +24,11 @@ var LesserOxtet = set.New(
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.PurgeCard{Zone: card.Hand, Player: card.Controller, Selection: card.Each{}},
+		card.PurgeCard{
+			Zones:     []card.Zone{card.Hand},
+			Player:    card.Controller,
+			Selection: card.Each{},
+		},
 	),
 	card.WithAbility(
 		card.Trigger.Reap, card.RaiseKeyCost{

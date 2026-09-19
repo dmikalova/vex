@@ -36,14 +36,6 @@ type MoveAember struct {
 	Bind bool
 }
 
-// amount is Amount with the zero value treated as one.
-func (e MoveAember) amount() int {
-	if e.Amount < 1 {
-		return 1
-	}
-	return e.Amount
-}
-
 // toPool reports whether the destination is a pool rather than a card.
 func (e MoveAember) toPool() bool { return e.To != playerUnset }
 
@@ -60,6 +52,11 @@ func (e MoveAember) validate() error {
 	}
 	if e.All && e.Fraction.valid() {
 		return fmt.Errorf("MoveAember: set All or Fraction, not both")
+	}
+	if !e.All && !e.Fraction.valid() {
+		if err := positiveCount("MoveAember", "Amount", e.Amount); err != nil {
+			return err
+		}
 	}
 	if e.toPool() == e.Onto.valid() {
 		return fmt.Errorf("MoveAember: set exactly one destination (To pool or Onto card)")
@@ -85,7 +82,7 @@ func (e MoveAember) Text() string {
 		return fmt.Sprintf("move %s the \u00c6mber from %s to %s, %s",
 			e.Fraction.word(), e.From.Text(), e.destText(), e.Fraction.roundingPhrase())
 	}
-	amount := fmt.Sprintf("%d", e.amount())
+	amount := fmt.Sprintf("%d", e.Amount)
 	if e.All {
 		amount = "all"
 	}
@@ -131,7 +128,7 @@ func (e MoveAember) Resolve(ctx *EffectContext) {
 	ctx.It, ctx.HasIt = priorIt, priorHasIt
 	total := 0
 	for _, from := range sources {
-		moved := e.amount()
+		moved := e.Amount
 		if have := ctx.Resolver.AmberOn(from); e.Fraction.valid() {
 			moved = e.Fraction.of(have)
 		} else if e.All || moved > have {

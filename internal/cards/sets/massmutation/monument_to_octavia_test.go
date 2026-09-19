@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Action: If Cornicen Octavia is in your discard pile, a friendly creature captures 2 Æmber from your opponent. Otherwise, a friendly creature captures 1 Æmber from your opponent.
+//	Action: A friendly creature captures 1 Æmber from your opponent. If Cornicen Octavia is in your discard pile, it captures 1 Æmber from your opponent.
 func TestMonumentToOctavia(t *testing.T) {
 	t.Run("a friendly creature captures 1 Æmber", func(t *testing.T) {
 		var ally ct.Card

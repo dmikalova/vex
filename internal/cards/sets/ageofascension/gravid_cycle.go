@@ -21,6 +21,10 @@ var GravidCycle = set.New(
 	card.WithKeywords(card.Keyword.Omega),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.PutFromDiscard{Selection: card.Chosen{}, Destination: card.To.Hand},
+		card.PutCard{
+			Zones:       []card.Zone{card.Discard},
+			Selection:   card.Chosen{},
+			Destination: card.To.Hand,
+		},
 	),
 )

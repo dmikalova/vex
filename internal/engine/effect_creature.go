@@ -103,6 +103,10 @@ func fightAmong(ctx *EffectContext, attacker LocalID, enemies []LocalID) (LocalI
 		ctx.Resolver.Record(NoCreatureToFight{Creature: attacker})
 		return 0, false
 	}
+	// Snapshot the enemy's neighbors before the fight, which may destroy it: a
+	// following "each neighbor of the fought creature" effect (Smite) reads this
+	// when the fought creature has left play.
+	ctx.Produced.Neighbors = neighbors(ctx, enemy)
 	ctx.Resolver.FightWith(attacker, enemy)
 	ctx.It, ctx.HasIt = enemy, true
 	return enemy, true

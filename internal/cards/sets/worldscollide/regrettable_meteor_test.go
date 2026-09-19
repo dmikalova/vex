@@ -38,4 +38,24 @@ func TestRegrettableMeteor(t *testing.T) {
 			h.Expect(small).At(ct.PlayArea)
 		},
 	)
+
+	// A creature matching both halves is one member of the destroyed set, not two,
+	// so its ward absorbs the destruction once and it survives.
+	t.Run("a warded Dinosaur with power 6 or higher survives", func(t *testing.T) {
+		var bigDino ct.Card
+		h := ct.Play(t, ct.Setup{
+			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(RegrettableMeteor)},
+			P2: ct.Side{InPlay: ct.Cards(
+				ct.Bind(&bigDino, ct.Creature(ct.Traits(card.Traits.Dinosaur), ct.Power(7))),
+			)},
+		})
+		bigDino.Ward()
+
+		h.P1.Play(RegrettableMeteor)
+
+		h.Expect(bigDino).At(ct.PlayArea)
+		if bigDino.Warded() {
+			t.Error("the ward should have been spent absorbing the destruction")
+		}
+	})
 }

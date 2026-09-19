@@ -376,7 +376,7 @@ card.WithAbility(
     Amount: 1,
     After:  card.IfDestroyed,
     Target: card.Target.Creature,
-    Then:   card.DiscardCard{Player: card.Opponent, Zones: []card.Zone{card.Hand}, Selection: card.Random{Count: 1}},
+    Then:   card.DiscardCard{Player: card.Opponent, Zones: []card.Zone{card.Hand}, Selection: card.Random{}},
   }),
 ```
 
@@ -436,7 +436,7 @@ Igon the Green purges itself, then fetches its counterpart:
 card.WithAbility(
   card.Trigger.Destroyed, card.Sequence{Effects: []card.Effect{
     card.PurgeCreature{Target: card.Target.This},
-    card.PutFromDiscard{Selection: card.Chosen{Name: IgonTheTerrible.Name}, Destination: card.To.Hand},
+    card.PutCard{Zones: []card.Zone{card.Discard}, Selection: card.Chosen{Name: IgonTheTerrible.Name}, Destination: card.To.Hand},
   }}),
 ```
 
@@ -450,7 +450,6 @@ card.WithAbility(
 | `PurgeCard`                      | purges a card from a pile                 |
 | `PurgeFromHand`                  | purges a card out of hand                 |
 | `PurgeSource`                    | purges the source card                    |
-| `PurgeArchives`                  | purges a player's archives                |
 | `PurgeArchivedCardThen`          | purges from archives, then resolves more  |
 
 `BatchDestroy` takes a `Gather` such as `EachPlayerUnless`, which spares the
@@ -555,6 +554,25 @@ adding another one-off `…FromHand` / `…TopOfDeck` variant to unwind later.
 `Chosen` and `Each` narrow with `House`, `Type`, `Trait`, `Name`, and `Or`;
 `Chosen` also takes `Optional`.
 
+**Quantities** — how many cards move. Independent of the Selection, which says
+only _which_ and always picks one. Set on `PurgeCard`, `DiscardCard`,
+`ArchiveCard`, `PutChosen`, and `ShuffleIntoDeck`; the zero value moves one.
+
+| Quantity                       | Takes                                       |
+| ------------------------------ | ------------------------------------------- |
+| `card.Takes{N: card.Fixed(2)}` | exactly 2 — reads "2 cards"                 |
+| `card.Takes{N: <a Count>}`     | one per board count — reads "for each …, …" |
+| `card.UpTo{N: card.Fixed(2)}`  | at most 2 — reads "up to 2 cards"           |
+| `card.AnyNumber{}`             | as many as the controller likes             |
+
+`UpTo` and `AnyNumber` need a declinable Selection (`Chosen{Optional: true}`) —
+that is what gives the controller the stop.
+
+Omitting the Quantity moves one card, which is what a card that says "archive a
+card" means. But a written `Takes` or `UpTo` must set `N`: a bare `Takes{}` or an
+`N` below one is a half-written field, not a second spelling of "one", so
+`validate()` rejects it at card init.
+
 **Zones** (the source): `card.Hand`, `card.Deck`, `card.Discard`,
 `card.Archives`.
 
@@ -589,7 +607,7 @@ Deck-top routing steps use the parallel `card.Into.Hand`, `.Archives`,
 | `DiscardUntil`                 | discards until a match turns up          |
 | `PutFromPlay`                  | moves a card out of play                 |
 | `PutChosen`                    | moves a card chosen mid-resolution       |
-| `PutFromDiscard`               | moves a card out of the discard pile     |
+| `PutCard`                      | moves a card out of your own zones       |
 | `PutFromHand`                  | moves a card out of hand                 |
 | `PutIntoPlay`                  | puts a card into play                    |
 | `PutDiscardedIntoHand`         | returns what an earlier step discarded   |
@@ -604,13 +622,16 @@ Deck-top routing steps use the parallel `card.Into.Hand`, `.Archives`,
 | `Draw`                         | draws cards                              |
 | `RefillHand`                   | refills to the hand size                 |
 
-`Search` names its zones explicitly (`Sources`) and never shuffles on its own:
+`Search` names its zones explicitly (`Sources`), states where its finds go
+(`Dest`, one of `card.To.Hand`, `card.To.TopOfDeck`, or `card.To.Archives`), and
+never shuffles on its own:
 
 ```go
 card.Search{
   Sources: []card.Zone{card.Deck, card.Discard},
   Filter:  card.Filter{Trait: card.Traits.Beast},
   Reveal:  true,
+  Dest:    card.To.Hand,
 }
 ```
 
@@ -906,7 +927,7 @@ card.DealDamage{
 | Count                             | Counts                               |
 | --------------------------------- | ------------------------------------ |
 | `Fixed`                           | a constant                           |
-| `CardsInPlay`                          | matching cards in play               |
+| `CardsInPlay`                     | matching cards in play               |
 | `ArtifactsInPlay`                 | artifacts in play                    |
 | `ExcessCreatures`                 | creatures beyond the opponent's      |
 | `HousesInPlay`                    | distinct houses in play              |

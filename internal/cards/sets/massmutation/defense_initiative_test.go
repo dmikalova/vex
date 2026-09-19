@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Choose a creature - ward the chosen creature, and you may exalt the chosen creature -> ward the chosen creature.
+//	Play: Choose a creature - ward the chosen creature, and you may exalt the chosen creature -> ward each neighbor of the chosen creature.
 func TestDefenseInitiative(t *testing.T) {
 	t.Run("wards a creature, then exalts it and wards its neighbors", func(t *testing.T) {
 		var left, chosen, right ct.Card

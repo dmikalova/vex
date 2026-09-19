@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Imp
 //
-//	Destroyed: Purge a random card from your opponent's hand.
+//	Destroyed: Your opponent purges a random card from their hand.
 func TestImpspector(t *testing.T) {
 	t.Run("purges a random card from the opponent's hand when destroyed", func(t *testing.T) {
 		var impspector, enemy, doomed ct.Card

@@ -12,7 +12,7 @@ func TestArchiveEffect(t *testing.T) {
 	if one.Text() != "archive a card from your hand" {
 		t.Errorf("archive text = %q", one.Text())
 	}
-	two := ArchiveCard{Zone: Hand, Selection: Chosen{}, Amount: 2}
+	two := ArchiveCard{Zone: Hand, Selection: Chosen{}, Quantity: Takes{N: Fixed(2)}}
 	if two.Text() != "archive 2 cards from your hand" {
 		t.Errorf("archive plural text = %q", two.Text())
 	}
@@ -27,7 +27,7 @@ func TestArchiveEffect(t *testing.T) {
 	}
 
 	// Archiving more than the hand holds stops when the hand empties.
-	(ArchiveCard{Zone: Hand, Selection: Chosen{}, Amount: 5}).Resolve(ctx)
+	(ArchiveCard{Zone: Hand, Selection: Chosen{}, Quantity: Takes{N: Fixed(5)}}).Resolve(ctx)
 	if len(g.Hand(0)) != 0 {
 		t.Errorf("hand should be empty, got %v", g.Hand(0))
 	}
@@ -75,8 +75,9 @@ func TestArchiveEnemyHand(t *testing.T) {
 	}
 }
 
-// TestArchiveCardValidate covers ArchiveCard's guards: a selection must be set
-// and the source zone must be the hand or discard pile.
+// TestArchiveCardValidate covers ArchiveCard's guards: a selection must be set,
+// the source zone must be the hand or discard pile, and a written quantity must
+// name a real number of cards.
 func TestArchiveCardValidate(t *testing.T) {
 	if (ArchiveCard{Zone: Hand}).validate() == nil {
 		t.Error("a nil selection should not validate")
@@ -86,6 +87,9 @@ func TestArchiveCardValidate(t *testing.T) {
 	}
 	if (ArchiveCard{Zone: Deck, Selection: Chosen{}}).validate() == nil {
 		t.Error("a Deck source should not validate")
+	}
+	if (ArchiveCard{Zone: Hand, Selection: Chosen{}, Quantity: Takes{}}).validate() == nil {
+		t.Error("a quantity with an unset count should not validate")
 	}
 	if (ArchiveCard{Zone: Hand, Selection: Chosen{}}).validate() != nil {
 		t.Error("a hand archive should validate")
@@ -104,10 +108,10 @@ func TestArchiveCardDeclinableFlags(t *testing.T) {
 	if (ArchiveCard{Zone: Hand, Selection: Chosen{}}).declinable() {
 		t.Error("a mandatory archive should not be declinable")
 	}
-	if (ArchiveCard{Zone: Hand, Selection: Chosen{Optional: true}, Amount: 2}).declinable() {
+	if (ArchiveCard{Zone: Hand, Selection: Chosen{Optional: true}, Quantity: UpTo{N: Fixed(2)}}).declinable() {
 		t.Error("a multi-count (up-to) archive should not be declinable")
 	}
-	if (ArchiveCard{Zone: Hand, Selection: Random{Count: 1}}).declinable() {
+	if (ArchiveCard{Zone: Hand, Selection: Random{}}).declinable() {
 		t.Error("a random archive is not a card choice, so not declinable")
 	}
 	if (ArchiveCard{Zone: Discard, Selection: Named{Name: "x"}}).declinable() {
@@ -134,7 +138,7 @@ func TestArchiveFromHandUpTo(t *testing.T) {
 	e := ArchiveCard{
 		Zone:      Hand,
 		Selection: Chosen{Optional: true},
-		Amount:    2,
+		Quantity:  UpTo{N: Fixed(2)},
 	}
 	if got := e.Text(); got != "archive up to 2 cards from your hand" {
 		t.Errorf("text = %q", got)
@@ -241,7 +245,7 @@ func TestArchiveTopOfDeckEffect(t *testing.T) {
 	if got := (ArchiveCard{Zone: Deck, Selection: Top{}}).Text(); got != "archive the top card of your deck" {
 		t.Errorf("text = %q", got)
 	}
-	if got := (ArchiveCard{Zone: Deck, Selection: Top{}, Amount: 2}).Text(); got != "archive the top 2 cards of your deck" {
+	if got := (ArchiveCard{Zone: Deck, Selection: Top{}, Quantity: Takes{N: Fixed(2)}}).Text(); got != "archive the top 2 cards of your deck" {
 		t.Errorf("plural text = %q", got)
 	}
 
@@ -255,7 +259,7 @@ func TestArchiveTopOfDeckEffect(t *testing.T) {
 	}
 
 	// Archiving more than the deck holds stops when the deck empties.
-	(ArchiveCard{Zone: Deck, Selection: Top{}, Amount: 5}).Resolve(ctx)
+	(ArchiveCard{Zone: Deck, Selection: Top{}, Quantity: Takes{N: Fixed(5)}}).Resolve(ctx)
 	if g.State.Deck[0].Count != 0 {
 		t.Errorf("deck should be empty, got %d", g.State.Deck[0].Count)
 	}
@@ -273,7 +277,7 @@ func TestArchiveTopOfDiscardEffect(t *testing.T) {
 	if got := (ArchiveCard{Zone: Discard, Selection: Top{}}).Text(); got != "archive the top card of your discard pile" {
 		t.Errorf("text = %q", got)
 	}
-	if got := (ArchiveCard{Zone: Discard, Selection: Top{}, Amount: 2}).Text(); got != "archive the top 2 cards of your discard pile" {
+	if got := (ArchiveCard{Zone: Discard, Selection: Top{}, Quantity: Takes{N: Fixed(2)}}).Text(); got != "archive the top 2 cards of your discard pile" {
 		t.Errorf("plural text = %q", got)
 	}
 
@@ -288,7 +292,7 @@ func TestArchiveTopOfDiscardEffect(t *testing.T) {
 	}
 
 	// Archiving more than the discard holds stops when the pile empties.
-	(ArchiveCard{Zone: Discard, Selection: Top{}, Amount: 5}).Resolve(ctx)
+	(ArchiveCard{Zone: Discard, Selection: Top{}, Quantity: Takes{N: Fixed(5)}}).Resolve(ctx)
 	if g.State.Discard[0].Count != 0 {
 		t.Errorf("discard should be empty, got %d", g.State.Discard[0].Count)
 	}
@@ -309,7 +313,7 @@ func TestArchiveBottomSelection(t *testing.T) {
 	if got := (ArchiveCard{Zone: Discard, Selection: Bottom{}}).Text(); got != "archive the bottom card of your discard pile" {
 		t.Errorf("text = %q", got)
 	}
-	if got := (ArchiveCard{Zone: Deck, Selection: Bottom{}, Amount: 2}).Text(); got != "archive the bottom 2 cards of your deck" {
+	if got := (ArchiveCard{Zone: Deck, Selection: Bottom{}, Quantity: Takes{N: Fixed(2)}}).Text(); got != "archive the bottom 2 cards of your deck" {
 		t.Errorf("plural text = %q", got)
 	}
 
@@ -324,7 +328,7 @@ func TestArchiveBottomSelection(t *testing.T) {
 	}
 
 	// Archiving more than the pile holds stops when it empties.
-	(ArchiveCard{Zone: Discard, Selection: Bottom{}, Amount: 5}).Resolve(ctx)
+	(ArchiveCard{Zone: Discard, Selection: Bottom{}, Quantity: Takes{N: Fixed(5)}}).Resolve(ctx)
 	if g.State.Discard[0].Count != 0 {
 		t.Errorf("discard should be empty, got %d", g.State.Discard[0].Count)
 	}
@@ -598,7 +602,7 @@ func TestArchiveFromHandFiltered(t *testing.T) {
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
 	}
-	if got := (ArchiveCard{Zone: Hand, Selection: Chosen{}, Amount: 2}).Text(); got != "archive 2 cards from your hand" {
+	if got := (ArchiveCard{Zone: Hand, Selection: Chosen{}, Quantity: Takes{N: Fixed(2)}}).Text(); got != "archive 2 cards from your hand" {
 		t.Errorf("plain plural text = %q", got)
 	}
 	if got := (ArchiveCard{Zone: Hand, Selection: Chosen{Type: Artifact}}).Text(); got != "archive an artifact from your hand" {
@@ -682,13 +686,13 @@ func TestArchiveFromHandExceptHouse(t *testing.T) {
 }
 
 func TestArchiveRandomFromHand(t *testing.T) {
-	if (ArchiveCard{Zone: Hand, Selection: Random{Count: 1}}).Text() != "archive a random card from your hand" {
+	if (ArchiveCard{Zone: Hand, Selection: Random{}}).Text() != "archive a random card from your hand" {
 		t.Errorf(
 			"text = %q",
-			(ArchiveCard{Zone: Hand, Selection: Random{Count: 1}}).Text(),
+			(ArchiveCard{Zone: Hand, Selection: Random{}}).Text(),
 		)
 	}
-	two := ArchiveCard{Zone: Hand, Selection: Random{Count: 1}, Amount: 2}
+	two := ArchiveCard{Zone: Hand, Selection: Random{}, Quantity: Takes{N: Fixed(2)}}
 	if two.Text() != "archive 2 random cards from your hand" {
 		t.Errorf("plural text = %q", two.Text())
 	}
@@ -708,7 +712,7 @@ func TestArchiveRandomFromHand(t *testing.T) {
 	}
 
 	// Archiving more than the hand holds stops when the hand empties.
-	(ArchiveCard{Zone: Hand, Selection: Random{Count: 1}, Amount: 5}).Resolve(ctx)
+	(ArchiveCard{Zone: Hand, Selection: Random{}, Quantity: Takes{N: Fixed(5)}}).Resolve(ctx)
 	if len(g.Hand(0)) != 0 {
 		t.Errorf("hand should be empty, got %v", g.Hand(0))
 	}
@@ -736,7 +740,7 @@ func TestArchiveFromHandOrAmount(t *testing.T) {
 	one := ArchiveCard{
 		Zone:      Hand,
 		Selection: Chosen{},
-		Amount:    2,
+		Quantity:  Takes{N: Fixed(2)},
 		Or:        OrAmount{Amount: 1, When: ControlsNamed{Name: "Hyde"}},
 	}
 	if got := one.Text(); got != "archive 2 cards from your hand, or a card if you control Hyde" {
@@ -747,7 +751,7 @@ func TestArchiveFromHandOrAmount(t *testing.T) {
 	per := ArchiveCard{
 		Zone:      Hand,
 		Selection: Chosen{},
-		Per:       ExcessCreatures{Player: Opponent},
+		Quantity:  Takes{N: ExcessCreatures{Player: Opponent}},
 	}
 	if got := per.Text(); got != "for each creature your opponent controls in excess of you, archive a card from your hand" {
 		t.Errorf("per text = %q", got)

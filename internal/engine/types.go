@@ -167,7 +167,7 @@ type Trait int
 // The traits a card can carry, in alphabetical order.
 const (
 	// traitUnset is the invalid zero value: a Trait field left unset (e.g.
-	// PutFromDiscard.Trait, Target.trait) means "no trait filter", not a real
+	// PutCard.Trait, Target.trait) means "no trait filter", not a real
 	// trait.
 	traitUnset Trait = iota
 	Agent
@@ -511,7 +511,7 @@ const (
 	// An Enters Play ability resolves on a creature as it enters play, whatever
 	// brought it in — the creature's own reaction to arriving, such as Chuff Ape
 	// entering stunned. It is fired on the entering creature by the enter-play event
-	// (Game.emitCreatureEnters), so a new "as it enters play" behavior is just
+	// (Game.emitEnters), so a new "as it enters play" behavior is just
 	// another ability rather than a special case in the play path.
 	TriggerEntersPlay
 	// An End of Turn ability resolves during the end of its controller's turn,

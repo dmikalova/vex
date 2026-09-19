@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"strconv"
 )
 
@@ -292,6 +293,21 @@ type abilityWindow struct {
 // window starts an empty gather.
 func (g *Game) window() *abilityWindow { return &abilityWindow{g: g} }
 
+// addEntersPlay collects everything that means "this card entered play": the
+// card's own "enters play" abilities, every other card's "after a creature enters
+// play", and the lasting reactions armed on EventCardEntersPlay. It is the single
+// definition of the event, so a path that brings a card into play cannot gather
+// two of the three and silently miss the third — which is exactly what putIntoPlay
+// once did, firing the trigger but never the lasting event of the same name
+// (TestEnteringPlayIsOneEventWhicheverWay).
+func (w *abilityWindow) addEntersPlay(player int, entered LocalID) {
+	w.add(entered, TriggerEntersPlay, 0, false)
+	if w.g.TypeOf(entered) == Creature {
+		w.addBoard(TriggerAfterCreatureEnters, entered, skipSubject)
+	}
+	w.pending = append(w.pending, w.g.lastingReactions(EventCardEntersPlay, player, entered)...)
+}
+
 // add collects src's abilities under trigger, each resolving for src's own
 // controller against it — the common case where a card's reaction resolves for
 // whoever controls it.
@@ -563,13 +579,12 @@ func (g *Game) actionReactions(actor int, id LocalID) []triggeredAbility {
 	return w.pending
 }
 
-// Fight uses attacker to fight the enemy creature defender.
 // fightErrorForgiven reports whether a canUse error may be forgiven for a fight.
 // A grant such as Brothers in Battle lets a creature of a chosen house fight out
 // of the active house, so a wrong-house error is excused when the grant covers
 // this attacker; every other check still applies.
 func (g *Game) fightErrorForgiven(err error, attacker LocalID) bool {
-	return err == ErrWrongHouse && g.mayFightOutOfHouse(attacker)
+	return errors.Is(err, ErrWrongHouse) && g.mayFightOutOfHouse(attacker)
 }
 
 // Fight uses a creature to fight an enemy creature: it validates the attacker and
@@ -577,6 +592,23 @@ func (g *Game) fightErrorForgiven(err error, attacker LocalID) bool {
 // attacker cannot be used (readiness, or wrong house unless a grant forgives it)
 // or the target is not a legal enemy creature.
 func (g *Game) Fight(player int, attacker, defender LocalID) error {
+	if err := g.validateFight(player, attacker, defender); err != nil {
+		return err
+	}
+	g.spendOffHouseUse(player, attacker)
+	g.fight(attacker, defender)
+	// Boundary: combat resolution and any lasting reaction it fired can change
+	// power anywhere on the board (ADR 0029).
+	g.settleDestroyed(player)
+	return nil
+}
+
+// validateFight checks that player may use attacker to fight defender: the
+// attacker is usable (readiness, or wrong house unless a grant forgives it) and
+// defender is a legal enemy creature — a creature the player does not control,
+// in play, not shielded by a taunt or (off a flank) camouflage, and admitted by
+// the attacker's own fight restriction.
+func (g *Game) validateFight(player int, attacker, defender LocalID) error {
 	if g.cannotFight(player) {
 		return ErrCannotFight
 	}
@@ -598,11 +630,6 @@ func (g *Game) Fight(player int, attacker, defender LocalID) error {
 		!fr.allows(&EffectContext{Resolver: g, Source: attacker, Controller: player}, defender) {
 		return ErrNoTarget
 	}
-	g.spendOffHouseUse(player, attacker)
-	g.fight(attacker, defender)
-	// Boundary: combat resolution and any lasting reaction it fired can change
-	// power anywhere on the board (ADR 0029).
-	g.settleDestroyed(player)
 	return nil
 }
 
@@ -620,6 +647,12 @@ func (g *Game) hasTrigger(id LocalID, trigger Trigger) bool {
 			}
 		}
 	}
+	return g.hasConstantGrantedTrigger(id, trigger)
+}
+
+// hasConstantGrantedTrigger reports whether an active constant ability of a card in
+// play grants id an ability under the trigger.
+func (g *Game) hasConstantGrantedTrigger(id LocalID, trigger Trigger) bool {
 	for player := 0; player < 2; player++ {
 		for _, grantor := range g.allInPlay(player) {
 			for _, c := range g.cat.def(grantor).ConstantAbilities {
@@ -765,13 +798,15 @@ func (g *Game) resolveUpgradePlay(host, upgrade LocalID, up *CardDefinition) {
 	}
 }
 
-// emitCreatureEnters is the enter-play event for a creature. It first resolves the
-// entering creature's own "enters play" abilities (Chuff Ape entering stunned),
-// then fires "after a creature enters play" abilities on every other in-play card,
-// with the entering creature as the trigger target ("it").
-func (g *Game) emitCreatureEnters(entered LocalID) {
-	g.triggerAbilities(entered, TriggerEntersPlay, 0, false)
-	g.emitBoard(TriggerAfterCreatureEnters, entered, skipSubject)
+// emitEnters resolves the enters-play event for a card that arrived without being
+// played — put into play, or swapped in. The play paths gather the same event into
+// their larger play window instead, so a card's arrival and the reactions to
+// playing it order together (ADR 0013); there is nothing else to order here.
+func (g *Game) emitEnters(entered LocalID) {
+	player := g.controller(entered)
+	w := g.window()
+	w.addEntersPlay(player, entered)
+	g.resolveWindow(g.orderTriggered(player, w.pending))
 }
 
 // emitCreaturePlayed fires the "after a creature is played" reaction on every
@@ -852,8 +887,7 @@ func (g *Game) afterPlayReactions(player int, played LocalID) []triggeredAbility
 func (g *Game) playCreatureReactions(player int, played LocalID) []triggeredAbility {
 	w := g.window()
 	w.add(played, TriggerAfterPlay, 0, false)
-	w.add(played, TriggerEntersPlay, 0, false)
-	w.addBoard(TriggerAfterCreatureEnters, played, skipSubject)
+	w.addEntersPlay(player, played)
 	for _, neighbor := range neighbors(&EffectContext{Resolver: g}, played) {
 		w.add(neighbor, TriggerAfterCreaturePlayedAdjacent, played, true)
 	}
@@ -1013,25 +1047,51 @@ func (g *Game) resolveTriggered(t triggeredAbility) bool {
 // triggeredBy collects every ability matching the trigger that src carries itself,
 // is granted by an attached upgrade, or is granted by an in-play card's constant
 // ability. Collection happens before any of them resolves so the whole window can
-// be ordered (ADR 0013).
+// be ordered (ADR 0013). Each source is gathered in turn and appended in order, so
+// the window's order follows the source order here.
 func (g *Game) triggeredBy(src LocalID, trigger Trigger) []triggeredAbility {
 	var pending []triggeredAbility
-	keep := func(grantor LocalID, ab Ability) {
-		if ab.Trigger == trigger {
-			pending = append(pending, triggeredAbility{source: src, grantor: grantor, ability: ab})
-		}
+	pending = append(pending, g.printedTriggers(src, trigger)...)
+	pending = append(pending, g.upgradeGrantedTriggers(src, trigger)...)
+	pending = append(pending, g.constantGrantedTriggers(src, trigger)...)
+	pending = append(pending, g.alsoFiredTriggers(src, trigger)...)
+	pending = append(pending, g.textBoxTriggers(src, trigger)...)
+	return pending
+}
+
+// printedTriggers collects src's own printed abilities under the trigger. A blanked
+// text box carries no abilities, so the whole set is dropped.
+func (g *Game) printedTriggers(src LocalID, trigger Trigger) []triggeredAbility {
+	if g.textBlanked(src) {
+		return nil
 	}
+	var out []triggeredAbility
 	for _, ab := range g.cat.def(src).Abilities {
-		if g.textBlanked(src) {
-			break
+		if ab.Trigger == trigger {
+			out = append(out, triggeredAbility{source: src, grantor: src, ability: ab})
 		}
-		keep(src, ab)
 	}
+	return out
+}
+
+// upgradeGrantedTriggers collects the abilities attached upgrades grant src under
+// the trigger; an upgrade's grant survives src's own text box being blanked.
+func (g *Game) upgradeGrantedTriggers(src LocalID, trigger Trigger) []triggeredAbility {
+	var out []triggeredAbility
 	for up, ok := g.firstUpgrade(src); ok; up, ok = g.nextUpgrade(up) {
 		for _, ab := range g.cat.def(up).Static.Granted {
-			keep(up, ab)
+			if ab.Trigger == trigger {
+				out = append(out, triggeredAbility{source: src, grantor: up, ability: ab})
+			}
 		}
 	}
+	return out
+}
+
+// constantGrantedTriggers collects the abilities that either player's in-play cards
+// grant src through an active constant ability that affects it, under the trigger.
+func (g *Game) constantGrantedTriggers(src LocalID, trigger Trigger) []triggeredAbility {
+	var out []triggeredAbility
 	for player := 0; player < 2; player++ {
 		for _, grantor := range g.allInPlay(player) {
 			for _, c := range g.cat.def(grantor).ConstantAbilities {
@@ -1040,40 +1100,56 @@ func (g *Game) triggeredBy(src LocalID, trigger Trigger) []triggeredAbility {
 					continue
 				}
 				for _, ab := range c.Granted {
-					keep(grantor, ab)
+					if ab.Trigger == trigger {
+						out = append(
+							out,
+							triggeredAbility{source: src, grantor: grantor, ability: ab},
+						)
+					}
 				}
 			}
 		}
 	}
-	// An also-triggers-on rule (Kompsos Haruspex's constant, Livia the Elder's lasting fuse)
-	// makes src's own abilities under one trigger also fire on this one — its play
-	// effect on reap, its fight and reap effects on each other. Gather those printed
-	// abilities here so an also-fired ability orders in the same window as a natural one.
-	if !g.textBlanked(src) {
-		for _, from := range g.additionalTriggers(src, trigger) {
-			for _, ab := range g.cat.def(src).Abilities {
-				if ab.Trigger == from {
-					pending = append(pending, triggeredAbility{
-						source:  src,
-						grantor: src,
-						ability: ab,
-					})
-				}
+	return out
+}
+
+// alsoFiredTriggers collects src's own printed abilities that an also-triggers-on
+// rule (Kompsos Haruspex's constant, Livia the Elder's lasting fuse) makes fire on
+// this trigger — its play effect on reap, its fight and reap effects on each other
+// — so an also-fired ability orders in the same window as a natural one. A blanked
+// text box carries no abilities to re-fire.
+func (g *Game) alsoFiredTriggers(src LocalID, trigger Trigger) []triggeredAbility {
+	if g.textBlanked(src) {
+		return nil
+	}
+	var out []triggeredAbility
+	for _, from := range g.additionalTriggers(src, trigger) {
+		for _, ab := range g.cat.def(src).Abilities {
+			if ab.Trigger == from {
+				out = append(out, triggeredAbility{source: src, grantor: src, ability: ab})
 			}
 		}
 	}
-	// A creature that has GAINED another card's text box (Mimic Gel copies a chosen
-	// creature; Creed of Nurture lends one for the turn) also fires that card's
-	// printed abilities as if they were its own. They keep src as their source, so
-	// self-referential text rebinds to the gaining creature.
-	if !g.textBlanked(src) {
-		for _, textSource := range g.grantedTextBoxSources(src) {
-			for _, ab := range g.cat.def(textSource).Abilities {
-				keep(src, ab)
+	return out
+}
+
+// textBoxTriggers collects the printed abilities of a card whose text box src has
+// GAINED (Mimic Gel copies a chosen creature; Creed of Nurture lends one for the
+// turn) as if they were its own. They keep src as their source, so self-referential
+// text rebinds to the gaining creature. A blanked text box gains nothing.
+func (g *Game) textBoxTriggers(src LocalID, trigger Trigger) []triggeredAbility {
+	if g.textBlanked(src) {
+		return nil
+	}
+	var out []triggeredAbility
+	for _, textSource := range g.grantedTextBoxSources(src) {
+		for _, ab := range g.cat.def(textSource).Abilities {
+			if ab.Trigger == trigger {
+				out = append(out, triggeredAbility{source: src, grantor: src, ability: ab})
 			}
 		}
 	}
-	return pending
+	return out
 }
 
 // orderTriggerPrompt is the prompt shown when abilities on several cards trigger

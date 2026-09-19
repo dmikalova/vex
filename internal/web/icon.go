@@ -566,7 +566,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		if v.Zone == engine.Purged {
 			return []glyph{{asset: "zone-purge"}, arrowTo(glyph{asset: "zone-archives"})}, true
 		}
-		return []glyph{{asset: "zone-archives", qty: v.Amount}}, true
+		return []glyph{{asset: "zone-archives", qty: engine.FixedCardCount(v.Quantity)}}, true
 	case engine.ArchiveFromPlay:
 		return []glyph{{asset: "zone-archives"}}, true
 	case engine.ArchiveSource:
@@ -580,25 +580,21 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-discard"}}, true
 	case engine.PurgeCard:
 		src := glyph{asset: "zone-hand"}
-		if v.Zone == engine.Discard {
+		switch v.Zones[0] {
+		case engine.Discard:
 			src.asset = "zone-discard"
+		case engine.Archives:
+			src.asset = "zone-archives"
 		}
 		if _, each := v.Selection.(engine.Each); each {
 			src.decor = decorEach
 		}
 		return []glyph{src, arrowTo(glyph{asset: "zone-purge"})}, true
-	case engine.PurgeArchives:
-		return []glyph{
-			{asset: "zone-archives"},
-			arrowTo(glyph{asset: "zone-purge"}),
-		}, true
 	case engine.PurgeArchivedCardThen:
 		gs := []glyph{{asset: "zone-purge"}}
 		more, _ := effectGlyphs(v.Then)
 		return append(gs, more...), true
 	case engine.Shuffle:
-		return []glyph{{asset: "zone-deck"}}, true
-	case engine.ShuffleFriendlyCardsIntoDeck:
 		return []glyph{{asset: "zone-deck"}}, true
 	case engine.ShuffleIntoDeck:
 		// A multi-zone shuffle has no single source glyph, so it shows what it takes.
@@ -607,8 +603,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			src = glyph{asset: "type-creature"}
 		}
 		return []glyph{src, arrowTo(glyph{asset: "zone-deck"})}, true
-	case engine.PutNamedIntoHand:
-		return []glyph{{asset: "glyph-return"}}, true
 	case engine.PutItIntoHand:
 		return []glyph{{asset: "glyph-return"}}, true
 	case engine.PlayFrom, engine.PlayTopOfDeck, engine.PutIntoPlay:
@@ -793,7 +787,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			return []glyph{targetGlyph(v.Target), arrowTo(glyph{asset: a})}, true
 		}
 		return fallbackGlyphs(e), false
-	case engine.PutFromDiscard:
+	case engine.PutCard:
 		if a := destinationGlyph(v.Destination); a != "" {
 			return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: a})}, true
 		}

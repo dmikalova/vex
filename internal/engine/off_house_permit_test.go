@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 // TestOffHousePermitFrees exercises each reason a permit refuses a card.
 func TestOffHousePermitFrees(t *testing.T) {
@@ -71,7 +74,7 @@ func TestOffHousePlayViaPermit(t *testing.T) {
 		if got := g.State.OffHousePermits[0][0].Remaining; got != 0 {
 			t.Errorf("Remaining after one play = %d, want 0", got)
 		}
-		if err := g.CanPlay(0, second); err != ErrWrongHouse {
+		if err := g.CanPlay(0, second); !errors.Is(err, ErrWrongHouse) {
 			t.Fatalf("second off-house play = %v, want ErrWrongHouse", err)
 		}
 	})
@@ -80,7 +83,7 @@ func TestOffHousePlayViaPermit(t *testing.T) {
 		g := started(t)
 		g.addOffHousePermit(0, OffHousePermit{Except: StarAlliance, Grant: GrantPlay, Remaining: 1})
 		sa := g.AddToHand(NewCard("sa card", StarAlliance, Creature, Common, WithPower(3)), 0)
-		if err := g.CanPlay(0, sa); err != ErrWrongHouse {
+		if err := g.CanPlay(0, sa); !errors.Is(err, ErrWrongHouse) {
 			t.Fatalf("CanPlay excluded house = %v, want ErrWrongHouse", err)
 		}
 	})
@@ -196,7 +199,7 @@ func TestNonActivePlayPermission(t *testing.T) {
 		if got := g.State.NonActivePlaysUsedThisTurn[0]; got != 1 {
 			t.Errorf("non-active plays used = %d, want 1", got)
 		}
-		if err := g.CanPlay(0, second); err != ErrWrongHouse {
+		if err := g.CanPlay(0, second); !errors.Is(err, ErrWrongHouse) {
 			t.Fatalf("second non-active play = %v, want ErrWrongHouse", err)
 		}
 
@@ -212,7 +215,7 @@ func TestNonActivePlayPermission(t *testing.T) {
 		g.AddToBattleline(testCreature("flank a", 3), 0)
 		g.AddToBattleline(jericho, 0) // even line: no center
 		mars := g.AddToHand(NewCard("mars c", Mars, Creature, Common, WithPower(3)), 0)
-		if err := g.CanPlay(0, mars); err != ErrWrongHouse {
+		if err := g.CanPlay(0, mars); !errors.Is(err, ErrWrongHouse) {
 			t.Fatalf("off-center Val granted a play: %v", err)
 		}
 		if got := g.nonActivePlayLimit(0); got != 0 {

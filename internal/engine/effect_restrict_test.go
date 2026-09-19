@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestCannotPlay(t *testing.T) {
 	if got := (CannotPlay{Player: Opponent, Type: Creature, Duration: OpponentNextTurn}).Text(); got != "your opponent cannot play creatures during their next turn" {
@@ -48,7 +51,7 @@ func TestCannotPlay(t *testing.T) {
 	g.State.CannotPlayTypeThis[0].Value = Creature
 	idx := int(g.State.Hand[0].Count)
 	g.AddToHand(NewCard("beast", Brobnar, Creature, Common, WithPower(3)), 0)
-	if _, err := g.PlayCreature(0, idx, false); err != ErrCannotPlayType {
+	if _, err := g.PlayCreature(0, idx, false); !errors.Is(err, ErrCannotPlayType) {
 		t.Errorf("playing a barred creature = %v, want ErrCannotPlayType", err)
 	}
 }
@@ -123,7 +126,7 @@ func TestRestrictFighting(t *testing.T) {
 	if !g.State.CannotFight[1].Value || g.State.CannotFightNext[1].Value {
 		t.Fatal("the bar should be active and disarmed on the opponent's turn")
 	}
-	if err := g.Fight(1, def, att); err != ErrCannotFight {
+	if err := g.Fight(1, def, att); !errors.Is(err, ErrCannotFight) {
 		t.Errorf("restricted Fight = %v, want ErrCannotFight", err)
 	}
 	// It lifts when player 1 ends the turn.
@@ -249,7 +252,7 @@ func TestCannotFightConstant(t *testing.T) {
 	if !g.cannotFight(0) {
 		t.Error("a constant Fighting restriction should bar the controller")
 	}
-	if err := g.Fight(0, att, def); err != ErrCannotFight {
+	if err := g.Fight(0, att, def); !errors.Is(err, ErrCannotFight) {
 		t.Errorf("Fight = %v, want ErrCannotFight", err)
 	}
 }
@@ -326,13 +329,13 @@ func TestCannotReapConstant(t *testing.T) {
 	// The active player cannot reap. With an enemy creature present the reaper can
 	// still fight, so canUse passes and canUseTo's ReapUse guard is what stops it.
 	g.AddToBattleline(testCreature("enemy", 4), 1)
-	if err := g.CanUseTo(0, reaper, ReapUse); err != ErrCannotUse {
+	if err := g.CanUseTo(0, reaper, ReapUse); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("CanUseTo(reap) while barred = %v, want ErrCannotUse", err)
 	}
 	if err := g.CanUseTo(0, reaper, FightUse); err != nil {
 		t.Errorf("CanUseTo(fight) while only reaping is barred = %v, want nil", err)
 	}
-	if err := g.Reap(0, reaper); err != ErrCannotUse {
+	if err := g.Reap(0, reaper); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("Reap while barred = %v, want ErrCannotUse", err)
 	}
 	// reapWith is a no-op too, so a forced reap gains no Æmber.
@@ -387,7 +390,14 @@ func TestCannotPlayCreatures(t *testing.T) {
 		t.Fatal("the restriction should bar creature plays")
 	}
 	g.AddToHand(testCreature("newbie", 2), 0)
-	if _, err := g.PlayCreature(0, handIdx(g, 0, "newbie"), false); err != ErrCannotPlayCreature {
+	if _, err := g.PlayCreature(
+		0,
+		handIdx(g, 0, "newbie"),
+		false,
+	); !errors.Is(
+		err,
+		ErrCannotPlayCreature,
+	) {
 		t.Errorf("PlayCreature = %v, want ErrCannotPlayCreature", err)
 	}
 	// Non-creature plays are unaffected.
@@ -431,10 +441,10 @@ func TestToll(t *testing.T) {
 
 	// Too poor to pay the toll: the play is rejected and the card stays in hand, and
 	// CanPlay says so up front rather than letting the caller find out on the click.
-	if err := g.CanPlay(1, g.Hand(1)[idx]); err != ErrCannotPayToll {
+	if err := g.CanPlay(1, g.Hand(1)[idx]); !errors.Is(err, ErrCannotPayToll) {
 		t.Fatalf("CanPlay (broke) = %v, want ErrCannotPayToll", err)
 	}
-	if _, err := g.PlayArtifact(1, idx); err != ErrCannotPayToll {
+	if _, err := g.PlayArtifact(1, idx); !errors.Is(err, ErrCannotPayToll) {
 		t.Fatalf("PlayArtifact (broke) = %v, want ErrCannotPayToll", err)
 	}
 
@@ -458,7 +468,7 @@ func TestToll(t *testing.T) {
 		WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 3})), 1)
 
 	g.State.Aember[1] = 0
-	if err := g.UseAction(1, gadget); err != ErrCannotPayToll {
+	if err := g.UseAction(1, gadget); !errors.Is(err, ErrCannotPayToll) {
 		t.Fatalf("UseAction (broke) = %v, want ErrCannotPayToll", err)
 	}
 	g.State.Aember[1] = 1
@@ -515,7 +525,7 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 		got.Kind != constraintMustHouse || got.House != Mars {
 		t.Errorf("promoted = %+v, want must-Mars", got)
 	}
-	if err := g.ChooseHouse(1, Sanctum); err != ErrHouseNotAllowed {
+	if err := g.ChooseHouse(1, Sanctum); !errors.Is(err, ErrHouseNotAllowed) {
 		t.Errorf("wrong house = %v, want ErrHouseNotAllowed", err)
 	}
 	if err := g.ChooseHouse(1, Mars); err != nil {
@@ -713,7 +723,7 @@ func TestForbidActiveHouseNextTurn(t *testing.T) {
 		got.Kind != constraintCannotHouse || got.House != Mars {
 		t.Errorf("promoted = %+v, want cannot-Mars", got)
 	}
-	if err := g.ChooseHouse(1, Mars); err != ErrHouseNotAllowed {
+	if err := g.ChooseHouse(1, Mars); !errors.Is(err, ErrHouseNotAllowed) {
 		t.Errorf("forbidden house = %v, want ErrHouseNotAllowed", err)
 	}
 	if err := g.ChooseHouse(1, Sanctum); err != nil {
@@ -822,7 +832,7 @@ func TestUseConditionRestriction(t *testing.T) {
 		WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 3}),
 	), 0)
 	g.State.Cards[sloth].Exhausted = false
-	if err := g.CanUse(0, sloth); err != ErrCannotUse {
+	if err := g.CanUse(0, sloth); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("unmet use condition = %v, want ErrCannotUse", err)
 	}
 
@@ -849,10 +859,17 @@ func TestCannotPlayBlanketThisTurn(t *testing.T) {
 	if g.State.CannotPlayTypeThis[0].Value != AnyType {
 		t.Fatalf("bar = %q, want the AnyType wildcard", g.State.CannotPlayTypeThis[0].Value)
 	}
-	if err := g.CanPlay(0, beast); err != ErrCannotPlayType {
+	if err := g.CanPlay(0, beast); !errors.Is(err, ErrCannotPlayType) {
 		t.Errorf("CanPlay = %v, want ErrCannotPlayType", err)
 	}
-	if _, err := g.PlayCreature(0, int(g.State.Hand[0].Count)-1, false); err != ErrCannotPlayType {
+	if _, err := g.PlayCreature(
+		0,
+		int(g.State.Hand[0].Count)-1,
+		false,
+	); !errors.Is(
+		err,
+		ErrCannotPlayType,
+	) {
 		t.Errorf("PlayCreature = %v, want ErrCannotPlayType", err)
 	}
 
@@ -901,7 +918,7 @@ func TestRestrictUse(t *testing.T) {
 		t.Fatal(err)
 	}
 	beast := g.AddToBattleline(NewCard("beast", Brobnar, Creature, Common, WithPower(3)), 1)
-	if err := g.Reap(1, beast); err != ErrCannotUse {
+	if err := g.Reap(1, beast); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("Reap = %v, want ErrCannotUse", err)
 	}
 	g.EndPlayPhase(1)
@@ -947,7 +964,7 @@ func TestRestrictReaping(t *testing.T) {
 	}
 	// A creature the barred player controls cannot reap while the bar is up.
 	mine := g.AddToBattleline(NewCard("mine", Brobnar, Creature, Common, WithPower(3)), 0)
-	if err := g.Reap(0, mine); err != ErrCannotUse {
+	if err := g.Reap(0, mine); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("Reap while barred this turn = %v, want ErrCannotUse", err)
 	}
 	foe := g.AddToBattleline(NewCard("foe", Brobnar, Creature, Common, WithPower(3)), 0)
@@ -961,7 +978,7 @@ func TestRestrictReaping(t *testing.T) {
 		t.Fatal(err)
 	}
 	beast := g.AddToBattleline(NewCard("beast", Brobnar, Creature, Common, WithPower(3)), 1)
-	if err := g.Reap(1, beast); err != ErrCannotUse {
+	if err := g.Reap(1, beast); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("Reap while barred = %v, want ErrCannotUse", err)
 	}
 	// The bar stops reaping only — fighting stays open.
@@ -1023,7 +1040,7 @@ func TestRestrictReapHouseNextTurn(t *testing.T) {
 		t.Fatalf("promoted = %v, want Brobnar", g.State.CannotReapHouse[1].Value)
 	}
 	beast := g.AddToBattleline(NewCard("beast", Brobnar, Creature, Common, WithPower(3)), 1)
-	if err := g.Reap(1, beast); err != ErrCannotUse {
+	if err := g.Reap(1, beast); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("Reap barred house = %v, want ErrCannotUse", err)
 	}
 	if g.CanUse(1, beast) == nil {
@@ -1136,7 +1153,7 @@ func TestCreaturesCannotFight(t *testing.T) {
 	}
 	p1c := g.AddToBattleline(NewCard("p1-br", Brobnar, Creature, Common, WithPower(3)), 1)
 	target := g.AddToBattleline(NewCard("tgt", Brobnar, Creature, Common, WithPower(3)), 0)
-	if err := g.Fight(1, p1c, target); err != ErrCannotUse {
+	if err := g.Fight(1, p1c, target); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("opponent barred Fight = %v, want ErrCannotUse", err)
 	}
 	g.EndPlayPhase(1)
@@ -1171,7 +1188,7 @@ func TestCreaturesCannotReap(t *testing.T) {
 	if g.creaturesGloballyBarred(mine, FightUse) {
 		t.Error("a reap bar must not stop fighting")
 	}
-	if err := g.Reap(0, mine); err != ErrCannotUse {
+	if err := g.Reap(0, mine); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("barred Reap = %v, want ErrCannotUse", err)
 	}
 
@@ -1182,7 +1199,7 @@ func TestCreaturesCannotReap(t *testing.T) {
 		t.Fatal(err)
 	}
 	foe := g.AddToBattleline(NewCard("foe", Brobnar, Creature, Common, WithPower(3)), 1)
-	if err := g.Reap(1, foe); err != ErrCannotUse {
+	if err := g.Reap(1, foe); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("opponent barred Reap = %v, want ErrCannotUse", err)
 	}
 	g.EndPlayPhase(1)

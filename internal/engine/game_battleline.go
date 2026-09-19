@@ -51,13 +51,8 @@ func (g *Game) swapAcrossZones(a, b LocalID) {
 		return // the in-play card is an artifact; cross-zone artifact swap is unsupported
 	}
 	g.record(CardsSwapped{A: inPlay, B: resting, FromPlayer: restingOwner, FromZone: Discard})
-	art, hasArt := g.giganticPartner(inPlay)
-	o := g.leavePlayTeardown(inPlay)
-	g.State.Discard[o].add(inPlay)
-	if hasArt { // the swapped-out creature's gigantic art half follows it to the discard
-		ao := g.leavePlayTeardown(art)
-		g.State.Discard[ao].add(art)
-	}
+	// Filing, not an attempt: the swap already settled, so it owes no ward check.
+	g.fileFromPlay(inPlay, func(half LocalID, o int) { g.State.Discard[o].add(half) })
 	g.State.Discard[restingOwner].remove(resting)
 	core := &g.State.Cards[resting]
 	core.Exhausted = true
@@ -65,7 +60,7 @@ func (g *Game) swapAcrossZones(a, b LocalID) {
 	// leavePlayTeardown may cascade and shrink the line below the slot idx
 	// captured before removal; clamp so the reinsert lands on the flank.
 	line.insertAt(min(idx, int(line.Count)), resting)
-	g.emitCreatureEnters(resting)
+	g.emitEnters(resting)
 }
 
 // MoveToFlank moves a creature to a flank of its own controller's battleline: the

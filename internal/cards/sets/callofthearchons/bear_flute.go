@@ -45,6 +45,7 @@ var BearFlute = set.New(
 						Filter:  card.Filter{Name: AncientBear.Name},
 						Any:     true,
 						Reveal:  true,
+						Dest:    card.To.Hand,
 					},
 					Result: card.Shuffle{Zones: []card.Zone{card.Discard}},
 				},

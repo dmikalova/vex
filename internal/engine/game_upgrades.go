@@ -90,8 +90,13 @@ func (g *Game) detachUpgrade(up LocalID) (LocalID, bool) {
 }
 
 // hostOf returns the creature an attached upgrade is on, or ok=false when the id is
-// not attached to any creature. The back-link makes this O(1).
+// not attached to any creature. The back-link makes this O(1). An id outside the
+// card table is no card at all, so it is unattached rather than a panic — inPlay
+// asks this of ids it has not yet established are real.
 func (g *Game) hostOf(upgrade LocalID) (LocalID, bool) {
+	if int(upgrade) >= len(g.State.Cards) {
+		return 0, false
+	}
 	return decodeUpgrade(g.State.Cards[upgrade].HostPlus)
 }
 

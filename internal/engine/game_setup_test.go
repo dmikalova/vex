@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 // stockDeck fills both players' decks with plain Brobnar creatures so StartGame
 // has cards to deal.
@@ -63,16 +66,16 @@ func TestFirstTurnRuleLimitsToOneCard(t *testing.T) {
 	if _, err := g.PlayCreature(0, 0, false); err != nil {
 		t.Fatalf("first play should be allowed: %v", err)
 	}
-	if _, err := g.PlayCreature(0, 0, false); err != ErrFirstTurnOneCard {
+	if _, err := g.PlayCreature(0, 0, false); !errors.Is(err, ErrFirstTurnOneCard) {
 		t.Errorf("second play err = %v, want %v", err, ErrFirstTurnOneCard)
 	}
-	if err := g.DiscardFromHand(0, 0); err != ErrFirstTurnOneCard {
+	if err := g.DiscardFromHand(0, 0); !errors.Is(err, ErrFirstTurnOneCard) {
 		t.Errorf("discard after a play err = %v, want %v", err, ErrFirstTurnOneCard)
 	}
-	if err := g.CanPlay(0, g.State.Hand[0].IDs[0]); err != ErrFirstTurnOneCard {
+	if err := g.CanPlay(0, g.State.Hand[0].IDs[0]); !errors.Is(err, ErrFirstTurnOneCard) {
 		t.Errorf("CanPlay err = %v, want %v", err, ErrFirstTurnOneCard)
 	}
-	if _, err := g.PlayUpgrade(0, 0); err != ErrFirstTurnOneCard {
+	if _, err := g.PlayUpgrade(0, 0); !errors.Is(err, ErrFirstTurnOneCard) {
 		t.Errorf("upgrade play after a play err = %v, want %v", err, ErrFirstTurnOneCard)
 	}
 	// A card an effect plays never passes through the volitional gates.
@@ -95,10 +98,10 @@ func TestFirstTurnRuleSpentByDiscard(t *testing.T) {
 	if err := g.DiscardFromHand(0, 0); err != nil {
 		t.Fatalf("first discard should be allowed: %v", err)
 	}
-	if _, err := g.PlayCreature(0, 0, false); err != ErrFirstTurnOneCard {
+	if _, err := g.PlayCreature(0, 0, false); !errors.Is(err, ErrFirstTurnOneCard) {
 		t.Errorf("play after a discard err = %v, want %v", err, ErrFirstTurnOneCard)
 	}
-	if err := g.CanDiscard(0, g.State.Hand[0].IDs[0]); err != ErrFirstTurnOneCard {
+	if err := g.CanDiscard(0, g.State.Hand[0].IDs[0]); !errors.Is(err, ErrFirstTurnOneCard) {
 		t.Errorf("CanDiscard err = %v, want %v", err, ErrFirstTurnOneCard)
 	}
 }
@@ -121,6 +124,65 @@ func TestFirstTurnRuleClearsAfterFirstTurn(t *testing.T) {
 	}
 	if _, err := g.PlayCreature(1, 0, false); err != nil {
 		t.Errorf("second player second play should be allowed: %v", err)
+	}
+}
+
+// The first-turn allowance binds only a play the first player makes of their own
+// volition: after spending it, a second in-house play is barred, but an off-house
+// play (one only a card effect could make legal) is not barred by the first-turn
+// rule — it fails for the missing grant, not the one-card limit. This is what lets
+// a grant like Captain Val Jericho or Subject Kirby play a further card on turn 1.
+func TestFirstTurnRuleBindsOnlyVolitionalPlays(t *testing.T) {
+	g := NewGame("Alice", "Bob", 1)
+	stockDeck(g)
+	g.StartGame(0)
+	if err := g.ChooseHouse(0, Brobnar); err != nil {
+		t.Fatalf("ChooseHouse: %v", err)
+	}
+	if _, err := g.PlayCreature(0, 0, false); err != nil {
+		t.Fatalf("first play should be allowed: %v", err)
+	}
+
+	// A second bare in-house play is barred by the first-turn rule, whatever its
+	// entry point.
+	inHouse := g.AddToHand(NewCard("bro", Brobnar, Creature, Common, WithPower(1)), 0)
+	inHouseUp := g.AddToHand(NewCard("bro-up", Brobnar, Upgrade, Common), 0)
+	if err := g.CanPlay(0, inHouse); !errors.Is(err, ErrFirstTurnOneCard) {
+		t.Errorf("CanPlay in-house = %v, want %v", err, ErrFirstTurnOneCard)
+	}
+	if _, err := g.PlayCreature(
+		0,
+		handIdxByID(g, 0, inHouse),
+		false,
+	); !errors.Is(
+		err,
+		ErrFirstTurnOneCard,
+	) {
+		t.Errorf("PlayCreature in-house = %v, want %v", err, ErrFirstTurnOneCard)
+	}
+	if _, err := g.PlayUpgrade(
+		0,
+		handIdxByID(g, 0, inHouseUp),
+	); !errors.Is(
+		err,
+		ErrFirstTurnOneCard,
+	) {
+		t.Errorf("PlayUpgrade in-house = %v, want %v", err, ErrFirstTurnOneCard)
+	}
+
+	// An off-house play is past the first-turn rule: it can only ever be legal via
+	// a card effect, so it reports the missing grant (ErrWrongHouse), not the
+	// first-turn limit.
+	off := g.AddToHand(NewCard("off", Sanctum, Creature, Common, WithPower(1)), 0)
+	offUp := g.AddToHand(NewCard("off-up", Sanctum, Upgrade, Common), 0)
+	if err := g.CanPlay(0, off); !errors.Is(err, ErrWrongHouse) {
+		t.Errorf("CanPlay off-house = %v, want %v", err, ErrWrongHouse)
+	}
+	if _, err := g.PlayCreature(0, handIdxByID(g, 0, off), false); !errors.Is(err, ErrWrongHouse) {
+		t.Errorf("PlayCreature off-house = %v, want %v", err, ErrWrongHouse)
+	}
+	if _, err := g.PlayUpgrade(0, handIdxByID(g, 0, offUp)); !errors.Is(err, ErrWrongHouse) {
+		t.Errorf("PlayUpgrade off-house = %v, want %v", err, ErrWrongHouse)
 	}
 }
 

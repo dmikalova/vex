@@ -6,8 +6,9 @@ package engine
 
 // An enraged creature must be used to fight on its controller's turn if it is
 // able to — it cannot reap or use an "Action:" ability while there is an enemy
-// creature it can fight. Enrage persists until an effect removes it. Enraging
-// applies this status to each creature the effect targets.
+// creature it can fight. Enrage is removed once the creature is used to fight
+// (clearEnrageOnFight); otherwise it persists until an effect removes it.
+// Enraging applies this status to each creature the effect targets.
 type Enrage struct {
 	Target Target
 }
@@ -37,4 +38,20 @@ func (e Enrage) Resolve(ctx *EffectContext) {
 		ctx.Resolver.SetEnraged(id, true)
 		ctx.Resolver.Record(CreatureEnraged{Creature: id, By: ctx.Source})
 	}
+}
+
+// clearEnrageOnFight removes the enrage a creature carried into a fight, once it
+// has been used to fight. The fight counts even when Elusive turned its damage
+// aside — the creature was still used to fight — so the enrage goes either way
+// (KeyForge removes all enrage counters after a creature is used to fight). Only
+// the attacker is used, so a defender keeps any enrage of its own. Runs before the
+// post-fight window so a "Fight:" ability that re-enrages the attacker
+// (Gladiodontus) is not undone. Pinned by TestEnrageClearedByFightingElusive and
+// TestEnrageClearedBeforeFightAbilityReenrages.
+func (g *Game) clearEnrageOnFight(attacker LocalID) {
+	if !g.inPlay(attacker) || !g.Enraged(attacker) {
+		return
+	}
+	g.State.Cards[attacker].Enraged = false
+	g.record(CreatureEnrageRemoved{Creature: attacker})
 }

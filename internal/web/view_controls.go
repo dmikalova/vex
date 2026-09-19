@@ -260,17 +260,7 @@ func (g *game) controls() app.UI {
 	// host to thread the selected card under; the board lights its hosts and the
 	// dock shows the pick's prompt with a Cancel.
 	if g.hostTargeting {
-		verb := "graft"
-		if g.hostFaceDown {
-			verb = "place"
-		}
-		return app.Div().Class("controls").Body(
-			app.Div().Class("btn-col").Body(
-				app.Div().Class("prompt").Text(
-					"Click a card to "+verb+" "+g.g.Def(g.sel).Name+" under it"),
-				btn("Cancel", g.cancelHostTargeting, "btn-secondary"),
-			),
-		)
+		return g.hostTargetingControls()
 	}
 	// While an engine chooser waits, the controls become the prompt itself: a
 	// green call to action to click one of the highlighted cards.
@@ -290,8 +280,29 @@ func (g *game) controls() app.UI {
 	if g.phase == phaseFlank || g.phase == phaseFightTarget {
 		return app.Div().Class("controls").Body(g.targetingPrompt())
 	}
-	// A selected card's verbs are drawn on the card itself, so nothing here
-	// competes with End turn for the dock.
+	return g.restingControls()
+}
+
+// hostTargetingControls draws the dock for a manual Graft / Place under waiting
+// for the player to click the in-play host to thread the selected card under.
+func (g *game) hostTargetingControls() app.UI {
+	verb := "graft"
+	if g.hostFaceDown {
+		verb = "place"
+	}
+	return app.Div().Class("controls").Body(
+		app.Div().Class("btn-col").Body(
+			app.Div().Class("prompt").Text(
+				"Click a card to "+verb+" "+g.g.Def(g.sel).Name+" under it"),
+			btn("Cancel", g.cancelHostTargeting, "btn-secondary"),
+		),
+	)
+}
+
+// restingControls is the default dock when no prompt is up: End turn, with the
+// manual-mode panel above it when manual mode is on. A selected card's verbs are
+// drawn on the card itself, so nothing here competes with End turn for the dock.
+func (g *game) restingControls() app.UI {
 	body := []app.UI{g.endTurnBar()}
 	if g.g.Manual() {
 		body = append([]app.UI{g.manualPanel()}, body...)

@@ -1,6 +1,7 @@
 package callofthearchons
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/card"
@@ -48,7 +49,7 @@ func TestBigtwig(t *testing.T) {
 		})
 
 		// An unstunned enemy is not a legal target.
-		if err := h.Game().Fight(0, big.ID(), foe.ID()); err != engine.ErrNoTarget {
+		if err := h.Game().Fight(0, big.ID(), foe.ID()); !errors.Is(err, engine.ErrNoTarget) {
 			t.Errorf("fight unstunned = %v, want ErrNoTarget", err)
 		}
 

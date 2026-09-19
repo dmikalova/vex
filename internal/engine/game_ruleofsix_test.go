@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"slices"
 	"testing"
 )
@@ -42,10 +43,10 @@ func TestRuleOfSixBarsPlay(t *testing.T) {
 	for range RuleOfSix {
 		g.recordUsage(id)
 	}
-	if err := g.CanPlay(0, id); err != ErrRuleOfSix {
+	if err := g.CanPlay(0, id); !errors.Is(err, ErrRuleOfSix) {
 		t.Errorf("CanPlay at the Rule of Six = %v, want ErrRuleOfSix", err)
 	}
-	if _, err := g.PlayCreature(0, 0, false); err != ErrRuleOfSix {
+	if _, err := g.PlayCreature(0, 0, false); !errors.Is(err, ErrRuleOfSix) {
 		t.Errorf("PlayCreature at the Rule of Six = %v, want ErrRuleOfSix", err)
 	}
 }
@@ -62,7 +63,7 @@ func TestRuleOfSixBarsUse(t *testing.T) {
 	for range RuleOfSix {
 		g.recordUsage(id)
 	}
-	if err := g.usable(0, id); err != ErrRuleOfSix {
+	if err := g.usable(0, id); !errors.Is(err, ErrRuleOfSix) {
 		t.Errorf("use at the Rule of Six = %v, want ErrRuleOfSix", err)
 	}
 }

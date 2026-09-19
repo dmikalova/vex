@@ -10,6 +10,10 @@ type ItIsEnemy struct{}
 // CondText renders the condition, e.g. "if it is an enemy creature".
 func (ItIsEnemy) CondText() string { return "if it is an enemy creature" }
 
+func (ItIsEnemy) itAdjective() string { return "enemy" }
+
+func (ItIsEnemy) itNoun() string { return "creature" }
+
 // Met reports whether a card is in context and its controller is not the
 // ability's controller.
 func (ItIsEnemy) Met(ctx *EffectContext) bool {

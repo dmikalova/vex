@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Sirs Colossus
 //
 //	House:  Sanctum
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  10
 //	Armor:  3

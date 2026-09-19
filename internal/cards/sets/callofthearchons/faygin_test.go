@@ -16,7 +16,7 @@ import (
 //	Traits: Human • Thief
 //
 //	Elusive.
-//	Reap: Put an Urchin from play or from your discard pile into your hand.
+//	Reap: Put an Urchin from play or your discard pile into your hand.
 func TestFaygin(t *testing.T) {
 	t.Run("recovers an Urchin from the discard pile", func(t *testing.T) {
 		var urchin ct.Card

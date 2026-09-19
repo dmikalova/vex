@@ -47,7 +47,7 @@ func TestChosenAnotherExcludesTheCardInContext(t *testing.T) {
 
 // TestTriggersFromDiscardReturnsSelf covers the discard-trigger path end to end: a
 // card with WithTriggersFromDiscard keeps its AfterChooseHouse ability live in its
-// owner's discard pile, and a PutFromDiscard{Self} returns that very card to hand.
+// owner's discard pile, and a PutFromDiscard{Zones: []Zone{Discard}, Self} returns that very card to hand.
 // This exercises the choose-house discard scan (game_turn.go), the ADR-0030 guard
 // exception (resolveTriggered via activeInDiscard), and the Self selection's
 // candidates/pick.
@@ -56,7 +56,7 @@ func TestTriggersFromDiscardReturnsSelf(t *testing.T) {
 		WithTriggersFromDiscard(),
 		WithAbility(TriggerAfterChooseHouse, Conditional{
 			Cond: ChoseHouse{House: Dis},
-			Then: PutFromDiscard{Selection: Self{}, Destination: ToHand},
+			Then: PutCard{Zones: []Zone{Discard}, Selection: Self{}, Destination: ToHand},
 		}))
 
 	g := NewGame("A", "B", 1)
@@ -82,7 +82,7 @@ func TestTriggersFromDiscardStaysWhenOtherHouseChosen(t *testing.T) {
 		WithTriggersFromDiscard(),
 		WithAbility(TriggerAfterChooseHouse, Conditional{
 			Cond: ChoseHouse{House: Dis},
-			Then: PutFromDiscard{Selection: Self{}, Destination: ToHand},
+			Then: PutCard{Zones: []Zone{Discard}, Selection: Self{}, Destination: ToHand},
 		}))
 
 	g := NewGame("A", "B", 1)
@@ -113,5 +113,53 @@ func TestSelfSelectionSkipsWhenSourceElsewhere(t *testing.T) {
 	}
 	if got := (Self{}).candidates(ctx, []LocalID{src, other}); len(got) != 1 || got[0] != src {
 		t.Errorf("candidates = %v, want [%v]", got, src)
+	}
+}
+
+// TestBlindPickVoiceIsUniform pins the pile-verb template across verbs: the same
+// blind pick from the same hidden zone names the owner as the actor whichever
+// verb takes it (Dendrix discards, Impspector purges), while a pick the
+// controller actually makes stays imperative even from a zone they cannot see —
+// Imperial Traitor is granted the look by a preceding reveal.
+func TestBlindPickVoiceIsUniform(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		text string
+		want string
+	}{
+		{
+			"discard from hand",
+			DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{}}.Text(),
+			"your opponent discards a random card from their hand",
+		},
+		{
+			"discard from archives",
+			DiscardCard{Player: Opponent, Zones: []Zone{Archives}, Selection: Random{}}.Text(),
+			"your opponent discards a random card from their archives",
+		},
+		{
+			"purge from hand",
+			PurgeCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{}}.Text(),
+			"your opponent purges a random card from their hand",
+		},
+		{
+			"its owner discards",
+			DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{}}.Text(),
+			"its owner discards a random card from their hand",
+		},
+		{
+			"a chosen pick stays imperative",
+			PurgeCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Chosen{}}.Text(),
+			"purge a card from your opponent's hand",
+		},
+		{
+			"the controller's own zone stays imperative",
+			DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Random{}}.Text(),
+			"discard a random card from your hand",
+		},
+	} {
+		if tc.text != tc.want {
+			t.Errorf("%s = %q, want %q", tc.name, tc.text, tc.want)
+		}
 	}
 }

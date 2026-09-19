@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Witch
 //
 //	Skirmish.
-//	After a creature enters play, if it is a friendly creature and it is a Cat creature, ward it.
+//	After a creature enters play, if it is a friendly Cat creature, ward it.
 //	Fight: Ready a friendly Beast creature.
 var MercyMalkinQueen = set.New(
 	"Mercy, Malkin Queen",

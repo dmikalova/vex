@@ -32,56 +32,50 @@ func possessive(p Player) string {
 	}
 }
 
+// side renders the adjective that puts a card on a side, e.g. the "friendly" in
+// "each friendly card". It is possessive's counterpart for a noun phrase whose
+// zone names no side: play belongs to neither player, so a verb reaching into it
+// carries the scope on the card noun rather than on a determiner.
+func side(p Player) string {
+	if p == Opponent {
+		return "enemy"
+	}
+	return "friendly"
+}
+
+// qualifyNoun places an adjective before a noun, leaving the noun alone when
+// there is no adjective to place.
+func qualifyNoun(adjective, noun string) string {
+	if adjective == "" {
+		return noun
+	}
+	return adjective + " " + noun
+}
+
+// afterTriggerText maps each "after ..." reaction trigger to the folder that
+// renders its natural wording when the effect fits the folded shape (returning
+// ok=false to fall back to the broad prefix form otherwise). RenderAbility
+// consults it before the generic prefix path, so a foldable reaction reads in the
+// card's own voice ("after you play an artifact, ...") rather than the literal
+// "after you play a card, if it is an artifact, ...".
+var afterTriggerText = map[Trigger]func(Effect) (string, bool){
+	TriggerAfterCardPlayed:             func(e Effect) (string, bool) { return afterYouActOnText("play", e) },
+	TriggerAfterUse:                    func(e Effect) (string, bool) { return afterYouActOnText("use", e) },
+	TriggerAfterDiscardFromHand:        func(e Effect) (string, bool) { return afterYouActOnText("discard", e) },
+	TriggerAfterChooseHouse:            afterChooseHouseText,
+	TriggerAfterAnyPlayerChoosesHouse:  afterAnyPlayerChooseHouseText,
+	TriggerAfterCreaturePlayedAdjacent: afterCreaturePlayedAdjacentText,
+	TriggerAfterCreatureReaps:          afterCreatureReapsText,
+	TriggerAfterCreatureDestroyed:      afterCreatureDestroyedText,
+	TriggerAfterCreatureFights:         afterCreatureFightsText,
+	TriggerAfterEnemyCardPlayed:        afterEnemyPlaysCreatureOnFlankText,
+}
+
 // RenderAbility renders a single triggered ability to its printed card line,
 // e.g. "After you forge a key, deal 2 damage to each enemy creature."
 func RenderAbility(a Ability) string {
-	if a.Trigger == TriggerAfterCardPlayed {
-		if s, ok := afterYouActOnText("play", a.Effect); ok {
-			return punctuate(capitalizeFirst(s))
-		}
-	}
-	if a.Trigger == TriggerAfterUse {
-		if s, ok := afterYouActOnText("use", a.Effect); ok {
-			return punctuate(capitalizeFirst(s))
-		}
-	}
-	if a.Trigger == TriggerAfterDiscardFromHand {
-		if s, ok := afterYouActOnText("discard", a.Effect); ok {
-			return punctuate(capitalizeFirst(s))
-		}
-	}
-	if a.Trigger == TriggerAfterChooseHouse {
-		if s, ok := afterChooseHouseText(a.Effect); ok {
-			return punctuate(capitalizeFirst(s))
-		}
-	}
-	if a.Trigger == TriggerAfterAnyPlayerChoosesHouse {
-		if s, ok := afterAnyPlayerChooseHouseText(a.Effect); ok {
-			return punctuate(capitalizeFirst(s))
-		}
-	}
-	if a.Trigger == TriggerAfterCreaturePlayedAdjacent {
-		if s, ok := afterCreaturePlayedAdjacentText(a.Effect); ok {
-			return punctuate(capitalizeFirst(s))
-		}
-	}
-	if a.Trigger == TriggerAfterCreatureReaps {
-		if s, ok := afterCreatureReapsText(a.Effect); ok {
-			return punctuate(capitalizeFirst(s))
-		}
-	}
-	if a.Trigger == TriggerAfterCreatureDestroyed {
-		if s, ok := afterCreatureDestroyedText(a.Effect); ok {
-			return punctuate(capitalizeFirst(s))
-		}
-	}
-	if a.Trigger == TriggerAfterCreatureFights {
-		if s, ok := afterCreatureFightsText(a.Effect); ok {
-			return punctuate(capitalizeFirst(s))
-		}
-	}
-	if a.Trigger == TriggerAfterEnemyCardPlayed {
-		if s, ok := afterEnemyPlaysCreatureOnFlankText(a.Effect); ok {
+	if fold, ok := afterTriggerText[a.Trigger]; ok {
+		if s, ok := fold(a.Effect); ok {
 			return punctuate(capitalizeFirst(s))
 		}
 	}
@@ -435,6 +429,18 @@ func RenderCardText(def *CardDefinition) string {
 	return renderCardText(def, false)
 }
 
+// CardTypeLabel is a card's type as printed — "Gigantic Creature" for either
+// half of a gigantic, otherwise the plain type. Both halves carry a non-None
+// GiganticRole, so the label reads straight off the role: nothing grants or
+// blanks it, and the gigantic play restriction runs off the role out of play,
+// so this is text only (see ADR 0042).
+func CardTypeLabel(def *CardDefinition) string {
+	if def.GiganticRole != GiganticNone {
+		return "Gigantic " + def.Type.String()
+	}
+	return def.Type.String()
+}
+
 // RenderCardDetail is RenderCardText with the card's name as an initial
 // "Name:" line, for a detail pane that shows a card on its own.
 func RenderCardDetail(def *CardDefinition) string {
@@ -449,7 +455,7 @@ func renderCardText(def *CardDefinition, withName bool) string {
 	}
 	fields = append(fields,
 		field{"House", def.House.String()},
-		field{"Type", def.Type.String()},
+		field{"Type", CardTypeLabel(def)},
 		field{"Rarity", string(def.Rarity)},
 	)
 	if def.Type == Creature {

@@ -240,13 +240,16 @@ body {
   background-color: var(--surface);
   box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 45%);
 }
-/* a card scrolled to the end of its row would otherwise come to rest underneath
-   the floating dock with no way to bring it back out, so each strip keeps a
-   dock's width of scrollable room past its last card. Rows the dock does not
-   reach pay only an empty scroll range, which moves no card. */
+/* a card scrolled to the end of a row the floating dock overlaps would otherwise
+   come to rest underneath it with no way to bring it back out, so a covered strip
+   keeps scroll room past its last card equal to the dock's actual reach over it.
+   --reserve is set per strip in JS (boardScript) from the live overlap, so a row
+   the dock does not reach — or a dock narrower than its 20rem max — reserves only
+   what it must; with no overlap it is cleared and the strip keeps its normal end
+   inset, so cards still line up with the player bar rather than the pane edge. */
 .app--sidebar-collapsed .board-row > .card-strip {
-  padding-inline-end: calc(20rem + var(--shell-pad));
-  scroll-padding-inline-end: calc(20rem + var(--shell-pad));
+  padding-inline-end: var(--reserve, calc(var(--ring) + var(--shell-pad)));
+  scroll-padding-inline-end: var(--reserve, var(--shell-pad));
 }
 /* the floating dock also sits over the bottom-right corner, on top of the lower
    player bar. The bar stops short of the dock the way the top bar stops before
@@ -339,11 +342,6 @@ body {
   .control-dock--floating .btn-col:not(:has(> .prompt-card)) > .house-btn {
     flex: 1;
     width: auto;
-  }
-  /* the dock spans the full width here, so no row can hide a card behind it */
-  .app--sidebar-collapsed .card-strip {
-    padding-inline-end: 0;
-    scroll-padding-inline-end: 0;
   }
   /* the dock no longer takes the bottom-right corner here either, so the lower
      player bar reclaims the room it held clear of the dock. */
@@ -3429,23 +3427,6 @@ button:disabled {
   width: 1.15em;
   height: 1.15em;
   flex: 0 0 auto;
-}
-/* the rarity diamonds sit in a tight row; the number of diamonds is the rarity
-   (1 = common … 4 = special) */
-.rarity-diamonds {
-  display: flex;
-  align-items: center;
-  gap: 0.05em;
-}
-.rarity-diamonds .icon-mark {
-  width: 0.85em;
-  height: 0.85em;
-}
-/* Connected cards show two overlapping circles in place of rarity diamonds,
-   sized to match the diamond marks it stands beside. */
-.rarity-connected-icon {
-  width: 0.95em;
-  height: 0.95em;
 }
 
 /* ---- selection badges (BadgeChooser preview) ---- */

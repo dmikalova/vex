@@ -63,6 +63,12 @@ func (g *Game) cannotBeUsedTo(id LocalID, kind UseKind) bool {
 			}
 		}
 	}
+	return g.barredByConstantAbility(id, kind)
+}
+
+// barredByConstantAbility reports whether an active constant ability of a card in
+// play bars id from this way of being used (Narp bars its neighbors from reaping).
+func (g *Game) barredByConstantAbility(id LocalID, kind UseKind) bool {
 	for p := 0; p < 2; p++ {
 		for _, src := range g.allInPlay(p) {
 			for _, c := range g.cat.def(src).ConstantAbilities {

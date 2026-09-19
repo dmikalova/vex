@@ -23,8 +23,8 @@ var Eyegor = set.New(
 		card.Trigger.Play, card.LookAtTopOfDeck{
 			Amount: 3,
 			Then: []card.TopAct{
-				card.ChooseAndMove{Count: 1, Dest: card.Into.Hand},
-				card.ChooseAndMove{Count: 2, Dest: card.Into.Discard},
+				card.ChooseAndMove{Cards: 1, Dest: card.Into.Hand},
+				card.ChooseAndMove{Cards: 2, Dest: card.Into.Discard},
 			},
 		}),
 )

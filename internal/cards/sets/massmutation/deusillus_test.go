@@ -10,7 +10,7 @@ import (
 // Deusillus
 //
 //	House:  Saurian
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  20
 //	Traits: Mutant

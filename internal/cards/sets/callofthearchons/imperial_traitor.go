@@ -22,7 +22,7 @@ var ImperialTraitor = set.New(
 			Effects: []card.Effect{
 				card.RevealHand{Player: card.Opponent},
 				card.PurgeCard{
-					Zone:   card.Hand,
+					Zones:  []card.Zone{card.Hand},
 					Player: card.Opponent,
 					Selection: card.Chosen{
 						House:    card.Houses.Named(card.House.Sanctum),

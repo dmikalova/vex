@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Ultra Gravitron
 //
 //	House:  Logos
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  10
 //	Armor:  3
@@ -25,7 +25,7 @@ var UltraGravitron = set.Gigantic(
 		card.Trigger.Play, card.ArchiveCard{
 			Zone:      card.Deck,
 			Selection: card.Top{},
-			Amount:    5,
+			Quantity:  card.Takes{N: card.Fixed(5)},
 		}),
 	card.WithAbility(
 		card.Trigger.FightReap, card.Then{

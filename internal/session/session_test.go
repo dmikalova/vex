@@ -1,6 +1,7 @@
 package session
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/engine"
@@ -78,17 +79,27 @@ func TestSessionApplyRecordsAndAdvances(t *testing.T) {
 func TestSessionApplyRejects(t *testing.T) {
 	s := newSession()
 	// The pending request is a card pick; an option command does not answer it.
-	if err := s.Apply(engine.Command{Kind: engine.CommandOption, Index: 0}); err != ErrIllegal {
+	if err := s.Apply(
+		engine.Command{Kind: engine.CommandOption, Index: 0},
+	); !errors.Is(
+		err,
+		ErrIllegal,
+	) {
 		t.Fatalf("apply wrong-kind command: got %v, want ErrIllegal", err)
 	}
 	// A card not among the candidates is also illegal.
-	if err := s.Apply(engine.Command{Kind: engine.CommandPickCard, Card: 9}); err != ErrIllegal {
+	if err := s.Apply(
+		engine.Command{Kind: engine.CommandPickCard, Card: 9},
+	); !errors.Is(
+		err,
+		ErrIllegal,
+	) {
 		t.Fatalf("apply out-of-set card: got %v, want ErrIllegal", err)
 	}
 
 	mustApply(t, s, engine.Command{Kind: engine.CommandPickCard, Card: 1})
 	mustApply(t, s, engine.Command{Kind: engine.CommandOption, Index: 0})
-	if err := s.Apply(engine.Command{Kind: engine.CommandOption}); err != ErrFinished {
+	if err := s.Apply(engine.Command{Kind: engine.CommandOption}); !errors.Is(err, ErrFinished) {
 		t.Fatalf("apply after done: got %v, want ErrFinished", err)
 	}
 }
@@ -113,10 +124,10 @@ func TestSessionUndoIsReplay(t *testing.T) {
 		t.Fatal("undo did not reproduce the state of the same prefix replayed fresh")
 	}
 
-	if err := full.Undo(-1); err != ErrRange {
+	if err := full.Undo(-1); !errors.Is(err, ErrRange) {
 		t.Fatalf("undo(-1): got %v, want ErrRange", err)
 	}
-	if err := full.Undo(99); err != ErrRange {
+	if err := full.Undo(99); !errors.Is(err, ErrRange) {
 		t.Fatalf("undo(99): got %v, want ErrRange", err)
 	}
 }
@@ -142,7 +153,7 @@ func TestSessionRecordRoundTrip(t *testing.T) {
 	}
 
 	rec.Version = Version + 1
-	if _, err := Load(rec, setup, drive); err != ErrVersion {
+	if _, err := Load(rec, setup, drive); !errors.Is(err, ErrVersion) {
 		t.Fatalf("load with wrong version: got %v, want ErrVersion", err)
 	}
 }

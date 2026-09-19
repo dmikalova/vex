@@ -22,15 +22,19 @@ type crossZoneMover struct {
 	Sources []Zone
 }
 
-// zoneCards reads the Player's cards in one source zone.
+// zoneCards reads the Player's cards in one source zone. In play means every card
+// they control in play, upgrades included (resolverCardsInPlay), so a mover reaches
+// an upgrade as a card in its own right rather than only as cargo on its host.
 func (m crossZoneMover) zoneCards(ctx *EffectContext, z Zone) []LocalID {
 	switch z {
 	case InPlay:
-		return append(ctx.Resolver.Battleline(m.Player), ctx.Resolver.Artifacts(m.Player)...)
+		return resolverCardsInPlay(ctx, m.Player)
 	case Hand:
 		return ctx.Resolver.Hand(m.Player)
 	case Discard:
 		return ctx.Resolver.Discard(m.Player)
+	case Archives:
+		return ctx.Resolver.Archives(m.Player)
 	default:
 		return ctx.Resolver.Deck(m.Player)
 	}
@@ -57,11 +61,10 @@ func (m crossZoneMover) originOf(ctx *EffectContext, id LocalID) Zone {
 	return m.Sources[last]
 }
 
-// inZone reports whether a card sits in one source zone.
+// inZone reports whether a card sits in one source zone. It asks zoneCards rather
+// than the row-only resolverInPlay so the probe admits exactly what gather offered
+// — an upgrade included.
 func (m crossZoneMover) inZone(ctx *EffectContext, z Zone, id LocalID) bool {
-	if z == InPlay {
-		return resolverInPlay(ctx, id)
-	}
 	return slices.Contains(m.zoneCards(ctx, z), id)
 }
 
@@ -98,6 +101,22 @@ func resolverCardsInPlay(ctx *EffectContext, p int) []LocalID {
 // so Yxilo Bolter purges the creature its own damage just killed. A card in
 // neither zone has gone somewhere no effect reaches (ADR 0030) and reports false.
 // Pinned by TestPurgeCreatureFollowsIntoDiscard.
+//
+// The rule this implements is about the resolution, not the destination: an
+// ability that is **still resolving** may reach its target in any zone whose cards
+// are public, because later instructions refer to a departed card as it was
+// immediately before it left. The discard pile is public, so a creature killed
+// earlier in the same ability is still reachable there; a hand, deck, or archives
+// is hidden, so a card that goes there is out of reach for good (Master Rulebook
+// line 926, and the Bad Penny ruling — it returns to hand and Yxilo Bolter's purge
+// no longer finds it).
+//
+// A card that has left play and an ability in a LATER window is a different case
+// and is not this function's business: Collector Worm does not archive the creature
+// it killed because its "after a fight" ability opens a window of its own, by which
+// time the target is long gone. That is a fizzle from window separation, not from
+// the zone. Do not read the bulk movers' skips as evidence against the rule above;
+// theirs is the same window-and-selection question, handled where they select.
 func currentZone(ctx *EffectContext, id LocalID) (Zone, int, bool) {
 	if resolverInPlay(ctx, id) {
 		return InPlay, ctx.Resolver.Controller(id), true

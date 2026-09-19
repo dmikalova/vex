@@ -19,19 +19,19 @@ var LookWhatIFound = set.New(
 	card.WithKeywords(card.Keyword.Omega),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.PutFromDiscard{
+			card.PutCard{Zones: []card.Zone{card.Discard},
 				Selection:   card.Chosen{Type: card.Type.Tactic},
 				Destination: card.To.Hand,
 			},
-			card.PutFromDiscard{
+			card.PutCard{Zones: []card.Zone{card.Discard},
 				Selection:   card.Chosen{Type: card.Type.Artifact},
 				Destination: card.To.Hand,
 			},
-			card.PutFromDiscard{
+			card.PutCard{Zones: []card.Zone{card.Discard},
 				Selection:   card.Chosen{Type: card.Type.Creature},
 				Destination: card.To.Hand,
 			},
-			card.PutFromDiscard{
+			card.PutCard{Zones: []card.Zone{card.Discard},
 				Selection:   card.Chosen{Type: card.Type.Upgrade},
 				Destination: card.To.Hand,
 			},

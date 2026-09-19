@@ -22,6 +22,10 @@ var NepentheSeed = set.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.This},
-			card.PutFromDiscard{Selection: card.Chosen{}, Destination: card.To.Hand},
+			card.PutCard{
+				Zones:       []card.Zone{card.Discard},
+				Selection:   card.Chosen{},
+				Destination: card.To.Hand,
+			},
 		}}),
 )

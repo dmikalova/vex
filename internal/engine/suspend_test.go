@@ -3,6 +3,7 @@ package engine
 import (
 	"reflect"
 	"testing"
+	"time"
 )
 
 // LegalCommands enumerates exactly the answers each request kind accepts, and
@@ -133,6 +134,58 @@ func TestStepperDrivesEachCapability(t *testing.T) {
 	// Advancing past completion is a no-op that reports done again.
 	if _, done, _ := s.Advance(Command{Kind: CommandOption}); !done {
 		t.Fatal("Advance after done did not report done")
+	}
+}
+
+// Close releases the action goroutine when a Stepper is abandoned mid-decision —
+// an undo or replay deals a fresh game — instead of leaving it parked forever on a
+// command that never arrives. The action's deferred cleanup runs either way,
+// proving the goroutine unwound rather than leaked.
+func TestStepperCloseReleasesGoroutine(t *testing.T) {
+	// Parked yielding its first request (nobody ever called Start, so no receiver):
+	// Close fires the send-side cancel.
+	t.Run("parked yielding a request", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		released := make(chan struct{})
+		action := func(g *Game) {
+			defer close(released)
+			g.chooserFor(0).ChooseCreature("s", "p", []LocalID{1, 2})
+		}
+		s := NewStepper(g, action)
+		s.Close()
+		requireReleased(t, released)
+	})
+
+	// Parked awaiting the command after Start: Close fires the receive-side cancel,
+	// is idempotent, and a later Advance reports done without blocking.
+	t.Run("parked awaiting a command", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		released := make(chan struct{})
+		action := func(g *Game) {
+			defer close(released)
+			g.chooserFor(0).ChooseCreature("s", "p", []LocalID{1, 2})
+		}
+		s := NewStepper(g, action)
+		if _, done := s.Start(); done {
+			t.Fatal("action finished before its choice; expected a parked request")
+		}
+		s.Close()
+		requireReleased(t, released)
+		s.Close() // idempotent: already done, no double close of cancel
+		if _, done, _ := s.Advance(Command{Kind: CommandPickCard, Card: 1}); !done {
+			t.Fatal("Advance after Close should report done")
+		}
+	})
+}
+
+// requireReleased fails if the action goroutine's deferred cleanup has not run
+// shortly after Close, which would mean it leaked rather than unwound.
+func requireReleased(t *testing.T, released <-chan struct{}) {
+	t.Helper()
+	select {
+	case <-released:
+	case <-time.After(time.Second):
+		t.Fatal("Close did not release the parked action goroutine")
 	}
 }
 

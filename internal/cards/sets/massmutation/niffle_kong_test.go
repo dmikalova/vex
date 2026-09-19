@@ -10,7 +10,7 @@ import (
 // Niffle Kong
 //
 //	House:  Untamed
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  12
 //	Armor:  2

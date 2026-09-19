@@ -7,40 +7,37 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 ## Things that can be done now
 
 - rename to Vex
-- Update card.New to be all opts
-- sequence vs sentences wording - eg sequence is obviously game, and sentences is textual, but they're both textual and game
-
-- The way a lot of effects work is there is implied chaining between one effect to the next - is there a reasonable way to make this more explicit?
-- Be able to load a test situation from a saved state or scenario file
-- I've noticed that there are some UI sugars in the engine - I was wondering if it makes sense for there to be an intermediate layer - eg the engine handles state changes, the wrapper handles relevant trackers for the UI, and then the UI on top imports the wrapper and renders what it gives. For example, there are badges for counting how much damage is about to be dealt to each creature in a selection like gargantes scrapper. That seems purely UI, but also makes sense near the engine. My concern is performance when there is no UI - eg for MCTS - if MCTS is calculating the badges and never using them then that's potentially lost performance.
-- Consolidate Destination and DeckDest - apparently the voicing would be a whole thing to add into this
-- using shared dictionaries for wasm compression
-- Changing card.X to instead be e.X eg for engine - is the facade really providing value, or is there anything else we could do to organize the repo better instead of one mega engine?
-- Split out glyphs more in icon.go
-- using property testing to find unused code paths and then force specific tests there
-- card gallery (and search). Gallery links to cards, and cards can pull in all the relevant rules onto that page
-- Be able to set up situation and then run it in the engine UI for playwright
 
 - Decompose:
-- AfterAnyPlayerChoosesHouse
-- SamePowerAsEitherChosen - how does this even work???
-- I wonder if TakeControl should be UntilLeavesPlay instead of Duration.Forever? Should all Forever's be until leaves play?
-- PurgedAemberBonus for Infurnace - eg mindfire could use the same thing too with BonusIconsOfChosen
-
+  - AfterAnyPlayerChoosesHouse
+  - SamePowerAsEitherChosen - how does this even work???
+  - I wonder if TakeControl should be UntilLeavesPlay instead of Duration.Forever? Should all Forever's be until leaves play?
+  - PurgedAemberBonus for Infurnace - eg mindfire could use the same thing too with BonusIconsOfChosen
+- sequence vs sentences wording - eg sequence is obviously game, and sentences is textual, but they're both textual and game
+- golden spiral prompt buttons are on any card I click - should be stuck on mack
+- axiom/troop call - generic choose a  creature for ward and bonus damage in prompt
+- Update card.New to be all opts
+- The way a lot of effects work is there is implied chaining between one effect to the next - is there a reasonable way to make this more explicit?
+- Consolidate Destination and DeckDest - apparently the voicing would be a whole thing to add into this
+- Changing card.X to instead be e.X eg for engine - is the facade really providing value, or is there anything else we could do to organize the repo better instead of one mega engine?
+- Split out glyphs more in icon.go
 - Instead of "OnIt" should we use "OnTarget"
 - I really like this form: Grant: card.GrantPlay | card.GrantUse - where can we use it more?
-- remove abduct / simplify to archive targets - the rules already naturally handle how archiving your opponent's cards works
-- martyrs end should multi-select
-- Livia and Fidgit could go further
-- shard of unity prompt doesn't lift creature for use
-- rows have excess scroll space and don't hide the scroll bar by default
-
+- remove abduct / simplify to archive targets - the rules already naturally handle how archiving your opponent's cards works - this is fine as a label in tests, but want to remove it from rules and comments in the engine
+- Livia and Fidgit could go further in decomposing (eg kompsos)
 - WithAemberCost and Toll could be combined into MustPay
 - decompose all the neighbor stuff
 - Granted: card.FightReap(card.ArchiveGrantingUpgrade{}), should be card.Archive{Target: GrantingUpgrade}
 - Why is DealDamage and ChooseCreatureThen needed? Why can't these just be sequences that pass along the effect context?
 - Get rid of bar.go
 - /cards view cuts off side icons - why isn't this rendering like in the engine?
+- Do a sweep for defaults and missing explicits - eg destination.go
+- Be able to load a test situation from a saved state or scenario file
+- I've noticed that there are some UI sugars in the engine - I was wondering if it makes sense for there to be an intermediate layer - eg the engine handles state changes, the wrapper handles relevant trackers for the UI, and then the UI on top imports the wrapper and renders what it gives. For example, there are badges for counting how much damage is about to be dealt to each creature in a selection like gargantes scrapper. That seems purely UI, but also makes sense near the engine. My concern is performance when there is no UI - eg for MCTS - if MCTS is calculating the badges and never using them then that's potentially lost performance.
+- using shared dictionaries for wasm compression
+- using property testing to find unused code paths and then force specific tests there
+- card gallery (and search). Gallery links to cards, and cards can pull in all the relevant rules onto that page
+- Be able to set up situation and then run it in the engine UI for playwright
 
 ### Automatic linters
 

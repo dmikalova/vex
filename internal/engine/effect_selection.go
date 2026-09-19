@@ -1,5 +1,10 @@
 package engine
 
+import (
+	"slices"
+	"strings"
+)
+
 // Selection is how a zone-movement effect picks the cards it acts on from a
 // zone: the controller chooses one (Chosen), one is uniformly random (Random),
 // every matching card is taken (Each), or a named card is pinned (Named). Each mode filters and picks its own
@@ -33,6 +38,26 @@ type declinableSelection interface {
 func selectionDeclinable(s Selection) bool {
 	d, ok := s.(declinableSelection)
 	return ok && d.declinable()
+}
+
+// qualifiableSelection is a Selection whose object phrase can take an extra
+// adjective between its determiner and its noun — "each card" becomes "each
+// friendly card". A verb needs it when the scope is not already in the noun:
+// play names no side, so a verb sourcing from play qualifies the object instead
+// of the zone phrase.
+type qualifiableSelection interface {
+	qualifiedObject(adjective string) string
+}
+
+// selectionObject renders a Selection's object phrase with an adjective before
+// its noun. A Selection with no determiner to insert after renders unqualified —
+// Named is a bare card name, which names its own card and takes no adjective.
+func selectionObject(s Selection, adjective string) string {
+	q, ok := s.(qualifiableSelection)
+	if !ok {
+		return s.object()
+	}
+	return q.qualifiedObject(adjective)
 }
 
 // positionalSelection is a Selection that picks by position in an ordered zone —
@@ -76,18 +101,61 @@ func topFirst(z Zone, cards []LocalID) []LocalID {
 	return out
 }
 
-// ownerActsSelection is a Selection where the hand's owner is the one who
-// discards, so a discard from an opponent's hand reads "your opponent discards …"
-// rather than the controller-directed "discard … from your opponent's hand". A
-// Random pick from a hidden hand is attributed to its owner this way.
+// ownerActsSelection is a Selection whose pick the card's controller does not
+// make, so a pile verb puts the zone's owner in the subject — "your opponent
+// discards …" rather than the controller-directed "discard … from your
+// opponent's hand".
+//
+// This asks about the pick, not about the zone, and the two are not the same
+// question: Imperial Traitor chooses from a hidden hand a preceding reveal
+// opened, and keeps the controller's imperative voice. Do not re-derive it from
+// zone visibility; TestBlindPickVoiceIsUniform pins both halves.
 type ownerActsSelection interface {
 	ownerActs() bool
 }
 
-// selectionOwnerActs reports whether the hand's owner performs the discard.
+// selectionOwnerActs reports whether the zone's owner performs the action.
 func selectionOwnerActs(s Selection) bool {
 	o, ok := s.(ownerActsSelection)
 	return ok && o.ownerActs()
+}
+
+// ownerActor names the sentence's subject when the zone's owner performs the
+// action rather than the controller directing it. ItsOwner always does — the
+// phrase only exists to name them — and an opponent does whenever the pick is
+// not the controller's to make. The controller's own zone keeps the imperative:
+// "discard a random card from your hand" has no one else to name.
+func ownerActor(s Selection, p Player) (string, bool) {
+	switch p {
+	case ItsOwner:
+		return "its owner", true
+	case Opponent:
+		if selectionOwnerActs(s) {
+			return "your opponent", true
+		}
+	}
+	return "", false
+}
+
+// pileVerb is the wording a pile verb plugs into the shared blind-pick template:
+// the imperative the controller is given, its third-person form for when the
+// owner is the subject, and the object being taken.
+type pileVerb struct {
+	imperative  string
+	thirdPerson string
+	object      string
+}
+
+// pileVerbText renders a pile verb's sentence in the one template every pile verb
+// shares, so a blind pick from an opponent's hand reads alike whichever verb
+// takes it: Dendrix discards and Impspector purges, and both say "your opponent
+// <verb>s a random card from their hand".
+// Pinned by TestBlindPickVoiceIsUniform.
+func pileVerbText(s Selection, p Player, zs []Zone, v pileVerb) string {
+	if subject, ok := ownerActor(s, p); ok {
+		return subject + " " + v.thirdPerson + " " + v.object + " from their " + joinedZoneNouns(zs)
+	}
+	return v.imperative + " " + v.object + " from " + whoseZones(p, zs)
 }
 
 // filterIDs keeps the ids the predicate admits, preserving order.
@@ -149,11 +217,16 @@ func (s Chosen) noun() string {
 }
 
 // object renders the single card chosen, e.g. "a Sanctum creature".
-func (s Chosen) object() string {
+func (s Chosen) object() string { return s.qualifiedObject("") }
+
+// qualifiedObject renders the choice with an adjective before the noun, e.g.
+// "a friendly Sanctum creature".
+func (s Chosen) qualifiedObject(adjective string) string {
+	noun := qualifyNoun(adjective, s.noun())
 	if s.Another {
-		return "another " + s.noun()
+		return "another " + noun
 	}
-	return indefinite(s.noun())
+	return indefinite(noun)
 }
 
 // plainType reports that the choice narrows by a single concrete card type alone —
@@ -198,25 +271,16 @@ func (s Chosen) pick(ctx *EffectContext, cands []LocalID) []LocalID {
 	return []LocalID{id}
 }
 
-// Random takes Count uniformly random cards, so the acting player does not choose
-// which cards leave (Impspector takes one, Tormax two). Count is explicit: the
-// zero value takes none, so a single random pick is Random{Count: 1}.
-type Random struct {
-	// Count is how many distinct random cards to take; the zero value takes none.
-	Count int
-}
+// Random takes one uniformly random card, so the acting player does not choose
+// which card leaves (Impspector). How many cards a verb takes is its Quantity,
+// not the Selection's business — Tormax is Random{} with Takes{N: Fixed(2)}.
+type Random struct{}
 
 // noun renders the bare kind of card taken at random.
 func (Random) noun() string { return "random card" }
 
-// object renders the random cards the verb acts on, e.g. "a random card" or "2
-// random cards".
-func (s Random) object() string {
-	if s.Count == 1 {
-		return "a random card"
-	}
-	return countNoun(s.Count, s.noun())
-}
+// object renders the card the verb acts on.
+func (Random) object() string { return "a random card" }
 
 // candidates returns every card — a random pick applies no filter.
 func (Random) candidates(
@@ -226,24 +290,18 @@ func (Random) candidates(
 	return cands
 }
 
-// ownerActs reports that a random pick from a hidden hand is attributed to the
-// hand's owner, so an opponent's random discard reads "your opponent discards …".
+// ownerActs reports that the controller does not make this pick, so a pile verb
+// names the owner as the actor — "your opponent discards …", "your opponent
+// purges …".
 func (Random) ownerActs() bool { return true }
 
-// pick draws Count distinct uniformly random cards from the candidates, stopping
-// early once the candidates run out.
+// pick draws one uniformly random card, or none when the candidates run out.
 func (s Random) pick(ctx *EffectContext, cands []LocalID) []LocalID {
-	pool := s.candidates(ctx, cands)
-	var out []LocalID
-	for i := 0; i < s.Count; i++ {
-		id, ok := ctx.ChooseRandom(pool)
-		if !ok {
-			break
-		}
-		out = append(out, id)
-		pool = filterIDs(pool, func(c LocalID) bool { return c != id })
+	id, ok := ctx.ChooseRandom(s.candidates(ctx, cands))
+	if !ok {
+		return nil
 	}
-	return out
+	return []LocalID{id}
 }
 
 // Each takes every card the filters admit, with no choice: the filters decide
@@ -280,7 +338,13 @@ func (s Each) noun() string {
 }
 
 // object renders the kind of card taken, e.g. "each non-Mars creature".
-func (s Each) object() string { return "each " + s.noun() }
+func (s Each) object() string { return s.qualifiedObject("") }
+
+// qualifiedObject renders the take with an adjective before the noun, e.g.
+// "each friendly card".
+func (s Each) qualifiedObject(adjective string) string {
+	return "each " + qualifyNoun(adjective, s.noun())
+}
 
 // candidates returns every card the filters admit — Each takes all of them.
 func (s Each) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
@@ -410,13 +474,42 @@ func (s Bottom) pick(ctx *EffectContext, cands []LocalID) []LocalID {
 	return s.candidates(ctx, cands)
 }
 
+// joinedZoneNouns joins the source piles a verb draws from the way a card names them
+// ("hand or archives"), so the controller reads one pool rather than a list.
+func joinedZoneNouns(zs []Zone) string {
+	nouns := make([]string, len(zs))
+	for i, z := range zs {
+		nouns[i] = z.noun()
+	}
+	return strings.Join(nouns, " or ")
+}
+
+// whoseZones is whoseZone for a verb that names several source piles. Piles a
+// player owns share one possessive ("your hand or archives"), but play belongs to
+// neither player and takes none, so a list containing it renders each zone on its
+// own instead ("play or your discard pile").
+func whoseZones(p Player, zs []Zone) string {
+	if len(zs) == 1 {
+		return whoseZone(p, zs[0])
+	}
+	if slices.Contains(zs, InPlay) {
+		parts := make([]string, len(zs))
+		for i, z := range zs {
+			parts[i] = whoseZone(p, z)
+		}
+		return strings.Join(parts, " or ")
+	}
+	return possessive(p) + " " + joinedZoneNouns(zs)
+}
+
 // whoseZone renders the possessive for a player's copy of a zone from the
 // controller's point of view: "your hand", "your opponent's hand", "each player's
 // discard pile", or — for a ChosenPlayer, where the controller picks a side at
-// resolution — the indefinite "a discard pile".
+// resolution — the indefinite "a discard pile". Play takes no possessive: it
+// belongs to neither player, so the side rides on the card noun instead (side).
 func whoseZone(p Player, z Zone) string {
 	if z == InPlay {
-		return "in play"
+		return "play"
 	}
 	if p == ChosenPlayer {
 		return indefinite(z.noun())

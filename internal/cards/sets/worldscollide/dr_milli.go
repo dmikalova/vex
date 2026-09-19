@@ -22,6 +22,8 @@ var DrMilli = set.New(
 	card.WithAbility(card.Trigger.Play, card.ArchiveCard{
 		Zone:      card.Hand,
 		Selection: card.Chosen{},
-		Per:       card.ExcessCreatures{Player: card.Opponent, NotCountingSelf: true},
+		Quantity: card.Takes{
+			N: card.ExcessCreatures{Player: card.Opponent, NotCountingSelf: true},
+		},
 	}),
 )

@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Boosted B4-RRY
 //
 //	House:  Shadows
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Special
 //	Power:  7
 //	Armor:  2

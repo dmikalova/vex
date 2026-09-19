@@ -19,7 +19,7 @@ var MartiansMakeBadAllies = set.New(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.RevealHand{Player: card.Controller},
 			card.PurgeCard{
-				Zone:   card.Hand,
+				Zones:  []card.Zone{card.Hand},
 				Player: card.Controller,
 				Selection: card.Each{
 					Type:  card.Type.Creature,

@@ -233,18 +233,100 @@ type Sentences struct {
 	Effects []Effect
 }
 
-// Text renders each child as its own sentence. The first is left uncapitalized
-// because whatever precedes it — a trigger prefix, an enclosing clause — decides
-// its case; every later child opens a sentence, so it is capitalized here.
+// Text renders each child as its own sentence, after folding any threshold ladder
+// among them. The first is left uncapitalized because whatever precedes it — a
+// trigger prefix, an enclosing clause — decides its case; every later child opens
+// a sentence, so it is capitalized here.
 func (e Sentences) Text() string {
-	if len(e.Effects) == 0 {
+	parts := foldLadders(e.Effects)
+	if len(parts) == 0 {
 		return ""
 	}
-	text := punctuate(e.Effects[0].Text())
-	for _, child := range e.Effects[1:] {
-		text += " " + punctuate(capitalizeFirst(child.Text()))
+	text := punctuate(parts[0])
+	for _, part := range parts[1:] {
+		text += " " + punctuate(capitalizeFirst(part))
 	}
 	return text
+}
+
+// ladderRung is a condition that compares a counted subject against a threshold.
+// A run of Conditionals whose rungs count the same subject is a threshold ladder —
+// Galactic Census pays again at 3, 5, and 6 houses — and naming the subject in
+// every rung repeats a long clause verbatim. Folded, the ladder reads "if there
+// are 3 or more houses represented among creatures in play, gain 1 Æmber. Gain 1
+// more if there are 5 or more. Gain 1 more if there are 6 or more."
+type ladderRung interface {
+	// ladderSubject names what is counted, so rungs counting different things do
+	// not fold together.
+	ladderSubject() string
+	// ladderThreshold renders the comparison with the subject left implicit, e.g.
+	// "if there are 5 or more".
+	ladderThreshold() string
+}
+
+// ladderRepeating is an effect that can render as a repetition of an identical one
+// already stated, so a later rung says "gain 1 more" instead of restating "gain 1
+// Æmber". It reports "" when it is not in that shape, and is then not folded.
+type ladderRepeating interface {
+	repeatedText() string
+}
+
+// foldLadders renders each effect's sentence, collapsing every threshold ladder it
+// finds. Effects outside a ladder render unchanged.
+func foldLadders(effects []Effect) []string {
+	parts := make([]string, 0, len(effects))
+	for i := 0; i < len(effects); {
+		run, next := foldThresholdLadder(effects, i)
+		parts = append(parts, run...)
+		i = next
+	}
+	return parts
+}
+
+// foldThresholdLadder folds the ladder starting at i, reporting its sentences and
+// the index just past it. The first rung keeps its full text and each later one
+// becomes "<repeat> <threshold>". A lone rung, or an effect that is no rung at
+// all, renders as itself.
+func foldThresholdLadder(effects []Effect, i int) ([]string, int) {
+	subject, _, repeat, ok := ladderRungAt(effects[i])
+	if !ok {
+		return []string{effects[i].Text()}, i + 1
+	}
+	parts := []string{effects[i].Text()}
+	j := i + 1
+	for ; j < len(effects); j++ {
+		s, threshold, r, ok := ladderRungAt(effects[j])
+		if !ok || s != subject || r != repeat {
+			break
+		}
+		parts = append(parts, repeat+" "+threshold)
+	}
+	if len(parts) < 2 {
+		return parts[:1], i + 1
+	}
+	return parts, j
+}
+
+// ladderRungAt reports eff as a rung of a threshold ladder: a Conditional with no
+// Else, over a condition that compares a counted subject, gating an effect that
+// can render as a repetition of itself.
+func ladderRungAt(eff Effect) (subject, threshold, repeat string, ok bool) {
+	c, isConditional := eff.(Conditional)
+	if !isConditional || c.Else != nil {
+		return "", "", "", false
+	}
+	rung, isRung := c.Cond.(ladderRung)
+	if !isRung {
+		return "", "", "", false
+	}
+	repeating, isRepeating := c.Then.(ladderRepeating)
+	if !isRepeating {
+		return "", "", "", false
+	}
+	if repeat = repeating.repeatedText(); repeat == "" {
+		return "", "", "", false
+	}
+	return rung.ladderSubject(), rung.ladderThreshold(), repeat, true
 }
 
 // Resolve resolves each child effect in order.

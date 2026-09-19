@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: If there are 3 or more houses represented among creatures in play, gain 1 Æmber. If there are 5 or more houses represented among creatures in play, gain 1 Æmber. If there are 6 or more houses represented among creatures in play, gain 1 Æmber.
+//	Play: If there are 3 or more houses represented among creatures in play, gain 1 Æmber. Gain 1 more if there are 5 or more. Gain 1 more if there are 6 or more.
 var GalacticCensus = set.New(
 	"Galactic Census",
 	card.House.StarAlliance,

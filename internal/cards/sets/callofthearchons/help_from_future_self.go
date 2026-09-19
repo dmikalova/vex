@@ -25,6 +25,7 @@ var HelpFromFutureSelf = set.New(
 					Sources: []card.Zone{card.Deck, card.Discard},
 					Filter:  card.Filter{Name: Timetraveller.Name},
 					Reveal:  true,
+					Dest:    card.To.Hand,
 				},
 				card.Shuffle{Zones: []card.Zone{card.Discard}},
 			},

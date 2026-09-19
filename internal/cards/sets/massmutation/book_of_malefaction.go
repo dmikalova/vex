@@ -23,7 +23,7 @@ var BookOfMalefaction = set.New(
 	card.WithTraits(card.Traits.Item, card.Traits.Law),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.AfterAemberStolenFromYou, card.PlaceCounter{
+		card.Trigger.AfterAemberStolenFromYou, card.PlaceCounter{Amount: 1,
 			Kind:   card.Counter.Warrant,
 			Target: card.Target.This,
 			Per:    card.AemberStolenThisEvent{},

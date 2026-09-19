@@ -24,7 +24,7 @@ var MobiusScroll = set.New(
 				card.ArchiveCard{
 					Zone:      card.Hand,
 					Selection: card.Chosen{Optional: true},
-					Amount:    2,
+					Quantity:  card.UpTo{N: card.Fixed(2)},
 				},
 			},
 		}),

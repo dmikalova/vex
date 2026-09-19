@@ -10,7 +10,7 @@ import (
 // Sirs Colossus
 //
 //	House:  Sanctum
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  10
 //	Armor:  3

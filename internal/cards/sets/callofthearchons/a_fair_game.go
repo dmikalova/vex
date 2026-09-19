@@ -17,14 +17,14 @@ var AFairGame = set.New(
 	card.Provenance(card.CotA, "53"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
-			card.DiscardTop{Player: card.Opponent},
+			card.DiscardTop{Amount: 1, Player: card.Opponent},
 			card.RevealHand{Player: card.Opponent},
 			card.GainAember{
 				Player: card.Controller,
 				Amount: 1,
 				Per:    card.CardsInHand{Player: card.Opponent, House: card.TheContextualHouse},
 			},
-			card.DiscardTop{Player: card.Controller},
+			card.DiscardTop{Amount: 1, Player: card.Controller},
 			card.RevealHand{Player: card.Controller},
 			card.GainAember{
 				Player: card.Opponent,

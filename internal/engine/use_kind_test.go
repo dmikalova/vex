@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 // A card barred from one way of being used stays open to the others: it cannot
 // reap, but it fights, and CanUse still offers it while a fight is available.
@@ -13,13 +16,13 @@ func TestCannotBeUsedToReap(t *testing.T) {
 	if err := g.CanUse(0, crocag); err != nil {
 		t.Fatalf("CanUse = %v, want nil while a fight is available", err)
 	}
-	if err := g.CanUseTo(0, crocag, ReapUse); err != ErrCannotUse {
+	if err := g.CanUseTo(0, crocag, ReapUse); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("CanUseTo(reap) = %v, want ErrCannotUse", err)
 	}
 	if err := g.CanUseTo(0, crocag, FightUse); err != nil {
 		t.Errorf("CanUseTo(fight) = %v, want nil", err)
 	}
-	if err := g.Reap(0, crocag); err != ErrCannotUse {
+	if err := g.Reap(0, crocag); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("Reap = %v, want ErrCannotUse", err)
 	}
 	if g.Exhausted(crocag) {
@@ -86,7 +89,7 @@ func TestCannotReapHouseLeavesFightUsable(t *testing.T) {
 	reaper := g.AddToBattleline(testCreature("reaper", 4), 0)
 	g.AddToBattleline(testCreature("foe", 3), 1)
 
-	if err := g.CanUseTo(0, reaper, ReapUse); err != ErrCannotUse {
+	if err := g.CanUseTo(0, reaper, ReapUse); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("CanUseTo(reap) barred by house = %v, want ErrCannotUse", err)
 	}
 	if err := g.CanUseTo(0, reaper, FightUse); err != nil {
@@ -104,7 +107,7 @@ func TestCannotBeUsedToFightAndAction(t *testing.T) {
 			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1}),
 		), 0)
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
-	if err := g.Fight(0, pacifist, foe); err != ErrCannotUse {
+	if err := g.Fight(0, pacifist, foe); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("Fight = %v, want ErrCannotUse", err)
 	}
 
@@ -113,7 +116,7 @@ func TestCannotBeUsedToFightAndAction(t *testing.T) {
 			WithCannotBeUsedTo(ActionUse),
 			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1}),
 		), 0)
-	if err := g.UseAction(0, idle); err != ErrCannotUse {
+	if err := g.UseAction(0, idle); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("UseAction = %v, want ErrCannotUse", err)
 	}
 
@@ -132,7 +135,7 @@ func TestHasAnyUse(t *testing.T) {
 	g := started(t)
 	crocag := g.AddToBattleline(
 		testCreature("Crocag", 7, WithCannotBeUsedTo(ReapUse)), 0)
-	if err := g.CanUse(0, crocag); err != ErrCannotUse {
+	if err := g.CanUse(0, crocag); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("CanUse with an empty enemy battleline = %v, want ErrCannotUse", err)
 	}
 
@@ -149,7 +152,7 @@ func TestHasAnyUse(t *testing.T) {
 	// A player-wide fight ban closes the last door on a creature that cannot reap.
 	g.AddToBattleline(testCreature("foe", 3), 1)
 	g.State.CannotFight[0].Value = true
-	if err := g.CanUse(0, crocag); err != ErrCannotUse {
+	if err := g.CanUse(0, crocag); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("CanUse while fighting is banned = %v, want ErrCannotUse", err)
 	}
 }
@@ -172,10 +175,10 @@ func TestCannotBeUsedWhile(t *testing.T) {
 
 	// Tide high for player 1 is low for player 0: barred every way.
 	g.State.Tide = TideHighForP1
-	if err := g.CanUseTo(0, valoo, ReapUse); err != ErrCannotUse {
+	if err := g.CanUseTo(0, valoo, ReapUse); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("CanUseTo(reap) while the tide is low = %v, want ErrCannotUse", err)
 	}
-	if err := g.CanUseTo(0, valoo, FightUse); err != ErrCannotUse {
+	if err := g.CanUseTo(0, valoo, FightUse); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("CanUseTo(fight) while the tide is low = %v, want ErrCannotUse", err)
 	}
 }
@@ -294,13 +297,13 @@ func TestMustFightIfAble(t *testing.T) {
 	}
 
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
-	if err := g.CanUseTo(0, brute, ReapUse); err != ErrCannotUse {
+	if err := g.CanUseTo(0, brute, ReapUse); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("reap while a fight is available = %v, want ErrCannotUse", err)
 	}
-	if err := g.Reap(0, brute); err != ErrCannotUse {
+	if err := g.Reap(0, brute); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("Reap = %v, want ErrCannotUse", err)
 	}
-	if err := g.UseAction(0, brute); err != ErrCannotUse {
+	if err := g.UseAction(0, brute); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("UseAction while a fight is available = %v, want ErrCannotUse", err)
 	}
 	if err := g.CanUseTo(0, brute, FightUse); err != nil {

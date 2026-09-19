@@ -24,7 +24,7 @@ var HelmsmanSpears = set.New(
 			Player:    card.Controller,
 			Zones:     []card.Zone{card.Hand},
 			Selection: card.Chosen{Optional: true},
-			AnyNumber: true,
+			Quantity:  card.AnyNumber{},
 		},
 		Result: card.ForEachDiscarded{Do: card.Draw{Amount: 1}},
 	}),

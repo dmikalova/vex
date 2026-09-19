@@ -372,22 +372,23 @@ func (g *game) firstPileCandidate(
 }
 
 // zoneOfCard finds the out-of-play pile a card sits in, if any, so a prompt over
-// that pile knows which viewer row to open or which player's cards to name.
+// that pile knows which viewer row to open or which player's cards to name. The
+// engine owns where a card is (ZoneOf); this only maps the piles that have a
+// viewer row to their label, so a card in hand or in play opens nothing.
 func (g *game) zoneOfCard(id engine.LocalID) (player int, label string, ok bool) {
-	for p := range 2 {
-		for _, z := range []struct {
-			label string
-			ids   []engine.LocalID
-		}{
-			{"Discard", g.g.Discard(p)},
-			{"Archives", g.g.Archives(p)},
-			{"Purge", g.g.Purge(p)},
-			{"Deck", g.g.Deck(p)},
-		} {
-			if containsID(z.ids, id) {
-				return p, z.label, true
-			}
-		}
+	p, zone, in := g.g.ZoneOf(id)
+	if !in {
+		return 0, "", false
+	}
+	switch zone {
+	case engine.Discard:
+		return p, zoneDiscardLabel, true
+	case engine.Archives:
+		return p, zoneArchivesLabel, true
+	case engine.Purged:
+		return p, zonePurgeLabel, true
+	case engine.Deck:
+		return p, zoneDeckLabel, true
 	}
 	return 0, "", false
 }

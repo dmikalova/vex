@@ -9,7 +9,11 @@ package engine
 //
 // Play is not a resting zone and is deliberately absent: a card in play carries
 // upgrades, damage, and ward, so entering and leaving it runs whole lifecycles
-// that this primitive does not and should not know about.
+// that this primitive does not and should not know about. It also has no pile to
+// take the card out of, so a play source would leave the `from` side a branch
+// whose one arm ignores `from` entirely. Leaving play goes through
+// leavePlayInto/fileFromPlay instead, and the two meet one level up in
+// Destination.moveFrom, which is the real source axis (ADR 0031).
 
 // cardPile is the pair of operations a resting-zone move needs. Archives are a
 // wideList while the other piles are deckLists, so the mover reaches all five
@@ -25,6 +29,22 @@ type cardPile interface {
 type zoneRef struct {
 	Player int
 	Zone   Zone
+}
+
+// pileZones lists every zone pile returns a pile for, so a caller that must
+// touch all of them (removeFromRestingZones) enumerates them here rather than
+// naming the five state fields again and silently missing a sixth.
+var pileZones = [...]Zone{Hand, Deck, Discard, Archives, Purged}
+
+// removeFromRestingZones unlists id from every pile its owner holds and returns
+// that owner. A card in play sits in none of them, so a caller that may be handed
+// one deals with play itself (manualRelocate does; putIntoPlay guards against it).
+func (g *Game) removeFromRestingZones(id LocalID) int {
+	o := g.owner(id)
+	for _, z := range pileZones {
+		g.pile(zoneRef{Player: o, Zone: z}).remove(id)
+	}
+	return o
 }
 
 // pile returns the player's pile for a resting zone, or nil for a zone that holds

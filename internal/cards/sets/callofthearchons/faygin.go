@@ -19,7 +19,7 @@ var fayginCluster = card.Cluster{
 //	Traits: Human • Thief
 //
 //	Elusive.
-//	Reap: Put an Urchin from play or from your discard pile into your hand.
+//	Reap: Put an Urchin from play or your discard pile into your hand.
 var Faygin = set.New(
 	"Faygin",
 	card.House.Shadows,
@@ -31,5 +31,9 @@ var Faygin = set.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.Reap, card.PutNamedIntoHand{Name: Urchin.Name}),
+		card.Trigger.Reap, card.PutCard{
+			Zones:       []card.Zone{card.InPlay, card.Discard},
+			Selection:   card.Chosen{Name: Urchin.Name},
+			Destination: card.To.Hand,
+		}),
 )

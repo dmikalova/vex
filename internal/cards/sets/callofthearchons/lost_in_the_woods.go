@@ -20,12 +20,12 @@ var LostInTheWoods = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.PutChosen{
-				Amount:      2,
+				Quantity:    card.Takes{N: card.Fixed(2)},
 				Target:      card.Target.EachFriendlyCreature,
 				Destination: card.To.DeckShuffled,
 			},
 			card.PutChosen{
-				Amount:      2,
+				Quantity:    card.Takes{N: card.Fixed(2)},
 				Target:      card.Target.EachEnemyCreature,
 				Destination: card.To.DeckShuffled,
 			},

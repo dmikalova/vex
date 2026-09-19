@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Dodger's 10
 //
 //	House:  Shadows
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  11
 //	Traits: Elf • Thief

@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestManualZoneString(t *testing.T) {
 	cases := map[ManualZone]string{
@@ -18,7 +21,7 @@ func TestManualZoneString(t *testing.T) {
 func TestManualModeLiftsHouse(t *testing.T) {
 	g := started(t) // active house Brobnar
 	off := g.AddToHand(NewCard("off", Sanctum, Creature, Common, WithPower(1)), 0)
-	if err := g.CanPlay(0, off); err != ErrWrongHouse {
+	if err := g.CanPlay(0, off); !errors.Is(err, ErrWrongHouse) {
 		t.Fatalf("off-house without manual = %v, want ErrWrongHouse", err)
 	}
 	if g.Manual() {
@@ -330,5 +333,34 @@ func TestManualMoveReleasesAember(t *testing.T) {
 	}
 	if !g.State.Discard[0].contains(under) {
 		t.Error("the card under the creature was not discarded")
+	}
+}
+
+// TestManualMoveIsAbsorbedByWard pins the human's ruling that manual mode runs the
+// real engine paths rather than a permissive copy of them: a manual relocation is
+// a removal attempt, so a ward absorbs it and spends itself, exactly as it would
+// against a card's own removal. A playtester who wants the move anyway clears the
+// ward with manual mode's own button first.
+func TestManualMoveIsAbsorbedByWard(t *testing.T) {
+	g := started(t)
+	id := g.AddToBattleline(testCreature("warded", 3), 0)
+	g.State.Cards[id].Warded = true
+
+	g.ManualMove(id, ManualDiscard)
+
+	if !g.inPlay(id) {
+		t.Error("the ward should absorb the manual move and leave the creature in play")
+	}
+	if g.State.Discard[0].contains(id) {
+		t.Error("the creature should not have reached the discard pile")
+	}
+	if g.Warded(id) {
+		t.Error("absorbing the move should spend the ward")
+	}
+
+	g.ManualMove(id, ManualDiscard)
+
+	if !g.State.Discard[0].contains(id) {
+		t.Error("with the ward spent, the second move should land")
 	}
 }

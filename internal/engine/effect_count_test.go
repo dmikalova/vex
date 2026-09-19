@@ -529,6 +529,27 @@ func TestAemberInPool(t *testing.T) {
 	}
 }
 
+// TestEqualToTextSpeaksToWhoIsPaid pins the voice an "equal to" count is read in:
+// Binate Rupture pays each player, so the count is about them, not about you.
+func TestEqualToTextSpeaksToWhoIsPaid(t *testing.T) {
+	pool := AemberInPool{Player: Controller}
+	if got := equalToText(pool, Controller); got != "Æmber in your pool" {
+		t.Errorf("controller equal-to text = %q", got)
+	}
+	if got := equalToText(AemberInPool{Player: Opponent}, EachPlayer); got !=
+		"the Æmber in their opponent's pool" {
+		t.Errorf("mirrored equal-to text = %q", got)
+	}
+	if got := equalToText(pool, EachPlayer); got != "the Æmber in their pool" {
+		t.Errorf("each-player equal-to text = %q", got)
+	}
+	// A count with no third-person form keeps its own voice rather than blocking
+	// an EachPlayer gain.
+	if got := equalToText(Fixed(2), EachPlayer); got != (Fixed(2)).CountText() {
+		t.Errorf("plain count under EachPlayer = %q, want its own text", got)
+	}
+}
+
 func TestAemberOnFriendlyCreatures(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	a := g.AddToBattleline(testCreature("a", 3), 0)

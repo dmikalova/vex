@@ -32,7 +32,7 @@ var OrtannuTheChained = set.New(
 	card.WithAbility(
 		card.Trigger.Reap, card.Sentences{
 			Effects: []card.Effect{
-				card.PutFromDiscard{
+				card.PutCard{Zones: []card.Zone{card.Discard},
 					Selection:   card.Each{Name: OrtannusBinding.Name},
 					Destination: card.To.Hand,
 				},

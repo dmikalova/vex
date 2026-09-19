@@ -93,6 +93,25 @@ func TestNeighborsOfCreatureFought(t *testing.T) {
 	}
 }
 
+// TestNeighborsOfFoughtCreatureThatLeftPlay covers the snapshot fallback: when the
+// fight destroyed the fought creature, "each neighbor of the fought creature"
+// reads the neighbors the fight snapshotted rather than the empty live line, so the
+// effect still lands (Smite; see TestSmiteHitsNeighborsWhenFoughtCreatureDies).
+func TestNeighborsOfFoughtCreatureThatLeftPlay(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	left := g.AddToBattleline(testCreature("left", 3), 1)
+	mid := g.Register(testCreature("mid", 3), 1)
+	g.State.Discard[1].add(mid) // the fought creature died in the fight
+	right := g.AddToBattleline(testCreature("right", 3), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0, It: mid, HasIt: true}
+	ctx.Produced.Neighbors = []LocalID{left, right}
+
+	Stun{Target: Target{Kind: TargetTheFoughtCreature}.NeighborsOf()}.Resolve(ctx)
+	if !g.Stunned(left) || !g.Stunned(right) {
+		t.Error("a departed fought creature's snapshotted neighbors should still be reached")
+	}
+}
+
 func TestExhaust(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 3), 0)

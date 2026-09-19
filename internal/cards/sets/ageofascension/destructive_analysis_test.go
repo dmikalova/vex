@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Bonus:  Æmber
 //
-//	Play: Deal 2 damage to a creature and purge any number of cards from your archives, and for each card purged this way, deal 2 damage to it.
+//	Play: Deal 2 damage to a creature and purge any number of cards from your archives. For each card purged this way, deal 2 damage to the same creature.
 func TestDestructiveAnalysis(t *testing.T) {
 	t.Run("deals 2, then 2 more per card purged from archives", func(t *testing.T) {
 		var analysis, foe, one, two ct.Card

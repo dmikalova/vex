@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 // nameChooser answers a labeled option prompt by picking the option whose label
 // equals want, so a test can name a specific card. It falls back to the first
@@ -164,11 +167,11 @@ func TestCanPlayBarredByName(t *testing.T) {
 	)
 	g.SetNamedCard(jar, troll)
 
-	if err := g.CanPlay(0, troll); err != ErrCannotPlayName {
+	if err := g.CanPlay(0, troll); !errors.Is(err, ErrCannotPlayName) {
 		t.Fatalf("CanPlay = %v, want ErrCannotPlayName", err)
 	}
 	idx := handIdxByID(g, 0, troll)
-	if _, err := g.PlayCreature(0, idx, false); err != ErrCannotPlayName {
+	if _, err := g.PlayCreature(0, idx, false); !errors.Is(err, ErrCannotPlayName) {
 		t.Fatalf("PlayCreature = %v, want ErrCannotPlayName", err)
 	}
 }

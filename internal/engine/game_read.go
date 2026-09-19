@@ -570,6 +570,30 @@ func (g *Game) Archives(player int) []LocalID { return cloneIDs(g.State.Archives
 // Purge returns a copy of the ids a player has purged (set aside out of the game).
 func (g *Game) Purge(player int) []LocalID { return cloneIDs(g.State.Purge[player].slice()) }
 
+// ZoneOf reports which out-of-play pile a card sits in and whose it is, so a
+// caller need not scan every pile itself to place a card a prompt reaches into.
+// It checks each player's discard, hand, archives, deck, and purge piles in turn;
+// a card in play or not found returns ok false.
+func (g *Game) ZoneOf(id LocalID) (player int, zone Zone, ok bool) {
+	for p := range 2 {
+		for _, z := range []struct {
+			zone Zone
+			ids  []LocalID
+		}{
+			{Discard, g.State.Discard[p].slice()},
+			{Hand, g.State.Hand[p].slice()},
+			{Archives, g.State.Archives[p].slice()},
+			{Deck, g.State.Deck[p].slice()},
+			{Purged, g.State.Purge[p].slice()},
+		} {
+			if slices.Contains(z.ids, id) {
+				return p, z.zone, true
+			}
+		}
+	}
+	return 0, zoneUnset, false
+}
+
 // Artifacts returns a copy of the ids in a player's artifact row.
 func (g *Game) Artifacts(
 	player int,
@@ -604,10 +628,16 @@ func (g *Game) Peekable(viewer int, host LocalID) bool {
 	return g.Controller(host) == viewer
 }
 
-// inPlay reports whether an id is in either player's battleline or artifact row.
+// inPlay reports whether an id is in play: in either player's battleline or
+// artifact row, or attached as an upgrade to a card that is. An attached upgrade
+// sits on its host's chain rather than in a row, but it is a card in play in its
+// own right, so every reachability re-check must see it (TestInPlayCountsUpgrades).
 // A controlled creature physically sits in its controller's battleline while its
 // owner remains unchanged, so this must not assume owner == controller.
 func (g *Game) inPlay(id LocalID) bool {
+	if host, ok := g.hostOf(id); ok {
+		id = host
+	}
 	for p := 0; p < 2; p++ {
 		if g.State.Battleline[p].contains(id) || g.State.Artifacts[p].contains(id) {
 			return true
@@ -933,8 +963,29 @@ func (g *Game) choosableHouses(player int) []House {
 // An empty result means the player has no active house this turn — a valid outcome,
 // not an error (they choose No House).
 func (g *Game) allowedHouses(player int) []House {
-	choosable := g.choosableHouses(player)
-	var cannots, musts []House
+	cannots, musts := g.houseConstraintLists(player)
+	var allowed []House
+	for _, h := range g.choosableHouses(player) {
+		if !slices.Contains(cannots, h) {
+			allowed = append(allowed, h)
+		}
+	}
+	var surviving []House
+	for _, h := range musts {
+		if slices.Contains(allowed, h) {
+			surviving = append(surviving, h)
+		}
+	}
+	if len(surviving) != 0 {
+		return surviving
+	}
+	return allowed
+}
+
+// houseConstraintLists gathers the houses player is barred from (cannots) and
+// required to pick from (musts), from both the explicit house constraints and the
+// continuous house locks of in-play cards. Both fold into the same two lists.
+func (g *Game) houseConstraintLists(player int) (cannots, musts []House) {
 	addTo := func(dst *[]House, h House) {
 		if h != HouseNone && !slices.Contains(*dst, h) {
 			*dst = append(*dst, h)
@@ -951,47 +1002,40 @@ func (g *Game) allowedHouses(player int) []House {
 			addTo(&musts, g.House(c.Creature))
 		}
 	}
-	// Continuous house locks fold into the same must/cannot computation.
 	for controller := 0; controller < 2; controller++ {
 		for _, id := range g.allInPlay(controller) {
-			lock := g.cat.def(id).HouseLock
-			if !lock.set() {
-				continue
-			}
-			constrained := controller
-			if lock.Player == Opponent {
-				constrained = 1 - controller
-			}
-			if constrained != player {
-				continue
-			}
-			locked := lock.locked(g.State.Cards[id].NamedHouse)
-			if locked == HouseNone {
-				continue
-			}
-			if lock.Bars {
-				addTo(&cannots, locked)
-			} else {
-				addTo(&musts, locked)
+			if h, bars, ok := g.lockedHouse(id, controller, player); ok {
+				if bars {
+					addTo(&cannots, h)
+				} else {
+					addTo(&musts, h)
+				}
 			}
 		}
 	}
-	var allowed []House
-	for _, h := range choosable {
-		if !slices.Contains(cannots, h) {
-			allowed = append(allowed, h)
-		}
+	return cannots, musts
+}
+
+// lockedHouse returns the house an in-play card locks for player, and whether that
+// lock bars the house (a cannot) or requires it (a must). ok is false when the card
+// carries no house lock, its lock does not constrain player, or it locks no house.
+func (g *Game) lockedHouse(id LocalID, controller, player int) (house House, bars, ok bool) {
+	lock := g.cat.def(id).HouseLock
+	if !lock.set() {
+		return HouseNone, false, false
 	}
-	var surviving []House
-	for _, h := range musts {
-		if slices.Contains(allowed, h) {
-			surviving = append(surviving, h)
-		}
+	constrained := controller
+	if lock.Player == Opponent {
+		constrained = 1 - controller
 	}
-	if len(surviving) != 0 {
-		return surviving
+	if constrained != player {
+		return HouseNone, false, false
 	}
-	return allowed
+	locked := lock.locked(g.State.Cards[id].NamedHouse)
+	if locked == HouseNone {
+		return HouseNone, false, false
+	}
+	return locked, lock.Bars, true
 }
 
 // keyCostChangeFor returns how much a single in-play card (controlled by
@@ -1070,6 +1114,13 @@ func (g *Game) creaturesMatchingInPlay(m HouseMatcher) int {
 // CurrentKeyCost is the exported view of keyCost: the Æmber a player must spend
 // to forge one key right now.
 func (g *Game) CurrentKeyCost(player int) int { return g.keyCost(player) }
+
+// AtCheck reports whether a pool of Æmber meets a player's current key cost —
+// enough to forge a key, KeyForge's "Check!". The amount is passed in so a live
+// standing checks the player's pool while the game log checks a recorded amount.
+func (g *Game) AtCheck(player, aember int) bool {
+	return aember >= g.CurrentKeyCost(player)
+}
 
 // battlelineCopy returns a fresh slice of a player's battleline ids, safe to hold
 // across state mutations (e.g. while dealing damage to each creature).

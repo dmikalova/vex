@@ -19,7 +19,7 @@ var Arise = set.New(
 		card.Trigger.Play, card.ChooseHouseThen{
 			Then: card.Sentences{
 				Effects: []card.Effect{
-					card.PutFromDiscard{
+					card.PutCard{Zones: []card.Zone{card.Discard},
 						Selection: card.Each{
 							Type:  card.Type.Creature,
 							House: card.Houses.Chosen,

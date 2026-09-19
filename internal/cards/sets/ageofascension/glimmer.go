@@ -23,6 +23,10 @@ var Glimmer = set.New(
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.PutFromDiscard{Selection: card.Chosen{}, Destination: card.To.Hand},
+		card.PutCard{
+			Zones:       []card.Zone{card.Discard},
+			Selection:   card.Chosen{},
+			Destination: card.To.Hand,
+		},
 	),
 )

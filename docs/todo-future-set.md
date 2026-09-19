@@ -290,3 +290,63 @@ Of.Value)`, floored at 0 so it can never feed a negative into `scaled`. The `Of`
   `InPlay.Other` already expresses "not counting the source".
 - Keep the `CardFilter` fold `ExcessCreatures` gained in the InPlay/ExcessCreatures
   refactor: the trait axis routes through `filter().admits`, applied to both sides.
+
+## Winds of Exchange — zone visibility as a computed fact
+
+**Trigger set:** **Winds of Exchange**, where house Ekwidon makes looking into a
+hidden zone a house mechanic rather than a one-off. Three cards force it:
+
+- **Flea Market** (WoE 064, Ekwidon) — "Look at **a random card** in your
+  opponent's hand. You may give your opponent 1 Æmber. If you do, play that card
+  as if it were yours." The look is granted for **one randomly chosen card**, not
+  the hand.
+- **Talent Scout** (WoE 069, Ekwidon) — "Look at your opponent's hand and play a
+  creature from it as if it were yours." A whole-hand grant, then a `Chosen`
+  filtered to creatures.
+- **Abyssal Sight** (WoE 384, Unfathomable) — "look at your opponent's hand and
+  choose a card from it. That player discards that card." Grant, `Chosen`, then a
+  pile verb — the shape this whole item exists for.
+
+**Not Æmber Skies' Clipped Wings** (AS 071), which reads "Purge **a random** card
+from your opponent's hand" — that is plain `Random{}` and needs no visibility at
+all. The AS card that would need it is Talent Scout again (AS 097, the reprint).
+
+**The grant is partial in this set, which today's seam cannot express.** The only
+grant the engine has is `RevealHand`, which opens the whole hand. Flea Market
+grants a look at exactly one card, and WoE's Plunder (356) reveals "a random
+**unrevealed** card", which needs per-card revealed state within a zone. Design
+the predicate to take the granted scope, not a hand-wide boolean.
+
+**What it is.** A predicate answering whether a given viewer can see the
+individual cards in a given player's zone. It is a function of all three of zone,
+owner, and viewer — a discard pile, the board, and the purge pile are open to
+both players; a hand and archives are open only to their owner; a deck is closed
+to both, including its owner. `Zone.public()` in `internal/engine/zone.go` is the
+two-players-only corner of it and should be derived from it once it lands, not
+left beside it.
+
+**What the chooser does with it.** A `Chosen` aimed at a zone the chooser cannot
+see picks uniformly at random instead, so the invalid combination is
+unrepresentable rather than merely rejected.
+
+**The grant is an input, not an exception.** A card can hand a player a look they
+would not otherwise have — today a preceding `RevealHand` (Hidden Stash, Imperial
+Traitor), in WoE a single card or a peek at the top N of a deck. The grant must be
+an argument to the predicate, so a granted look and a natural one answer through
+the same seam.
+
+**Two traps, both already paid for once — read before designing:**
+
+- **`Text()` renders with no game state, and the grant is a runtime fact.** A
+  reveal is a sibling effect earlier in the same `Sequence`, so static visibility
+  would print "at random" for Imperial Traitor while the resolve let the
+  controller choose — exactly the ADR 0006 desync the feature is supposed to
+  prevent. The design has to say what `Text()` renders for a grant it cannot see,
+  and "derive the wording from visibility" is not an answer on its own.
+- **Do NOT fold `ownerActs` into it.** `ownerActsSelection` / `Random.ownerActs`
+  (`internal/engine/effect_selection.go`) looks like the same idea and is not: it
+  asks whether the **pick** is the controller's to make, not whether the zone is
+  visible. Imperial Traitor chooses from a hidden hand and still reads in the
+  controller's imperative voice. The two coincide today only because every blind
+  pick happens to target a hidden zone. Pinned by
+  `TestBlindPickVoiceIsUniform`.

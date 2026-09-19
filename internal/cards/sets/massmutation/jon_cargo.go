@@ -21,7 +21,7 @@ var JONCargo = set.New(
 	card.WithTraits(card.Traits.Robot),
 	card.WithAbility(
 		card.Trigger.Reap, card.Sequence{Effects: []card.Effect{
-			card.DiscardTop{Player: card.Controller},
+			card.DiscardTop{Amount: 1, Player: card.Controller},
 			card.RevealHand{Player: card.Controller},
 			card.ArchiveCard{
 				Zone:      card.Hand,

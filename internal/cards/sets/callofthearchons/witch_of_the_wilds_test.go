@@ -1,6 +1,7 @@
 package callofthearchons
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/card"
@@ -35,7 +36,7 @@ func TestWitchOfTheWilds(t *testing.T) {
 		h.P1.Play(first)
 
 		h.Expect(first).At(ct.PlayArea)
-		if _, err := h.Game().PlayCreature(0, 0, false); err != engine.ErrWrongHouse {
+		if _, err := h.Game().PlayCreature(0, 0, false); !errors.Is(err, engine.ErrWrongHouse) {
 			t.Fatalf("second off-house Untamed play = %v, want ErrWrongHouse", err)
 		}
 		h.Expect(second).At(ct.Hand)
@@ -71,7 +72,7 @@ func TestWitchOfTheWilds(t *testing.T) {
 			},
 		})
 
-		if _, err := h.Game().PlayCreature(0, 0, false); err != engine.ErrWrongHouse {
+		if _, err := h.Game().PlayCreature(0, 0, false); !errors.Is(err, engine.ErrWrongHouse) {
 			t.Fatalf("off-house Untamed play without Witch = %v, want ErrWrongHouse", err)
 		}
 		h.Expect(untamed).At(ct.Hand)

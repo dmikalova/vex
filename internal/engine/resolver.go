@@ -468,9 +468,6 @@ type ZoneResolver interface {
 	PutOnTopOfDeck(id LocalID)
 	// PutIntoHand moves a card from play to its owner's hand.
 	PutIntoHand(id LocalID)
-	// ReturnUpgradesToHand moves each upgrade attached to a host in play to its
-	// owner's hand, rather than shedding it to the discard pile.
-	ReturnUpgradesToHand(host LocalID)
 	// ArchiveUpgrade detaches an attached upgrade from its host and moves it to its
 	// owner's archives (Ghostform archives itself off its host).
 	ArchiveUpgrade(upgrade LocalID)
@@ -484,12 +481,6 @@ type ZoneResolver interface {
 	PutIntoYourArchives(id LocalID, player int)
 	// PutIntoDeckShuffled moves a card from play into its owner's deck and shuffles.
 	PutIntoDeckShuffled(id LocalID)
-	// ShuffleFriendlyCardsInPlayIntoDeck moves every card player controls in play —
-	// each creature and artifact and their upgrades — into its owner's deck,
-	// returning how many cards went into each owner's deck, indexed by player. A card
-	// the controller does not own is tallied under its owner, not the controller. The
-	// caller opens a shuffle batch around it.
-	ShuffleFriendlyCardsInPlayIntoDeck(player int) [2]int
 	// BeginShuffleBatch starts collecting the cards shuffled into a deck until
 	// EndShuffleBatch, so an effect that shuffles several creatures at once narrates
 	// them as one grouped line per owner attributed to the frame's source.

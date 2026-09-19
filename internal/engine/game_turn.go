@@ -5,7 +5,8 @@ import (
 	"slices"
 )
 
-// Engine action errors.
+// Engine action errors. Compare these with errors.Is, not ==, so a call site
+// stays correct if one is ever wrapped (docs/style-guide.md).
 var (
 	ErrNotActivePlayer    = errors.New("not the active player")
 	ErrCardNotInHand      = errors.New("card index is not in hand")
@@ -51,6 +52,17 @@ func (g *Game) StartTurn(player int) {
 	g.State.ActivePlayer = player
 	g.State.ActiveHouse = HouseNone
 	g.State.Turn++
+	g.resetTurnTallies(player)
+	g.activateArmedBars(player)
+	g.record(TurnBegan{Player: player, Turn: g.State.Turn})
+	g.enterPhase(PhaseStartOfTurn)
+	g.runPhases()
+	g.assertInvariants()
+}
+
+// resetTurnTallies clears the per-turn play, discard, usage, and creature-use
+// counters at the start of player's turn.
+func (g *Game) resetTurnTallies(player int) {
 	g.State.PlayedThisTurn[player].reset()
 	g.State.DiscardedThisTurn[player].reset()
 	g.State.PlayPermissionsUsedThisTurn[player] = [NumHouses]uint8{}
@@ -69,8 +81,13 @@ func (g *Game) StartTurn(player int) {
 			g.State.Cards[id].ElusiveUsedThisTurn = false
 		}
 	}
-	// Each bar armed on a previous turn becomes active for this player now, taking
-	// the card that imposed it along so a reminder can name the reason.
+}
+
+// activateArmedBars promotes every restriction armed on a previous turn into the
+// bar active for player's turn now beginning, carrying along the card that
+// imposed each so a reminder can name the reason, and re-arms the empty "next"
+// slots for whatever this turn schedules.
+func (g *Game) activateArmedBars(player int) {
 	g.State.CannotFight[player] = g.State.CannotFightNext[player]
 	g.State.CannotFightNext[player] = Bar[bool]{}
 	g.State.CannotPlayTypeThis[player] = g.State.CannotPlayTypeNext[player]
@@ -93,10 +110,6 @@ func (g *Game) StartTurn(player int) {
 	g.State.KeyCostBumpNext[player] = Bar[int]{}
 	g.State.KeyCostPerHouse[player] = g.State.KeyCostPerHouseNext[player]
 	g.State.KeyCostPerHouseNext[player] = Bar[perHouseKeySurcharge]{}
-	g.record(TurnBegan{Player: player, Turn: g.State.Turn})
-	g.enterPhase(PhaseStartOfTurn)
-	g.runPhases()
-	g.assertInvariants()
 }
 
 // Choose a house: pick one of your deck's three houses to be your active house
@@ -209,7 +222,7 @@ func (g *Game) drawStep(player int) {
 	before := int(g.State.Hand[player].Count)
 	g.drawTo(player, target)
 	hand := int(g.State.Hand[player].Count)
-	g.record(CardsDrawn{Player: player, Count: hand - before, Hand: hand})
+	g.record(CardsDrawn{Player: player, Cards: hand - before, Hand: hand})
 	// The reduction blocked a draw only when it left the player below a full hand
 	// with cards still available to draw.
 	if chains > 0 &&
@@ -427,7 +440,7 @@ func (g *Game) GrantMayPlayOrUse(
 		Houses: houses,
 		Grant:  grant,
 		Types:  types,
-		Count:  count,
+		Cards:  count,
 	})
 }
 

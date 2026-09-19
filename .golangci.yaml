@@ -13,13 +13,14 @@ linters:
   settings:
     # gocognit measures cognitive (not cyclomatic) complexity: the engine's flat
     # Visitor dispatch switches (ADR 0006) stay cheap while genuinely nested logic
-    # is flagged. 40 holds the engine's genuinely nested seams split (fight,
-    # NewCard, hasKeyword, the text renderers, Target.filter — see
-    # docs/todo-agent.md); the remaining exclusions below are the web renderers
-    # deferred to their own passes. Treat this as a smoke detector: split a
-    # function when a reader gains from it, exempt an honest one cohesive dispatch.
+    # is flagged. 30 holds the engine's genuinely nested seams split (fight,
+    # NewCard, hasKeyword, the text renderers, Target.filter, triggeredBy,
+    # RenderAbility, allowedHouses — see docs/todo-agent.md); the remaining
+    # exclusions below are the web renderers deferred to their own passes. Treat
+    # this as a smoke detector: split a function when a reader gains from it, exempt
+    # an honest one cohesive dispatch.
     gocognit:
-      min-complexity: 40
+      min-complexity: 30
   exclusions:
     rules:
       # Invalid-zero enum sentinels (…Unset) are intentionally unreferenced: the
@@ -57,11 +58,20 @@ linters:
           - dupl
         path: _test\.go
       # gocognit backlog deferred to their own passes (see docs/todo-agent.md): the
-      # web glyph and rendering seams sit above 40 today. The gate holds every
-      # other function at 40 until those web passes split them.
+      # web glyph and rendering seams sit above 30 today. The gate holds every
+      # other function at 30 until those web passes split them.
       - linters:
           - gocognit
         text: effectGlyphs
       - linters:
           - gocognit
         text: installTips
+      - linters:
+          - gocognit
+        text: installKeyShortcuts
+      - linters:
+          - gocognit
+        text: computeFlashes
+      - linters:
+          - gocognit
+        text: renderMarkdown

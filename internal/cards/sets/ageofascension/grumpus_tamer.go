@@ -36,6 +36,7 @@ var GrumpusTamer = set.New(
 					Sources: []card.Zone{card.Deck, card.Discard},
 					Filter:  card.Filter{Name: WarGrumpus.Name},
 					Reveal:  true,
+					Dest:    card.To.Hand,
 				},
 				card.Shuffle{},
 			},

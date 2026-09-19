@@ -31,11 +31,20 @@ func (ArchivedCreaturesShareHouse) Met(ctx *EffectContext) bool {
 // MovedAnyAember is met when a preceding MoveAember relocated at least one Æmber
 // this resolution (ctx.Produced.AemberMoved) — Shadowsaurus takes control of the
 // enemy creature it emptied only when there was Æmber to move.
-type MovedAnyAember struct{}
+type MovedAnyAember struct {
+	// Noun words the clause around the card the Æmber came from — "if there was any
+	// Æmber on that creature" — instead of around the move itself, so a following
+	// "it" takes that card as its antecedent rather than the Æmber (Shadowsaurus).
+	Noun ItNoun
+}
 
-// CondText renders the condition as a back-reference to the Æmber just moved.
-func (MovedAnyAember) CondText() string {
-	return "if you moved any \u00c6mber this way"
+// CondText renders the condition as a back-reference to the Æmber just moved, or
+// to the card it was moved off when Noun names one.
+func (c MovedAnyAember) CondText() string {
+	if c.Noun == 0 {
+		return "if you moved any \u00c6mber this way"
+	}
+	return "if there was any \u00c6mber on " + c.Noun.noun()
 }
 
 // Met reports whether the most recent MoveAember moved any Æmber.

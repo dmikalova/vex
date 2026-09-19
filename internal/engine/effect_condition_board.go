@@ -213,6 +213,16 @@ func (c HousesRepresented) Met(ctx *EffectContext) bool {
 // CondText renders the condition, e.g. "if there are 3 or more houses represented
 // among creatures in play".
 func (c HousesRepresented) CondText() string {
+	return c.ladderThreshold() + " houses represented among " + c.Among.scope()
+}
+
+// ladderSubject names the board survey being counted, so only rungs over the same
+// survey fold into one ladder.
+func (c HousesRepresented) ladderSubject() string { return c.Among.scope() }
+
+// ladderThreshold renders the comparison with the counted noun left implicit, for
+// a later rung of a ladder whose first rung already named it.
+func (c HousesRepresented) ladderThreshold() string {
 	qty := fmt.Sprintf("%d or more", c.Amount)
 	switch c.Is {
 	case AtMost:
@@ -220,7 +230,7 @@ func (c HousesRepresented) CondText() string {
 	case Exactly:
 		qty = fmt.Sprintf("exactly %d", c.Amount)
 	}
-	return fmt.Sprintf("if there are %s houses represented among %s", qty, c.Among.scope())
+	return "if there are " + qty
 }
 
 // CounterInPlay is met while at least one card in play carries a generic counter

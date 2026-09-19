@@ -1311,6 +1311,31 @@ func TestWithGiganticRole(t *testing.T) {
 	}
 }
 
+// A gigantic reads "Gigantic Creature" on its type line for both halves, so
+// either card in hand shows it is gigantic; an ordinary creature reads plainly.
+func TestCardTypeLabelGigantic(t *testing.T) {
+	base := NewCard(
+		"Colossus", Brobnar, Creature, Common, WithPower(9), WithGiganticRole(GiganticBase),
+	)
+	art := NewCard(
+		"Colossus", Brobnar, Creature, Common, WithPower(9), WithGiganticRole(GiganticArt),
+	)
+	plain := NewCard("Goon", Brobnar, Creature, Common, WithPower(3))
+
+	if got := CardTypeLabel(&base); got != "Gigantic Creature" {
+		t.Errorf("base CardTypeLabel = %q, want %q", got, "Gigantic Creature")
+	}
+	if got := CardTypeLabel(&art); got != "Gigantic Creature" {
+		t.Errorf("art CardTypeLabel = %q, want %q", got, "Gigantic Creature")
+	}
+	if got := CardTypeLabel(&plain); got != "Creature" {
+		t.Errorf("plain CardTypeLabel = %q, want %q", got, "Creature")
+	}
+	if !strings.Contains(RenderCardText(&base), "Gigantic Creature") {
+		t.Errorf("RenderCardText omits gigantic type line:\n%s", RenderCardText(&base))
+	}
+}
+
 func TestIndefinite(t *testing.T) {
 	cases := map[string]string{
 		"":                 "",

@@ -1,6 +1,7 @@
 package worldscollide
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/card"
@@ -41,7 +42,7 @@ func TestSnag(t *testing.T) {
 
 	// The must reads the fought creature's house live at choice time (Logos), so
 	// any other house is rejected and Logos is required.
-	if err := h.Game().ChooseHouse(1, card.House.Mars); err != engine.ErrHouseNotAllowed {
+	if err := h.Game().ChooseHouse(1, card.House.Mars); !errors.Is(err, engine.ErrHouseNotAllowed) {
 		t.Errorf("a house other than the fought creature's = %v, want ErrHouseNotAllowed", err)
 	}
 	h.P2.ChooseHouse(card.House.Logos)

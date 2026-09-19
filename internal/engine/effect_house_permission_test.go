@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 // TestMayPlayOrUseText covers the rendered clause for every axis combination the
 // out-of-house permission family folds into MayPlayOrUse.
@@ -61,7 +64,7 @@ func TestMayPlayOrUseText(t *testing.T) {
 				Houses: HouseSelector{Match: exceptHouse(StarAlliance)},
 				Grant:  GrantPlay,
 				Types:  CardTypesOf(Artifact, Upgrade, Tactic),
-				Count:  1,
+				Cards:  1,
 			},
 			"you may play a non-Star Alliance artifact, upgrade, or tactic this turn",
 		},
@@ -70,7 +73,7 @@ func TestMayPlayOrUseText(t *testing.T) {
 			MayPlayOrUse{
 				Houses: HouseSelector{Match: exceptHouse(StarAlliance)},
 				Grant:  GrantPlay | GrantUse,
-				Count:  1,
+				Cards:  1,
 			},
 			"you may play or use one non-Star Alliance card this turn",
 		},
@@ -79,7 +82,7 @@ func TestMayPlayOrUseText(t *testing.T) {
 			MayPlayOrUse{
 				Houses: HouseSelector{Match: HouseMatcher{Kind: MatchExceptHouse}},
 				Grant:  GrantPlay,
-				Count:  1,
+				Cards:  1,
 			},
 			"you may play one card this turn",
 		},
@@ -107,7 +110,7 @@ func TestMayPlayOrUseValidate(t *testing.T) {
 	if (MayPlayOrUse{
 		Houses: HouseSelector{Match: HouseMatcher{Kind: MatchExceptHouse}},
 		Grant:  GrantPlay,
-		Count:  -1,
+		Cards:  -1,
 	}).validate() == nil {
 		t.Error("a negative count should be invalid")
 	}
@@ -145,7 +148,7 @@ func TestMayPlayOrUseResolveFight(t *testing.T) {
 	}
 	outsider := g2.AddToBattleline(NewCard("outsider", Logos, Creature, Common, WithPower(5)), 0)
 	enemy := g2.AddToBattleline(NewCard("enemy", Dis, Creature, Common, WithPower(2)), 1)
-	if err := g2.Fight(0, outsider, enemy); err != ErrWrongHouse {
+	if err := g2.Fight(0, outsider, enemy); !errors.Is(err, ErrWrongHouse) {
 		t.Fatalf("Fight before the grant = %v, want ErrWrongHouse", err)
 	}
 	MayPlayOrUse{Houses: HouseSelector{Match: anyHouse}, Grant: GrantFight}.Resolve(
@@ -259,7 +262,7 @@ func TestMayPlayOrUseResolvePermit(t *testing.T) {
 	MayPlayOrUse{
 		Houses: HouseSelector{Match: exceptHouse(StarAlliance)},
 		Grant:  GrantPlay,
-		Count:  2,
+		Cards:  2,
 	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 	if g.State.OffHousePermitCount[0] != 1 {
 		t.Fatalf("permit count = %d, want 1", g.State.OffHousePermitCount[0])

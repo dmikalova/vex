@@ -89,6 +89,12 @@ not.
 - **Handle every error.** Most catastrophic failures come from mishandled
   non-fatal errors. Never discard an `error` you can act on; never `_ =` an error
   return without a reason.
+- **Compare errors with `errors.Is`, not `==`.** The engine returns bare sentinel
+  errors (`ErrNoTarget`, `ErrWrongHouse`, `session.ErrIllegal`, …) for speed, but
+  every consumer — production and test — matches them with `errors.Is(err, ErrX)`,
+  never `err == ErrX`. `errors.Is` still works on a bare sentinel and keeps the
+  call site correct if the error is ever wrapped with `%w`. The sentinel blocks
+  live in `game_turn.go`, `session.go`, and `match.go`.
 - **Validate at the boundary; then trust within it.** vactrol's "assertions" are
   its `validate()` pass and its invalid-zero sentinels. A card runs `validate()`
   at registration (`card.New` → `init`), so a malformed definition fails at

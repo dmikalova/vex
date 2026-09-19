@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 // These tests exercise USING a card — reaping, action abilities, and the checks
 // that gate them — plus the machinery that fires triggered abilities, including
@@ -100,12 +103,12 @@ func TestReapAndActionAbility(t *testing.T) {
 		t.Errorf("aember = %d, want 5", g.Aember(0))
 	}
 	// Re-using an exhausted creature fails via canUse.
-	if err := g.UseAction(0, aid); err != ErrCardExhausted {
+	if err := g.UseAction(0, aid); !errors.Is(err, ErrCardExhausted) {
 		t.Errorf("second UseAction err = %v, want ErrCardExhausted", err)
 	}
 	// A creature without an action ability cannot use one.
 	noAction := g.AddToBattleline(testCreature("plain", 2), 0)
-	if err := g.UseAction(0, noAction); err != ErrWrongType {
+	if err := g.UseAction(0, noAction); !errors.Is(err, ErrWrongType) {
 		t.Errorf("UseAction err = %v, want ErrWrongType", err)
 	}
 }
@@ -155,16 +158,16 @@ func TestCanUseErrors(t *testing.T) {
 	g := started(t)
 	// Enemy creature (owner mismatch).
 	enemy := g.AddToBattleline(testCreature("enemy", 2), 1)
-	if err := g.Reap(0, enemy); err != ErrWrongType {
+	if err := g.Reap(0, enemy); !errors.Is(err, ErrWrongType) {
 		t.Errorf("reap enemy err = %v, want ErrWrongType", err)
 	}
 	// Exhausted.
 	own := g.AddToBattleline(testCreature("own", 2), 0)
 	g.State.Cards[own].Exhausted = true
-	if err := g.CanUse(0, own); err != ErrCardExhausted {
+	if err := g.CanUse(0, own); !errors.Is(err, ErrCardExhausted) {
 		t.Errorf("CanUse exhausted = %v, want ErrCardExhausted", err)
 	}
-	if err := g.Reap(0, own); err != ErrCardExhausted {
+	if err := g.Reap(0, own); !errors.Is(err, ErrCardExhausted) {
 		t.Errorf("err = %v, want ErrCardExhausted", err)
 	}
 	g.State.Cards[own].Exhausted = false
@@ -176,27 +179,27 @@ func TestCanUseErrors(t *testing.T) {
 	if !g.Exhausted(sick) {
 		t.Error("a freshly played creature should be exhausted")
 	}
-	if err := g.Reap(0, sick); err != ErrCardExhausted {
+	if err := g.Reap(0, sick); !errors.Is(err, ErrCardExhausted) {
 		t.Errorf("err = %v, want ErrCardExhausted", err)
 	}
 	// Wrong house.
 	disC := NewCard("Dis Creature", Dis, Creature, Common, WithPower(2))
 	disID := g.AddToBattleline(disC, 0)
-	if err := g.Reap(0, disID); err != ErrWrongHouse {
+	if err := g.Reap(0, disID); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("err = %v, want ErrWrongHouse", err)
 	}
 	// An artifact is in play but is not a creature, so it cannot reap or fight.
 	relic := g.AddArtifact(NewCard("Relic", Brobnar, Artifact, Common), 0)
-	if err := g.Reap(0, relic); err != ErrWrongType {
+	if err := g.Reap(0, relic); !errors.Is(err, ErrWrongType) {
 		t.Errorf("reap artifact err = %v, want ErrWrongType", err)
 	}
 	// Not active player.
-	if err := g.Reap(1, own); err != ErrNotActivePlayer {
+	if err := g.Reap(1, own); !errors.Is(err, ErrNotActivePlayer) {
 		t.Errorf("err = %v, want ErrNotActivePlayer", err)
 	}
 	// Game over.
 	g.State.Winner = 0
-	if err := g.Reap(0, own); err != ErrGameOver {
+	if err := g.Reap(0, own); !errors.Is(err, ErrGameOver) {
 		t.Errorf("err = %v, want ErrGameOver", err)
 	}
 }
@@ -210,7 +213,7 @@ func TestFightGrantForgivesWrongHouseForFightOnly(t *testing.T) {
 	g.AddToBattleline(testCreature("foe", 3), 1)
 
 	// Without the grant, fighting out of house is barred.
-	if err := g.CanUseTo(0, off, FightUse); err != ErrWrongHouse {
+	if err := g.CanUseTo(0, off, FightUse); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("ungranted fight = %v, want ErrWrongHouse", err)
 	}
 
@@ -219,7 +222,7 @@ func TestFightGrantForgivesWrongHouseForFightOnly(t *testing.T) {
 		t.Errorf("granted fight = %v, want nil", err)
 	}
 	// The grant is fight-only: reap stays barred out of house.
-	if err := g.CanUseTo(0, off, ReapUse); err != ErrWrongHouse {
+	if err := g.CanUseTo(0, off, ReapUse); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("granted reap = %v, want ErrWrongHouse", err)
 	}
 }
@@ -227,7 +230,7 @@ func TestFightGrantForgivesWrongHouseForFightOnly(t *testing.T) {
 func TestCanUseArtifact(t *testing.T) {
 	g := started(t)
 	relic := g.AddArtifact(NewCard("Relic", Brobnar, Artifact, Common), 0)
-	if err := g.CanUseArtifact(0, relic); err != ErrCannotUse {
+	if err := g.CanUseArtifact(0, relic); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("artifact without an action ability = %v, want ErrCannotUse", err)
 	}
 
@@ -247,7 +250,7 @@ func TestCanUseArtifact(t *testing.T) {
 
 	// Wrong house, no Versatile: blocked.
 	g.State.ActiveHouse = Dis
-	if err := g.CanUseArtifact(0, actor); err != ErrWrongHouse {
+	if err := g.CanUseArtifact(0, actor); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("actor out of house = %v, want ErrWrongHouse", err)
 	}
 
@@ -267,12 +270,12 @@ func TestCanUseArtifact(t *testing.T) {
 
 	// A creature is not an artifact.
 	creature := g.AddToBattleline(testCreature("creature", 2), 0)
-	if err := g.CanUseArtifact(0, creature); err != ErrWrongType {
+	if err := g.CanUseArtifact(0, creature); !errors.Is(err, ErrWrongType) {
 		t.Errorf("CanUseArtifact on a creature = %v, want ErrWrongType", err)
 	}
 
 	// usable()'s own checks (e.g. wrong player) surface unchanged.
-	if err := g.CanUseArtifact(1, actor); err != ErrNotActivePlayer {
+	if err := g.CanUseArtifact(1, actor); !errors.Is(err, ErrNotActivePlayer) {
 		t.Errorf("CanUseArtifact wrong player = %v, want ErrNotActivePlayer", err)
 	}
 }
@@ -340,7 +343,7 @@ func TestUpgradeUseConditionGatesHost(t *testing.T) {
 			Restrictions{UseCondition: CardsDiscarded{Player: Controller, Amount: 1}},
 		),
 	))
-	if err := g.usable(0, host); err != ErrCannotUse {
+	if err := g.usable(0, host); !errors.Is(err, ErrCannotUse) {
 		t.Fatalf("host with unmet upgrade use-condition = %v, want ErrCannotUse", err)
 	}
 	c := g.AddToHand(NewCard("spare", Brobnar, Tactic, Common), 0)
@@ -480,12 +483,12 @@ func TestUnstun(t *testing.T) {
 	// blocked exactly like Reap, not a house-independent escape hatch.
 	outsider := g.AddToBattleline(NewCard("outsider", Dis, Creature, Common, WithPower(2)), 0)
 	g.State.Cards[outsider].Stunned = true
-	if err := g.Unstun(0, outsider); err != ErrWrongHouse {
+	if err := g.Unstun(0, outsider); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("Unstun out of house = %v, want ErrWrongHouse", err)
 	}
 	// A creature that is not stunned has nothing for Unstun to do.
 	fine := g.AddToBattleline(testCreature("fine", 2), 0)
-	if err := g.Unstun(0, fine); err != ErrCannotUse {
+	if err := g.Unstun(0, fine); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("Unstun an unstunned creature = %v, want ErrCannotUse", err)
 	}
 	// The checks Unstun shares with every other use still apply: an
@@ -493,7 +496,7 @@ func TestUnstun(t *testing.T) {
 	spent := g.AddToBattleline(testCreature("spent", 2), 0)
 	g.State.Cards[spent].Stunned = true
 	g.State.Cards[spent].Exhausted = true
-	if err := g.Unstun(0, spent); err != ErrCardExhausted {
+	if err := g.Unstun(0, spent); !errors.Is(err, ErrCardExhausted) {
 		t.Errorf("Unstun an exhausted creature = %v, want ErrCardExhausted", err)
 	}
 }

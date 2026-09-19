@@ -412,8 +412,10 @@ targets, freeing it to act normally instead of having to shake the stun off.`,
 controller must use it to fight on their turn whenever it is able to — it cannot
 reap or use an "Action:" ability while there is an enemy creature it can fight. If
 it cannot fight (nothing to fight, or an effect stops it), it is free to reap or
-act. Enrage persists until an effect removes it. Enraging applies this status to
-each creature the effect targets.`,
+act. After a creature is used to fight, its enrage is removed; this holds even when
+the defender is Elusive and takes no damage, because the fight still happened.
+Reaping does not remove enrage. Enrage otherwise persists until an effect removes
+it. Enraging applies this status to each creature the effect targets.`,
 		},
 		{
 			Section:    SectionEffect,

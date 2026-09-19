@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"strings"
 	"testing"
 )
@@ -62,7 +63,7 @@ func TestChooseHouseLockRequires(t *testing.T) {
 	g.SetPlayerHouses(1, []House{Brobnar, Mars, Shadows})
 	g.AddToBattleline(lockedCreature("Pit", HouseLock{Player: Controller, House: Dis}), 0)
 	g.State.ActivePlayer = 0
-	if err := g.ChooseHouse(0, Logos); err != ErrHouseNotAllowed {
+	if err := g.ChooseHouse(0, Logos); !errors.Is(err, ErrHouseNotAllowed) {
 		t.Errorf("choosing another house = %v, want ErrHouseNotAllowed", err)
 	}
 	if err := g.ChooseHouse(0, Dis); err != nil {
@@ -101,7 +102,7 @@ func TestChooseHouseLockBars(t *testing.T) {
 	}
 
 	g.SetNamedHouse(id, Mars)
-	if err := g.ChooseHouse(1, Mars); err != ErrHouseNotAllowed {
+	if err := g.ChooseHouse(1, Mars); !errors.Is(err, ErrHouseNotAllowed) {
 		t.Errorf("choosing the barred house = %v, want ErrHouseNotAllowed", err)
 	}
 	if err := g.ChooseHouse(1, Brobnar); err != nil {

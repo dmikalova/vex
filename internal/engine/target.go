@@ -650,7 +650,7 @@ func (t Target) specialKindText() (string, bool) {
 	case TargetTheSameCreature:
 		return "the same creature", true
 	case TargetTheChosenCreature:
-		return "the chosen creature", true
+		return t.decorateNeighbors("the chosen creature"), true
 	case TargetAttachedHost:
 		if t.named != "" {
 			return t.named, true

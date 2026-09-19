@@ -39,7 +39,7 @@ func (p PlayPermission) count() int { return p.Amount }
 // it needs no count.
 func (p PlayPermission) validate() error {
 	if p.Types == 0 && p.granted() && p.Amount < 1 {
-		return fmt.Errorf("PlayPermission: Count must be positive")
+		return fmt.Errorf("PlayPermission: Amount must be positive")
 	}
 	if p.Condition != nil {
 		return validateCondition(p.Condition)

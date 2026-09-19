@@ -595,6 +595,67 @@ func (lowestPower) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 // board at that moment.
 func PowerLessThan(limit Count) Refinement { return powerLessThan{limit: limit} }
 
+// PowerAtLeast is a Refinement that keeps every creature of a set whose power is
+// minPower or higher. It restates the Target axis of the same name as a refinement
+// so an AnyOf can union power against another axis, which the conjoined axes
+// cannot — Regrettable Meteor destroys the Dinosaurs and the power-6-or-higher
+// creatures as one set.
+func PowerAtLeast(minPower int) Refinement { return powerAtLeast{minPower: minPower} }
+
+// powerAtLeast implements the PowerAtLeast refinement.
+type powerAtLeast struct{ minPower int }
+
+// clause renders "<phrase> with power N or higher", matching the Target axis.
+func (p powerAtLeast) clause(phrase string) string {
+	return fmt.Sprintf("%s with power %d or higher", phrase, p.minPower)
+}
+
+// refine keeps the creatures whose power reaches the minimum.
+func (p powerAtLeast) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	kept := make([]LocalID, 0, len(ids))
+	for _, id := range ids {
+		if ctx.Resolver.Power(id) >= p.minPower {
+			kept = append(kept, id)
+		}
+	}
+	return kept
+}
+
+// OfTrait is a Refinement that keeps every creature of a set with the trait. It
+// restates the Target axis of the same name as a refinement so an AnyOf can union
+// a trait against another axis (Regrettable Meteor).
+func OfTrait(trait Trait) Refinement { return ofTrait{trait: trait} }
+
+// ofTrait implements the OfTrait refinement.
+type ofTrait struct{ trait Trait }
+
+// clause renders the trait as an adjective on the phrase's noun, "each Dinosaur
+// creature", the way the Target axis renders it.
+func (o ofTrait) clause(phrase string) string {
+	return qualifyLastNoun(phrase, o.trait.String())
+}
+
+// refine keeps the creatures carrying the trait.
+func (o ofTrait) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	kept := make([]LocalID, 0, len(ids))
+	for _, id := range ids {
+		if ctx.Resolver.HasTrait(id, o.trait) {
+			kept = append(kept, id)
+		}
+	}
+	return kept
+}
+
+// qualifyLastNoun inserts an adjective before the final word of a rendered phrase,
+// so "each creature" becomes "each Dinosaur creature".
+func qualifyLastNoun(phrase, adjective string) string {
+	i := strings.LastIndex(phrase, " ")
+	if i < 0 {
+		return adjective + " " + phrase
+	}
+	return phrase[:i+1] + adjective + " " + phrase[i+1:]
+}
+
 // powerLessThan implements the PowerLessThan refinement.
 type powerLessThan struct{ limit Count }
 

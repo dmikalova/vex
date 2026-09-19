@@ -19,7 +19,7 @@ var WretchedDoll = set.New(
 	card.Provenance(card.AoA, "107"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
-		card.Trigger.Play, card.PlaceCounter{
+		card.Trigger.Play, card.PlaceCounter{Amount: 1,
 			Kind:   card.Counter.Doom,
 			Target: card.Target.Creature,
 		}),
@@ -28,7 +28,7 @@ var WretchedDoll = set.New(
 			card.Destroy{
 				Target: card.Target.EachCreature.WithCounter(card.Counter.Doom),
 			},
-			card.PlaceCounter{
+			card.PlaceCounter{Amount: 1,
 				Kind:   card.Counter.Doom,
 				Target: card.Target.Creature,
 			},

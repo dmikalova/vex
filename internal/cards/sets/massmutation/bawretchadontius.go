@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Bawretchadontius
 //
 //	House:  Saurian
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Special
 //	Power:  14
 //	Traits: Beast

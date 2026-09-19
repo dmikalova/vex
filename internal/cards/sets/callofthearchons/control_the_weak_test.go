@@ -1,6 +1,7 @@
 package callofthearchons
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/card"
@@ -36,7 +37,7 @@ func TestControlTheWeak(t *testing.T) {
 		h.P1.EndTurn() // the opponent's turn begins, promoting the forced house
 
 		if err := h.Game().
-			ChooseHouse(1, card.House.Sanctum); err != engine.ErrHouseNotAllowed {
+			ChooseHouse(1, card.House.Sanctum); !errors.Is(err, engine.ErrHouseNotAllowed) {
 			t.Errorf("wrong house = %v, want ErrHouseNotAllowed", err)
 		}
 		h.P2.ChooseHouse(card.House.Mars) // the forced house is allowed

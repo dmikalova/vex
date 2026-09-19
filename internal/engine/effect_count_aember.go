@@ -39,6 +39,16 @@ func (c AemberInPool) CountText() string {
 	return "Æmber in " + who + " pool"
 }
 
+// eachPlayerEqualToText renders the pool from the point of view of the player
+// being paid, so Binate Rupture says "equal to the Æmber in their pool".
+func (c AemberInPool) eachPlayerEqualToText() string {
+	who := "their"
+	if c.Player == Opponent {
+		who = "their opponent's"
+	}
+	return "the \u00c6mber in " + who + " pool"
+}
+
 // AemberOnFriendlyCreatures counts the Æmber sitting on the controller's
 // creatures — Imperial Forge cuts its forge surcharge by it.
 type AemberOnFriendlyCreatures struct{}

@@ -1,6 +1,7 @@
 package massmutation
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/card"
@@ -42,7 +43,11 @@ func TestMarkOfDis(t *testing.T) {
 
 		// The must reads the creature's house live (Logos), so any other house is
 		// rejected and Logos is required.
-		if err := h.Game().ChooseHouse(1, card.House.Mars); err != engine.ErrHouseNotAllowed {
+		if err := h.Game().
+			ChooseHouse(1, card.House.Mars); !errors.Is(
+			err,
+			engine.ErrHouseNotAllowed,
+		) {
 			t.Errorf("a house other than the creature's = %v, want ErrHouseNotAllowed", err)
 		}
 		h.P2.ChooseHouse(card.House.Logos)

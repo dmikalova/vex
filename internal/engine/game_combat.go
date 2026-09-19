@@ -72,6 +72,7 @@ func (g *Game) fight(attacker, defender LocalID) {
 	if g.inPlay(attacker) && g.inPlay(defender) {
 		g.exchangeFightDamage(attacker, defender, redirect, elusive, defenderSide)
 	}
+	g.clearEnrageOnFight(attacker)
 	g.resolvePostFight(attacker, defender, attackerSide, defenderSide, neighborsAtFight)
 }
 

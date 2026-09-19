@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"slices"
 	"testing"
 )
@@ -11,22 +12,22 @@ func TestCanPlay(t *testing.T) {
 	if err := g.CanPlay(0, creat); err != nil {
 		t.Errorf("playable creature = %v, want nil", err)
 	}
-	if err := g.CanPlay(1, creat); err != ErrNotActivePlayer {
+	if err := g.CanPlay(1, creat); !errors.Is(err, ErrNotActivePlayer) {
 		t.Errorf("wrong player = %v, want ErrNotActivePlayer", err)
 	}
 
 	off := g.AddToHand(NewCard("off", Sanctum, Creature, Common, WithPower(1)), 0)
-	if err := g.CanPlay(0, off); err != ErrWrongHouse {
+	if err := g.CanPlay(0, off); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("off-house = %v, want ErrWrongHouse", err)
 	}
 
 	up := g.AddToHand(NewCard("up", Brobnar, Upgrade, Common), 0)
-	if err := g.CanPlay(0, up); err != ErrNoTarget {
+	if err := g.CanPlay(0, up); !errors.Is(err, ErrNoTarget) {
 		t.Errorf("hostless upgrade = %v, want ErrNoTarget", err)
 	}
 
 	g.State.Winner = 1
-	if err := g.CanPlay(0, creat); err != ErrGameOver {
+	if err := g.CanPlay(0, creat); !errors.Is(err, ErrGameOver) {
 		t.Errorf("game over = %v, want ErrGameOver", err)
 	}
 }
@@ -37,7 +38,7 @@ func TestCanPlayRestrictions(t *testing.T) {
 	g.AddToBattleline(NewCard("Blocker", Brobnar, Creature, Common, WithPower(1),
 		WithRestrictions(Restrictions{CannotPlay: Creature})), 0)
 	c := g.AddToHand(testCreature("c", 3), 0)
-	if err := g.CanPlay(0, c); err != ErrCannotPlayCreature {
+	if err := g.CanPlay(0, c); !errors.Is(err, ErrCannotPlayCreature) {
 		t.Errorf("creatures barred = %v, want ErrCannotPlayCreature", err)
 	}
 
@@ -55,7 +56,7 @@ func TestCanPlayRestrictions(t *testing.T) {
 	), 0)
 	g2.State.PlayedThisTurn[0].Count = 2
 	c2 := g2.AddToHand(testCreature("c2", 3), 0)
-	if err := g2.CanPlay(0, c2); err != ErrCardPlayLimit {
+	if err := g2.CanPlay(0, c2); !errors.Is(err, ErrCardPlayLimit) {
 		t.Errorf("limit reached = %v, want ErrCardPlayLimit", err)
 	}
 }
@@ -85,10 +86,16 @@ func TestCardPlayLimit(t *testing.T) {
 		t.Fatalf("second play: %v", err)
 	}
 	// The third card play is barred, whatever its type.
-	if _, err := g.PlayCreature(0, handIdx(g, 0, "c2"), false); err != ErrCardPlayLimit {
+	if _, err := g.PlayCreature(0, handIdx(g, 0, "c2"), false); !errors.Is(err, ErrCardPlayLimit) {
 		t.Errorf("third creature play = %v, want ErrCardPlayLimit", err)
 	}
-	if _, err := g.PlayUpgrade(0, handIdx(g, 0, "Brute Strength")); err != ErrCardPlayLimit {
+	if _, err := g.PlayUpgrade(
+		0,
+		handIdx(g, 0, "Brute Strength"),
+	); !errors.Is(
+		err,
+		ErrCardPlayLimit,
+	) {
 		t.Errorf("upgrade play = %v, want ErrCardPlayLimit", err)
 	}
 
@@ -189,7 +196,7 @@ func TestTypeUnlimitedPlayPermission(t *testing.T) {
 		g := started(t)
 		g.AddArtifact(maker, 0)
 		creature := g.AddToHand(NewCard("Logos Bot", Logos, Creature, Common, WithPower(3)), 0)
-		if err := g.CanPlay(0, creature); err != ErrWrongHouse {
+		if err := g.CanPlay(0, creature); !errors.Is(err, ErrWrongHouse) {
 			t.Fatalf("CanPlay off-house creature = %v, want ErrWrongHouse", err)
 		}
 	})
@@ -223,10 +230,17 @@ func TestOffHousePlayGrant(t *testing.T) {
 		if got := g.State.PlayPermissionsUsedThisTurn[0][Untamed]; got != 1 {
 			t.Fatalf("off-house plays used = %d, want 1", got)
 		}
-		if err := g.CanPlay(0, second); err != ErrWrongHouse {
+		if err := g.CanPlay(0, second); !errors.Is(err, ErrWrongHouse) {
 			t.Fatalf("CanPlay second off-house Untamed = %v, want ErrWrongHouse", err)
 		}
-		if _, err := g.PlayCreature(0, handIdxByID(g, 0, second), false); err != ErrWrongHouse {
+		if _, err := g.PlayCreature(
+			0,
+			handIdxByID(g, 0, second),
+			false,
+		); !errors.Is(
+			err,
+			ErrWrongHouse,
+		) {
 			t.Fatalf("second off-house play = %v, want ErrWrongHouse", err)
 		}
 
@@ -265,10 +279,17 @@ func TestOffHousePlayGrant(t *testing.T) {
 		g := started(t)
 		untamed := g.AddToHand(NewCard("badger", Untamed, Creature, Common, WithPower(3)), 0)
 
-		if err := g.CanPlay(0, untamed); err != ErrWrongHouse {
+		if err := g.CanPlay(0, untamed); !errors.Is(err, ErrWrongHouse) {
 			t.Fatalf("CanPlay without Witch = %v, want ErrWrongHouse", err)
 		}
-		if _, err := g.PlayCreature(0, handIdxByID(g, 0, untamed), false); err != ErrWrongHouse {
+		if _, err := g.PlayCreature(
+			0,
+			handIdxByID(g, 0, untamed),
+			false,
+		); !errors.Is(
+			err,
+			ErrWrongHouse,
+		) {
 			t.Fatalf("PlayCreature without Witch = %v, want ErrWrongHouse", err)
 		}
 	})
@@ -287,7 +308,14 @@ func TestOffHousePlayGrant(t *testing.T) {
 		if _, err := g.PlayCreature(0, handIdxByID(g, 0, second), false); err != nil {
 			t.Fatalf("second off-house play with two grants: %v", err)
 		}
-		if _, err := g.PlayCreature(0, handIdxByID(g, 0, third), false); err != ErrWrongHouse {
+		if _, err := g.PlayCreature(
+			0,
+			handIdxByID(g, 0, third),
+			false,
+		); !errors.Is(
+			err,
+			ErrWrongHouse,
+		) {
 			t.Fatalf("third off-house play with two grants = %v, want ErrWrongHouse", err)
 		}
 	})
@@ -425,7 +453,7 @@ func TestPlayableAsUpgradeDeclineHostErrors(t *testing.T) {
 	g.AddToBattleline(testCreature("h1", 3), 0)
 	g.AddToBattleline(testCreature("h2", 3), 0) // two hosts, so the pick is a real choice
 	rid := g.AddToHand(exRover(), 0)
-	if _, err := g.PlayCreature(0, handIdxByID(g, 0, rid), false); err != ErrNoTarget {
+	if _, err := g.PlayCreature(0, handIdxByID(g, 0, rid), false); !errors.Is(err, ErrNoTarget) {
 		t.Errorf("err = %v, want ErrNoTarget", err)
 	}
 }
@@ -468,7 +496,14 @@ func TestPlayableAsUpgradeBannedNoHostErrors(t *testing.T) {
 	g.AddArtifact(NewCard("Ban", Brobnar, Artifact, Common,
 		WithRestrictions(Restrictions{CannotPlay: Creature})), 0)
 	rid := g.AddToHand(exRover(), 0)
-	if _, err := g.PlayCreature(0, handIdxByID(g, 0, rid), false); err != ErrCannotPlayCreature {
+	if _, err := g.PlayCreature(
+		0,
+		handIdxByID(g, 0, rid),
+		false,
+	); !errors.Is(
+		err,
+		ErrCannotPlayCreature,
+	) {
 		t.Errorf("err = %v, want ErrCannotPlaycreature", err)
 	}
 }
@@ -478,7 +513,7 @@ func TestCanPlayPlayableAsUpgradeUnderCreatureBan(t *testing.T) {
 	rid := g.AddToHand(exRover(), 0)
 	g.AddArtifact(NewCard("Ban", Brobnar, Artifact, Common,
 		WithRestrictions(Restrictions{CannotPlay: Creature})), 0)
-	if err := g.CanPlay(0, rid); err != ErrCannotPlayCreature {
+	if err := g.CanPlay(0, rid); !errors.Is(err, ErrCannotPlayCreature) {
 		t.Errorf("CanPlay with no host = %v, want ErrCannotPlaycreature", err)
 	}
 	g.AddToBattleline(testCreature("host", 3), 0)

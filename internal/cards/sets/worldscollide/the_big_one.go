@@ -21,7 +21,7 @@ var TheBigOne = set.New(
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.AfterCreaturePlayed, card.Sentences{Effects: []card.Effect{
-			card.PlaceCounter{
+			card.PlaceCounter{Amount: 1,
 				Kind:   card.Counter.Fuse,
 				Target: card.Target.This,
 			},

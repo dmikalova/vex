@@ -461,54 +461,62 @@ func (h *Harness) ownerOf(id engine.LocalID) int {
 
 // location reports which zone a card is in.
 func (h *Harness) location(id engine.LocalID) Zone {
+	// A card lives in exactly one place, so scanning a player's zones in order and
+	// returning the first hit is equivalent to scanning each zone across players.
 	for p := 0; p < 2; p++ {
-		if containsID(h.g.Battleline(p), id) || containsID(h.g.Artifacts(p), id) {
+		switch {
+		case containsID(h.g.Battleline(p), id), containsID(h.g.Artifacts(p), id):
 			return PlayArea
-		}
-	}
-	for p := 0; p < 2; p++ {
-		if containsID(h.g.Hand(p), id) {
+		case containsID(h.g.Hand(p), id):
 			return Hand
-		}
-	}
-	for p := 0; p < 2; p++ {
-		if containsID(h.g.Discard(p), id) {
+		case containsID(h.g.Discard(p), id):
 			return Discard
-		}
-	}
-	for p := 0; p < 2; p++ {
-		if containsID(h.g.Archives(p), id) {
+		case containsID(h.g.Archives(p), id):
 			return Archives
-		}
-	}
-	for p := 0; p < 2; p++ {
-		if containsID(h.g.Purge(p), id) {
+		case containsID(h.g.Purge(p), id):
 			return Purge
-		}
-	}
-	for p := 0; p < 2; p++ {
-		d := &h.g.State.Deck[p]
-		for i := 0; i < int(d.Count); i++ {
-			if d.IDs[i] == id {
-				return Deck
-			}
-		}
-	}
-	for p := 0; p < 2; p++ {
-		for _, cid := range h.g.Battleline(p) {
-			if containsID(h.g.Upgrades(cid), id) {
-				return Attached
-			}
-		}
-	}
-	for p := 0; p < 2; p++ {
-		for _, cid := range append(h.g.Battleline(p), h.g.Artifacts(p)...) {
-			if containsID(h.g.Under(cid), id) {
-				return Under
-			}
+		case h.inDeck(p, id):
+			return Deck
+		case h.attachedToUpgrade(p, id):
+			return Attached
+		case h.underAnyCard(p, id):
+			return Under
 		}
 	}
 	return Nowhere
+}
+
+// inDeck reports whether id sits in player p's deck.
+func (h *Harness) inDeck(p int, id engine.LocalID) bool {
+	d := &h.g.State.Deck[p]
+	for i := 0; i < int(d.Count); i++ {
+		if d.IDs[i] == id {
+			return true
+		}
+	}
+	return false
+}
+
+// attachedToUpgrade reports whether id is an upgrade attached to one of player p's
+// creatures.
+func (h *Harness) attachedToUpgrade(p int, id engine.LocalID) bool {
+	for _, cid := range h.g.Battleline(p) {
+		if containsID(h.g.Upgrades(cid), id) {
+			return true
+		}
+	}
+	return false
+}
+
+// underAnyCard reports whether id sits under one of player p's creatures or
+// artifacts.
+func (h *Harness) underAnyCard(p int, id engine.LocalID) bool {
+	for _, cid := range append(h.g.Battleline(p), h.g.Artifacts(p)...) {
+		if containsID(h.g.Under(cid), id) {
+			return true
+		}
+	}
+	return false
 }
 
 // inPlayIDs returns every creature and artifact in play, both players.

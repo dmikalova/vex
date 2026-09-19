@@ -24,7 +24,7 @@ var RelentlessCreeper = set.New(
 		card.Trigger.AfterChooseHouse, card.Conditional{
 			Cond: card.ChoseHouse{House: card.House.Self},
 			Then: card.May{
-				Do: card.PutFromDiscard{
+				Do: card.PutCard{Zones: []card.Zone{card.Discard},
 					Selection:   card.Self{},
 					Destination: card.To.Hand,
 				},

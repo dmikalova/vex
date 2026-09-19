@@ -23,7 +23,7 @@ var DisruptionField = set.New(
 			Per(card.CountersOnThis{Kind: card.Counter.Disruption}),
 	),
 	card.WithStatic(card.StaticModifier{
-		Granted: card.FightReap(card.PlaceCounter{
+		Granted: card.FightReap(card.PlaceCounter{Amount: 1,
 			Kind:   card.Counter.Disruption,
 			Target: card.Target.GrantingCard,
 		}),

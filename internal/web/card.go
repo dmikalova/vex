@@ -359,18 +359,8 @@ func (c *cardView) Render() app.UI {
 				return app.Div().Class("card-marks").Body(
 					app.If(c.Maverick, func() app.UI { return icon("maverick", "icon-mark", "icon-outline") }),
 					app.If(c.Legacy, func() app.UI { return icon("legacy", "icon-mark", "icon-outline") }),
-					app.If(c.Rarity.diamonds() > 0, func() app.UI {
-						return app.Div().
-							Class("rarity-diamonds").
-							Body(rarityDiamonds(c.Rarity.diamonds())...)
-					}),
-					app.If(c.Rarity.isConnected(), func() app.UI {
-						return icon(
-							"rarity-connected",
-							"icon-mark",
-							"icon-outline",
-							"rarity-connected-icon",
-						)
+					app.If(c.Rarity.iconName() != "", func() app.UI {
+						return icon(c.Rarity.iconName(), "icon-mark", "icon-outline")
 					}),
 				)
 			}),

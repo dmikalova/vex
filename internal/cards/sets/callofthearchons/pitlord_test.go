@@ -1,6 +1,7 @@
 package callofthearchons
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/card"
@@ -30,7 +31,11 @@ func TestPitlord(t *testing.T) {
 		h.P2.ChooseHouse(card.House.Mars)
 		h.P2.EndTurn()
 
-		if err := h.Game().ChooseHouse(0, card.House.Brobnar); err != engine.ErrHouseNotAllowed {
+		if err := h.Game().
+			ChooseHouse(0, card.House.Brobnar); !errors.Is(
+			err,
+			engine.ErrHouseNotAllowed,
+		) {
 			t.Errorf("choosing another house = %v, want ErrHouseNotAllowed", err)
 		}
 		h.P1.ChooseHouse(card.House.Dis) // the locked house is allowed

@@ -151,15 +151,19 @@ func (g *game) setLogPreview(ctx app.Context, def *engine.CardDefinition) {
 	g.hoverOverSidebar, g.hoverAtBottom = g.logPreviewPlacement(ctx)
 }
 
+// logPreviewSideBySideWidth is the viewport width (px, 34rem at a 16px root)
+// below which a card preview cannot sit beside the sidebar, so the preview draws
+// over the sidebar instead.
+const logPreviewSideBySideWidth = 34 * 16.0
+
 // logPreviewPlacement decides where a log-mention preview goes. It draws over the
 // sidebar when the sidebar is collapsed or the window is narrower than a preview
 // plus the sidebar can sit side by side, and anchors to the bottom when the tapped
 // line is in the top half of the viewport. Off-browser (no window to measure) it
 // reports the over-sidebar, top-anchored default.
 func (g *game) logPreviewPlacement(ctx app.Context) (overSidebar, atBottom bool) {
-	const remPx = 16.0
 	vw := app.Window().Get("innerWidth").Float()
-	overSidebar = g.sidebarCollapsed || vw < 34*remPx
+	overSidebar = g.sidebarCollapsed || vw < logPreviewSideBySideWidth
 	if src := ctx.JSSrc(); src.Truthy() {
 		if vh := app.Window().Get("innerHeight").Float(); vh > 0 {
 			top := src.Call("getBoundingClientRect").Get("top").Float()

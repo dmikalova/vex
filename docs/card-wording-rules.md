@@ -144,7 +144,7 @@ The rule reaches the **code**, not just the printed text: an effect node, a
 facade alias, a log entry, and a `*Game` method that moves a card all say `Put`
 and `Into`, never `Return` and `To`. A name that still says `Return` is how the
 old verb creeps back into new card text, so rename it when you touch it —
-`PutNamedIntoHand`, `PutItIntoHand`, `PutNextTacticIntoHand`, and the mechanic's
+`PutItIntoHand`, `PutNextTacticIntoHand`, and the mechanic's
 own file `internal/engine/effect_put_into_zone.go`.
 
 ## 5. Result gates use `->`, replacing `If you do`
@@ -410,6 +410,16 @@ names it, even where the printed card leaves it implied.
 | -------------------------------------- | --------------------------------------------------------- |
 | `a friendly creature captures 1 Æmber` | `a friendly creature captures 1 Æmber from your opponent` |
 
+**Play is the one source zone that takes no possessive.** Every other zone is a
+player's copy of it ("your hand", "your opponent's discard pile"), but play
+belongs to neither player, so it renders as the bare `from play`. The side scope
+then rides on the **object** instead of on the zone — `friendly` or `enemy`
+before the noun — so nothing is lost by dropping the determiner.
+
+| Original                                         | Curated                                                |
+| ------------------------------------------------ | ------------------------------------------------------ |
+| `Shuffle each card from in play into your deck.` | `Shuffle each friendly card from play into your deck.` |
+
 ## 18. Æmber a player owes another player is `give`, never `pay`
 
 One verb covers Æmber changing hands between players: **`give`**. `pay` (the
@@ -489,7 +499,7 @@ play or use a non-Star Alliance card this turn"_ becomes:
 > Fight/Reap: Play or use a non-Star Alliance card.
 
 The play-or-use resolves now against the cards in hand and in play. (Affected:
-Phase Shift, Kirby, Taber.)
+Phase Shift, both Kirbys, Taber.)
 
 ## 22. A number-only branch collapses to `or <alt> if <cond>`
 

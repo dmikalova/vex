@@ -21,7 +21,7 @@ var TheColosseum = set.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.AfterEnemyDestroyedFighting, card.PlaceCounter{
+		card.Trigger.AfterEnemyDestroyedFighting, card.PlaceCounter{Amount: 1,
 			Kind:   card.Counter.Glory,
 			Target: card.Target.This,
 		}),

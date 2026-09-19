@@ -16,7 +16,7 @@ func TestShuffleFromDiscardText(t *testing.T) {
 
 	anyNum := ShuffleIntoDeck{Player: Controller, From: []Zone{Discard},
 		Selection: Chosen{Type: Creature, Optional: true},
-		AnyNumber: true,
+		Quantity:  AnyNumber{},
 	}
 	if got := anyNum.Text(); got !=
 		"shuffle any number of creatures from your discard pile into your deck" {
@@ -24,7 +24,7 @@ func TestShuffleFromDiscardText(t *testing.T) {
 	}
 	anyHouse := ShuffleIntoDeck{Player: Controller, From: []Zone{Discard},
 		Selection: Chosen{House: namedHouse(Untamed), Type: Creature, Optional: true},
-		AnyNumber: true,
+		Quantity:  AnyNumber{},
 	}
 	if got := anyHouse.Text(); got !=
 		"shuffle any number of Untamed creatures from your discard pile into your deck" {
@@ -33,7 +33,7 @@ func TestShuffleFromDiscardText(t *testing.T) {
 
 	counted := ShuffleIntoDeck{Player: Controller, From: []Zone{Discard},
 		Selection: Chosen{},
-		Count:     CardsInPlay{Player: Controller, Trait: Shard},
+		Quantity:  Takes{N: CardsInPlay{Player: Controller, Trait: Shard}},
 	}
 	if got := counted.Text(); got !=
 		"for each friendly Shard, shuffle a card from your discard pile into your deck" {
@@ -52,14 +52,9 @@ func TestShuffleFromDiscardValidate(t *testing.T) {
 	if (ShuffleIntoDeck{Player: Controller, From: []Zone{Archives}, Selection: Chosen{}}).validate() == nil {
 		t.Error("a zone no shuffle draws from should fail validation")
 	}
-	both := ShuffleIntoDeck{Player: Controller, From: []Zone{Discard},
-		Selection: Chosen{},
-		AnyNumber: true,
-		Count:     CardsInPlay{Player: Controller, Trait: Shard},
-	}
-	if both.validate() == nil {
-		t.Error("pairing AnyNumber with a Count should fail validation")
-	}
+	// The old "AnyNumber and Count are exclusive" rejection is gone, and nothing
+	// replaces it: the two are now one Quantity field, so the pair cannot be
+	// written at all rather than being written and refused.
 	if err := (ShuffleIntoDeck{Player: Controller, From: []Zone{Discard}, Selection: Chosen{}}).validate(); err != nil {
 		t.Errorf("a set Selection should validate, got %v", err)
 	}
@@ -136,7 +131,7 @@ func TestShuffleFromDiscardAnyNumber(t *testing.T) {
 		Player:    Controller,
 		From:      []Zone{Discard},
 		Selection: sel,
-		AnyNumber: true,
+		Quantity:  AnyNumber{},
 	}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0, Source: a},
 	)
@@ -159,7 +154,7 @@ func TestShuffleFromDiscardAnyNumber(t *testing.T) {
 		Player:    Controller,
 		From:      []Zone{Discard},
 		Selection: houseSel,
-		AnyNumber: true,
+		Quantity:  AnyNumber{},
 	}.
 		Resolve(
 			&EffectContext{Resolver: g2, Controller: 0, Source: untamed},
@@ -172,8 +167,15 @@ func TestShuffleFromDiscardAnyNumber(t *testing.T) {
 	g3 := NewGame("A", "B", 1)
 	kept := g3.AddToDiscard(testCreature("kept", 3), 0)
 	g3.SetChooser(0, &cardDecliner{decline: true})
-	ShuffleIntoDeck{Player: Controller, From: []Zone{Discard}, Selection: sel, AnyNumber: true}.
-		Resolve(&EffectContext{Resolver: g3, Controller: 0, Source: kept})
+	ShuffleIntoDeck{
+		Player:    Controller,
+		From:      []Zone{Discard},
+		Selection: sel,
+		Quantity:  AnyNumber{},
+	}.
+		Resolve(
+			&EffectContext{Resolver: g3, Controller: 0, Source: kept},
+		)
 	if g3.State.Deck[0].Count != 0 || !containsID(g3.Discard(0), kept) {
 		t.Error("declining should shuffle nothing")
 	}
@@ -192,7 +194,7 @@ func TestShuffleFromDiscardAnyNumber(t *testing.T) {
 func TestShuffleFromDiscardCount(t *testing.T) {
 	sel := ShuffleIntoDeck{Player: Controller, From: []Zone{Discard},
 		Selection: Chosen{},
-		Count:     CardsInPlay{Player: Controller, Trait: Shard},
+		Quantity:  Takes{N: CardsInPlay{Player: Controller, Trait: Shard}},
 	}
 
 	// Two friendly Shards in play shuffle two discard cards back.

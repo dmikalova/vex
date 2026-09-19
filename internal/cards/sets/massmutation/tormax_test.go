@@ -10,12 +10,12 @@ import (
 // Tormax
 //
 //	House:  Dis
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  8
 //	Traits: Demon
 //
-//	Play/Fight/Reap: Discard your hand, and purge 2 random cards from your opponent's hand.
+//	Play/Fight/Reap: Discard your hand, and your opponent purges 2 random cards from their hand.
 func TestTormax(t *testing.T) {
 	var tormax, mine1, mine2, theirs1, theirs2 ct.Card
 	h := ct.Play(t, ct.Setup{

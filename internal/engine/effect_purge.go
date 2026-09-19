@@ -8,35 +8,43 @@ import (
 // no ability can reach it unless that ability names the purge pile. It is the most
 // permanent way a card leaves play: a purged card never enters a discard pile and
 // can never be drawn, played, or destroyed again.
-// PurgeCard sets cards aside out of the game, taken from a hand or a discard
-// pile. Zone names which, and Player whose: Controller or Opponent for one named
-// side (Imperial Traitor purges from your opponent's hand), ChosenPlayer for a
+// PurgeCard sets cards aside out of the game, taken from the resting piles a
+// player holds. Zones names which — a hand, a discard pile, archives, or several
+// pooled together — and Player whose: Controller or Opponent for one named side
+// (Imperial Traitor purges from your opponent's hand), ChosenPlayer for a
 // side the controller picks among those holding a matching card (Creeping
 // Oblivion's "a discard pile"), EachPlayer for both at once (Soldiers to
 // Flowers). A Selection decides which cards leave — a chosen card, restricted by
 // house or type; a uniformly random one (Impspector); or every match (Lesser
-// Oxtet). Amount purges that many per zone; an Optional Selection lets the
-// controller purge fewer, which reads "you may purge" for one card and "up to N"
-// for several. GainOwnerAember gives each purged card's owner 1 Æmber.
+// Oxtet). Quantity purges that many per zone — Takes a fixed or board-scaled
+// number, UpTo that many so the controller may stop early (Creeping Oblivion's
+// "up to 2"), or AnyNumber (Destructive Analysis). GainOwnerAember gives each
+// purged card's owner 1 Æmber.
 // It serves both as a standalone effect (Creeping Oblivion purges up to 2 cards)
 // and as the first half of a Then ("purge a creature -> give a +1 power counter"),
 // so it reports whether it purged anything, and it records the tally and the total
 // Æmber bonus of the purged cards so a following effect can scale with them
 // (Noname's power, Infurnace's Æmber loss).
+//
+// The purge verb is three nodes, and the split is settled — do not merge them
+// from their names. PurgeCard draws from resting piles with a Selection;
+// PurgeCreature selects from play with a Target, which is a different selection
+// vocabulary, not a different source zone; PurgeArchivedCardThen's purge is a
+// cost gate rather than a selection at all. Merging any two produces a node whose
+// fields are only valid in particular combinations.
 type PurgeCard struct {
-	// Zone names the source the cards are purged from: Hand or Discard.
-	Zone Zone
+	// Zones names the source piles the cards are purged from, each Hand, Discard, or
+	// Archives. Naming more than one combines them into a single pool.
+	Zones []Zone
 	// Player names whose copy of the zone the purge pulls from: Controller or
 	// Opponent for a fixed side, ChosenPlayer for one the controller picks,
 	// EachPlayer for both at once.
 	Player Player
 	// Selection decides which cards are purged; it must be set.
 	Selection Selection
-	// Amount is how many cards to purge from each zone; the zero value counts as
-	// one. It is ignored by an Each Selection, which takes every matching card. An
-	// Optional Selection lets the controller purge fewer, down to none, reading as
-	// "up to N" (Creeping Oblivion's "up to 2").
-	Amount int
+	// Quantity is how many cards to purge from each zone; the zero value purges
+	// one. It is ignored by an Each Selection, which takes every matching card.
+	Quantity Quantity
 	// GainOwnerAember gives each purged card's owner 1 Æmber per purged card
 	// (Soldiers to Flowers).
 	GainOwnerAember bool
@@ -51,38 +59,28 @@ func (e PurgeCard) validate() error {
 	if e.Selection == nil {
 		return fmt.Errorf("PurgeCard: selection must be set")
 	}
-	if e.Zone != Hand && e.Zone != Discard {
-		return fmt.Errorf("PurgeCard: zone must be Hand or Discard")
+	if len(e.Zones) == 0 {
+		return fmt.Errorf("PurgeCard: at least one zone must be set")
 	}
-	return nil
-}
-
-// count is Amount with the zero value treated as one.
-func (e PurgeCard) count() int {
-	if e.Amount < 1 {
-		return 1
+	for _, z := range e.Zones {
+		if z != Hand && z != Discard && z != Archives {
+			return fmt.Errorf("PurgeCard: zone must be Hand, Discard, or Archives")
+		}
 	}
-	return e.Amount
+	return quantityValidate(e.Quantity)
 }
 
 // object renders the noun phrase purged, e.g. "a creature", "up to 2 cards", or
 // "each Untamed creature".
 func (e PurgeCard) object() string {
-	switch {
-	case selectionDeclinable(e.Selection) && e.count() > 1:
-		return "up to " + countNoun(e.count(), e.Selection.noun())
-	case e.count() > 1:
-		return countNoun(e.count(), e.Selection.noun())
-	default:
-		return e.Selection.object()
-	}
+	return quantityObject(e.Quantity, e.Selection.noun(), e.Selection.object())
 }
 
 // declinable reports that a single-card purge with a declinable selection is one
 // clickable card, so the controller answers it by clicking that card or passing. A
 // multi-card purge renders "up to N" and runs its own cycle instead.
 func (e PurgeCard) declinable() bool {
-	return selectionDeclinable(e.Selection) && e.count() == 1
+	return selectionDeclinable(e.Selection) && quantitySingle(e.Quantity)
 }
 
 // Text renders the effect, e.g. "purge a creature from a discard pile", "purge up
@@ -90,11 +88,11 @@ func (e PurgeCard) declinable() bool {
 // opponent's hand", or "purge each Untamed creature from each player's discard
 // pile. For each card purged this way, its owner gains 1 Æmber".
 func (e PurgeCard) Text() string {
-	verb := "purge "
+	verb := "purge"
 	if e.declinable() {
-		verb = "you may purge "
+		verb = "you may purge"
 	}
-	text := verb + e.object() + " from " + whoseZone(e.Player, e.Zone)
+	text := pileVerbText(e.Selection, e.Player, e.Zones, pileVerb{verb, "purges", e.object()})
 	if e.GainOwnerAember {
 		text += ". For each card purged this way, its owner gains 1 Æmber"
 	}
@@ -108,12 +106,16 @@ func (e PurgeCard) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // Done to decline.
 func (e PurgeCard) resolveOptional(ctx *EffectContext) bool { return e.resolveGate(ctx) }
 
-// cards returns the cards in one player's copy of the source zone.
+// mover carries one side's cards from the source piles into the purge pile
+// through the shared cross-zone seam (ADR 0031), so the purge names a destination
+// and never a per-zone move.
+func (e PurgeCard) mover(side int) crossZoneMover {
+	return crossZoneMover{Player: side, Dest: toPurged, Sources: e.Zones}
+}
+
+// cards returns the cards in one player's copies of the source piles, pooled.
 func (e PurgeCard) cards(ctx *EffectContext, player int) []LocalID {
-	if e.Zone == Hand {
-		return ctx.Resolver.Hand(player)
-	}
-	return ctx.Resolver.Discard(player)
+	return e.mover(player).gather(ctx, func(LocalID) bool { return true })
 }
 
 // sides returns whose copies of the zone the purge acts on: both for EachPlayer,
@@ -137,8 +139,8 @@ func (e PurgeCard) sides(ctx *EffectContext) []int {
 	if len(eligible) < 2 {
 		return eligible
 	}
-	chosen := ctx.ChooseOption("Choose a "+e.Zone.noun()+" to purge from",
-		[]string{"your " + e.Zone.noun(), "your opponent's " + e.Zone.noun()})
+	chosen := ctx.ChooseOption("Choose a "+joinedZoneNouns(e.Zones)+" to purge from",
+		[]string{"your " + joinedZoneNouns(e.Zones), "your opponent's " + joinedZoneNouns(e.Zones)})
 	return eligible[chosen : chosen+1]
 }
 
@@ -154,14 +156,16 @@ func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 	bonus := 0
 	var last LocalID
 	for _, side := range e.sides(ctx) {
-		for i := 0; i < e.count(); i++ {
+		mover := e.mover(side)
+		limit, bounded := quantityPicks(e.Quantity, ctx)
+		for i := 0; !bounded || i < limit; i++ {
 			ids := e.Selection.pick(ctx, e.cards(ctx, side))
 			if len(ids) == 0 {
 				break
 			}
 			for _, id := range ids {
 				bonus += ctx.Resolver.AemberBonus(id)
-				purgeFrom(ctx, e.Zone, side, id)
+				mover.move(ctx, id)
 				purged++
 				last = id
 				ctx.Produced.Purged[side]++

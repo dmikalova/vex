@@ -18,7 +18,7 @@ type MayPlayOrUseGranted struct {
 	Houses HouseSelector
 	Grant  HouseGrant
 	Types  CardTypes
-	Count  int
+	Cards  int
 }
 
 // Text renders the grant, narrowing to the houses and verbs it frees.

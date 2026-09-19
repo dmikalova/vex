@@ -24,6 +24,6 @@ var AncientYurk = set.New(
 			Player:    card.Controller,
 			Zones:     []card.Zone{card.Hand},
 			Selection: card.Chosen{},
-			Amount:    3,
+			Quantity:  card.Takes{N: card.Fixed(3)},
 		}),
 )

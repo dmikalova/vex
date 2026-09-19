@@ -433,7 +433,7 @@ inside the destruction window; wait until the batch is in the discard.
 Three tiers of verb, kept distinct so a method name says which level it works at:
 
 - **`emit<Event>`** announces a game event and fans out to everything listening —
-  `emitReapWindow`, `emitCreatureEnters`, `emitActionPlayedBeforeResolve`,
+  `emitReapWindow`, `emitEnters`, `emitActionPlayedBeforeResolve`,
   `emitLeavesPlay`. Use it at an event site that dispatches to responders (triggered
   abilities and the lasting registry). The site folds its duration reactions into
   that event's trigger window with `lastingReactions`.

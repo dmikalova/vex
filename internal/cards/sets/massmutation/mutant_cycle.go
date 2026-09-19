@@ -63,7 +63,6 @@ var mutantHouses = map[engine.House]mutantHouse{
 					Player:    card.Controller,
 					Zones:     []card.Zone{card.Hand},
 					Selection: card.Chosen{},
-					Amount:    1,
 				},
 				Result: card.Draw{Amount: 1},
 			},
@@ -120,8 +119,8 @@ var mutantHouses = map[engine.House]mutantHouse{
 			Effect: card.LookAtTopOfDeck{
 				Amount: 3,
 				Then: []card.TopAct{
-					card.ChooseAndMove{Count: 1, Dest: card.Into.Hand},
-					card.ChooseAndMove{Count: 1, Dest: card.Into.BottomOfDeck},
+					card.ChooseAndMove{Cards: 1, Dest: card.Into.Hand},
+					card.ChooseAndMove{Cards: 1, Dest: card.Into.BottomOfDeck},
 				},
 			},
 		}},

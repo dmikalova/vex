@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"strings"
 	"testing"
 )
@@ -34,10 +35,10 @@ func TestPlayRequirement(t *testing.T) {
 	id := g.AddToHand(dragon, 0)
 
 	g.SetAember(0, 6)
-	if err := g.CanPlay(0, id); err != ErrPlayRequirement {
+	if err := g.CanPlay(0, id); !errors.Is(err, ErrPlayRequirement) {
 		t.Errorf("CanPlay under the threshold = %v, want %v", err, ErrPlayRequirement)
 	}
-	if _, err := g.PlayCreature(0, 0, false); err != ErrPlayRequirement {
+	if _, err := g.PlayCreature(0, 0, false); !errors.Is(err, ErrPlayRequirement) {
 		t.Errorf("PlayCreature under the threshold = %v, want %v", err, ErrPlayRequirement)
 	}
 

@@ -269,14 +269,53 @@ func (a And) validate() error {
 }
 
 // CondText joins the sub-clauses with "and", e.g. "if it is a friendly creature
-// and it is a Mutant creature". Each condition renders "if <clause>" (the shared
+// and it is used to reap". Each condition renders "if <clause>" (the shared
 // convention), so the leading "if " is dropped before the clauses are joined.
+// Clauses that all describe the shape of the card in context collapse into one
+// noun phrase first — see collapsedItShape.
 func (a And) CondText() string {
+	if phrase, ok := collapsedItShape(a.Conditions); ok {
+		return phrase
+	}
 	clauses := make([]string, len(a.Conditions))
 	for i, c := range a.Conditions {
 		clauses[i] = strings.TrimPrefix(c.CondText(), "if ")
 	}
 	return "if " + strings.Join(clauses, " and ")
+}
+
+// itShaped is a condition that constrains the shape of the card in context and
+// can render as an adjective on a shared noun rather than as a whole clause.
+type itShaped interface {
+	// itAdjective is the word the clause contributes before the noun — "friendly",
+	// "Cat", "Mars". An empty string declines the collapse.
+	itAdjective() string
+	// itNoun is the noun the clause describes. Clauses collapse only when they
+	// agree on it.
+	itNoun() string
+}
+
+// collapsedItShape renders conditions that all describe the shape of the card in
+// context as a single noun phrase — "if it is a friendly Cat creature" (Mercy,
+// Malkin Queen) rather than "if it is a friendly creature and it is a Cat
+// creature". It declines unless every condition is an itShaped that offers an
+// adjective and they agree on the noun. Pinned by TestAndCollapsesItShapeClauses.
+func collapsedItShape(conds []Condition) (string, bool) {
+	adjectives := make([]string, 0, len(conds))
+	noun := ""
+	for _, c := range conds {
+		shaped, ok := c.(itShaped)
+		if !ok {
+			return "", false
+		}
+		adj := shaped.itAdjective()
+		if adj == "" || (noun != "" && shaped.itNoun() != noun) {
+			return "", false
+		}
+		noun = shaped.itNoun()
+		adjectives = append(adjectives, adj)
+	}
+	return "if it is " + indefinite(strings.Join(adjectives, " ")+" "+noun), true
 }
 
 // Met reports whether every condition is met.

@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 // TestGiganticPartnerLinkIsSymmetric links two halves, checks each finds the
 // other, that giganticHalves returns both, and that unlinking clears both ends.
@@ -162,13 +165,13 @@ func TestGiganticSwapTakesBothHalves(t *testing.T) {
 	}
 }
 
-// TestRemoveFromAnyZoneTearsDownBothHalves confirms the manual removal path tears
+// TestManualMoveTearsDownBothGiganticHalves confirms the manual removal path tears
 // down a gigantic's art half so it never dangles.
-func TestRemoveFromAnyZoneTearsDownBothHalves(t *testing.T) {
+func TestManualMoveTearsDownBothGiganticHalves(t *testing.T) {
 	g := started(t)
 	base, art := playedGigantic(g, 0)
 
-	g.removeFromAnyZone(base)
+	g.ManualMove(base, ManualDiscard)
 
 	if g.inPlay(base) || g.inPlay(art) {
 		t.Error("neither half should be in play after removal")
@@ -252,13 +255,13 @@ func TestPlayGiganticLoneHalfCannotBePlayed(t *testing.T) {
 	base := g.AddToHand(baseDef, 0)
 
 	_, err := g.PlayCreature(0, handIdxByID(g, 0, base), false)
-	if err != ErrGiganticNoPartner {
+	if !errors.Is(err, ErrGiganticNoPartner) {
 		t.Fatalf("PlayCreature lone half = %v, want ErrGiganticNoPartner", err)
 	}
 	if !g.State.Hand[0].contains(base) {
 		t.Error("the lone half should stay in hand after a failed play")
 	}
-	if err := g.CanPlay(0, base); err != ErrGiganticNoPartner {
+	if err := g.CanPlay(0, base); !errors.Is(err, ErrGiganticNoPartner) {
 		t.Errorf("CanPlay lone half = %v, want ErrGiganticNoPartner", err)
 	}
 }
@@ -275,7 +278,7 @@ func TestPlayGiganticBarredByCreatureRestriction(t *testing.T) {
 
 	_, err := g.playCardFromZone(0, base,
 		func() { g.State.Hand[0].remove(base) }, playCardOptions{})
-	if err != ErrCannotPlayCreature {
+	if !errors.Is(err, ErrCannotPlayCreature) {
 		t.Fatalf("gigantic while creatures barred = %v, want ErrCannotPlayCreature", err)
 	}
 	if !g.State.Hand[0].contains(base) {

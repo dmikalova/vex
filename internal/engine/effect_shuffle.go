@@ -12,7 +12,7 @@ import (
 // lint (TestSearchIsFollowedByShuffle). Zones folds whole piles in before the
 // shuffle — the discard pile (Help from Future Self), the hand and discard pile
 // (Screaming Cave), the archives and discard pile. To fold every friendly card in
-// play into the deck instead, use ShuffleFriendlyCardsIntoDeck.
+// play into the deck instead, use ShuffleIntoDeck with From: []Zone{InPlay}.
 type Shuffle struct {
 	// Zones names whole piles that fold into the deck before it shuffles; each must
 	// be shuffleable (a hand, a discard pile, or archives). Empty is the bare deck

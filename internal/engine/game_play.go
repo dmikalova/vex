@@ -16,7 +16,7 @@ func (g *Game) PlayCreature(player, handIndex int, flankLeft bool) (LocalID, err
 	def := g.cat.def(id)
 	// A creature played as an upgrade is not playing a creature, so a creature ban
 	// bars it only when it cannot become an upgrade — no host to attach to.
-	if g.cannotPlayCreatures(player) && (!def.PlayableAsUpgrade || !g.hasUpgradeHost()) {
+	if g.cannotPlayCreatures(player) && (!def.PlayableAsUpgrade || !g.HasUpgradeHost()) {
 		return 0, ErrCannotPlayCreature
 	}
 	result, err := g.playCardFromZone(
@@ -180,15 +180,15 @@ func (g *Game) PlayUpgrade(player, handIndex int) (LocalID, error) {
 	if g.cannotPlayCard(player) {
 		return 0, ErrCardPlayLimit
 	}
-	if g.barredByFirstTurn(player) {
-		return 0, ErrFirstTurnOneCard
-	}
 	hand := &g.State.Hand[player]
 	if handIndex < 0 || handIndex >= int(hand.Count) {
 		return 0, ErrCardNotInHand
 	}
 	id := hand.IDs[handIndex]
 	def := g.cat.def(id)
+	if g.barredByFirstTurnPlay(player, def) {
+		return 0, ErrFirstTurnOneCard
+	}
 	if def.Type != Upgrade {
 		return 0, ErrWrongType
 	}
@@ -392,44 +392,7 @@ func (g *Game) playCardFromZone(
 	}
 	switch def.Type {
 	case Creature:
-		if def.GiganticRole != GiganticNone {
-			return g.playGigantic(player, id, remove, opts)
-		}
-		banned := g.cannotPlayCreatures(player)
-		if def.PlayableAsUpgrade && g.hasUpgradeHost() {
-			// Playing a creature as an upgrade is not playing a creature, so it is
-			// allowed even while creatures are barred — a ban then forces upgrade mode.
-			asUpgrade := banned
-			if !banned {
-				asUpgrade = g.chooseOption(player, g.Name(id),
-					"Play "+SelfName+" as a creature or an upgrade?",
-					[]string{"Creature", "Upgrade"}) == 1
-			}
-			if asUpgrade {
-				candidates := append(g.battlelineCopy(player), g.battlelineCopy(1-player)...)
-				host, ok := g.pickCreature(
-					player,
-					g.Name(id),
-					"Choose a creature to attach "+SelfName+" to",
-					candidates,
-				)
-				if !ok {
-					return 0, ErrNoTarget
-				}
-				g.recordCardPlayed(player, id, opts)
-				remove()
-				g.playUpgradeCard(player, id, host, def)
-				return host, nil
-			}
-		}
-		if banned {
-			return 0, ErrCannotPlayCreature
-		}
-		g.recordCardPlayed(player, id, opts)
-		remove()
-		g.playCreatureCard(player, id, opts.flank)
-		g.applyTreachery(player, id)
-		return id, nil
+		return g.playCreatureFromZone(player, id, remove, opts, def)
 	case Artifact:
 		if err := g.chargeToll(player, TollPlayArtifact); err != nil {
 			return 0, err
@@ -464,6 +427,57 @@ func (g *Game) playCardFromZone(
 	}
 }
 
+// playCreatureFromZone resolves the Creature branch of playCardFromZone. A gigantic
+// plays through playGigantic; a PlayableAsUpgrade creature may be played as an
+// upgrade — chosen by its controller, or forced when creatures are barred; an
+// ordinary creature enters the battleline unless a ban forbids it.
+func (g *Game) playCreatureFromZone(
+	player int,
+	id LocalID,
+	remove func(),
+	opts playCardOptions,
+	def *CardDefinition,
+) (LocalID, error) {
+	if def.GiganticRole != GiganticNone {
+		return g.playGigantic(player, id, remove, opts)
+	}
+	banned := g.cannotPlayCreatures(player)
+	if def.PlayableAsUpgrade && g.HasUpgradeHost() {
+		// Playing a creature as an upgrade is not playing a creature, so it is
+		// allowed even while creatures are barred — a ban then forces upgrade mode.
+		asUpgrade := banned
+		if !banned {
+			asUpgrade = g.chooseOption(player, g.Name(id),
+				"Play "+SelfName+" as a creature or an upgrade?",
+				[]string{"Creature", "Upgrade"}) == 1
+		}
+		if asUpgrade {
+			candidates := append(g.battlelineCopy(player), g.battlelineCopy(1-player)...)
+			host, ok := g.pickCreature(
+				player,
+				g.Name(id),
+				"Choose a creature to attach "+SelfName+" to",
+				candidates,
+			)
+			if !ok {
+				return 0, ErrNoTarget
+			}
+			g.recordCardPlayed(player, id, opts)
+			remove()
+			g.playUpgradeCard(player, id, host, def)
+			return host, nil
+		}
+	}
+	if banned {
+		return 0, ErrCannotPlayCreature
+	}
+	g.recordCardPlayed(player, id, opts)
+	remove()
+	g.playCreatureCard(player, id, opts.flank)
+	g.applyTreachery(player, id)
+	return id, nil
+}
+
 // applyTreachery hands a just-played Treachery card to its player's opponent,
 // permanently — the keyword means the card enters play under your opponent's
 // control. The card is placed and its Play abilities and Æmber bonus resolve for
@@ -482,10 +496,10 @@ func (g *Game) applyTreachery(player int, id LocalID) {
 	}
 }
 
-// hasUpgradeHost reports whether any creature is in play on either battleline to
+// HasUpgradeHost reports whether any creature is in play on either battleline to
 // attach an upgrade to — the host an Upgrade, or a creature played as an upgrade,
 // needs.
-func (g *Game) hasUpgradeHost() bool {
+func (g *Game) HasUpgradeHost() bool {
 	return g.State.Battleline[0].Count > 0 || g.State.Battleline[1].Count > 0
 }
 
@@ -521,7 +535,6 @@ func (g *Game) playCreatureCard(player int, id LocalID, fl flank) {
 	pending := g.playCreatureReactions(player, id)
 	pending = append(pending, g.lastingReactions(EventCardPlayed, player, id)...)
 	pending = append(pending, g.lastingReactions(EventCreaturePlayed, player, id)...)
-	pending = append(pending, g.lastingReactions(EventCardEntersPlay, player, id)...)
 	g.resolveWindow(g.orderTriggered(player, pending))
 	// The arrival may have walked into a power-reducing constant ability, or been one.
 	g.settleDestroyed(player)
@@ -548,7 +561,7 @@ func (g *Game) putIntoPlay(id LocalID, controller int) {
 	if g.cat.def(id).GiganticRole != GiganticNone {
 		return
 	}
-	g.removeFromAnyZone(id)
+	g.removeFromRestingZones(id)
 	core := &g.State.Cards[id]
 	if controller != g.owner(id) {
 		core.ControlPlus = uint8(controller + 1)
@@ -561,10 +574,11 @@ func (g *Game) putIntoPlay(id LocalID, controller int) {
 		pos, _ := g.deployPosition(controller, id, flankUnset, false)
 		g.State.Battleline[controller].insertAt(pos, id)
 		g.record(CardPutIntoPlay{Player: controller, Card: id})
-		g.emitCreatureEnters(id)
+		g.emitEnters(id)
 	case Artifact:
 		g.State.Artifacts[controller].add(id)
 		g.record(CardPutIntoPlay{Player: controller, Card: id})
+		g.emitEnters(id)
 	}
 }
 
@@ -583,7 +597,9 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 	// so the active player orders the set (ADR 0013).
 	pending := g.afterPlayReactions(player, id)
 	pending = append(pending, g.lastingReactions(EventCardPlayed, player, id)...)
-	pending = append(pending, g.lastingReactions(EventCardEntersPlay, player, id)...)
+	w := g.window()
+	w.addEntersPlay(player, id)
+	pending = append(pending, w.pending...)
 	g.resolveWindow(g.orderTriggered(player, pending))
 	g.settleDestroyed(player)
 }
@@ -802,17 +818,30 @@ func (g *Game) recordCardPlayed(player int, id LocalID, opts playCardOptions) {
 	g.recordUsage(id)
 }
 
-// barredByFirstTurn reports whether the first-turn rule blocks player from
-// playing or discarding a card from hand now: it is armed only for the first
-// player's first turn, and blocks once they have taken one volitional play or
-// discard. A card that a played card lets them play (Wild Wormhole, Phase Shift)
-// goes through playCardFromZone directly, not these gates, so it is never barred.
+// barredByFirstTurn reports whether the first player has already spent their one
+// first-turn play-or-discard: it is armed only for the first player's first turn
+// and trips once they have taken one play or discard. It is the bare allowance —
+// the discard path uses it directly, while the play path adds an in-house check
+// (barredByFirstTurnPlay) so a card-effect-enabled play still gets through. A card
+// another card plays (Wild Wormhole, Phase Shift) bypasses these gates entirely.
 func (g *Game) barredByFirstTurn(player int) bool {
 	if g.manual {
 		return false
 	}
 	return g.State.FirstTurnPlayLimit[player] &&
 		g.State.PlayedThisTurn[player].Count+g.State.DiscardedThisTurn[player].Count >= 1
+}
+
+// barredByFirstTurnPlay reports whether the first-turn rule blocks playing def
+// now. The rule limits the first player to one play or discard of their own
+// volition; a play only a card effect makes legal — an off-house play a grant
+// permits (Subject Kirby, Captain Val Jericho), or a card another card plays for
+// them (Wild Wormhole, Phase Shift, which bypass these gates entirely) — is a card
+// effect modifying the rule, so it is never barred. Only a bare in-house play
+// counts against the one-card allowance. Pinned by
+// TestFirstTurnRuleBindsOnlyVolitionalPlays.
+func (g *Game) barredByFirstTurnPlay(player int, def *CardDefinition) bool {
+	return g.barredByFirstTurn(player) && g.inActiveHouse(def)
 }
 
 // validateHandPlay runs the read-only checks that a hand card may be played —
@@ -829,15 +858,15 @@ func (g *Game) validateHandPlay(player, handIndex int, want CardType) (LocalID, 
 	if g.cannotPlayCard(player) {
 		return 0, ErrCardPlayLimit
 	}
-	if g.barredByFirstTurn(player) {
-		return 0, ErrFirstTurnOneCard
-	}
 	hand := &g.State.Hand[player]
 	if handIndex < 0 || handIndex >= int(hand.Count) {
 		return 0, ErrCardNotInHand
 	}
 	id := hand.IDs[handIndex]
 	def := g.cat.def(id)
+	if g.barredByFirstTurnPlay(player, def) {
+		return 0, ErrFirstTurnOneCard
+	}
 	if def.Type != want {
 		return 0, ErrWrongType
 	}
@@ -866,7 +895,7 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 	}
 	def := g.cat.def(id)
 	if def.Type == Creature && g.cannotPlayCreatures(player) {
-		if !def.PlayableAsUpgrade || !g.hasUpgradeHost() {
+		if !def.PlayableAsUpgrade || !g.HasUpgradeHost() {
 			return ErrCannotPlayCreature
 		}
 	}
@@ -886,7 +915,7 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 	if g.atRuleOfSix(id) {
 		return ErrRuleOfSix
 	}
-	if g.barredByFirstTurn(player) {
+	if g.barredByFirstTurnPlay(player, def) {
 		return ErrFirstTurnOneCard
 	}
 	if g.barredByAlpha(player, def) {
@@ -906,7 +935,7 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 		return ErrCannotPayToll
 	}
 	if def.Type == Upgrade &&
-		!g.hasUpgradeHost() {
+		!g.HasUpgradeHost() {
 		return ErrNoTarget
 	}
 	return nil

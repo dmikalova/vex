@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 // ---- playing cards ----
 
@@ -57,13 +60,13 @@ func TestPlayTypeMismatchErrors(t *testing.T) {
 	creatureID := g.AddToHand(testCreature("c", 2), 0)
 	_ = creatureID
 	// Playing a creature as an artifact/action/upgrade should fail on type.
-	if _, err := g.PlayArtifact(0, 0); err != ErrWrongType {
+	if _, err := g.PlayArtifact(0, 0); !errors.Is(err, ErrWrongType) {
 		t.Errorf("PlayArtifact err = %v, want ErrWrongType", err)
 	}
-	if err := g.PlayAction(0, 0); err != ErrWrongType {
+	if err := g.PlayAction(0, 0); !errors.Is(err, ErrWrongType) {
 		t.Errorf("PlayAction err = %v, want ErrWrongType", err)
 	}
-	if _, err := g.PlayUpgrade(0, 0); err != ErrWrongType {
+	if _, err := g.PlayUpgrade(0, 0); !errors.Is(err, ErrWrongType) {
 		t.Errorf("PlayUpgrade err = %v, want ErrWrongType", err)
 	}
 	// Now play it correctly.
@@ -75,22 +78,22 @@ func TestPlayTypeMismatchErrors(t *testing.T) {
 func TestTakeFromHandErrors(t *testing.T) {
 	g := started(t)
 	// Not active player.
-	if _, err := g.PlayCreature(1, 0, false); err != ErrNotActivePlayer {
+	if _, err := g.PlayCreature(1, 0, false); !errors.Is(err, ErrNotActivePlayer) {
 		t.Errorf("err = %v, want ErrNotActivePlayer", err)
 	}
 	// Bad hand index.
-	if _, err := g.PlayCreature(0, 5, false); err != ErrCardNotInHand {
+	if _, err := g.PlayCreature(0, 5, false); !errors.Is(err, ErrCardNotInHand) {
 		t.Errorf("err = %v, want ErrCardNotInHand", err)
 	}
 	// Wrong house.
 	dis := NewCard("Dissonant", Dis, Creature, Common, WithPower(2))
 	g.AddToHand(dis, 0)
-	if _, err := g.PlayCreature(0, 0, false); err != ErrWrongHouse {
+	if _, err := g.PlayCreature(0, 0, false); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("err = %v, want ErrWrongHouse", err)
 	}
 	// Game over.
 	g.State.Winner = 0
-	if _, err := g.PlayCreature(0, 0, false); err != ErrGameOver {
+	if _, err := g.PlayCreature(0, 0, false); !errors.Is(err, ErrGameOver) {
 		t.Errorf("err = %v, want ErrGameOver", err)
 	}
 }
@@ -111,13 +114,13 @@ func TestVersatileIgnoresActiveHouse(t *testing.T) {
 
 	// Versatile does not let it be PLAYED from hand out of house, though.
 	hid := g.AddToHand(versatile, 0)
-	if _, err := g.PlayCreature(0, handIdxByID(g, 0, hid), false); err != ErrWrongHouse {
+	if _, err := g.PlayCreature(0, handIdxByID(g, 0, hid), false); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("play Versatile out of house err = %v, want ErrWrongHouse", err)
 	}
 
 	// A non-Versatile creature of the wrong house cannot be used either.
 	dis := g.AddToBattleline(NewCard("Dissonant", Dis, Creature, Common, WithPower(2)), 0)
-	if err := g.Reap(0, dis); err != ErrWrongHouse {
+	if err := g.Reap(0, dis); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("non-Versatile reap err = %v, want ErrWrongHouse", err)
 	}
 
@@ -175,21 +178,21 @@ func TestPlayUpgradeErrorsAndSuccess(t *testing.T) {
 	g := started(t)
 	// No creature to attach to.
 	g.AddToHand(exBruteStrength(), 0)
-	if _, err := g.PlayUpgrade(0, 0); err != ErrNoTarget {
+	if _, err := g.PlayUpgrade(0, 0); !errors.Is(err, ErrNoTarget) {
 		t.Errorf("err = %v, want ErrNoTarget", err)
 	}
 	// Not active player.
-	if _, err := g.PlayUpgrade(1, 0); err != ErrNotActivePlayer {
+	if _, err := g.PlayUpgrade(1, 0); !errors.Is(err, ErrNotActivePlayer) {
 		t.Errorf("err = %v, want ErrNotActivePlayer", err)
 	}
 	// Bad index.
-	if _, err := g.PlayUpgrade(0, 9); err != ErrCardNotInHand {
+	if _, err := g.PlayUpgrade(0, 9); !errors.Is(err, ErrCardNotInHand) {
 		t.Errorf("err = %v, want ErrCardNotInHand", err)
 	}
 	// Wrong house.
 	disUp := NewCard("Dis Upgrade", Dis, Upgrade, Common, WithStatic(StaticModifier{PowerBonus: 1}))
 	g.AddToHand(disUp, 0)
-	if _, err := g.PlayUpgrade(0, handIdx(g, 0, "Dis Upgrade")); err != ErrWrongHouse {
+	if _, err := g.PlayUpgrade(0, handIdx(g, 0, "Dis Upgrade")); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("err = %v, want ErrWrongHouse", err)
 	}
 	// Success: attach +5 power upgrade to a creature.
@@ -205,7 +208,7 @@ func TestPlayUpgradeErrorsAndSuccess(t *testing.T) {
 	}
 	// Game over branch.
 	g.State.Winner = 0
-	if _, err := g.PlayUpgrade(0, 0); err != ErrGameOver {
+	if _, err := g.PlayUpgrade(0, 0); !errors.Is(err, ErrGameOver) {
 		t.Errorf("err = %v, want ErrGameOver", err)
 	}
 }
@@ -237,15 +240,15 @@ func TestDiscardFromHand(t *testing.T) {
 	// Wrong house.
 	dis := NewCard("Dis", Dis, Creature, Common, WithPower(2))
 	g.AddToHand(dis, 0)
-	if err := g.DiscardFromHand(0, 0); err != ErrWrongHouse {
+	if err := g.DiscardFromHand(0, 0); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("err = %v, want ErrWrongHouse", err)
 	}
 	// Not the active player.
-	if err := g.DiscardFromHand(1, 0); err != ErrNotActivePlayer {
+	if err := g.DiscardFromHand(1, 0); !errors.Is(err, ErrNotActivePlayer) {
 		t.Errorf("err = %v, want ErrNotActivePlayer", err)
 	}
 	// Bad index.
-	if err := g.DiscardFromHand(0, 9); err != ErrCardNotInHand {
+	if err := g.DiscardFromHand(0, 9); !errors.Is(err, ErrCardNotInHand) {
 		t.Errorf("err = %v, want ErrCardNotInHand", err)
 	}
 	// Success: discard a Brobnar (active-house) card.
@@ -258,7 +261,7 @@ func TestDiscardFromHand(t *testing.T) {
 	}
 	// Game over.
 	g.State.Winner = 0
-	if err := g.DiscardFromHand(0, 0); err != ErrGameOver {
+	if err := g.DiscardFromHand(0, 0); !errors.Is(err, ErrGameOver) {
 		t.Errorf("err = %v, want ErrGameOver", err)
 	}
 }
@@ -287,13 +290,13 @@ func TestCanDiscard(t *testing.T) {
 	dis := g.AddToHand(NewCard("Dis", Dis, Creature, Common, WithPower(2)), 0)
 	brob := g.AddToHand(testCreature("brob", 3), 0)
 
-	if err := g.CanDiscard(0, dis); err != ErrWrongHouse {
+	if err := g.CanDiscard(0, dis); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("wrong house = %v, want ErrWrongHouse", err)
 	}
-	if err := g.CanDiscard(1, brob); err != ErrNotActivePlayer {
+	if err := g.CanDiscard(1, brob); !errors.Is(err, ErrNotActivePlayer) {
 		t.Errorf("inactive player = %v, want ErrNotActivePlayer", err)
 	}
-	if err := g.CanDiscard(0, brob+99); err != ErrCardNotInHand {
+	if err := g.CanDiscard(0, brob+99); !errors.Is(err, ErrCardNotInHand) {
 		t.Errorf("absent card = %v, want ErrCardNotInHand", err)
 	}
 	if err := g.CanDiscard(0, brob); err != nil {
@@ -301,7 +304,7 @@ func TestCanDiscard(t *testing.T) {
 	}
 
 	g.State.Winner = 0
-	if err := g.CanDiscard(0, brob); err != ErrGameOver {
+	if err := g.CanDiscard(0, brob); !errors.Is(err, ErrGameOver) {
 		t.Errorf("game over = %v, want ErrGameOver", err)
 	}
 }
@@ -420,7 +423,7 @@ func TestKeyCost(t *testing.T) {
 func TestChooseHouseWrongPlayer(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.StartTurn(0)
-	if err := g.ChooseHouse(1, Brobnar); err != ErrNotActivePlayer {
+	if err := g.ChooseHouse(1, Brobnar); !errors.Is(err, ErrNotActivePlayer) {
 		t.Errorf("err = %v, want ErrNotActivePlayer", err)
 	}
 }
@@ -431,7 +434,7 @@ func TestChooseHouseForcedBindsWhenAvailable(t *testing.T) {
 	g.State.ActivePlayer = 0
 	g.State.HouseConstraints[0][0] = HouseConstraint{Kind: constraintMustHouse, House: Mars}
 	g.State.HouseConstraintCount[0] = 1
-	if err := g.ChooseHouse(0, Logos); err != ErrHouseNotAllowed {
+	if err := g.ChooseHouse(0, Logos); !errors.Is(err, ErrHouseNotAllowed) {
 		t.Errorf("choosing a different house = %v, want ErrHouseNotAllowed", err)
 	}
 	if err := g.ChooseHouse(0, Mars); err != nil {

@@ -1,6 +1,7 @@
 package ageofascension
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/card"
@@ -36,7 +37,7 @@ func TestTezmal(t *testing.T) {
 
 	h.P1.EndTurn() // the opponent's turn begins, promoting the forbidden house
 
-	if err := h.Game().ChooseHouse(1, card.House.Mars); err != engine.ErrHouseNotAllowed {
+	if err := h.Game().ChooseHouse(1, card.House.Mars); !errors.Is(err, engine.ErrHouseNotAllowed) {
 		t.Errorf("forbidden house = %v, want ErrHouseNotAllowed", err)
 	}
 	h.P2.ChooseHouse(card.House.Sanctum) // any other house is allowed

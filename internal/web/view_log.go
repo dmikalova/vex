@@ -227,7 +227,7 @@ func (g *game) logSegments(rec engine.Record) []app.UI {
 // lit with the check highlight, the log's echo of the score pill's "Check!" glow.
 func (g *game) playerStandingSegments(e engine.PlayerStanding) []app.UI {
 	amount := app.Text(fmt.Sprintf(" has %d ", e.Aember))
-	if e.Aember >= g.g.CurrentKeyCost(e.Player) {
+	if g.g.AtCheck(e.Player, e.Aember) {
 		amount = app.Span().Body(
 			app.Text(" has "),
 			app.Span().Class("log-aember").Text(strconv.Itoa(e.Aember)),

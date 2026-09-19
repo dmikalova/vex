@@ -29,7 +29,7 @@ func TestSequenceEffect(t *testing.T) {
 
 func TestSentencesRendersEachChildAsItsOwnSentence(t *testing.T) {
 	seq := Sentences{Effects: []Effect{
-		DiscardTop{Player: Opponent},
+		DiscardTop{Amount: 1, Player: Opponent},
 		RevealHand{Player: Opponent},
 		GainAember{
 			Player: Controller,
@@ -94,10 +94,26 @@ func TestSequenceCombinesSameVerb(t *testing.T) {
 // into one article-led noun list (Look What I Found!).
 func TestSequenceFoldsNounList(t *testing.T) {
 	seq := Sequence{Effects: []Effect{
-		PutFromDiscard{Selection: Chosen{Type: Tactic}, Destination: ToHand},
-		PutFromDiscard{Selection: Chosen{Type: Artifact}, Destination: ToHand},
-		PutFromDiscard{Selection: Chosen{Type: Creature}, Destination: ToHand},
-		PutFromDiscard{Selection: Chosen{Type: Upgrade}, Destination: ToHand},
+		PutCard{
+			Zones:       []Zone{Discard},
+			Selection:   Chosen{Type: Tactic},
+			Destination: ToHand,
+		},
+		PutCard{
+			Zones:       []Zone{Discard},
+			Selection:   Chosen{Type: Artifact},
+			Destination: ToHand,
+		},
+		PutCard{
+			Zones:       []Zone{Discard},
+			Selection:   Chosen{Type: Creature},
+			Destination: ToHand,
+		},
+		PutCard{
+			Zones:       []Zone{Discard},
+			Selection:   Chosen{Type: Upgrade},
+			Destination: ToHand,
+		},
 	}}
 	want := "put a tactic, artifact, creature, and upgrade " +
 		"from your discard pile into your hand"
@@ -111,7 +127,11 @@ func TestSequenceFoldsNounList(t *testing.T) {
 func TestSequenceNounListDeclines(t *testing.T) {
 	// One qualifying effect on its own does not fold.
 	single := Sequence{Effects: []Effect{
-		PutFromDiscard{Selection: Chosen{Type: Tactic}, Destination: ToHand},
+		PutCard{
+			Zones:       []Zone{Discard},
+			Selection:   Chosen{Type: Tactic},
+			Destination: ToHand,
+		},
 	}}
 	if got := single.Text(); got != "put a tactic from your discard pile into your hand" {
 		t.Errorf("single text = %q", got)
@@ -119,8 +139,16 @@ func TestSequenceNounListDeclines(t *testing.T) {
 
 	// A differing tail (top of deck vs hand) stops the run after the first.
 	tails := Sequence{Effects: []Effect{
-		PutFromDiscard{Selection: Chosen{Type: Tactic}, Destination: ToHand},
-		PutFromDiscard{Selection: Chosen{Type: Artifact}, Destination: ToTopOfDeck},
+		PutCard{
+			Zones:       []Zone{Discard},
+			Selection:   Chosen{Type: Tactic},
+			Destination: ToHand,
+		},
+		PutCard{
+			Zones:       []Zone{Discard},
+			Selection:   Chosen{Type: Artifact},
+			Destination: ToTopOfDeck,
+		},
 	}}
 	want := "put a tactic from your discard pile into your hand, and " +
 		"put an artifact from your discard pile on top of your deck"
@@ -130,8 +158,16 @@ func TestSequenceNounListDeclines(t *testing.T) {
 
 	// A non-plain selection (named, not a bare type) does not qualify.
 	named := Sequence{Effects: []Effect{
-		PutFromDiscard{Selection: Named{Name: "Velum"}, Destination: ToHand},
-		PutFromDiscard{Selection: Chosen{Type: Artifact}, Destination: ToHand},
+		PutCard{
+			Zones:       []Zone{Discard},
+			Selection:   Named{Name: "Velum"},
+			Destination: ToHand,
+		},
+		PutCard{
+			Zones:       []Zone{Discard},
+			Selection:   Chosen{Type: Artifact},
+			Destination: ToHand,
+		},
 	}}
 	if got := named.Text(); !strings.Contains(got, "Velum") {
 		t.Errorf("named text = %q, want it to keep Velum unfolded", got)
@@ -270,5 +306,106 @@ func TestSentencesDeclinable(t *testing.T) {
 	}
 	if !onAnyLine(declined, survivor) || declined.Aember(0) != 0 {
 		t.Error("a declined lead should pass on the later sentences too")
+	}
+}
+
+// housesRung builds one rung of Galactic Census's ladder: gain 1 Æmber if at
+// least n houses are represented among creatures in play.
+func housesRung(n int) Conditional {
+	return Conditional{
+		Cond: HousesRepresented{
+			Among:  HousesAmong{Player: EachPlayer, Type: Creature},
+			Is:     AtLeast,
+			Amount: n,
+		},
+		Then: GainAember{Player: Controller, Amount: 1},
+	}
+}
+
+// TestSentencesFoldsThresholdLadder pins Galactic Census's wording: a run of
+// rungs over the same board survey names that survey once, and every later rung
+// is a bare "gain 1 more if there are N or more".
+func TestSentencesFoldsThresholdLadder(t *testing.T) {
+	ladder := Sentences{Effects: []Effect{housesRung(3), housesRung(5), housesRung(6)}}
+	want := "if there are 3 or more houses represented among creatures in play, gain 1 Æmber. " +
+		"Gain 1 more if there are 5 or more. Gain 1 more if there are 6 or more."
+	if got := ladder.Text(); got != want {
+		t.Errorf("ladder text = %q, want %q", got, want)
+	}
+}
+
+// TestSentencesLadderDeclines walks every reason a Conditional is not a ladder
+// rung, so a card that merely looks like one keeps its full text.
+func TestSentencesLadderDeclines(t *testing.T) {
+	full := "if there are 3 or more houses represented among creatures in play, gain 1 Æmber."
+	otherSubject := housesRung(5)
+	otherSubject.Cond = HousesRepresented{
+		Among:  HousesAmong{Player: Controller, Type: Creature},
+		Is:     AtLeast,
+		Amount: 5,
+	}
+	withElse := housesRung(5)
+	withElse.Else = GainAember{Player: Controller, Amount: 1}
+	perRung := housesRung(5)
+	perRung.Then = GainAember{Player: Controller, Amount: 1, Per: Fixed(2)}
+	notRepeating := housesRung(5)
+	notRepeating.Then = Draw{Amount: 1}
+
+	cases := []struct {
+		name    string
+		second  Effect
+		wantFix string
+	}{
+		{"a lone rung", nil, full},
+		{"a different survey", otherSubject, "among friendly creatures"},
+		{"a two-way branch", withElse, "Otherwise"},
+		{"a scaled gain", perRung, "for each"},
+		{"an effect with no repeated form", notRepeating, "draw"},
+		{
+			"an effect that is no Conditional at all",
+			GainAember{Player: Controller, Amount: 2},
+			"Gain 2 Æmber",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			effects := []Effect{housesRung(3)}
+			if tc.second != nil {
+				effects = append(effects, tc.second)
+			}
+			got := Sentences{Effects: effects}.Text()
+			if !strings.HasPrefix(got, full) {
+				t.Errorf("text = %q, want it to open with the unfolded rung", got)
+			}
+			if !strings.Contains(got, tc.wantFix) {
+				t.Errorf("text = %q, want it to contain %q", got, tc.wantFix)
+			}
+			if strings.Contains(got, "more if there are") {
+				t.Errorf("text = %q, want no ladder fold", got)
+			}
+		})
+	}
+}
+
+// TestGainAemberRepeatedText covers the forms a gain can and cannot repeat as.
+func TestGainAemberRepeatedText(t *testing.T) {
+	cases := []struct {
+		name string
+		gain GainAember
+		want string
+	}{
+		{"controller", GainAember{Player: Controller, Amount: 1}, "gain 1 more"},
+		{"opponent", GainAember{Player: Opponent, Amount: 2}, "your opponent gains 2 more"},
+		{"each player", GainAember{Player: EachPlayer, Amount: 1}, "each player gains 1 more"},
+		{"equal to a count", GainAember{Player: Controller, EqualTo: Fixed(1)}, ""},
+		{"scaled by a count", GainAember{Player: Controller, Amount: 1, Per: Fixed(2)}, ""},
+		{"a subject gainVerb cannot name", GainAember{Player: ItsOwner, Amount: 1}, ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.gain.repeatedText(); got != tc.want {
+				t.Errorf("repeatedText() = %q, want %q", got, tc.want)
+			}
+		})
 	}
 }

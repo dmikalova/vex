@@ -135,6 +135,7 @@ var ItNoun = itNouns{
 	DiscardedCard:  engine.DiscardedCard,
 	ThatCard:       engine.ThatCard,
 	FoughtCreature: engine.FoughtCreature,
+	ThatCreature:   engine.ThatCreature,
 }
 
 type itNouns struct {
@@ -144,6 +145,9 @@ type itNouns struct {
 	ThatCard engine.ItNoun
 	// FoughtCreature names the creature the source is fighting.
 	FoughtCreature engine.ItNoun
+	// ThatCreature names the creature an effect just acted on when "it" would be
+	// ambiguous.
+	ThatCreature engine.ItNoun
 }
 
 // Subject groups the cards a condition can read, e.g. card.Subject.This. Unlike

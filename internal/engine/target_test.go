@@ -152,6 +152,13 @@ func TestTargetText(t *testing.T) {
 		Text(); got != "each neighbor of the fought creature" {
 		t.Errorf("fought-creature neighbors text = %q", got)
 	}
+	if got := (Target{Kind: TargetTheChosenCreature}).Text(); got != "the chosen creature" {
+		t.Errorf("chosen-creature text = %q", got)
+	}
+	if got := (Target{Kind: TargetTheChosenCreature}.NeighborsOf()).
+		Text(); got != "each neighbor of the chosen creature" {
+		t.Errorf("chosen-creature neighbors text = %q", got)
+	}
 }
 
 func TestTargetSharingTrait(t *testing.T) {
@@ -988,6 +995,50 @@ func TestPowerLessThanSource(t *testing.T) {
 	if text := (Target{Kind: TargetChosenEnemyCreature}).Refine(PowerLessThanSource()).
 		Text(); text != "an enemy creature with lower power than "+SelfName {
 		t.Errorf("PowerLessThanSource text = %q", text)
+	}
+}
+
+// TestUnionableAxisRefinements covers the trait and power-floor refinements that
+// restate a Target axis so AnyOf can union them — Regrettable Meteor destroys the
+// Dinosaurs and the power-6-or-higher creatures as one set, so a creature matching
+// both halves is destroyed once.
+func TestUnionableAxisRefinements(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	dino := g.AddToBattleline(
+		NewCard("dino", Untamed, Creature, Common, WithPower(2), WithTraits(Dinosaur)), 1)
+	big := g.AddToBattleline(testCreature("big", 6), 1)
+	bigDino := g.AddToBattleline(
+		NewCard("bigDino", Untamed, Creature, Common, WithPower(7), WithTraits(Dinosaur)), 1)
+	small := g.AddToBattleline(testCreature("small", 3), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	each := Target{Kind: TargetEachEnemyCreature}
+	union := each.Refine(AnyOf(OfTrait(Dinosaur), PowerAtLeast(6)))
+	got := union.Select(ctx)
+	if len(got) != 3 || !containsID(got, dino) || !containsID(got, big) ||
+		!containsID(got, bigDino) || containsID(got, small) {
+		t.Errorf("union = %v, want dino, big, and bigDino once each", got)
+	}
+
+	if text := union.Text(); text !=
+		"each enemy Dinosaur creature and each enemy creature with power 6 or higher" {
+		t.Errorf("union text = %q", text)
+	}
+
+	// Each half also stands on its own.
+	if ids := each.Refine(OfTrait(Dinosaur)).Select(ctx); len(ids) != 2 {
+		t.Errorf("OfTrait = %v, want the two Dinosaurs", ids)
+	}
+	if ids := each.Refine(PowerAtLeast(6)).Select(ctx); len(ids) != 2 {
+		t.Errorf("PowerAtLeast = %v, want the two power-6+ creatures", ids)
+	}
+}
+
+// TestQualifyLastNoun covers the one-word phrase, which has no space to insert an
+// adjective before.
+func TestQualifyLastNoun(t *testing.T) {
+	if got := qualifyLastNoun("creature", "Dinosaur"); got != "Dinosaur creature" {
+		t.Errorf("qualifyLastNoun = %q", got)
 	}
 }
 

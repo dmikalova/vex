@@ -23,7 +23,7 @@ var Mastermindy = set.New(
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.EndOfTurn, card.PlaceCounter{
+		card.Trigger.EndOfTurn, card.PlaceCounter{Amount: 1,
 			Kind:   card.Counter.Scheme,
 			Target: card.Target.This,
 		}),

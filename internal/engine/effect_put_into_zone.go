@@ -15,9 +15,9 @@ import (
 type PutFromPlay struct {
 	Target      Target
 	Destination Destination
-	// WithUpgrades also returns each upgrade attached to a moved creature to its
-	// owner's hand, rather than shedding it to the discard pile (Transporter
-	// Platform). It is supported only for the hand.
+	// WithUpgrades sends each upgrade attached to a moved creature to the same
+	// destination, rather than shedding it to the discard pile as the host's own
+	// move would (Transporter Platform). Any destination the effect supports.
 	WithUpgrades bool
 }
 
@@ -33,17 +33,13 @@ func (e PutFromPlay) Text() string {
 
 // validate rejects a destination this effect cannot move a card to; only the hand,
 // the top of the deck, and the archives are supported, and the destination must be
-// named. Returning attached upgrades along with the creature is supported only for
-// the hand.
+// named.
 func (e PutFromPlay) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("PutFromPlay")
 	}
 	if !e.Destination.movable() {
 		return fmt.Errorf("PutFromPlay: unsupported destination %d", e.Destination.zone)
-	}
-	if e.WithUpgrades && e.Destination != ToHand {
-		return fmt.Errorf("PutFromPlay: WithUpgrades is supported only for the hand")
 	}
 	return nil
 }
@@ -97,7 +93,9 @@ func (e PutFromPlay) put(ctx *EffectContext, ids []LocalID) bool {
 				continue
 			}
 			if e.WithUpgrades {
-				ctx.Resolver.ReturnUpgradesToHand(id)
+				// Ahead of the host: once the host moves it sheds its upgrades to the
+				// discard pile, and they are gone before this could redirect them.
+				e.Destination.move(ctx, ctx.Resolver.Upgrades(id)...)
 			}
 			controller := ctx.Resolver.Controller(id)
 			e.Destination.move(ctx, id)
@@ -109,49 +107,41 @@ func (e PutFromPlay) put(ctx *EffectContext, ids []LocalID) bool {
 	return moved
 }
 
-// PutChosen moves Amount cards the controller chooses from Target's pool into a
+// PutChosen moves Quantity cards the controller chooses from Target's pool into a
 // destination zone, one at a time — Lost in the Woods shuffles 2 friendly and 2
-// enemy creatures into their owners' decks. UpTo makes the choice declinable, the
-// "up to 3 artifacts" of Grasping Vines; without it the controller must choose as
-// many as the pool allows. It is the bounded-choice counterpart to PutFromPlay,
-// which moves every card the Target selects.
+// enemy creatures into their owners' decks. An UpTo quantity makes the choice
+// declinable, the "up to 3 artifacts" of Grasping Vines; a Takes quantity makes
+// the controller choose as many as the pool allows. It is the bounded-choice
+// counterpart to PutFromPlay, which moves every card the Target selects.
 type PutChosen struct {
-	Amount      int
-	UpTo        bool
+	Quantity    Quantity
 	Target      Target
 	Destination Destination
 }
 
-// validate requires a target, a positive count, and a supported destination.
+// validate requires a target and a supported destination.
 func (e PutChosen) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("PutChosen")
 	}
-	if e.Amount <= 0 {
-		return fmt.Errorf("PutChosen: Count must be positive")
-	}
 	if !e.Destination.movable() {
 		return fmt.Errorf("PutChosen: unsupported destination %d", e.Destination.zone)
 	}
-	return nil
+	return quantityValidate(e.Quantity)
 }
 
 // Text renders the effect, e.g. "put up to 3 artifacts into their owners' hands"
 // or "shuffle 2 friendly creatures into their owners' decks".
 func (e PutChosen) Text() string {
 	noun := singularNoun(e.Target.Text())
-	if e.Amount == 1 {
-		return e.Destination.clause(indefinite(noun), false)
-	}
-	quantity := fmt.Sprintf("%d %ss", e.Amount, noun)
-	if e.UpTo {
-		quantity = "up to " + quantity
-	}
-	return e.Destination.clause(quantity, true)
+	single := indefinite(noun)
+	object := quantityObject(e.Quantity, noun, single)
+	return e.Destination.clause(object, object != single)
 }
 
-// Resolve moves Amount cards one at a time. An UpTo choice is declinable so the
-// controller can stop early; either way it stops when the pool runs out. Shuffles
+// Resolve moves Quantity cards one at a time. An optional quantity is declinable
+// so the controller can stop early; either way it stops when the pool runs out.
+// Shuffles
 // into a deck are batched so several creatures moved at once narrate as one
 // grouped line per owner attributed to this ability's source.
 func (e PutChosen) Resolve(ctx *EffectContext) {
@@ -168,10 +158,11 @@ func (e PutChosen) Resolve(ctx *EffectContext) {
 // paths.
 func (e PutChosen) resolveMoves(ctx *EffectContext) {
 	choose := ctx.ChooseCard
-	if e.UpTo {
+	if quantityOptional(e.Quantity) {
 		choose = ctx.ChooseCardOptional
 	}
-	for i := 0; i < e.Amount; i++ {
+	limit, bounded := quantityPicks(e.Quantity, ctx)
+	for i := 0; !bounded || i < limit; i++ {
 		chosen, ok := choose("Choose a card to move", e.Target.Select(ctx))
 		if !ok {
 			return
@@ -185,39 +176,6 @@ func (e PutChosen) resolveMoves(ctx *EffectContext) {
 			continue
 		}
 		e.Destination.move(ctx, chosen)
-	}
-}
-
-// PutNamedIntoHand puts a card with a specific name that the controller chooses
-// into their hand, taken either from a friendly card in play or from their
-// discard pile — Faygin recovering an Urchin. The controller chooses among both
-// zones at once; an in-play card returns to hand (shedding its in-play state)
-// and a discard card is recovered.
-type PutNamedIntoHand struct {
-	Name string
-}
-
-// Text renders the effect, e.g. "put an Urchin from play or from your discard pile
-// into your hand".
-func (e PutNamedIntoHand) Text() string {
-	return fmt.Sprintf(
-		"put %s from play or from your discard pile into your hand",
-		indefinite(e.Name),
-	)
-}
-
-// Resolve gathers every friendly in-play creature and discard-pile card, then
-// lets the controller pick the named one through the shared Selection vocabulary
-// (Chosen{Name}) and moves it to their hand from whichever zone it is in.
-func (e PutNamedIntoHand) Resolve(ctx *EffectContext) {
-	mover := crossZoneMover{
-		Player:  ctx.Controller,
-		Dest:    ToHand,
-		Sources: []Zone{InPlay, Discard},
-	}
-	pool := mover.gather(ctx, func(LocalID) bool { return true })
-	for _, id := range (Chosen{Name: e.Name}).pick(ctx, pool) {
-		mover.move(ctx, id)
 	}
 }
 

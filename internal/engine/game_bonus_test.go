@@ -184,7 +184,7 @@ func TestBonusIconsSkippedIfCreatureAlreadyGone(t *testing.T) {
 	g := started(t)
 	src := g.AddToBattleline(
 		NewCard("Ghost", Brobnar, Creature, Common, WithPower(3), WithBonus(BonusAember)), 0)
-	g.removeFromAnyZone(src)
+	g.leavePlayTeardown(src)
 	before := g.State.Aember[0]
 	g.resolveBonusIcons(0, src) // not in play: no icon resolves
 	if g.State.Aember[0] != before {

@@ -37,14 +37,14 @@ type HouseSelector struct {
 // control), Trait scopes a use grant to a creature trait instead of a house
 // (Mutagenic Serum's "use friendly Mutant creatures"), Grant selects the verbs it
 // frees (play, use, or fight), Types narrows the card types (the zero value frees
-// all), and Count bounds how many cards the grant frees (zero is unlimited). The
+// all), and Cards bounds how many cards the grant frees (zero is unlimited). The
 // grant lasts only the current turn (the ready phase clears it).
 type MayPlayOrUse struct {
 	Houses HouseSelector
 	Trait  Trait
 	Grant  HouseGrant
 	Types  CardTypes
-	Count  int
+	Cards  int
 }
 
 // validate rejects a grant that frees no verb or bounds a negative count.
@@ -52,8 +52,8 @@ func (e MayPlayOrUse) validate() error {
 	if e.Grant == 0 {
 		return fmt.Errorf("MayPlayOrUse: at least one grant must be set")
 	}
-	if e.Count < 0 {
-		return fmt.Errorf("MayPlayOrUse: count must not be negative")
+	if e.Cards < 0 {
+		return fmt.Errorf("MayPlayOrUse: Cards must not be negative")
 	}
 	return nil
 }
@@ -143,5 +143,5 @@ func (e MayPlayOrUse) Resolve(ctx *EffectContext) {
 	if houses.Match.Kind == MatchChosenHouse && houses.Match.House == HouseNone {
 		houses.Match.House = ctx.ChosenHouse
 	}
-	ctx.Resolver.GrantMayPlayOrUse(ctx.Controller, houses, e.Grant, e.Types, e.Count)
+	ctx.Resolver.GrantMayPlayOrUse(ctx.Controller, houses, e.Grant, e.Types, e.Cards)
 }

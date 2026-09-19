@@ -155,6 +155,18 @@ func (e CreatureEnraged) Text(n Namer) string {
 	return fmt.Sprintf("%s is enraged", n.Name(e.Creature))
 }
 
+// CreatureEnrageRemoved narrates a creature losing its enrage after being used to
+// fight, when KeyForge removes all enrage counters from it. Only the fighter loses
+// it, so there is no source to name.
+type CreatureEnrageRemoved struct {
+	Creature LocalID
+}
+
+// Text renders the fighter that is no longer enraged.
+func (e CreatureEnrageRemoved) Text(n Namer) string {
+	return fmt.Sprintf("%s is no longer enraged", n.Name(e.Creature))
+}
+
 // CreatureWarded narrates a card being warded, and by what — unless the source is
 // the card itself, which reads better left passive. AlreadyWarded marks a ward
 // that found its target already warded: the source still had to choose it, so the

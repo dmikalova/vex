@@ -37,36 +37,42 @@ func (g *game) runAction(ctx app.Context, fn func() error) {
 			g.handOffEndedTurn()
 			return nil
 		})
-		g.dispatch(func(ctx app.Context) {
-			g.busy = false
-			// A manual-mode Cancel drained this action; roll it back to the snapshot
-			// beginAction recorded and remake the cancel channel for the next action.
-			cancelled := g.cancelling
-			g.cancelling = false
-			g.chooser.cancel = make(chan struct{})
-			g.chooser.cancelled = false
-			if crashed {
-				// A corrupt engine state can panic mid-action (e.g. an
-				// out-of-range card id). Peel the partial action back off the
-				// command log and replay so the board stays consistent, then
-				// surface the failure instead of freezing on "resolving…".
-				g.rollbackLastRoot()
-				g.setStatus(err.Error())
-				g.save(ctx)
-				return
-			}
-			if cancelled {
-				g.rollbackLastRoot()
-				g.save(ctx)
-				return
-			}
-			if err != nil {
-				g.setStatus(err.Error())
-			}
-			g.afterAction()
-			g.save(ctx)
-		})
+		g.dispatch(func(ctx app.Context) { g.finishAction(ctx, crashed, err) })
 	})
+}
+
+// finishAction settles a resolved root action on the UI goroutine: it clears the
+// busy flag and remakes the chooser cancel channel, then either rolls the action
+// back (a crash or a manual-mode Cancel), surfaces an illegal-move rejection, or
+// commits it with afterAction. Either way the match is saved.
+func (g *game) finishAction(ctx app.Context, crashed bool, err error) {
+	g.busy = false
+	// A manual-mode Cancel drained this action; roll it back to the snapshot
+	// beginAction recorded and remake the cancel channel for the next action.
+	cancelled := g.cancelling
+	g.cancelling = false
+	g.chooser.cancel = make(chan struct{})
+	g.chooser.cancelled = false
+	if crashed {
+		// A corrupt engine state can panic mid-action (e.g. an
+		// out-of-range card id). Peel the partial action back off the
+		// command log and replay so the board stays consistent, then
+		// surface the failure instead of freezing on "resolving…".
+		g.rollbackLastRoot()
+		g.setStatus(err.Error())
+		g.save(ctx)
+		return
+	}
+	if cancelled {
+		g.rollbackLastRoot()
+		g.save(ctx)
+		return
+	}
+	if err != nil {
+		g.setStatus(err.Error())
+	}
+	g.afterAction()
+	g.save(ctx)
 }
 
 // runSafely runs a root action, converting a panic from a corrupt engine state
@@ -130,6 +136,15 @@ func (g *game) markTakeoff(id engine.LocalID) {
 	g.takeoffID, g.takingOff = id, true
 }
 
+// flyIntoPlayDurMS and flyIntoPlayEasing tune the hand-to-board slide of a
+// just-played card; flyIntoPlayZIndex lifts it above the settled board while it
+// travels. Keep the duration in step with the CSS card transitions.
+const (
+	flyIntoPlayDurMS  = 260
+	flyIntoPlayEasing = "cubic-bezier(0.2, 0.8, 0.3, 1)"
+	flyIntoPlayZIndex = "40"
+)
+
 // flyIntoPlay slides a just-played card from the hand slot it left to the board
 // slot it landed in, so the card the player let go of is the card that arrives
 // rather than one fading in beside it. It runs on the render that first shows
@@ -150,10 +165,10 @@ func (g *game) flyIntoPlay() {
 		g.takeoff.y-to.Get("top").Float())
 	el.Call("animate",
 		[]any{
-			map[string]any{"transform": from, "zIndex": "40"},
-			map[string]any{"transform": "none", "zIndex": "40"},
+			map[string]any{"transform": from, "zIndex": flyIntoPlayZIndex},
+			map[string]any{"transform": "none", "zIndex": flyIntoPlayZIndex},
 		},
-		map[string]any{"duration": 260, "easing": "cubic-bezier(0.2, 0.8, 0.3, 1)"})
+		map[string]any{"duration": flyIntoPlayDurMS, "easing": flyIntoPlayEasing})
 }
 
 // beginAction starts a new log group for the root action about to run and marks

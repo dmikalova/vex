@@ -602,27 +602,31 @@ func TestZoneTipNamesTheCardsInAFaceUpPile(t *testing.T) {
 	if !ok {
 		t.Fatalf("no card named %q", testCreature)
 	}
-	names := c.g.zoneNames(
+	names := c.g.zoneNames(zoneView{
 		c.g.active(),
-		"Discard",
+		zoneDiscardLabel,
 		[]engine.LocalID{c.g.g.AddToDiscard(*def, c.g.active())},
-	)
+	})
 	if len(names) != 1 || names[0] != testCreature {
 		t.Fatalf("discard tip listed %v, want [%s]", names, testCreature)
 	}
 	// The player may review their own deck (sorted so its order stays hidden).
-	own := c.g.zoneNames(
+	own := c.g.zoneNames(zoneView{
 		c.g.active(),
-		"Deck",
+		zoneDeckLabel,
 		[]engine.LocalID{c.g.g.AddToDeck(*def, c.g.active())},
-	)
+	})
 	if len(own) != 1 || own[0] != testCreature {
 		t.Errorf("own deck roster listed %v, want [%s]", own, testCreature)
 	}
-	if got := c.g.zoneNames(1-c.g.active(), "Deck", []engine.LocalID{1}); got != nil {
+	if got := c.g.zoneNames(
+		zoneView{1 - c.g.active(), zoneDeckLabel, []engine.LocalID{1}},
+	); got != nil {
 		t.Errorf("an opponent's deck leaked its names: %v", got)
 	}
-	if got := c.g.zoneNames(1-c.g.active(), "Hand", []engine.LocalID{1}); got != nil {
+	if got := c.g.zoneNames(
+		zoneView{1 - c.g.active(), zoneHandLabel, []engine.LocalID{1}},
+	); got != nil {
 		t.Errorf("an opponent's hand leaked its names: %v", got)
 	}
 }
@@ -642,7 +646,9 @@ func TestArchivesPillReadableToItsOwnerOnly(t *testing.T) {
 	id := c.g.g.AddToArchives(*def, p)
 
 	// The owner sees a roster naming their archived card.
-	if roster := c.g.zoneRoster(p, "Archives", []engine.LocalID{id}); roster == nil {
+	if roster := c.g.zoneRoster(
+		zoneView{p, zoneArchivesLabel, []engine.LocalID{id}},
+	); roster == nil {
 		t.Fatal("the owner's Archives pill got no roster; it should list its cards")
 	}
 	ownerHTML := app.HTMLString(app.Div().Body(c.g.zoneCounts(p)...))
@@ -652,16 +658,18 @@ func TestArchivesPillReadableToItsOwnerOnly(t *testing.T) {
 
 	// An opponent sees only the count through the plain tip — no roster, no names.
 	opp := 1 - p
-	if roster := c.g.zoneRoster(opp, "Archives", []engine.LocalID{id}); roster != nil {
+	if roster := c.g.zoneRoster(
+		zoneView{opp, zoneArchivesLabel, []engine.LocalID{id}},
+	); roster != nil {
 		t.Fatal("an opponent's Archives pill got a roster; it should stay hidden")
 	}
-	if got := c.g.zoneNames(opp, "Archives", []engine.LocalID{id}); got != nil {
+	if got := c.g.zoneNames(zoneView{opp, zoneArchivesLabel, []engine.LocalID{id}}); got != nil {
 		t.Errorf("an opponent's archives leaked its names: %v", got)
 	}
 
 	// An opponent's deck is hidden and not a labelled zone of its own, so it stays a
 	// plain tip with no popover.
-	if got := c.g.zoneRoster(opp, "Deck", []engine.LocalID{id}); got != nil {
+	if got := c.g.zoneRoster(zoneView{opp, zoneDeckLabel, []engine.LocalID{id}}); got != nil {
 		t.Error("a hidden opponent deck got a roster popover")
 	}
 }
@@ -721,7 +729,7 @@ func TestDeckReadingOrderMatchesDeckList(t *testing.T) {
 	}
 	want := []string{"Bbb Beast", "Ccc Relic", "Aaa Tactic"}
 
-	got := c.g.zoneNames(me, "Deck", ids)
+	got := c.g.zoneNames(zoneView{me, zoneDeckLabel, ids})
 	if !equalStrings(got, want) {
 		t.Errorf("deck tooltip order = %v, want %v (Tactic last)", got, want)
 	}

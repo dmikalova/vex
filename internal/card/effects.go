@@ -149,6 +149,22 @@ type (
 	Bottom = engine.Bottom
 )
 
+// Quantity is how many cards a movement verb takes, the axis that varies
+// independently of which cards a Selection picks.
+type (
+	// Quantity says how many cards a movement verb takes; set it beside Selection.
+	Quantity = engine.Quantity
+	// Takes takes N cards — card.Takes{N: card.Fixed(2)} for a plain "2 cards", or
+	// a board Count for "for each …, take a card".
+	Takes = engine.Takes
+	// UpTo takes at most N cards, letting the controller stop early ("up to 2
+	// cards"); pair it with an Optional Chosen.
+	UpTo = engine.UpTo
+	// AnyNumber takes as many as the controller likes, one at a time, until they
+	// decline; pair it with an Optional Chosen.
+	AnyNumber = engine.AnyNumber
+)
+
 // Destruction and purging.
 type (
 	// Destroy removes the creatures its Target selects from play.
@@ -200,9 +216,6 @@ type (
 	// your next turn" suffix (the Mutation cycle grants a keyword and the Mutant
 	// trait together).
 	GainUntilNextTurn = engine.GainUntilNextTurn
-	// PurgeArchives purges any number of cards from your archives, recording the
-	// tally a following CardsPurged scales by (Destructive Analysis).
-	PurgeArchives = engine.PurgeArchives
 	// PurgeArchivedCardThen optionally purges a card from your archives to pay for
 	// a follow-up effect (Yzphyz Knowdrone purges to stun a creature).
 	PurgeArchivedCardThen = engine.PurgeArchivedCardThen
@@ -248,19 +261,18 @@ type (
 	AttachSelfTo = engine.AttachSelfTo
 	// PutFromPlay takes each targeted card out of play into a chosen Destination.
 	PutFromPlay = engine.PutFromPlay
-	// PutChosen moves Amount cards the controller chooses into a Destination,
-	// declinably when UpTo is set.
+	// PutChosen moves a Quantity of cards the controller chooses into a Destination,
+	// declinably when that Quantity is UpTo.
 	PutChosen = engine.PutChosen
-	// PutFromDiscard moves cards from your discard pile to a Destination, with a
-	// Selection (Chosen or Each) deciding which cards.
-	PutFromDiscard = engine.PutFromDiscard
+	// PutCard moves cards out of one or more of your own zones — your discard pile,
+	// or play as well — to a Destination, with a Selection (Chosen or Each) deciding
+	// which cards.
+	PutCard = engine.PutCard
 	// Filter is a predicate selecting cards by type, trait, and/or name, with Or
 	// alternatives — e.g. an upgrade or a Robot card. It is a Chosen/Each Or element.
 	Filter = engine.CardFilter
 	// PutFromHand puts a chosen card from your hand directly into play.
 	PutFromHand = engine.PutFromHand
-	// PutNamedIntoHand puts a chosen card of a given name into its owner's hand.
-	PutNamedIntoHand = engine.PutNamedIntoHand
 	// PutItIntoHand puts the creature in context ("it") into its owner's hand,
 	// recovering it from the discard pile when it was already destroyed (Nizak, The
 	// Forgotten recovers an enemy destroyed fighting it).
@@ -279,16 +291,14 @@ type (
 	// it first: nothing (the bare "shuffle your deck" a search ends on, also a
 	// RevealTopOfDeck/LookAtTopOfDeck routing terminal — Borr Nit) or whole Zones
 	// (hand, discard, archives). To fold every friendly card in play into the deck
-	// instead, use ShuffleFriendlyCardsIntoDeck.
+	// instead, use ShuffleIntoDeck with From: card.InPlay.
 	Shuffle = engine.Shuffle
-	// ShuffleFriendlyCardsIntoDeck folds every friendly card in play plus its
-	// upgrades into its owner's deck, tallying how many returned to each owner's deck
-	// so a following Draw{Per: CardsShuffledIntoDeck} draws one card for each card
-	// that returned to your own deck (Timequake).
-	ShuffleFriendlyCardsIntoDeck = engine.ShuffleFriendlyCardsIntoDeck
 	// ShuffleIntoDeck shuffles the cards a Selection picks from your own zones (From:
-	// card.Discard, card.Hand, card.Battleline) into your deck — each match, any number of
-	// a chosen kind, or a counted number.
+	// card.Hand, card.Discard, card.InPlay) into your deck — each match, any number of
+	// a chosen kind, or a counted number. An in-play source reaches upgrades as cards
+	// in their own right, so Each{} folds the whole board home (Timequake). It tallies
+	// per owner, so a following Draw{Per: CardsShuffledIntoDeck} draws one card for
+	// each card that returned to your own deck.
 	ShuffleIntoDeck = engine.ShuffleIntoDeck
 	// SwapDeckAndDiscard exchanges the controller's deck with their discard pile,
 	// then shuffles.
@@ -929,7 +939,7 @@ type (
 )
 
 // Counter groups the generic counter kinds a card can place or read, e.g.
-// card.PlaceCounter{Kind: card.Counter.Doom, Target: card.Target.ChosenCreature}.
+// card.PlaceCounter{Amount: 1, Kind: card.Counter.Doom, Target: card.Target.ChosenCreature}.
 var Counter = counters{
 	Doom:       engine.CounterDoom,
 	Fuse:       engine.CounterFuse,

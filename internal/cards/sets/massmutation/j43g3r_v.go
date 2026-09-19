@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // J43G3R V
 //
 //	House:  Star Alliance
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  8
 //	Armor:  2

@@ -20,7 +20,7 @@ var BonkersKillingMachine = set.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{
 			Effects: []card.Effect{
-				card.DiscardTop{Player: card.EachPlayer},
+				card.DiscardTop{Amount: 1, Player: card.EachPlayer},
 				card.ForEachDiscarded{
 					Do: card.Destroy{
 						Target: card.Target.CreatureOrArtifact.House(card.Houses.Contextual),

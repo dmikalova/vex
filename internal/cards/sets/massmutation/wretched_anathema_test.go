@@ -10,7 +10,7 @@ import (
 // Wretched Anathema
 //
 //	House:  Dis
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Special
 //	Power:  10
 //	Traits: Demon

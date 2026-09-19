@@ -23,12 +23,11 @@ var MindBarb = set.New(
 				Player:    card.Controller,
 				Zones:     []card.Zone{card.Hand},
 				Selection: card.Chosen{},
-				Amount:    1,
 			},
 			card.DiscardCard{
 				Player:    card.Opponent,
 				Zones:     []card.Zone{card.Hand},
-				Selection: card.Random{Count: 1},
+				Selection: card.Random{},
 			},
 		},
 	}),

@@ -141,6 +141,46 @@ func TestLastingOnceReadiesMatchingHouseAndSelfRemoves(t *testing.T) {
 	}
 }
 
+// TestEnteringPlayIsOneEventWhicheverWay pins that a card put into play fires the
+// EventCardEntersPlay lasting reactions, exactly as a card played from hand does.
+// The two arrivals once disagreed: putIntoPlay fired the AfterCreatureEnters
+// trigger but never the lasting event of the same name, because each play path
+// appended that event by hand and putIntoPlay was not a play path. Both now gather
+// it through abilityWindow.addEntersPlay, so a new arrival cannot miss it.
+func TestEnteringPlayIsOneEventWhicheverWay(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		typ  CardType
+	}{{"creature", Creature}, {"artifact", Artifact}} {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewGame("A", "B", 1)
+			id := g.Register(NewCard("arrival", Mars, tc.typ, Common, WithPower(3)), 0)
+			g.State.Deck[0].add(id)
+
+			g.AddLasting(LastingEffect{
+				On:         EventCardEntersPlay,
+				Do:         actReadyPlayed,
+				Controller: 0,
+				House:      anyHouse,
+				Type:       AnyType,
+				Once:       true,
+			})
+
+			g.putIntoPlay(id, 0)
+
+			if g.State.LastingCount != 0 {
+				t.Errorf(
+					"a card put into play should consume the entry, count = %d",
+					g.State.LastingCount,
+				)
+			}
+			if g.State.Cards[id].Exhausted {
+				t.Error("the lasting reaction should have readied the arrival")
+			}
+		})
+	}
+}
+
 // TestLastingOnceFiltersByCardType covers the type filter a "next creature or
 // artifact" entry carries (Soft Landing): an upgrade play is passed over, while a
 // creature and an artifact both satisfy it.

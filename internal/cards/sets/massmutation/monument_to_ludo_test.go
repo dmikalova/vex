@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Traits: Location
 //
-//	Action: If Praefectus Ludo is in your discard pile, move 2 Æmber from a creature to the common supply. Otherwise, move 1 Æmber from a creature to the common supply.
+//	Action: Move 1 Æmber from a creature to the common supply. If Praefectus Ludo is in your discard pile, move 1 Æmber from the chosen creature to the common supply.
 func TestMonumentToLudo(t *testing.T) {
 	t.Run("moves 1 Æmber from the chosen creature to the common supply", func(t *testing.T) {
 		var rich ct.Card

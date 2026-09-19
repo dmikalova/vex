@@ -82,20 +82,23 @@ func TestMoveAember(t *testing.T) {
 	if got := toOpp.Text(); got != "move 2 \u00c6mber from a friendly creature or artifact to your opponent's pool" {
 		t.Errorf("opponent-pool text = %q", got)
 	}
-	toCard := MoveAember{From: friendly, Onto: Target{Kind: TargetChosenEnemyCreature}}
+	toCard := MoveAember{Amount: 1, From: friendly, Onto: Target{Kind: TargetChosenEnemyCreature}}
 	if got := toCard.Text(); got != "move 1 \u00c6mber from a friendly creature or artifact to an enemy creature" {
 		t.Errorf("card text = %q", got)
 	}
 
 	// validate: source and exactly one destination.
-	if (MoveAember{To: Controller}).validate() == nil {
+	if (MoveAember{Amount: 1, To: Controller}).validate() == nil {
 		t.Error("unset source should be invalid")
 	}
-	if (MoveAember{From: friendly}).validate() == nil {
+	if (MoveAember{Amount: 1, From: friendly}).validate() == nil {
 		t.Error("no destination should be invalid")
 	}
-	if (MoveAember{From: friendly, To: Controller, Onto: friendly}).validate() == nil {
+	if (MoveAember{Amount: 1, From: friendly, To: Controller, Onto: friendly}).validate() == nil {
 		t.Error("two destinations should be invalid")
+	}
+	if (MoveAember{From: friendly, To: Controller}).validate() == nil {
+		t.Error("an unset amount should be invalid without All or Fraction")
 	}
 	if toPool.validate() != nil || toCard.validate() != nil {
 		t.Error("one destination should be valid")
@@ -125,7 +128,13 @@ func TestMoveAember(t *testing.T) {
 	// No source carries Æmber: nothing happens.
 	g3 := NewGame("A", "B", 1)
 	g3.AddToBattleline(testCreature("bare", 3), 0)
-	MoveAember{From: friendly, To: Controller}.Resolve(&EffectContext{Resolver: g3, Controller: 0})
+	MoveAember{
+		Amount: 1,
+		From:   friendly,
+		To:     Controller,
+	}.Resolve(
+		&EffectContext{Resolver: g3, Controller: 0},
+	)
 	if g3.Aember(0) != 0 {
 		t.Error("moving with no Æmber-bearing card should do nothing")
 	}
@@ -134,7 +143,7 @@ func TestMoveAember(t *testing.T) {
 	g4 := NewGame("A", "B", 1)
 	only := g4.AddToBattleline(testCreature("only", 3), 0)
 	g4.AddAmberOn(only, 1)
-	MoveAember{From: friendly, Onto: Target{Kind: TargetChosenEnemyCreature}}.
+	MoveAember{Amount: 1, From: friendly, Onto: Target{Kind: TargetChosenEnemyCreature}}.
 		Resolve(&EffectContext{Resolver: g4, Controller: 0})
 	if g4.AmberOn(only) != 1 {
 		t.Error("a move with no destination card should move nothing")
@@ -215,8 +224,14 @@ func TestMoveAemberDeclined(t *testing.T) {
 	g.AddAmberOn(a, 1)
 	g.AddAmberOn(b, 1)
 	g.SetChooser(0, orderRejectChooser{})
-	MoveAember{From: Target{Kind: TargetChosenFriendlyCreatureOrArtifact}, To: Controller}.
-		Resolve(&EffectContext{Resolver: g, Controller: 0})
+	MoveAember{
+		Amount: 1,
+		From:   Target{Kind: TargetChosenFriendlyCreatureOrArtifact},
+		To:     Controller,
+	}.
+		Resolve(
+			&EffectContext{Resolver: g, Controller: 0},
+		)
 	if g.Aember(0) != 0 {
 		t.Error("a declined move should move nothing")
 	}

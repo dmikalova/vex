@@ -619,14 +619,14 @@ func (c *declineAfterChooser) ChooseCardOrDecline(_, _ string, _ []LocalID) (Loc
 }
 
 func TestSpreadUpToCreatures(t *testing.T) {
-	t.Run("damages up to Count creatures and tallies the kills", func(t *testing.T) {
+	t.Run("damages up to Creatures creatures and tallies the kills", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		g.AddToBattleline(testCreature("a", 1), 1)
 		g.AddToBattleline(testCreature("b", 1), 1)
 		g.AddToBattleline(testCreature("c", 1), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		e := DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1}}
+		e := DealDamage{Spread: UpToCreatures{Creatures: 3, Amount: 1}}
 		if e.Text() != "deal 1 damage to up to 3 creatures" {
 			t.Errorf("text = %q", e.Text())
 		}
@@ -640,7 +640,7 @@ func TestSpreadUpToCreatures(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		a := g.AddToBattleline(testCreature("a", 5), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
-		DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1}}.Resolve(ctx)
+		DealDamage{Spread: UpToCreatures{Creatures: 3, Amount: 1}}.Resolve(ctx)
 		if g.Damage(a) != 1 {
 			t.Errorf("damage = %d, want 1", g.Damage(a))
 		}
@@ -655,7 +655,7 @@ func TestSpreadUpToCreatures(t *testing.T) {
 		b := g.AddToBattleline(testCreature("b", 5), 1)
 		g.SetChooser(0, &declineAfterChooser{ids: []LocalID{a}})
 		ctx := &EffectContext{Resolver: g, Controller: 0}
-		DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1}}.Resolve(ctx)
+		DealDamage{Spread: UpToCreatures{Creatures: 3, Amount: 1}}.Resolve(ctx)
 		if g.Damage(a) != 1 || g.Damage(b) != 0 {
 			t.Errorf("damage = %d/%d, want 1/0", g.Damage(a), g.Damage(b))
 		}
@@ -663,16 +663,16 @@ func TestSpreadUpToCreatures(t *testing.T) {
 
 	t.Run("with no creatures, does nothing", func(_ *testing.T) {
 		g := NewGame("A", "B", 1)
-		DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1}}.Resolve(
+		DealDamage{Spread: UpToCreatures{Creatures: 3, Amount: 1}}.Resolve(
 			&EffectContext{Resolver: g, Controller: 0},
 		)
 	})
 
 	t.Run("validate rejects a Count below one", func(t *testing.T) {
-		if (DealDamage{Spread: UpToCreatures{Count: 0, Amount: 1}}).validate() == nil {
+		if (DealDamage{Spread: UpToCreatures{Creatures: 0, Amount: 1}}).validate() == nil {
 			t.Error("Count 0 should be invalid")
 		}
-		if (DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1}}).validate() != nil {
+		if (DealDamage{Spread: UpToCreatures{Creatures: 3, Amount: 1}}).validate() != nil {
 			t.Error("Count 3 should be valid")
 		}
 	})
@@ -684,7 +684,7 @@ func TestSpreadUpToCreatures(t *testing.T) {
 		g.SetDamage(hurt, 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		e := DealDamage{Spread: UpToCreatures{Count: 3, Amount: 2, Undamaged: true}}
+		e := DealDamage{Spread: UpToCreatures{Creatures: 3, Amount: 2, Undamaged: true}}
 		if got := e.Text(); got != "deal 2 damage to up to 3 undamaged creatures" {
 			t.Errorf("text = %q", got)
 		}
@@ -704,7 +704,7 @@ func TestSpreadUpToCreatures(t *testing.T) {
 		g.SetDamage(hurt, 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		e := DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1, WhenDamaged: 3}}
+		e := DealDamage{Spread: UpToCreatures{Creatures: 3, Amount: 1, WhenDamaged: 3}}
 		if got := e.Text(); got !=
 			"choose up to 3 creatures. Deal 1 damage to each chosen creature. "+
 				"Deal 3 damage instead to each chosen creature that was already damaged" {
@@ -720,7 +720,7 @@ func TestSpreadUpToCreatures(t *testing.T) {
 	})
 
 	t.Run("validate rejects WhenDamaged combined with Undamaged", func(t *testing.T) {
-		if (DealDamage{Spread: UpToCreatures{Count: 2, Amount: 1, WhenDamaged: 3, Undamaged: true}}).
+		if (DealDamage{Spread: UpToCreatures{Creatures: 2, Amount: 1, WhenDamaged: 3, Undamaged: true}}).
 			validate() == nil {
 			t.Error("WhenDamaged + Undamaged should be invalid")
 		}
@@ -847,15 +847,15 @@ func TestDamageThenIfSurvives(t *testing.T) {
 		Amount: 3,
 		After:  IfSurvives,
 		Target: Target{Kind: TargetChosenCreature},
-		Then:   DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{Count: 1}},
+		Then:   DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{}},
 	}
 	if e.Text() != "deal 3 damage to a creature. If it is not destroyed, its owner discards a random card from their hand" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if (DealDamage{After: IfSurvives, Then: DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).validate() == nil {
+	if (DealDamage{After: IfSurvives, Then: DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{}}}).validate() == nil {
 		t.Error("unset target should be invalid")
 	}
-	if (DealDamage{Target: Target{Kind: TargetChosenCreature}, After: IfSurvives, Then: DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).validate() != nil {
+	if (DealDamage{Target: Target{Kind: TargetChosenCreature}, After: IfSurvives, Then: DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{}}}).validate() != nil {
 		t.Error("a set target with a valid follow-up should pass")
 	}
 
@@ -871,7 +871,7 @@ func TestDamageThenIfSurvives(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	dead := g2.AddToBattleline(testCreature("d", 2), 1)
 	g2.AddToHand(testCreature("keep", 1), 1)
-	(DealDamage{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).Resolve(
+	(DealDamage{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{}}}).Resolve(
 		&EffectContext{Resolver: g2, Controller: 0},
 	)
 	if g2.inPlay(dead) {
@@ -883,7 +883,7 @@ func TestDamageThenIfSurvives(t *testing.T) {
 
 	// No creature to target: nothing happens.
 	g3 := NewGame("A", "B", 1)
-	(DealDamage{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{Count: 1}}}).Resolve(
+	(DealDamage{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{}}}).Resolve(
 		&EffectContext{Resolver: g3, Controller: 0},
 	)
 }

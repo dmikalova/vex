@@ -13,23 +13,27 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Archive a card from your hand. Archive Causal Loop.
+//	Play: Archive 2 cards from your hand. Archive Causal Loop.
 func TestCausalLoop(t *testing.T) {
-	t.Run("archives a card and itself", func(t *testing.T) {
-		var other ct.Card
+	t.Run("archives two cards and itself", func(t *testing.T) {
+		var first, second ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House: card.House.Logos,
 				Hand: ct.Cards(
 					CausalLoop,
-					ct.Bind(&other, ct.Creature()),
+					ct.Bind(&first, ct.Creature()),
+					ct.Bind(&second, ct.Creature()),
 				),
 			},
 		})
 
 		h.P1.Play(CausalLoop)
+		// The second archive has only one card left, so it needs no click.
+		h.P1.ClickCard(first)
 
-		h.Expect(other).At(ct.Archives)
+		h.Expect(first).At(ct.Archives)
+		h.Expect(second).At(ct.Archives)
 		h.Expect(CausalLoop).At(ct.Archives)
 	})
 }

@@ -21,6 +21,10 @@ var WitchOfTheEye = set.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithAbility(
 		card.Trigger.Reap,
-		card.PutFromDiscard{Selection: card.Chosen{}, Destination: card.To.Hand},
+		card.PutCard{
+			Zones:       []card.Zone{card.Discard},
+			Selection:   card.Chosen{},
+			Destination: card.To.Hand,
+		},
 	),
 )

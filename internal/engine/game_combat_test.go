@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"strings"
 	"testing"
 )
@@ -26,12 +27,12 @@ func TestFight(t *testing.T) {
 	// Invalid target: a friendly creature.
 	friend := g.AddToBattleline(testCreature("friend", 2), 0)
 	att2 := g.AddToBattleline(testCreature("att2", 2), 0)
-	if err := g.Fight(0, att2, friend); err != ErrNoTarget {
+	if err := g.Fight(0, att2, friend); !errors.Is(err, ErrNoTarget) {
 		t.Errorf("err = %v, want ErrNoTarget", err)
 	}
 	// Invalid attacker: exhausted (fails via canUse before target checks).
 	g.State.Cards[att2].Exhausted = true
-	if err := g.Fight(0, att2, friend); err != ErrCardExhausted {
+	if err := g.Fight(0, att2, friend); !errors.Is(err, ErrCardExhausted) {
 		t.Errorf("err = %v, want ErrCardExhausted", err)
 	}
 }
@@ -42,7 +43,7 @@ func TestGrantFightForHouse(t *testing.T) {
 	def := g.AddToBattleline(testCreature("def", 3), 1)
 
 	// Without a grant, an out-of-house creature cannot fight.
-	if err := g.Fight(0, att, def); err != ErrWrongHouse {
+	if err := g.Fight(0, att, def); !errors.Is(err, ErrWrongHouse) {
 		t.Fatalf("without grant: err = %v, want ErrWrongHouse", err)
 	}
 
@@ -55,14 +56,14 @@ func TestGrantFightForHouse(t *testing.T) {
 	// A creature of another house is still barred.
 	att2 := g.AddToBattleline(NewCard("holy", Sanctum, Creature, Common, WithPower(5)), 0)
 	def2 := g.AddToBattleline(testCreature("def2", 3), 1)
-	if err := g.Fight(0, att2, def2); err != ErrWrongHouse {
+	if err := g.Fight(0, att2, def2); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("other-house attacker: err = %v, want ErrWrongHouse", err)
 	}
 
 	// The ready phase clears the grant.
 	g.EndPlayPhase(0)
 	def3 := g.AddToBattleline(testCreature("def3", 3), 1)
-	if err := g.Fight(0, att, def3); err != ErrWrongHouse {
+	if err := g.Fight(0, att, def3); !errors.Is(err, ErrWrongHouse) {
 		t.Errorf("after EndPlayPhase: err = %v, want ErrWrongHouse (grant cleared)", err)
 	}
 }
@@ -238,7 +239,7 @@ func TestCamouflageBlocksNonFlankAttackers(t *testing.T) {
 	if got := g.FightTargets(0, mid); len(got) != 0 {
 		t.Errorf("FightTargets for interior attacker = %v, want none", got)
 	}
-	if err := g.Fight(0, mid, defender); err != ErrNoTarget {
+	if err := g.Fight(0, mid, defender); !errors.Is(err, ErrNoTarget) {
 		t.Errorf("interior attacker Fight err = %v, want ErrNoTarget", err)
 	}
 
@@ -502,7 +503,7 @@ func TestBeforeFightCanCancelFight(t *testing.T) {
 		WithPower(5),
 		WithAssault(2),
 		WithAbility(TriggerBeforeFight, Sequence{Effects: []Effect{
-			DiscardTop{},
+			DiscardTop{Amount: 1},
 			Conditional{Cond: ItIs{House: activeHouse}, Then: CancelFight{}},
 		}}),
 		WithAbility(TriggerAfterFight, GainAember{Player: Controller, Amount: 1}),
@@ -545,7 +546,7 @@ func TestBeforeFightCancelMissStillFights(t *testing.T) {
 	attacker := g.AddToBattleline(NewCard("evader", Brobnar, Creature, Common,
 		WithPower(9),
 		WithAbility(TriggerBeforeFight, Sequence{Effects: []Effect{
-			DiscardTop{},
+			DiscardTop{Amount: 1},
 			Conditional{Cond: ItIs{House: activeHouse}, Then: CancelFight{}},
 		}}),
 		WithAbility(TriggerAfterFight, GainAember{Player: Controller, Amount: 1}),
@@ -821,7 +822,7 @@ func TestFightRestriction(t *testing.T) {
 	def := g.AddToBattleline(testCreature("def", 3), 1)
 
 	// An unstunned enemy is not a legal target.
-	if err := g.Fight(0, att, def); err != ErrNoTarget {
+	if err := g.Fight(0, att, def); !errors.Is(err, ErrNoTarget) {
 		t.Errorf("fight unstunned = %v, want ErrNoTarget", err)
 	}
 
@@ -903,10 +904,10 @@ func TestTauntProtectsNeighbors(t *testing.T) {
 	if got := g.FightTargets(0, att); len(got) != 2 || got[0] != taunter || got[1] != far {
 		t.Errorf("FightTargets = %v, want [%d %d]", got, taunter, far)
 	}
-	if err := g.Fight(0, att, left); err != ErrNoTarget {
+	if err := g.Fight(0, att, left); !errors.Is(err, ErrNoTarget) {
 		t.Errorf("fighting a taunt neighbor: err = %v, want ErrNoTarget", err)
 	}
-	if err := g.Fight(0, att, right); err != ErrNoTarget {
+	if err := g.Fight(0, att, right); !errors.Is(err, ErrNoTarget) {
 		t.Errorf("fighting a taunt neighbor: err = %v, want ErrNoTarget", err)
 	}
 	if err := g.Fight(0, att, taunter); err != nil {
@@ -982,7 +983,7 @@ func TestTauntReachesNeighborsNeighbors(t *testing.T) {
 	if got := g.FightTargets(0, att); len(got) != 2 || got[0] != a || got[1] != loreena {
 		t.Errorf("FightTargets = %v, want [%d %d]", got, a, loreena)
 	}
-	if err := g.Fight(0, att, b); err != ErrNoTarget {
+	if err := g.Fight(0, att, b); !errors.Is(err, ErrNoTarget) {
 		t.Errorf("fighting a distance-2 creature: err = %v, want ErrNoTarget", err)
 	}
 

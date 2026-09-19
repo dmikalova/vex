@@ -582,10 +582,55 @@ func TestDiscardDestroyedIgnoresWard(t *testing.T) {
 	}
 }
 
+// TestUpgradeAbilitiesBelongToItsHost pins why every upgrade exit can share the
+// ordinary leave-play teardown. An upgrade's abilities are granted to its host
+// (upgradeGrantedTriggers), not held by the upgrade itself, so a "Leaves Play:"
+// printed on an upgrade fires when the HOST leaves play and never when the upgrade
+// alone is shed. Routing an upgrade through emitLeavesPlay therefore cannot
+// double-fire anything — which is what makes discard, hand, and archive able to
+// use one path.
+func TestUpgradeAbilitiesBelongToItsHost(t *testing.T) {
+	parting := func() CardDefinition {
+		return NewCard("Parting Gift", Mars, Upgrade, Common,
+			WithStatic(StaticModifier{Granted: []Ability{
+				{Trigger: TriggerLeavesPlay, Effect: GainAember{Player: Controller, Amount: 1}},
+			}}))
+	}
+
+	t.Run("fires when the host leaves play", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		host := g.AddToBattleline(testCreature("Host", 3), 0)
+		g.AttachUpgrade(host, g.Register(parting(), 0))
+
+		g.PutIntoHand(host)
+
+		if got := g.Aember(0); got != 1 {
+			t.Errorf("the host should have fired the upgrade's granted ability; Æmber = %d", got)
+		}
+	})
+
+	t.Run("silent when only the upgrade is shed", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		host := g.AddToBattleline(testCreature("Host", 3), 0)
+		up := g.Register(parting(), 0)
+		g.AttachUpgrade(host, up)
+
+		g.archiveUpgrade(up)
+
+		if got := g.Aember(0); got != 0 {
+			t.Errorf("shedding the upgrade alone must not fire the grant; Æmber = %d", got)
+		}
+	})
+}
+
 // TestUpgradeReleasesAemberOnLeavingHost checks an upgrade gets the same teardown
 // as any other card leaving play, by whichever exit it takes. Æmber on a
 // non-creature returns to the common supply (Master Rulebook line 927), so an
-// upgrade must never carry it into the discard pile or a hand.
+// upgrade must never carry it into the discard pile or a hand. The manual exit is
+// in the table because manual mode skips rule *checks*, not the conservation of
+// the Æmber supply — it once sailed past releaseAemberOnLeavePlay and destroyed
+// the Æmber outright. resetCore zeroes the card either way, so only the log entry
+// tells a release apart from a quiet deletion.
 func TestUpgradeReleasesAemberOnLeavingHost(t *testing.T) {
 	cases := []struct {
 		name string
@@ -599,7 +644,17 @@ func TestUpgradeReleasesAemberOnLeavingHost(t *testing.T) {
 		},
 		{
 			"returned to hand",
-			func(g *Game, host LocalID) { g.returnUpgradesToHand(host) },
+			func(g *Game, host LocalID) { g.PutIntoHand(g.upgradesOf(host)[0]) },
+			func(g *Game, up LocalID) bool { return g.State.Hand[0].contains(up) },
+		},
+		{
+			"archived off its host",
+			func(g *Game, host LocalID) { g.archiveUpgrade(g.upgradesOf(host)[0]) },
+			func(g *Game, up LocalID) bool { return g.State.Archives[0].contains(up) },
+		},
+		{
+			"detached to hand in manual mode",
+			func(g *Game, host LocalID) { g.ManualDetachToHand(g.upgradesOf(host)[0]) },
 			func(g *Game, up LocalID) bool { return g.State.Hand[0].contains(up) },
 		},
 	}
@@ -624,6 +679,16 @@ func TestUpgradeReleasesAemberOnLeavingHost(t *testing.T) {
 			if g.Aember(0) != 0 || g.Aember(1) != 0 {
 				t.Errorf("pools = [%d %d], want [0 0]: a non-creature's Æmber goes to the supply",
 					g.Aember(0), g.Aember(1))
+			}
+			var released bool
+			for _, rec := range g.Log {
+				if m, ok := rec.Entry.(AemberMovedToCommonSupply); ok && m.Card == up &&
+					m.Amount == 2 {
+					released = true
+				}
+			}
+			if !released {
+				t.Error("the Æmber was destroyed, not released: no AemberMovedToCommonSupply entry")
 			}
 		})
 	}

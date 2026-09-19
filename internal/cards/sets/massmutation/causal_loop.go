@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Archive a card from your hand. Archive Causal Loop.
+//	Play: Archive 2 cards from your hand. Archive Causal Loop.
 var CausalLoop = set.New(
 	"Causal Loop",
 	card.House.Logos,
@@ -21,7 +21,7 @@ var CausalLoop = set.New(
 				card.ArchiveCard{
 					Zone:      card.Hand,
 					Selection: card.Chosen{},
-					Amount:    1,
+					Quantity:  card.Takes{N: card.Fixed(2)},
 				},
 				card.ArchiveSource{},
 			},

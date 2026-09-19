@@ -83,6 +83,7 @@ func TestLogEntryText(t *testing.T) {
 		"Card2 is enraged",
 		"Card5 enraged Card2",
 		"Card2 is already enraged",
+		"Card2 is no longer enraged",
 		"Card2 is warded",
 		"Card5 warded Card2",
 		"Card2 is already warded",
@@ -323,7 +324,7 @@ func TestRecordTextSubjectsToSourceCard(t *testing.T) {
 			CreaturesUnstunned{Player: 0, Creatures: []LocalID{2, 5}},
 			"Card7 unstuns Card2 and Card5",
 		},
-		{CardsDrawnBy{Player: 0, Count: 1}, "Card7 has P0 draw 1 card"},
+		{CardsDrawnBy{Player: 0, Cards: 1}, "Card7 has P0 draw 1 card"},
 		{
 			AemberGiven{Giver: 0, Receiver: 1, Amount: 1, Reason: TollUseArtifact},
 			"Card7 has P0 give 1 Æmber to P1 to use an artifact",

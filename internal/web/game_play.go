@@ -346,7 +346,7 @@ func (g *game) canPlayAsUpgrade() bool {
 	if def.Type != engine.Creature || !def.PlayableAsUpgrade {
 		return false
 	}
-	return len(g.g.Battleline(0)) > 0 || len(g.g.Battleline(1)) > 0
+	return g.g.HasUpgradeHost()
 }
 
 // playAsCreature plays the creature-that-could-be-an-upgrade as a creature: it

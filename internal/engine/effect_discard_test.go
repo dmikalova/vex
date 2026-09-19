@@ -8,7 +8,7 @@ func TestMoveFromDiscardToHand(t *testing.T) {
 	g.State.Discard[0].add(c)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := PutFromDiscard{Selection: Chosen{}, Destination: ToHand}
+	e := PutCard{Zones: []Zone{Discard}, Selection: Chosen{}, Destination: ToHand}
 	if e.Text() != "put a card from your discard pile into your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -34,14 +34,28 @@ func TestPutFromDiscardBindsReturnedCard(t *testing.T) {
 	g.State.Discard[0].add(c)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	PutFromDiscard{Selection: Chosen{}, Destination: ToHand, Bind: true}.Resolve(ctx)
+	PutCard{
+		Zones:       []Zone{Discard},
+		Selection:   Chosen{},
+		Destination: ToHand,
+		Bind:        true,
+	}.Resolve(
+		ctx,
+	)
 	if !ctx.HasIt || ctx.It != c {
 		t.Errorf("ctx.It = %v (HasIt %v), want %d bound", ctx.It, ctx.HasIt, c)
 	}
 
 	// Nothing to return binds nothing.
 	ctx2 := &EffectContext{Resolver: g, Controller: 0}
-	PutFromDiscard{Selection: Chosen{}, Destination: ToHand, Bind: true}.Resolve(ctx2)
+	PutCard{
+		Zones:       []Zone{Discard},
+		Selection:   Chosen{},
+		Destination: ToHand,
+		Bind:        true,
+	}.Resolve(
+		ctx2,
+	)
 	if ctx2.HasIt {
 		t.Error("an empty discard should leave ctx.It unset")
 	}
@@ -110,7 +124,7 @@ func TestPutFromDiscardByTrait(t *testing.T) {
 	g.State.Discard[0].add(other)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := PutFromDiscard{
+	e := PutCard{Zones: []Zone{Discard},
 		Selection:   Each{Type: Creature, Trait: Horseman},
 		Destination: ToHand,
 	}
@@ -156,7 +170,11 @@ func TestPutFromDiscardByTraitChoose(t *testing.T) {
 
 	// Not All: the non-Horseman card is filtered out of the candidates, leaving
 	// only the Horseman for the controller to choose.
-	e := PutFromDiscard{Selection: Chosen{Type: Creature, Trait: Horseman}, Destination: ToHand}
+	e := PutCard{
+		Zones:       []Zone{Discard},
+		Selection:   Chosen{Type: Creature, Trait: Horseman},
+		Destination: ToHand,
+	}
 	e.Resolve(ctx)
 	if !g.State.Hand[0].contains(horseman) {
 		t.Error("the Horseman creature should return to hand")
@@ -180,7 +198,7 @@ func TestMoveFromDiscardAll(t *testing.T) {
 	}
 	ctx := &EffectContext{Resolver: g, Controller: 0, ChosenHouse: Dis}
 
-	e := PutFromDiscard{
+	e := PutCard{Zones: []Zone{Discard},
 		Selection:   Each{Type: Creature, House: chosenHouse},
 		Destination: ToHand,
 	}
@@ -213,7 +231,7 @@ func TestPutFromDiscardByName(t *testing.T) {
 	}
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := PutFromDiscard{
+	e := PutCard{Zones: []Zone{Discard},
 		Selection:   Each{Name: "Ortannu's Binding"},
 		Destination: ToHand,
 	}
@@ -244,7 +262,11 @@ func TestPutFromDiscardByNameChoose(t *testing.T) {
 
 	// Not All: the differently named card is filtered out of the candidates,
 	// leaving only the Binding for the controller to choose.
-	e := PutFromDiscard{Selection: Chosen{Name: "Ortannu's Binding"}, Destination: ToHand}
+	e := PutCard{
+		Zones:       []Zone{Discard},
+		Selection:   Chosen{Name: "Ortannu's Binding"},
+		Destination: ToHand,
+	}
 	e.Resolve(ctx)
 	if !g.State.Hand[0].contains(bind) {
 		t.Error("the named card should return to hand")
@@ -265,7 +287,11 @@ func TestReturnCreatureFromDiscardToDeck(t *testing.T) {
 	g.State.Discard[0].add(crea)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := PutFromDiscard{Selection: Chosen{Type: Creature}, Destination: ToTopOfDeck}
+	e := PutCard{
+		Zones:       []Zone{Discard},
+		Selection:   Chosen{Type: Creature},
+		Destination: ToTopOfDeck,
+	}
 	if e.Text() != "put a creature from your discard pile on top of your deck" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -313,14 +339,14 @@ func TestPutFromDiscardTypeOrTrait(t *testing.T) {
 	}
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := PutFromDiscard{
+	e := PutCard{Zones: []Zone{Discard},
 		Selection:   Each{Type: Upgrade, Or: []CardFilter{{Trait: Robot}}},
 		Destination: ToHand,
 	}
 	if e.Text() != "put each upgrade or Robot card from your discard pile into your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
-	choose := PutFromDiscard{
+	choose := PutCard{Zones: []Zone{Discard},
 		Selection:   Chosen{Type: Upgrade, Or: []CardFilter{{Trait: Robot}}},
 		Destination: ToHand,
 	}
@@ -368,7 +394,7 @@ func TestPutFromDiscardVacuousUnderMay(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	may := May{
-		Do: PutFromDiscard{
+		Do: PutCard{Zones: []Zone{Discard},
 			Selection:   Chosen{Type: Upgrade, Or: []CardFilter{{Trait: Robot}}},
 			Destination: ToHand,
 		},
@@ -455,17 +481,17 @@ func TestDiscardRandomFromHand(t *testing.T) {
 	b := g.AddToHand(NewCard("b", Mars, Tactic, Common), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{Count: 1}}
+	e := DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{}}
 	if e.Text() != "your opponent discards a random card from their hand" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if self := (DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Random{Count: 1}}).Text(); self != "discard a random card from your hand" {
+	if self := (DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Random{}}).Text(); self != "discard a random card from your hand" {
 		t.Errorf("self text = %q", self)
 	}
-	if (DiscardCard{Zones: []Zone{Hand}, Selection: Random{Count: 1}}).validate() == nil {
+	if (DiscardCard{Zones: []Zone{Hand}, Selection: Random{}}).validate() == nil {
 		t.Error("unset player should be invalid")
 	}
-	if (DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{Count: 1}}).validate() != nil {
+	if (DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{}}).validate() != nil {
 		t.Error("set player should be valid")
 	}
 
@@ -506,8 +532,8 @@ func TestDiscardRandomFromHandAmount(t *testing.T) {
 	e := DiscardCard{
 		Player:    Controller,
 		Zones:     []Zone{Hand},
-		Selection: Random{Count: 1},
-		Amount:    2,
+		Selection: Random{},
+		Quantity:  Takes{N: Fixed(2)},
 	}
 	if got := e.Text(); got != "discard 2 random cards from your hand" {
 		t.Errorf("text = %q", got)
@@ -530,20 +556,20 @@ func TestDiscardFromArchives(t *testing.T) {
 	b := g.AddToArchives(NewCard("b", Mars, Tactic, Common), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DiscardCard{Player: Opponent, Zones: []Zone{Archives}, Selection: Random{Count: 1}}
+	e := DiscardCard{Player: Opponent, Zones: []Zone{Archives}, Selection: Random{}}
 	if e.Text() != "your opponent discards a random card from their archives" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if self := (DiscardCard{Player: Controller, Zones: []Zone{Archives}, Selection: Random{Count: 1}}).Text(); self != "discard a random card from your archives" {
+	if self := (DiscardCard{Player: Controller, Zones: []Zone{Archives}, Selection: Random{}}).Text(); self != "discard a random card from your archives" {
 		t.Errorf("self text = %q", self)
 	}
-	if owner := (DiscardCard{Player: ItsOwner, Zones: []Zone{Archives}, Selection: Random{Count: 1}}).Text(); owner != "its owner discards a random card from their archives" {
+	if owner := (DiscardCard{Player: ItsOwner, Zones: []Zone{Archives}, Selection: Random{}}).Text(); owner != "its owner discards a random card from their archives" {
 		t.Errorf("owner text = %q", owner)
 	}
-	if (DiscardCard{Zones: []Zone{Archives}, Selection: Random{Count: 1}}).validate() == nil {
+	if (DiscardCard{Zones: []Zone{Archives}, Selection: Random{}}).validate() == nil {
 		t.Error("unset player should be invalid")
 	}
-	if (DiscardCard{Player: Opponent, Zones: []Zone{Archives}, Selection: Random{Count: 1}}).validate() != nil {
+	if (DiscardCard{Player: Opponent, Zones: []Zone{Archives}, Selection: Random{}}).validate() != nil {
 		t.Error("set player should be valid")
 	}
 
@@ -592,7 +618,7 @@ func TestDiscardFromHandEffect(t *testing.T) {
 		Player:    Controller,
 		Zones:     []Zone{Hand},
 		Selection: Chosen{},
-		Amount:    1,
+		Quantity:  Takes{N: Fixed(1)},
 	}
 	if one.Text() != "discard a card from your hand" {
 		t.Errorf("text = %q", one.Text())
@@ -601,7 +627,7 @@ func TestDiscardFromHandEffect(t *testing.T) {
 		Player:    Controller,
 		Zones:     []Zone{Hand},
 		Selection: Chosen{},
-		Amount:    2,
+		Quantity:  Takes{N: Fixed(2)},
 	}
 	if two.Text() != "discard 2 cards from your hand" {
 		t.Errorf("plural text = %q", two.Text())
@@ -614,7 +640,7 @@ func TestDiscardFromHandEffect(t *testing.T) {
 	}
 
 	// Discarding more than the hand holds stops when the hand empties.
-	(DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Chosen{}, Amount: 5}).Resolve(
+	(DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Chosen{}, Quantity: Takes{N: Fixed(5)}}).Resolve(
 		ctx,
 	)
 	if g.State.Hand[0].Count != 0 {
@@ -628,7 +654,7 @@ func TestDiscardFromHandEffectDeclined(t *testing.T) {
 	g.AddToHand(NewCard("d", Logos, Tactic, Common), 0)
 	g.SetChooser(0, orderRejectChooser{})
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	(DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Chosen{}, Amount: 1}).Resolve(
+	(DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Chosen{}, Quantity: Takes{N: Fixed(1)}}).Resolve(
 		ctx,
 	)
 	if g.State.Discard[0].Count != 0 {
@@ -642,7 +668,7 @@ func TestDiscardFromHandAnyNumber(t *testing.T) {
 			Player:    Controller,
 			Zones:     []Zone{Hand},
 			Selection: Chosen{Optional: true},
-			AnyNumber: true,
+			Quantity:  AnyNumber{},
 		}
 		if got := e.Text(); got != "discard any number of cards from your hand" {
 			t.Errorf("text = %q", got)
@@ -657,7 +683,7 @@ func TestDiscardFromHandAnyNumber(t *testing.T) {
 			g.AddToHand(NewCard("b", Logos, Tactic, Common), 0)
 			g.AddToHand(NewCard("c", Logos, Tactic, Common), 0)
 			ctx := &EffectContext{Resolver: g, Controller: 0}
-			(DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Chosen{Optional: true}, AnyNumber: true}).Resolve(
+			(DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Chosen{Optional: true}, Quantity: AnyNumber{}}).Resolve(
 				ctx,
 			)
 			if g.State.Hand[0].Count != 0 {
@@ -674,7 +700,7 @@ func TestDiscardFromHandAnyNumber(t *testing.T) {
 		g.AddToHand(NewCard("d", Logos, Tactic, Common), 0)
 		g.SetChooser(0, &declineAfterChooser{})
 		ctx := &EffectContext{Resolver: g, Controller: 0}
-		(DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Chosen{Optional: true}, AnyNumber: true}).Resolve(
+		(DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Chosen{Optional: true}, Quantity: AnyNumber{}}).Resolve(
 			ctx,
 		)
 		if g.State.Discard[0].Count != 0 {
@@ -699,7 +725,7 @@ func TestDiscardFromHandCreaturesOnlyGate(t *testing.T) {
 		Player:    Controller,
 		Zones:     []Zone{Hand},
 		Selection: Chosen{Type: Creature},
-		Amount:    1,
+		Quantity:  Takes{N: Fixed(1)},
 	}
 	if e.Text() != "discard a creature from your hand" {
 		t.Errorf("text = %q", e.Text())
@@ -708,7 +734,7 @@ func TestDiscardFromHandCreaturesOnlyGate(t *testing.T) {
 		Player:    Controller,
 		Zones:     []Zone{Hand},
 		Selection: Chosen{Type: Creature},
-		Amount:    2,
+		Quantity:  Takes{N: Fixed(2)},
 	}
 	if plural.Text() != "discard 2 creatures from your hand" {
 		t.Errorf("plural text = %q", plural.Text())
@@ -729,25 +755,25 @@ func TestDiscardFromHandCreaturesOnlyGate(t *testing.T) {
 }
 
 func TestDiscardFromHandValidate(t *testing.T) {
-	if (DiscardCard{Zones: []Zone{Hand}, Selection: Random{Count: 1}}).validate() == nil {
+	if (DiscardCard{Zones: []Zone{Hand}, Selection: Random{}}).validate() == nil {
 		t.Error("an unset player should be invalid")
 	}
 	if (DiscardCard{Player: Controller, Zones: []Zone{Hand}}).validate() == nil {
 		t.Error("a nil selection should be invalid")
 	}
-	if (DiscardCard{Player: Controller, Selection: Random{Count: 1}}).validate() == nil {
+	if (DiscardCard{Player: Controller, Selection: Random{}}).validate() == nil {
 		t.Error("an unset zone should be invalid")
 	}
-	if (DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Random{Count: 1}, AnyNumber: true, Amount: 2}).validate() == nil {
-		t.Error("AnyNumber paired with Amount should be invalid")
-	}
-	if (DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Random{Count: 1}, Amount: 2}).validate() != nil {
+	// The old "AnyNumber and Amount are exclusive" rejection is gone, and nothing
+	// replaces it: the two are now one Quantity field, so the pair cannot be
+	// written at all rather than being written and refused.
+	if (DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Random{}, Quantity: Takes{N: Fixed(2)}}).validate() != nil {
 		t.Error("a fixed amount should be valid")
 	}
-	if (DiscardCard{Player: Controller, Zones: []Zone{Deck}, Selection: Random{Count: 1}}).validate() == nil {
+	if (DiscardCard{Player: Controller, Zones: []Zone{Deck}, Selection: Random{}}).validate() == nil {
 		t.Error("a zone other than hand or archives should be invalid")
 	}
-	if (DiscardCard{Player: Controller, Zones: []Zone{Hand, Archives}, Selection: Random{Count: 1}}).validate() != nil {
+	if (DiscardCard{Player: Controller, Zones: []Zone{Hand, Archives}, Selection: Random{}}).validate() != nil {
 		t.Error("a hand-or-archives combined source should be valid")
 	}
 }

@@ -1,18 +1,21 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // ShuffleIntoDeck shuffles the cards a Selection picks from the controller's own
-// zones back into their deck, as one grouped shuffle. Two axes vary (ADR 0031).
+// zones back into their deck, as one grouped shuffle. Three axes vary (ADR 0031).
 // From names the source zones — the discard pile alone for most cards, or a set a
 // single pick ranges over (Song of Spring reaches hand, discard pile, and
 // battleline at once). Selection picks within them: Each takes every match with no
-// choice (Low Dawn returns each Untamed creature), an Optional Chosen with
-// AnyNumber lets the controller shuffle back any number one at a time until they
-// decline (Not Finished with You), a plain Chosen with a Count shuffles that many
-// chosen cards (Shard of Life shuffles one for each friendly Shard), and a Named
-// takes the one card of a printed name (Chain Gang returns Subtle Chain). Fewer
-// move when the zones hold fewer than asked.
+// choice (Low Dawn returns each Untamed creature), an Optional Chosen lets the
+// controller stop early, and a Named takes the one card of a printed name (Chain
+// Gang returns Subtle Chain). Quantity says how many: AnyNumber shuffles back as
+// many as the controller likes (Not Finished with You), Scaled shuffles one per
+// board count (Shard of Life, one for each friendly Shard). Fewer move when the
+// zones hold fewer than asked.
 type ShuffleIntoDeck struct {
 	// Player names whose zones the cards are taken from; it must be set.
 	Player Player
@@ -21,17 +24,11 @@ type ShuffleIntoDeck struct {
 	From []Zone
 	// Selection picks which of those zones' cards move; it must be set.
 	Selection Selection
-	// AnyNumber lets the controller shuffle back as many matching cards as they
-	// like, one at a time, until they decline — "any number of". Pair it with an
-	// Optional Chosen so the pick is declinable. Mutually exclusive with Count.
-	AnyNumber bool
-	// Count says how many cards to shuffle when the number is fixed (Shard of Life
-	// scales it by the friendly Shards in play). The zero value shuffles one pick.
-	Count Count
+	// Quantity says how many cards move; the zero value shuffles one pick.
+	Quantity Quantity
 }
 
-// validate requires a Selection and at least one supported source zone, and
-// rejects pairing AnyNumber with a Count (the two count modes are exclusive).
+// validate requires a Selection and at least one supported source zone.
 func (e ShuffleIntoDeck) validate() error {
 	if e.Player == playerUnset {
 		return fmt.Errorf("ShuffleIntoDeck: player must be set")
@@ -48,27 +45,27 @@ func (e ShuffleIntoDeck) validate() error {
 				"ShuffleIntoDeck: From must be Hand, Discard, or InPlay")
 		}
 	}
-	if e.AnyNumber && e.Count != nil {
-		return fmt.Errorf("ShuffleIntoDeck: AnyNumber and Count are exclusive")
-	}
-	return nil
+	return quantityValidate(e.Quantity)
 }
 
-// count is the fixed number of picks: the Count's value, or one when unset.
-func (e ShuffleIntoDeck) count(ctx *EffectContext) int {
-	if e.Count == nil {
-		return 1
+// side renders the scope an in-play source has to spell out. The mover reaches
+// only the Player's own cards, but the zone phrase "play" names no side, so the
+// object carries "friendly" (or "enemy") instead. Empty when no source is play.
+func (e ShuffleIntoDeck) side() string {
+	if !slices.Contains(e.From, InPlay) {
+		return ""
 	}
-	return e.Count.Value(ctx)
+	return side(e.Player)
 }
 
-// object renders the noun phrase the shuffle acts on, e.g. "each Untamed creature",
-// "any number of creatures", or the singular "a card" a Count wraps with forEach.
+// object renders the noun phrase the shuffle acts on, e.g. "each friendly card",
+// "any number of creatures", or the singular "a card" a Scaled quantity leads with.
 func (e ShuffleIntoDeck) object() string {
-	if e.AnyNumber {
-		return "any number of " + e.Selection.noun() + "s"
-	}
-	return e.Selection.object()
+	side := e.side()
+	return quantityObject(
+		e.Quantity,
+		qualifyNoun(side, e.Selection.noun()),
+		selectionObject(e.Selection, side))
 }
 
 // fromText renders the source zones as an alternation of fully formed phrases,
@@ -83,13 +80,14 @@ func (e ShuffleIntoDeck) fromText() string {
 }
 
 // Text renders the effect, e.g. "shuffle each Untamed creature from your discard
-// pile into your deck". A Count leads the sentence with its per-clause. The deck
-// is always the same player's, so it takes the same possessive as the sources.
+// pile into your deck". A Scaled quantity leads the sentence with its per-clause.
+// The deck is always the same player's, so it takes the same possessive as the
+// sources.
 func (e ShuffleIntoDeck) Text() string {
 	base := "shuffle " + e.object() + " from " + e.fromText() +
 		" into " + possessive(e.Player) + " deck"
-	if e.Count != nil {
-		return forEach(e.Count, base)
+	if per := quantityLeadIn(e.Quantity); per != nil {
+		return forEach(per, base)
 	}
 	return base
 }
@@ -111,7 +109,8 @@ func (e ShuffleIntoDeck) Resolve(ctx *EffectContext) {
 		Sources: e.From,
 	}
 	ctx.Resolver.BeginShuffleBatch()
-	for i := 0; e.AnyNumber || i < e.count(ctx); i++ {
+	limit, bounded := quantityPicks(e.Quantity, ctx)
+	for i := 0; !bounded || i < limit; i++ {
 		ids := e.Selection.pick(ctx, mover.gather(ctx, func(LocalID) bool { return true }))
 		if len(ids) == 0 {
 			break

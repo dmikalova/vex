@@ -10,7 +10,7 @@ import (
 // Titanic Bumblebird
 //
 //	House:  Untamed
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Rare
 //	Power:  8
 //	Traits: Beast • Insect

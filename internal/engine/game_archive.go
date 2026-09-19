@@ -31,7 +31,7 @@ func (g *Game) offerArchives(player int) {
 		g.State.Hand[g.owner(id)].add(id)
 	}
 	*arc = wideList{}
-	g.record(ArchivesTakenIntoHand{Player: player, Count: int(n)})
+	g.record(ArchivesTakenIntoHand{Player: player, Cards: int(n)})
 }
 
 // selectiveArchivePickup lets a player take any number of cards from their
@@ -55,7 +55,7 @@ func (g *Game) selectiveArchivePickup(player int, src LocalID) {
 		g.State.Hand[g.owner(id)].add(id)
 	}
 	if len(chosen) > 0 {
-		g.record(ArchivesTakenIntoHand{Player: player, Count: len(chosen)})
+		g.record(ArchivesTakenIntoHand{Player: player, Cards: len(chosen)})
 	}
 }
 
@@ -122,7 +122,7 @@ func (g *Game) discardArchives(owner int) {
 		// discarded out of these archives goes to its owner's pile.
 		g.State.Discard[g.owner(id)].add(id)
 	}
-	g.record(ArchivesDiscarded{Player: owner, Count: len(ids)})
+	g.record(ArchivesDiscarded{Player: owner, Cards: len(ids)})
 }
 
 // DiscardCardFromArchives moves a specific card from a player's archives to a

@@ -1,6 +1,7 @@
 package callofthearchons
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/card"
@@ -51,7 +52,7 @@ func TestCustomsOffice(t *testing.T) {
 		h.P1.EndTurn()
 		h.P2.ChooseHouse(card.House.Brobnar)
 
-		if _, err := h.Game().PlayArtifact(1, 0); err != engine.ErrCannotPayToll {
+		if _, err := h.Game().PlayArtifact(1, 0); !errors.Is(err, engine.ErrCannotPayToll) {
 			t.Fatalf("PlayArtifact = %v, want ErrCannotPayToll", err)
 		}
 		h.Expect(toll).At(ct.Hand)

@@ -1,6 +1,7 @@
 package callofthearchons
 
 import (
+	"errors"
 	"slices"
 	"testing"
 
@@ -39,7 +40,7 @@ func TestCollarOfSubordination(t *testing.T) {
 		h.P1.ExpectAmber(1)
 		h.P1.EndTurn()
 		h.P2.ChooseHouse(card.House.Dis)
-		if err := h.Game().CanUse(1, host.ID()); err != engine.ErrWrongType {
+		if err := h.Game().CanUse(1, host.ID()); !errors.Is(err, engine.ErrWrongType) {
 			t.Fatalf("P2 CanUse(controlled host) = %v, want wrong type", err)
 		}
 	})

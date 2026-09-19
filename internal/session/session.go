@@ -96,8 +96,12 @@ func Load(rec Record, setup Setup, action Action) (*Session, error) {
 }
 
 // start deals a fresh game and drives the action to its first request. It is used
-// both on New and on every replay (undo rebuilds from scratch).
+// both on New and on every replay (undo rebuilds from scratch); it closes the
+// previous stepper first so a replaced mid-action game leaves no parked goroutine.
 func (s *Session) start() {
+	if s.stepper != nil {
+		s.stepper.Close()
+	}
 	s.commands = nil
 	s.barriers = nil
 	s.game = s.setup(s.seed, s.sets)

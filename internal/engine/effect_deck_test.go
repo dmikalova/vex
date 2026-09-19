@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"slices"
 	"strings"
 	"testing"
@@ -208,7 +209,7 @@ func TestPlayTopOfDeckLeavesUnplayableCardOnTop(t *testing.T) {
 			top,
 			func() { g.State.Deck[0].removeAt(0) },
 			playCardOptions{},
-		); err != ErrCannotPlayCreature {
+		); !errors.Is(err, ErrCannotPlayCreature) {
 			t.Fatalf("playCardFromZone err = %v, want %v", err, ErrCannotPlayCreature)
 		}
 		if g.State.Deck[0].Count != 1 || g.State.Deck[0].IDs[0] != top {
@@ -236,7 +237,7 @@ func TestPlayTopOfDeckLeavesUnplayableCardOnTop(t *testing.T) {
 			top,
 			func() { g.State.Deck[0].removeAt(0) },
 			playCardOptions{},
-		); err != ErrWrongType {
+		); !errors.Is(err, ErrWrongType) {
 			t.Fatalf("playCardFromZone err = %v, want %v", err, ErrWrongType)
 		}
 		if g.State.Deck[0].Count != 1 || g.State.Deck[0].IDs[0] != top {
@@ -285,7 +286,7 @@ func TestBonkersComposition(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Source: source, Controller: 0}
 
 	effect := Sentences{Effects: []Effect{
-		DiscardTop{Player: EachPlayer},
+		DiscardTop{Amount: 1, Player: EachPlayer},
 		ForEachDiscarded{
 			Do: Destroy{
 				Target: Target{Kind: TargetChosenCreatureOrArtifact}.House(contextualHouse),
@@ -330,7 +331,7 @@ func TestBonkersCompositionSelfDestructs(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Source: source, Controller: 0}
 
 	Sentences{Effects: []Effect{
-		DiscardTop{Player: EachPlayer},
+		DiscardTop{Amount: 1, Player: EachPlayer},
 		ForEachDiscarded{
 			Do: Destroy{
 				Target: Target{Kind: TargetChosenCreatureOrArtifact}.House(contextualHouse),
@@ -403,7 +404,7 @@ func TestEvasionSigilComposition(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
 	e := Sentences{Effects: []Effect{
-		DiscardTop{},
+		DiscardTop{Amount: 1},
 		Conditional{Cond: ItIs{House: activeHouse}, Then: CancelFight{}},
 	}}
 	if got := e.Text(); got != "discard the top card of its controller's deck. If it is of the active house, the fight does not occur." {
@@ -427,7 +428,7 @@ func TestEvasionSigilCompositionMiss(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
 	Sequence{Effects: []Effect{
-		DiscardTop{},
+		DiscardTop{Amount: 1},
 		Conditional{Cond: ItIs{House: activeHouse}, Then: CancelFight{}},
 	}}.Resolve(ctx)
 
@@ -441,7 +442,7 @@ func TestEvasionSigilCompositionMiss(t *testing.T) {
 	g2 := started(t)
 	src2 := g2.AddToBattleline(testCreature("attacker", 5), 0)
 	Sequence{Effects: []Effect{
-		DiscardTop{},
+		DiscardTop{Amount: 1},
 		Conditional{Cond: ItIs{House: activeHouse}, Then: CancelFight{}},
 	}}.Resolve(&EffectContext{Resolver: g2, Source: src2, Controller: 0})
 	if g2.State.FightCancelled {
@@ -659,7 +660,7 @@ func TestArchiveDiscardedThisWay(t *testing.T) {
 // empty deck, and with a declined purge.
 func TestRevealTopOfDeckRouting(t *testing.T) {
 	borrNit := RevealTopOfDeck{Amount: 5, ChooseWhoseDeck: true, Then: []TopAct{
-		ChooseAndMove{Count: 1, Dest: IntoPurge}, Shuffle{},
+		ChooseAndMove{Cards: 1, Dest: IntoPurge}, Shuffle{},
 	}}
 
 	t.Run("text", func(t *testing.T) {
@@ -668,7 +669,7 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 		if got := borrNit.Text(); got != want {
 			t.Errorf("text = %q, want %q", got, want)
 		}
-		if got := (ChooseAndMove{Count: 2, Dest: IntoPurge}).clause(); got !=
+		if got := (ChooseAndMove{Cards: 2, Dest: IntoPurge}).clause(); got !=
 			"purge 2 cards revealed this way" {
 			t.Errorf("plural purge clause = %q", got)
 		}
@@ -684,7 +685,7 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		oppTop := g.AddToDeck(NewCard("OppTop", Logos, Creature, Common), 1)
 		RevealTopOfDeck{Amount: 1, Player: Opponent, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoDiscard},
+			ChooseAndMove{Cards: 1, Dest: IntoDiscard},
 		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if disc := g.Discard(1); len(disc) != 1 || disc[0] != oppTop {
 			t.Errorf("opponent discard = %v, want [%d]", disc, oppTop)
@@ -711,7 +712,7 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 			t.Error("a step with a bad Count should be rejected")
 		}
 		notLast := RevealTopOfDeck{Amount: 5, ChooseWhoseDeck: true, Then: []TopAct{
-			Shuffle{}, ChooseAndMove{Count: 1, Dest: IntoPurge},
+			Shuffle{}, ChooseAndMove{Cards: 1, Dest: IntoPurge},
 		}}
 		if notLast.validate() == nil {
 			t.Error("a Shuffle terminal that is not last should be rejected")
@@ -725,7 +726,7 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 		g.AddToDeck(NewCard("Low", Logos, Creature, Common), 0)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoPurge}, Shuffle{},
+			ChooseAndMove{Cards: 1, Dest: IntoPurge}, Shuffle{},
 		}}.Resolve(ctx)
 		if purge := g.Purge(0); len(purge) != 1 || purge[0] != top {
 			t.Errorf("purge = %v, want [%d]", purge, top)
@@ -739,7 +740,7 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoPurge}, Shuffle{},
+			ChooseAndMove{Cards: 1, Dest: IntoPurge}, Shuffle{},
 		}}.Resolve(ctx)
 		if len(g.Purge(0)) != 0 {
 			t.Errorf("purge = %v, want empty", g.Purge(0))
@@ -752,7 +753,7 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 		g.SetChooser(0, optionPicker{idx: 1})
 		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoPurge}, Shuffle{},
+			ChooseAndMove{Cards: 1, Dest: IntoPurge}, Shuffle{},
 		}}.Resolve(ctx)
 		if purge := g.Purge(1); len(purge) != 1 || purge[0] != oppTop {
 			t.Errorf("opponent purge = %v, want [%d]", purge, oppTop)
@@ -766,7 +767,7 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 		g.SetChooser(0, orderRejectChooser{})
 		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoPurge}, Shuffle{},
+			ChooseAndMove{Cards: 1, Dest: IntoPurge}, Shuffle{},
 		}}.Resolve(ctx)
 		if len(g.Purge(0)) != 0 {
 			t.Errorf("purge = %v, want empty", g.Purge(0))
@@ -781,7 +782,7 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 		only := g.AddToDeck(NewCard("Only", Logos, Creature, Common), 0)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
-			ChooseAndMove{Count: 2, Dest: IntoPurge},
+			ChooseAndMove{Cards: 2, Dest: IntoPurge},
 		}}.Resolve(ctx)
 		if purge := g.Purge(0); len(purge) != 1 || purge[0] != only {
 			t.Errorf("purge = %v, want [%d]", purge, only)
@@ -868,16 +869,16 @@ func TestLookAtTopOfDeck(t *testing.T) {
 			t.Errorf("singular Text() = %q", got)
 		}
 		eyegor := LookAtTopOfDeck{Amount: 3, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoHand}, ChooseAndMove{Count: 2, Dest: IntoDiscard},
+			ChooseAndMove{Cards: 1, Dest: IntoHand}, ChooseAndMove{Cards: 2, Dest: IntoDiscard},
 		}}
 		if got := eyegor.Text(); got !=
 			"look at the top 3 cards of your deck, put 1 into your hand, and discard 2" {
 			t.Errorf("Eyegor Text() = %q", got)
 		}
 		philo := LookAtTopOfDeck{Amount: 3, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoArchives},
-			ChooseAndMove{Count: 1, Dest: IntoHand},
-			ChooseAndMove{Count: 1, Dest: IntoDiscard},
+			ChooseAndMove{Cards: 1, Dest: IntoArchives},
+			ChooseAndMove{Cards: 1, Dest: IntoHand},
+			ChooseAndMove{Cards: 1, Dest: IntoDiscard},
 		}}
 		if got := philo.Text(); got !=
 			"look at the top 3 cards of your deck, archive 1, put 1 into your hand, and discard 1" {
@@ -889,8 +890,8 @@ func TestLookAtTopOfDeck(t *testing.T) {
 			t.Errorf("reorder Text() = %q", got)
 		}
 		alien := LookAtTopOfDeck{Amount: 3, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoHand},
-			ChooseAndMove{Count: 1, Dest: IntoBottomOfDeck},
+			ChooseAndMove{Cards: 1, Dest: IntoHand},
+			ChooseAndMove{Cards: 1, Dest: IntoBottomOfDeck},
 		}}
 		if got := alien.Text(); got !=
 			"look at the top 3 cards of your deck, put 1 into your hand, "+
@@ -917,13 +918,13 @@ func TestLookAtTopOfDeck(t *testing.T) {
 			t.Error("a step with a bad Count should be rejected")
 		}
 		notLast := LookAtTopOfDeck{Amount: 3, Then: []TopAct{
-			ReorderRest{}, ChooseAndMove{Count: 1, Dest: IntoHand},
+			ReorderRest{}, ChooseAndMove{Cards: 1, Dest: IntoHand},
 		}}
 		if notLast.validate() == nil {
 			t.Error("a ReorderRest that is not last should be rejected")
 		}
 		last := LookAtTopOfDeck{Amount: 3, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoHand}, ReorderRest{},
+			ChooseAndMove{Cards: 1, Dest: IntoHand}, ReorderRest{},
 		}}
 		if err := last.validate(); err != nil {
 			t.Errorf("a trailing ReorderRest = %v", err)
@@ -948,7 +949,7 @@ func TestLookAtTopOfDeck(t *testing.T) {
 		bottom := g.AddToDeck(NewCard("Bottom", Logos, Creature, Common, WithPower(1)), 0)
 		g.SetChooser(0, &idQueueChooser{ids: []LocalID{b}})
 		LookAtTopOfDeck{Amount: 3, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoHand}, ChooseAndMove{Count: 2, Dest: IntoDiscard},
+			ChooseAndMove{Cards: 1, Dest: IntoHand}, ChooseAndMove{Cards: 2, Dest: IntoDiscard},
 		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Hand(0); len(got) != 1 || got[0] != b {
 			t.Errorf("hand = %v, want [%d]", got, b)
@@ -969,9 +970,9 @@ func TestLookAtTopOfDeck(t *testing.T) {
 		bottom := g.AddToDeck(NewCard("Bottom", Logos, Creature, Common, WithPower(1)), 0)
 		g.SetChooser(0, &idQueueChooser{ids: []LocalID{a, b}})
 		LookAtTopOfDeck{Amount: 3, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoArchives},
-			ChooseAndMove{Count: 1, Dest: IntoHand},
-			ChooseAndMove{Count: 1, Dest: IntoDiscard},
+			ChooseAndMove{Cards: 1, Dest: IntoArchives},
+			ChooseAndMove{Cards: 1, Dest: IntoHand},
+			ChooseAndMove{Cards: 1, Dest: IntoDiscard},
 		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Archives(0); len(got) != 1 || got[0] != a {
 			t.Errorf("archives = %v, want [%d]", got, a)
@@ -995,8 +996,8 @@ func TestLookAtTopOfDeck(t *testing.T) {
 		bottom := g.AddToDeck(NewCard("Bottom", Logos, Creature, Common, WithPower(1)), 0)
 		g.SetChooser(0, &idQueueChooser{ids: []LocalID{b, a}})
 		LookAtTopOfDeck{Amount: 3, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoHand},
-			ChooseAndMove{Count: 1, Dest: IntoBottomOfDeck},
+			ChooseAndMove{Cards: 1, Dest: IntoHand},
+			ChooseAndMove{Cards: 1, Dest: IntoBottomOfDeck},
 		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Hand(0); len(got) != 1 || got[0] != b {
 			t.Errorf("hand = %v, want [%d]", got, b)
@@ -1012,7 +1013,7 @@ func TestLookAtTopOfDeck(t *testing.T) {
 		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
 		g.SetChooser(0, &idQueueChooser{ids: []LocalID{a}})
 		LookAtTopOfDeck{Amount: 3, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoHand}, ChooseAndMove{Count: 2, Dest: IntoDiscard},
+			ChooseAndMove{Cards: 1, Dest: IntoHand}, ChooseAndMove{Cards: 2, Dest: IntoDiscard},
 		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Hand(0); len(got) != 1 || got[0] != a {
 			t.Errorf("hand = %v, want [%d]", got, a)
@@ -1025,7 +1026,7 @@ func TestLookAtTopOfDeck(t *testing.T) {
 	t.Run("an empty deck does nothing", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		LookAtTopOfDeck{Amount: 3, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoHand},
+			ChooseAndMove{Cards: 1, Dest: IntoHand},
 		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Hand(0); len(got) != 0 {
 			t.Errorf("hand = %v, want empty", got)
@@ -1038,7 +1039,7 @@ func TestLookAtTopOfDeck(t *testing.T) {
 		g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
 		g.SetChooser(0, orderRejectChooser{})
 		LookAtTopOfDeck{Amount: 3, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoHand}, ChooseAndMove{Count: 2, Dest: IntoDiscard},
+			ChooseAndMove{Cards: 1, Dest: IntoHand}, ChooseAndMove{Cards: 2, Dest: IntoDiscard},
 		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Hand(0); len(got) != 0 {
 			t.Errorf("hand = %v, want empty", got)
@@ -1145,7 +1146,7 @@ func TestMayDiscardLookedAt(t *testing.T) {
 		// The move consumes the only read card, so MayDiscardLookedAt sees an empty
 		// run and offers nothing.
 		LookAtTopOfDeck{Amount: 1, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoHand}, MayDiscardLookedAt{},
+			ChooseAndMove{Cards: 1, Dest: IntoHand}, MayDiscardLookedAt{},
 		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Hand(0); len(got) != 1 || got[0] != top {
 			t.Errorf("hand = %v, want [%d]", got, top)
@@ -1158,10 +1159,10 @@ func TestMayDiscardLookedAt(t *testing.T) {
 func TestDiscardTopAndForEachDiscardedHouseFilter(t *testing.T) {
 	// DiscardTop text across counts and perspectives. Amount 0 folds to one card,
 	// and the granted default (unset Player) names "its controller's deck".
-	if got := (DiscardTop{}).Text(); got != "discard the top card of its controller's deck" {
+	if got := (DiscardTop{Amount: 1}).Text(); got != "discard the top card of its controller's deck" {
 		t.Errorf("granted default text = %q", got)
 	}
-	if got := (DiscardTop{Player: Controller}).Text(); got != "discard the top card of your deck" {
+	if got := (DiscardTop{Amount: 1, Player: Controller}).Text(); got != "discard the top card of your deck" {
 		t.Errorf("singular text = %q", got)
 	}
 	if got := (DiscardTop{Player: Opponent, Amount: 2}).Text(); got != "discard the top 2 cards of your opponent's deck" {
@@ -1196,13 +1197,13 @@ func TestDiscardTopAndForEachDiscardedHouseFilter(t *testing.T) {
 func TestDiscardTopOfDeckPlayer(t *testing.T) {
 	// Text renders from each perspective: the granted default names "its
 	// controller", while Controller and Opponent are direct first/second person.
-	if got := (DiscardTop{}).Text(); got != "discard the top card of its controller's deck" {
+	if got := (DiscardTop{Amount: 1}).Text(); got != "discard the top card of its controller's deck" {
 		t.Errorf("granted text = %q", got)
 	}
-	if got := (DiscardTop{Player: Controller}).Text(); got != "discard the top card of your deck" {
+	if got := (DiscardTop{Amount: 1, Player: Controller}).Text(); got != "discard the top card of your deck" {
 		t.Errorf("controller text = %q", got)
 	}
-	if got := (DiscardTop{Player: Opponent}).Text(); got != "discard the top card of your opponent's deck" {
+	if got := (DiscardTop{Amount: 1, Player: Opponent}).Text(); got != "discard the top card of your opponent's deck" {
 		t.Errorf("opponent text = %q", got)
 	}
 
@@ -1211,7 +1212,7 @@ func TestDiscardTopOfDeckPlayer(t *testing.T) {
 	next := g.AddToDeck(NewCard("Opp Next", Logos, Tactic, Common), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	DiscardTop{Player: Opponent}.Resolve(ctx)
+	DiscardTop{Amount: 1, Player: Opponent}.Resolve(ctx)
 	if !ctx.HasIt || ctx.It != top {
 		t.Errorf("context card = %d (has %v), want opponent top %d", ctx.It, ctx.HasIt, top)
 	}
@@ -1226,7 +1227,7 @@ func TestDiscardTopOfDeckPlayer(t *testing.T) {
 func TestDiscardTopOfDeckEmpty(t *testing.T) {
 	g := NewGame("Alice", "Bob", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0, HasIt: true, It: 42}
-	DiscardTop{Player: Controller}.Resolve(ctx)
+	DiscardTop{Amount: 1, Player: Controller}.Resolve(ctx)
 	if ctx.HasIt {
 		t.Errorf("empty deck should leave no card in context, got It=%d", ctx.It)
 	}
@@ -1258,7 +1259,7 @@ func TestCardsInHand(t *testing.T) {
 	}
 
 	// Discard sets the context card, so the count matches the opponent's Mars cards.
-	DiscardTop{Player: Opponent}.Resolve(ctx)
+	DiscardTop{Amount: 1, Player: Opponent}.Resolve(ctx)
 	if ctx.It != discarded {
 		t.Fatalf("context card = %d, want %d", ctx.It, discarded)
 	}

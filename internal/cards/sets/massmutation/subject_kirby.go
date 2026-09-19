@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Mutant
 //
-//	Play/Fight/Reap: You may play a non-Star Alliance creature this turn.
+//	Play/Fight/Reap: Play a non-Star Alliance creature.
 var SubjectKirby = set.New(
 	"Subject Kirby",
 	card.House.StarAlliance,
@@ -19,9 +19,9 @@ var SubjectKirby = set.New(
 	card.Provenance(card.MM, "315"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Mutant),
-	card.WithAbility(card.Trigger.PlayFightReap, card.MayPlayOrUse{
-		Houses: card.GrantHouses.Except(card.House.Self),
-		Grant:  card.GrantPlay,
-		Types:  card.Types.Of(card.Type.Creature),
+	card.WithAbility(card.Trigger.PlayFightReap, card.PlayFrom{
+		From:  card.Hand,
+		House: card.Houses.Except(card.House.Self),
+		Types: card.Types.Of(card.Type.Creature),
 	}),
 )

@@ -33,13 +33,13 @@ func playerPutsPrefix(n Namer, player int, id LocalID, from, to Zone) (prefix, o
 // ArchivesTakenIntoHand narrates a player collecting their archives.
 type ArchivesTakenIntoHand struct {
 	Player int
-	Count  int
+	Cards  int
 }
 
 // Text renders how many archived cards a player took into hand.
 func (e ArchivesTakenIntoHand) Text(n Namer) string {
 	return fmt.Sprintf("%s takes %s from their archives into hand",
-		n.PlayerName(e.Player), countNoun(e.Count, "card"))
+		n.PlayerName(e.Player), countNoun(e.Cards, "card"))
 }
 
 // CardMoved narrates one specific card moving between zones — archived (To
@@ -137,13 +137,13 @@ func (e TopOfDeckArchived) Text(n Namer) string {
 // ArchivesDiscarded narrates archives emptying into a discard pile.
 type ArchivesDiscarded struct {
 	Player int
-	Count  int
+	Cards  int
 }
 
 // Text renders how many archived cards were discarded.
 func (e ArchivesDiscarded) Text(n Namer) string {
 	return fmt.Sprintf("%s discards %s",
-		subject(n, e.Player), countNoun(e.Count, "archived card"))
+		subject(n, e.Player), countNoun(e.Cards, "archived card"))
 }
 
 // TopOfDeckDiscarded narrates the top card of a deck going to the discard pile.

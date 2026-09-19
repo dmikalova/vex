@@ -112,36 +112,53 @@ func (g *game) scorePill(player int) app.UI {
 		)
 }
 
+// The out-of-play pile labels double as each zone's display name and its
+// readability discriminator (readableZoneIDs), so they are named once here.
+const (
+	zoneHandLabel     = "Hand"
+	zoneDeckLabel     = "Deck"
+	zoneDiscardLabel  = "Discard"
+	zoneArchivesLabel = "Archives"
+	zonePurgeLabel    = "Purge"
+)
+
+// zoneView is one out-of-play pile as the bar renders it: whose it is, its label
+// (both the display name and the readability discriminator), and the cards in it.
+type zoneView struct {
+	player int
+	label  string
+	ids    []engine.LocalID
+}
+
 // zoneCounts renders a player's out-of-play zone sizes as icon-and-count pairs.
 // The hand is included because knowing how many cards an opponent is holding is
 // public information that a physical game makes obvious and a screen does not.
 func (g *game) zoneCounts(player int) []app.UI {
 	zones := []struct {
-		name  string
-		label string
-		ids   []engine.LocalID
+		icon string
+		view zoneView
 	}{
-		{"zone-hand", "Hand", g.g.Hand(player)},
-		{"zone-deck", "Deck", g.g.Deck(player)},
-		{"zone-discard", "Discard", g.g.Discard(player)},
-		{"zone-archives", "Archives", g.g.Archives(player)},
-		{"zone-purge", "Purge", g.g.Purge(player)},
+		{"zone-hand", zoneView{player, zoneHandLabel, g.g.Hand(player)}},
+		{"zone-deck", zoneView{player, zoneDeckLabel, g.g.Deck(player)}},
+		{"zone-discard", zoneView{player, zoneDiscardLabel, g.g.Discard(player)}},
+		{"zone-archives", zoneView{player, zoneArchivesLabel, g.g.Archives(player)}},
+		{"zone-purge", zoneView{player, zonePurgeLabel, g.g.Purge(player)}},
 	}
 	out := make([]app.UI, 0, len(zones))
 	for _, z := range zones {
 		// A destroyed or discarded card cannot pulse where it was — it is off the
 		// board — so its destination pulses in its place.
 		pulse := ""
-		if z.label == "Discard" && g.discardFlash[player] {
+		if z.view.label == zoneDiscardLabel && g.discardFlash[player] {
 			pulse = pulseClass(true, g.discardParity[player], "gain")
 		}
-		body := []app.UI{icon(z.name, "icon-stat"), app.Text(strconv.Itoa(len(z.ids)))}
-		body = append(body, g.flightsInto(player, z.name)...)
+		body := []app.UI{icon(z.icon, "icon-stat"), app.Text(strconv.Itoa(len(z.view.ids)))}
+		body = append(body, g.flightsInto(player, z.icon)...)
 		// A readable pile with cards opens a roster of house-coloured card headers,
 		// the same title bar an upgrade tab shows; every other zone — including a
 		// hidden or empty one — just names itself in the plain floating tip, which
 		// names itself on touch too, so all label-only tooltips look alike.
-		if roster := g.zoneRoster(player, z.label, z.ids); roster != nil {
+		if roster := g.zoneRoster(z.view); roster != nil {
 			out = append(out,
 				app.Span().Class(cx("zone-count", "zone-has-roster", pulse)).
 					OnMouseEnter(g.onZoneRosterHover).
@@ -149,8 +166,12 @@ func (g *game) zoneCounts(player int) []app.UI {
 			)
 			continue
 		}
-		out = append(out,
-			app.Span().Class(cx("zone-count", "tip", pulse)).DataSet("tip", z.label).Body(body...),
+		out = append(
+			out,
+			app.Span().
+				Class(cx("zone-count", "tip", pulse)).
+				DataSet("tip", z.view.label).
+				Body(body...),
 		)
 	}
 	return out
@@ -161,13 +182,13 @@ func (g *game) zoneCounts(player int) []app.UI {
 // zone count is hovered. It returns nil for a zone this player may not read or one
 // with no cards, so hovering a hidden or empty pile shows only the plain floating
 // tip that names it (the same tip every other label-only icon uses).
-func (g *game) zoneRoster(player int, label string, ids []engine.LocalID) app.UI {
-	shown := g.readableZoneIDs(player, label, ids)
+func (g *game) zoneRoster(z zoneView) app.UI {
+	shown := g.readableZoneIDs(z)
 	if len(shown) == 0 {
 		return nil
 	}
 	rows := make([]app.UI, 0, len(shown)+1)
-	rows = append(rows, app.Div().Class("zone-roster-label").Text(label))
+	rows = append(rows, app.Div().Class("zone-roster-label").Text(z.label))
 	for _, id := range shown {
 		def := g.g.Def(id)
 		rows = append(rows,
@@ -188,8 +209,8 @@ func (g *game) onZoneRosterHover(ctx app.Context, _ app.Event) {
 
 // zoneNames lists the names of the cards in a zone, sorted, but only for the
 // zones this player may read (see readableZoneIDs). A hidden zone returns nothing.
-func (g *game) zoneNames(player int, label string, ids []engine.LocalID) []string {
-	readable := g.readableZoneIDs(player, label, ids)
+func (g *game) zoneNames(z zoneView) []string {
+	readable := g.readableZoneIDs(z)
 	if len(readable) == 0 {
 		return nil
 	}
@@ -208,17 +229,17 @@ func (g *game) zoneNames(player int, label string, ids []engine.LocalID) []strin
 // and matches the deck list's order. A player may read their own archives (they set
 // them face-down but know their contents); an opponent's archives, hand, or deck is
 // hidden and returns nil, so hovering it never leaks its contents.
-func (g *game) readableZoneIDs(player int, label string, ids []engine.LocalID) []engine.LocalID {
-	switch label {
-	case "Discard", "Purge":
-	case "Hand", "Deck", "Archives":
-		if player != g.active() {
+func (g *game) readableZoneIDs(z zoneView) []engine.LocalID {
+	switch z.label {
+	case zoneDiscardLabel, zonePurgeLabel:
+	case zoneHandLabel, zoneDeckLabel, zoneArchivesLabel:
+		if z.player != g.active() {
 			return nil
 		}
 	default:
 		return nil
 	}
-	sorted := append([]engine.LocalID(nil), ids...)
+	sorted := append([]engine.LocalID(nil), z.ids...)
 	sort.SliceStable(sorted, func(i, j int) bool {
 		a, b := g.g.Def(sorted[i]), g.g.Def(sorted[j])
 		if a.House != b.House {
@@ -349,7 +370,7 @@ func (g *game) aemberSeg(player int) app.UI {
 	gain := cx(
 		ifCls(g.poolFlash[player] && !g.poolParity[player], "stat-seg--gain-a"),
 		ifCls(g.poolFlash[player] && g.poolParity[player], "stat-seg--gain-b"),
-		ifCls(g.g.Aember(player) >= g.g.CurrentKeyCost(player), "stat-seg--check"),
+		ifCls(g.g.AtCheck(player, g.g.Aember(player)), "stat-seg--check"),
 	)
 	if !g.g.Manual() {
 		return app.Span().Class(cx("stat-seg", "tip", gain)).DataSet("tip", "Æmber").Body(count, ic)

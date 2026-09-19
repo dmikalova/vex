@@ -24,8 +24,7 @@ var Rockatiel = set.New(
 	card.WithHazardous(1),
 	card.WithAbility(
 		card.Trigger.PlayReap, card.PutChosen{
-			Amount:      2,
-			UpTo:        true,
+			Quantity:    card.UpTo{N: card.Fixed(2)},
 			Target:      card.Target.EachCreature,
 			Destination: card.To.DeckShuffled,
 		}),

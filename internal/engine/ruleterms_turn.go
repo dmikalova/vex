@@ -42,10 +42,12 @@ they cut any draw, and a mulligan sheds no further chain.`,
 			Subtitle:   "the first player's first turn",
 			Definition: "On the first player's first turn, they may play or discard only one card from their hand.",
 			Body: `On the first player's first turn only, that player may play or discard just one
-card from their hand — one or the other, not both. Using creatures to reap, fight,
-or take an "Action:" is unaffected. A card the played card lets its controller
-play (Wild Wormhole, Phase Shift) does not count against this limit, and a card
-effect can modify the rule.`,
+card from their hand of their own volition — one or the other, not both. Using
+creatures to reap, fight, or take an "Action:" is unaffected. A card effect can let
+them play more: a card another card plays for them (Wild Wormhole, Phase Shift)
+does not count against the limit, and a grant to play a card (Subject Kirby,
+Captain Val Jericho) lets them play that card too. Only a bare in-house play of
+their own volition counts against the one-card allowance.`,
 		},
 		{
 			Section:  SectionTurn,

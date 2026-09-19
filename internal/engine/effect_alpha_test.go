@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 // These tests cover the Alpha keyword: a card with Alpha must be the first card
 // its player plays this turn.
@@ -35,10 +38,10 @@ func TestAlphaMustBeFirst(t *testing.T) {
 	if _, err := g.PlayCreature(0, handIdxByID(g, 0, other), false); err != nil {
 		t.Fatalf("play other card: %v", err)
 	}
-	if err := g.CanPlay(0, alpha); err != ErrAlphaNotFirst {
+	if err := g.CanPlay(0, alpha); !errors.Is(err, ErrAlphaNotFirst) {
 		t.Errorf("Alpha after acting (CanPlay) = %v, want ErrAlphaNotFirst", err)
 	}
-	if err := g.PlayAction(0, handIdxByID(g, 0, alpha)); err != ErrAlphaNotFirst {
+	if err := g.PlayAction(0, handIdxByID(g, 0, alpha)); !errors.Is(err, ErrAlphaNotFirst) {
 		t.Errorf("Alpha after acting (PlayAction) = %v, want ErrAlphaNotFirst", err)
 	}
 }
@@ -54,7 +57,7 @@ func TestAlphaUpgradeBarred(t *testing.T) {
 	if _, err := g.PlayCreature(0, handIdxByID(g, 0, first), false); err != nil {
 		t.Fatalf("play first card: %v", err)
 	}
-	if _, err := g.PlayUpgrade(0, handIdxByID(g, 0, up)); err != ErrAlphaNotFirst {
+	if _, err := g.PlayUpgrade(0, handIdxByID(g, 0, up)); !errors.Is(err, ErrAlphaNotFirst) {
 		t.Errorf("Alpha upgrade after acting = %v, want ErrAlphaNotFirst", err)
 	}
 }

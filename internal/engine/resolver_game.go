@@ -620,7 +620,7 @@ func (g *Game) PlayerHasHouse(player int, house House) bool {
 // Draw is the Resolver entry point for the internal draw.
 func (g *Game) Draw(controller, count int) {
 	if n := g.draw(controller, count); n > 0 {
-		g.record(CardsDrawnBy{Player: controller, Count: n})
+		g.record(CardsDrawnBy{Player: controller, Cards: n})
 	}
 }
 
@@ -633,9 +633,6 @@ func (g *Game) PutOnTopOfDeck(id LocalID) { g.putOnTopOfDeck(id) }
 
 // PutIntoHand is the Resolver entry point for putIntoHand.
 func (g *Game) PutIntoHand(id LocalID) { g.putIntoHand(id) }
-
-// ReturnUpgradesToHand is the Resolver entry point for returnUpgradesToHand.
-func (g *Game) ReturnUpgradesToHand(host LocalID) { g.returnUpgradesToHand(host) }
 
 // Simultaneously is the Resolver entry point for simultaneously.
 func (g *Game) Simultaneously(controller int, batch func()) {
@@ -655,12 +652,6 @@ func (g *Game) PutIntoArchivesEach(controller int, ids []LocalID) {
 
 // PutIntoDeckShuffled is the Resolver entry point for putIntoDeckShuffled.
 func (g *Game) PutIntoDeckShuffled(id LocalID) { g.putIntoDeckShuffled(id) }
-
-// ShuffleFriendlyCardsInPlayIntoDeck is the Resolver entry point for
-// shuffleFriendlyInPlayIntoDeck.
-func (g *Game) ShuffleFriendlyCardsInPlayIntoDeck(player int) [2]int {
-	return g.shuffleFriendlyInPlayIntoDeck(player)
-}
 
 // BeginShuffleBatch opens a shuffle batch: cards shuffled into a deck until
 // EndShuffleBatch are collected rather than narrated one by one.

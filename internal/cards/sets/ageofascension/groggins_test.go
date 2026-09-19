@@ -1,6 +1,7 @@
 package ageofascension
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/card"
@@ -35,7 +36,11 @@ func TestGroggins(t *testing.T) {
 		})
 
 		// A creature not on a flank is not a legal target.
-		if err := h.Game().Fight(0, groggins.ID(), middle.ID()); err != engine.ErrNoTarget {
+		if err := h.Game().
+			Fight(0, groggins.ID(), middle.ID()); !errors.Is(
+			err,
+			engine.ErrNoTarget,
+		) {
 			t.Errorf("fight middle = %v, want ErrNoTarget", err)
 		}
 

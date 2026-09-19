@@ -12,13 +12,13 @@ import (
 // uniformly random card leaves a hidden hand (Random, Eureka!), or a named card is
 // pinned (Named, Hyde archiving Velum). Zone names the source: Hand, Discard,
 // Deck, or purged (Universal Recycle Bin recovering a card set aside for good).
-// Amount archives that many; the zero value archives one. An Optional Selection
-// (Chosen with Optional) lets the controller archive fewer, down to none, which
-// reads as "up to N" (Mobius Scroll). Revealed shows each card before
-// archiving it, so a filtered choice is verified (Incubation Chamber). Per scales
-// the count by a running tally (Dr. Milli); Or switches Amount to an alternate
-// when a condition holds (Velum). It reports whether any card was archived, so it
-// can gate a Then (Zyzzix the Many).
+// Quantity archives that many; the zero value archives one, a board count leads
+// the sentence ("for each …, archive a card", Dr. Milli), and UpTo lets the
+// controller archive fewer, down to none (Mobius Scroll). Revealed shows each
+// card before archiving it, so a filtered choice is verified (Incubation
+// Chamber). Or switches the quantity to an alternate when a condition holds
+// (Velum). It reports whether any card was archived, so it can gate a Then
+// (Zyzzix the Many).
 type ArchiveCard struct {
 	// Zone names the source the cards are archived from: Hand, Discard, Deck, or
 	// purged.
@@ -29,16 +29,16 @@ type ArchiveCard struct {
 	From Player
 	// Selection decides how each card is picked; it must be set.
 	Selection Selection
-	// Amount is how many cards to archive; the zero value counts as one.
-	Amount int
+	// Quantity is how many cards to archive; the zero value archives one. A board
+	// count leads the sentence ("for each …, archive a card", Dr. Milli) and UpTo
+	// lets the controller stop short (Mobius Scroll).
+	Quantity Quantity
 	// Revealed shows each chosen card to the opponent before archiving it, which is
 	// how a filtered choice is verified (Incubation Chamber).
 	Revealed bool
-	// Per scales how many cards are archived by a running count (Dr. Milli). The
-	// zero value archives exactly the count.
-	Per Count
-	// Or switches Amount to an alternate when a condition holds, so the card reads
-	// "archive a card, or 2 cards if …" (Velum archives 2 while controlling Hyde).
+	// Or switches the quantity to an alternate when a condition holds, so the card
+	// reads "archive a card, or 2 cards if …" (Velum archives 2 while controlling
+	// Hyde).
 	Or OrAmount
 	// Bind records the archived card as the choice context (ctx.It) so a later
 	// effect in the same ability can read it (Blast from the Past deals the
@@ -65,30 +65,20 @@ func (e ArchiveCard) validate() error {
 	if e.From == Opponent && e.Zone != Hand {
 		return fmt.Errorf("ArchiveCard: an opponent archive must be from the hand")
 	}
-	return e.Or.validate()
-}
-
-// count is Amount with the zero value treated as one.
-func (e ArchiveCard) count() int {
-	if e.Amount < 1 {
-		return 1
+	if err := quantityValidate(e.Quantity); err != nil {
+		return err
 	}
-	return e.Amount
+	return e.Or.validate()
 }
 
 // object renders the count-bearing noun phrase the archive acts on, e.g. "a card",
 // "2 cards", "up to 2 cards", "the top card", or the pinned "Velum".
 func (e ArchiveCard) object() string {
-	switch {
-	case selectionPositional(e.Selection):
-		return positionalObject(e.Selection, e.count())
-	case selectionDeclinable(e.Selection) && e.count() > 1:
-		return "up to " + countNoun(e.count(), e.Selection.noun())
-	case e.count() > 1:
-		return countNoun(e.count(), e.Selection.noun())
-	default:
-		return e.Selection.object()
+	if selectionPositional(e.Selection) {
+		n, _ := quantityFixed(e.Quantity)
+		return positionalObject(e.Selection, n)
 	}
+	return quantityObject(e.Quantity, e.Selection.noun(), e.Selection.object())
 }
 
 // Text renders the effect, naming the source zone explicitly (rule 17). A
@@ -104,8 +94,8 @@ func (e ArchiveCard) Text() string {
 		prep = strings.TrimSuffix(prep, "your ") + "your opponent's "
 	}
 	from := prep + e.Zone.noun()
-	if e.Per != nil {
-		return forEach(e.Per, "archive "+e.Selection.object()+from)
+	if per := quantityLeadIn(e.Quantity); per != nil {
+		return forEach(per, "archive "+e.Selection.object()+from)
 	}
 	if e.Revealed {
 		return "reveal " + e.object() + from + " and archive it"
@@ -135,7 +125,8 @@ func (e ArchiveCard) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // is set, then moved into archives from its source zone.
 func (e ArchiveCard) resolveGate(ctx *EffectContext) bool {
 	archived := false
-	amount := scaled(e.Or.pick(e.count(), ctx), e.Per, ctx)
+	base, _ := quantityPicks(e.Quantity, ctx)
+	amount := e.Or.pick(base, ctx)
 	for i := 0; i < amount; i++ {
 		ids := e.Selection.pick(ctx, e.source(ctx))
 		if len(ids) == 0 {
@@ -152,7 +143,7 @@ func (e ArchiveCard) resolveGate(ctx *EffectContext) bool {
 // clicking that card instead of a separate Yes/No. A multi-card ("up to N") archive
 // keeps its own cycle instead.
 func (e ArchiveCard) declinable() bool {
-	return selectionDeclinable(e.Selection) && e.count() == 1
+	return selectionDeclinable(e.Selection) && quantitySingle(e.Quantity)
 }
 
 // resolveOptional is resolveGate under a May: the card is asked declinably, with a

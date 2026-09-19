@@ -136,7 +136,14 @@ func (t Target) expandNeighbors(ctx *EffectContext, ids []LocalID) []LocalID {
 		if t.withNeighbors {
 			out = append(out, id)
 		}
-		out = append(out, neighbors(ctx, id)...)
+		ns := neighbors(ctx, id)
+		// The fought creature may have left play in the fight that named it, so
+		// "each neighbor of the fought creature" falls back to the neighbors the
+		// fight snapshotted (Smite pops a warded neighbor even when the target dies).
+		if t.neighborsOf && len(ns) == 0 && !resolverInPlay(ctx, id) {
+			ns = ctx.Produced.Neighbors
+		}
+		out = append(out, ns...)
 	}
 	return out
 }
@@ -546,18 +553,29 @@ func allArtifacts(ctx *EffectContext) []LocalID {
 		ctx.Resolver.Artifacts(ctx.Opponent())...)
 }
 
-// allCardsInPlay is every creature in play followed by every artifact in play.
-// Cards group by type before they group by player, so a creature of either side
-// precedes every artifact.
-func allCardsInPlay(ctx *EffectContext) []LocalID {
+// creaturesAndArtifacts is every creature in play followed by every artifact in
+// play. Cards group by type before they group by player, so a creature of either
+// side precedes every artifact. It is the pool for the target kinds that NAME the
+// two types ("a creature or artifact"), which is why it stops at the two rows;
+// a kind that says "card in play" reads resolverCardsInPlay and reaches upgrades.
+func creaturesAndArtifacts(ctx *EffectContext) []LocalID {
 	return append(allCreatures(ctx), allArtifacts(ctx)...)
 }
 
-// cardsInPlayOf is one player's creatures followed by their artifacts.
-func cardsInPlayOf(ctx *EffectContext, player int) []LocalID {
+// creaturesAndArtifactsOf is one player's creatures followed by their artifacts,
+// the one-sided form of creaturesAndArtifacts.
+func creaturesAndArtifactsOf(ctx *EffectContext, player int) []LocalID {
 	return append(
 		ctx.Resolver.Battleline(player),
 		ctx.Resolver.Artifacts(player)...)
+}
+
+// allCardsInPlay is every card both players have in play — creatures, artifacts,
+// and the upgrades on either — the controller's side first.
+func allCardsInPlay(ctx *EffectContext) []LocalID {
+	return append(
+		resolverCardsInPlay(ctx, ctx.Controller),
+		resolverCardsInPlay(ctx, ctx.Opponent())...)
 }
 
 // selectBase resolves the unfiltered base set chosen by Kind. Chosen kinds return
@@ -598,12 +616,16 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 		return ctx.Resolver.Artifacts(ctx.Opponent())
 	case TargetEachFriendlyArtifact:
 		return ctx.Resolver.Artifacts(ctx.Controller)
-	case TargetEachCardInPlay, TargetChosenCreatureOrArtifact:
+	case TargetEachCardInPlay:
 		return allCardsInPlay(ctx)
-	case TargetEachFriendlyCardInPlay, TargetChosenFriendlyCreatureOrArtifact:
-		return cardsInPlayOf(ctx, ctx.Controller)
+	case TargetEachFriendlyCardInPlay:
+		return resolverCardsInPlay(ctx, ctx.Controller)
+	case TargetChosenCreatureOrArtifact:
+		return creaturesAndArtifacts(ctx)
+	case TargetChosenFriendlyCreatureOrArtifact:
+		return creaturesAndArtifactsOf(ctx, ctx.Controller)
 	case TargetChosenEnemyCreatureOrArtifact:
-		return cardsInPlayOf(ctx, ctx.Opponent())
+		return creaturesAndArtifactsOf(ctx, ctx.Opponent())
 	case TargetEachCreature, TargetChosenCreature:
 		return allCreatures(ctx)
 	case TargetEachFriendlyCreature, TargetChosenFriendlyCreature:

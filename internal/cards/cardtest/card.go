@@ -90,11 +90,17 @@ func (c Card) Stunned() bool { c.require(); return c.h.g.State.Cards[c.id].Stunn
 // Enraged reports whether the creature is enraged.
 func (c Card) Enraged() bool { c.require(); return c.h.g.State.Cards[c.id].Enraged }
 
+// Warded reports whether the creature has a ward.
+func (c Card) Warded() bool { c.require(); return c.h.g.State.Cards[c.id].Warded }
+
 // Location returns the zone the card is currently in.
 func (c Card) Location() Zone { c.require(); return c.h.location(c.id) }
 
 // Stun stuns the creature (setup helper for scenarios that begin mid-board).
 func (c Card) Stun() { c.require(); c.h.g.State.Cards[c.id].Stunned = true }
+
+// Ward wards the creature (setup helper for scenarios that begin mid-board).
+func (c Card) Ward() { c.require(); c.h.g.State.Cards[c.id].Warded = true }
 
 // Exhaust exhausts the card.
 func (c Card) Exhaust() { c.require(); c.h.g.State.Cards[c.id].Exhausted = true }

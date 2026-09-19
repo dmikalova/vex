@@ -21,6 +21,6 @@ var EclecticInquiry = set.New(
 		card.Trigger.Play, card.ArchiveCard{
 			Zone:      card.Deck,
 			Selection: card.Top{},
-			Amount:    2,
+			Quantity:  card.Takes{N: card.Fixed(2)},
 		}),
 )

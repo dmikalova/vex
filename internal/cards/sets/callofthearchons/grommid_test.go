@@ -1,6 +1,7 @@
 package callofthearchons
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/card"
@@ -39,7 +40,11 @@ func TestGrommid(t *testing.T) {
 	t.Run("stops its controller from playing creatures", func(t *testing.T) {
 		h, _, _ := setup(t)
 
-		if _, err := h.Game().PlayCreature(0, 0, false); err != engine.ErrCannotPlayCreature {
+		if _, err := h.Game().
+			PlayCreature(0, 0, false); !errors.Is(
+			err,
+			engine.ErrCannotPlayCreature,
+		) {
 			t.Errorf("PlayCreature = %v, want ErrCannotPlayCreature", err)
 		}
 	})

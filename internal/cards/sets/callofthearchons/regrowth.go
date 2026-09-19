@@ -18,7 +18,7 @@ var Regrowth = set.New(
 	card.Provenance(card.CotA, "332"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.PutFromDiscard{
+		card.Trigger.Play, card.PutCard{Zones: []card.Zone{card.Discard},
 			Selection:   card.Chosen{Type: card.Type.Creature},
 			Destination: card.To.Hand,
 		}),

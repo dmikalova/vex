@@ -45,8 +45,10 @@ type CardCore struct {
 	// removes the stun instead of reaping, fighting, or firing an Action.
 	Stunned bool
 	// Enraged is whether the creature is enraged: while set, its controller must use
-	// it to fight on their turn if it is able to. Enrage persists across turns until
-	// an effect removes it, so nothing in the ready phase clears it.
+	// it to fight on their turn if it is able to. Enrage is removed once the creature
+	// is used to fight (even against an Elusive defender — the fight still happened);
+	// otherwise it persists across turns until an effect removes it, so nothing in
+	// the ready phase clears it.
 	Enraged bool
 	// Warded is whether the creature has a ward: a one-shot shield that absorbs the
 	// next instance of damage or the next time it would leave play, then is spent.

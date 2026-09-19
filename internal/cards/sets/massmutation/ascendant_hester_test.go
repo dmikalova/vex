@@ -10,7 +10,7 @@ import (
 // Ascendant Hester
 //
 //	House:  Sanctum
-//	Type:   Creature
+//	Type:   Gigantic Creature
 //	Rarity: Special
 //	Power:  8
 //	Traits: Knight • Spirit

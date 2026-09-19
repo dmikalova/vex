@@ -958,7 +958,6 @@ var galleryIcons = []string{
 	"power-counter-minus",
 	"power-counter-plus",
 	"rarity-connected",
-	"rarity-diamond",
 	"rarity-hexagon",
 	"rarity-pentagon",
 	"rarity-square",

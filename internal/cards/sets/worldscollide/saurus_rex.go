@@ -29,6 +29,7 @@ var SaurusRex = set.New(
 						Sources: []card.Zone{card.Deck},
 						House:   card.Houses.Named(card.House.Self),
 						Reveal:  true,
+						Dest:    card.To.Hand,
 					},
 					card.Shuffle{},
 				},

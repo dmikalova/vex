@@ -27,7 +27,7 @@ var AVinda = set.New(
 			Then: card.DiscardCard{
 				Player:    card.Opponent,
 				Zones:     []card.Zone{card.Hand},
-				Selection: card.Random{Count: 1},
+				Selection: card.Random{},
 			},
 		}),
 )

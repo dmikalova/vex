@@ -89,10 +89,9 @@ func bonusIconStem(b engine.BonusIcon) string {
 	return ""
 }
 
-// rarityMark is how a card's rarity renders at its foot. The diamond marks are
-// ordered so a mark's ordinal position is its diamond count (rarityCommon is 1
-// … raritySpecial is 4); rarityConnected instead shows a single "+", and
-// rarityNone (Fixed and the rest) shows nothing.
+// rarityMark is how a card's rarity renders wherever it is shown — the card face,
+// the deck list, and the gallery filter chips. Each tier maps to its own shape via
+// iconName; rarityNone (Fixed and the rest) shows nothing.
 type rarityMark int
 
 const (
@@ -121,49 +120,32 @@ func rarityMarkOf(r engine.Rarity) rarityMark {
 	return rarityNone
 }
 
-// diamonds is how many rarity diamonds the mark shows. The diamond marks are
-// consecutive from rarityCommon (1) to raritySpecial (4), so a mark in that
-// range is its own count; every other mark shows no diamonds.
-func (m rarityMark) diamonds() int {
-	if m >= rarityCommon && m <= raritySpecial {
-		return int(m)
+// iconName is the stem of the single shape a rarity renders as everywhere it is
+// shown — the card face, the deck list, and the gallery filter chips: a polygon
+// whose side count rises with the tier (triangle Common, square Uncommon, pentagon
+// Rare, hexagon Special) and the link glyph for a Connected card. Distinct
+// silhouettes, not colour, carry the tier so it stays legible to colour-blind
+// players. rarityNone renders nothing.
+func (m rarityMark) iconName() string {
+	switch m {
+	case rarityCommon:
+		return "rarity-triangle"
+	case rarityUncommon:
+		return "rarity-square"
+	case rarityRare:
+		return "rarity-pentagon"
+	case raritySpecial:
+		return "rarity-hexagon"
+	case rarityConnected:
+		return "rarity-connected"
 	}
-	return 0
+	return ""
 }
 
-// isConnected reports whether the mark is a Connected card's single "+".
-func (m rarityMark) isConnected() bool { return m == rarityConnected }
-
-// rarityDiamonds renders n identical rarity diamonds; the count is the rarity
-// (one for Common up to four for Special). Each carries the hard outline so the
-// diamonds read against any card art.
-func rarityDiamonds(n int) []app.UI {
-	out := make([]app.UI, 0, n)
-	for i := 0; i < n; i++ {
-		out = append(out, icon("rarity-diamond", "icon-mark", "icon-outline"))
-	}
-	return out
-}
-
-// deckRarityIcon renders a card's rarity as one compact shape for the deck list:
-// a polygon whose side count rises with rarity — triangle Common, square
-// Uncommon, pentagon Rare, hexagon Special — and the Connected link glyph for a
-// connected card. Distinct silhouettes, not colour, carry the tier, so the list
-// stays legible to colour-blind players. A rarity with no mark renders nothing.
+// deckRarityIcon renders a card's rarity as its single shape for the deck list, or
+// nothing for a rarity with no mark.
 func deckRarityIcon(r engine.Rarity) app.UI {
-	name := ""
-	switch r {
-	case engine.Common:
-		name = "rarity-triangle"
-	case engine.Uncommon:
-		name = "rarity-square"
-	case engine.Rare:
-		name = "rarity-pentagon"
-	case engine.Special:
-		name = "rarity-hexagon"
-	case engine.Connected:
-		name = "rarity-connected"
-	}
+	name := rarityMarkOf(r).iconName()
 	if name == "" {
 		return nil
 	}

@@ -56,6 +56,13 @@ func errUnsetZone(effect string) error {
 	return fmt.Errorf("%s: at least one source zone must be set", effect)
 }
 
+// errUnsetDestination is the configuration error a move effect returns when its
+// Destination was left as the invalid zero value, so where the card goes must be
+// stated rather than silently assumed to be the hand (ADR 0010).
+func errUnsetDestination(effect string) error {
+	return fmt.Errorf("%s: destination must be set", effect)
+}
+
 // errUnsetDuration is the configuration error a timed effect returns when its
 // Duration was left as the invalid zero value.
 func errUnsetDuration(effect string) error {
@@ -69,6 +76,16 @@ func errUnsetDuration(effect string) error {
 func errAmountOr(effect, alt string, amount int, altSet bool) error {
 	if amount != 0 && altSet {
 		return fmt.Errorf("%s: set Amount or %s, not both (got Amount=%d)", effect, alt, amount)
+	}
+	return nil
+}
+
+// positiveCount rejects a number field left unset or below one, so a forgotten
+// field cannot pass for "one" (ADR 0010). field names the field for the message,
+// since the effects that share this guard spell it Amount, Cards, or Creatures.
+func positiveCount(effect, field string, n int) error {
+	if n < 1 {
+		return fmt.Errorf("%s: %s must be at least 1", effect, field)
 	}
 	return nil
 }
