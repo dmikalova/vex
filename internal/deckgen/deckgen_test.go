@@ -20,7 +20,7 @@ func synthCards() []Card {
 	var cs []Card
 	for _, h := range houses {
 		for _, rr := range rarities {
-			for i := 0; i < 6; i++ {
+			for i := range 6 {
 				name := h.String() + "-" + string(rr) + "-" + string(rune('a'+i))
 				cs = append(
 					cs,
@@ -60,7 +60,7 @@ func legacyPool() []Card {
 	houses := []engine.House{engine.Brobnar, engine.Dis, engine.Logos, engine.Mars, engine.Sanctum}
 	var cs []Card
 	for _, h := range houses {
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			name := "Legacy-" + h.String() + "-" + string(rune('a'+i))
 			cs = append(
 				cs,
@@ -183,7 +183,7 @@ func foreignLegacyPool() []Card {
 	houses := []engine.House{engine.Shadows, engine.Untamed, engine.Saurian}
 	var cs []Card
 	for _, h := range houses {
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			name := "Foreign-" + h.String() + "-" + string(rune('a'+i))
 			cs = append(cs, Card{Def: engine.NewCard(
 				name, h, engine.Creature, engine.Common, engine.WithPower(2),
@@ -261,7 +261,7 @@ func TestErrantExhaustsForeignHouses(t *testing.T) {
 	tuning.ErrantRate = 1
 	tuning.InterloperRate = 0
 	entries := make([]LegacyEntry, 0)
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		entries = append(entries, LegacyEntry{
 			Card: mkCard("Sau-"+string(rune('a'+i)), engine.Saurian, engine.Common),
 			Set:  "Other",

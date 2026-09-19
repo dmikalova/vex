@@ -211,7 +211,7 @@ func (omegaDriver) ChooseAction(actions []Command) Command {
 func TestRunMatchDrivesToWinnerThroughEndedTurn(t *testing.T) {
 	g := NewGame("Alice", "Bob", 1)
 	omega := testCreature("Omega", 3, WithKeywords(Omega))
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		g.AddToDeck(omega, 0)
 		g.AddToDeck(omega, 1)
 	}

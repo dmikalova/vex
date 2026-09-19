@@ -75,7 +75,7 @@ func (g *Game) resetTurnTallies(player int) {
 	// step where the reap/fight tallies roll, so an end-of-turn ability (Sloth) can
 	// still read it after ready and draw have run (ADR 0013).
 	g.State.TurnHistory[player][CreaturesUsedThisTurn] = 0
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		for _, id := range g.State.Battleline[p].slice() {
 			g.State.Cards[id].TimesUsedThisTurn = 0
 			g.State.Cards[id].ElusiveUsedThisTurn = false
@@ -181,12 +181,7 @@ func (g *Game) playerHasHouse(player int, house House) bool {
 	if len(g.houses[player]) == 0 {
 		return true
 	}
-	for _, h := range g.houses[player] {
-		if h == house {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(g.houses[player], house)
 }
 
 // Ready and draw: at the end of your turn every card you control readies (turns
@@ -212,10 +207,7 @@ func (g *Game) EndPlayPhase(player int) {
 // draw kept them from taking a card they could otherwise have drawn.
 func (g *Game) drawStep(player int) {
 	chains := g.State.Chains[player]
-	target := HandSize + g.drawModifier(player) - (chains+5)/6
-	if target < 0 {
-		target = 0
-	}
+	target := max(HandSize+g.drawModifier(player)-(chains+5)/6, 0)
 	before := int(g.State.Hand[player].Count)
 	g.drawTo(player, target)
 	hand := int(g.State.Hand[player].Count)
@@ -235,7 +227,7 @@ func (g *Game) drawStep(player int) {
 // Howling Pit).
 func (g *Game) drawModifier(player int) int {
 	total := 0
-	for owner := 0; owner < 2; owner++ {
+	for owner := range 2 {
 		for _, id := range g.allInPlay(owner) {
 			if m := g.cat.def(id).DrawModifier; m.Amount != 0 && m.affects(owner, player) {
 				if m.OnlyWhileOffFlank && g.onFlankOf(id) {
@@ -567,7 +559,7 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 	// A symmetric CannotPlayWhile bar (Quixxle Stone) is continuous, not
 	// turn-scoped, so it is not in State; name each in-play card whose bar
 	// currently holds against this player.
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		for _, id := range g.allInPlay(p) {
 			bar := g.cat.def(id).CannotPlayWhile
 			if bar.When == nil {
@@ -599,7 +591,7 @@ func (g *Game) KeyCostSources(player int) []LocalID {
 	if g.State.KeyCostPerHouse[player].Value.Per != 0 {
 		name(g.State.KeyCostPerHouse[player].Source)
 	}
-	for controller := 0; controller < 2; controller++ {
+	for controller := range 2 {
 		for _, id := range g.allInPlay(controller) {
 			if g.keyCostChangeFor(id, controller, player) != 0 {
 				name(id)

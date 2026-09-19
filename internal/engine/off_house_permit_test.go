@@ -48,7 +48,7 @@ func TestOffHousePermitFrees(t *testing.T) {
 // TestAddOffHousePermitCap confirms the store drops grants past its cap.
 func TestAddOffHousePermitCap(t *testing.T) {
 	g := started(t)
-	for i := 0; i < maxOffHousePermits+2; i++ {
+	for range maxOffHousePermits + 2 {
 		g.addOffHousePermit(0, OffHousePermit{Grant: GrantPlay, Remaining: 1})
 	}
 	if int(g.State.OffHousePermitCount[0]) != maxOffHousePermits {

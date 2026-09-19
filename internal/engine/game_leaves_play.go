@@ -5,6 +5,8 @@ package engine
 // archives. All of these shed the card's per-match state and its attached
 // upgrades on the way out.
 
+import "slices"
+
 // resetCore returns a card to its fresh, out-of-play state by zeroing its entire
 // CardCore. Every field there is per-match, in-play state (damage, armor, Æmber,
 // exhaustion, attached upgrades), so one zeroing covers them all and any field
@@ -190,7 +192,7 @@ func (g *Game) removeFromPlay(id LocalID) {
 // buffing what it leaves behind, but the resolution boundary settles that, not
 // this low-level move (ADR 0029).
 func (g *Game) removeFromPlayRows(id LocalID) {
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		g.State.Battleline[p].remove(id)
 		g.State.Artifacts[p].remove(id)
 	}
@@ -382,12 +384,7 @@ func (g *Game) excludeOpenWindows(ids []LocalID) []LocalID {
 
 // inDestroyingWindow reports whether a creature's Destroyed window is already open.
 func (g *Game) inDestroyingWindow(id LocalID) bool {
-	for _, w := range g.destroyingWindow {
-		if w == id {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(g.destroyingWindow, id)
 }
 
 // destroyTogether destroys several creatures as one simultaneous event, matching

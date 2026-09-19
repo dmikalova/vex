@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // CardDefinition is the immutable blueprint for a card. Definitions are shared,
 // read-only data held in the match Catalog; all mutable per-match state lives in
@@ -659,22 +662,12 @@ type Ability struct {
 
 // hasKeyword reports whether the definition has the given keyword.
 func (d *CardDefinition) hasKeyword(k Keyword) bool {
-	for _, kw := range d.Keywords {
-		if kw == k {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(d.Keywords, k)
 }
 
 // hasTrait reports whether the definition has the given trait.
 func (d *CardDefinition) hasTrait(t Trait) bool {
-	for _, tr := range d.Traits {
-		if tr == t {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(d.Traits, t)
 }
 
 // hasTrigger reports whether the definition has an ability with the trigger.
@@ -1060,12 +1053,7 @@ func WithoutEnhancement(icons ...BonusIcon) CardOption {
 // BarsEnhanceIcon reports whether deck generation must not land a bonus icon of
 // this kind on the card via Enhance.
 func (d *CardDefinition) BarsEnhanceIcon(b BonusIcon) bool {
-	for _, k := range d.NoEnhanceIcons {
-		if k == b {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(d.NoEnhanceIcons, b)
 }
 
 // WithStatic sets the continuous modifier an Upgrade applies to its host.

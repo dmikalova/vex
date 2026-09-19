@@ -120,8 +120,7 @@ func chosenTargetField(e Effect) bool {
 	if v.Kind() != reflect.Struct {
 		return false
 	}
-	for i := range v.NumField() {
-		f := v.Field(i)
+	for _, f := range v.Fields() {
 		if t, ok := f.Interface().(Target); ok && t.isChosen() {
 			return true
 		}

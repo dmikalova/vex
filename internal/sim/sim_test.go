@@ -64,7 +64,7 @@ func TestSoak(t *testing.T) {
 	var games, failures atomic.Int64
 	var mu sync.Mutex // serialize corpus writes and test logging across workers
 	var wg sync.WaitGroup
-	for w := 0; w < workers; w++ {
+	for w := range workers {
 		wg.Add(1)
 		go func(seed int64) {
 			defer wg.Done()

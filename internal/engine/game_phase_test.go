@@ -146,7 +146,7 @@ func TestEndOfTurnAbilitiesResolveAfterReadyAndDraw(t *testing.T) {
 	c := g.AddToBattleline(NewCard("watcher", Brobnar, Creature, Common, WithPower(3),
 		WithAbility(TriggerEndOfTurn, watcher)), 0)
 	g.State.Cards[c].Exhausted = true
-	for i := 0; i < HandSize; i++ {
+	for range HandSize {
 		g.AddToDeck(testCreature("stock", 1), 0)
 	}
 

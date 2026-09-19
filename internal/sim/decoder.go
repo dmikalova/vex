@@ -30,7 +30,7 @@ func (d *decoder) bool() bool { return d.byte()&1 == 1 }
 // uint64 consumes eight bytes (big-endian) for a seed. Exhausted bytes read as 0.
 func (d *decoder) uint64() uint64 {
 	var v uint64
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		v = v<<8 | uint64(d.byte())
 	}
 	return v

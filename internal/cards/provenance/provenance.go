@@ -18,7 +18,7 @@ package provenance
 
 import (
 	"embed"
-	"encoding/json"
+	"encoding/json/v2"
 	"sort"
 	"sync"
 )

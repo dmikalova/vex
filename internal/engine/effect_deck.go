@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // PlayRevealedCard plays the card in context (put there by a preceding
 // RevealTopOfDeck) from the controller's deck — Chaos Portal. It does nothing when
@@ -680,16 +683,12 @@ func resolverInPlay(ctx *EffectContext, id LocalID) bool {
 	if host, ok := ctx.Resolver.HostOf(id); ok {
 		id = host
 	}
-	for p := 0; p < 2; p++ {
-		for _, candidate := range ctx.Resolver.Battleline(p) {
-			if candidate == id {
-				return true
-			}
+	for p := range 2 {
+		if slices.Contains(ctx.Resolver.Battleline(p), id) {
+			return true
 		}
-		for _, candidate := range ctx.Resolver.Artifacts(p) {
-			if candidate == id {
-				return true
-			}
+		if slices.Contains(ctx.Resolver.Artifacts(p), id) {
+			return true
 		}
 	}
 	return false

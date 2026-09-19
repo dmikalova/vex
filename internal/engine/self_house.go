@@ -11,7 +11,7 @@ import "reflect"
 // really is about Sanctum rather than about itself — spells that house out.
 
 var (
-	houseType = reflect.TypeOf(House(0))
+	houseType = reflect.TypeFor[House]()
 )
 
 // selfHouseResolvable is implemented by the value types that keep part of a card
@@ -88,8 +88,8 @@ func replaceHouse(v reflect.Value, from, to House) reflect.Value {
 	case reflect.Struct:
 		out := reflect.New(v.Type()).Elem()
 		out.Set(v)
-		for i := range out.NumField() {
-			if f := out.Field(i); f.CanSet() {
+		for _, f := range out.Fields() {
+			if f.CanSet() {
 				f.Set(replaceHouse(f, from, to))
 			}
 		}

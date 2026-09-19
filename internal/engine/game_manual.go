@@ -180,10 +180,7 @@ func (g *Game) ManualAddAmber(player, delta int) {
 
 // ManualAddChains adjusts player's chain count by delta (clamped at zero).
 func (g *Game) ManualAddChains(player, delta int) {
-	n := g.State.Chains[player] + delta
-	if n < 0 {
-		n = 0
-	}
+	n := max(g.State.Chains[player]+delta, 0)
 	g.State.Chains[player] = n
 	g.record(ManualChainsSet{Player: player, Amount: n})
 }

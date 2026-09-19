@@ -3,6 +3,7 @@ package cardtest
 import (
 	"fmt"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
@@ -53,8 +54,8 @@ func expectFail(t *testing.T, fn func(tb testing.TB)) string {
 	go func() {
 		defer close(done)
 		defer func() {
-			for i := len(rec.cleanups) - 1; i >= 0; i-- {
-				rec.cleanups[i]()
+			for _, v := range slices.Backward(rec.cleanups) {
+				v()
 			}
 		}()
 		fn(rec)

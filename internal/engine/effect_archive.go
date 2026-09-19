@@ -127,7 +127,7 @@ func (e ArchiveCard) resolveGate(ctx *EffectContext) bool {
 	archived := false
 	base, _ := quantityPicks(e.Quantity, ctx)
 	amount := e.Or.pick(base, ctx)
-	for i := 0; i < amount; i++ {
+	for range amount {
 		ids := e.Selection.pick(ctx, e.source(ctx))
 		if len(ids) == 0 {
 			return archived

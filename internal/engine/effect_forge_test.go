@@ -277,7 +277,7 @@ func TestForgeKeyPaysTheSurcharge(t *testing.T) {
 func TestForgeKeyReducedBelowTheSurcharge(t *testing.T) {
 	g := started(t)
 	g.State.Aember[0] = KeyCost
-	for i := 0; i < 12; i++ {
+	for range 12 {
 		g.AddToHand(NewCard("Filler", Brobnar, Tactic, Common), 0)
 	}
 
@@ -302,7 +302,7 @@ func TestForgeKeyDiscountFloorsAndPurges(t *testing.T) {
 
 	// A discount larger than the current key cost floors the whole cost at 0, so the
 	// forge lands with an empty pool, and the successful forge purges the source.
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		g.AddToHand(NewCard("Filler", Brobnar, Tactic, Common), 0)
 	}
 	ForgeKey{

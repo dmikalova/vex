@@ -128,7 +128,7 @@ func TestUndoHistoryIsNotCapped(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	const n = 120
-	for i := 0; i < n; i++ {
+	for range n {
 		c.g.adjustManualAmber(c.ctx, c.g.active(), 1)
 		c.settle()
 	}

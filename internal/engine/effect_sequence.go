@@ -144,11 +144,12 @@ func splitBeforeConditionals(parts []string, opensSentence []bool) string {
 	if len(sentences) < 2 {
 		return joinSequenceParts(sentences)
 	}
-	text := punctuate(sentences[0])
+	var text strings.Builder
+	text.WriteString(punctuate(sentences[0]))
 	for _, s := range sentences[1:] {
-		text += " " + punctuate(capitalizeFirst(s))
+		text.WriteString(" " + punctuate(capitalizeFirst(s)))
 	}
-	return text
+	return text.String()
 }
 
 // nounListable is an effect whose text is a fixed head, an indefinite noun, and a

@@ -232,8 +232,8 @@ func singularNoun(phrase string) string {
 		return "other " + rest
 	}
 	for _, p := range []string{"each other ", "each ", "an ", "a "} {
-		if strings.HasPrefix(phrase, p) {
-			return strings.TrimPrefix(phrase, p)
+		if after, ok := strings.CutPrefix(phrase, p); ok {
+			return after
 		}
 	}
 	return phrase

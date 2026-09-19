@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Dealing damage puts that much pending damage on each creature the effect
 // targets. Armor prevents pending damage first — each point stops 1, and armor
@@ -229,7 +232,7 @@ func (e DealDamage) resolvePerInstance(ctx *EffectContext) {
 	defer ctx.previewBadge(SelectionBadge{})
 	assigned := map[LocalID]int{}
 	order := []LocalID{}
-	for i := 0; i < n; i++ {
+	for range n {
 		id, ok := ctx.ChooseCreature(prompt, cands)
 		if !ok {
 			continue
@@ -594,9 +597,9 @@ func (s DivideDamage) hits(ctx *EffectContext) []DamageTarget {
 	total := scaled(s.Amount, s.Per, ctx)
 	assigned := map[LocalID]int{}
 	order := []LocalID{}
-	for i := 0; i < total; i++ {
+	for range total {
 		var cands []LocalID
-		for p := 0; p < 2; p++ {
+		for p := range 2 {
 			cands = append(cands, ctx.Resolver.Battleline(p)...)
 		}
 		if len(cands) == 0 {
@@ -682,15 +685,16 @@ func (s FlankWalk) spreadText() string {
 	for i, a := range s.Amounts {
 		parts[i] = fmt.Sprintf("%d damage to %s", a, flankWalkPhrase(i))
 	}
-	joined := parts[0]
+	var joined strings.Builder
+	joined.WriteString(parts[0])
 	for i := 1; i < len(parts); i++ {
 		sep := ", "
 		if i == len(parts)-1 {
 			sep = ", and "
 		}
-		joined += sep + parts[i]
+		joined.WriteString(sep + parts[i])
 	}
-	return "choose a flank creature. Deal " + joined
+	return "choose a flank creature. Deal " + joined.String()
 }
 
 // validate requires at least one amount to deal.

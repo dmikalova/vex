@@ -154,7 +154,7 @@ func SetupDecksFor(
 		names[i] = d.Name
 	}
 	g.SetNameableNames(names)
-	for player := 0; player < 2; player++ {
+	for player := range 2 {
 		set, err := setFor(setNames[player])
 		if err != nil {
 			return houses, mavericks, legacies, rosters, err

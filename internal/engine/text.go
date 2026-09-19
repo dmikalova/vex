@@ -611,12 +611,13 @@ func houseOverrideLine(def *CardDefinition) string {
 	if m.HouseOverride == HouseNone {
 		return ""
 	}
-	line := "This creature belongs to " + m.HouseOverride.String()
+	var line strings.Builder
+	line.WriteString("This creature belongs to " + m.HouseOverride.String())
 	frame := func(body string) string { return `gains "` + body + `"` }
 	for _, g := range grantedLines(m, def.Name, frame) {
-		line += " and " + g
+		line.WriteString(" and " + g)
 	}
-	return line
+	return line.String()
 }
 
 // playableAsUpgradeText renders the clause a creature played as an upgrade prints
@@ -825,7 +826,7 @@ func trailingRules(def *CardDefinition) []string {
 func CardDocComment(def *CardDefinition) string {
 	var b strings.Builder
 	b.WriteString("// " + def.Name + "\n//\n")
-	for _, line := range strings.Split(RenderCardText(def), "\n") {
+	for line := range strings.SplitSeq(RenderCardText(def), "\n") {
 		if line == "" {
 			b.WriteString("//\n")
 		} else {

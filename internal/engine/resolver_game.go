@@ -1,6 +1,9 @@
 package engine
 
-import "sort"
+import (
+	"slices"
+	"sort"
+)
 
 // This file holds the *Game implementation of the Resolver port declared in
 // resolver.go: every method a card can reach through EffectContext, grouped by
@@ -104,12 +107,7 @@ func (g *Game) SharesTrait(a, b LocalID) bool {
 		return false
 	}
 	other := g.cat.def(b)
-	for _, tr := range g.cat.def(a).Traits {
-		if other.hasTrait(tr) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(g.cat.def(a).Traits, other.hasTrait)
 }
 
 // HasKeyword reports whether a creature has a keyword, printed or granted.
@@ -302,10 +300,7 @@ func (g *Game) NoteAemberStolenFrom(player, amount int) {
 	if amount <= 0 {
 		return
 	}
-	total := int(g.State.TurnHistory[player][AemberStolenFromThisTurn]) + amount
-	if total > 127 {
-		total = 127
-	}
+	total := min(int(g.State.TurnHistory[player][AemberStolenFromThisTurn])+amount, 127)
 	g.State.TurnHistory[player][AemberStolenFromThisTurn] = int8(total)
 }
 
@@ -466,7 +461,7 @@ func (g *Game) PutIntoBattlelineAsCreature(id LocalID, right bool, d Duration) {
 // RemainderOfPlayerTurn effect.
 func (g *Game) revertTemporaryCreatures() {
 	var revert []LocalID
-	for owner := 0; owner < 2; owner++ {
+	for owner := range 2 {
 		for _, id := range g.allInPlay(owner) {
 			if g.State.Cards[id].CreatureUntilTurnEnd {
 				revert = append(revert, id)

@@ -193,9 +193,9 @@ var fieldNarration = map[string]narration{
 // gap from being introduced silently: a new GameState field fails the build until
 // fieldNarration says how the log covers it.
 func TestEveryStateFieldDeclaresItsNarration(t *testing.T) {
-	typ := reflect.TypeOf(GameState{})
-	for i := range typ.NumField() {
-		name := typ.Field(i).Name
+	typ := reflect.TypeFor[GameState]()
+	for field := range typ.Fields() {
+		name := field.Name
 		if _, ok := fieldNarration[name]; !ok {
 			t.Errorf(
 				"GameState.%s has no fieldNarration entry; decide whether a change "+

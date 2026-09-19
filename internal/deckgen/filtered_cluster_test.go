@@ -1,6 +1,7 @@
 package deckgen
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/engine"
@@ -11,12 +12,7 @@ func isUpgradeOrRobot(d engine.CardDefinition) bool {
 	if d.Type == engine.Upgrade {
 		return true
 	}
-	for _, tr := range d.Traits {
-		if tr == engine.Robot {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(d.Traits, engine.Robot)
 }
 
 func upgradeCard(name string, h engine.House) Card {
@@ -90,7 +86,7 @@ func TestBuildFilteredClustersStampsLead(t *testing.T) {
 func TestFilteredTarget(t *testing.T) {
 	g := gen(richFilteredSet())
 	flat := FilteredCluster{Name: "F", Floor: 3, Match: isUpgradeOrRobot}
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		if got := g.filteredTarget(flat); got != 3 {
 			t.Fatalf("zero-Mean target = %d, want exactly 3", got)
 		}
@@ -98,7 +94,7 @@ func TestFilteredTarget(t *testing.T) {
 	spread := FilteredCluster{Name: "F", Floor: 4, Mean: 6, Match: isUpgradeOrRobot}
 	sum := 0
 	const n = 2000
-	for i := 0; i < n; i++ {
+	for range n {
 		got := g.filteredTarget(spread)
 		if got < 4 {
 			t.Fatalf("target %d below floor 4", got)
@@ -219,7 +215,7 @@ func TestPlaceFilteredMatchMaverick(t *testing.T) {
 	if !g.placeFilteredMatch(&deck, fc, g.set.byName["UpM"]) {
 		t.Fatal("expected maverick placement to succeed")
 	}
-	for i := 0; i < PodCount; i++ {
+	for i := range PodCount {
 		for _, s := range deck.Pods[i].Slots {
 			if s.Card.Name == "UpM" {
 				if !s.Maverick || s.Card.House != deck.Pods[i].House {

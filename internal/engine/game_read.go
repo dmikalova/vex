@@ -111,10 +111,8 @@ func (g *Game) Power(id LocalID) int {
 	// A variable "X" power reads its neighbors' power, so two such creatures that
 	// reference each other would recurse forever. A creature already mid-computation
 	// contributes 0 — its power is undeterminable, which KeyForge treats as 0.
-	for _, computing := range g.powerComputing {
-		if computing == id {
-			return 0
-		}
+	if slices.Contains(g.powerComputing, id) {
+		return 0
 	}
 	g.powerComputing = append(g.powerComputing, id)
 	defer func() { g.powerComputing = g.powerComputing[:len(g.powerComputing)-1] }()
@@ -253,12 +251,7 @@ func (g *Game) constantContext(src LocalID) *EffectContext {
 // creature id, resolving c's Target from src's point of view.
 func (g *Game) constantAffects(src LocalID, c ConstantAbility, id LocalID) bool {
 	ctx := g.constantContext(src)
-	for _, t := range c.target().Select(ctx) {
-		if t == id {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.target().Select(ctx), id)
 }
 
 // constantActive reports whether constant ability c's positional condition is met
@@ -430,10 +423,8 @@ func (g *Game) keywordGranted(id LocalID, k Keyword) bool {
 func (g *Game) keywordFromUpgrades(id LocalID, k Keyword) bool {
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		m := g.staticOn(id, up)
-		for _, kw := range m.Keywords {
-			if kw == k {
-				return true
-			}
+		if slices.Contains(m.Keywords, k) {
+			return true
 		}
 		for _, grant := range m.KeywordGrants {
 			if grant.Host && slices.Contains(grant.Keywords, k) {
@@ -657,7 +648,7 @@ func (g *Game) inPlay(id LocalID) bool {
 	if host, ok := g.hostOf(id); ok {
 		id = host
 	}
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		if g.State.Battleline[p].contains(id) || g.State.Artifacts[p].contains(id) {
 			return true
 		}
@@ -717,7 +708,7 @@ func (g *Game) cannotFight(player int) bool {
 // must fight when used, if able" rule (Little Rapscal). It affects both players'
 // creatures, so it scans every in-play card.
 func (g *Game) mustFightIfAble() bool {
-	for owner := 0; owner < 2; owner++ {
+	for owner := range 2 {
 		for _, id := range g.allInPlay(owner) {
 			if g.cat.def(id).Restricts.MustFightIfAble {
 				return true
@@ -756,7 +747,7 @@ func (g *Game) cannotReap(player int) bool {
 	if g.State.CannotReap[player].Value {
 		return true
 	}
-	for owner := 0; owner < 2; owner++ {
+	for owner := range 2 {
 		for _, id := range g.allInPlay(owner) {
 			r := g.cat.def(id).Restricts.Reaping
 			switch r {
@@ -802,7 +793,7 @@ func (g *Game) barredFromPlaying(player int, t CardType) bool {
 // named card in either deck. It lifts when the naming permanent leaves play,
 // because resetCore clears the stored name.
 func (g *Game) barredByNamedCard(def *CardDefinition) bool {
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		for _, id := range g.allInPlay(p) {
 			named := g.State.Cards[id].NamedCardPlus
 			if named != 0 && g.cat.def(LocalID(named-1)).Name == def.Name {
@@ -829,7 +820,7 @@ func (g *Game) cannotPlayCreatures(player int) bool {
 // bars player from playing cards of type t through a CannotPlayWhile rule whose
 // condition holds for player (Quixxle Stone bars whoever controls more creatures).
 func (g *Game) barredByConditionalPlayBar(player int, t CardType) bool {
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		for _, id := range g.allInPlay(p) {
 			bar := g.cat.def(id).CannotPlayWhile
 			if bar.When == nil || bar.Type != t {
@@ -867,7 +858,7 @@ func (g *Game) keyForgeCapReached(player int) bool {
 // Imps bar a key ordinal for both players, whoever controls the Imp.
 func (g *Game) forgeKeyNumberBarred(player int) bool {
 	next := g.Keys(player) + 1
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		for _, id := range g.allInPlay(p) {
 			if g.cat.def(id).Restricts.NoForgeKeyNumber == next {
 				return true
@@ -891,7 +882,7 @@ func (g *Game) forgeAemberGainer(payer int) (LocalID, bool) {
 // cannotPlayCard reports whether a player cannot play another card this turn
 // because they have reached a card-play limit an in-play card imposes (Ember Imp).
 func (g *Game) cannotPlayCard(player int) bool {
-	for controller := 0; controller < 2; controller++ {
+	for controller := range 2 {
 		for _, id := range g.allInPlay(controller) {
 			limit := g.cat.def(id).Restricts.PlayCardLimit
 			if limit.Amount > 0 && limit.affects(controller, player) &&
@@ -927,7 +918,7 @@ func (g *Game) forgeBarredWhileAhead(player int) bool {
 	if g.Keys(player) <= g.Keys(1-player) {
 		return false
 	}
-	for controller := 0; controller < 2; controller++ {
+	for controller := range 2 {
 		for _, id := range g.allInPlay(controller) {
 			if g.cat.def(id).Restricts.NoForgeWhileAheadOnKeys {
 				return true
@@ -1018,7 +1009,7 @@ func (g *Game) houseConstraintLists(player int) (cannots, musts []House) {
 			addTo(&musts, g.House(c.Creature))
 		}
 	}
-	for controller := 0; controller < 2; controller++ {
+	for controller := range 2 {
 		for _, id := range g.allInPlay(controller) {
 			if h, bars, ok := g.lockedHouse(id, controller, player); ok {
 				if bars {
@@ -1102,7 +1093,7 @@ func (g *Game) keyCost(target int) int {
 	if sure := g.State.KeyCostPerHouse[target].Value; sure.Per != 0 {
 		cost += sure.Per * g.creaturesMatchingInPlay(sure.House)
 	}
-	for controller := 0; controller < 2; controller++ {
+	for controller := range 2 {
 		for _, id := range g.allInPlay(controller) {
 			cost += g.keyCostChangeFor(id, controller, target)
 		}
@@ -1117,7 +1108,7 @@ func (g *Game) keyCost(target int) int {
 func (g *Game) creaturesMatchingInPlay(m HouseMatcher) int {
 	ctx := &EffectContext{Resolver: g}
 	n := 0
-	for player := 0; player < 2; player++ {
+	for player := range 2 {
 		for _, id := range g.State.Battleline[player].slice() {
 			if m.matches(ctx, id) {
 				n++

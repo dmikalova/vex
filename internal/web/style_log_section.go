@@ -128,7 +128,6 @@ func (s *style) logHeroGallery() app.UI {
 	cov := s.logCov
 	out := make([]app.UI, 0, len(cov.cover))
 	for _, cb := range cov.cover {
-		cb := cb
 		gw := cov.games[cb.game].game
 		blocks := cov.games[cb.game].blocks
 		if cb.block >= len(blocks) {

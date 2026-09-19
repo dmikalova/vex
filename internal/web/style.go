@@ -3,6 +3,7 @@ package web
 import (
 	"errors"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -399,10 +400,8 @@ func (s *style) onAddFont(ctx app.Context, _ app.Event) {
 		return
 	}
 	s.fontErr = ""
-	for _, f := range s.fonts {
-		if f == family {
-			return
-		}
+	if slices.Contains(s.fonts, family) {
+		return
 	}
 	s.fonts = append(s.fonts, family)
 	linkFont(family)
@@ -471,7 +470,7 @@ func fontFamily(raw string) (string, error) {
 // (family=Inter:wght@400;700), so the commonest font URL there is would come
 // back with no family at all.
 func rawParam(query, name string) string {
-	for _, pair := range strings.Split(query, "&") {
+	for pair := range strings.SplitSeq(query, "&") {
 		k, v, ok := strings.Cut(pair, "=")
 		if !ok || k != name {
 			continue

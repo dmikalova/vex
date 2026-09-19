@@ -273,7 +273,7 @@ func stubSource(pkg string, set provenance.SourceSet, c provenance.Card) string 
 	}
 	if c.Text != "" {
 		b.WriteString("//\n")
-		for _, line := range strings.Split(c.Text, "\n") {
+		for line := range strings.SplitSeq(c.Text, "\n") {
 			b.WriteString("//\t" + line + "\n")
 		}
 	}

@@ -3,6 +3,7 @@ package web
 import (
 	"hash/fnv"
 	"math/rand"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -135,12 +136,7 @@ func featureSpecimens() []specimen {
 // the definition rather than the board, because a specimen is a printed card and
 // never enters play.
 func hasKeyword(d *engine.CardDefinition, kw engine.Keyword) bool {
-	for _, k := range d.Keywords {
-		if k == kw {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(d.Keywords, kw)
 }
 
 // longestRules builds a predicate matching only the card with the most rules

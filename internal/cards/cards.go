@@ -10,6 +10,7 @@ package cards
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -137,12 +138,7 @@ func catalogCards() []deckgen.Card {
 // hasDraftable reports whether any of a set's own pool cards would enter its draw
 // pool. A set with none is a reservoir set and gets no Set of its own.
 func hasDraftable(pool []deckgen.Card) bool {
-	for _, c := range pool {
-		if deckgen.Draftable(c) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(pool, deckgen.Draftable)
 }
 
 // buildLegacy assembles the single cross-set legacy pool shared by every set: each

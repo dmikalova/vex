@@ -73,7 +73,7 @@ func TestGainAemberPerCount(t *testing.T) {
 
 func TestGainAemberPerArchivedCards(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		g.State.Archives[0].add(g.Register(testCreature("a", 1), 0))
 	}
 	ctx := &EffectContext{Resolver: g, Controller: 0}

@@ -305,7 +305,7 @@ func (e DistributeCapture) Resolve(ctx *EffectContext) {
 		by = AllAember
 	}
 	total := min(by.lose(ctx.Resolver.Aember(pool)), ctx.Resolver.Aember(pool))
-	for i := 0; i < total; i++ {
+	for range total {
 		if len(ctx.Resolver.Battleline(ctx.Controller)) == 0 {
 			return
 		}

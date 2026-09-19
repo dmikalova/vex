@@ -1,6 +1,9 @@
 package engine
 
-import "runtime"
+import (
+	"runtime"
+	"slices"
+)
 
 // This file holds the engine's suspendable step function (ADR 0040): the seam
 // that lets resolution YIELD for a decision instead of PULLING one from a blocking
@@ -217,12 +220,7 @@ func indexCommands(kind CommandKind, n int) []Command {
 
 // IsLegal reports whether cmd is a valid answer to this request.
 func (r Request) IsLegal(cmd Command) bool {
-	for _, c := range r.LegalCommands() {
-		if c == cmd {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(r.LegalCommands(), cmd)
 }
 
 // suspendChooser is the adapter that turns a pulled choice into a yielded Request:

@@ -1,6 +1,7 @@
 package web
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 
@@ -219,12 +220,7 @@ func (g *game) usableFromHand(id engine.LocalID) bool {
 }
 
 func containsID(ids []engine.LocalID, id engine.LocalID) bool {
-	for _, x := range ids {
-		if x == id {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(ids, id)
 }
 
 func indexOfID(ids []engine.LocalID, id engine.LocalID) int {

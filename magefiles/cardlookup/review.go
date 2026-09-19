@@ -1,7 +1,8 @@
 package main
 
 import (
-	"encoding/json"
+	jsontext "encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"math/rand"
 	"os"
@@ -144,7 +145,7 @@ func loadReviewState() (reviewState, error) {
 
 // saveReviewState writes the reviewed-files record.
 func saveReviewState(s reviewState) error {
-	data, err := json.MarshalIndent(s, "", "  ")
+	data, err := json.Marshal(s, jsontext.WithIndent("  "))
 	if err != nil {
 		return fmt.Errorf("cardlookup review: %w", err)
 	}

@@ -41,7 +41,7 @@ func TestGalleryWindowsFacesButKeepsTextSearchable(t *testing.T) {
 		t.Skipf("need at least 3 registered cards, have %d", len(regs))
 	}
 	g := &gallery{ready: true, order: "name"}
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		d := regs[i].Def
 		g.cards = append(g.cards, galleryCard{def: &d, nameHay: d.Name, textHay: d.Name})
 	}

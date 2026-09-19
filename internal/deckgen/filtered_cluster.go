@@ -140,7 +140,7 @@ func (g *generator) filteredNames() []string {
 
 // deckHasCard reports whether any pod holds a card of the given name.
 func deckHasCard(deck *Deck, name string) bool {
-	for i := 0; i < PodCount; i++ {
+	for i := range PodCount {
 		for _, s := range deck.Pods[i].Slots {
 			if s.Card.Name == name {
 				return true
@@ -153,7 +153,7 @@ func deckHasCard(deck *Deck, name string) bool {
 // deckCountMatching counts the deck's slots whose card satisfies the predicate.
 func deckCountMatching(deck *Deck, match func(engine.CardDefinition) bool) int {
 	n := 0
-	for i := 0; i < PodCount; i++ {
+	for i := range PodCount {
 		for _, s := range deck.Pods[i].Slots {
 			if match(s.Card) {
 				n++
@@ -169,7 +169,7 @@ func deckCountMatching(deck *Deck, match func(engine.CardDefinition) bool) int {
 // by seed.
 func (g *generator) filteredCandidates(deck *Deck, fc FilteredCluster) []Card {
 	inDeck := map[string]bool{}
-	for i := 0; i < PodCount; i++ {
+	for i := range PodCount {
 		for _, s := range deck.Pods[i].Slots {
 			inDeck[s.Card.Name] = true
 		}
@@ -242,12 +242,12 @@ func (g *generator) placeFilteredMatch(deck *Deck, fc FilteredCluster, cand Card
 // maverick slot elsewhere.
 func podOrder(deck *Deck, house engine.House) []int {
 	order := make([]int, 0, PodCount)
-	for i := 0; i < PodCount; i++ {
+	for i := range PodCount {
 		if deck.Pods[i].House == house {
 			order = append(order, i)
 		}
 	}
-	for i := 0; i < PodCount; i++ {
+	for i := range PodCount {
 		if deck.Pods[i].House != house {
 			order = append(order, i)
 		}

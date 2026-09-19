@@ -472,7 +472,7 @@ func TestEndTurnReadyDrawAndArmorRefresh(t *testing.T) {
 	g.AddArtifact(exAutocannon(), 0)
 
 	// Deck to draw from.
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		g.AddToDeck(testCreature("deckcard", 1), 0)
 	}
 	g.Shuffle(0)

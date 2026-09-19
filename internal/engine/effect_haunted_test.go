@@ -15,7 +15,7 @@ func TestHaunted(t *testing.T) {
 		t.Error("empty discard pile should not be haunted")
 	}
 
-	for i := 0; i < 9; i++ {
+	for range 9 {
 		g.AddToDiscard(testCreature("buried", 1), 0)
 	}
 	if c.Met(ctx) {
@@ -29,7 +29,7 @@ func TestHaunted(t *testing.T) {
 
 	// The opponent's discard pile does not haunt the controller.
 	g2 := NewGame("A", "B", 1)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		g2.AddToDiscard(testCreature("theirs", 1), 1)
 	}
 	if c.Met(&EffectContext{Resolver: g2, Controller: 0}) {

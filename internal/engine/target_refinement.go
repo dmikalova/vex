@@ -554,7 +554,7 @@ func (h houseWithAtLeast) clause(phrase string) string {
 // house count toward its total.
 func (h houseWithAtLeast) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	counts := map[House]int{}
-	for player := 0; player < 2; player++ {
+	for player := range 2 {
 		for _, cid := range ctx.Resolver.Battleline(player) {
 			counts[ctx.Resolver.House(cid)]++
 		}

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -278,12 +279,7 @@ func TestMayValidate(t *testing.T) {
 
 // stillInPlay reports whether an id is still in player 0's battleline.
 func stillInPlay(g *Game, id LocalID) bool {
-	for _, x := range g.Battleline(0) {
-		if x == id {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(g.Battleline(0), id)
 }
 
 // The shape rule fires at init: a May over an effect that decides by choosing a

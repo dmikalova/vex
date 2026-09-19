@@ -10,7 +10,7 @@ import (
 // to fill the remaining slots so no slot is left with a zero-value definition.
 func fillDeck(cards ...engine.CardDefinition) *Deck {
 	d := &Deck{}
-	for i := 0; i < DeckSize; i++ {
+	for i := range DeckSize {
 		c := cards[len(cards)-1]
 		if i < len(cards) {
 			c = cards[i]
@@ -61,7 +61,7 @@ func TestApplyEnhancementsIsDeterministic(t *testing.T) {
 	set := NewSet("S", []Card{mkCard("B", engine.Brobnar, engine.Common)}, DefaultTuning())
 	gen(set).applyEnhancements(a)
 	gen(set).applyEnhancements(b)
-	for i := 0; i < DeckSize; i++ {
+	for i := range DeckSize {
 		pa := a.Pods[i/PodSize].Slots[i%PodSize].Card.Bonuses
 		pb := b.Pods[i/PodSize].Slots[i%PodSize].Card.Bonuses
 		if len(pa) != len(pb) {

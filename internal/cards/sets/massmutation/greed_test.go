@@ -19,7 +19,7 @@ import (
 func TestGreed(t *testing.T) {
 	t.Run("refills one extra card for each friendly Sin creature", func(t *testing.T) {
 		var deck []any
-		for i := 0; i < 12; i++ {
+		for range 12 {
 			deck = append(deck, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(2)))
 		}
 		h := ct.Play(t, ct.Setup{

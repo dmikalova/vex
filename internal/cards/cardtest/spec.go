@@ -66,7 +66,7 @@ func Bonus(icons ...engine.BonusIcon) Option {
 // AemberBonus sets a vanilla card's Æmber pips (a shim over Bonus).
 func AemberBonus(n int) Option {
 	return func(s *spec) {
-		for i := 0; i < n; i++ {
+		for range n {
 			s.bonuses = append(s.bonuses, engine.BonusAember)
 		}
 	}

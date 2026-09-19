@@ -114,7 +114,7 @@ func (g *generator) fillPod(house engine.House) HousePod {
 func (g *generator) fillPodPlan(plan podPlan) HousePod {
 	pod := HousePod{House: plan.house}
 	placed := make([]placedCard, 0, PodSize)
-	for i := 0; i < PodSize; i++ {
+	for i := range PodSize {
 		slot, pc := g.fillSlot(plan, placed)
 		pod.Slots[i] = slot
 		placed = append(placed, pc)
@@ -312,10 +312,7 @@ func nonLeadMembers(ci clusterIndex) []Card {
 // PodSize — at least Min, averaging about Mean, reaching a whole pod only on the
 // thin tail.
 func (g *generator) selfPullCount(ci clusterIndex) int {
-	n := ci.min + poisson(g.r, ci.mean-float64(ci.min))
-	if n > PodSize {
-		n = PodSize
-	}
+	n := min(ci.min+poisson(g.r, ci.mean-float64(ci.min)), PodSize)
 	return n
 }
 
@@ -323,10 +320,7 @@ func (g *generator) selfPullCount(ci clusterIndex) int {
 // Poisson(Mean − Min), capped at PodSize. A partner with Min 0 (Niffle Queen)
 // often rolls none.
 func (g *generator) pullCount(m ClusterMembership) int {
-	n := m.Min + poisson(g.r, m.Mean-float64(m.Min))
-	if n > PodSize {
-		n = PodSize
-	}
+	n := min(m.Min+poisson(g.r, m.Mean-float64(m.Min)), PodSize)
 	return n
 }
 
@@ -400,7 +394,7 @@ func (g *generator) expandClusters(deck *Deck) {
 		if !g.clusterTriggered(deck, ci) {
 			continue
 		}
-		for i := 0; i < PodCount; i++ {
+		for i := range PodCount {
 			pod := &deck.Pods[i]
 			if pod.House == engine.HouseNone {
 				continue
@@ -415,7 +409,7 @@ func (g *generator) expandClusters(deck *Deck) {
 // clusterTriggered reports whether a cluster has fired: for ByAnyMember, that any
 // member has been drawn into the deck; for ByLead, that the lead member has.
 func (g *generator) clusterTriggered(deck *Deck, ci clusterIndex) bool {
-	for i := 0; i < PodCount; i++ {
+	for i := range PodCount {
 		for _, s := range deck.Pods[i].Slots {
 			name := s.Card.Name
 			if ci.trigger == ByLead {

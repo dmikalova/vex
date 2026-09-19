@@ -525,7 +525,7 @@ func (g *game) cardFlags(
 // inPlayPrev and avoid flagging the restored board as freshly entered.
 func (g *game) inPlaySet() map[engine.LocalID]bool {
 	set := map[engine.LocalID]bool{}
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		for _, id := range g.g.Battleline(p) {
 			set[id] = true
 		}

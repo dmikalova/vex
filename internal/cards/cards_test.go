@@ -135,7 +135,7 @@ func TestMaterializedNamesAreUnique(t *testing.T) {
 			continue
 		}
 		for h := engine.HouseNone + 1; int(h) < engine.NumHouses; h++ {
-			for seed := int64(0); seed < samplesPerHouse; seed++ {
+			for seed := range int64(samplesPerHouse) {
 				ctx := deckgen.SlotContext{House: h, Rarity: rc.Def.Rarity}
 				out := rc.Materializer.Materialize(ctx, rand.New(rand.NewSource(seed)))
 				if out.Name == rc.Def.Name {
@@ -490,8 +490,8 @@ func effectTypeNames(v reflect.Value) map[string]bool {
 		switch v.Kind() {
 		case reflect.Struct:
 			found[v.Type().Name()] = true
-			for i := range v.NumField() {
-				walk(v.Field(i))
+			for _, field := range v.Fields() {
+				walk(field)
 			}
 		case reflect.Slice, reflect.Array:
 			for i := range v.Len() {
@@ -530,8 +530,8 @@ func searchShufflesInternally(v reflect.Value) bool {
 					return
 				}
 			}
-			for i := range v.NumField() {
-				walk(v.Field(i))
+			for _, field := range v.Fields() {
+				walk(field)
 			}
 		case reflect.Slice, reflect.Array:
 			for i := range v.Len() {
@@ -565,8 +565,8 @@ func referencedCardNames(def reflect.Value, names map[string]bool) map[string]bo
 				found[v.String()] = true
 			}
 		case reflect.Struct:
-			for i := range v.NumField() {
-				walk(v.Field(i))
+			for _, field := range v.Fields() {
+				walk(field)
 			}
 		case reflect.Slice, reflect.Array:
 			for i := range v.Len() {

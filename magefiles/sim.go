@@ -4,7 +4,8 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
+	jsontext "encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"net"
 	"os"
@@ -444,7 +445,7 @@ func writeBaseline(b perfBaseline) error {
 	if err := os.MkdirAll(filepath.Dir(baselineFile), 0o755); err != nil {
 		return err
 	}
-	data, err := json.MarshalIndent(b, "", "  ")
+	data, err := json.Marshal(b, jsontext.WithIndent("  "))
 	if err != nil {
 		return err
 	}

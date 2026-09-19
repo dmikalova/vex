@@ -28,6 +28,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -193,8 +194,8 @@ type edit struct {
 // — is untouched.
 func applyEdits(src []byte, edits []edit) []byte {
 	out := src
-	for i := len(edits) - 1; i >= 0; i-- {
-		e := edits[i]
+	for _, e := range slices.Backward(edits) {
+
 		out = append(append(append([]byte{}, out[:e.start]...), e.text...), out[e.end:]...)
 	}
 	return out
@@ -503,7 +504,7 @@ func cardNameOf(gd *ast.GenDecl, wrappers map[string]nameTemplate) (string, bool
 func renderComment(def *engine.CardDefinition, isTemplate bool) string {
 	var b strings.Builder
 	b.WriteString("// " + def.Name + "\n//\n")
-	for _, line := range strings.Split(engine.RenderCardText(def), "\n") {
+	for line := range strings.SplitSeq(engine.RenderCardText(def), "\n") {
 		if line == "" {
 			b.WriteString("//\n")
 			continue

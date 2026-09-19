@@ -7,6 +7,7 @@
 package cardtest
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -450,7 +451,7 @@ func (h *Harness) resolve(card any, ids []engine.LocalID, ctx string) engine.Loc
 
 // ownerOf reports which player currently holds a card, scanning play and hand.
 func (h *Harness) ownerOf(id engine.LocalID) int {
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		if containsID(h.g.Battleline(p), id) || containsID(h.g.Artifacts(p), id) ||
 			containsID(h.g.Hand(p), id) {
 			return p
@@ -463,7 +464,7 @@ func (h *Harness) ownerOf(id engine.LocalID) int {
 func (h *Harness) location(id engine.LocalID) Zone {
 	// A card lives in exactly one place, so scanning a player's zones in order and
 	// returning the first hit is equivalent to scanning each zone across players.
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		switch {
 		case containsID(h.g.Battleline(p), id), containsID(h.g.Artifacts(p), id):
 			return PlayArea
@@ -522,7 +523,7 @@ func (h *Harness) underAnyCard(p int, id engine.LocalID) bool {
 // inPlayIDs returns every creature and artifact in play, both players.
 func (h *Harness) inPlayIDs() []engine.LocalID {
 	var out []engine.LocalID
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		out = append(out, h.g.Battleline(p)...)
 		out = append(out, h.g.Artifacts(p)...)
 	}
@@ -533,7 +534,7 @@ func (h *Harness) inPlayIDs() []engine.LocalID {
 // placed under a host, both players.
 func (h *Harness) allIDs() []engine.LocalID {
 	var out []engine.LocalID
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		out = append(out, h.g.Battleline(p)...)
 		out = append(out, h.g.Artifacts(p)...)
 		out = append(out, h.g.Hand(p)...)
@@ -580,12 +581,7 @@ func (h *Harness) describe(target any) string {
 
 // containsID reports whether ids contains id.
 func containsID(ids []engine.LocalID, id engine.LocalID) bool {
-	for _, x := range ids {
-		if x == id {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(ids, id)
 }
 
 // reorder arranges ids to match a script of def-or-handle cards; ids not named in

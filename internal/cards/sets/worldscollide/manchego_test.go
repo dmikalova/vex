@@ -38,7 +38,7 @@ func TestManchego(t *testing.T) {
 	t.Run("does not steal with a large deck", func(t *testing.T) {
 		var m ct.Card
 		deck := make([]ct.Entry, 0, 6)
-		for i := 0; i < 6; i++ {
+		for range 6 {
 			deck = append(deck, ct.Bind(nil, ct.Creature()))
 		}
 		h := ct.Play(t, ct.Setup{

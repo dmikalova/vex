@@ -130,7 +130,7 @@ func TestClearLastingKeepsOtherPlayer(t *testing.T) {
 
 func TestAddLastingCap(t *testing.T) {
 	g := started(t)
-	for i := 0; i < maxLasting+3; i++ {
+	for range maxLasting + 3 {
 		g.AddLasting(
 			LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 1},
 		)

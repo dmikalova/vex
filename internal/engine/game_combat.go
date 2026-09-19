@@ -5,6 +5,8 @@ package engine
 // creatures the damage destroys. The destruction itself is carried out in
 // game_destroy.go.
 
+import "slices"
+
 // Combat: use one of your ready creatures to fight an enemy creature. Using it to
 // fight exhausts it. First, any "Before Fight" abilities and the Assault and
 // Hazardous keywords resolve; if these destroy either creature, the fight does not
@@ -306,7 +308,7 @@ func (g *Game) fightReactions(
 	// Peace Accord), with the fighting creature as "it" — including those narrowed to
 	// a friendly fighter (Lieutenant Gorvenal, by ItIsFriendly), which firesForSubject
 	// keeps only when the fighter is on the reacting card's side.
-	for player := 0; player < 2; player++ {
+	for player := range 2 {
 		for _, id := range g.allInPlay(player) {
 			add(id, TriggerAfterCreatureFights, attacker, true)
 		}
@@ -345,12 +347,7 @@ func (g *Game) spendElusive(attacker, defender LocalID) bool {
 // attackIgnores reports whether an attacking creature ignores a defensive keyword
 // while it attacks — Niffle Ape ignores taunt and elusive.
 func (g *Game) attackIgnores(attacker LocalID, k Keyword) bool {
-	for _, kw := range g.cat.def(attacker).AttackIgnores {
-		if kw == k {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(g.cat.def(attacker).AttackIgnores, k)
 }
 
 // attackGrantsPoison reports whether an attacker gains poison for a fight against
@@ -360,12 +357,7 @@ func (g *Game) attackGrantsPoison(attacker, defender LocalID) bool {
 	if ak.FlankOnly && !g.onFlankOf(defender) {
 		return false
 	}
-	for _, kw := range ak.Keywords {
-		if kw == Poison {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(ak.Keywords, Poison)
 }
 
 // applyFightPoison destroys each creature a poison combatant dealt landing damage
@@ -641,7 +633,7 @@ func (g *Game) dealDamage(controller int, targets ...DamageTarget) {
 // entirely when none are present.
 func (g *Game) armorPreventWatchers() []LocalID {
 	var watchers []LocalID
-	for player := 0; player < 2; player++ {
+	for player := range 2 {
 		for _, id := range g.allInPlay(player) {
 			if len(g.triggeredBy(id, TriggerAfterArmorPrevents)) > 0 {
 				watchers = append(watchers, id)
@@ -693,10 +685,8 @@ func (g *Game) damageRedirect(id LocalID) LocalID {
 			if shield == id || !t.valid() {
 				continue
 			}
-			for _, warded := range t.Select(g.constantContext(shield)) {
-				if warded == id {
-					return shield
-				}
+			if slices.Contains(t.Select(g.constantContext(shield)), id) {
+				return shield
 			}
 		}
 	}
@@ -734,15 +724,12 @@ func (g *Game) neighborFightSplash(targets []DamageTarget) []DamageTarget {
 			if sharer == t.ID {
 				continue
 			}
-			for _, n := range neighbors(&EffectContext{Resolver: g}, sharer) {
-				if n == t.ID {
-					extra = append(extra, DamageTarget{
-						ID:     sharer,
-						Amount: t.Amount,
-						Source: t.Source,
-					})
-					break
-				}
+			if slices.Contains(neighbors(&EffectContext{Resolver: g}, sharer), t.ID) {
+				extra = append(extra, DamageTarget{
+					ID:     sharer,
+					Amount: t.Amount,
+					Source: t.Source,
+				})
 			}
 		}
 	}

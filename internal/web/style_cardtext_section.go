@@ -93,10 +93,10 @@ func continuousSpecimens() []specimen {
 // the walk matches any value declared as the interface (a Conditional's Cond, a
 // scaled effect's Per) and reads its own CondText/CountText.
 var (
-	targetType    = reflect.TypeOf(engine.Target{})
-	durationType  = reflect.TypeOf(engine.Duration(0))
-	conditionType = reflect.TypeOf((*engine.Condition)(nil)).Elem()
-	countType     = reflect.TypeOf((*engine.Count)(nil)).Elem()
+	targetType    = reflect.TypeFor[engine.Target]()
+	durationType  = reflect.TypeFor[engine.Duration]()
+	conditionType = reflect.TypeFor[engine.Condition]()
+	countType     = reflect.TypeFor[engine.Count]()
 )
 
 // walkEffectValues calls visit for every value reachable through an effect's
@@ -124,8 +124,8 @@ func walkEffectValues(v reflect.Value, visit func(reflect.Value)) {
 		if v.Type() == targetType {
 			return
 		}
-		for i := 0; i < v.NumField(); i++ {
-			walkEffectValues(v.Field(i), visit)
+		for _, field := range v.Fields() {
+			walkEffectValues(field, visit)
 		}
 	}
 }
@@ -220,7 +220,6 @@ func defUsesDuration(d *engine.CardDefinition, dur engine.Duration) bool {
 func durationSpecimens() []specimen {
 	out := make([]specimen, 0, len(engine.Durations()))
 	for _, dur := range engine.Durations() {
-		dur := dur
 		out = append(out, randomMatch(dur.String(), func(d *engine.CardDefinition) bool {
 			return defUsesDuration(d, dur)
 		}))
@@ -302,7 +301,6 @@ func phraseSpecimens(
 	sort.Strings(phrases)
 	out := make([]specimen, 0, len(phrases))
 	for _, p := range phrases {
-		p := p
 		out = append(out, randomMatch(p, func(d *engine.CardDefinition) bool {
 			return has(d, p)
 		}))

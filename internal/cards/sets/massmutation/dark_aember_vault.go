@@ -1,6 +1,10 @@
 package massmutation
 
-import "github.com/dmikalova/vactrol/internal/card"
+import (
+	"slices"
+
+	"github.com/dmikalova/vactrol/internal/card"
+)
 
 // isMutantCreature reports whether a definition is a Mutant creature, for Dark
 // Æmber Vault's deck-wide pull.
@@ -8,12 +12,7 @@ func isMutantCreature(d card.Definition) bool {
 	if d.Type != card.Type.Creature {
 		return false
 	}
-	for _, t := range d.Traits {
-		if t == card.Traits.Mutant {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(d.Traits, card.Traits.Mutant)
 }
 
 // Dark Æmber Vault

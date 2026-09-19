@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 // TestTargetKindsAreRealAndRendered walks every target kind so a newly added one
 // cannot slip in unrendered. TargetKind has no String, so the rendering under test
@@ -783,7 +786,7 @@ func TestOfHouseWithMostCreatures(t *testing.T) {
 	t.Run("keeps only the most populous house", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		// Mars leads with three creatures; Brobnar has two, Dis has one.
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(3)), 0)
 		}
 		g.AddToBattleline(NewCard("b", Brobnar, Creature, Common, WithPower(3)), 0)
@@ -1005,12 +1008,7 @@ func TestNotMostPowerful(t *testing.T) {
 
 // containsID reports whether ids contains id.
 func containsID(ids []LocalID, id LocalID) bool {
-	for _, x := range ids {
-		if x == id {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(ids, id)
 }
 
 // TestPowerLessThan covers the refinement Exterminate! Exterminate! uses: keep the

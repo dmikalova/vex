@@ -53,16 +53,12 @@ func (g *Game) cannotBeUsedTo(id LocalID, kind UseKind) bool {
 			return true
 		}
 	}
-	for _, k := range g.cat.def(id).CannotBeUsedTo {
-		if k == kind {
-			return true
-		}
+	if slices.Contains(g.cat.def(id).CannotBeUsedTo, kind) {
+		return true
 	}
 	for _, up := range g.upgradesOf(id) {
-		for _, k := range g.staticOn(id, up).CannotBeUsedTo {
-			if k == kind {
-				return true
-			}
+		if slices.Contains(g.staticOn(id, up).CannotBeUsedTo, kind) {
+			return true
 		}
 	}
 	return g.barredByConstantAbility(id, kind)

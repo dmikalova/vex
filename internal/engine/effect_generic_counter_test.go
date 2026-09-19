@@ -122,7 +122,7 @@ func TestCounterTableOverflow(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	c := g.AddToBattleline(testCreature("overflow", 3), 1)
 	// Fill the table with entries for cards that cannot collide with c's LocalID.
-	for i := 0; i < maxCounterEntries; i++ {
+	for i := range maxCounterEntries {
 		g.State.Counters[i] = CounterEntry{Card: LocalID(128 + i), Kind: CounterDoom, N: 1}
 	}
 	g.State.CounterCount = maxCounterEntries

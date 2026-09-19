@@ -2,7 +2,8 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
+	jsontext "encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -287,10 +289,7 @@ func fetchSetCards(client *http.Client, p *pacer, slug string, expansion int) ([
 			emptyStreak++
 		}
 
-		decksSeen := page * pageSize
-		if decksSeen > resp.Count {
-			decksSeen = resp.Count
-		}
+		decksSeen := min(page*pageSize, resp.Count)
 		fmt.Printf("%s: %d\n", slug, len(collected))
 		fmt.Printf(
 			"  page %d: %d/%d decks scanned, %d cards so far\n",
@@ -429,7 +428,7 @@ func fetchDecksPage(
 			)
 		}
 		var out mvResponse
-		err = json.NewDecoder(resp.Body).Decode(&out)
+		err = json.UnmarshalRead(resp.Body, &out)
 		_ = resp.Body.Close()
 		if err != nil {
 			return nil, throttled, fmt.Errorf("decoding decks feed: %w", err)
@@ -719,10 +718,8 @@ func stripKeywordReminders(s string) string {
 
 // isKeywordReminder reports whether inner is one of the templated keyword blurbs.
 func isKeywordReminder(inner string) bool {
-	for _, t := range keywordReminderTexts {
-		if inner == t {
-			return true
-		}
+	if slices.Contains(keywordReminderTexts, inner) {
+		return true
 	}
 	for _, re := range keywordReminderPatterns {
 		if re.MatchString(inner) {
@@ -883,10 +880,16 @@ func writeCatalog(path string, cards []catalogCard) error {
 	if err != nil {
 		return err
 	}
-	enc := json.NewEncoder(f)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(cards); err != nil {
+	if err := json.MarshalWrite(
+		f,
+		cards,
+		jsontext.WithIndent("  "),
+		jsontext.EscapeForHTML(false),
+	); err != nil {
+		_ = f.Close()
+		return err
+	}
+	if _, err := f.Write([]byte("\n")); err != nil {
 		_ = f.Close()
 		return err
 	}

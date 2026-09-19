@@ -31,7 +31,7 @@ func (g *Game) InvariantError() error {
 // checkPlayerTotals validates the per-player scalars — Æmber, forged-key prefix,
 // chains — and the winner range.
 func (g *Game) checkPlayerTotals() error {
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		if a := g.State.Aember[p]; a < 0 {
 			return fmt.Errorf("player %d has negative Æmber (%d)", p, a)
 		}
@@ -78,7 +78,7 @@ func (g *Game) tallyPlacement(pl *cardPlacement) error {
 			pl.count[id]++
 		}
 	}
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		tally(g.State.Hand[p].slice())
 		tally(g.State.Deck[p].slice())
 		tally(g.State.Battleline[p].slice())
@@ -221,7 +221,7 @@ func (g *Game) checkCardPresence(pl *cardPlacement) error {
 // because that is exactly where control shows, and an under-chain is excluded
 // because a card may be placed under an enemy card.
 func (g *Game) checkRestingOwnership() error {
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		for _, z := range []struct {
 			name string
 			ids  []LocalID
@@ -249,7 +249,7 @@ func (g *Game) checkRestingOwnership() error {
 // one can never be sitting in play in that state — this catches a power change (a
 // buff leaving) that no state-based sweep noticed.
 func (g *Game) checkDamageBelowPower() error {
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		for _, id := range g.State.Battleline[p].slice() {
 			if power := g.Power(id); power <= int(g.State.Cards[id].Damage) {
 				return fmt.Errorf(

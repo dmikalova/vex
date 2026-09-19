@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -404,12 +405,7 @@ func TestSkirmishAndArmorAndPoison(t *testing.T) {
 
 // hasLogLine reports whether the game log holds a line exactly matching want.
 func hasLogLine(g *Game, want string) bool {
-	for _, line := range g.LogText() {
-		if line == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(g.LogText(), want)
 }
 
 func TestPoisonIsOffensive(t *testing.T) {

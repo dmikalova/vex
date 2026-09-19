@@ -1,6 +1,7 @@
 package massmutation
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -215,21 +216,11 @@ func TestMutantCycleBuildsEveryHousePair(t *testing.T) {
 }
 
 func hasTrait(traits []card.Trait, want card.Trait) bool {
-	for _, tr := range traits {
-		if tr == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(traits, want)
 }
 
 func hasKeyword(keywords []card.KeywordValue, want card.KeywordValue) bool {
-	for _, kw := range keywords {
-		if kw == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(keywords, want)
 }
 
 func hasTrigger(abilities []card.Ability, want engine.Trigger) bool {

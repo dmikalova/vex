@@ -220,7 +220,7 @@ func (g EachPlayerUnless) gatherText() string {
 // controller, so refine reads the original context.
 func (g EachPlayerUnless) gather(ctx *EffectContext) []LocalID {
 	var doomed []LocalID
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		pctx := *ctx
 		pctx.Controller = p
 		if g.Spare.Met(&pctx) {

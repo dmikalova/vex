@@ -29,7 +29,7 @@ func TestGainChainsResolve(t *testing.T) {
 
 func TestChainsReduceDrawAndShed(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	for i := 0; i < HandSize; i++ {
+	for range HandSize {
 		g.AddToDeck(testCreature("d", 1), 0)
 	}
 	g.State.Chains[0] = 7 // 7 chains: draw two fewer
@@ -47,7 +47,7 @@ func TestChainsReduceDrawAndShed(t *testing.T) {
 func TestChainsShedOnlyWhenBlocked(t *testing.T) {
 	// A full hand with cards to draw is not blocked, so no chain is shed.
 	g := NewGame("A", "B", 1)
-	for i := 0; i < HandSize; i++ {
+	for range HandSize {
 		g.AddToHand(testCreature("h", 1), 0)
 	}
 	g.AddToDeck(testCreature("d", 1), 0)
@@ -81,7 +81,7 @@ func TestChainsNotShedWhenNothingToDraw(t *testing.T) {
 
 func TestChainsClampDrawAtZero(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	for i := 0; i < HandSize; i++ {
+	for range HandSize {
 		g.AddToDeck(testCreature("d", 1), 0)
 	}
 	g.State.Chains[0] = 40 // 40 chains: draw seven fewer, clamped to zero

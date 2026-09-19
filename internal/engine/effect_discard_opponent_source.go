@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // DiscardFromOpponent discards one card from a source the controller picks among
 // Sources — Fidgit offers the opponent's facedown archives (a uniformly random
@@ -32,14 +35,15 @@ func (e DiscardFromOpponent) validate() error {
 // "your opponent's"; a later one says "their", so the joined clause does not repeat
 // it.
 func (e DiscardFromOpponent) Text() string {
-	clause := "discard "
+	var clause strings.Builder
+	clause.WriteString("discard ")
 	for i, z := range e.Sources {
 		if i > 0 {
-			clause += " or "
+			clause.WriteString(" or ")
 		}
-		clause += discardSourcePhrase(z, i == 0)
+		clause.WriteString(discardSourcePhrase(z, i == 0))
 	}
-	return clause
+	return clause.String()
 }
 
 // Resolve discards from the chosen source and binds the discarded card in context.

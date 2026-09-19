@@ -38,6 +38,11 @@ func TestRun(pattern string) error {
 	return goTest("./...", "-run", pattern)
 }
 
+// Fix runs go fix.
+func Fix() error {
+	return sh.RunV("go", "fix", "./...")
+}
+
 // Vet runs go vet.
 func Vet() error {
 	return sh.RunV("go", "vet", "./...")
@@ -107,13 +112,17 @@ func Tidy() error {
 	return sh.RunV("go", "mod", "tidy")
 }
 
-// Check is the full green gate before calling work done. It formats in place,
-// then runs build, vet, lint, markdown lint, test, and coverage. Fmt runs first
-// and alone (it writes files) so it cannot race the readers; the independent
-// checks then run together, and test and coverage run after them, in order, so
-// their reports read as two clean blocks rather than interleaving.
+// Check is the full green gate before calling work done. It formats and fixes
+// in place, then runs build, vet, lint, markdown lint, test, and coverage. Fmt
+// and Fix run first and alone (they write files) so they cannot race the
+// readers; the independent checks then run together, and test and coverage run
+// after them, in order, so their reports read as two clean blocks rather than
+// interleaving.
 func Check() error {
 	if err := Fmt(); err != nil {
+		return err
+	}
+	if err := Fix(); err != nil {
 		return err
 	}
 	mg.Deps(Build, Vet, Lint, Markdownlint)

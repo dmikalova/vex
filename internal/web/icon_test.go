@@ -19,7 +19,6 @@ func forEachAbilityEffect(fn func(name string, covered bool)) {
 	regs := card.Cards()
 	for i := range regs {
 		for _, def := range materializedDefs(regs[i]) {
-			def := def
 			for _, ab := range def.Abilities {
 				_, covered := effectGlyphs(ab.Effect)
 				fn(effectTypeName(ab.Effect), covered)

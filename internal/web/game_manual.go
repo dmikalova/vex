@@ -159,7 +159,7 @@ func (g *game) isAttached(id engine.LocalID) bool {
 	if _, ok := g.g.HostOf(id); ok {
 		return true
 	}
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		for _, host := range g.g.Battleline(p) {
 			if containsID(g.g.Under(host), id) {
 				return true
@@ -517,7 +517,7 @@ func (g *game) addCardDef(ctx app.Context, def engine.CardDefinition) {
 
 // isInPlay reports whether a card is on either player's battleline or artifact row.
 func (g *game) isInPlay(id engine.LocalID) bool {
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		if containsID(g.g.Battleline(p), id) || containsID(g.g.Artifacts(p), id) {
 			return true
 		}

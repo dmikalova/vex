@@ -1,6 +1,10 @@
 package massmutation
 
-import "github.com/dmikalova/vactrol/internal/card"
+import (
+	"slices"
+
+	"github.com/dmikalova/vactrol/internal/card"
+)
 
 // isNiffleCreature reports whether a definition is a Niffle creature, for Niffle
 // Kong's deck-wide pull.
@@ -8,12 +12,7 @@ func isNiffleCreature(d card.Definition) bool {
 	if d.Type != card.Type.Creature {
 		return false
 	}
-	for _, t := range d.Traits {
-		if t == card.Traits.Niffle {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(d.Traits, card.Traits.Niffle)
 }
 
 // Niffle Kong

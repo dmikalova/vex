@@ -365,7 +365,7 @@ func (p subjectPolicy) reaches(id, subject LocalID) bool {
 // addBoard collects trigger from every in-play card of both players, bound to
 // subject as "it".
 func (w *abilityWindow) addBoard(trigger Trigger, subject LocalID, policy subjectPolicy) {
-	for player := 0; player < 2; player++ {
+	for player := range 2 {
 		for _, id := range w.g.allInPlay(player) {
 			if policy.reaches(id, subject) {
 				w.add(id, trigger, subject, true)
@@ -447,7 +447,7 @@ func (w *abilityWindow) addAsEachPlayer(src LocalID, trigger Trigger, resolver i
 // bound to subject as "it" — addBoard's twin for an event that resolves as it is
 // found rather than joining an ordered window.
 func (g *Game) emitBoard(trigger Trigger, subject LocalID, policy subjectPolicy) {
-	for player := 0; player < 2; player++ {
+	for player := range 2 {
 		g.emitSide(player, trigger, subject, policy)
 	}
 }

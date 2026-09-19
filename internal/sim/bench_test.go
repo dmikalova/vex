@@ -108,7 +108,7 @@ func playForBench(script []byte) int {
 		if len(houses[player]) > 0 {
 			_ = g.ChooseHouse(player, houses[player][int(d.byte())%len(houses[player])])
 		}
-		for step := 0; step < maxDecisionsPerTurn; step++ {
+		for range maxDecisionsPerTurn {
 			if g.Winner() >= 0 || d.done() {
 				break
 			}

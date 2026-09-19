@@ -243,10 +243,7 @@ func (g *gallery) measureWindow() (from, to int, ok bool) {
 	style := win.Call("getComputedStyle", grid)
 	rowGap := parsePx(style.Get("rowGap").String())
 	colGap := parsePx(style.Get("columnGap").String())
-	cols := int((gridRect.Get("width").Float() + colGap) / (cardW + colGap))
-	if cols < 1 {
-		cols = 1
-	}
+	cols := max(int((gridRect.Get("width").Float()+colGap)/(cardW+colGap)), 1)
 	rowH := cardH + rowGap
 	if rowH <= 0 {
 		return 0, 0, false
@@ -321,7 +318,6 @@ func buildGalleryCatalog() galleryCatalog {
 		native := nativeSetsOf(regs[i])
 		reprint := reprintsByName[regs[i].Def.Name]
 		for _, def := range materializedDefs(regs[i]) {
-			def := def
 			cat.cards = append(cat.cards, galleryCard{
 				def:         &def,
 				nativeSets:  native,

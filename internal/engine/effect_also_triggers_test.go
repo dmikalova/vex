@@ -54,7 +54,7 @@ func TestFuseTriggersForTurnResolveInstallsBothDirections(t *testing.T) {
 
 func TestAddLastingAlsoTriggersCaps(t *testing.T) {
 	g := started(t)
-	for i := 0; i < maxAlsoTriggers+2; i++ {
+	for range maxAlsoTriggers + 2 {
 		g.AddLastingAlsoTriggers(
 			LastingAlsoTriggersOn{Controller: 0, From: TriggerAfterFight, Onto: TriggerAfterReap},
 		)

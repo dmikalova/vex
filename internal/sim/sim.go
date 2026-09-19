@@ -123,7 +123,7 @@ func playTurn(g *engine.Game, player int, houses []engine.House, d *decoder) err
 	if len(houses) > 0 {
 		_ = g.ChooseHouse(player, houses[int(d.byte())%len(houses)])
 	}
-	for step := 0; step < maxDecisionsPerTurn; step++ {
+	for step := range maxDecisionsPerTurn {
 		if g.Winner() >= 0 || d.done() {
 			return nil
 		}

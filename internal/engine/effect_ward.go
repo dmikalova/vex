@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // Ward applies the ward status. It is a simple "verb the target" effect, so a
 // ward that runs beside another status change on the same target folds into one
@@ -61,13 +64,7 @@ func (e Ward) Resolve(ctx *EffectContext) {
 		for i := 0; i < e.Amount; i++ {
 			remaining := make([]LocalID, 0)
 			for _, id := range e.Target.Select(ctx) {
-				picked := false
-				for _, c := range chosen {
-					if c == id {
-						picked = true
-						break
-					}
-				}
+				picked := slices.Contains(chosen, id)
 				if !picked {
 					remaining = append(remaining, id)
 				}

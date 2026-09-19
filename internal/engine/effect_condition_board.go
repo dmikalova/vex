@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -248,7 +249,7 @@ func (c CounterInPlay) CondText() string {
 
 // Met reports whether any creature in either battleline carries the counter.
 func (c CounterInPlay) Met(ctx *EffectContext) bool {
-	for player := 0; player < 2; player++ {
+	for player := range 2 {
 		for _, id := range ctx.Resolver.Battleline(player) {
 			if ctx.Resolver.CountersOn(id, c.Kind) > 0 {
 				return true
@@ -390,10 +391,5 @@ func (c KeyColorForged) CondText() string {
 
 // Met reports whether the named player has forged a key of Color.
 func (c KeyColorForged) Met(ctx *EffectContext) bool {
-	for _, col := range ctx.Resolver.KeyColors(ctx.PlayerFor(c.Player)) {
-		if col == c.Color {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(ctx.Resolver.KeyColors(ctx.PlayerFor(c.Player)), c.Color)
 }

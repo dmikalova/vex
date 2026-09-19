@@ -128,7 +128,7 @@ func TestDrawModifierInCardRules(t *testing.T) {
 
 func TestDrawStepModifier(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		g.AddToDeck(testCreature("d", 1), 0)
 	}
 	g.AddToBattleline(
@@ -148,7 +148,7 @@ func TestDrawStepModifier(t *testing.T) {
 // of the battleline (Greed: one extra card per friendly Sin creature).
 func TestDrawStepModifierPer(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	for i := 0; i < 12; i++ {
+	for range 12 {
 		g.AddToDeck(testCreature("d", 1), 0)
 	}
 	g.AddToBattleline(

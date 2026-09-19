@@ -45,10 +45,10 @@ func TestRefillHandText(t *testing.T) {
 func TestDiscardAndRefillHandEachPlayer(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	old := g.AddToHand(testCreature("old", 3), 0)
-	for i := 0; i < HandSize+2; i++ {
+	for range HandSize + 2 {
 		g.AddToDeck(testCreature("fresh0", 1), 0)
 	}
-	for i := 0; i < HandSize+2; i++ {
+	for range HandSize + 2 {
 		g.AddToDeck(testCreature("fresh1", 1), 1)
 	}
 	g.AddToHand(testCreature("theirOld", 3), 1)
@@ -73,7 +73,7 @@ func TestDiscardAndRefillHandEachPlayer(t *testing.T) {
 func TestDiscardAndRefillHandRespectsChains(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Chains[0] = 6 // reduces the draw by one card
-	for i := 0; i < HandSize; i++ {
+	for range HandSize {
 		g.AddToHand(testCreature("hand", 1), 0)
 		g.AddToDeck(testCreature("deck", 1), 0)
 	}

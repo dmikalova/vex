@@ -184,7 +184,7 @@ func (t Target) isChosen() bool {
 // eligible so the chooser may pick a creature of any of them (Etaromme).
 func isOfMostPopulousHouse(ctx *EffectContext, id LocalID) bool {
 	counts := map[House]int{}
-	for player := 0; player < 2; player++ {
+	for player := range 2 {
 		for _, cid := range ctx.Resolver.Battleline(player) {
 			counts[ctx.Resolver.House(cid)]++
 		}
@@ -426,12 +426,7 @@ func toSideOfSource(ctx *EffectContext, src, id LocalID, dir int) bool {
 
 // isNeighbor reports whether id is one of src's battleline neighbors.
 func isNeighbor(ctx *EffectContext, src, id LocalID) bool {
-	for _, n := range neighbors(ctx, src) {
-		if n == id {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(neighbors(ctx, src), id)
 }
 
 // sharedHouseNeighbors counts how many of id's battleline neighbors share its
@@ -477,7 +472,7 @@ func neighbors(ctx *EffectContext, id LocalID) []LocalID {
 // creature" or "another creature" than one already chosen.
 func creaturesExcept(ctx *EffectContext, exclude LocalID) []LocalID {
 	var out []LocalID
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		for _, id := range ctx.Resolver.Battleline(p) {
 			if id != exclude {
 				out = append(out, id)
@@ -525,12 +520,10 @@ func pickCards(
 }
 
 func battlelineContaining(ctx *EffectContext, id LocalID) []LocalID {
-	for p := 0; p < 2; p++ {
+	for p := range 2 {
 		bl := ctx.Resolver.Battleline(p)
-		for _, x := range bl {
-			if x == id {
-				return bl
-			}
+		if slices.Contains(bl, id) {
+			return bl
 		}
 	}
 	return nil

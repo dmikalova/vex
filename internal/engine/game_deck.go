@@ -62,7 +62,7 @@ func (g *Game) shuffleZonesIntoDeck(player int, zones []Zone) {
 // deck and discard are both exhausted. It returns how many cards were drawn.
 func (g *Game) draw(player, count int) int {
 	drawn := 0
-	for i := 0; i < count; i++ {
+	for range count {
 		if !g.drawOne(player) {
 			break
 		}

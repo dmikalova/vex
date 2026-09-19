@@ -79,7 +79,7 @@ func TestRandomCountPlacesMembers(t *testing.T) {
 				mkCard("FD", engine.Dis, engine.Common),
 			}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 
-			for seed := int64(0); seed < 20; seed++ {
+			for seed := range int64(20) {
 				g := &generator{
 					set:    set,
 					r:      rand.New(rand.NewSource(seed)),
@@ -113,7 +113,7 @@ func TestRandomCountByLeadExcludesLead(t *testing.T) {
 	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 
 	ci := set.clusters["Harbinger"]
-	for seed := int64(0); seed < 30; seed++ {
+	for seed := range int64(30) {
 		g := &generator{set: set, r: rand.New(rand.NewSource(seed)), placed: map[string]bool{}}
 		pod := g.expandPodClusters(firePod(g, set, engine.Untamed, "Lead"))
 		if got := countMember(pod, "Lead"); got != 1 {
@@ -141,7 +141,7 @@ func TestSelfPullPlacesCopies(t *testing.T) {
 		mkCard("FS", engine.Shadows, engine.Common),
 	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 
-	for seed := int64(0); seed < 50; seed++ {
+	for seed := range int64(50) {
 		g := &generator{set: set, r: rand.New(rand.NewSource(seed)), placed: map[string]bool{}}
 		pod := g.expandPodClusters(firePod(g, set, engine.Shadows, "Rat"))
 		if got := countMember(pod, "Rat"); got < 3 || got > PodSize {
@@ -164,7 +164,7 @@ func TestSelfPullCount(t *testing.T) {
 	g := &generator{r: rand.New(rand.NewSource(7))}
 
 	flat := clusterIndex{strategy: SelfPull, min: 4, mean: 4}
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		if n := g.selfPullCount(flat); n != 4 {
 			t.Fatalf("Mean==Min returned %d, want 4", n)
 		}
@@ -172,7 +172,7 @@ func TestSelfPullCount(t *testing.T) {
 
 	// A high Min at the pod ceiling drives the cap; every roll stays in range.
 	capped := clusterIndex{strategy: SelfPull, min: PodSize - 1, mean: PodSize}
-	for i := 0; i < 500; i++ {
+	for range 500 {
 		if n := g.selfPullCount(capped); n < PodSize-1 || n > PodSize {
 			t.Fatalf("capped count %d out of range", n)
 		}
@@ -328,7 +328,7 @@ func TestPullCount(t *testing.T) {
 	g := &generator{r: rand.New(rand.NewSource(7))}
 
 	flat := ClusterMembership{Min: 2, Mean: 2}
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		if n := g.pullCount(flat); n != 2 {
 			t.Fatalf("Mean==Min returned %d, want 2", n)
 		}

@@ -66,7 +66,7 @@ func (g *Game) ResolveBonusIconsOn(player int, id LocalID) {
 // cannotResolveBonusIcons reports whether an in-play card bars this player from
 // resolving the bonus icons on cards they play (Master of the Grey).
 func (g *Game) cannotResolveBonusIcons(player int) bool {
-	for owner := 0; owner < 2; owner++ {
+	for owner := range 2 {
 		for _, id := range g.allInPlay(owner) {
 			switch g.cat.def(id).Restricts.BonusIcons {
 			case Controller:

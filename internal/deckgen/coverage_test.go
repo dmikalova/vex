@@ -233,7 +233,7 @@ func TestPickHousesExclusionsAndWeights(t *testing.T) {
 		mkCard("L", engine.Logos, engine.Common),
 		mkCard("M", engine.Mars, engine.Common),
 	}, tuning)
-	for seed := int64(0); seed < 40; seed++ {
+	for seed := range int64(40) {
 		hasDis, hasLogos := false, false
 		for _, h := range Generate(set, seed).Houses() {
 			hasDis = hasDis || h == engine.Dis

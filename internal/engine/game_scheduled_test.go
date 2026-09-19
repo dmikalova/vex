@@ -244,7 +244,7 @@ func TestDestroyEachCreatureAtEndOfTurn(t *testing.T) {
 // the fixed array is full, and the scheduledEffectOf fallback for an unset action.
 func TestScheduleAtEndOfTurnFull(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	for i := 0; i < maxScheduled+2; i++ {
+	for i := range maxScheduled + 2 {
 		g.ScheduleAtEndOfTurn(LocalID(i), schedDestroyEachCreature)
 	}
 	if int(g.State.ScheduledCount) != maxScheduled {

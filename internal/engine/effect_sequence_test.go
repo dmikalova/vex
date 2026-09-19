@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -393,10 +394,8 @@ func TestSequenceResolveOptional(t *testing.T) {
 // onAnyLine reports whether a creature is still in either player's battleline.
 func onAnyLine(g *Game, id LocalID) bool {
 	for _, p := range []int{0, 1} {
-		for _, x := range g.Battleline(p) {
-			if x == id {
-				return true
-			}
+		if slices.Contains(g.Battleline(p), id) {
+			return true
 		}
 	}
 	return false

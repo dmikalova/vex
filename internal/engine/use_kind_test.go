@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"slices"
 	"testing"
 )
 
@@ -347,10 +348,5 @@ func TestMustFightIfAbleText(t *testing.T) {
 
 // containsLine reports whether lines holds exactly the line want.
 func containsLine(lines []string, want string) bool {
-	for _, l := range lines {
-		if l == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(lines, want)
 }

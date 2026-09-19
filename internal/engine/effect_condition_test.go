@@ -1549,7 +1549,7 @@ func TestCardsInDeckAtMost(t *testing.T) {
 		t.Error("a small deck should meet the condition")
 	}
 
-	for i := 0; i < 6; i++ {
+	for range 6 {
 		g.State.Deck[0].add(
 			g.Register(NewCard("filler", Brobnar, Creature, Common, WithPower(3)), 0),
 		)

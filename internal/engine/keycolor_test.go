@@ -23,7 +23,7 @@ func TestKeyColorString(t *testing.T) {
 func TestForgeRecordsKeyColor(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Aember[0] = 3 * KeyCost
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		g.forgeKey(0)
 	}
 	got := g.KeyColors(0)
@@ -39,7 +39,7 @@ func TestForgeKeyColorChoice(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetChooser(0, optionPicker{idx: 1})
 	g.State.Aember[0] = 3 * KeyCost
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		g.forgeKey(0)
 	}
 	got := g.KeyColors(0)
@@ -55,7 +55,7 @@ func TestForgeKeyColorChoice(t *testing.T) {
 func TestForgeFourthKeyIsColorless(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Aember[0] = 4 * KeyCost
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		g.forgeKey(0)
 	}
 	if got := g.Keys(0); got != MaxKeys {

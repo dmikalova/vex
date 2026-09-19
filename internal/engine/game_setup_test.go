@@ -8,7 +8,7 @@ import (
 // stockDeck fills both players' decks with plain Brobnar creatures so StartGame
 // has cards to deal.
 func stockDeck(g *Game) {
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		g.AddToDeck(testCreature("Deck", 3), 0)
 		g.AddToDeck(testCreature("Deck", 3), 1)
 	}

@@ -1,6 +1,10 @@
 package worldscollide
 
-import "github.com/dmikalova/vactrol/internal/card"
+import (
+	"slices"
+
+	"github.com/dmikalova/vactrol/internal/card"
+)
 
 // upgradeOrRobot matches the cards Chief Engineer Walls retrieves — any Upgrade,
 // or any card with the Robot trait — so a deck that runs Walls is guaranteed a
@@ -9,12 +13,7 @@ func upgradeOrRobot(d card.Definition) bool {
 	if d.Type == card.Type.Upgrade {
 		return true
 	}
-	for _, tr := range d.Traits {
-		if tr == card.Traits.Robot {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(d.Traits, card.Traits.Robot)
 }
 
 // Chief Engineer Walls

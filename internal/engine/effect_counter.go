@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Power counters are permanent +1/-1 power tokens placed on a creature: they
 // raise (or lower) its power for as long as it stays in play, and are shed when
@@ -58,15 +61,16 @@ func (e AddPowerCounter) walkText() string {
 	for i, a := range e.Walk {
 		parts[i] = flankWalkPhrase(i) + " " + counterTokens(a)
 	}
-	joined := parts[0]
+	var joined strings.Builder
+	joined.WriteString(parts[0])
 	for i := 1; i < len(parts); i++ {
 		sep := ", "
 		if i == len(parts)-1 {
 			sep = ", and "
 		}
-		joined += sep + parts[i]
+		joined.WriteString(sep + parts[i])
 	}
-	return "choose a flank creature. Give " + joined
+	return "choose a flank creature. Give " + joined.String()
 }
 
 // counters renders the tokens placed, e.g. "a +1 power counter" or "two +1 power

@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func TestReturnNamedToHand(t *testing.T) {
 	e := PutCard{
@@ -605,12 +608,7 @@ func TestPutItIntoHand(t *testing.T) {
 }
 
 func handContains(g *Game, player int, id LocalID) bool {
-	for _, h := range g.Hand(player) {
-		if h == id {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(g.Hand(player), id)
 }
 
 // TestPutFromPlaySkipsTheSecondGiganticHalf checks the in-play recheck in put is
