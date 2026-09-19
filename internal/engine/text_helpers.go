@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 // This file holds the low-level, card-agnostic string helpers the text renderers
@@ -198,12 +199,17 @@ func indefinite(noun string) string {
 	if strings.HasPrefix(noun, "other ") {
 		return "an" + noun
 	}
-	switch unicode.ToLower([]rune(noun)[0]) {
+	switch lowerFirstRune(noun) {
 	case 'a', 'e', 'i', 'o', 'u':
 		return "an " + noun
 	default:
 		return "a " + noun
 	}
+}
+
+func lowerFirstRune(s string) rune {
+	r, _ := utf8.DecodeRuneInString(s)
+	return unicode.ToLower(r)
 }
 
 // plural gives a noun the form a count of n calls for: "card" for one, "cards"

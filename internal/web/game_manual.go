@@ -435,7 +435,8 @@ func (g *game) pickerMatches() []engine.CardDefinition {
 	q := normalizeSearch(strings.TrimSpace(g.pickerQuery))
 	offered := g.pickerOfferedNames()
 	var matches []engine.CardDefinition
-	for _, d := range g.allDefs {
+	for i := range g.allDefs {
+		d := g.allDefs[i]
 		if offered != nil && !offered[d.Name] {
 			continue
 		}

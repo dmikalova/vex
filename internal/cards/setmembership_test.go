@@ -13,7 +13,8 @@ import (
 // and fails here — the failure it would otherwise cause (a card silently absent
 // from its set's pool) is caught at the source instead.
 func TestEveryCardDeclaresItsSet(t *testing.T) {
-	for _, rc := range card.Cards() {
+	for i := range card.Cards() {
+		rc := card.Cards()[i]
 		if rc.Set.Name == "" {
 			t.Errorf(
 				"card %q registered with no set: author it through its set's set.New",

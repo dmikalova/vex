@@ -61,7 +61,9 @@ func setOrder() []string {
 // bySet groups the registered cards by source-set name.
 func bySet() map[string][]card.RegisteredCard {
 	groups := map[string][]card.RegisteredCard{}
-	for _, rc := range card.Cards() {
+	regs := card.Cards()
+	for i := range regs {
+		rc := regs[i]
 		groups[setName(rc)] = append(groups[setName(rc)], rc)
 	}
 	return groups
@@ -133,7 +135,8 @@ func tuningFor(name string) deckgen.Tuning {
 func catalogCards() []deckgen.Card {
 	regs := card.Cards()
 	out := make([]deckgen.Card, 0, len(regs))
-	for _, rc := range regs {
+	for i := range regs {
+		rc := regs[i]
 		out = append(out, deckgenCard(rc))
 	}
 	return out
@@ -156,7 +159,9 @@ func buildLegacy(groups map[string][]card.RegisteredCard) *deckgen.Legacy {
 	seen := map[string]bool{}
 	add := func(name string) {
 		seen[name] = true
-		for _, rc := range groups[name] {
+		cardsBySet := groups[name]
+		for i := range cardsBySet {
+			rc := cardsBySet[i]
 			entries = append(entries, deckgen.LegacyEntry{
 				Card: deckgenCard(rc),
 				Set:  name,
@@ -186,19 +191,21 @@ func buildLegacy(groups map[string][]card.RegisteredCard) *deckgen.Legacy {
 // decides whether it joins as a plain pool card or is a catalog error.
 func ownPool(native, reprints []card.RegisteredCard, leads map[string]string) []deckgen.Card {
 	inPool := make(map[string]bool, len(native)+len(reprints))
-	for _, rc := range native {
-		inPool[normalizeName(rc.Def.Name)] = true
+	for i := range native {
+		inPool[normalizeName(native[i].Def.Name)] = true
 	}
-	for _, rc := range reprints {
-		inPool[normalizeName(rc.Def.Name)] = true
+	for i := range reprints {
+		inPool[normalizeName(reprints[i].Def.Name)] = true
 	}
 	seen := make(map[string]bool, len(native))
 	out := make([]deckgen.Card, 0, len(native)+len(reprints))
-	for _, rc := range native {
+	for i := range native {
+		rc := native[i]
 		out = append(out, nativePoolCard(rc, inPool, leads))
 		seen[rc.Def.Name] = true
 	}
-	for _, rc := range reprints {
+	for i := range reprints {
+		rc := reprints[i]
 		if seen[rc.Def.Name] {
 			continue
 		}
@@ -239,7 +246,9 @@ func nativePoolCard(
 // into the same set.
 func clusterLeadNames() map[string]string {
 	leads := map[string]string{}
-	for _, rc := range card.Cards() {
+	regs := card.Cards()
+	for i := range regs {
+		rc := regs[i]
 		if m := rc.Profile.Cluster; m.Name != "" && m.Lead {
 			leads[m.Name] = rc.Def.Name
 		}
@@ -288,7 +297,9 @@ func reprintPoolCard(
 // name so the pool is deterministic regardless of package init order.
 func reprintsBySet() map[string][]card.RegisteredCard {
 	byName := map[string]card.RegisteredCard{}
-	for _, rc := range card.Cards() {
+	regs := card.Cards()
+	for i := range regs {
+		rc := regs[i]
 		byName[normalizeName(rc.Def.Name)] = rc
 	}
 	out := map[string][]card.RegisteredCard{}
@@ -365,8 +376,8 @@ func Sets() []Set {
 			continue
 		}
 		defs := make([]card.Definition, 0, len(regs))
-		for _, rc := range regs {
-			defs = append(defs, rc.Def)
+		for i := range regs {
+			defs = append(defs, regs[i].Def)
 		}
 		sort.Slice(defs, func(i, j int) bool {
 			if defs[i].House != defs[j].House {

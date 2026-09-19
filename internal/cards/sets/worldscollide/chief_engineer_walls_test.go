@@ -119,7 +119,8 @@ func TestUpgradeOrRobot(t *testing.T) {
 			false,
 		},
 	}
-	for _, tc := range cases {
+	for i := range cases {
+		tc := &cases[i]
 		if got := upgradeOrRobot(tc.def); got != tc.want {
 			t.Errorf("upgradeOrRobot(%s) = %v, want %v", tc.name, got, tc.want)
 		}

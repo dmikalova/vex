@@ -453,7 +453,7 @@ func actionTriggerRun(abs []Ability, i int) (string, int) {
 // canonicalTriggerLabel joins the present action-trigger labels in the fixed
 // order Play, Fight, Reap.
 func canonicalTriggerLabel(play, fight, reap bool) string {
-	var parts []string
+	parts := make([]string, 0, 3)
 	if play {
 		parts = append(parts, "Play")
 	}
@@ -463,7 +463,17 @@ func canonicalTriggerLabel(play, fight, reap bool) string {
 	if reap {
 		parts = append(parts, "Reap")
 	}
-	return strings.Join(parts, "/")
+	if len(parts) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	for i, p := range parts {
+		if i > 0 {
+			b.WriteByte('/')
+		}
+		b.WriteString(p)
+	}
+	return b.String()
 }
 
 // isFightReapPair reports whether two adjacent abilities are a Fight and a Reap

@@ -259,7 +259,7 @@ func (g *game) measureFocus() bool {
 	// A live copy supersedes any exit that was still fading.
 	g.focusExit = false
 	if g.hasFocus && g.focusID == id && g.focusRect == next &&
-		g.focusViewW == vw && g.focusViewH == vh {
+		math.Abs(g.focusViewW-vw) < 0.01 && math.Abs(g.focusViewH-vh) < 0.01 {
 		return false
 	}
 	if !g.hasFocus || g.focusID != id {

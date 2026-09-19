@@ -117,8 +117,8 @@ func TestOnePerHouseCompletenessGate(t *testing.T) {
 }
 
 func podHas(pod HousePod, name string) bool {
-	for _, s := range &pod.Slots {
-		if s.Card.Name == name {
+	for i := range pod.Slots {
+		if pod.Slots[i].Card.Name == name {
 			return true
 		}
 	}
@@ -235,7 +235,8 @@ func TestDraftable(t *testing.T) {
 			false,
 		},
 	}
-	for _, tc := range cases {
+	for i := range cases {
+		tc := cases[i]
 		if got := Draftable(tc.card); got != tc.want {
 			t.Errorf("Draftable(%s) = %v, want %v", tc.name, got, tc.want)
 		}
@@ -552,7 +553,8 @@ func TestOnePerHouseMaverickSubstitution(t *testing.T) {
 	// Pod 1 lacked its member and rolled maverick, so it holds the other House's
 	// member as a maverick.
 	maverick := false
-	for _, s := range &deck.Pods[1].Slots {
+	for i := range deck.Pods[1].Slots {
+		s := deck.Pods[1].Slots[i]
 		if s.Maverick && (s.Card.Name == "Shard-B" || s.Card.Name == "Shard-D") {
 			maverick = true
 		}

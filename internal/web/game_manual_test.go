@@ -409,8 +409,8 @@ func TestThePickerAnswersANameACardPrompt(t *testing.T) {
 // names lists the card names of a picker result, for a readable failure message.
 func names(defs []engine.CardDefinition) []string {
 	out := make([]string, len(defs))
-	for i, d := range defs {
-		out[i] = d.Name
+	for i := range defs {
+		out[i] = defs[i].Name
 	}
 	return out
 }

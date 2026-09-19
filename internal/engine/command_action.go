@@ -226,7 +226,10 @@ func (g *Game) RunMatch(firstPlayer int) {
 			continue
 		}
 		player := g.State.ActivePlayer
-		chooser := g.chooserFor(player).(ActionChooser)
+		chooser, ok := g.chooserFor(player).(ActionChooser)
+		if !ok {
+			panic("game: active player chooser is not an ActionChooser")
+		}
 		// The chooser answers from the legal set (TestLegalActionsAreAllApplicable),
 		// which ApplyAction always accepts, so its error is unreachable here.
 		_ = g.ApplyAction(chooser.ChooseAction(g.LegalActions(player)))

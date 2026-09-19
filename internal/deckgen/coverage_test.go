@@ -49,8 +49,11 @@ func TestSpecialOverlay(t *testing.T) {
 		RarityWeights: map[engine.Rarity]float64{engine.Common: 1},
 		SpecialRate:   1,
 	})
-	for _, pod := range Generate(set, 1).Pods {
-		for _, s := range &pod.Slots {
+	pods := Generate(set, 1).Pods
+	for i := range pods {
+		pod := &pods[i]
+		for j := range pod.Slots {
+			s := &pod.Slots[j]
 			if !s.Special || s.Card.Name != "Special" || s.Card.House != pod.House {
 				t.Fatalf("special slot = %+v (pod %v)", s, pod.House)
 			}
@@ -69,8 +72,11 @@ func TestMaverickDraw(t *testing.T) {
 		RarityWeights: map[engine.Rarity]float64{engine.Common: 1},
 		MaverickRate:  1,
 	})
-	for _, pod := range Generate(set, 1).Pods {
-		for _, s := range &pod.Slots {
+	pods := Generate(set, 1).Pods
+	for i := range pods {
+		pod := &pods[i]
+		for j := range pod.Slots {
+			s := &pod.Slots[j]
 			if s.Card.House != pod.House {
 				t.Fatalf("maverick not rehoused: %v in pod %v", s.Card.House, pod.House)
 			}
@@ -87,7 +93,9 @@ func TestMaverickSingleHouse(t *testing.T) {
 		RarityWeights: map[engine.Rarity]float64{engine.Common: 1},
 		MaverickRate:  1,
 	})
-	for _, s := range Generate(set, 1).Pods[0].Slots {
+	slots := Generate(set, 1).Pods[0].Slots
+	for i := range slots {
+		s := &slots[i]
 		if s.Maverick {
 			t.Fatal("single-house set produced a maverick")
 		}
@@ -172,7 +180,9 @@ func TestOnePerDeckExhaustion(t *testing.T) {
 		Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}},
 	)
 	count := 0
-	for _, s := range Generate(set, 1).Pods[0].Slots {
+	slots := Generate(set, 1).Pods[0].Slots
+	for i := range slots {
+		s := &slots[i]
 		if s.Card.Name == "U" {
 			count++
 		}
@@ -207,7 +217,9 @@ func TestMaterializerTemplate(t *testing.T) {
 		[]Card{tmpl},
 		Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}},
 	)
-	for _, s := range Generate(set, 1).Pods[0].Slots {
+	slots := Generate(set, 1).Pods[0].Slots
+	for i := range slots {
+		s := &slots[i]
 		if s.Card.Name != "Materialized" || s.Card.Power != 7 {
 			t.Fatalf("template not materialized: %q pow %d", s.Card.Name, s.Card.Power)
 		}
@@ -264,7 +276,9 @@ func TestTuningDefaults(t *testing.T) {
 	}
 	empty := NewSet("S", []Card{mkCard("B", engine.Brobnar, engine.Common)},
 		Tuning{RarityWeights: map[engine.Rarity]float64{}})
-	for _, s := range Generate(empty, 1).Pods[0].Slots {
+	slots := Generate(empty, 1).Pods[0].Slots
+	for i := range slots {
+		s := &slots[i]
 		if s.Rarity != engine.Common {
 			t.Fatalf("empty weights rolled %v, want Common", s.Rarity)
 		}
@@ -276,7 +290,9 @@ func TestTuningDefaults(t *testing.T) {
 func TestDrawRarityFallback(t *testing.T) {
 	set := NewSet("S", []Card{mkCard("B", engine.Brobnar, engine.Common)},
 		Tuning{RarityWeights: map[engine.Rarity]float64{engine.Rare: 1}})
-	for _, s := range Generate(set, 1).Pods[0].Slots {
+	slots := Generate(set, 1).Pods[0].Slots
+	for i := range slots {
+		s := &slots[i]
 		if s.Card.Name != "B" {
 			t.Fatalf("fallback failed: %q", s.Card.Name)
 		}

@@ -128,7 +128,8 @@ func Draftable(c Card) bool {
 // init order.
 func buildClusters(cards []Card) map[string]clusterIndex {
 	idx := map[string]clusterIndex{}
-	for _, c := range cards {
+	for i := range cards {
+		c := cards[i]
 		m := c.Profile.Cluster
 		if m.Empty() {
 			continue
@@ -273,7 +274,8 @@ func validatePullCluster(name, setName string, ci clusterIndex) {
 			name, setName,
 		))
 	}
-	for _, m := range ci.members {
+	for i := range ci.members {
+		m := ci.members[i]
 		r := m.Profile.Cluster
 		if m.Def.Name == ci.lead {
 			continue
@@ -308,13 +310,15 @@ func (s Set) validateOnePerHouseCluster(name string, ci clusterIndex) {
 // roll; for ByAnyMember any non-Connected member suffices.
 func clusterCanFire(ci clusterIndex) bool {
 	if ci.trigger == ByLead {
-		for _, m := range ci.members {
+		for i := range ci.members {
+			m := ci.members[i]
 			if m.Def.Name == ci.lead {
 				return m.Def.Rarity != engine.Connected
 			}
 		}
 	}
-	for _, m := range ci.members {
+	for i := range ci.members {
+		m := ci.members[i]
 		if m.Def.Rarity != engine.Connected {
 			return true
 		}

@@ -47,7 +47,10 @@ func pickSet() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	picked := result.(setPicker)
+	picked, ok := result.(setPicker)
+	if !ok {
+		return "", fmt.Errorf("picker returned unexpected model type %T", result)
+	}
 	if picked.cancelled {
 		return "", nil
 	}
@@ -77,7 +80,10 @@ func pickImportSet() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	picked := result.(setPicker)
+	picked, ok := result.(setPicker)
+	if !ok {
+		return "", fmt.Errorf("picker returned unexpected model type %T", result)
+	}
 	if picked.cancelled {
 		return "", nil
 	}

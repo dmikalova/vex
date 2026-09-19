@@ -588,7 +588,8 @@ func TestPlayableAsUpgradeText(t *testing.T) {
 			"Creatures not on a flank cannot fight this creature.",
 		},
 	}
-	for _, tc := range cases {
+	for i := range cases {
+		tc := &cases[i]
 		if got := RenderCardRules(&tc.def); got != tc.rules {
 			t.Errorf("%s rules:\n got:  %q\n want: %q", tc.def.Name, got, tc.rules)
 		}

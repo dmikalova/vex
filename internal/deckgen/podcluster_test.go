@@ -22,7 +22,8 @@ func firePod(g *generator, set Set, house engine.House, member string) HousePod 
 
 func distinctMembers(pod HousePod, ci clusterIndex) int {
 	seen := map[string]bool{}
-	for _, s := range &pod.Slots {
+	for i := range pod.Slots {
+		s := pod.Slots[i]
 		if inCluster(ci, s.Card.Name) {
 			seen[s.Card.Name] = true
 		}
@@ -238,7 +239,8 @@ func TestWholePoolRehousesMaverickMember(t *testing.T) {
 	}
 	pod := g.expandPodClusters(firePod(g, set, engine.Brobnar, "Lead"))
 	found := false
-	for _, s := range &pod.Slots {
+	for i := range pod.Slots {
+		s := pod.Slots[i]
 		if s.Card.Name != "Rider" {
 			continue
 		}
@@ -305,7 +307,8 @@ func TestWholePoolStopsWhenPodFull(t *testing.T) {
 		placed: map[string]bool{},
 	}
 	pod := g.expandPodClusters(firePod(g, set, engine.Brobnar, "M0"))
-	for _, s := range &pod.Slots {
+	for i := range pod.Slots {
+		s := pod.Slots[i]
 		if !inCluster(set.clusters["H"], s.Card.Name) {
 			t.Fatalf("slot holds non-member %q; the pod should be full of members", s.Card.Name)
 		}

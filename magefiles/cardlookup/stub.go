@@ -120,7 +120,8 @@ func reprintsForSet(set provenance.Set) []provenance.Card {
 	refName := sourceNameByRef()
 	type impl struct{ name, home string }
 	bySourceName := map[string]impl{}
-	for _, rc := range card.Cards() {
+	for i := range card.Cards() {
+		rc := card.Cards()[i]
 		// The card's actual home set is where it is implemented (InSet), not its
 		// provenance origin — an anomaly's provenance points at Worlds Collide but it
 		// lives in Anomaly Expansion, so keying home off provenance would claim it as
@@ -152,7 +153,8 @@ func reprintsForSet(set provenance.Set) []provenance.Card {
 	// drawn, so skip it here (the aggregator also panics if one is forced in by hand).
 	regByName := map[string]card.RegisteredCard{}
 	leadOfCluster := map[string]string{}
-	for _, rc := range card.Cards() {
+	for i := range card.Cards() {
+		rc := card.Cards()[i]
 		regByName[normalizeName(rc.Def.Name)] = rc
 		if m := rc.Profile.Cluster; m.Name != "" && m.Lead {
 			leadOfCluster[m.Name] = rc.Def.Name

@@ -49,9 +49,9 @@ func (g *game) sortedArtifacts(p int) []engine.LocalID {
 // view, and the deck list. The deck in particular must not reveal its shuffled
 // order, so it is always sorted.
 func (g *game) sortByHouseTypeName(ids []engine.LocalID) []engine.LocalID {
-	ids = make([]engine.LocalID, len(ids))
-	copy(ids, ids)
-	sort.SliceStable(ids, func(i, j int) bool {
+	out := make([]engine.LocalID, len(ids))
+	copy(out, ids)
+	sort.SliceStable(out, func(i, j int) bool {
 		a, b := g.g.Def(ids[i]), g.g.Def(ids[j])
 		if a.House != b.House {
 			return a.House < b.House
@@ -61,7 +61,7 @@ func (g *game) sortByHouseTypeName(ids []engine.LocalID) []engine.LocalID {
 		}
 		return a.Name < b.Name
 	})
-	return ids
+	return out
 }
 
 func (g *game) renderHandCard(id engine.LocalID) app.UI {

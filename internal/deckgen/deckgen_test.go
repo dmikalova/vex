@@ -108,7 +108,8 @@ func TestLegacyDraws(t *testing.T) {
 	tuning := DefaultTuning()
 	tuning.LegacyRate = 1 // every non-special slot draws from the legacy pool
 	entries := make([]LegacyEntry, 0)
-	for _, c := range legacyPool() {
+	for i := range legacyPool() {
+		c := legacyPool()[i]
 		entries = append(entries, LegacyEntry{
 			Card: c,
 			Set:  "Other",
@@ -118,8 +119,10 @@ func TestLegacyDraws(t *testing.T) {
 
 	deck := Generate(set, 3)
 	legacyCount := 0
-	for _, pod := range &deck.Pods {
-		for _, s := range &pod.Slots {
+	for i := range deck.Pods {
+		pod := deck.Pods[i]
+		for j := range pod.Slots {
+			s := pod.Slots[j]
 			if s.Legacy {
 				legacyCount++
 				if s.Card.House != pod.House {
@@ -141,7 +144,9 @@ func TestInterloperHousePod(t *testing.T) {
 	tuning := DefaultTuning()
 	tuning.InterloperRate = 1 // force every pod to draw from the legacy pool
 	entries := make([]LegacyEntry, 0)
-	for _, c := range legacyPool() {
+	pool := legacyPool()
+	for i := range pool {
+		c := pool[i]
 		entries = append(entries, LegacyEntry{
 			Card: c,
 			Set:  "Other",
@@ -150,14 +155,16 @@ func TestInterloperHousePod(t *testing.T) {
 	set := NewSet("Test", synthCards(), tuning).WithLegacy(NewLegacy(entries))
 
 	deck := Generate(set, 3)
-	for _, pod := range &deck.Pods {
-		for i, s := range &pod.Slots {
+	for i := range deck.Pods {
+		pod := deck.Pods[i]
+		for j := range pod.Slots {
+			s := pod.Slots[j]
 			if !s.Legacy {
-				t.Errorf("pod %v slot %d not legacy in an interloper pod", pod.House, i)
+				t.Errorf("pod %v slot %d not legacy in an interloper pod", pod.House, j)
 			}
 			if s.Card.House != pod.House {
 				t.Errorf("pod %v slot %d house = %v, want pod house",
-					pod.House, i, s.Card.House)
+					pod.House, j, s.Card.House)
 			}
 		}
 	}
@@ -174,10 +181,12 @@ func TestInterloperNeedsLegacyPool(t *testing.T) {
 	set := NewSet("Test", synthCards(), tuning) // no legacy pool
 
 	deck := Generate(set, 3)
-	for _, pod := range &deck.Pods {
-		for i, s := range &pod.Slots {
+	for i := range deck.Pods {
+		pod := deck.Pods[i]
+		for j := range pod.Slots {
+			s := pod.Slots[j]
 			if s.Legacy {
-				t.Errorf("pod %v slot %d tagged legacy without a legacy pool", pod.House, i)
+				t.Errorf("pod %v slot %d tagged legacy without a legacy pool", pod.House, j)
 			}
 		}
 	}
@@ -208,7 +217,9 @@ func TestErrantHousePod(t *testing.T) {
 	tuning.ErrantRate = 1     // force every pod errant
 	tuning.InterloperRate = 0 // isolate the errant overlay
 	entries := make([]LegacyEntry, 0)
-	for _, c := range foreignLegacyPool() {
+	pool := foreignLegacyPool()
+	for i := range pool {
+		c := pool[i]
 		entries = append(entries, LegacyEntry{
 			Card: c,
 			Set:  "Other",
@@ -220,16 +231,18 @@ func TestErrantHousePod(t *testing.T) {
 		engine.Shadows: true, engine.Untamed: true, engine.Saurian: true,
 	}
 	deck := Generate(set, 3)
-	for _, pod := range &deck.Pods {
+	for i := range deck.Pods {
+		pod := deck.Pods[i]
 		if !foreign[pod.House] {
 			t.Errorf("pod House %v is not a foreign errant House", pod.House)
 		}
-		for i, s := range &pod.Slots {
+		for j := range pod.Slots {
+			s := pod.Slots[j]
 			if !s.Legacy {
-				t.Errorf("pod %v slot %d not legacy in an errant pod", pod.House, i)
+				t.Errorf("pod %v slot %d not legacy in an errant pod", pod.House, j)
 			}
 			if s.Card.House != pod.House {
-				t.Errorf("pod %v slot %d House = %v, want pod House", pod.House, i, s.Card.House)
+				t.Errorf("pod %v slot %d House = %v, want pod House", pod.House, j, s.Card.House)
 			}
 		}
 	}
@@ -245,7 +258,9 @@ func TestErrantNeedsForeignHouse(t *testing.T) {
 	tuning.ErrantRate = 1
 	tuning.InterloperRate = 0
 	entries := make([]LegacyEntry, 0)
-	for _, c := range legacyPool() { // same Houses as synthSet: no foreign House
+	pool := legacyPool() // same Houses as synthSet: no foreign House
+	for i := range pool {
+		c := pool[i]
 		entries = append(entries, LegacyEntry{
 			Card: c,
 			Set:  "Other",
@@ -258,7 +273,8 @@ func TestErrantNeedsForeignHouse(t *testing.T) {
 		native[h] = true
 	}
 	deck := Generate(set, 3)
-	for _, pod := range &deck.Pods {
+	for i := range deck.Pods {
+		pod := deck.Pods[i]
 		if !native[pod.House] {
 			t.Errorf("pod House %v is foreign, but the legacy pool has none", pod.House)
 		}
@@ -283,7 +299,8 @@ func TestErrantExhaustsForeignHouses(t *testing.T) {
 
 	deck := Generate(set, 3)
 	saurian := 0
-	for _, pod := range &deck.Pods {
+	for i := range deck.Pods {
+		pod := deck.Pods[i]
 		if pod.House == engine.Saurian {
 			saurian++
 		}
@@ -316,7 +333,8 @@ func TestLegacyDrawOfSetMemberNotTaggedLegacy(t *testing.T) {
 	// shape of a reprint: the same card printed in this set and pooled as legacy
 	// from its native set.
 	entries := make([]LegacyEntry, 0)
-	for _, c := range synthCards() {
+	for i := range synthCards() {
+		c := synthCards()[i]
 		entries = append(entries, LegacyEntry{
 			Card: c,
 			Set:  "Other",
@@ -325,8 +343,10 @@ func TestLegacyDrawOfSetMemberNotTaggedLegacy(t *testing.T) {
 	set := NewSet("Test", synthCards(), tuning).WithLegacy(NewLegacy(entries))
 
 	deck := Generate(set, 3)
-	for _, pod := range &deck.Pods {
-		for _, s := range &pod.Slots {
+	for i := range deck.Pods {
+		pod := deck.Pods[i]
+		for j := range pod.Slots {
+			s := pod.Slots[j]
 			if s.Legacy {
 				t.Errorf("slot %q tagged legacy, but the set prints that card", s.Card.Name)
 			}
@@ -379,10 +399,12 @@ func TestDeckShape(t *testing.T) {
 
 func TestEveryCardAdoptsItsPodHouse(t *testing.T) {
 	deck := Generate(synthSet(), 99)
-	for _, pod := range &deck.Pods {
-		for i, s := range &pod.Slots {
+	for i := range deck.Pods {
+		pod := deck.Pods[i]
+		for j := range pod.Slots {
+			s := pod.Slots[j]
 			if s.Card.House != pod.House {
-				t.Errorf("pod %v slot %d has house %v", pod.House, i, s.Card.House)
+				t.Errorf("pod %v slot %d has house %v", pod.House, j, s.Card.House)
 			}
 		}
 	}
@@ -410,10 +432,13 @@ func TestRarityWeightsAreHonored(t *testing.T) {
 	tuning.SpecialRate = 0
 	set := synthSet()
 	set.Tuning = tuning
-	for _, pod := range Generate(set, 3).Pods {
-		for i, s := range &pod.Slots {
+	pods := Generate(set, 3).Pods
+	for i := range pods {
+		pod := &pods[i]
+		for j := range pod.Slots {
+			s := &pod.Slots[j]
 			if s.Rarity != engine.Rare {
-				t.Fatalf("pod %v slot %d rarity = %v, want Rare", pod.House, i, s.Rarity)
+				t.Fatalf("pod %v slot %d rarity = %v, want Rare", pod.House, j, s.Rarity)
 			}
 		}
 	}
@@ -444,7 +469,9 @@ func TestOneCopyPerDeckIsRespected(t *testing.T) {
 	set := NewSet("Solo", []Card{unique, filler}, DefaultTuning())
 	deck := Generate(set, 5)
 	count := 0
-	for _, d := range deck.Cards() {
+	cards := deck.Cards()
+	for i := range cards {
+		d := cards[i]
 		if d.Name == "Unique" {
 			count++
 		}

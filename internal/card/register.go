@@ -102,7 +102,8 @@ func Gigantic(
 // generation places the art half automatically). It panics if base is not a
 // registered gigantic base half.
 func GiganticArt(base Definition) Definition {
-	for _, e := range registry {
+	for i := range registry {
+		e := &registry[i]
 		if e.Def.Name == base.Name && e.Def.GiganticRole == engine.GiganticBase &&
 			e.Profile.GiganticArt != nil {
 			return *e.Profile.GiganticArt
@@ -143,8 +144,8 @@ func Build(
 // populate the registry, so callers should reach it through cards.All().
 func Registered() []Definition {
 	out := make([]Definition, len(registry))
-	for i, e := range registry {
-		out[i] = e.Def
+	for i := range registry {
+		out[i] = registry[i].Def
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].House != out[j].House {

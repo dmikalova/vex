@@ -80,7 +80,7 @@ func shuffleTraits(traits []engine.Trait) {
 	sort.Slice(traits, func(i, j int) bool { return traits[i].String() < traits[j].String() })
 	h := fnv.New64a()
 	for _, t := range traits {
-		io.WriteString(h, t.String())
+		_, _ = io.WriteString(h, t.String())
 		h.Write([]byte{0})
 	}
 	r := rand.New(rand.NewSource(int64(h.Sum64())))

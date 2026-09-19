@@ -317,7 +317,9 @@ func buildGalleryCatalog() galleryCatalog {
 	for i := range regs {
 		native := nativeSetsOf(regs[i])
 		reprint := reprintsByName[regs[i].Def.Name]
-		for _, def := range materializedDefs(regs[i]) {
+		defs := materializedDefs(regs[i])
+		for j := range defs {
+			def := defs[j]
 			cat.cards = append(cat.cards, galleryCard{
 				def:         &def,
 				nativeSets:  native,
@@ -426,8 +428,8 @@ func materializedDefs(rc card.RegisteredCard) []engine.CardDefinition {
 		stale = 0
 	}
 	out := make([]engine.CardDefinition, 0, len(seen))
-	for _, d := range seen {
-		out = append(out, d)
+	for name := range seen {
+		out = append(out, seen[name])
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out

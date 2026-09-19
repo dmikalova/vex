@@ -192,7 +192,9 @@ func coveredNumbers() map[string]map[string]bool {
 
 	refName := sourceNameByRef()
 	implemented := map[string]bool{}
-	for _, rc := range card.Cards() {
+	cardsAll := card.Cards()
+	for i := range cardsAll {
+		rc := cardsAll[i]
 		// A card counts as implemented under its own name (so a same-named printing
 		// in any set's catalog is covered) and under every source name its provenance
 		// Refs resolve to. The own-name entry matters when a Ref does not resolve — an

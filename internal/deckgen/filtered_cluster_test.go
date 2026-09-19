@@ -232,7 +232,8 @@ func TestPlaceFilteredMatchNative(t *testing.T) {
 		t.Fatal("expected native placement to succeed")
 	}
 	found := false
-	for _, s := range &deck.Pods[0].Slots {
+	for i := range deck.Pods[0].Slots {
+		s := deck.Pods[0].Slots[i]
 		if s.Card.Name == "UpD" {
 			found = true
 			if s.Maverick {
@@ -254,7 +255,8 @@ func TestPlaceFilteredMatchMaverick(t *testing.T) {
 		t.Fatal("expected maverick placement to succeed")
 	}
 	for i := range PodCount {
-		for _, s := range &deck.Pods[i].Slots {
+		for j := range deck.Pods[i].Slots {
+			s := deck.Pods[i].Slots[j]
 			if s.Card.Name == "UpM" {
 				if !s.Maverick || s.Card.House != deck.Pods[i].House {
 					t.Errorf("UpM not rehoused as maverick: %+v", s)
@@ -328,7 +330,8 @@ func TestFilteredCandidatesSkips(t *testing.T) {
 	deck := vanillaDeck([PodCount]engine.House{engine.Brobnar, engine.Dis, engine.Logos})
 	deck.Pods[1].Slots[0] = Slot{Card: s.byName["UpD"].Def} // already in deck
 	cands := g.filteredCandidates(&deck, g.set.filtered["F"])
-	for _, c := range cands {
+	for i := range cands {
+		c := cands[i]
 		if c.Def.Name == "UpD" || c.Def.Name == "UpOnce" {
 			t.Errorf("candidate %q should be excluded", c.Def.Name)
 		}

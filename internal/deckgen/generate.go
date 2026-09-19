@@ -148,24 +148,28 @@ func (g *generator) expandPodClusters(pod HousePod) HousePod {
 		}
 		switch ci.strategy {
 		case WholePool:
-			for _, m := range ci.members {
+			for i := range ci.members {
+				m := ci.members[i]
 				g.placeMemberCopies(&pod, ci, m, 1)
 			}
 		case RandomCount:
-			for _, m := range g.randomMembers(ci) {
+			for i := range g.randomMembers(ci) {
+				m := g.randomMembers(ci)[i]
 				g.placeMemberCopies(&pod, ci, m, 1)
 			}
 		case SelfPull:
 			g.placeMemberCopies(&pod, ci, ci.members[0], g.selfPullCount(ci))
 		case PullExact:
 			leads := countMember(pod, ci.lead)
-			for _, m := range ci.members {
+			for i := range ci.members {
+				m := ci.members[i]
 				if m.Def.Name != ci.lead {
 					g.placeMemberCopies(&pod, ci, m, leads)
 				}
 			}
 		case Pull:
-			for _, m := range ci.members {
+			for i := range ci.members {
+				m := ci.members[i]
 				if m.Def.Name != ci.lead {
 					g.placeMemberCopies(&pod, ci, m, g.pullCount(m.Profile.Cluster))
 				}
@@ -277,8 +281,8 @@ func (g *generator) clusterNames() []string {
 // podClusterFires reports whether a cluster's trigger is met in the pod: for
 // ByLead, that its lead member is present; for ByAnyMember, that any member is.
 func podClusterFires(pod HousePod, ci clusterIndex) bool {
-	for _, s := range &pod.Slots {
-		name := s.Card.Name
+	for i := range pod.Slots {
+		name := pod.Slots[i].Card.Name
 		if ci.trigger == ByLead {
 			if name == ci.lead {
 				return true
@@ -317,7 +321,8 @@ func nonLeadMembers(ci clusterIndex) []Card {
 		return ci.members
 	}
 	out := make([]Card, 0, len(ci.members))
-	for _, m := range ci.members {
+	for i := range ci.members {
+		m := ci.members[i]
 		if m.Def.Name != ci.lead {
 			out = append(out, m)
 		}
@@ -399,8 +404,8 @@ func freeClusterSlot(pod *HousePod, ci clusterIndex) int {
 // countMember counts how many of the pod's slots hold the named card.
 func countMember(pod HousePod, name string) int {
 	n := 0
-	for _, s := range &pod.Slots {
-		if s.Card.Name == name {
+	for i := range pod.Slots {
+		if pod.Slots[i].Card.Name == name {
 			n++
 		}
 	}
@@ -435,8 +440,8 @@ func (g *generator) expandClusters(deck *Deck) {
 // member has been drawn into the deck; for ByLead, that the lead member has.
 func (g *generator) clusterTriggered(deck *Deck, ci clusterIndex) bool {
 	for i := range PodCount {
-		for _, s := range &deck.Pods[i].Slots {
-			name := s.Card.Name
+		for j := range deck.Pods[i].Slots {
+			name := deck.Pods[i].Slots[j].Card.Name
 			if ci.trigger == ByLead {
 				if name == ci.lead {
 					return true
@@ -457,8 +462,8 @@ func (g *generator) clusterTriggered(deck *Deck, ci clusterIndex) bool {
 // instead receives another House's member, rehoused as a maverick — the printed-
 // house rule KeyForge uses for a maverick card.
 func (g *generator) ensureClusterMember(pod *HousePod, ci clusterIndex, member Card) {
-	for _, s := range &pod.Slots {
-		if inCluster(ci, s.Card.Name) {
+	for i := range pod.Slots {
+		if inCluster(ci, pod.Slots[i].Card.Name) {
 			return
 		}
 	}
@@ -488,7 +493,8 @@ func (g *generator) ensureClusterMember(pod *HousePod, ci clusterIndex, member C
 // multi-House deck always has at least two), so the pick is never empty.
 func (g *generator) otherClusterMember(ci clusterIndex, exclude Card) Card {
 	alts := make([]Card, 0, len(ci.members))
-	for _, m := range ci.members {
+	for i := range ci.members {
+		m := ci.members[i]
 		if m.Def.Name != exclude.Def.Name {
 			alts = append(alts, m)
 		}
@@ -498,8 +504,8 @@ func (g *generator) otherClusterMember(ci clusterIndex, exclude Card) Card {
 
 // inCluster reports whether a card name is a member of the cluster.
 func inCluster(ci clusterIndex, name string) bool {
-	for _, m := range ci.members {
-		if m.Def.Name == name {
+	for i := range ci.members {
+		if ci.members[i].Def.Name == name {
 			return true
 		}
 	}
@@ -636,7 +642,8 @@ func (g *generator) tryDuplicate(rarity engine.Rarity, placed []placedCard) (Car
 		return Card{}, false
 	}
 	elig := make([]Card, 0, len(placed))
-	for _, pc := range placed {
+	for i := range placed {
+		pc := placed[i]
 		if pc.rarity != rarity || pc.card.Def.Name == "" || pc.card.Profile.OneCopyPerDeck {
 			continue
 		}
@@ -654,7 +661,8 @@ func (g *generator) tryDuplicate(rarity engine.Rarity, placed []placedCard) (Car
 // when nothing is eligible.
 func (g *generator) pick(cards []Card) (Card, bool) {
 	elig := make([]Card, 0, len(cards))
-	for _, c := range cards {
+	for i := range cards {
+		c := cards[i]
 		if c.Profile.OneCopyPerDeck && g.placed[c.Def.Name] {
 			continue
 		}
@@ -664,8 +672,8 @@ func (g *generator) pick(cards []Card) (Card, bool) {
 		return Card{}, false
 	}
 	total := 0.0
-	for _, c := range elig {
-		total += drawWeight(c)
+	for i := range elig {
+		total += drawWeight(elig[i])
 	}
 	x := g.r.Float64() * total
 	for i := 0; i < len(elig)-1; i++ {

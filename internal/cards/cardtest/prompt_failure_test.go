@@ -56,7 +56,7 @@ func twoEnemies(hand ...any) Setup {
 func TestClickMisuse(t *testing.T) {
 	pick := targeting()
 	var mine Card
-	for _, tc := range []struct {
+	cases := []struct {
 		name  string
 		hand  engine.CardDefinition
 		click func(h *Harness)
@@ -110,7 +110,9 @@ func TestClickMisuse(t *testing.T) {
 			click: func(h *Harness) { h.P2.ClickCard(Creature()) },
 			want:  []string{"is for P1, not P2"},
 		},
-	} {
+	}
+	for i := range cases {
+		tc := &cases[i]
 		t.Run(tc.name, func(t *testing.T) {
 			got := expectFail(t, func(tb testing.TB) {
 				h := Play(tb, Setup{
@@ -155,14 +157,16 @@ func TestClickWithNoPromptPending(t *testing.T) {
 // Leaving a prompt unanswered is the mistake the ready check exists for: it names
 // the prompt, then drains the parked action so the run does not leak a goroutine.
 func TestUnansweredPromptAtEnd(t *testing.T) {
-	for _, tc := range []struct {
+	cases := []struct {
 		name string
 		card engine.CardDefinition
 		want string
 	}{
 		{"card prompt", targeting(), "clickable: ["},
 		{"option prompt", choosing(), "options: ["},
-	} {
+	}
+	for i := range cases {
+		tc := &cases[i]
 		t.Run(tc.name, func(t *testing.T) {
 			got := expectFail(t, func(tb testing.TB) {
 				h := Play(tb, twoEnemies(tc.card))

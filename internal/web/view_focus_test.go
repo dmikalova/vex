@@ -1,6 +1,7 @@
 package web
 
 import (
+	"math"
 	"strings"
 	"testing"
 )
@@ -47,7 +48,7 @@ func TestTheLiftCentresOnItsCardAndStaysOnScreen(t *testing.T) {
 			focusViewH: 800,
 		}
 		x, y, gw, minH := g.focusBox()
-		if x != tc.wantX || y != tc.wantY || gw != tc.wantW || minH != tc.wantMin {
+		if !sameFloat(x, tc.wantX) || !sameFloat(y, tc.wantY) || !sameFloat(gw, tc.wantW) || !sameFloat(minH, tc.wantMin) {
 			t.Errorf("a card %s lifts to (%v,%v) %vx%v, want (%v,%v) %vx%v",
 				tc.what, x, y, gw, minH, tc.wantX, tc.wantY, tc.wantW, tc.wantMin)
 		}
@@ -57,6 +58,8 @@ func TestTheLiftCentresOnItsCardAndStaysOnScreen(t *testing.T) {
 // A card lifted from hand puts its verbs above its face; a card on the board puts
 // them below, so a card being played and a card already in play read their buttons
 // in the same place.
+func sameFloat(a, b float64) bool { return math.Abs(a-b) < 1e-9 }
+
 func TestTheLiftPutsHandVerbsAboveAndBoardVerbsBelow(t *testing.T) {
 	for _, tc := range []struct {
 		what   string
@@ -107,7 +110,7 @@ func TestALiftTallerThanTheWindowPinsToTheNearEdge(t *testing.T) {
 		focusViewW: 1280,
 		focusViewH: 400,
 	}
-	if _, y, _, _ := g.focusBox(); y != focusPad {
+	if _, y, _, _ := g.focusBox(); !sameFloat(y, focusPad) {
 		t.Errorf("an oversized lift sits at y=%v, want %v", y, focusPad)
 	}
 }
@@ -142,7 +145,7 @@ func TestTheLiftGrowsOutOfItsCardsSlot(t *testing.T) {
 			focusViewH: 800,
 		}
 		_, y, _, _ := g.focusBox()
-		if dy := g.focusDY(y); dy != tc.wantDY {
+		if dy := g.focusDY(y); !sameFloat(dy, tc.wantDY) {
 			t.Errorf("a card %s grows from dy=%v, want %v", tc.what, dy, tc.wantDY)
 		}
 	}

@@ -115,12 +115,19 @@ func (e ForDuration) Resolve(ctx *EffectContext) {
 // the result with its own duration phrasing — a prefix for ForDuration, a suffix
 // for GainUntilNextTurn.
 func foldDurationBodies(effects []Effect) (subject, joined string, shared bool) {
-	subject = effects[0].(durationScoped).durationSubject()
+	first, ok := effects[0].(durationScoped)
+	if !ok {
+		return "", "", false
+	}
+	subject = first.durationSubject()
 	shared = true
 	predicates := make([]string, len(effects))
 	bodies := make([]string, len(effects))
 	for i, child := range effects {
-		c := child.(durationScoped)
+		c, ok := child.(durationScoped)
+		if !ok {
+			return "", "", false
+		}
 		if c.durationSubject() != subject {
 			shared = false
 		}

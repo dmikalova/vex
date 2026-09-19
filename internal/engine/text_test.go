@@ -1222,7 +1222,8 @@ func TestGeneratedCardText(t *testing.T) {
 			"House:  Dis\nType:   Artifact\nRarity: Rare\nTraits: Power\n\nEach creature gains, \"Destroyed: Purge this creature.\"",
 		},
 	}
-	for _, tc := range cases {
+	for i := range cases {
+		tc := &cases[i]
 		if got := RenderCardText(&tc.def); got != tc.want {
 			t.Errorf("%s text mismatch:\n got:\n%s\nwant:\n%s", tc.def.Name, got, tc.want)
 		}
@@ -1314,7 +1315,8 @@ func TestRenderCardRules(t *testing.T) {
 			"Spyyyder gains poison while attacking.",
 		},
 	}
-	for _, tc := range cases {
+	for i := range cases {
+		tc := &cases[i]
 		if got := RenderCardRules(&tc.def); got != tc.want {
 			t.Errorf("%s rules mismatch:\n got:  %q\n want: %q", tc.def.Name, got, tc.want)
 		}
@@ -1428,7 +1430,8 @@ func TestRenderUpgradeOnCreature(t *testing.T) {
 			"Your Æmber cannot be stolen.",
 		},
 	}
-	for _, tc := range cases {
+	for i := range cases {
+		tc := &cases[i]
 		if got := RenderUpgradeOnCreature(&tc.def); got != tc.want {
 			t.Errorf("%s hosted rules mismatch:\n got:  %q\n want: %q", tc.def.Name, got, tc.want)
 		}
@@ -1496,7 +1499,8 @@ func TestCardDocComment(t *testing.T) {
 			"// Asp\n//\n//\tHouse:  Shadows\n//\tType:   Creature\n//\tRarity: Uncommon\n//\tPower:  3\n//\n//\tSkirmish, Poison.",
 		},
 	}
-	for _, tc := range cases {
+	for i := range cases {
+		tc := &cases[i]
 		if got := CardDocComment(&tc.def); got != tc.want {
 			t.Errorf("%s doc comment mismatch:\n got:\n%s\nwant:\n%s", tc.def.Name, got, tc.want)
 		}

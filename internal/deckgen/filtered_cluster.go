@@ -38,7 +38,8 @@ type FilteredCluster struct {
 // itself a lead with card.PullsMatching.
 func buildFilteredClusters(cards []Card) map[string]FilteredCluster {
 	idx := map[string]FilteredCluster{}
-	for _, c := range cards {
+	for i := range cards {
+		c := cards[i]
 		if c.Profile.Leads == nil {
 			continue
 		}
@@ -54,7 +55,9 @@ func buildFilteredClusters(cards []Card) map[string]FilteredCluster {
 func (s Set) matchingPool(fc FilteredCluster) []Card {
 	var out []Card
 	for _, h := range s.houses {
-		for _, c := range s.byHouse[h] {
+		cardsByHouse := s.byHouse[h]
+		for i := range cardsByHouse {
+			c := cardsByHouse[i]
 			if fc.Match(c.Def) {
 				out = append(out, c)
 			}
@@ -109,11 +112,12 @@ func (g *generator) expandFilteredClusters(deck *Deck) {
 			continue
 		}
 		need := g.filteredTarget(fc) - deckCountMatching(deck, fc.Match)
-		for _, cand := range g.filteredCandidates(deck, fc) {
+		cands := g.filteredCandidates(deck, fc)
+		for i := range cands {
 			if need <= 0 {
 				break
 			}
-			if g.placeFilteredMatch(deck, fc, cand) {
+			if g.placeFilteredMatch(deck, fc, cands[i]) {
 				need--
 			}
 		}
@@ -141,8 +145,8 @@ func (g *generator) filteredNames() []string {
 // deckHasCard reports whether any pod holds a card of the given name.
 func deckHasCard(deck *Deck, name string) bool {
 	for i := range PodCount {
-		for _, s := range &deck.Pods[i].Slots {
-			if s.Card.Name == name {
+		for j := range deck.Pods[i].Slots {
+			if deck.Pods[i].Slots[j].Card.Name == name {
 				return true
 			}
 		}
@@ -154,8 +158,8 @@ func deckHasCard(deck *Deck, name string) bool {
 func deckCountMatching(deck *Deck, match func(engine.CardDefinition) bool) int {
 	n := 0
 	for i := range PodCount {
-		for _, s := range &deck.Pods[i].Slots {
-			if match(s.Card) {
+		for j := range deck.Pods[i].Slots {
+			if match(deck.Pods[i].Slots[j].Card) {
 				n++
 			}
 		}
@@ -170,12 +174,13 @@ func deckCountMatching(deck *Deck, match func(engine.CardDefinition) bool) int {
 func (g *generator) filteredCandidates(deck *Deck, fc FilteredCluster) []Card {
 	inDeck := map[string]bool{}
 	for i := range PodCount {
-		for _, s := range &deck.Pods[i].Slots {
-			inDeck[s.Card.Name] = true
+		for j := range deck.Pods[i].Slots {
+			inDeck[deck.Pods[i].Slots[j].Card.Name] = true
 		}
 	}
 	var cands []Card
-	for _, c := range g.set.matchingPool(fc) {
+	for i := range g.set.matchingPool(fc) {
+		c := g.set.matchingPool(fc)[i]
 		if inDeck[c.Def.Name] || (c.Profile.OneCopyPerDeck && g.placed[c.Def.Name]) {
 			continue
 		}
@@ -192,12 +197,14 @@ func (g *generator) filteredCandidates(deck *Deck, fc FilteredCluster) []Card {
 func (g *generator) protectedNames() map[string]bool {
 	names := map[string]bool{}
 	for _, ci := range g.set.clusters {
-		for _, m := range ci.members {
+		for i := range ci.members {
+			m := ci.members[i]
 			names[m.Def.Name] = true
 		}
 	}
 	for _, ci := range g.set.onePerHouseClusters() {
-		for _, m := range ci.members {
+		for i := range ci.members {
+			m := ci.members[i]
 			names[m.Def.Name] = true
 		}
 	}

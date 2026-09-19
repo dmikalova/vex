@@ -30,7 +30,8 @@ func TestAllIsAValidDatabase(t *testing.T) {
 	}
 
 	seen := make(map[string]bool, len(all))
-	for _, rc := range all {
+	for i := range all {
+		rc := all[i]
 		c := rc.Def
 		switch {
 		case c.Name == "":
@@ -64,7 +65,8 @@ func TestNoDuplicateActionTrigger(t *testing.T) {
 		engine.TriggerAfterFight: "Fight",
 		engine.TriggerAfterReap:  "Reap",
 	}
-	for _, c := range All() {
+	for i := range All() {
+		c := All()[i]
 		counts := make(map[engine.Trigger]int)
 		for _, ab := range c.Abilities {
 			counts[ab.Trigger]++
@@ -84,7 +86,8 @@ func TestNoDuplicateActionTrigger(t *testing.T) {
 // every creature and artifact carries at least one trait (e.g. Giant, Beast,
 // Weapon). Actions and upgrades are exempt.
 func TestEveryCreatureAndArtifactHasTrait(t *testing.T) {
-	for _, c := range All() {
+	for i := range All() {
+		c := All()[i]
 		if c.Type != engine.Creature && c.Type != engine.Artifact {
 			continue
 		}
@@ -125,12 +128,14 @@ func TestMaterializedNamesAreUnique(t *testing.T) {
 	// owner tracks who a name belongs to: a registered card by its own name, or a
 	// template by the name it was found under.
 	owner := make(map[string]string, len(regs))
-	for _, rc := range regs {
+	for i := range regs {
+		rc := regs[i]
 		owner[rc.Def.Name] = rc.Def.Name
 	}
 
 	const samplesPerHouse = 20
-	for _, rc := range regs {
+	for i := range regs {
+		rc := regs[i]
 		if rc.Materializer == nil {
 			continue
 		}
@@ -168,7 +173,8 @@ func TestMaterializedNamesAreUnique(t *testing.T) {
 func TestNoDuplicateImplementations(t *testing.T) {
 	all := All()
 	seenBy := make(map[string]string, len(all))
-	for _, c := range all {
+	for i := range all {
+		c := all[i]
 		sig := c
 		sig.Name = ""
 		sig.House = engine.HouseNone
@@ -194,7 +200,8 @@ func TestNoDuplicateImplementations(t *testing.T) {
 // copied from another card's file and never updated.
 func TestProvenanceHasNoOverlap(t *testing.T) {
 	seenBy := make(map[provenance.Ref]string)
-	for _, rc := range card.Cards() {
+	for i := range card.Cards() {
+		rc := card.Cards()[i]
 		for _, ref := range rc.Provenance {
 			if owner, ok := seenBy[ref]; ok && owner != rc.Def.Name {
 				t.Errorf(
@@ -215,7 +222,8 @@ func TestProvenanceHasNoOverlap(t *testing.T) {
 // gate loudly and names the offending claim instead.
 func TestEveryReprintResolvesToACard(t *testing.T) {
 	byName := make(map[string]bool)
-	for _, rc := range card.Cards() {
+	for i := range card.Cards() {
+		rc := card.Cards()[i]
 		byName[normalizeName(rc.Def.Name)] = true
 	}
 	for _, rp := range card.ReprintRefs() {
@@ -336,13 +344,15 @@ func TestReferencedCardIsConnected(t *testing.T) {
 	regs := card.Cards()
 	names := make(map[string]bool, len(regs))
 	cluster := make(map[string]string, len(regs))
-	for _, rc := range regs {
+	for i := range regs {
+		rc := regs[i]
 		names[rc.Def.Name] = true
 		if !rc.Profile.Cluster.Empty() {
 			cluster[rc.Def.Name] = rc.Profile.Cluster.Name
 		}
 	}
-	for _, rc := range regs {
+	for i := range regs {
+		rc := regs[i]
 		for ref := range referencedCardNames(reflect.ValueOf(rc.Def), names) {
 			sameCluster := cluster[rc.Def.Name] != "" && cluster[rc.Def.Name] == cluster[ref]
 			if ref == rc.Def.Name || sameCluster {
@@ -365,7 +375,8 @@ func TestReferencedCardIsConnected(t *testing.T) {
 // reference, the puller need not mention the card in its text: the three Connected
 // Horsemen ride in on Horseman of Pestilence's cluster, which names none of them.
 func TestConnectedCardIsPulled(t *testing.T) {
-	for _, rc := range card.Cards() {
+	for i := range card.Cards() {
+		rc := card.Cards()[i]
 		if rc.Def.Rarity != engine.Connected || !rc.Profile.Cluster.Empty() {
 			continue
 		}
@@ -382,7 +393,8 @@ func TestConnectedCardIsPulled(t *testing.T) {
 func regByNameForReprintTests(t *testing.T) map[string]card.RegisteredCard {
 	t.Helper()
 	byName := map[string]card.RegisteredCard{}
-	for _, rc := range card.Cards() {
+	for i := range card.Cards() {
+		rc := card.Cards()[i]
 		byName[rc.Def.Name] = rc
 	}
 	return byName
@@ -418,7 +430,8 @@ func TestReprintedOrphanKeepsClusterWhenLeadRidesAlong(t *testing.T) {
 	garcia := byName["Sensor Chief Garcia"]
 	blaster := byName["Garcia's Blaster"]
 	pool := ownPool(nil, []card.RegisteredCard{garcia, blaster}, clusterLeadNames())
-	for _, c := range pool {
+	for i := range pool {
+		c := pool[i]
 		if c.Def.Name == "Sensor Chief Garcia" && c.Profile.Cluster.Empty() {
 			t.Errorf("Garcia's cluster was dropped even though its lead is in the pool")
 		}
@@ -449,7 +462,8 @@ func TestReprintedConnectedOrphanPanics(t *testing.T) {
 // keeps a search from silently skipping its shuffle.
 func TestSearchIsFollowedByShuffle(t *testing.T) {
 	searches := map[string]bool{"Search": true}
-	for _, rc := range card.Cards() {
+	for i := range card.Cards() {
+		rc := card.Cards()[i]
 		for _, ab := range rc.Def.Abilities {
 			types := effectTypeNames(reflect.ValueOf(ab.Effect))
 			searched := false

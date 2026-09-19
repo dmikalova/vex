@@ -18,7 +18,9 @@ import (
 func forEachAbilityEffect(fn func(name string, covered bool)) {
 	regs := card.Cards()
 	for i := range regs {
-		for _, def := range materializedDefs(regs[i]) {
+		defs := materializedDefs(regs[i])
+		for j := range defs {
+			def := defs[j]
 			for _, ab := range def.Abilities {
 				_, covered := effectGlyphs(ab.Effect)
 				fn(effectTypeName(ab.Effect), covered)
@@ -67,7 +69,9 @@ func TestIconTotality(t *testing.T) {
 func TestNoResidualUnknownGlyph(t *testing.T) {
 	regs := card.Cards()
 	for i := range regs {
-		for _, def := range materializedDefs(regs[i]) {
+		defs := materializedDefs(regs[i])
+		for j := range defs {
+			def := defs[j]
 			for _, line := range cardGlyphs(&def) {
 				for _, tr := range line.triggers {
 					if tr == "glyph-unknown" {

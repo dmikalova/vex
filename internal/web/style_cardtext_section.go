@@ -134,7 +134,9 @@ func walkEffectValues(v reflect.Value, visit func(reflect.Value)) {
 func walkEffectTargets(e engine.Effect, fn func(engine.Target)) {
 	walkEffectValues(reflect.ValueOf(e), func(v reflect.Value) {
 		if v.Type() == targetType && v.CanInterface() {
-			fn(v.Interface().(engine.Target))
+			if t, ok := v.Interface().(engine.Target); ok {
+				fn(t)
+			}
 		}
 	})
 }
@@ -143,7 +145,9 @@ func walkEffectTargets(e engine.Effect, fn func(engine.Target)) {
 func walkEffectDurations(e engine.Effect, fn func(engine.Duration)) {
 	walkEffectValues(reflect.ValueOf(e), func(v reflect.Value) {
 		if v.Type() == durationType && v.CanInterface() {
-			fn(v.Interface().(engine.Duration))
+			if d, ok := v.Interface().(engine.Duration); ok {
+				fn(d)
+			}
 		}
 	})
 }
@@ -155,7 +159,9 @@ func walkEffectConditions(e engine.Effect, fn func(engine.Condition)) {
 	walkEffectValues(reflect.ValueOf(e), func(v reflect.Value) {
 		if v.Kind() == reflect.Interface && v.Type() == conditionType &&
 			!v.IsNil() && v.CanInterface() {
-			fn(v.Interface().(engine.Condition))
+			if c, ok := v.Interface().(engine.Condition); ok {
+				fn(c)
+			}
 		}
 	})
 }
@@ -167,7 +173,9 @@ func walkEffectCounts(e engine.Effect, fn func(engine.Count)) {
 	walkEffectValues(reflect.ValueOf(e), func(v reflect.Value) {
 		if v.Kind() == reflect.Interface && v.Type() == countType &&
 			!v.IsNil() && v.CanInterface() {
-			fn(v.Interface().(engine.Count))
+			if n, ok := v.Interface().(engine.Count); ok {
+				fn(n)
+			}
 		}
 	})
 }

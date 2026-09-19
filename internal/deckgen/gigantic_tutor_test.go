@@ -18,7 +18,8 @@ func tutorCard(name string) Card {
 }
 
 func countNamed(pod HousePod, name string) (n int, house engine.House) {
-	for _, s := range &pod.Slots {
+	for i := range pod.Slots {
+		s := pod.Slots[i]
 		if s.Card.Name == name {
 			n++
 			house = s.Card.House

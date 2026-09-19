@@ -53,8 +53,10 @@ func TestDeckListShowsRoster(t *testing.T) {
 
 	// A dealt roster names a real card in each of its 36 slots.
 	slots := 0
-	for _, hr := range &c.g.rosters[0].Houses {
-		for _, card := range &hr.Cards {
+	for i := range c.g.rosters[0].Houses {
+		hr := c.g.rosters[0].Houses[i]
+		for j := range hr.Cards {
+			card := hr.Cards[j]
 			if card.Def.Name == "" {
 				t.Error("roster slot has no card")
 			}

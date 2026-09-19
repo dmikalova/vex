@@ -340,19 +340,23 @@ func (p *Player) ExpectKeys(n int) {
 
 // placeSide fills a player's zones and pools from a Side.
 func (h *Harness) placeSide(player int, s Side) {
-	for _, e := range s.InPlay {
-		h.placeInPlay(player, e)
+	for i := range s.InPlay {
+		h.placeInPlay(player, s.InPlay[i])
 	}
-	for _, e := range s.Hand {
+	for i := range s.Hand {
+		e := s.Hand[i]
 		h.bind(e, h.g.AddToHand(e.def, player))
 	}
-	for _, e := range s.Deck {
+	for i := range s.Deck {
+		e := s.Deck[i]
 		h.bind(e, h.g.AddToDeck(e.def, player))
 	}
-	for _, e := range s.Discard {
+	for i := range s.Discard {
+		e := s.Discard[i]
 		h.bind(e, h.g.AddToDiscard(e.def, player))
 	}
-	for _, e := range s.Archives {
+	for i := range s.Archives {
+		e := s.Archives[i]
 		h.bind(e, h.g.AddToArchives(e.def, player))
 	}
 	if s.Amber != 0 {
@@ -377,7 +381,8 @@ func (h *Harness) placeInPlay(player int, e Entry) {
 		id = h.g.AddToBattleline(e.def, player)
 	}
 	h.bind(e, id)
-	for _, u := range e.upgrades {
+	for i := range e.upgrades {
+		u := e.upgrades[i]
 		up := h.attach(id, u.def)
 		if u.bind != nil {
 			*u.bind = up

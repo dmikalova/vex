@@ -54,9 +54,11 @@ func (r Roster) Empty() bool { return r.Houses[0].House == engine.HouseNone }
 func rosterOf(deck deckgen.Deck) Roster {
 	var r Roster
 	r.Set = deck.Set
-	for i, pod := range &deck.Pods {
+	for i := range deck.Pods {
+		pod := &deck.Pods[i]
 		r.Houses[i].House = pod.House
-		for j, s := range &pod.Slots {
+		for j := range pod.Slots {
+			s := &pod.Slots[j]
 			r.Houses[i].Cards[j] = RosterCard{
 				Def:      s.Card,
 				Maverick: s.Maverick,
@@ -150,8 +152,8 @@ func SetupDecksFor(
 	// cards in this match would show a player their opponent's deck list.
 	all := cards.All()
 	names := make([]string, len(all))
-	for i, d := range all {
-		names[i] = d.Name
+	for i := range all {
+		names[i] = all[i].Name
 	}
 	g.SetNameableNames(names)
 	for player := range 2 {
@@ -166,8 +168,9 @@ func SetupDecksFor(
 		// The whole deck goes into the deck zone; engine.StartGame shuffles it and
 		// deals the opening hands. Each card's Maverick and Legacy flags are pinned to
 		// the LocalID the engine assigns on add, so the badge survives that shuffle.
-		for _, pod := range &deck.Pods {
-			for _, s := range &pod.Slots {
+		for i := range deck.Pods {
+			for j := range deck.Pods[i].Slots {
+				s := deck.Pods[i].Slots[j]
 				id := g.AddToDeck(s.Card, player)
 				if s.Maverick {
 					mavericks[player] = append(mavericks[player], id)

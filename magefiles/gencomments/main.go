@@ -90,7 +90,9 @@ func run() error {
 // definitionsByName indexes the live card registry by printed name.
 func definitionsByName() map[string]engine.CardDefinition {
 	out := make(map[string]engine.CardDefinition)
-	for _, d := range cards.All() {
+	defs := cards.All()
+	for i := range defs {
+		d := defs[i]
 		out[d.Name] = d
 	}
 	return out
@@ -103,7 +105,9 @@ func definitionsByName() map[string]engine.CardDefinition {
 // finished card.
 func templateNames() map[string]bool {
 	out := map[string]bool{}
-	for _, rc := range card.Cards() {
+	regs := card.Cards()
+	for i := range regs {
+		rc := regs[i]
 		if rc.Materializer != nil {
 			out[rc.Def.Name] = true
 		}

@@ -94,9 +94,13 @@ func newBlankClient(t *testing.T) *client {
 		t.Fatalf("load probe: %v", err)
 	}
 	e.ConsumeAll()
+	g, ok := NewGame().(*game)
+	if !ok {
+		t.Fatal("NewGame returned a non-*game")
+	}
 	c := &client{
 		t:   t,
-		g:   NewGame().(*game),
+		g:   g,
 		e:   e,
 		ctx: p.ctx,
 	}
@@ -143,9 +147,13 @@ func nullEvent() app.Event { return app.Event{Value: app.Null()} }
 // match the last one was playing.
 func (c *client) nextLoad() *client {
 	c.t.Helper()
+	g, ok := NewGame().(*game)
+	if !ok {
+		c.t.Fatal("NewGame returned a non-*game")
+	}
 	next := &client{
 		t:   c.t,
-		g:   NewGame().(*game),
+		g:   g,
 		e:   c.e,
 		ctx: c.ctx,
 	}

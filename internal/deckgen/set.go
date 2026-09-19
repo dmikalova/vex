@@ -71,7 +71,8 @@ func NewSet(name string, cards []Card, tuning Tuning) Set {
 		byName:  map[string]Card{},
 	}
 	seen := map[engine.House]bool{}
-	for _, c := range cards {
+	for i := range cards {
+		c := cards[i]
 		if c.Def.Name != "" {
 			s.byName[c.Def.Name] = c
 		}
@@ -135,7 +136,8 @@ func NewLegacy(entries []LegacyEntry) *Legacy {
 		byHouseRarity: map[engine.House]map[engine.Rarity][]LegacyEntry{},
 		byHouse:       map[engine.House][]LegacyEntry{},
 	}
-	for _, e := range entries {
+	for i := range entries {
+		e := entries[i]
 		c := e.Card
 		if c.Profile.Houseless || c.Def.Rarity == engine.Connected {
 			continue
@@ -157,7 +159,8 @@ func NewLegacy(entries []LegacyEntry) *Legacy {
 // Set never draws one of its own cards as a legacy card.
 func (l *Legacy) candidates(entries []LegacyEntry, exclude string) []Card {
 	out := make([]Card, 0, len(entries))
-	for _, e := range entries {
+	for i := range entries {
+		e := entries[i]
 		if e.Set == exclude {
 			continue
 		}

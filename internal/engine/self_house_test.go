@@ -140,7 +140,10 @@ func TestSelfHouseResolvedWalksEveryShape(t *testing.T) {
 		Map:    map[string]House{"k": SelfHouse},
 		hidden: SelfHouse,
 	}
-	out := replaceHouse(reflect.ValueOf(in), SelfHouse, Dis).Interface().(selfHouseProbe)
+	out, ok := replaceHouse(reflect.ValueOf(in), SelfHouse, Dis).Interface().(selfHouseProbe)
+	if !ok {
+		t.Fatal("replaceHouse did not return selfHouseProbe")
+	}
 
 	if *out.Ptr != Dis {
 		t.Errorf("through pointer = %v, want Dis", *out.Ptr)
