@@ -8,6 +8,13 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 - rename to Vex
 
+- Library of polli should let you choose any creature, even with 0 aember. Could be changed to "choose a creature."
+- Lost in the woods shuld be a vacuous choice for any side that has 0,1, or 2 creatures
+- Loot the bodies should have player gain all aember simultaneously
+- exile - creature appears on other side before flank choice
+- Techno-saurus - wording should be Play: then Reap:
+- Defense initiative - click target to exalt and ward, or click done
+- Vaults blessing should cluster with mutants
 - Niffle ape missing glyphs
 - Decompose WithEachPlayerAbility
 - golden spiral prompt buttons are on any card I click - should be stuck on mack
