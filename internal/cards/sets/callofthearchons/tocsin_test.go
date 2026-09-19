@@ -19,7 +19,10 @@ import (
 func TestTocsin(t *testing.T) {
 	t.Run("opponent discards a random card when it reaps", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Tocsin)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(Tocsin),
+			},
 			P2: ct.Side{Hand: ct.Cards(ct.Creature(), ct.Creature())},
 		})
 

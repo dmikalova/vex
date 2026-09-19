@@ -207,7 +207,12 @@ type Chosen struct {
 // filter is the identity predicate the choice narrows by, conjoining Type, Trait,
 // and Name and admitting any Or alternative.
 func (s Chosen) filter() CardFilter {
-	return CardFilter{Type: s.Type, Trait: s.Trait, Name: s.Name, Or: s.Or}
+	return CardFilter{
+		Type:  s.Type,
+		Trait: s.Trait,
+		Name:  s.Name,
+		Or:    s.Or,
+	}
 }
 
 // noun renders the bare kind of card chosen, qualified by the identity filter and
@@ -328,7 +333,12 @@ type Each struct {
 // filter is the identity predicate the take narrows by, conjoining Type, Trait,
 // and Name and admitting any Or alternative.
 func (s Each) filter() CardFilter {
-	return CardFilter{Type: s.Type, Trait: s.Trait, Name: s.Name, Or: s.Or}
+	return CardFilter{
+		Type:  s.Type,
+		Trait: s.Trait,
+		Name:  s.Name,
+		Or:    s.Or,
+	}
 }
 
 // noun renders the bare kind of card taken, e.g. "non-Mars creature" or "creature

@@ -18,7 +18,10 @@ var GoldenAura = set.New(
 	card.WithAbility(card.Trigger.Play, card.ChooseCreatureThen{
 		Target: card.Target.Creature,
 		Then: card.Sequence{Effects: []card.Effect{
-			card.Heal{Fully: true, Target: card.Target.Triggering},
+			card.Heal{
+				Fully:  true,
+				Target: card.Target.Triggering,
+			},
 			card.ForDuration{
 				Duration: card.Duration.RemainderOfPlayerTurn,
 				Effects: []card.Effect{

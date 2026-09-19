@@ -22,6 +22,9 @@ var HorsemanOfWar = set.New(
 	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.MayPlayOrUse{Houses: card.GrantHouses.Any, Grant: card.GrantFight},
+		card.MayPlayOrUse{
+			Houses: card.GrantHouses.Any,
+			Grant:  card.GrantFight,
+		},
 	),
 )

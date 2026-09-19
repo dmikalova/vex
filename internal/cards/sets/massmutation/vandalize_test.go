@@ -19,7 +19,10 @@ func TestVandalize(t *testing.T) {
 	t.Run("discards 1 of the opponent's top 3 cards, the rest stay", func(t *testing.T) {
 		var top, second, third ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(Vandalize)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(Vandalize),
+			},
 			P2: ct.Side{Deck: ct.Cards(
 				ct.Bind(&top, ct.Creature(ct.Power(3))),
 				ct.Bind(&second, ct.Creature(ct.Power(4))),

@@ -20,7 +20,10 @@ func TestKingOfTheCrag(t *testing.T) {
 	t.Run("gives each enemy Brobnar creature -2 power", func(t *testing.T) {
 		var brobFoe, marsFoe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(KingOfTheCrag)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(KingOfTheCrag),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&brobFoe, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5))),

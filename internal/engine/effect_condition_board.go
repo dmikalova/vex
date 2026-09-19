@@ -122,7 +122,10 @@ type ControlsMoreCreatures struct {
 // the controller has than the opponent, narrowed to Trait when set. It also
 // supplies the counted noun both wordings repeat.
 func (c ControlsMoreCreatures) excess() ExcessCreatures {
-	return ExcessCreatures{Player: Controller, Trait: c.Trait}
+	return ExcessCreatures{
+		Player: Controller,
+		Trait:  c.Trait,
+	}
 }
 
 // CondText renders the condition, e.g. "if you control more Mutant creatures than
@@ -142,7 +145,11 @@ func (c ControlsMoreCreatures) symmetricCondText() string {
 
 // Met reports whether the controller has more creatures in play than the opponent.
 func (c ControlsMoreCreatures) Met(ctx *EffectContext) bool {
-	return CountIs{Count: c.excess(), Is: AtLeast, Amount: 1}.Met(ctx)
+	return CountIs{
+		Count:  c.excess(),
+		Is:     AtLeast,
+		Amount: 1,
+	}.Met(ctx)
 }
 
 // ControlsNamed is met when the controller has a card of a given printed name in
@@ -158,7 +165,10 @@ func (c ControlsNamed) CondText() string {
 
 // Met reports whether the controller has the named card in play.
 func (c ControlsNamed) Met(ctx *EffectContext) bool {
-	return CardsInPlay{Player: Controller, Name: c.Name}.Met(ctx)
+	return CardsInPlay{
+		Player: Controller,
+		Name:   c.Name,
+	}.Met(ctx)
 }
 
 // Overwhelmed reports whether the controller is overwhelmed — their opponent

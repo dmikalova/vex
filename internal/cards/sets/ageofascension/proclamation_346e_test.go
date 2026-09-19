@@ -18,7 +18,10 @@ import (
 func TestProclamation346E(t *testing.T) {
 	t.Run("taxes the opponent while they field fewer than three houses", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, InPlay: ct.Cards(Proclamation346E)},
+			P1: ct.Side{
+				House:  card.House.Sanctum,
+				InPlay: ct.Cards(Proclamation346E),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Creature(ct.OfHouse(card.House.Sanctum)),
@@ -34,7 +37,10 @@ func TestProclamation346E(t *testing.T) {
 
 	t.Run("stops taxing once the opponent fields three houses", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, InPlay: ct.Cards(Proclamation346E)},
+			P1: ct.Side{
+				House:  card.House.Sanctum,
+				InPlay: ct.Cards(Proclamation346E),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Creature(ct.OfHouse(card.House.Sanctum)),

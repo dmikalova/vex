@@ -27,7 +27,10 @@ var OldBoomy = set.New(
 					House:   card.Houses.Named(card.House.Self),
 					MayStop: true,
 				},
-				Result: card.DealDamage{Target: card.Target.This, Amount: 2},
+				Result: card.DealDamage{
+					Target: card.Target.This,
+					Amount: 2,
+				},
 			},
 			card.ArchiveDiscardedThisWay{},
 		}}),

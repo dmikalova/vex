@@ -18,7 +18,10 @@ func TestSelfSelectionText(t *testing.T) {
 // ctx.It from the candidates rather than trusting the first pick to have moved
 // the card out of the pile.
 func TestChosenAnotherExcludesTheCardInContext(t *testing.T) {
-	sel := Chosen{Type: Creature, Another: true}
+	sel := Chosen{
+		Type:    Creature,
+		Another: true,
+	}
 	if got := sel.object(); got != "another creature" {
 		t.Errorf("object() = %q, want %q", got, "another creature")
 	}
@@ -29,7 +32,11 @@ func TestChosenAnotherExcludesTheCardInContext(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	first := g.AddToDiscard(testCreature("first", 2), 0)
 	second := g.AddToDiscard(testCreature("second", 2), 0)
-	ctx := &EffectContext{Resolver: g, It: first, HasIt: true}
+	ctx := &EffectContext{
+		Resolver: g,
+		It:       first,
+		HasIt:    true,
+	}
 
 	got := sel.candidates(ctx, []LocalID{first, second})
 	if len(got) != 1 || got[0] != second {
@@ -56,7 +63,11 @@ func TestTriggersFromDiscardReturnsSelf(t *testing.T) {
 		WithTriggersFromDiscard(),
 		WithAbility(TriggerAfterChooseHouse, Conditional{
 			Cond: ChoseHouse{House: Dis},
-			Then: PutCard{Zones: []Zone{Discard}, Selection: Self{}, Destination: ToHand},
+			Then: PutCard{
+				Zones:       []Zone{Discard},
+				Selection:   Self{},
+				Destination: ToHand,
+			},
 		}))
 
 	g := NewGame("A", "B", 1)
@@ -82,7 +93,11 @@ func TestTriggersFromDiscardStaysWhenOtherHouseChosen(t *testing.T) {
 		WithTriggersFromDiscard(),
 		WithAbility(TriggerAfterChooseHouse, Conditional{
 			Cond: ChoseHouse{House: Dis},
-			Then: PutCard{Zones: []Zone{Discard}, Selection: Self{}, Destination: ToHand},
+			Then: PutCard{
+				Zones:       []Zone{Discard},
+				Selection:   Self{},
+				Destination: ToHand,
+			},
 		}))
 
 	g := NewGame("A", "B", 1)
@@ -106,7 +121,11 @@ func TestSelfSelectionSkipsWhenSourceElsewhere(t *testing.T) {
 	g.StartTurn(0)
 	src := g.AddToDiscard(testCreature("src", 3), 0)
 	other := g.AddToDiscard(testCreature("other", 3), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	if got := (Self{}).pick(ctx, []LocalID{other}); len(got) != 0 {
 		t.Errorf("pick without the source present = %v, want none", got)
@@ -129,32 +148,56 @@ func TestBlindPickVoiceIsUniform(t *testing.T) {
 	}{
 		{
 			"discard from hand",
-			DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{}}.Text(),
+			DiscardCard{
+				Player:    Opponent,
+				Zones:     []Zone{Hand},
+				Selection: Random{},
+			}.Text(),
 			"your opponent discards a random card from their hand",
 		},
 		{
 			"discard from archives",
-			DiscardCard{Player: Opponent, Zones: []Zone{Archives}, Selection: Random{}}.Text(),
+			DiscardCard{
+				Player:    Opponent,
+				Zones:     []Zone{Archives},
+				Selection: Random{},
+			}.Text(),
 			"your opponent discards a random card from their archives",
 		},
 		{
 			"purge from hand",
-			PurgeCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{}}.Text(),
+			PurgeCard{
+				Player:    Opponent,
+				Zones:     []Zone{Hand},
+				Selection: Random{},
+			}.Text(),
 			"your opponent purges a random card from their hand",
 		},
 		{
 			"its owner discards",
-			DiscardCard{Player: ItsOwner, Zones: []Zone{Hand}, Selection: Random{}}.Text(),
+			DiscardCard{
+				Player:    ItsOwner,
+				Zones:     []Zone{Hand},
+				Selection: Random{},
+			}.Text(),
 			"its owner discards a random card from their hand",
 		},
 		{
 			"a chosen pick stays imperative",
-			PurgeCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Chosen{}}.Text(),
+			PurgeCard{
+				Player:    Opponent,
+				Zones:     []Zone{Hand},
+				Selection: Chosen{},
+			}.Text(),
 			"purge a card from your opponent's hand",
 		},
 		{
 			"the controller's own zone stays imperative",
-			DiscardCard{Player: Controller, Zones: []Zone{Hand}, Selection: Random{}}.Text(),
+			DiscardCard{
+				Player:    Controller,
+				Zones:     []Zone{Hand},
+				Selection: Random{},
+			}.Text(),
 			"discard a random card from your hand",
 		},
 	} {

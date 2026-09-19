@@ -64,7 +64,10 @@ func TestCopyPrintedStatsText(t *testing.T) {
 
 // TestCreatureCopiedStatsText names the copier and the card whose stats it copied.
 func TestCreatureCopiedStatsText(t *testing.T) {
-	e := CreatureCopiedStats{Creature: 4, Source: 7}
+	e := CreatureCopiedStats{
+		Creature: 4,
+		Source:   7,
+	}
 	if got := e.Text(stubNamer{}); got != "Card4 copies the printed stats of Card7" {
 		t.Errorf("text = %q", got)
 	}
@@ -141,7 +144,11 @@ func TestCopyPrintedStatsResolveNoSource(t *testing.T) {
 	CopyPrintedStats{
 		Target: Target{Kind: TargetThisCreature},
 		Source: Target{Kind: TargetTheSameCreature},
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: recipient})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     recipient,
+	})
 	if g.State.Cards[recipient].CopiedStatsSourcePlus != 0 {
 		t.Error("a source that selects nothing should copy no stats")
 	}

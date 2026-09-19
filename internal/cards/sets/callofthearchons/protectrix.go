@@ -22,7 +22,10 @@ var Protectrix = set.New(
 	card.WithAbility(card.Trigger.Reap, card.ChooseCreatureThen{
 		Target: card.Target.Creature,
 		Then: card.Sequence{Effects: []card.Effect{
-			card.Heal{Fully: true, Target: card.Target.Triggering},
+			card.Heal{
+				Fully:  true,
+				Target: card.Target.Triggering,
+			},
 			card.CannotBeDealtDamage{
 				Target:   card.Target.Triggering,
 				Duration: card.Duration.RemainderOfPlayerTurn,

@@ -56,7 +56,10 @@ func (g *Game) GrantTextBox(recipient, source LocalID, d Duration) {
 	} else {
 		c.TextBoxSourcePlus = uint8(source) + 1
 	}
-	g.record(CreatureGainedTextBox{Creature: recipient, Source: source})
+	g.record(CreatureGainedTextBox{
+		Creature: recipient,
+		Source:   source,
+	})
 }
 
 // GainTextBox gives the creature its Target selects the printed text box of the
@@ -137,7 +140,10 @@ func (LendTextBoxFromHand) Resolve(ctx *EffectContext) {
 	if !ok {
 		return
 	}
-	ctx.Resolver.Record(CardsRevealedToAll{Player: ctx.Controller, Cards: []LocalID{source}})
+	ctx.Resolver.Record(CardsRevealedToAll{
+		Player: ctx.Controller,
+		Cards:  []LocalID{source},
+	})
 	recipients := (Target{Kind: TargetChosenCreature}).Select(ctx)
 	if len(recipients) == 0 {
 		return

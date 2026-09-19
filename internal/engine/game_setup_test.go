@@ -200,7 +200,10 @@ func TestMulliganDrawsOneFewer(t *testing.T) {
 	if got := int(g.State.Hand[1].Count); got != HandSize {
 		t.Errorf("kept second player hand = %d, want %d", got, HandSize)
 	}
-	if got := (Mulliganed{Player: 0, Hand: 6}).Text(
+	if got := (Mulliganed{
+		Player: 0,
+		Hand:   6,
+	}).Text(
 		g,
 	); got != "Alice mulligans, drawing a new hand of 6" {
 		t.Errorf("Mulliganed text = %q", got)

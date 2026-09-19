@@ -18,7 +18,10 @@ func TestMindfire(t *testing.T) {
 	t.Run("steals 1 Æmber per bonus icon on the discarded card", func(t *testing.T) {
 		var pitched ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(Mindfire)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(Mindfire),
+			},
 			P2: ct.Side{
 				Amber: 5,
 				Hand:  ct.Cards(ct.Bind(&pitched, ct.Tactic(ct.AemberBonus(2)))),
@@ -35,7 +38,10 @@ func TestMindfire(t *testing.T) {
 	t.Run("a discarded card with no bonus icons steals nothing", func(t *testing.T) {
 		var pitched ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(Mindfire)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(Mindfire),
+			},
 			P2: ct.Side{
 				Amber: 5,
 				Hand:  ct.Cards(ct.Bind(&pitched, ct.Tactic())),
@@ -51,7 +57,10 @@ func TestMindfire(t *testing.T) {
 
 	t.Run("an empty opponent hand steals nothing", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(Mindfire)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(Mindfire),
+			},
 			P2: ct.Side{Amber: 5},
 		})
 

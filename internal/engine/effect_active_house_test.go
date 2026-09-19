@@ -14,7 +14,12 @@ func TestChangeActiveHouseSetsActiveHouse(t *testing.T) {
 	ChangeActiveHouse{
 		To: TheContextualHouse,
 	}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, It: it, HasIt: true},
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			It:         it,
+			HasIt:      true,
+		},
 	)
 	if g.State.ActiveHouse != Logos {
 		t.Errorf("active house = %v, want Logos", g.State.ActiveHouse)
@@ -25,7 +30,10 @@ func TestChangeActiveHouseSetsActiveHouse(t *testing.T) {
 // context the active house is left untouched.
 func TestChangeActiveHouseNoContext(t *testing.T) {
 	g := started(t)
-	ChangeActiveHouse{To: TheContextualHouse}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	ChangeActiveHouse{To: TheContextualHouse}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.State.ActiveHouse != Brobnar {
 		t.Errorf("active house = %v, want Brobnar (unchanged)", g.State.ActiveHouse)
 	}

@@ -152,7 +152,10 @@ func assembleGlossary(terms []RuleTerm) []GlossaryEntry {
 			continue
 		}
 		at[t.Title] = len(out)
-		out = append(out, GlossaryEntry{Title: t.Title, Definition: t.Definition})
+		out = append(out, GlossaryEntry{
+			Title:      t.Title,
+			Definition: t.Definition,
+		})
 	}
 	sort.SliceStable(out, func(i, j int) bool {
 		return strings.ToLower(out[i].Title) < strings.ToLower(out[j].Title)

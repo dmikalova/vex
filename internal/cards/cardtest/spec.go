@@ -81,7 +81,10 @@ func ArmorBonus(n int) Option { return func(s *spec) { s.static.ArmorBonus = n }
 // build turns the accumulated spec into a definition of the given type, applying
 // a sensible default power for creatures and a unique generated name.
 func build(kind string, ct engine.CardType, defaultPower int, opts []Option) engine.CardDefinition {
-	s := spec{house: DefaultHouse, power: defaultPower}
+	s := spec{
+		house: DefaultHouse,
+		power: defaultPower,
+	}
 	for _, o := range opts {
 		o(&s)
 	}

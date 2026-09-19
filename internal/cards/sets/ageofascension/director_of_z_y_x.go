@@ -23,5 +23,8 @@ var DirectorOfZYX = set.New(
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.StartOfTurn,
-		card.ArchiveCard{Zone: card.Deck, Selection: card.Top{}}),
+		card.ArchiveCard{
+			Zone:      card.Deck,
+			Selection: card.Top{},
+		}),
 )

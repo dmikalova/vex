@@ -21,7 +21,10 @@ import (
 func TestDextre(t *testing.T) {
 	t.Run("captures 1 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(Dextre)},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(Dextre),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 
@@ -34,7 +37,10 @@ func TestDextre(t *testing.T) {
 	t.Run("returns to the top of its owner's deck when destroyed", func(t *testing.T) {
 		var dextre ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, InPlay: ct.Cards(ct.Bind(&dextre, Dextre))},
+			P1: ct.Side{
+				House:  card.House.Logos,
+				InPlay: ct.Cards(ct.Bind(&dextre, Dextre)),
+			},
 		})
 
 		h.Game().DestroyEach(0, []engine.LocalID{dextre.ID()})

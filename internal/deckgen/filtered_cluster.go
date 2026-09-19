@@ -225,12 +225,20 @@ func (g *generator) placeFilteredMatch(deck *Deck, fc FilteredCluster, cand Card
 			maverick := cand.Def.House != pod.House
 			def := g.materialize(
 				cand,
-				SlotContext{House: pod.House, Rarity: cand.Def.Rarity, Maverick: maverick},
+				SlotContext{
+					House:    pod.House,
+					Rarity:   cand.Def.Rarity,
+					Maverick: maverick,
+				},
 			)
 			if cand.Profile.OneCopyPerDeck {
 				g.placed[cand.Def.Name] = true
 			}
-			pod.Slots[si] = Slot{Rarity: cand.Def.Rarity, Maverick: maverick, Card: def}
+			pod.Slots[si] = Slot{
+				Rarity:   cand.Def.Rarity,
+				Maverick: maverick,
+				Card:     def,
+			}
 			return true
 		}
 	}

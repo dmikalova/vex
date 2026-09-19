@@ -7,7 +7,10 @@ import (
 
 func TestPutIntoPlay(t *testing.T) {
 	t.Run("text", func(t *testing.T) {
-		if got := (PutIntoPlay{Target: Target{Kind: TargetTriggeringCreature}, Control: ControlYours}).Text(); got != "put it into play under your control" {
+		if got := (PutIntoPlay{
+			Target:  Target{Kind: TargetTriggeringCreature},
+			Control: ControlYours,
+		}).Text(); got != "put it into play under your control" {
 			t.Errorf("text = %q", got)
 		}
 		if got := (PutIntoPlay{Target: Target{Kind: TargetTriggeringCreature}}).Text(); got != "put it into play" {
@@ -29,7 +32,12 @@ func TestPutIntoPlay(t *testing.T) {
 		func(t *testing.T) {
 			g := NewGame("A", "B", 1)
 			foe := g.AddToDiscard(testCreature("foe", 3), 1)
-			ctx := &EffectContext{Resolver: g, Controller: 0, It: foe, HasIt: true}
+			ctx := &EffectContext{
+				Resolver:   g,
+				Controller: 0,
+				It:         foe,
+				HasIt:      true,
+			}
 
 			PutIntoPlay{
 				Target:  Target{Kind: TargetTriggeringCreature},
@@ -53,7 +61,12 @@ func TestPutIntoPlay(t *testing.T) {
 	t.Run("puts a card into play under its owner's control by default", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		c := g.AddToHand(testCreature("c", 3), 1)
-		ctx := &EffectContext{Resolver: g, Controller: 0, It: c, HasIt: true}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			It:         c,
+			HasIt:      true,
+		}
 
 		PutIntoPlay{Target: Target{Kind: TargetTriggeringCreature}}.Resolve(ctx)
 
@@ -68,7 +81,12 @@ func TestPutIntoPlay(t *testing.T) {
 	t.Run("puts an artifact into play in the controller's artifact row", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		art := g.AddToDiscard(NewCard("relic", Mars, Artifact, Common), 1)
-		ctx := &EffectContext{Resolver: g, Controller: 0, It: art, HasIt: true}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			It:         art,
+			HasIt:      true,
+		}
 
 		PutIntoPlay{
 			Target:  Target{Kind: TargetTriggeringCreature},
@@ -111,7 +129,10 @@ func TestPutIntoPlay(t *testing.T) {
 		PutIntoPlay{
 			Target: Target{Kind: TargetTriggeringCreature},
 		}.Resolve(
-			&EffectContext{Resolver: g, Controller: 0},
+			&EffectContext{
+				Resolver:   g,
+				Controller: 0,
+			},
 		)
 	})
 }
@@ -138,7 +159,10 @@ func TestEachPlayerPutsHandCreaturesIntoPlay(t *testing.T) {
 			theirs := g.AddToHand(testCreature("theirs", 4), 1)
 
 			EachPlayerPutsHandCreaturesIntoPlay{Ready: true}.Resolve(
-				&EffectContext{Resolver: g, Controller: 0},
+				&EffectContext{
+					Resolver:   g,
+					Controller: 0,
+				},
 			)
 
 			if !slices.Contains(g.Battleline(0), mine) {
@@ -161,7 +185,10 @@ func TestEachPlayerPutsHandCreaturesIntoPlay(t *testing.T) {
 		mine := g.AddToHand(testCreature("mine", 3), 0)
 
 		EachPlayerPutsHandCreaturesIntoPlay{}.Resolve(
-			&EffectContext{Resolver: g, Controller: 0},
+			&EffectContext{
+				Resolver:   g,
+				Controller: 0,
+			},
 		)
 
 		if !g.Exhausted(mine) {
@@ -176,7 +203,10 @@ func TestEachPlayerPutsHandCreaturesIntoPlay(t *testing.T) {
 		theirs := g.AddToHand(testCreature("theirs", 4), 1)
 
 		EachPlayerPutsHandCreaturesIntoPlay{Ready: true}.Resolve(
-			&EffectContext{Resolver: g, Controller: 0},
+			&EffectContext{
+				Resolver:   g,
+				Controller: 0,
+			},
 		)
 
 		if !slices.Contains(g.Battleline(0), mine) {
@@ -196,7 +226,10 @@ func TestPutIntoPlayReady(t *testing.T) {
 		"put it into play" {
 		t.Errorf("plain text = %q", got)
 	}
-	ready := PutIntoPlay{Target: Target{Kind: TargetTriggeringCreature}, Ready: true}
+	ready := PutIntoPlay{
+		Target: Target{Kind: TargetTriggeringCreature},
+		Ready:  true,
+	}
 	if got := ready.Text(); got != "put it into play ready" {
 		t.Errorf("ready text = %q", got)
 	}
@@ -204,7 +237,12 @@ func TestPutIntoPlayReady(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	creature := g.Register(NewCard("saur", Saurian, Creature, Common, WithPower(2)), 0)
 	g.State.Discard[0].add(creature)
-	ctx := &EffectContext{Resolver: g, Controller: 0, It: creature, HasIt: true}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         creature,
+		HasIt:      true,
+	}
 
 	ready.Resolve(ctx)
 

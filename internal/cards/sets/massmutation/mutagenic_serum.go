@@ -23,6 +23,9 @@ var MutagenicSerum = set.New(
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 		card.Destroy{Target: card.Target.This},
-		card.MayPlayOrUse{Trait: card.Traits.Mutant, Grant: card.GrantUse},
+		card.MayPlayOrUse{
+			Trait: card.Traits.Mutant,
+			Grant: card.GrantUse,
+		},
 	}}),
 )

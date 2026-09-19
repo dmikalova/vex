@@ -216,7 +216,12 @@ func (s *style) save(ctx app.Context) {
 // every branch of a Player bar at once, and a gallery that has to be played to
 // is a gallery nobody looks at.
 func styleHarness() *game {
-	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
+	g := &game{
+		selHand:     -1,
+		zonesPlayer: -1,
+		forgingKey:  -1,
+		handSlot:    -1,
+	}
 	g.g = engine.NewGame("Player One", "Player Two", 1)
 	g.mavericks = map[engine.LocalID]bool{}
 	g.legacy = map[engine.LocalID]bool{}
@@ -262,7 +267,12 @@ func styleHarness() *game {
 // sits on the opponent's host (owner 1) or the active player's own (a card is
 // facedown for everyone; the controller peeks its face by hovering).
 func attachHarness() *game {
-	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
+	g := &game{
+		selHand:     -1,
+		zonesPlayer: -1,
+		forgingKey:  -1,
+		handSlot:    -1,
+	}
 	g.g = engine.NewGame("Player One", "Player Two", 1)
 	g.mavericks = map[engine.LocalID]bool{}
 	g.legacy = map[engine.LocalID]bool{}
@@ -614,7 +624,10 @@ func (s *style) glyphVocabSection() app.UI {
 	for _, ex := range examples {
 		gs, _ := effectGlyphs(ex.effect)
 		rows = append(rows, app.Div().Class("style-swatch").Body(
-			iconLine(glyphLine{triggers: ex.triggers, glyphs: gs}),
+			iconLine(glyphLine{
+				triggers: ex.triggers,
+				glyphs:   gs,
+			}),
 			app.Span().Class("style-mono").Text(ex.label),
 		))
 	}

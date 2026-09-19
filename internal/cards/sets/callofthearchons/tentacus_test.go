@@ -19,7 +19,10 @@ import (
 func TestTentacus(t *testing.T) {
 	t.Run("opponent pays the controller 1 Æmber to use an artifact", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Tentacus)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(Tentacus),
+			},
 			P2: ct.Side{
 				House:  card.House.Logos,
 				InPlay: ct.Cards(LibraryOfBabble),

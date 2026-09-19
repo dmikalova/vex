@@ -18,7 +18,10 @@ func TestCardsInPlayCountsUpgrades(t *testing.T) {
 	onArtifact := g.Register(NewCard("Mod", Untamed, Upgrade, Common), 0)
 	g.AttachUpgrade(art, onArtifact)
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	got := resolverCardsInPlay(ctx, 0)
 	want := []LocalID{onCreature, host, onArtifact, art}
 	if !slices.Equal(got, want) {
@@ -28,10 +31,16 @@ func TestCardsInPlayCountsUpgrades(t *testing.T) {
 	if n := (CardsInPlay{Player: Controller}).Value(ctx); n != 4 {
 		t.Errorf("untyped CardsInPlay = %d, want all 4 cards in play", n)
 	}
-	if n := (CardsInPlay{Player: Controller, Type: Upgrade}).Value(ctx); n != 2 {
+	if n := (CardsInPlay{
+		Player: Controller,
+		Type:   Upgrade,
+	}).Value(ctx); n != 2 {
 		t.Errorf("CardsInPlay{Type: Upgrade} = %d, want the 2 attached upgrades", n)
 	}
-	if n := (CardsInPlay{Player: Controller, Type: Creature}).Value(ctx); n != 1 {
+	if n := (CardsInPlay{
+		Player: Controller,
+		Type:   Creature,
+	}).Value(ctx); n != 1 {
 		t.Errorf("CardsInPlay{Type: Creature} = %d, want only the creature", n)
 	}
 }
@@ -45,7 +54,10 @@ func TestInPlayCountsUpgrades(t *testing.T) {
 	host := g.AddToBattleline(NewCard("Host", Untamed, Creature, Common, WithPower(3)), 0)
 	up := g.Register(NewCard("Boon", Untamed, Upgrade, Common), 0)
 	g.AttachUpgrade(host, up)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	if !g.inPlay(up) || !resolverInPlay(ctx, up) {
 		t.Error("an attached upgrade should read in play")
@@ -65,7 +77,10 @@ func TestEachCardInPlayReachesUpgrades(t *testing.T) {
 	host := g.AddToBattleline(NewCard("Host", Untamed, Creature, Common, WithPower(3)), 0)
 	up := g.Register(NewCard("Boon", Untamed, Upgrade, Common), 0)
 	g.AttachUpgrade(host, up)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	for _, tc := range []struct {
 		kind TargetKind
@@ -93,8 +108,15 @@ func TestCrossZoneMoverReachesUpgradesInPlay(t *testing.T) {
 	up := g.Register(NewCard("Boon", Untamed, Upgrade, Common), 0)
 	g.AttachUpgrade(host, up)
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-	mover := crossZoneMover{Player: 0, Dest: ToHand, Sources: []Zone{InPlay, Discard}}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
+	mover := crossZoneMover{
+		Player:  0,
+		Dest:    ToHand,
+		Sources: []Zone{InPlay, Discard},
+	}
 	got := mover.gather(ctx, func(LocalID) bool { return true })
 	if !slices.Equal(got, []LocalID{up, host}) {
 		t.Fatalf("gather = %v, want [%d %d] (upgrade ahead of its host)", got, up, host)
@@ -126,7 +148,10 @@ func TestCrossZoneMoverReachesUpgradesInPlay(t *testing.T) {
 func TestCrossZoneMoveSkipsCardThatLeftItsSourceZones(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	id := g.AddToBattleline(NewCard("Inka", Untamed, Creature, Common, WithPower(3)), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	mover := crossZoneMover{
 		Player:  0,
 		Dest:    ToDeckShuffled,

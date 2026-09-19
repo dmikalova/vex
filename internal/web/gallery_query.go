@@ -51,7 +51,10 @@ func parseQuery(q string) []queryTerm {
 			}
 		}
 		if len(nonEmpty) > 0 {
-			terms = append(terms, queryTerm{negate: negate, alts: nonEmpty})
+			terms = append(terms, queryTerm{
+				negate: negate,
+				alts:   nonEmpty,
+			})
 		}
 		alts, negate, started = nil, false, false
 	}

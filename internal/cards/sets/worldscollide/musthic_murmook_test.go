@@ -22,7 +22,10 @@ func TestMusthicMurmook(t *testing.T) {
 	t.Run("deals 4 damage to a creature when played", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(MusthicMurmook)},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(MusthicMurmook),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(10))))},
 		})
 
@@ -34,7 +37,10 @@ func TestMusthicMurmook(t *testing.T) {
 
 	t.Run("raises each player's key cost by 1 while in play", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(MusthicMurmook)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(MusthicMurmook),
+			},
 		})
 
 		g := h.Game()

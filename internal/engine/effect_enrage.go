@@ -32,11 +32,18 @@ func (e Enrage) Text() string { return e.verb() + " " + e.targetText() }
 func (e Enrage) Resolve(ctx *EffectContext) {
 	for _, id := range e.Target.Select(ctx) {
 		if ctx.Resolver.Enraged(id) {
-			ctx.Resolver.Record(CreatureEnraged{Creature: id, By: ctx.Source, AlreadyEnraged: true})
+			ctx.Resolver.Record(CreatureEnraged{
+				Creature:       id,
+				By:             ctx.Source,
+				AlreadyEnraged: true,
+			})
 			continue
 		}
 		ctx.Resolver.SetEnraged(id, true)
-		ctx.Resolver.Record(CreatureEnraged{Creature: id, By: ctx.Source})
+		ctx.Resolver.Record(CreatureEnraged{
+			Creature: id,
+			By:       ctx.Source,
+		})
 	}
 }
 

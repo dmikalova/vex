@@ -18,7 +18,10 @@ func TestOubliette(t *testing.T) {
 	t.Run("purges a creature with power 3 or lower", func(t *testing.T) {
 		var weak, strong ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(Oubliette)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(Oubliette),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&weak, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2))),

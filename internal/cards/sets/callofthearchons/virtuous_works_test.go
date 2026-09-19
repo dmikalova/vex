@@ -16,7 +16,10 @@ import (
 func TestVirtuousWorks(t *testing.T) {
 	t.Run("gains 3 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(VirtuousWorks)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(VirtuousWorks),
+			},
 		})
 
 		h.P1.Play(VirtuousWorks)

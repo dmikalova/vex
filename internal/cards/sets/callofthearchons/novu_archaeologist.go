@@ -21,6 +21,9 @@ var NovuArchaeologist = set.New(
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.Action,
-		card.ArchiveCard{Zone: card.Discard, Selection: card.Chosen{}},
+		card.ArchiveCard{
+			Zone:      card.Discard,
+			Selection: card.Chosen{},
+		},
 	),
 )

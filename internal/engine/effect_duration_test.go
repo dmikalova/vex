@@ -16,20 +16,38 @@ func TestForDurationValidate(t *testing.T) {
 		Duration: RemainderOfPlayerTurn,
 	}
 
-	if err := (ForDuration{Duration: OpponentNextTurn, Effects: []Effect{house, cannotDamage}}).validate(); err == nil {
+	if err := (ForDuration{
+		Duration: OpponentNextTurn,
+		Effects:  []Effect{house, cannotDamage},
+	}).validate(); err == nil {
 		t.Error("want error for unsupported duration")
 	}
-	if err := (ForDuration{Duration: RemainderOfPlayerTurn, Effects: []Effect{house}}).validate(); err == nil {
+	if err := (ForDuration{
+		Duration: RemainderOfPlayerTurn,
+		Effects:  []Effect{house},
+	}).validate(); err == nil {
 		t.Error("want error for fewer than two effects")
 	}
-	if err := (ForDuration{Duration: RemainderOfPlayerTurn, Effects: []Effect{house, Heal{Fully: true, Target: Target{Kind: TargetThisCreature}}}}).validate(); err == nil {
+	if err := (ForDuration{
+		Duration: RemainderOfPlayerTurn,
+		Effects: []Effect{house, Heal{
+			Fully:  true,
+			Target: Target{Kind: TargetThisCreature},
+		}},
+	}).validate(); err == nil {
 		t.Error("want error for a child that renders no duration body")
 	}
 	badChild := CannotBeDealtDamage{Duration: RemainderOfPlayerTurn} // no target
-	if err := (ForDuration{Duration: RemainderOfPlayerTurn, Effects: []Effect{house, badChild}}).validate(); err == nil {
+	if err := (ForDuration{
+		Duration: RemainderOfPlayerTurn,
+		Effects:  []Effect{house, badChild},
+	}).validate(); err == nil {
 		t.Error("want error surfaced from a misconfigured child")
 	}
-	if err := (ForDuration{Duration: RemainderOfPlayerTurn, Effects: []Effect{house, cannotDamage}}).validate(); err != nil {
+	if err := (ForDuration{
+		Duration: RemainderOfPlayerTurn,
+		Effects:  []Effect{house, cannotDamage},
+	}).validate(); err != nil {
 		t.Errorf("valid ForDuration errored: %v", err)
 	}
 }
@@ -87,11 +105,18 @@ func TestForDurationResolvesChildren(t *testing.T) {
 			Duration: RemainderOfPlayerTurn,
 		},
 	}}
-	e.Resolve(&EffectContext{Resolver: g, Source: host, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     host,
+		Controller: 0,
+	})
 	if g.House(host) != Mars {
 		t.Errorf("house = %s, want Mars", g.House(host))
 	}
-	g.applyRawDamage(DamageTarget{ID: host, Amount: 2})
+	g.applyRawDamage(DamageTarget{
+		ID:     host,
+		Amount: 2,
+	})
 	if g.Damage(host) != 0 {
 		t.Errorf("damage = %d, want 0 (prevented)", g.Damage(host))
 	}
@@ -108,7 +133,10 @@ func TestGainUntilNextTurnText(t *testing.T) {
 				Keywords: []Keyword{Elusive},
 				Duration: StartOfPlayerNextTurn,
 			},
-			GainTrait{Target: Target{Kind: TargetTriggeringCreature}, Trait: Mutant},
+			GainTrait{
+				Target: Target{Kind: TargetTriggeringCreature},
+				Trait:  Mutant,
+			},
 		},
 	}
 	want := "it gains elusive and the Mutant trait until the start of your next turn"
@@ -125,7 +153,10 @@ func TestGainUntilNextTurnText(t *testing.T) {
 				Keywords: []Keyword{Elusive},
 				Duration: StartOfPlayerNextTurn,
 			},
-			GainTrait{Target: Target{Kind: TargetThisCreature}, Trait: Mutant},
+			GainTrait{
+				Target: Target{Kind: TargetThisCreature},
+				Trait:  Mutant,
+			},
 		},
 	}
 	want = "it gains elusive and " + SelfName +
@@ -178,8 +209,15 @@ func TestGainUntilNextTurnValidate(t *testing.T) {
 	}
 	if (GainUntilNextTurn{
 		Effects: []Effect{
-			GainKeywords{Target: Target{Kind: TargetTriggeringCreature}, Keywords: []Keyword{Elusive}, Duration: StartOfPlayerNextTurn},
-			GainTrait{Target: Target{Kind: TargetTriggeringCreature}, Trait: Mutant},
+			GainKeywords{
+				Target:   Target{Kind: TargetTriggeringCreature},
+				Keywords: []Keyword{Elusive},
+				Duration: StartOfPlayerNextTurn,
+			},
+			GainTrait{
+				Target: Target{Kind: TargetTriggeringCreature},
+				Trait:  Mutant,
+			},
 		},
 	}).validate() != nil {
 		t.Error("a valid fold should pass")
@@ -203,9 +241,17 @@ func TestGainUntilNextTurnResolve(t *testing.T) {
 				Target: Target{Kind: TargetTriggeringCreature},
 				Amount: Fixed(3),
 			},
-			GainTrait{Target: Target{Kind: TargetTriggeringCreature}, Trait: Mutant},
+			GainTrait{
+				Target: Target{Kind: TargetTriggeringCreature},
+				Trait:  Mutant,
+			},
 		},
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0, It: beast, HasIt: true})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         beast,
+		HasIt:      true,
+	})
 
 	if !g.hasKeyword(beast, Skirmish) {
 		t.Error("the creature should have gained skirmish")

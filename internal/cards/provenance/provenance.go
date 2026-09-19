@@ -150,7 +150,10 @@ func load() {
 			})
 		}
 		sort.Slice(cards, func(i, j int) bool { return cards[i].Number < cards[j].Number })
-		sets = append(sets, Set{SourceSet: ss, Cards: cards})
+		sets = append(sets, Set{
+			SourceSet: ss,
+			Cards:     cards,
+		})
 	}
 }
 

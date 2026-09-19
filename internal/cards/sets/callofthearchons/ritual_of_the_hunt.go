@@ -23,6 +23,9 @@ var RitualOfTheHunt = set.New(
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 		card.Destroy{Target: card.Target.This},
-		card.MayPlayOrUse{Houses: card.GrantHouses.Named(card.House.Self), Grant: card.GrantUse},
+		card.MayPlayOrUse{
+			Houses: card.GrantHouses.Named(card.House.Self),
+			Grant:  card.GrantUse,
+		},
 	}}),
 )

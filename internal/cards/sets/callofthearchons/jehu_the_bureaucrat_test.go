@@ -19,7 +19,10 @@ import (
 func TestJehuTheBureaucrat(t *testing.T) {
 	t.Run("gains 2 Æmber when Sanctum is chosen as the active house", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, InPlay: ct.Cards(JehuTheBureaucrat)},
+			P1: ct.Side{
+				House:  card.House.Sanctum,
+				InPlay: ct.Cards(JehuTheBureaucrat),
+			},
 		})
 
 		// The opening house choice happens before cards are placed, so cycle round
@@ -34,7 +37,10 @@ func TestJehuTheBureaucrat(t *testing.T) {
 
 	t.Run("does nothing when a different house is chosen", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, InPlay: ct.Cards(JehuTheBureaucrat)},
+			P1: ct.Side{
+				House:  card.House.Sanctum,
+				InPlay: ct.Cards(JehuTheBureaucrat),
+			},
 		})
 
 		h.P1.EndTurn()

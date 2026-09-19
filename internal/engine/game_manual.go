@@ -73,9 +73,16 @@ func (g *Game) ManualMove(id LocalID, dest ManualZone) {
 		if dest == ManualDeckTop {
 			g.State.Deck[o].addFront(card)
 		} else {
-			g.pile(zoneRef{Player: o, Zone: dest.zone()}).add(card)
+			g.pile(zoneRef{
+				Player: o,
+				Zone:   dest.zone(),
+			}).add(card)
 		}
-		g.record(ManualCardMoved{Player: o, Card: card, To: dest})
+		g.record(ManualCardMoved{
+			Player: o,
+			Card:   card,
+			To:     dest,
+		})
 	})
 }
 
@@ -103,7 +110,12 @@ func (g *Game) manualRelocate(id LocalID, file func(card LocalID, owner int)) {
 func (g *Game) ManualAttachUnder(host, id LocalID, faceDown bool) {
 	g.manualRelocate(id, func(card LocalID, o int) {
 		g.AttachUnder(host, card, faceDown)
-		g.record(CardPutUnder{Player: o, Card: card, Host: host, FaceDown: faceDown})
+		g.record(CardPutUnder{
+			Player:   o,
+			Card:     card,
+			Host:     host,
+			FaceDown: faceDown,
+		})
 	})
 }
 
@@ -125,14 +137,21 @@ func (g *Game) ManualDetachToHand(id LocalID) {
 	g.releaseAemberOnLeavePlay(id)
 	g.resetCore(id)
 	g.State.Hand[o].add(id)
-	g.record(ManualCardMoved{Player: o, Card: id, To: ManualHand})
+	g.record(ManualCardMoved{
+		Player: o,
+		Card:   id,
+		To:     ManualHand,
+	})
 }
 
 // ManualSetExhausted sets or clears a card's exhausted flag — readying an
 // exhausted creature, or exhausting a ready one.
 func (g *Game) ManualSetExhausted(id LocalID, exhausted bool) {
 	g.State.Cards[id].Exhausted = exhausted
-	g.record(ManualExhaustSet{Card: id, Exhausted: exhausted})
+	g.record(ManualExhaustSet{
+		Card:      id,
+		Exhausted: exhausted,
+	})
 }
 
 // ManualPlaceInPlay drops a card straight into play for its owner outside the
@@ -151,7 +170,10 @@ func (g *Game) ManualPlaceInPlay(id LocalID, index int) {
 		} else {
 			g.State.Artifacts[o].add(card)
 		}
-		g.record(ManualPlacedInPlay{Player: o, Card: card})
+		g.record(ManualPlacedInPlay{
+			Player: o,
+			Card:   card,
+		})
 	})
 }
 
@@ -166,7 +188,10 @@ func (g *Game) ManualAddCard(def CardDefinition, player int) (LocalID, bool) {
 	}
 	id := g.Register(def, player)
 	g.State.Hand[player].add(id)
-	g.record(ManualCardAdded{Player: player, Card: id})
+	g.record(ManualCardAdded{
+		Player: player,
+		Card:   id,
+	})
 	return id, true
 }
 
@@ -175,21 +200,30 @@ func (g *Game) ManualAddCard(def CardDefinition, player int) (LocalID, bool) {
 func (g *Game) ManualAddAmber(player, delta int) {
 	n := max(g.Aember(player)+delta, 0)
 	g.SetAember(player, n)
-	g.record(ManualAemberSet{Player: player, Amount: n})
+	g.record(ManualAemberSet{
+		Player: player,
+		Amount: n,
+	})
 }
 
 // ManualAddChains adjusts player's chain count by delta (clamped at zero).
 func (g *Game) ManualAddChains(player, delta int) {
 	n := max(g.State.Chains[player]+delta, 0)
 	g.State.Chains[player] = n
-	g.record(ManualChainsSet{Player: player, Amount: n})
+	g.record(ManualChainsSet{
+		Player: player,
+		Amount: n,
+	})
 }
 
 // ManualSetActiveHouse sets the active player's active house directly, so
 // manual mode can switch houses mid-turn.
 func (g *Game) ManualSetActiveHouse(h House) {
 	g.State.ActiveHouse = h
-	g.record(ManualHouseChosen{Player: g.State.ActivePlayer, House: h})
+	g.record(ManualHouseChosen{
+		Player: g.State.ActivePlayer,
+		House:  h,
+	})
 }
 
 // ManualForgeKey forges one more key for player using the next unused colour.
@@ -220,5 +254,9 @@ func (g *Game) ManualUnforgeKey(player int) {
 		return
 	}
 	g.State.KeyColors[player][g.Keys(player)-1] = KeyColorNone
-	g.record(ManualKeyUnforged{Player: player, Keys: g.Keys(player), Needed: KeysToWin})
+	g.record(ManualKeyUnforged{
+		Player: player,
+		Keys:   g.Keys(player),
+		Needed: KeysToWin,
+	})
 }

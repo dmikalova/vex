@@ -20,7 +20,10 @@ func TestSilvertooth(t *testing.T) {
 	t.Run("enters play ready", func(t *testing.T) {
 		var silver ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(ct.Bind(&silver, Silvertooth))},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(ct.Bind(&silver, Silvertooth)),
+			},
 		})
 
 		h.P1.Play(Silvertooth)

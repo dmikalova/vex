@@ -19,7 +19,11 @@ var GeneralOrder24 = set.New(
 	card.WithTraits(card.Traits.Law),
 	card.WithEachPlayerAbility(
 		card.Trigger.StartOfTurn, card.Conditional{
-			Cond: card.CardsInPlay{Player: card.Controller, Type: card.Type.Creature, None: true},
+			Cond: card.CardsInPlay{
+				Player: card.Controller,
+				Type:   card.Type.Creature,
+				None:   true,
+			},
 			Then: card.Destroy{Target: card.Target.This},
 			Else: card.ChooseCreatureThen{
 				Target: card.Target.FriendlyCreature,

@@ -19,7 +19,10 @@ import (
 func TestSensorChiefGarcia(t *testing.T) {
 	t.Run("raises the opponent's key cost during their next turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.StarAlliance, Hand: ct.Cards(SensorChiefGarcia)},
+			P1: ct.Side{
+				House: card.House.StarAlliance,
+				Hand:  ct.Cards(SensorChiefGarcia),
+			},
 			P2: ct.Side{},
 		})
 

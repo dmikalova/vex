@@ -22,7 +22,10 @@ func (e recordEnemyCount) Resolve(ctx *EffectContext) {
 // creature is forced), and both abilities fire.
 func TestDestroyOrderByCreature(t *testing.T) {
 	g := started(t)
-	gain := GainAember{Player: Controller, Amount: 1}
+	gain := GainAember{
+		Player: Controller,
+		Amount: 1,
+	}
 	a := g.AddToBattleline(testCreature("a", 3, WithAbility(TriggerDestroyed, gain)), 0)
 	b := g.AddToBattleline(testCreature("b", 3, WithAbility(TriggerDestroyed, gain)), 0)
 	before := g.Aember(0)
@@ -45,8 +48,15 @@ func TestDestructionReplacedByOwnStatic(t *testing.T) {
 		return testCreature("automaton", 3, WithStatic(StaticModifier{
 			Replaces: Replace{
 				When: EventCreatureDestroyed,
-				Cond: CardsInPlay{Player: Controller, Type: Creature, Other: true},
-				With: GainAember{Player: Controller, Amount: 1},
+				Cond: CardsInPlay{
+					Player: Controller,
+					Type:   Creature,
+					Other:  true,
+				},
+				With: GainAember{
+					Player: Controller,
+					Amount: 1,
+				},
 			},
 		}))
 	}
@@ -99,9 +109,16 @@ func TestDestructionReplacementDoesNotHangAtZeroPower(t *testing.T) {
 	automaton := testCreature("automaton", 3, WithStatic(StaticModifier{
 		Replaces: Replace{
 			When: EventCreatureDestroyed,
-			Cond: CardsInPlay{Player: Controller, Type: Creature, Other: true},
+			Cond: CardsInPlay{
+				Player: Controller,
+				Type:   Creature,
+				Other:  true,
+			},
 			With: Sequence{Effects: []Effect{
-				Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
+				Heal{
+					Fully:  true,
+					Target: Target{Kind: TargetTriggeringCreature},
+				},
 				MoveToFlank{Target: Target{Kind: TargetTriggeringCreature}},
 			}},
 		},
@@ -142,9 +159,16 @@ func TestCreatureSelfDestructionReplacementText(t *testing.T) {
 		WithStatic(StaticModifier{
 			Replaces: Replace{
 				When: EventCreatureDestroyed,
-				Cond: CardsInPlay{Player: Controller, Type: Creature, Other: true},
+				Cond: CardsInPlay{
+					Player: Controller,
+					Type:   Creature,
+					Other:  true,
+				},
 				With: Sequence{Effects: []Effect{
-					Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
+					Heal{
+						Fully:  true,
+						Target: Target{Kind: TargetTriggeringCreature},
+					},
 					MoveToFlank{Target: Target{Kind: TargetTriggeringCreature}},
 				}},
 			},
@@ -288,7 +312,10 @@ func TestDestroyedRelocationSkipsDiscard(t *testing.T) {
 			3,
 			WithAbility(
 				TriggerDestroyed,
-				PutFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToTopOfDeck},
+				PutFromPlay{
+					Target:      Target{Kind: TargetThisCreature},
+					Destination: ToTopOfDeck,
+				},
 			),
 		),
 		0,
@@ -333,14 +360,20 @@ func TestUpgradeCanPreventHostDestructionOnce(t *testing.T) {
 		WithStatic(
 			StaticModifier{
 				Replaces: Replace{When: EventCreatureDestroyed, With: Sequence{Effects: []Effect{
-					Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
+					Heal{
+						Fully:  true,
+						Target: Target{Kind: TargetTriggeringCreature},
+					},
 					Destroy{Target: Target{Kind: TargetThisCreature}},
 				}}},
 			},
 		),
 	)
 	host := g.AddToBattleline(testCreature("host", 3,
-		WithAbility(TriggerDestroyed, GainAember{Player: Controller, Amount: 1})), 0)
+		WithAbility(TriggerDestroyed, GainAember{
+			Player: Controller,
+			Amount: 1,
+		})), 0)
 	attachUpgrade(g, host, shield)
 	upgrade := g.Upgrades(host)[0]
 	g.State.Cards[host].Damage = 2
@@ -458,7 +491,10 @@ func TestPurgesDestroyed(t *testing.T) {
 			},
 		})), 0)
 	enemy := g.AddToBattleline(NewCard("v", Brobnar, Creature, Common, WithPower(3),
-		WithAbility(TriggerDestroyed, GainAember{Player: Controller, Amount: 1})), 1)
+		WithAbility(TriggerDestroyed, GainAember{
+			Player: Controller,
+			Amount: 1,
+		})), 1)
 	// The active player orders the ritual's granted purge before the creature's
 	// printed gain; the reversing chooser picks the last-gathered ability first, and
 	// the constant-granted purge is gathered after the printed gain. Purging the
@@ -481,24 +517,45 @@ func TestPurgesDestroyed(t *testing.T) {
 func TestDestroyedAbilitiesCollectEverySource(t *testing.T) {
 	g := started(t)
 	enemy := g.AddToBattleline(NewCard("v", Brobnar, Creature, Common, WithPower(3),
-		WithAbility(TriggerDestroyed, GainAember{Player: Controller, Amount: 1}),
-		WithAbility(TriggerAfterReap, GainAember{Player: Controller, Amount: 1})), 0)
+		WithAbility(TriggerDestroyed, GainAember{
+			Player: Controller,
+			Amount: 1,
+		}),
+		WithAbility(TriggerAfterReap, GainAember{
+			Player: Controller,
+			Amount: 1,
+		})), 0)
 	attachUpgrade(g, enemy, NewCard("upgrade", Brobnar, Upgrade, Common,
 		WithStatic(StaticModifier{Granted: []Ability{
-			{Trigger: TriggerDestroyed, Effect: GainAember{Player: Controller, Amount: 1}},
-			{Trigger: TriggerAfterReap, Effect: GainAember{Player: Controller, Amount: 1}},
+			{Trigger: TriggerDestroyed, Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			}},
+			{Trigger: TriggerAfterReap, Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			}},
 		}})))
 	g.AddArtifact(NewCard("grantor", Dis, Artifact, Rare, WithConstantAbility(ConstantAbility{
 		Target: Target{Kind: TargetEachCreature},
 		Granted: []Ability{
-			{Trigger: TriggerDestroyed, Effect: GainAember{Player: Controller, Amount: 1}},
-			{Trigger: TriggerAfterReap, Effect: GainAember{Player: Controller, Amount: 1}},
+			{Trigger: TriggerDestroyed, Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			}},
+			{Trigger: TriggerAfterReap, Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			}},
 		},
 	})), 1)
 	g.AddArtifact(NewCard("other", Dis, Artifact, Rare, WithConstantAbility(ConstantAbility{
 		Target: Target{Kind: TargetEachFriendlyCreature},
 		Granted: []Ability{
-			{Trigger: TriggerDestroyed, Effect: GainAember{Player: Controller, Amount: 1}},
+			{Trigger: TriggerDestroyed, Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			}},
 		},
 	})), 1)
 
@@ -593,7 +650,10 @@ func TestUpgradeAbilitiesBelongToItsHost(t *testing.T) {
 	parting := func() CardDefinition {
 		return NewCard("Parting Gift", Mars, Upgrade, Common,
 			WithStatic(StaticModifier{Granted: []Ability{
-				{Trigger: TriggerLeavesPlay, Effect: GainAember{Player: Controller, Amount: 1}},
+				{Trigger: TriggerLeavesPlay, Effect: GainAember{
+					Player: Controller,
+					Amount: 1,
+				}},
 			}}))
 	}
 

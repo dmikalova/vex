@@ -116,5 +116,9 @@ func (g *Game) MoveUpgrade(upgrade, newHost LocalID) {
 		return
 	}
 	g.AttachUpgrade(newHost, upgrade)
-	g.record(UpgradeAttached{Player: g.owner(upgrade), Upgrade: upgrade, Host: newHost})
+	g.record(UpgradeAttached{
+		Player:  g.owner(upgrade),
+		Upgrade: upgrade,
+		Host:    newHost,
+	})
 }

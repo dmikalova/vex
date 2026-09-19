@@ -108,7 +108,11 @@ func (g *Game) resolveBonusIcon(player int, id LocalID, ic BonusIcon) {
 			continue
 		}
 		if rm.Instead != nil {
-			rm.Instead.Resolve(&EffectContext{Resolver: g, Source: src, Controller: player})
+			rm.Instead.Resolve(&EffectContext{
+				Resolver:   g,
+				Source:     src,
+				Controller: player,
+			})
 			return
 		}
 		ic = rm.As
@@ -166,10 +170,18 @@ func (g *Game) resolveBonusIconEffect(player int, id LocalID, ic BonusIcon) {
 			})
 			return
 		}
-		g.record(BonusAemberGained{Player: player, Card: id, Amount: 1})
+		g.record(BonusAemberGained{
+			Player: player,
+			Card:   id,
+			Amount: 1,
+		})
 	case BonusDraw:
 		if g.draw(player, 1) > 0 {
-			g.record(BonusCardDrawn{Player: player, Card: id, Amount: 1})
+			g.record(BonusCardDrawn{
+				Player: player,
+				Card:   id,
+				Amount: 1,
+			})
 			g.afterBonusReaction(player, TriggerAfterBonusDraw, 0, false)
 		}
 	case BonusDamage:
@@ -233,7 +245,11 @@ func (g *Game) resolveBonusCapture(player int, id LocalID) {
 	}
 	g.State.Aember[opp]--
 	g.addAmberOn(captor, 1)
-	g.record(BonusCaptured{Creature: captor, Card: id, Amount: 1})
+	g.record(BonusCaptured{
+		Creature: captor,
+		Card:     id,
+		Amount:   1,
+	})
 }
 
 // creaturesInPlay lists a player's in-play creatures.

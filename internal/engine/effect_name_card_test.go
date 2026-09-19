@@ -72,7 +72,11 @@ func TestNameCardResolveRecordsName(t *testing.T) {
 	troll := g.AddToHand(NewCard("Troll", Brobnar, Creature, Common, WithPower(8)), 1)
 	g.SetChooser(0, nameChooser{want: "Troll"})
 
-	NameCard{}.Resolve(&EffectContext{Resolver: g, Source: jar, Controller: 0})
+	NameCard{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     jar,
+		Controller: 0,
+	})
 
 	if got := g.State.Cards[jar].NamedCardPlus; got != uint8(troll)+1 {
 		t.Fatalf("NamedCardPlus = %d, want %d", got, uint8(troll)+1)
@@ -85,7 +89,11 @@ func TestNameCardResolveOutOfRange(t *testing.T) {
 	g.AddToHand(NewCard("Troll", Brobnar, Creature, Common, WithPower(8)), 1)
 	g.SetChooser(0, outOfRangeOptionChooser{})
 
-	NameCard{}.Resolve(&EffectContext{Resolver: g, Source: jar, Controller: 0})
+	NameCard{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     jar,
+		Controller: 0,
+	})
 
 	if got := g.State.Cards[jar].NamedCardPlus; got != 0 {
 		t.Fatalf("NamedCardPlus = %d, want 0 on out-of-range choice", got)
@@ -106,7 +114,11 @@ func TestNameCardOffersTheInjectedDatabase(t *testing.T) {
 	}
 
 	g.SetChooser(0, nameChooser{want: "Troll"})
-	NameCard{}.Resolve(&EffectContext{Resolver: g, Source: jar, Controller: 0})
+	NameCard{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     jar,
+		Controller: 0,
+	})
 	if got := g.State.Cards[jar].NamedCardPlus; got != uint8(troll)+1 {
 		t.Fatalf("NamedCardPlus = %d, want %d", got, uint8(troll)+1)
 	}
@@ -115,7 +127,11 @@ func TestNameCardOffersTheInjectedDatabase(t *testing.T) {
 	g.SetNamedCard(jar, 0)
 	g.State.Cards[jar].NamedCardPlus = 0
 	g.SetChooser(0, nameChooser{want: "Ancient Bear"})
-	NameCard{}.Resolve(&EffectContext{Resolver: g, Source: jar, Controller: 0})
+	NameCard{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     jar,
+		Controller: 0,
+	})
 	if got := g.State.Cards[jar].NamedCardPlus; got != 0 {
 		t.Fatalf("NamedCardPlus = %d, want 0 for a name no card in the match carries", got)
 	}
@@ -128,7 +144,11 @@ func TestNameCardResolveNoCandidates(t *testing.T) {
 	// remove it from the catalog view by resolving on an empty match instead.
 	g.cat.defs = g.cat.defs[:0]
 
-	NameCard{}.Resolve(&EffectContext{Resolver: g, Source: jar, Controller: 0})
+	NameCard{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     jar,
+		Controller: 0,
+	})
 
 	if got := g.State.Cards[jar].NamedCardPlus; got != 0 {
 		t.Fatalf("NamedCardPlus = %d, want 0 with no candidates", got)

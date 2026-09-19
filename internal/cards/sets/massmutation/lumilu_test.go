@@ -38,7 +38,10 @@ func TestLumilu(t *testing.T) {
 
 	t.Run("counts only Beasts other than itself", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(Lumilu)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(Lumilu),
+			},
 		})
 
 		h.P1.Reap(Lumilu)

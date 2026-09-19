@@ -18,7 +18,10 @@ func TestSaveThePack(t *testing.T) {
 	t.Run("destroys each damaged creature and gains 1 chain", func(t *testing.T) {
 		var hurt, healthy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(SaveThePack)},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(SaveThePack),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&hurt, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),

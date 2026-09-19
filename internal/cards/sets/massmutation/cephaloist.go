@@ -20,6 +20,10 @@ var Cephaloist = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAemberCannotBeStolen(
-		card.PoolAember{Player: card.Controller, Is: card.AtLeast, Amount: 4},
+		card.PoolAember{
+			Player: card.Controller,
+			Is:     card.AtLeast,
+			Amount: 4,
+		},
 	),
 )

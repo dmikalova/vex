@@ -18,7 +18,10 @@ var LayOfTheLand = set.New(
 	card.Provenance(card.WC, "313"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-		card.LookAtTopOfDeck{Amount: 3, Then: []card.TopAct{card.ReorderRest{}}},
+		card.LookAtTopOfDeck{
+			Amount: 3,
+			Then:   []card.TopAct{card.ReorderRest{}},
+		},
 		card.Draw{Amount: 1},
 	}}),
 )

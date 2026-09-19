@@ -19,7 +19,10 @@ func TestSoulFiddle(t *testing.T) {
 	t.Run("enrages a chosen creature", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(SoulFiddle)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(SoulFiddle),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature()))},
 		})
 

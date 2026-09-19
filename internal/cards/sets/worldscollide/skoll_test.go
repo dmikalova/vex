@@ -23,7 +23,10 @@ func TestSkoll(t *testing.T) {
 		func(t *testing.T) {
 			var foe ct.Card
 			h := ct.Play(t, ct.Setup{
-				P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(Skoll)},
+				P1: ct.Side{
+					House:  card.House.Brobnar,
+					InPlay: ct.Cards(Skoll),
+				},
 				P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(3))))},
 			})
 
@@ -39,7 +42,10 @@ func TestSkoll(t *testing.T) {
 	t.Run("no counter when the Assault does not kill", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(Skoll)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(Skoll),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(6))))},
 		})
 

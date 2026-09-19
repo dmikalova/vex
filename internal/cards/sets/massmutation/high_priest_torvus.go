@@ -22,7 +22,10 @@ var HighPriestTorvus = set.New(
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Priest),
 	card.WithAbility(card.Trigger.Reap, card.May{Do: card.Then{
-		First:  card.Exalt{Target: card.Target.This, Amount: 1},
+		First: card.Exalt{
+			Target: card.Target.This,
+			Amount: 1,
+		},
 		Result: card.PutNextTacticIntoHand{},
 	}}),
 )

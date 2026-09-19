@@ -21,7 +21,10 @@ func TestSquawker(t *testing.T) {
 	t.Run("can stun a non-Mars creature", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Mars, Hand: ct.Cards(Squawker)},
+			P1: ct.Side{
+				House: card.House.Mars,
+				Hand:  ct.Cards(Squawker),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Brobnar)))),
 			},

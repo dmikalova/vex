@@ -19,7 +19,10 @@ func TestTheCommonCold(t *testing.T) {
 	t.Run("damages each creature and may destroy each Mars creature", func(t *testing.T) {
 		var marsFoe, brobFoe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(TheCommonCold)},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(TheCommonCold),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&marsFoe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),

@@ -110,7 +110,11 @@ func (e PurgeCard) resolveOptional(ctx *EffectContext) bool { return e.resolveGa
 // through the shared cross-zone seam (ADR 0031), so the purge names a destination
 // and never a per-zone move.
 func (e PurgeCard) mover(side int) crossZoneMover {
-	return crossZoneMover{Player: side, Dest: toPurged, Sources: e.Zones}
+	return crossZoneMover{
+		Player:  side,
+		Dest:    toPurged,
+		Sources: e.Zones,
+	}
 }
 
 // cards returns the cards in one player's copies of the source piles, pooled.

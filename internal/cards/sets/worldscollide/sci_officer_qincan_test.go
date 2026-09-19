@@ -20,7 +20,10 @@ import (
 func TestSciOfficerQincan(t *testing.T) {
 	t.Run("steals 1 when the chosen house matches no card in play", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.StarAlliance, InPlay: ct.Cards(SciOfficerQincan)},
+			P1: ct.Side{
+				House:  card.House.StarAlliance,
+				InPlay: ct.Cards(SciOfficerQincan),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 
@@ -33,7 +36,10 @@ func TestSciOfficerQincan(t *testing.T) {
 
 	t.Run("does nothing when the chosen house matches a card in play", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.StarAlliance, InPlay: ct.Cards(SciOfficerQincan)},
+			P1: ct.Side{
+				House:  card.House.StarAlliance,
+				InPlay: ct.Cards(SciOfficerQincan),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 

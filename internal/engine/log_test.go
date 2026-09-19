@@ -246,104 +246,202 @@ func TestLogEntryText(t *testing.T) {
 func TestRecordTextSubjectsToSourceCard(t *testing.T) {
 	n := stubNamer{}
 	// A frame opened for a card ability P0 controls, sourced to Card7.
-	fr := Frame{Actor: 0, Source: 7, HasSource: true}
+	fr := Frame{
+		Actor:     0,
+		Source:    7,
+		HasSource: true,
+	}
 	cases := []struct {
 		entry LogEntry
 		want  string
 	}{
-		{AemberGained{Player: 0, Amount: 1}, "Card7 has P0 gain 1 Æmber"},
-		{AemberGained{Player: 1, Amount: 2}, "Card7 has P1 gain 2 Æmber"},
-		{AemberLost{Player: 1, Amount: 1}, "Card7 has P1 lose 1 Æmber"},
-		{AemberStolen{Player: 0, From: 1, Amount: 2}, "Card7 steals 2 Æmber from P1"},
+		{AemberGained{
+			Player: 0,
+			Amount: 1,
+		}, "Card7 has P0 gain 1 Æmber"},
+		{AemberGained{
+			Player: 1,
+			Amount: 2,
+		}, "Card7 has P1 gain 2 Æmber"},
+		{AemberLost{
+			Player: 1,
+			Amount: 1,
+		}, "Card7 has P1 lose 1 Æmber"},
+		{AemberStolen{
+			Player: 0,
+			From:   1,
+			Amount: 2,
+		}, "Card7 steals 2 Æmber from P1"},
 		// A redirected steal is narrated by the card that redirected it, not by the
 		// frame's source: the replacement is what made the line worth printing.
 		{
-			AemberStolen{Player: 0, From: 1, Amount: 2, FromSupply: true, Cause: 9},
+			AemberStolen{
+				Player:     0,
+				From:       1,
+				Amount:     2,
+				FromSupply: true,
+				Cause:      9,
+			},
 			"Card9 has P0 steal 2 Æmber from the common supply, instead of from P1's pool",
 		},
-		{AbilityDamageDealt{Amount: 4, Target: 2}, "Card7 deals 4 damage to Card2"},
+		{AbilityDamageDealt{
+			Amount: 4,
+			Target: 2,
+		}, "Card7 deals 4 damage to Card2"},
 		{
-			TopOfDeckDiscarded{Player: 1, Card: 6},
+			TopOfDeckDiscarded{
+				Player: 1,
+				Card:   6,
+			},
 			"Card7 discards Card6 from the top of P1's deck",
 		},
 		{
-			PlayedFromTopOfDeck{Card: 9, Player: 0},
+			PlayedFromTopOfDeck{
+				Card:   9,
+				Player: 0,
+			},
 			"Card7 plays Card9 from the top of P0's deck",
 		},
 		{
-			ChainsGained{Player: 1, Amount: 2, Total: 2},
+			ChainsGained{
+				Player: 1,
+				Amount: 2,
+				Total:  2,
+			},
 			"Card7 has P1 gain 2 chains",
 		},
 		{
-			CardMoved{Player: 0, Card: 6, From: Discard, To: Archives},
+			CardMoved{
+				Player: 0,
+				Card:   6,
+				From:   Discard,
+				To:     Archives,
+			},
 			"Card7 archives Card6 from P0's discard pile",
 		},
 		{
-			CardMoved{Player: 1, Card: 6, From: Deck, To: Discard},
+			CardMoved{
+				Player: 1,
+				Card:   6,
+				From:   Deck,
+				To:     Discard,
+			},
 			"Card7 discards Card6 from P1's deck",
 		},
 		{
-			TopOfDeckArchived{Player: 0, Card: 6},
+			TopOfDeckArchived{
+				Player: 0,
+				Card:   6,
+			},
 			"Card7 archives a card from the top of P0's deck",
 		},
 		{DeckAndDiscardSwapped{Player: 1}, "Card7 swaps P1's deck and discard pile"},
 		{
-			ShuffledIntoDeck{Player: 0, DiscardCards: []LocalID{6}, HandCount: 2},
+			ShuffledIntoDeck{
+				Player:       0,
+				DiscardCards: []LocalID{6},
+				HandCount:    2,
+			},
 			"Card7 shuffles Card6 from P0's discard pile and 2 cards from P0's hand into P0's deck",
 		},
 		{ShuffledIntoDeck{Player: 1}, "Card7 shuffles P1's deck"},
 		{
-			CardPutFromDiscardIntoHand{Player: 0, Card: 6},
+			CardPutFromDiscardIntoHand{
+				Player: 0,
+				Card:   6,
+			},
 			"Card7 puts Card6 from P0's discard pile into hand",
 		},
 		{
-			CardPutFromDeckIntoHand{Player: 1, Card: 6},
+			CardPutFromDeckIntoHand{
+				Player: 1,
+				Card:   6,
+			},
 			"Card7 puts a card from P1's deck into hand",
 		},
 		{
-			CardPutFromDiscardOnTopOfDeck{Player: 0, Card: 6},
+			CardPutFromDiscardOnTopOfDeck{
+				Player: 0,
+				Card:   6,
+			},
 			"Card7 puts Card6 from P0's discard pile on top of P0's deck",
 		},
 		{
-			CardArchivedFromPurge{Player: 0, Card: 6},
+			CardArchivedFromPurge{
+				Player: 0,
+				Card:   6,
+			},
 			"Card7 archives Card6 from P0's purge pile",
 		},
 		{
-			CardPlayedToBattleline{Player: 0, Card: 9},
+			CardPlayedToBattleline{
+				Player: 0,
+				Card:   9,
+			},
 			"Card7 plays Card9 on P0's right flank",
 		},
 		{
-			CardPlayedToBattleline{Player: 0, Card: 9, Interior: true},
+			CardPlayedToBattleline{
+				Player:   0,
+				Card:     9,
+				Interior: true,
+			},
 			"Card7 plays Card9 into P0's battleline",
 		},
 		{
-			CardPutIntoPlay{Player: 1, Card: 9},
+			CardPutIntoPlay{
+				Player: 1,
+				Card:   9,
+			},
 			"Card7 puts Card9 into play under P1's control",
 		},
 		{
-			CreaturesUnstunned{Player: 0, Creatures: []LocalID{2, 5}},
+			CreaturesUnstunned{
+				Player:    0,
+				Creatures: []LocalID{2, 5},
+			},
 			"Card7 unstuns Card2 and Card5",
 		},
-		{CardsDrawnBy{Player: 0, Cards: 1}, "Card7 has P0 draw 1 card"},
+		{CardsDrawnBy{
+			Player: 0,
+			Cards:  1,
+		}, "Card7 has P0 draw 1 card"},
 		{
-			AemberGiven{Giver: 0, Receiver: 1, Amount: 1, Reason: TollUseArtifact},
+			AemberGiven{
+				Giver:    0,
+				Receiver: 1,
+				Amount:   1,
+				Reason:   TollUseArtifact,
+			},
 			"Card7 has P0 give 1 Æmber to P1 to use an artifact",
 		},
 		{
-			CardDiscarded{Player: 0, Card: 6},
+			CardDiscarded{
+				Player: 0,
+				Card:   6,
+			},
 			"Card7 discards Card6",
 		},
 		{
-			CardPurgedFromHand{Card: 6, Owner: 0},
+			CardPurgedFromHand{
+				Card:  6,
+				Owner: 0,
+			},
 			"Card7 purges Card6 from P0's hand",
 		},
 		{
-			CardsShuffledIntoDeckBy{Owner: 1, Cards: []LocalID{3, 8}},
+			CardsShuffledIntoDeckBy{
+				Owner: 1,
+				Cards: []LocalID{3, 8},
+			},
 			"Card7 shuffles Card3 and Card8 into P1's deck",
 		},
 	}
 	for _, c := range cases {
-		if got := (Record{Frame: fr, Entry: c.entry}).Text(n); got != c.want {
+		if got := (Record{
+			Frame: fr,
+			Entry: c.entry,
+		}).Text(n); got != c.want {
 			t.Errorf("%T framed Text() = %q, want %q", c.entry, got, c.want)
 		}
 	}
@@ -354,8 +452,15 @@ func TestRecordTextSubjectsToSourceCard(t *testing.T) {
 // segment, so a client links it (ADR 0011).
 func TestRenderRecordSubjectsToSourceCard(t *testing.T) {
 	rec := Record{
-		Frame: Frame{Actor: 0, Source: 7, HasSource: true},
-		Entry: AemberGained{Player: 0, Amount: 1},
+		Frame: Frame{
+			Actor:     0,
+			Source:    7,
+			HasSource: true,
+		},
+		Entry: AemberGained{
+			Player: 0,
+			Amount: 1,
+		},
 	}
 	segs := RenderRecord(rec, stubNamer{})
 	want := []LogSegment{
@@ -379,7 +484,10 @@ func TestRenderRecordSubjectsToSourceCard(t *testing.T) {
 // entry names from the ids the entry carries, rather than by matching its prose
 // against a card index (ADR 0011).
 func TestRenderEntrySplitsOutCardNames(t *testing.T) {
-	segs := RenderEntry(PositionsSwapped{A: 1, B: 2}, stubNamer{})
+	segs := RenderEntry(PositionsSwapped{
+		A: 1,
+		B: 2,
+	}, stubNamer{})
 	want := []LogSegment{
 		{Text: "Card1", Card: 1, HasCard: true},
 		{Text: " swaps positions with "},
@@ -427,13 +535,19 @@ func (prefixNamer) PlayerName(int) string { return "Trollkin" }
 // where it stands as a whole word: not when a longer name starts at the same
 // place, and not when it is merely the start of some longer word.
 func TestRenderEntryMatchesWholeNamesOnly(t *testing.T) {
-	segs := RenderEntry(PositionsSwapped{A: 2, B: 1}, prefixNamer{})
+	segs := RenderEntry(PositionsSwapped{
+		A: 2,
+		B: 1,
+	}, prefixNamer{})
 	if len(segs) != 3 || segs[0].Text != "Trollkin" || segs[2].Text != "Troll" {
 		t.Fatalf("segments = %+v, want Trollkin then Troll", segs)
 	}
 	// "Trollkin discards Troll": the player's name only starts with the card's,
 	// so the card is not linked until the card itself.
-	segs = RenderEntry(CardDiscarded{Player: 0, Card: 1}, prefixNamer{})
+	segs = RenderEntry(CardDiscarded{
+		Player: 0,
+		Card:   1,
+	}, prefixNamer{})
 	want := []LogSegment{
 		{Text: "Trollkin", Player: 0, HasPlayer: true},
 		{Text: " discards "},
@@ -454,7 +568,10 @@ func TestRenderEntryMatchesWholeNamesOnly(t *testing.T) {
 // Æmber and the houses — comes back as icon segments, and that a name the entry
 // asked for wins over a keyword sitting in the same place.
 func TestRenderEntryMarksIconKeywords(t *testing.T) {
-	segs := RenderEntry(HouseChosen{Player: 1, House: Brobnar}, stubNamer{})
+	segs := RenderEntry(HouseChosen{
+		Player: 1,
+		House:  Brobnar,
+	}, stubNamer{})
 	want := []LogSegment{
 		{Text: "P1", Player: 1, HasPlayer: true},
 		{Text: " chooses house "},
@@ -464,7 +581,10 @@ func TestRenderEntryMarksIconKeywords(t *testing.T) {
 		segs[2] != want[2] {
 		t.Fatalf("segments = %+v, want %+v", segs, want)
 	}
-	segs = RenderEntry(AemberGained{Player: 0, Amount: 2}, stubNamer{})
+	segs = RenderEntry(AemberGained{
+		Player: 0,
+		Amount: 2,
+	}, stubNamer{})
 	var icons int
 	for _, s := range segs {
 		if s.Icon == "aember" && s.Text == "Æmber" {
@@ -485,16 +605,43 @@ func TestRenderEntryMarksIconKeywords(t *testing.T) {
 		icon  string
 		word  string
 	}{
-		{CreatureStunned{Creature: 2, By: 5}, "stun", "stunned"},
-		{ChainsGained{Player: 0, Amount: 2, Total: 5}, "chains", "chains"},
-		{ChainShed{Player: 1, Remaining: 4}, "chains", "chain"},
-		{KeyForged{Player: 0, Color: KeyColorColorless, Keys: 4, Needed: 3}, "key", "key"},
+		{CreatureStunned{
+			Creature: 2,
+			By:       5,
+		}, "stun", "stunned"},
+		{ChainsGained{
+			Player: 0,
+			Amount: 2,
+			Total:  5,
+		}, "chains", "chains"},
+		{ChainShed{
+			Player:    1,
+			Remaining: 4,
+		}, "chains", "chain"},
+		{KeyForged{
+			Player: 0,
+			Color:  KeyColorColorless,
+			Keys:   4,
+			Needed: 3,
+		}, "key", "key"},
 		{
-			KeyForged{Player: 0, Color: KeyColorRed, Keys: 1, Needed: 3},
+			KeyForged{
+				Player: 0,
+				Color:  KeyColorRed,
+				Keys:   1,
+				Needed: 3,
+			},
 			"key-red", "key",
 		},
-		{PlayerStanding{Player: 0, Aember: 4, KeyColors: []KeyColor{KeyColorRed}}, "key", "key"},
-		{CardShuffledIntoDeck{Card: 6, Owner: 1}, "zone-deck", "deck"},
+		{PlayerStanding{
+			Player:    0,
+			Aember:    4,
+			KeyColors: []KeyColor{KeyColorRed},
+		}, "key", "key"},
+		{CardShuffledIntoDeck{
+			Card:  6,
+			Owner: 1,
+		}, "zone-deck", "deck"},
 	}
 	for _, c := range iconCases {
 		segs := RenderEntry(c.entry, stubNamer{})
@@ -567,14 +714,33 @@ func (namelessNamer) Name(LocalID) string { return "" }
 func TestFramesNestAndPop(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.record(ForgeSkipped{Player: 0})
-	outer := g.openFrame(Frame{Actor: 1, Source: 5, HasSource: true, Trigger: TriggerAfterReap})
-	g.record(AemberGained{Player: 1, Amount: 1})
-	inner := g.openFrame(Frame{Actor: 1, Source: 6, HasSource: true, Trigger: TriggerDestroyed})
+	outer := g.openFrame(Frame{
+		Actor:     1,
+		Source:    5,
+		HasSource: true,
+		Trigger:   TriggerAfterReap,
+	})
+	g.record(AemberGained{
+		Player: 1,
+		Amount: 1,
+	})
+	inner := g.openFrame(Frame{
+		Actor:     1,
+		Source:    6,
+		HasSource: true,
+		Trigger:   TriggerDestroyed,
+	})
 	g.record(CardDestroyed{Card: 6})
 	inner()
-	g.record(AemberGained{Player: 1, Amount: 2})
+	g.record(AemberGained{
+		Player: 1,
+		Amount: 2,
+	})
 	outer()
-	g.record(TurnBegan{Player: 1, Turn: 2})
+	g.record(TurnBegan{
+		Player: 1,
+		Turn:   2,
+	})
 
 	wantFrames := []Frame{
 		{Actor: 0},

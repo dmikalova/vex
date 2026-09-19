@@ -42,7 +42,10 @@ var pileZones = [...]Zone{Hand, Deck, Discard, Archives, Purged}
 func (g *Game) removeFromRestingZones(id LocalID) int {
 	o := g.owner(id)
 	for _, z := range pileZones {
-		g.pile(zoneRef{Player: o, Zone: z}).remove(id)
+		g.pile(zoneRef{
+			Player: o,
+			Zone:   z,
+		}).remove(id)
 	}
 	return o
 }

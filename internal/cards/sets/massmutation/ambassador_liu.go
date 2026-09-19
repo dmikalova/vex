@@ -39,7 +39,10 @@ var AmbassadorLiu = set.New(
 					card.ItIs{House: card.Houses.Named(card.House.Logos)},
 					card.ItIs{House: card.Houses.Named(card.House.Untamed)},
 				}},
-				Then: card.GainAember{Player: card.Controller, Amount: 2},
+				Then: card.GainAember{
+					Player: card.Controller,
+					Amount: 2,
+				},
 			},
 			card.Conditional{
 				Cond: card.Or{Conditions: []card.Condition{

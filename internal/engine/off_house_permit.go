@@ -121,7 +121,11 @@ func (g *Game) nonActivePlayLimit(player int) int {
 			continue
 		}
 		if c := p.Condition; c != nil &&
-			!c.Met(&EffectContext{Resolver: g, Source: id, Controller: player}) {
+			!c.Met(&EffectContext{
+				Resolver:   g,
+				Source:     id,
+				Controller: player,
+			}) {
 			continue
 		}
 		limit += p.count()

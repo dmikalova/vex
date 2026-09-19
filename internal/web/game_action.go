@@ -165,10 +165,19 @@ func (g *game) flyIntoPlay() {
 		g.takeoff.y-to.Get("top").Float())
 	el.Call("animate",
 		[]any{
-			map[string]any{"transform": from, "zIndex": flyIntoPlayZIndex},
-			map[string]any{"transform": "none", "zIndex": flyIntoPlayZIndex},
+			map[string]any{
+				"transform": from,
+				"zIndex":    flyIntoPlayZIndex,
+			},
+			map[string]any{
+				"transform": "none",
+				"zIndex":    flyIntoPlayZIndex,
+			},
 		},
-		map[string]any{"duration": flyIntoPlayDurMS, "easing": flyIntoPlayEasing})
+		map[string]any{
+			"duration": flyIntoPlayDurMS,
+			"easing":   flyIntoPlayEasing,
+		})
 }
 
 // beginAction starts a new log group for the root action about to run and marks
@@ -186,7 +195,10 @@ func (g *game) beginAction() {
 	g.prevState = g.g.State.FastCopy()
 	g.prevValid = true
 	g.redoLog = nil
-	g.logGroups = append(g.logGroups, logMark{Start: len(g.g.Log), Player: g.g.State.ActivePlayer})
+	g.logGroups = append(g.logGroups, logMark{
+		Start:  len(g.g.Log),
+		Player: g.g.State.ActivePlayer,
+	})
 }
 
 // clearFlashes drops every queued one-shot animation, so a state change the
@@ -470,7 +482,11 @@ func (g *game) computeFlights(inPlayNow map[engine.LocalID]bool) {
 			continue
 		}
 		if player, zone, ok := g.landing(id); ok {
-			g.flights = append(g.flights, flight{id: id, player: player, zone: zone})
+			g.flights = append(g.flights, flight{
+				id:     id,
+				player: player,
+				zone:   zone,
+			})
 		}
 	}
 	if len(g.flights) > 0 {

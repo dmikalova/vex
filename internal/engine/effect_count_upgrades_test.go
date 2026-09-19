@@ -14,13 +14,20 @@ func TestUpgradesOnCount(t *testing.T) {
 	g.AttachUpgrade(host, up2)
 
 	onHost := UpgradesOn{Target: Target{Kind: TargetThisCreature}}
-	if got := onHost.Value(&EffectContext{Resolver: g, Controller: 0, Source: host}); got != 2 {
+	if got := onHost.Value(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	}); got != 2 {
 		t.Errorf("Value with two upgrades = %d, want 2", got)
 	}
 
 	// A Target that selects nothing (no attached upgrade in context) counts zero.
 	empty := UpgradesOn{Target: Target{Kind: TargetAttachedHost}}
-	if got := empty.Value(&EffectContext{Resolver: g, Controller: 0}); got != 0 {
+	if got := empty.Value(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}); got != 0 {
 		t.Errorf("Value with no selection = %d, want 0", got)
 	}
 

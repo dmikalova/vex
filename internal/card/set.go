@@ -23,7 +23,12 @@ func NewSet(src provenance.SourceSet) *Set { return &Set{src: src} }
 // registered through its New method is marked undraftable, so the set builds no
 // draw pool of its own and its cards reach a deck only through a cross-set
 // mechanism such as a cluster. The Anomaly Expansion Shards are its members.
-func ReservoirSet(src provenance.SourceSet) *Set { return &Set{src: src, reservoir: true} }
+func ReservoirSet(src provenance.SourceSet) *Set {
+	return &Set{
+		src:       src,
+		reservoir: true,
+	}
+}
 
 // New registers a card as a member of the set, prefilling its home set (and, for a
 // reservoir set, marking it undraftable) before delegating to the package-level

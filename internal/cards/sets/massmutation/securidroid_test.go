@@ -20,7 +20,10 @@ import (
 func TestSecuriDroid(t *testing.T) {
 	t.Run("plays as a creature", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.StarAlliance, Hand: ct.Cards(SecuriDroid)},
+			P1: ct.Side{
+				House: card.House.StarAlliance,
+				Hand:  ct.Cards(SecuriDroid),
+			},
 		})
 
 		h.P1.Play(SecuriDroid)

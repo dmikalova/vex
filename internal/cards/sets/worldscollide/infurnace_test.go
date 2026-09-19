@@ -19,7 +19,10 @@ import (
 func TestInfurnace(t *testing.T) {
 	var a, b ct.Card
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(Infurnace)},
+		P1: ct.Side{
+			House: card.House.Dis,
+			Hand:  ct.Cards(Infurnace),
+		},
 		P2: ct.Side{
 			Amber: 5,
 			Discard: ct.Cards(

@@ -19,7 +19,10 @@ func TestPerilousWild(t *testing.T) {
 	t.Run("destroys each elusive creature", func(t *testing.T) {
 		var elusive, plain ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(PerilousWild)},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(PerilousWild),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(

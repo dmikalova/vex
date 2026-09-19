@@ -22,9 +22,12 @@ var ZyzzixTheMany = set.New(
 	card.WithAbility(card.Trigger.FightReap, card.May{
 		Do: card.Then{
 			First: card.ArchiveCard{
-				Zone:      card.Hand,
-				Selection: card.Chosen{Type: card.Type.Creature, Optional: true},
-				Revealed:  true,
+				Zone: card.Hand,
+				Selection: card.Chosen{
+					Type:     card.Type.Creature,
+					Optional: true,
+				},
+				Revealed: true,
 			},
 			Result: card.AddPowerCounter{
 				Target: card.Target.This,

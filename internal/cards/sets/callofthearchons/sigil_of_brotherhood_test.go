@@ -21,7 +21,10 @@ import (
 func TestSigilOfBrotherhood(t *testing.T) {
 	t.Run("destroys itself and grants use of friendly Sanctum creatures", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, InPlay: ct.Cards(SigilOfBrotherhood)},
+			P1: ct.Side{
+				House:  card.House.Sanctum,
+				InPlay: ct.Cards(SigilOfBrotherhood),
+			},
 		})
 
 		h.P1.UseAction(SigilOfBrotherhood)

@@ -19,7 +19,10 @@ func TestGongoozle(t *testing.T) {
 	t.Run("a surviving creature's owner discards a random card", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(Gongoozle)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(Gongoozle),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),

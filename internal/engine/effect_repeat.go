@@ -192,7 +192,11 @@ func (g ByExalting) run(ctx *EffectContext, do Effect) {
 	}
 	for _, id := range ids {
 		ctx.Resolver.AddAmberOn(id, 1)
-		ctx.Resolver.Record(AemberExalted{Player: ctx.Controller, Creature: id, Amount: 1})
+		ctx.Resolver.Record(AemberExalted{
+			Player:   ctx.Controller,
+			Creature: id,
+			Amount:   1,
+		})
 	}
 	do.Resolve(ctx)
 }

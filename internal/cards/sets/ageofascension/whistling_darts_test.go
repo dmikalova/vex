@@ -19,7 +19,10 @@ func TestWhistlingDarts(t *testing.T) {
 	t.Run("deals 1 damage to each enemy creature when played", func(t *testing.T) {
 		var foe1, foe2 ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(WhistlingDarts)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(WhistlingDarts),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&foe1, ct.Creature(ct.Power(20))),

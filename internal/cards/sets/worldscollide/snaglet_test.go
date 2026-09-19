@@ -20,8 +20,14 @@ import (
 func TestSnaglet(t *testing.T) {
 	t.Run("opponent picks the predicted house", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Snaglet)},
-			P2: ct.Side{House: card.House.Mars, Amber: 3},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(Snaglet),
+			},
+			P2: ct.Side{
+				House: card.House.Mars,
+				Amber: 3,
+			},
 		})
 
 		h.P1.UseAction(Snaglet)
@@ -41,8 +47,14 @@ func TestSnaglet(t *testing.T) {
 
 	t.Run("opponent picks a different house", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Snaglet)},
-			P2: ct.Side{House: card.House.Mars, Amber: 3},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(Snaglet),
+			},
+			P2: ct.Side{
+				House: card.House.Mars,
+				Amber: 3,
+			},
 		})
 
 		h.P1.UseAction(Snaglet)

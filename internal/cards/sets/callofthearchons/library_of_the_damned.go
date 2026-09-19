@@ -19,6 +19,9 @@ var LibraryOfTheDamned = set.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action,
-		card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
+		card.ArchiveCard{
+			Zone:      card.Hand,
+			Selection: card.Chosen{},
+		},
 	),
 )

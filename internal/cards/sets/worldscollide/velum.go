@@ -22,14 +22,23 @@ var Velum = set.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithAbility(card.Trigger.Reap, card.Sequence{Effects: []card.Effect{
-		card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
+		card.ArchiveCard{
+			Zone:      card.Hand,
+			Selection: card.Chosen{},
+		},
 		card.Conditional{
 			Cond: card.ControlsNamed{Name: HydeName},
-			Then: card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
+			Then: card.ArchiveCard{
+				Zone:      card.Hand,
+				Selection: card.Chosen{},
+			},
 		},
 	}}),
 	card.WithAbility(card.Trigger.Destroyed, card.Then{
-		First:  card.ArchiveCard{Zone: card.Discard, Selection: card.Named{Name: HydeName}},
+		First: card.ArchiveCard{
+			Zone:      card.Discard,
+			Selection: card.Named{Name: HydeName},
+		},
 		Result: card.ArchiveFromPlay{Target: card.Target.This},
 	}),
 )

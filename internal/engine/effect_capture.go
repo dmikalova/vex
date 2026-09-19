@@ -404,7 +404,10 @@ func (e MoveAemberToSupply) resolveGate(ctx *EffectContext) bool {
 			continue
 		}
 		ctx.Resolver.AddAmberOn(id, -remove)
-		ctx.Resolver.Record(AemberMovedToCommonSupply{Card: id, Amount: remove})
+		ctx.Resolver.Record(AemberMovedToCommonSupply{
+			Card:   id,
+			Amount: remove,
+		})
 		moved = true
 	}
 	if e.Bind && haveLast {

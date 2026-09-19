@@ -10,7 +10,11 @@ func TestStaticModifierPerUpgrade(t *testing.T) {
 	host := g.AddToBattleline(testCreature("host", 4), 0)
 	light := g.Register(
 		NewCard("light", StarAlliance, Upgrade, Common,
-			WithStatic(StaticModifier{PowerBonus: 1, ArmorBonus: 1, Per: UpgradesOnIt})),
+			WithStatic(StaticModifier{
+				PowerBonus: 1,
+				ArmorBonus: 1,
+				Per:        UpgradesOnIt,
+			})),
 		0,
 	)
 	g.AttachUpgrade(host, light)

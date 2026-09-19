@@ -7,11 +7,18 @@ func TestThen(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	self := g.AddToBattleline(testCreature("self", 3), 0)
 	foe := g.AddToBattleline(testCreature("foe", 1), 1)
-	ctx := &EffectContext{Resolver: g, Source: self, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     self,
+		Controller: 0,
+	}
 
 	then := Then{
-		First:  Destroy{Target: Target{Kind: TargetEachEnemyCreature}},
-		Result: AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: 1},
+		First: Destroy{Target: Target{Kind: TargetEachEnemyCreature}},
+		Result: AddPowerCounter{
+			Target: Target{Kind: TargetThisCreature},
+			Amount: 1,
+		},
 	}
 	if then.Text() != "destroy each enemy creature -> give {self} a +1 power counter" {
 		t.Errorf("text = %q", then.Text())
@@ -34,9 +41,18 @@ func TestThen(t *testing.T) {
 
 func TestStealAemberGate(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
-	then := Then{First: StealAember{Amount: 1}, Result: GainAember{Player: Controller, Amount: 5}}
+	then := Then{
+		First: StealAember{Amount: 1},
+		Result: GainAember{
+			Player: Controller,
+			Amount: 5,
+		},
+	}
 	if then.Text() != "steal 1 Æmber -> gain 5 Æmber" {
 		t.Errorf("text = %q", then.Text())
 	}
@@ -59,9 +75,15 @@ func TestStealAemberGate(t *testing.T) {
 // First does nothing, the Else arm resolves in place of the Result.
 func TestThenElse(t *testing.T) {
 	then := Then{
-		First:  StealAember{Amount: 1},
-		Result: GainAember{Player: Controller, Amount: 5},
-		Else:   GainAember{Player: Controller, Amount: 2},
+		First: StealAember{Amount: 1},
+		Result: GainAember{
+			Player: Controller,
+			Amount: 5,
+		},
+		Else: GainAember{
+			Player: Controller,
+			Amount: 2,
+		},
 	}
 	if got := then.Text(); got != "steal 1 Æmber -> gain 5 Æmber. Otherwise, gain 2 Æmber" {
 		t.Errorf("text = %q", got)
@@ -72,7 +94,10 @@ func TestThenElse(t *testing.T) {
 
 	// First does nothing (opponent has no Æmber): the Else arm runs, not the Result.
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	then.Resolve(ctx)
 	if g.State.Aember[0] != 2 {
 		t.Errorf("the Else arm should run: you = %d, want 2", g.State.Aember[0])
@@ -90,9 +115,12 @@ func TestThenElse(t *testing.T) {
 // TestThenElseValidate surfaces a misconfigured Else arm.
 func TestThenElseValidate(t *testing.T) {
 	bad := Then{
-		First:  StealAember{Amount: 1},
-		Result: GainAember{Player: Controller, Amount: 1},
-		Else:   DiscardCard{}, // unset player and selection
+		First: StealAember{Amount: 1},
+		Result: GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
+		Else: DiscardCard{}, // unset player and selection
 	}
 	if err := bad.validate(); err == nil {
 		t.Error("a misconfigured Else effect should be rejected")

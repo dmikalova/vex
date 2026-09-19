@@ -33,6 +33,9 @@ var Mastermindy = set.New(
 				Amount: 1,
 				Per:    card.CountersOnThis{Kind: card.Counter.Scheme},
 			},
-			card.RemoveCounters{Kind: card.Counter.Scheme, Target: card.Target.This},
+			card.RemoveCounters{
+				Kind:   card.Counter.Scheme,
+				Target: card.Target.This,
+			},
 		}}),
 )

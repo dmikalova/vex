@@ -20,7 +20,10 @@ import (
 //	Players cannot forge their second key.
 func TestSilverKeyImp(t *testing.T) {
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(SilverKeyImp)},
+		P1: ct.Side{
+			House:  card.House.Dis,
+			InPlay: ct.Cards(SilverKeyImp),
+		},
 	})
 	g := h.Game()
 

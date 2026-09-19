@@ -22,7 +22,10 @@ func TestGravelguts(t *testing.T) {
 		func(t *testing.T) {
 			var foe ct.Card
 			h := ct.Play(t, ct.Setup{
-				P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(Gravelguts)},
+				P1: ct.Side{
+					House:  card.House.Brobnar,
+					InPlay: ct.Cards(Gravelguts),
+				},
 				P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(2))))},
 			})
 

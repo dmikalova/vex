@@ -19,7 +19,10 @@ var LifeForALife = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
-			First:  card.Destroy{Target: card.Target.FriendlyCreature},
-			Result: card.DealDamage{Amount: 6, Target: card.Target.Creature},
+			First: card.Destroy{Target: card.Target.FriendlyCreature},
+			Result: card.DealDamage{
+				Amount: 6,
+				Target: card.Target.Creature,
+			},
 		}),
 )

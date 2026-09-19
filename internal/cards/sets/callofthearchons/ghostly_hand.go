@@ -19,7 +19,11 @@ var GhostlyHand = set.New(
 	card.WithBonus(card.Bonus.Aember, card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.PoolAember{Player: card.Opponent, Is: card.Exactly, Amount: 1},
+			Cond: card.PoolAember{
+				Player: card.Opponent,
+				Is:     card.Exactly,
+				Amount: 1,
+			},
 			Then: card.StealAember{Amount: 1},
 		}),
 )

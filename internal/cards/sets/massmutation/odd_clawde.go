@@ -21,7 +21,10 @@ var OddClawde = set.New(
 	card.WithTraits(card.Traits.Mutant, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{
-			Cond: card.PoolAember{Player: card.Opponent, Is: card.Odd},
+			Cond: card.PoolAember{
+				Player: card.Opponent,
+				Is:     card.Odd,
+			},
 			Then: card.StealAember{Amount: 1},
 		}),
 )

@@ -18,7 +18,10 @@ import (
 func TestTakeThatSmartypants(t *testing.T) {
 	t.Run("steals 2 when opponent has 3 or more Logos cards in play", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(TakeThatSmartypants)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(TakeThatSmartypants),
+			},
 			P2: ct.Side{
 				Amber: 4,
 				InPlay: ct.Cards(
@@ -37,7 +40,10 @@ func TestTakeThatSmartypants(t *testing.T) {
 
 	t.Run("steals nothing when opponent has fewer than 3 Logos cards", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(TakeThatSmartypants)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(TakeThatSmartypants),
+			},
 			P2: ct.Side{
 				Amber: 4,
 				InPlay: ct.Cards(

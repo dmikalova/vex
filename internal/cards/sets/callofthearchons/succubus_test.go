@@ -19,7 +19,10 @@ import (
 func TestSuccubus(t *testing.T) {
 	t.Run("refills the opponent's hand to one fewer card", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Succubus)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(Succubus),
+			},
 			P2: ct.Side{Deck: ct.DeckOf(card.House.Logos, 10)},
 		})
 

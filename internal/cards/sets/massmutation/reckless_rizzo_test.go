@@ -21,7 +21,10 @@ import (
 func TestRecklessRizzo(t *testing.T) {
 	var rizzo ct.Card
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(ct.Bind(&rizzo, RecklessRizzo))},
+		P1: ct.Side{
+			House:  card.House.Shadows,
+			InPlay: ct.Cards(ct.Bind(&rizzo, RecklessRizzo)),
+		},
 		P2: ct.Side{Amber: 2},
 	})
 

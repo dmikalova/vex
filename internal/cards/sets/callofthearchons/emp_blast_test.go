@@ -19,7 +19,10 @@ func TestEMPBlast(t *testing.T) {
 	t.Run("stuns each Mars and Robot creature and destroys each artifact", func(t *testing.T) {
 		var marsGuy, robot, other ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Mars, Hand: ct.Cards(EMPBlast)},
+			P1: ct.Side{
+				House: card.House.Mars,
+				Hand:  ct.Cards(EMPBlast),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&marsGuy, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),

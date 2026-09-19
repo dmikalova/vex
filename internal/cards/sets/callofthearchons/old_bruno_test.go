@@ -20,7 +20,10 @@ import (
 func TestOldBruno(t *testing.T) {
 	t.Run("captures 3 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(OldBruno)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(OldBruno),
+			},
 			P2: ct.Side{Amber: 5},
 		})
 

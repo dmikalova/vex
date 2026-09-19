@@ -141,7 +141,10 @@ func TestExpectMismatches(t *testing.T) {
 
 func TestExpectPoolMismatches(t *testing.T) {
 	got := expectFail(t, func(tb testing.TB) {
-		h := Play(tb, Setup{P1: Side{Amber: 2, Keys: 1}})
+		h := Play(tb, Setup{P1: Side{
+			Amber: 2,
+			Keys:  1,
+		}})
 		h.P1.ExpectAmber(5)
 		h.P1.ExpectKeys(3)
 	})

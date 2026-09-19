@@ -51,7 +51,10 @@ func plantFor(ctx card.SlotContext, r *rand.Rand) card.Definition {
 		card.WithEachPlayerAbility(
 			card.Trigger.AfterChooseHouse, card.Conditional{
 				Cond: card.ChoseHouse{House: partner},
-				Then: card.GainAember{Player: card.Controller, Amount: 1},
+				Then: card.GainAember{
+					Player: card.Controller,
+					Amount: 1,
+				},
 			}),
 	)
 }

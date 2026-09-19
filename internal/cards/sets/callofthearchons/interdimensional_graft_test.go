@@ -20,8 +20,14 @@ func TestInterdimensionalGraft(t *testing.T) {
 		"gives the opponent's remaining Æmber after they forge on their next turn",
 		func(t *testing.T) {
 			h := ct.Play(t, ct.Setup{
-				P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(InterdimensionalGraft)},
-				P2: ct.Side{House: card.House.Brobnar, Amber: 10},
+				P1: ct.Side{
+					House: card.House.Logos,
+					Hand:  ct.Cards(InterdimensionalGraft),
+				},
+				P2: ct.Side{
+					House: card.House.Brobnar,
+					Amber: 10,
+				},
 			})
 
 			h.P1.Play(InterdimensionalGraft)
@@ -37,8 +43,14 @@ func TestInterdimensionalGraft(t *testing.T) {
 		"does not transfer if the opponent does not forge on their next turn",
 		func(t *testing.T) {
 			h := ct.Play(t, ct.Setup{
-				P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(InterdimensionalGraft)},
-				P2: ct.Side{House: card.House.Brobnar, Amber: 5},
+				P1: ct.Side{
+					House: card.House.Logos,
+					Hand:  ct.Cards(InterdimensionalGraft),
+				},
+				P2: ct.Side{
+					House: card.House.Brobnar,
+					Amber: 5,
+				},
 			})
 
 			h.P1.Play(InterdimensionalGraft)
@@ -52,8 +64,14 @@ func TestInterdimensionalGraft(t *testing.T) {
 
 	t.Run("expires after the opponent's immediate next turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(InterdimensionalGraft)},
-			P2: ct.Side{House: card.House.Brobnar, Amber: 5},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(InterdimensionalGraft),
+			},
+			P2: ct.Side{
+				House: card.House.Brobnar,
+				Amber: 5,
+			},
 		})
 
 		h.P1.Play(InterdimensionalGraft)

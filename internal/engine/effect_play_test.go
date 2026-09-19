@@ -11,32 +11,57 @@ func TestPlayFromText(t *testing.T) {
 		{"any card", PlayFrom{From: Hand}, "play a card"},
 		{
 			"excluded house",
-			PlayFrom{From: Hand, House: HouseMatcher{Kind: MatchExceptHouse, House: Logos}},
+			PlayFrom{
+				From: Hand,
+				House: HouseMatcher{
+					Kind:  MatchExceptHouse,
+					House: Logos,
+				},
+			},
 			"play a non-Logos card",
 		},
 		{
 			"named house",
-			PlayFrom{From: Hand, House: HouseMatcher{Kind: MatchNamedHouse, House: Mars}},
+			PlayFrom{
+				From: Hand,
+				House: HouseMatcher{
+					Kind:  MatchNamedHouse,
+					House: Mars,
+				},
+			},
 			"play a Mars card",
 		},
-		{"typed", PlayFrom{From: Hand, Types: CardTypesOf(Creature)}, "play a creature"},
+		{"typed", PlayFrom{
+			From:  Hand,
+			Types: CardTypesOf(Creature),
+		}, "play a creature"},
 		{
 			"house and type",
 			PlayFrom{
-				From:  Hand,
-				House: HouseMatcher{Kind: MatchNamedHouse, House: Untamed},
+				From: Hand,
+				House: HouseMatcher{
+					Kind:  MatchNamedHouse,
+					House: Untamed,
+				},
 				Types: CardTypesOf(Artifact),
 			},
 			"play an Untamed artifact",
 		},
 		{
 			"opponent's discard pile",
-			PlayFrom{From: Discard, Player: Opponent, Types: CardTypesOf(Tactic)},
+			PlayFrom{
+				From:   Discard,
+				Player: Opponent,
+				Types:  CardTypesOf(Tactic),
+			},
 			"play a tactic from your opponent's discard pile",
 		},
 		{
 			"opponent's hand",
-			PlayFrom{From: Hand, Player: Opponent},
+			PlayFrom{
+				From:   Hand,
+				Player: Opponent,
+			},
 			"play a card from your opponent's hand",
 		},
 	}
@@ -50,16 +75,31 @@ func TestPlayFromText(t *testing.T) {
 }
 
 func TestPlayFromValidate(t *testing.T) {
-	if err := (PlayFrom{From: Hand, House: HouseMatcher{Kind: MatchExceptHouse}}).validate(); err == nil {
+	if err := (PlayFrom{
+		From:  Hand,
+		House: HouseMatcher{Kind: MatchExceptHouse},
+	}).validate(); err == nil {
 		t.Error("an except-house matcher without a house should not validate")
 	}
-	if err := (PlayFrom{From: Hand, House: HouseMatcher{Kind: MatchExceptHouse, House: Logos}}).validate(); err != nil {
+	if err := (PlayFrom{
+		From: Hand,
+		House: HouseMatcher{
+			Kind:  MatchExceptHouse,
+			House: Logos,
+		},
+	}).validate(); err != nil {
 		t.Errorf("validate = %v, want nil", err)
 	}
-	if err := (PlayFrom{From: Hand, Player: Opponent}).validate(); err != nil {
+	if err := (PlayFrom{
+		From:   Hand,
+		Player: Opponent,
+	}).validate(); err != nil {
 		t.Errorf("the opponent's hand may be played from (Lateral Shift): %v", err)
 	}
-	if err := (PlayFrom{From: Archives, Player: Opponent}).validate(); err == nil {
+	if err := (PlayFrom{
+		From:   Archives,
+		Player: Opponent,
+	}).validate(); err == nil {
 		t.Error("only the opponent's hand or discard pile may be played from, not their archives")
 	}
 }
@@ -70,11 +110,21 @@ func TestPlayFromValidate(t *testing.T) {
 func TestPlayFromOpponentDiscard(t *testing.T) {
 	g := started(t)
 	copied := g.AddToDiscard(NewCard("Copied", Logos, Tactic, Common,
-		WithAbility(TriggerAfterPlay, GainAember{Player: Controller, Amount: 2})), 1)
+		WithAbility(TriggerAfterPlay, GainAember{
+			Player: Controller,
+			Amount: 2,
+		})), 1)
 	buried := g.AddToDiscard(NewCard("Buried", Logos, Creature, Common, WithPower(1)), 1)
 
-	PlayFrom{From: Discard, Player: Opponent, Types: CardTypesOf(Tactic)}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0},
+	PlayFrom{
+		From:   Discard,
+		Player: Opponent,
+		Types:  CardTypesOf(Tactic),
+	}.Resolve(
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		},
 	)
 
 	// The Play: ability resolved under player 0's control, so player 0 — not the
@@ -106,9 +156,15 @@ func TestPlayFromBindsIt(t *testing.T) {
 	g := started(t)
 	dino := g.AddToHand(NewCard("Dino", Brobnar, Creature, Common, WithPower(3)), 0)
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	Then{
-		First:  PlayFrom{From: Hand, Types: CardTypesOf(Creature)},
+		First: PlayFrom{
+			From:  Hand,
+			Types: CardTypesOf(Creature),
+		},
 		Result: Stun{Target: Target{Kind: TargetTriggeringCreature}},
 	}.Resolve(ctx)
 
@@ -130,9 +186,15 @@ func TestPlayFromGateFalseWithNoCandidate(t *testing.T) {
 	bystander := g.AddToBattleline(NewCard("Bystander", Brobnar, Creature, Common, WithPower(2)), 0)
 
 	Then{
-		First:  PlayFrom{From: Hand, Types: CardTypesOf(Creature)},
+		First: PlayFrom{
+			From:  Hand,
+			Types: CardTypesOf(Creature),
+		},
 		Result: Stun{Target: Target{Kind: TargetEachFriendlyCreature}},
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	if g.Stunned(bystander) {
 		t.Error("no card was played, so the gate is false and the follow-up Stun must not run")
@@ -146,7 +208,13 @@ func TestPlayFromOpponentHand(t *testing.T) {
 	g := started(t)
 	foreign := g.AddToHand(NewCard("Borrowed", Brobnar, Creature, Common, WithPower(4)), 1)
 
-	PlayFrom{From: Hand, Player: Opponent}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	PlayFrom{
+		From:   Hand,
+		Player: Opponent,
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	if line := g.Battleline(0); len(line) != 1 || line[0] != foreign {
 		t.Fatalf("player 0 battleline = %v, want the borrowed creature %d", line, foreign)
@@ -183,10 +251,16 @@ func TestPlayFromPlaysAChosenCard(t *testing.T) {
 	g.AddToHand(NewCard("On House", Brobnar, Creature, Common, WithPower(2)), 0)
 
 	PlayFrom{
-		From:  Hand,
-		House: HouseMatcher{Kind: MatchExceptHouse, House: Brobnar},
+		From: Hand,
+		House: HouseMatcher{
+			Kind:  MatchExceptHouse,
+			House: Brobnar,
+		},
 	}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0},
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		},
 	)
 
 	if got := g.Battleline(0); len(got) != 1 || got[0] != off {
@@ -199,10 +273,16 @@ func TestPlayFromWithNoCandidate(t *testing.T) {
 	g.AddToHand(NewCard("On House", Brobnar, Creature, Common, WithPower(2)), 0)
 
 	PlayFrom{
-		From:  Hand,
-		House: HouseMatcher{Kind: MatchExceptHouse, House: Brobnar},
+		From: Hand,
+		House: HouseMatcher{
+			Kind:  MatchExceptHouse,
+			House: Brobnar,
+		},
 	}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0},
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		},
 	)
 
 	if got := len(g.Battleline(0)); got != 0 {
@@ -220,7 +300,10 @@ func TestPlayFromDeclined(t *testing.T) {
 		From:  Hand,
 		Types: CardTypesOf(Creature),
 	}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0},
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		},
 	)
 
 	if got := len(g.Battleline(0)); got != 0 {
@@ -232,8 +315,11 @@ func TestPlayFromDeclined(t *testing.T) {
 // Officer Kirby frees a non-creature card.
 func TestPlayFromTypesText(t *testing.T) {
 	e := PlayFrom{
-		From:  Hand,
-		House: HouseMatcher{Kind: MatchExceptHouse, House: StarAlliance},
+		From: Hand,
+		House: HouseMatcher{
+			Kind:  MatchExceptHouse,
+			House: StarAlliance,
+		},
 		Types: CardTypesOf(Artifact, Upgrade, Tactic),
 	}
 	if got, want := e.Text(), "play a non-Star Alliance artifact, upgrade, or tactic"; got != want {
@@ -251,7 +337,10 @@ func TestPlayFromTypesFiltersCandidates(t *testing.T) {
 	cands := PlayFrom{
 		From:  Hand,
 		Types: CardTypesOf(Artifact, Upgrade, Tactic),
-	}.candidates(&EffectContext{Resolver: g, Controller: 0})
+	}.candidates(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	if len(cands) != 1 || cands[0] != art {
 		t.Errorf("candidates = %v, want [%d] (the creature filtered out)", cands, art)
@@ -267,7 +356,10 @@ func TestPlayFromFiltersByType(t *testing.T) {
 		From:  Hand,
 		Types: CardTypesOf(Artifact),
 	}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0},
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		},
 	)
 
 	if got := g.Artifacts(0); len(got) != 1 || got[0] != artifact {
@@ -294,7 +386,10 @@ func TestActivePlayer(t *testing.T) {
 }
 
 func TestPlayFromDiscardPile(t *testing.T) {
-	e := PlayFrom{From: Discard, Types: CardTypesOf(Creature)}
+	e := PlayFrom{
+		From:  Discard,
+		Types: CardTypesOf(Creature),
+	}
 	want := "play a creature from your discard pile"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
@@ -304,7 +399,10 @@ func TestPlayFromDiscardPile(t *testing.T) {
 	creature := g.AddToDiscard(NewCard("Risen", Logos, Creature, Common, WithPower(2)), 0)
 	g.AddToDiscard(NewCard("Spent Tactic", Logos, Tactic, Common), 0) // wrong type
 
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	if got := g.Battleline(0); len(got) != 1 || got[0] != creature {
 		t.Errorf("battleline = %v, want the creature %d from the discard pile", got, creature)
@@ -337,7 +435,10 @@ func TestPlayFromValidatesItsSourcePile(t *testing.T) {
 // TestPlayFromArchives covers Project Z.Y.X.: a creature plays a card out of its
 // controller's archives, bypassing the active-house gate.
 func TestPlayFromArchives(t *testing.T) {
-	e := PlayFrom{From: Archives, Types: CardTypesOf(Creature)}
+	e := PlayFrom{
+		From:  Archives,
+		Types: CardTypesOf(Creature),
+	}
 	want := "play a creature from your archives"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
@@ -350,7 +451,10 @@ func TestPlayFromArchives(t *testing.T) {
 	creature := g.AddToArchives(NewCard("Archived", Logos, Creature, Common, WithPower(2)), 0)
 	g.AddToArchives(NewCard("Archived Tactic", Logos, Tactic, Common), 0) // wrong type
 
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	if got := g.Battleline(0); len(got) != 1 || got[0] != creature {
 		t.Errorf("battleline = %v, want the creature %d from the archives", got, creature)
@@ -404,7 +508,10 @@ func TestPlayFromOpponentEffectsValidate(t *testing.T) {
 func TestPlayTopOfOpponentDeckCreature(t *testing.T) {
 	g := started(t)
 	foe := g.AddToDeck(NewCard("Foe", Logos, Creature, Common, WithPower(3),
-		WithAbility(TriggerAfterPlay, GainAember{Player: Controller, Amount: 2})), 1)
+		WithAbility(TriggerAfterPlay, GainAember{
+			Player: Controller,
+			Amount: 2,
+		})), 1)
 
 	g.PlayFromOpponent(0, Deck)
 
@@ -431,7 +538,10 @@ func TestPlayTopOfOpponentDeckCreature(t *testing.T) {
 func TestPlayRandomFromOpponentArchives(t *testing.T) {
 	g := started(t)
 	act := g.AddToArchives(NewCard("Snatched", Logos, Tactic, Common,
-		WithAbility(TriggerAfterPlay, GainAember{Player: Controller, Amount: 3})), 1)
+		WithAbility(TriggerAfterPlay, GainAember{
+			Player: Controller,
+			Amount: 3,
+		})), 1)
 
 	g.PlayFromOpponent(0, Archives)
 
@@ -482,9 +592,15 @@ func TestPlayForeignRevertsRejectedPlay(t *testing.T) {
 func TestPlayRandomFromOpponentArchivesResolve(t *testing.T) {
 	g := started(t)
 	act := g.AddToArchives(NewCard("A", Logos, Tactic, Common,
-		WithAbility(TriggerAfterPlay, GainAember{Player: Controller, Amount: 1})), 1)
+		WithAbility(TriggerAfterPlay, GainAember{
+			Player: Controller,
+			Amount: 1,
+		})), 1)
 
-	PlayFromOpponent{From: Archives}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	PlayFromOpponent{From: Archives}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	if g.State.Archives[1].contains(act) {
 		t.Error("archives card should have been played")
@@ -500,7 +616,10 @@ func TestPlayTopOfOpponentDeckResolve(t *testing.T) {
 	g := started(t)
 	top := g.AddToDeck(NewCard("D", Logos, Creature, Common, WithPower(2)), 1)
 
-	PlayFromOpponent{From: Deck}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	PlayFromOpponent{From: Deck}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	if !g.inPlay(top) || g.controller(top) != 0 {
 		t.Error("deck top should be in play under player 0")

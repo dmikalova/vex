@@ -20,7 +20,10 @@ import (
 func TestFuzzyGruen(t *testing.T) {
 	t.Run("gives the opponent 1 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(FuzzyGruen)},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(FuzzyGruen),
+			},
 			P2: ct.Side{Amber: 0},
 		})
 

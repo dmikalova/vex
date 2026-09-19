@@ -30,7 +30,11 @@ func TestPutUnderFromHandChoosesAndAttaches(t *testing.T) {
 	buried := g.AddToHand(NewCard("Buried", Brobnar, Creature, Common, WithPower(2)), 0)
 
 	PutUnderFromHand{FaceDown: true}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, Source: host},
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			Source:     host,
+		},
 	)
 
 	if got := g.Under(host); len(got) != 1 || got[0] != buried {
@@ -45,7 +49,11 @@ func TestPutUnderFromHandWithEmptyHand(t *testing.T) {
 	g := started(t)
 	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
 
-	PutUnderFromHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+	PutUnderFromHand{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	})
 
 	if got := g.Under(host); len(got) != 0 {
 		t.Errorf("under = %v, want none", got)
@@ -59,7 +67,11 @@ func TestPutUnderFromHandDeclined(t *testing.T) {
 	g.AddToHand(NewCard("Second", Brobnar, Creature, Common, WithPower(2)), 0)
 	g.SetChooser(0, orderRejectChooser{})
 
-	PutUnderFromHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+	PutUnderFromHand{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	})
 
 	if got := g.Under(host); len(got) != 0 {
 		t.Errorf("under = %v, want none after declining", got)
@@ -78,7 +90,11 @@ func TestPlayCardUnderWithOneCandidate(t *testing.T) {
 	buried := g.Register(NewCard("Buried", Brobnar, Creature, Common, WithPower(2)), 0)
 	g.AttachUnder(host, buried, true)
 
-	ctx := &EffectContext{Resolver: g, Controller: 0, Source: host}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	}
 	PlayCardUnder{}.Resolve(ctx)
 
 	if got := g.Battleline(0); len(got) != 1 || got[0] != buried {
@@ -98,7 +114,11 @@ func TestPlayCardUnderChoosesAmongSeveral(t *testing.T) {
 	g.AttachUnder(host, second, true)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{second}})
 
-	PlayCardUnder{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+	PlayCardUnder{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	})
 
 	if got := g.Battleline(0); len(got) != 1 || got[0] != second {
 		t.Errorf("battleline = %v, want the chosen creature %d", got, second)
@@ -117,7 +137,11 @@ func TestPlayCardUnderDeclined(t *testing.T) {
 	g.AttachUnder(host, second, true)
 	g.SetChooser(0, orderRejectChooser{})
 
-	PlayCardUnder{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+	PlayCardUnder{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	})
 
 	if got := len(g.Battleline(0)); got != 0 {
 		t.Errorf("battleline holds %d creatures, want none after declining", got)
@@ -128,7 +152,11 @@ func TestPlayCardUnderWithNoCandidate(t *testing.T) {
 	g := started(t)
 	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
 
-	PlayCardUnder{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+	PlayCardUnder{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	})
 
 	if got := len(g.Battleline(0)); got != 0 {
 		t.Errorf("battleline holds %d creatures, want none", got)
@@ -161,7 +189,11 @@ func TestGraftResolvePlacesTargetUnderSource(t *testing.T) {
 	g.putIntoPlay(victim, 0)
 
 	Graft{Target: Target{Kind: TargetChosenCreature}}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, Source: host},
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			Source:     host,
+		},
 	)
 
 	if g.inPlay(victim) {
@@ -201,7 +233,11 @@ func TestPutUnderIntoPlayResolveReturnsToOwners(t *testing.T) {
 	g.AttachUnder(host, mine, false)
 	g.AttachUnder(host, theirs, false)
 
-	PutUnderIntoPlay{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+	PutUnderIntoPlay{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	})
 
 	if got := g.Under(host); len(got) != 0 {
 		t.Errorf("under = %v, want empty", got)
@@ -239,7 +275,11 @@ func TestArchiveCardUnderResolveMovesToOwnerArchives(t *testing.T) {
 	g.AttachUnder(host, mine, true)
 	g.AttachUnder(host, theirs, true)
 
-	ArchiveCardUnder{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+	ArchiveCardUnder{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	})
 
 	if got := g.Under(host); len(got) != 0 {
 		t.Errorf("under = %v, want empty", got)
@@ -272,7 +312,11 @@ func TestPutUnderFromHandTypeOnlyOffersMatchingType(t *testing.T) {
 	tactic := g.AddToHand(NewCard("Tactic", Brobnar, Tactic, Common), 0)
 
 	PutUnderFromHand{Type: Tactic}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, Source: host},
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			Source:     host,
+		},
 	)
 
 	if got := g.Under(host); len(got) != 1 || got[0] != tactic {
@@ -299,10 +343,17 @@ func TestTriggerGraftedPlayEffectFiresAndStaysGrafted(t *testing.T) {
 	g := started(t)
 	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
 	gift := g.Register(NewCard("Gift", Brobnar, Tactic, Common,
-		WithAbility(TriggerAfterPlay, GainAember{Amount: 2, Player: Controller})), 0)
+		WithAbility(TriggerAfterPlay, GainAember{
+			Amount: 2,
+			Player: Controller,
+		})), 0)
 	g.AttachUnder(host, gift, false)
 
-	ctx := &EffectContext{Resolver: g, Controller: 0, Source: host}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	}
 	TriggerGraftedPlayEffect{}.Resolve(ctx)
 
 	if g.Aember(0) != 2 {
@@ -325,14 +376,24 @@ func TestTriggerGraftedPlayEffectChoosesAmongSeveral(t *testing.T) {
 	g := started(t)
 	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
 	first := g.Register(NewCard("First", Brobnar, Tactic, Common,
-		WithAbility(TriggerAfterPlay, GainAember{Amount: 1, Player: Controller})), 0)
+		WithAbility(TriggerAfterPlay, GainAember{
+			Amount: 1,
+			Player: Controller,
+		})), 0)
 	second := g.Register(NewCard("Second", Brobnar, Tactic, Common,
-		WithAbility(TriggerAfterPlay, GainAember{Amount: 3, Player: Controller})), 0)
+		WithAbility(TriggerAfterPlay, GainAember{
+			Amount: 3,
+			Player: Controller,
+		})), 0)
 	g.AttachUnder(host, first, false)
 	g.AttachUnder(host, second, false)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{second}})
 
-	TriggerGraftedPlayEffect{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+	TriggerGraftedPlayEffect{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	})
 
 	if g.Aember(0) != 3 {
 		t.Errorf("Æmber = %d, want 3 from the chosen action", g.Aember(0))
@@ -348,7 +409,11 @@ func TestTriggerGraftedPlayEffectVacuousWithNothingGrafted(t *testing.T) {
 	g := started(t)
 	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
 
-	TriggerGraftedPlayEffect{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+	TriggerGraftedPlayEffect{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	})
 
 	if g.Aember(0) != 0 {
 		t.Errorf("Æmber = %d, want 0 with nothing grafted", g.Aember(0))
@@ -361,10 +426,17 @@ func TestTriggerGraftedPlayEffectSkipsFaceDown(t *testing.T) {
 	g := started(t)
 	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
 	hidden := g.Register(NewCard("Hidden", Brobnar, Tactic, Common,
-		WithAbility(TriggerAfterPlay, GainAember{Amount: 5, Player: Controller})), 0)
+		WithAbility(TriggerAfterPlay, GainAember{
+			Amount: 5,
+			Player: Controller,
+		})), 0)
 	g.AttachUnder(host, hidden, true)
 
-	TriggerGraftedPlayEffect{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+	TriggerGraftedPlayEffect{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	})
 
 	if g.Aember(0) != 0 {
 		t.Errorf("Æmber = %d, want 0 — a facedown card is not a graft", g.Aember(0))
@@ -377,14 +449,24 @@ func TestTriggerGraftedPlayEffectDeclined(t *testing.T) {
 	g := started(t)
 	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
 	first := g.Register(NewCard("First", Brobnar, Tactic, Common,
-		WithAbility(TriggerAfterPlay, GainAember{Amount: 1, Player: Controller})), 0)
+		WithAbility(TriggerAfterPlay, GainAember{
+			Amount: 1,
+			Player: Controller,
+		})), 0)
 	second := g.Register(NewCard("Second", Brobnar, Tactic, Common,
-		WithAbility(TriggerAfterPlay, GainAember{Amount: 3, Player: Controller})), 0)
+		WithAbility(TriggerAfterPlay, GainAember{
+			Amount: 3,
+			Player: Controller,
+		})), 0)
 	g.AttachUnder(host, first, false)
 	g.AttachUnder(host, second, false)
 	g.SetChooser(0, orderRejectChooser{})
 
-	TriggerGraftedPlayEffect{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+	TriggerGraftedPlayEffect{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	})
 
 	if g.Aember(0) != 0 {
 		t.Errorf("Æmber = %d, want 0 after declining the choice", g.Aember(0))

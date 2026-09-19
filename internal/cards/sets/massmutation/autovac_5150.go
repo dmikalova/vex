@@ -29,6 +29,9 @@ var AutoVac5150 = set.New(
 				Amount:   3,
 				Duration: card.Duration.OpponentNextTurn,
 			},
-			Else: card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
+			Else: card.ArchiveCard{
+				Zone:      card.Hand,
+				Selection: card.Chosen{},
+			},
 		}),
 )

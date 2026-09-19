@@ -37,7 +37,10 @@ func (g *Game) runPhases() {
 func (g *Game) enterPhase(p Phase) {
 	g.State.Phase = p
 	g.State.PhaseEnded = false
-	g.record(PhaseBegan{Player: g.State.ActivePlayer, Phase: p})
+	g.record(PhaseBegan{
+		Player: g.State.ActivePlayer,
+		Phase:  p,
+	})
 }
 
 // EndPhase ends the current phase early, so the phase loop moves on without
@@ -109,7 +112,10 @@ func (g *Game) readyPhase(player int) {
 		}
 	}
 	if len(readied) > 0 {
-		g.record(CardsReadied{Player: player, Cards: readied})
+		g.record(CardsReadied{
+			Player: player,
+			Cards:  readied,
+		})
 	}
 	// A card animated only for this turn (Animator) reverts to an artifact now, at
 	// end of turn, keeping its power counters.

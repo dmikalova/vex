@@ -13,7 +13,10 @@ func TestNoActiveHouseWhenAllForbidden(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetPlayerHouses(0, []House{Mars})
 	g.State.ActivePlayer = 0
-	g.State.HouseConstraints[0][0] = HouseConstraint{Kind: constraintCannotHouse, House: Mars}
+	g.State.HouseConstraints[0][0] = HouseConstraint{
+		Kind:  constraintCannotHouse,
+		House: Mars,
+	}
 	g.State.HouseConstraintCount[0] = 1
 	if got := g.AllowedHouses(0); len(got) != 0 {
 		t.Fatalf("allowed = %v, want none", got)
@@ -62,9 +65,18 @@ func TestHouseConstraintsStack(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetPlayerHouses(0, []House{Mars, Logos, Untamed})
 	g.State.ActivePlayer = 0
-	g.State.HouseConstraints[0][0] = HouseConstraint{Kind: constraintMustHouse, House: Mars}
-	g.State.HouseConstraints[0][1] = HouseConstraint{Kind: constraintMustHouse, House: Logos}
-	g.State.HouseConstraints[0][2] = HouseConstraint{Kind: constraintCannotHouse, House: Mars}
+	g.State.HouseConstraints[0][0] = HouseConstraint{
+		Kind:  constraintMustHouse,
+		House: Mars,
+	}
+	g.State.HouseConstraints[0][1] = HouseConstraint{
+		Kind:  constraintMustHouse,
+		House: Logos,
+	}
+	g.State.HouseConstraints[0][2] = HouseConstraint{
+		Kind:  constraintCannotHouse,
+		House: Mars,
+	}
 	g.State.HouseConstraintCount[0] = 3
 	got := g.AllowedHouses(0)
 	if len(got) != 1 || got[0] != Logos {
@@ -80,7 +92,10 @@ func TestMustChooseFoughtCreatureHouse(t *testing.T) {
 	g.SetPlayerHouses(0, []House{Mars, Logos, Untamed})
 	g.State.ActivePlayer = 0
 	id := g.AddToBattleline(NewCard("logosC", Logos, Creature, Common, WithPower(1)), 0)
-	g.State.HouseConstraints[0][0] = HouseConstraint{Kind: constraintMustCreature, Creature: id}
+	g.State.HouseConstraints[0][0] = HouseConstraint{
+		Kind:     constraintMustCreature,
+		Creature: id,
+	}
 	g.State.HouseConstraintCount[0] = 1
 	got := g.AllowedHouses(0)
 	if len(got) != 1 || got[0] != Logos {

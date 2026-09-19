@@ -20,7 +20,10 @@ import (
 func TestChampionAnaphiel(t *testing.T) {
 	t.Run("is a 6-power creature with Taunt", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(ChampionAnaphiel)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(ChampionAnaphiel),
+			},
 		})
 
 		h.P1.Play(ChampionAnaphiel)

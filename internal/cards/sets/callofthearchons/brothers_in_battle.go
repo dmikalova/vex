@@ -19,6 +19,9 @@ var BrothersInBattle = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{
-			Then: card.MayPlayOrUse{Houses: card.GrantHouses.Chosen, Grant: card.GrantFight},
+			Then: card.MayPlayOrUse{
+				Houses: card.GrantHouses.Chosen,
+				Grant:  card.GrantFight,
+			},
 		}),
 )

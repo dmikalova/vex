@@ -9,19 +9,28 @@ func TestGainChainsText(t *testing.T) {
 	if got := (GainChains{Amount: 2}).Text(); got != "gain 2 chains" {
 		t.Errorf("text = %q, want %q", got, "gain 2 chains")
 	}
-	if got := (GainChains{Player: Opponent, Amount: 3}).Text(); got != "your opponent gains 3 chains" {
+	if got := (GainChains{
+		Player: Opponent,
+		Amount: 3,
+	}).Text(); got != "your opponent gains 3 chains" {
 		t.Errorf("text = %q, want %q", got, "your opponent gains 3 chains")
 	}
 }
 
 func TestGainChainsResolve(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	GainChains{Amount: 2}.Resolve(ctx)
 	if g.State.Chains[0] != 2 {
 		t.Errorf("chains = %d, want 2", g.State.Chains[0])
 	}
-	GainChains{Player: Opponent, Amount: 3}.Resolve(ctx)
+	GainChains{
+		Player: Opponent,
+		Amount: 3,
+	}.Resolve(ctx)
 	if g.State.Chains[1] != 3 {
 		t.Errorf("opponent chains = %d, want 3", g.State.Chains[1])
 	}

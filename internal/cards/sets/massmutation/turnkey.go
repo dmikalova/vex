@@ -23,7 +23,10 @@ var Turnkey = set.New(
 		card.Trigger.Play, card.Then{
 			First: card.UnforgeKey{Player: card.Opponent},
 			Result: card.ScheduleOnLeave{
-				Do: card.ForgeKey{Player: card.Opponent, FreeOfCost: true},
+				Do: card.ForgeKey{
+					Player:     card.Opponent,
+					FreeOfCost: true,
+				},
 			},
 		}),
 )

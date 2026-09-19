@@ -20,7 +20,10 @@ import (
 func TestSquireAlys(t *testing.T) {
 	t.Run("captures 2 Æmber from the opponent when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(SquireAlys)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(SquireAlys),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 

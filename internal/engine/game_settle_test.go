@@ -37,7 +37,11 @@ func TestArtifactSelfDestroysWhenNoCreatures(t *testing.T) {
 	g := started(t)
 	sigil := g.AddArtifact(
 		NewCard("Doom Sigil", Shadows, Artifact, Rare,
-			WithDestroyedWhen(CardsInPlay{Player: EachPlayer, Type: Creature, None: true})), 0)
+			WithDestroyedWhen(CardsInPlay{
+				Player: EachPlayer,
+				Type:   Creature,
+				None:   true,
+			})), 0)
 	creature := g.AddToBattleline(
 		NewCard("Sapling", Untamed, Creature, Common, WithPower(2)), 0)
 
@@ -77,7 +81,11 @@ func TestBuffLossKillsADamagedCreature(t *testing.T) {
 	g := started(t)
 	src := g.AddToBattleline(banner(2), 0)
 	victim := g.AddToBattleline(NewCard("Oak", Untamed, Creature, Common, WithPower(3)), 0)
-	g.applyRawDamage(DamageTarget{ID: victim, Amount: 4, IgnoreArmor: true})
+	g.applyRawDamage(DamageTarget{
+		ID:          victim,
+		Amount:      4,
+		IgnoreArmor: true,
+	})
 
 	if !g.inPlay(victim) {
 		t.Fatal("4 damage should not destroy a 5-power creature")
@@ -99,7 +107,11 @@ func TestSettleCascades(t *testing.T) {
 	last := g.AddToBattleline(NewCard("Sprout", Untamed, Creature, Common), 0)
 
 	// middle sits at 3 printed + 2 from src + 2 from itself; last is 0 + 4.
-	g.applyRawDamage(DamageTarget{ID: middle, Amount: 6, IgnoreArmor: true})
+	g.applyRawDamage(DamageTarget{
+		ID:          middle,
+		Amount:      6,
+		IgnoreArmor: true,
+	})
 	g.putIntoHand(src)
 	g.settleDestroyed(0) // the resolution boundary settles the buff loss (ADR 0029)
 
@@ -118,7 +130,11 @@ func TestDamageSkipsACardOutOfPlay(t *testing.T) {
 	victim := g.AddToBattleline(NewCard("Oak", Untamed, Creature, Common, WithPower(5)), 0)
 	g.putIntoHand(victim)
 
-	g.applyRawDamage(DamageTarget{ID: victim, Amount: 3, IgnoreArmor: true})
+	g.applyRawDamage(DamageTarget{
+		ID:          victim,
+		Amount:      3,
+		IgnoreArmor: true,
+	})
 
 	if got := g.State.Cards[victim].Damage; got != 0 {
 		t.Errorf("damage on a card in hand = %d, want 0", got)
@@ -134,8 +150,16 @@ func TestCaptureSkipsACreatureOutOfPlay(t *testing.T) {
 	g.State.Aember[1] = 3
 	g.putIntoHand(captor)
 
-	CaptureAember{Amount: 1, Target: Target{Kind: TargetThisCreature}, Source: Opponent}.
-		Resolve(&EffectContext{Resolver: g, Source: captor, Controller: 0})
+	CaptureAember{
+		Amount: 1,
+		Target: Target{Kind: TargetThisCreature},
+		Source: Opponent,
+	}.
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Source:     captor,
+			Controller: 0,
+		})
 
 	if got := g.State.Aember[1]; got != 3 {
 		t.Errorf("opponent pool = %d, want 3 left alone", got)
@@ -159,7 +183,11 @@ func TestAemberOnACreatureFeedsItsPower(t *testing.T) {
 		0,
 	)
 	g.addAmberOn(marauder, 2)
-	g.applyRawDamage(DamageTarget{ID: marauder, Amount: 3, IgnoreArmor: true})
+	g.applyRawDamage(DamageTarget{
+		ID:          marauder,
+		Amount:      3,
+		IgnoreArmor: true,
+	})
 
 	if !g.inPlay(marauder) {
 		t.Fatal("3 damage should not destroy it at 4 power")
@@ -207,7 +235,11 @@ func TestForgingSettlesPowerFromUnforgedKeys(t *testing.T) {
 			})),
 		0,
 	)
-	g.applyRawDamage(DamageTarget{ID: id, Amount: 6, IgnoreArmor: true})
+	g.applyRawDamage(DamageTarget{
+		ID:          id,
+		Amount:      6,
+		IgnoreArmor: true,
+	})
 
 	if !g.inPlay(id) {
 		t.Fatal("6 damage should not destroy it while it holds 11 power")
@@ -256,7 +288,10 @@ func TestArrivalKillsFlankNeighborBeforeAfterPlay(t *testing.T) {
 	var neighborStillInPlay bool
 	id := g.AddToHand(
 		testCreature("arriving", 3,
-			WithAbility(TriggerAfterPlay, recordInPlay{id: neighbor, got: &neighborStillInPlay})),
+			WithAbility(TriggerAfterPlay, recordInPlay{
+				id:  neighbor,
+				got: &neighborStillInPlay,
+			})),
 		0,
 	)
 	g.State.ActivePlayer = 0
@@ -314,7 +349,11 @@ func TestPlaceAemberOnACardOutOfPlayLandsOnNothing(t *testing.T) {
 	src := g.AddToBattleline(NewCard("Gizmo", Logos, Creature, Common, WithPower(3)), 0)
 	g.putIntoHand(src)
 
-	PlaceAemberOnThis{Amount: 2}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	PlaceAemberOnThis{Amount: 2}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
 
 	if got := g.State.Cards[src].Amber; got != 0 {
 		t.Errorf("Æmber on a card in hand = %d, want 0", got)
@@ -360,7 +399,10 @@ func TestSimultaneouslySettlesOnce(t *testing.T) {
 func TestLeavesPlayWaitsForTheWholeBatch(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	watcher := g.AddToBattleline(NewCard("watcher", Mars, Creature, Common, WithPower(2),
-		WithAbility(TriggerLeavesPlay, GainAember{Player: Controller, Amount: 1})), 0)
+		WithAbility(TriggerLeavesPlay, GainAember{
+			Player: Controller,
+			Amount: 1,
+		})), 0)
 	other := g.AddToBattleline(NewCard("other", Mars, Creature, Common, WithPower(2)), 0)
 
 	g.simultaneously(0, func() {
@@ -387,7 +429,10 @@ func TestLeavesPlayWindowIsOrderedByTheActivePlayer(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.ActivePlayer = 1
 	mine := g.AddToBattleline(NewCard("mine", Mars, Creature, Common, WithPower(2),
-		WithAbility(TriggerLeavesPlay, GainAember{Player: Controller, Amount: 1})), 0)
+		WithAbility(TriggerLeavesPlay, GainAember{
+			Player: Controller,
+			Amount: 1,
+		})), 0)
 	theirs := g.AddToBattleline(NewCard("theirs", Mars, Creature, Common, WithPower(2),
 		WithAbility(TriggerLeavesPlay, Draw{Amount: 1})), 1)
 

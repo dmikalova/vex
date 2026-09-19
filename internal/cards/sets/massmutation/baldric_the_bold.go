@@ -26,6 +26,9 @@ var BaldricTheBold = set.New(
 			Target: card.Target.EachEnemyCreature.Refine(card.MostPowerful),
 			Noun:   card.ItNoun.FoughtCreature,
 		},
-		Then: card.GainAember{Player: card.Controller, Amount: 2},
+		Then: card.GainAember{
+			Player: card.Controller,
+			Amount: 2,
+		},
 	}),
 )

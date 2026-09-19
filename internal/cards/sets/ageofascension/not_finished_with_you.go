@@ -20,7 +20,10 @@ var NotFinishedWithYou = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.ShuffleIntoDeck{
 			Player: card.Controller, From: []card.Zone{card.Discard},
-			Selection: card.Chosen{Type: card.Type.Creature, Optional: true},
-			Quantity:  card.AnyNumber{},
+			Selection: card.Chosen{
+				Type:     card.Type.Creature,
+				Optional: true,
+			},
+			Quantity: card.AnyNumber{},
 		}),
 )

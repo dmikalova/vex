@@ -27,6 +27,9 @@ var ShardOfGlory = set.New(
 				Player: card.Controller,
 				Trait:  card.Traits.Shard,
 			},
-			Do: card.Exalt{Target: card.Target.EnemyCreature, Amount: 1},
+			Do: card.Exalt{
+				Target: card.Target.EnemyCreature,
+				Amount: 1,
+			},
 		}),
 )

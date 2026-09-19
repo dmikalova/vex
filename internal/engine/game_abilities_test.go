@@ -22,7 +22,10 @@ func TestSubjectPredicateNarrowing(t *testing.T) {
 		ItIsEnemy{},
 		ItIsYourTurn{},
 		ItIsOfTrait{Trait: Giant},
-		OnFlank{OfIt: true, Where: RightFlank},
+		OnFlank{
+			OfIt:  true,
+			Where: RightFlank,
+		},
 		And{Conditions: []Condition{ItIsFriendly{}, ItIsOfTrait{Trait: Giant}}},
 		And{Conditions: []Condition{ItIsEnemy{}, ItIsYourTurn{}}},
 	}
@@ -30,18 +33,32 @@ func TestSubjectPredicateNarrowing(t *testing.T) {
 		if !isFixedPredicate(c) {
 			t.Errorf("%T should be a fixed predicate", c)
 		}
-		if _, ok := fixedNarrowing(Conditional{Cond: c, Then: Draw{Amount: 1}}); !ok {
+		if _, ok := fixedNarrowing(Conditional{
+			Cond: c,
+			Then: Draw{Amount: 1},
+		}); !ok {
 			t.Errorf("Conditional{%T} should narrow", c)
 		}
 	}
 	notFixed := []Condition{
-		OnFlank{OfIt: false, Where: RightFlank},
-		PoolAember{Player: Opponent, Is: AtLeast, Amount: 1},
+		OnFlank{
+			OfIt:  false,
+			Where: RightFlank,
+		},
+		PoolAember{
+			Player: Opponent,
+			Is:     AtLeast,
+			Amount: 1,
+		},
 		And{},
 		And{
 			Conditions: []Condition{
 				ItIsFriendly{},
-				PoolAember{Player: Opponent, Is: AtLeast, Amount: 1},
+				PoolAember{
+					Player: Opponent,
+					Is:     AtLeast,
+					Amount: 1,
+				},
 			},
 		},
 	}
@@ -60,7 +77,11 @@ func TestSubjectPredicateNarrowing(t *testing.T) {
 		t.Error("a Conditional with an Else should not narrow")
 	}
 	if _, ok := fixedNarrowing(Conditional{
-		Cond: PoolAember{Player: Opponent, Is: AtLeast, Amount: 1},
+		Cond: PoolAember{
+			Player: Opponent,
+			Is:     AtLeast,
+			Amount: 1,
+		},
 		Then: Draw{Amount: 1},
 	}); ok {
 		t.Error("a board-gated Conditional should not narrow")
@@ -75,7 +96,10 @@ func TestReapAndActionAbility(t *testing.T) {
 	reaper := testCreature(
 		"reaper",
 		2,
-		WithAbility(TriggerAfterReap, GainAember{Player: Controller, Amount: 1}),
+		WithAbility(TriggerAfterReap, GainAember{
+			Player: Controller,
+			Amount: 1,
+		}),
 	)
 	id := g.AddToBattleline(reaper, 0)
 	if err := g.Reap(0, id); err != nil {
@@ -93,7 +117,10 @@ func TestReapAndActionAbility(t *testing.T) {
 	actor := testCreature(
 		"actor",
 		2,
-		WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 3}),
+		WithAbility(TriggerAction, GainAember{
+			Player: Controller,
+			Amount: 3,
+		}),
 	)
 	aid := g.AddToBattleline(actor, 0)
 	if err := g.UseAction(0, aid); err != nil {
@@ -119,7 +146,10 @@ func TestTimesUsedThisTurn(t *testing.T) {
 		testCreature(
 			"user",
 			6,
-			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerAction, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		),
 		0,
 	)
@@ -240,7 +270,10 @@ func TestCanUseArtifact(t *testing.T) {
 			Brobnar,
 			Artifact,
 			Common,
-			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerAction, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		),
 		0,
 	)
@@ -258,7 +291,10 @@ func TestCanUseArtifact(t *testing.T) {
 	versatile := g.AddArtifact(
 		NewCard(
 			"Versatile Actor", Brobnar, Artifact, Common,
-			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerAction, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 			WithKeywords(Versatile),
 		),
 		0,
@@ -286,7 +322,10 @@ func TestAfterCardPlayedTrigger(t *testing.T) {
 		testCreature(
 			"watcher",
 			3,
-			WithAbility(TriggerAfterCardPlayed, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerAfterCardPlayed, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		),
 		0,
 	)
@@ -309,11 +348,23 @@ func TestSubjectNarrowedReactionEntersWindowOnlyWhenMatched(t *testing.T) {
 	g := started(t)
 	g.AddToBattleline(testCreature("narrowed", 3, WithAbility(
 		TriggerAfterCardPlayed,
-		Conditional{Cond: ItIs{Type: Artifact}, Then: GainAember{Player: Controller, Amount: 1}},
+		Conditional{
+			Cond: ItIs{Type: Artifact},
+			Then: GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
+		},
 	)), 0)
 	g.AddToBattleline(testCreature("board", 3, WithAbility(
 		TriggerAfterCardPlayed,
-		Conditional{Cond: Overwhelmed{}, Then: GainAember{Player: Controller, Amount: 1}},
+		Conditional{
+			Cond: Overwhelmed{},
+			Then: GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
+		},
 	)), 0)
 
 	// A Tactic does not match the artifact narrowing, so only the board-gated
@@ -340,7 +391,10 @@ func TestUpgradeUseConditionGatesHost(t *testing.T) {
 		Upgrade,
 		Common,
 		WithRestrictions(
-			Restrictions{UseCondition: CardsDiscarded{Player: Controller, Amount: 1}},
+			Restrictions{UseCondition: CardsDiscarded{
+				Player: Controller,
+				Amount: 1,
+			}},
 		),
 	))
 	if err := g.usable(0, host); !errors.Is(err, ErrCannotUse) {
@@ -416,7 +470,10 @@ func TestStunBehavior(t *testing.T) {
 		testCreature(
 			"stunact",
 			3,
-			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 5}),
+			WithAbility(TriggerAction, GainAember{
+				Player: Controller,
+				Amount: 5,
+			}),
 		),
 		0,
 	)
@@ -507,7 +564,10 @@ func TestGrantedAbilitiesFireFromUpgrades(t *testing.T) {
 	// An upgrade granting its host "Reap: Gain 1 Æmber".
 	attachUpgrade(g, host, NewCard("charm", Shadows, Upgrade, Common,
 		WithStatic(StaticModifier{Granted: []Ability{
-			{Trigger: TriggerAfterReap, Effect: GainAember{Player: Controller, Amount: 1}},
+			{Trigger: TriggerAfterReap, Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			}},
 		}})))
 
 	// A non-matching trigger fires nothing granted.
@@ -527,7 +587,10 @@ func TestGrantedActionAbilitiesCanBeUsed(t *testing.T) {
 	upgraded := g.AddToBattleline(testCreature("upgraded", 5), 0)
 	attachUpgrade(g, upgraded, NewCard("controls", Logos, Upgrade, Rare,
 		WithStatic(StaticModifier{Granted: []Ability{
-			{Trigger: TriggerAction, Effect: GainAember{Player: Controller, Amount: 2}},
+			{Trigger: TriggerAction, Effect: GainAember{
+				Player: Controller,
+				Amount: 2,
+			}},
 		}})))
 
 	if err := g.UseAction(0, upgraded); err != nil {
@@ -542,7 +605,10 @@ func TestGrantedActionAbilitiesCanBeUsed(t *testing.T) {
 		WithConstantAbility(ConstantAbility{
 			Target: Target{Kind: TargetEachCreature},
 			Granted: []Ability{
-				{Trigger: TriggerAction, Effect: GainAember{Player: Controller, Amount: 3}},
+				{Trigger: TriggerAction, Effect: GainAember{
+					Player: Controller,
+					Amount: 3,
+				}},
 			},
 		})), 0)
 
@@ -560,7 +626,10 @@ func TestGrantedAbilitiesFireFromConstants(t *testing.T) {
 	g.AddArtifact(NewCard("ritual", Dis, Artifact, Rare, WithConstantAbility(ConstantAbility{
 		Target: Target{Kind: TargetEachCreature},
 		Granted: []Ability{
-			{Trigger: TriggerAfterReap, Effect: GainAember{Player: Controller, Amount: 1}},
+			{Trigger: TriggerAfterReap, Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			}},
 		},
 	})), 1)
 
@@ -588,7 +657,10 @@ func TestDisableTriggersStopsDestroyedAbilities(t *testing.T) {
 			DisableTriggers: []Trigger{TriggerAction, TriggerDestroyed},
 		})), 0)
 	victim := g.AddToBattleline(NewCard("v", Brobnar, Creature, Common, WithPower(3),
-		WithAbility(TriggerDestroyed, GainAember{Player: Controller, Amount: 1})), 0)
+		WithAbility(TriggerDestroyed, GainAember{
+			Player: Controller,
+			Amount: 1,
+		})), 0)
 
 	g.DestroyEach(0, []LocalID{victim})
 

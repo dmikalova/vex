@@ -22,6 +22,9 @@ var CommanderDhrxgar = set.New(
 	card.WithAbility(
 		card.Trigger.AfterUpgradeEnters, card.Conditional{
 			Cond: card.ItAttachedToThisOrNeighbor{},
-			Then: card.GainAember{Player: card.Controller, Amount: 1},
+			Then: card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
 		}),
 )

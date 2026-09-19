@@ -285,7 +285,10 @@ func driveReplay(
 		}
 		groups = append(
 			groups,
-			logMark{Start: len(eg.Log), Player: eg.State.ActivePlayer},
+			logMark{
+				Start:  len(eg.Log),
+				Player: eg.State.ActivePlayer,
+			},
 		)
 		rc.pos++
 		if err := dispatchRoot(eg, in, defs); err != nil {

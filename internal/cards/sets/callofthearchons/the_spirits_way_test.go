@@ -18,7 +18,10 @@ func TestTheSpiritsWay(t *testing.T) {
 	t.Run("destroys each creature with power 3 or higher", func(t *testing.T) {
 		var strong, weak ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(TheSpiritsWay)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(TheSpiritsWay),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&strong, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(4))),

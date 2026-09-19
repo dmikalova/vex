@@ -51,7 +51,10 @@ func TestCanPlayRestrictions(t *testing.T) {
 		Common,
 		WithPower(1),
 		WithRestrictions(
-			Restrictions{PlayCardLimit: PlayCardLimit{Player: Controller, Amount: 2}},
+			Restrictions{PlayCardLimit: PlayCardLimit{
+				Player: Controller,
+				Amount: 2,
+			}},
 		),
 	), 0)
 	g2.State.PlayedThisTurn[0].Count = 2
@@ -71,7 +74,10 @@ func TestCardPlayLimit(t *testing.T) {
 		Common,
 		WithPower(2),
 		WithRestrictions(
-			Restrictions{PlayCardLimit: PlayCardLimit{Player: Opponent, Amount: 2}},
+			Restrictions{PlayCardLimit: PlayCardLimit{
+				Player: Opponent,
+				Amount: 2,
+			}},
 		),
 	), 1)
 	g.AddToHand(testCreature("c0", 3), 0)
@@ -209,7 +215,10 @@ func TestOffHousePlayGrant(t *testing.T) {
 		Creature,
 		Rare,
 		WithPower(4),
-		WithPlayPermission(PlayPermission{House: Untamed, Amount: 1}),
+		WithPlayPermission(PlayPermission{
+			House:  Untamed,
+			Amount: 1,
+		}),
 	)
 
 	t.Run("allows one off-house play and consumes it", func(t *testing.T) {
@@ -342,7 +351,10 @@ func TestPlayCardLimitTargets(t *testing.T) {
 				Common,
 				WithPower(1),
 				WithRestrictions(
-					Restrictions{PlayCardLimit: PlayCardLimit{Player: tc.player, Amount: 2}},
+					Restrictions{PlayCardLimit: PlayCardLimit{
+						Player: tc.player,
+						Amount: 2,
+					}},
 				),
 			), 0)
 			g.State.PlayedThisTurn[tc.limited].Count = 2
@@ -431,7 +443,10 @@ func TestPlayableAsUpgradeChoosesUpgrade(t *testing.T) {
 	}
 	// "Destroy an upgrade" reaches it (it is now an upgrade).
 	cands := Target{Kind: TargetChosenUpgrade}.
-		selectBase(&EffectContext{Resolver: g, Controller: 0})
+		selectBase(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		})
 	if !slices.Contains(cands, rid) {
 		t.Errorf("Destroy-upgrade candidates = %v, want to include %d", cands, rid)
 	}

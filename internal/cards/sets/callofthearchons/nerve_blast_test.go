@@ -18,7 +18,10 @@ func TestNerveBlast(t *testing.T) {
 	t.Run("steals 1 Æmber and, if it does, deals 2 damage", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(NerveBlast)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(NerveBlast),
+			},
 			P2: ct.Side{
 				Amber: 3,
 				InPlay: ct.Cards(
@@ -37,7 +40,10 @@ func TestNerveBlast(t *testing.T) {
 	t.Run("does nothing when there is no Æmber to steal", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(NerveBlast)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(NerveBlast),
+			},
 			P2: ct.Side{
 				Amber: 0,
 				InPlay: ct.Cards(

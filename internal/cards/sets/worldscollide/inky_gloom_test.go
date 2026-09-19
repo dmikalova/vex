@@ -45,7 +45,10 @@ func TestInkyGloom(t *testing.T) {
 	t.Run("lifts once that turn is over", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(InkyGloom)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(InkyGloom),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3))),

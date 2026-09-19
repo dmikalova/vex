@@ -19,7 +19,10 @@ func TestCard12Punch(t *testing.T) {
 	t.Run("stuns an unstunned enemy creature", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(Card12Punch)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(Card12Punch),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(4))))},
 		})
 
@@ -32,7 +35,10 @@ func TestCard12Punch(t *testing.T) {
 	t.Run("destroys an enemy creature that was already stunned", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(Card12Punch)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(Card12Punch),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(4))))},
 		})
 		foe.Stun()

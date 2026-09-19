@@ -21,9 +21,12 @@ var InformationOfficerGray = set.New(
 	card.WithTraits(card.Traits.Human),
 	card.WithAbility(card.Trigger.PlayFightReap, card.May{
 		Do: card.ArchiveCard{
-			Zone:      card.Hand,
-			Selection: card.Chosen{House: card.Houses.Except(card.House.Self), Optional: true},
-			Revealed:  true,
+			Zone: card.Hand,
+			Selection: card.Chosen{
+				House:    card.Houses.Except(card.House.Self),
+				Optional: true,
+			},
+			Revealed: true,
 		},
 	}),
 )

@@ -26,10 +26,17 @@ func (e RemoveWard) Text() string {
 func (e RemoveWard) Resolve(ctx *EffectContext) {
 	for _, id := range e.Target.Select(ctx) {
 		if !ctx.Resolver.Warded(id) {
-			ctx.Resolver.Record(WardRemoved{Creature: id, By: ctx.Source, AlreadyUnwarded: true})
+			ctx.Resolver.Record(WardRemoved{
+				Creature:        id,
+				By:              ctx.Source,
+				AlreadyUnwarded: true,
+			})
 			continue
 		}
 		ctx.Resolver.SetWarded(id, false)
-		ctx.Resolver.Record(WardRemoved{Creature: id, By: ctx.Source})
+		ctx.Resolver.Record(WardRemoved{
+			Creature: id,
+			By:       ctx.Source,
+		})
 	}
 }

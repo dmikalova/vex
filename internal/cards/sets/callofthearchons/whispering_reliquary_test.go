@@ -19,7 +19,10 @@ func TestWhisperingReliquary(t *testing.T) {
 	t.Run("puts a chosen artifact into its owner's hand", func(t *testing.T) {
 		var foeArtifact ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, InPlay: ct.Cards(WhisperingReliquary)},
+			P1: ct.Side{
+				House:  card.House.Sanctum,
+				InPlay: ct.Cards(WhisperingReliquary),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foeArtifact, ct.Artifact()))},
 		})
 

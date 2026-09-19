@@ -26,6 +26,9 @@ var EDAIEdie4x4 = set.New(
 	})),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
+		card.ArchiveCard{
+			Zone:      card.Hand,
+			Selection: card.Chosen{},
+		},
 	),
 )

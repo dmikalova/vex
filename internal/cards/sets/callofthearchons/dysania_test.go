@@ -22,7 +22,10 @@ func TestDysania(t *testing.T) {
 		func(t *testing.T) {
 			var a, b ct.Card
 			h := ct.Play(t, ct.Setup{
-				P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(Dysania)},
+				P1: ct.Side{
+					House: card.House.Logos,
+					Hand:  ct.Cards(Dysania),
+				},
 				P2: ct.Side{
 					Archives: ct.Cards(
 						ct.Bind(&a, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1))),

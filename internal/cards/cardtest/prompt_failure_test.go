@@ -31,8 +31,14 @@ func choosing() engine.CardDefinition {
 		DefaultHouse, engine.Tactic, engine.Common,
 		engine.WithAbility(engine.TriggerAfterPlay, engine.ChooseOne{
 			Options: []engine.Effect{
-				engine.GainAember{Player: engine.Controller, Amount: 1},
-				engine.GainAember{Player: engine.Controller, Amount: 2},
+				engine.GainAember{
+					Player: engine.Controller,
+					Amount: 1,
+				},
+				engine.GainAember{
+					Player: engine.Controller,
+					Amount: 2,
+				},
 			},
 		}),
 	)

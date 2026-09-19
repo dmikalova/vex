@@ -9,11 +9,21 @@ import (
 func TestSequenceEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 1), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 	seq := Sequence{
 		Effects: []Effect{
-			GainAember{Player: Controller, Amount: 1},
-			GainAember{Player: Controller, Amount: 2},
+			GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
+			GainAember{
+				Player: Controller,
+				Amount: 2,
+			},
 		},
 	}
 	if got := (Sequence{}).Text(); got != "" {
@@ -30,12 +40,18 @@ func TestSequenceEffect(t *testing.T) {
 
 func TestSequenceRendersEachChildAsItsOwnSentence(t *testing.T) {
 	seq := Sequence{Effects: []Effect{
-		DiscardTop{Amount: 1, Player: Opponent},
+		DiscardTop{
+			Amount: 1,
+			Player: Opponent,
+		},
 		RevealHand{Player: Opponent},
 		GainAember{
 			Player: Controller,
 			Amount: 1,
-			Per:    CardsInHand{Player: Opponent, House: TheContextualHouse},
+			Per: CardsInHand{
+				Player: Opponent,
+				House:  TheContextualHouse,
+			},
 		},
 	}}
 	want := "discard the top card of your opponent's deck. Reveal your opponent's hand. For each card of the discarded card's house revealed this way, gain 1 Æmber."
@@ -52,7 +68,11 @@ func TestSequenceRendersEachChildAsItsOwnSentence(t *testing.T) {
 // break is suppressed and its neighbours stay conjoined.
 func TestSequenceBreaksBeforeConditional(t *testing.T) {
 	cond := Conditional{
-		Cond: PoolAember{Player: Opponent, Amount: 3, Is: AtMost},
+		Cond: PoolAember{
+			Player: Opponent,
+			Amount: 3,
+			Is:     AtMost,
+		},
 		Then: StealAember{Amount: 3},
 	}
 	cases := []struct {
@@ -61,27 +81,39 @@ func TestSequenceBreaksBeforeConditional(t *testing.T) {
 		gated   bool
 		want    string
 	}{{
-		name:    "a trailing Conditional starts a sentence",
-		effects: []Effect{GainAember{Player: Controller, Amount: 1}, cond},
+		name: "a trailing Conditional starts a sentence",
+		effects: []Effect{GainAember{
+			Player: Controller,
+			Amount: 1,
+		}, cond},
 		want: "gain 1 Æmber. If your opponent has 3 Æmber or fewer, " +
 			"steal 3 Æmber.",
 	}, {
-		name:    "a gate still breaks before its inner Conditional",
-		effects: []Effect{GainAember{Player: Controller, Amount: 1}, cond},
-		gated:   true,
+		name: "a gate still breaks before its inner Conditional",
+		effects: []Effect{GainAember{
+			Player: Controller,
+			Amount: 1,
+		}, cond},
+		gated: true,
 		want: "gain 1 Æmber. If your opponent has 3 Æmber or fewer, " +
 			"steal 3 Æmber.",
 	}, {
-		name:    "a leading Conditional in a gate conjoins what follows",
-		effects: []Effect{cond, GainAember{Player: Controller, Amount: 1}},
-		gated:   true,
+		name: "a leading Conditional in a gate conjoins what follows",
+		effects: []Effect{cond, GainAember{
+			Player: Controller,
+			Amount: 1,
+		}},
+		gated: true,
 		want: "if your opponent has 3 Æmber or fewer, steal 3 Æmber, " +
 			"and gain 1 Æmber",
 	}, {
 		name: "clauses in a gate after the break still take a serial comma",
 		effects: []Effect{
 			cond,
-			GainAember{Player: Controller, Amount: 1},
+			GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
 			Draw{Amount: 1},
 			GainChains{Amount: 1},
 		},
@@ -108,7 +140,11 @@ func TestSequenceBreaksBeforeConditional(t *testing.T) {
 // sentence that reads as unconditional.
 func TestConditionalKeepsItsSequenceJoined(t *testing.T) {
 	cond := Conditional{
-		Cond: PoolAember{Player: Opponent, Amount: 3, Is: AtMost},
+		Cond: PoolAember{
+			Player: Opponent,
+			Amount: 3,
+			Is:     AtMost,
+		},
 		Then: Sequence{Effects: []Effect{
 			StealAember{Amount: 1},
 			GainChains{Amount: 1},
@@ -128,7 +164,10 @@ func TestSequenceBreaksAfterLeadIn(t *testing.T) {
 		Target: Target{Kind: TargetChosenCreature},
 		Then:   Stun{Target: Target{Kind: TargetTriggeringCreature}},
 	}
-	seq := Sequence{Effects: []Effect{led, GainAember{Player: Controller, Amount: 1}}}
+	seq := Sequence{Effects: []Effect{led, GainAember{
+		Player: Controller,
+		Amount: 1,
+	}}}
 	want := "choose a creature. Stun it. Gain 1 Æmber."
 	if got := seq.Text(); got != want {
 		t.Errorf("Text() = %q, want %q", got, want)
@@ -137,7 +176,10 @@ func TestSequenceBreaksAfterLeadIn(t *testing.T) {
 	// A clause with no lead-in still conjoins its neighbour inside a gate.
 	plain := Sequence{Effects: []Effect{
 		Stun{Target: Target{Kind: TargetEachEnemyCreature}},
-		GainAember{Player: Controller, Amount: 1},
+		GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
 	}}
 	if got := plain.gatedText(); got != "stun each enemy creature, and gain 1 Æmber" {
 		t.Errorf("plain Text() = %q", got)
@@ -184,7 +226,10 @@ func TestLeadInEffectsEndTheirSentence(t *testing.T) {
 		t.Error("a plain Destroy should not end a sentence")
 	}
 
-	hedged := ChooseHouseThen{Then: GainAember{Player: Controller, Amount: 1}}
+	hedged := ChooseHouseThen{Then: GainAember{
+		Player: Controller,
+		Amount: 1,
+	}}
 	if got := (May{Do: hedged}).Text(); got != "you may choose a house. If you do, gain 1 Æmber" {
 		t.Errorf("hedged house Text() = %q", got)
 	}
@@ -204,7 +249,10 @@ func TestSequenceCombinesSameTarget(t *testing.T) {
 	mixed := Sequence{Effects: []Effect{
 		Stun{Target: Target{Kind: TargetThisCreature}},
 		Exhaust{Target: Target{Kind: TargetEachEnemyCreature}},
-		GainAember{Player: Controller, Amount: 1},
+		GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
 	}}
 	want := "stun " + SelfName + ". Exhaust each enemy creature. Gain 1 Æmber."
 	if got := mixed.Text(); got != want {
@@ -324,7 +372,10 @@ func TestSequenceExaltFoldsOnlyWhenSingle(t *testing.T) {
 	target := Target{Kind: TargetEachCreature}
 	single := Sequence{Effects: []Effect{
 		Ready{Target: target},
-		Exalt{Target: target, Amount: 1},
+		Exalt{
+			Target: target,
+			Amount: 1,
+		},
 	}}
 	if got, want := single.Text(), "ready and exalt each creature"; got != want {
 		t.Errorf("single exalt text = %q, want %q", got, want)
@@ -332,7 +383,10 @@ func TestSequenceExaltFoldsOnlyWhenSingle(t *testing.T) {
 
 	repeated := Sequence{Effects: []Effect{
 		Ready{Target: target},
-		Exalt{Target: target, Amount: 2},
+		Exalt{
+			Target: target,
+			Amount: 2,
+		},
 	}}
 	want := "ready each creature. Exalt each creature 2 times."
 	if got := repeated.Text(); got != want {
@@ -373,7 +427,10 @@ func TestSequenceResolveOptional(t *testing.T) {
 	accepted.SetChooser(0, &cardDecliner{})
 	foe := accepted.AddToBattleline(testCreature("Foe", 3), 1)
 	ally := accepted.AddToBattleline(testCreature("Ally", 3), 0)
-	if !seq.resolveOptional(&EffectContext{Resolver: accepted, Controller: 0}) {
+	if !seq.resolveOptional(&EffectContext{
+		Resolver:   accepted,
+		Controller: 0,
+	}) {
 		t.Error("taking the leading choice should report the sequence resolved")
 	}
 	if onAnyLine(accepted, foe) || onAnyLine(accepted, ally) {
@@ -383,7 +440,10 @@ func TestSequenceResolveOptional(t *testing.T) {
 	declined := NewGame("A", "B", 1)
 	declined.SetChooser(0, &cardDecliner{decline: true})
 	survivor := declined.AddToBattleline(testCreature("Foe", 3), 1)
-	if seq.resolveOptional(&EffectContext{Resolver: declined, Controller: 0}) {
+	if seq.resolveOptional(&EffectContext{
+		Resolver:   declined,
+		Controller: 0,
+	}) {
 		t.Error("declining the leading choice should report nothing resolved")
 	}
 	if !onAnyLine(declined, survivor) {
@@ -421,7 +481,10 @@ func TestSequenceResolveOptionalWithoutAChoice(t *testing.T) {
 func TestSequenceDeclineSkipsLaterSentences(t *testing.T) {
 	led := Sequence{Effects: []Effect{
 		Destroy{Target: Target{Kind: TargetChosenEnemyCreature}},
-		GainAember{Player: Controller, Amount: 1},
+		GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
 	}}
 	if !led.declinable() {
 		t.Error("a sequence leading with a chosen Destroy should be declinable")
@@ -433,7 +496,10 @@ func TestSequenceDeclineSkipsLaterSentences(t *testing.T) {
 	accepted := NewGame("A", "B", 1)
 	accepted.SetChooser(0, &cardDecliner{})
 	foe := accepted.AddToBattleline(testCreature("Foe", 3), 1)
-	if !led.resolveOptional(&EffectContext{Resolver: accepted, Controller: 0}) {
+	if !led.resolveOptional(&EffectContext{
+		Resolver:   accepted,
+		Controller: 0,
+	}) {
 		t.Error("taking the leading choice should report the sentences resolved")
 	}
 	if onAnyLine(accepted, foe) || accepted.Aember(0) != 1 {
@@ -443,7 +509,10 @@ func TestSequenceDeclineSkipsLaterSentences(t *testing.T) {
 	declined := NewGame("A", "B", 1)
 	declined.SetChooser(0, &cardDecliner{decline: true})
 	survivor := declined.AddToBattleline(testCreature("Foe", 3), 1)
-	if led.resolveOptional(&EffectContext{Resolver: declined, Controller: 0}) {
+	if led.resolveOptional(&EffectContext{
+		Resolver:   declined,
+		Controller: 0,
+	}) {
 		t.Error("declining the leading choice should report nothing resolved")
 	}
 	if !onAnyLine(declined, survivor) || declined.Aember(0) != 0 {
@@ -456,11 +525,17 @@ func TestSequenceDeclineSkipsLaterSentences(t *testing.T) {
 func housesRung(n int) Conditional {
 	return Conditional{
 		Cond: HousesRepresented{
-			Among:  HousesAmong{Player: EachPlayer, Type: Creature},
+			Among: HousesAmong{
+				Player: EachPlayer,
+				Type:   Creature,
+			},
 			Is:     AtLeast,
 			Amount: n,
 		},
-		Then: GainAember{Player: Controller, Amount: 1},
+		Then: GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
 	}
 }
 
@@ -484,14 +559,24 @@ func TestSequenceLadderDeclines(t *testing.T) {
 	lone := strings.TrimSuffix(full, ".")
 	otherSubject := housesRung(5)
 	otherSubject.Cond = HousesRepresented{
-		Among:  HousesAmong{Player: Controller, Type: Creature},
+		Among: HousesAmong{
+			Player: Controller,
+			Type:   Creature,
+		},
 		Is:     AtLeast,
 		Amount: 5,
 	}
 	withElse := housesRung(5)
-	withElse.Else = GainAember{Player: Controller, Amount: 1}
+	withElse.Else = GainAember{
+		Player: Controller,
+		Amount: 1,
+	}
 	perRung := housesRung(5)
-	perRung.Then = GainAember{Player: Controller, Amount: 1, Per: Fixed(2)}
+	perRung.Then = GainAember{
+		Player: Controller,
+		Amount: 1,
+		Per:    Fixed(2),
+	}
 	notRepeating := housesRung(5)
 	notRepeating.Then = Draw{Amount: 1}
 
@@ -507,7 +592,10 @@ func TestSequenceLadderDeclines(t *testing.T) {
 		{"an effect with no repeated form", notRepeating, "draw"},
 		{
 			"an effect that is no Conditional at all",
-			GainAember{Player: Controller, Amount: 2},
+			GainAember{
+				Player: Controller,
+				Amount: 2,
+			},
 			"Gain 2 Æmber",
 		},
 	}
@@ -538,12 +626,31 @@ func TestGainAemberRepeatedText(t *testing.T) {
 		gain GainAember
 		want string
 	}{
-		{"controller", GainAember{Player: Controller, Amount: 1}, "gain 1 more"},
-		{"opponent", GainAember{Player: Opponent, Amount: 2}, "your opponent gains 2 more"},
-		{"each player", GainAember{Player: EachPlayer, Amount: 1}, "each player gains 1 more"},
-		{"equal to a count", GainAember{Player: Controller, EqualTo: Fixed(1)}, ""},
-		{"scaled by a count", GainAember{Player: Controller, Amount: 1, Per: Fixed(2)}, ""},
-		{"a subject gainVerb cannot name", GainAember{Player: ItsOwner, Amount: 1}, ""},
+		{"controller", GainAember{
+			Player: Controller,
+			Amount: 1,
+		}, "gain 1 more"},
+		{"opponent", GainAember{
+			Player: Opponent,
+			Amount: 2,
+		}, "your opponent gains 2 more"},
+		{"each player", GainAember{
+			Player: EachPlayer,
+			Amount: 1,
+		}, "each player gains 1 more"},
+		{"equal to a count", GainAember{
+			Player:  Controller,
+			EqualTo: Fixed(1),
+		}, ""},
+		{"scaled by a count", GainAember{
+			Player: Controller,
+			Amount: 1,
+			Per:    Fixed(2),
+		}, ""},
+		{"a subject gainVerb cannot name", GainAember{
+			Player: ItsOwner,
+			Amount: 1,
+		}, ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

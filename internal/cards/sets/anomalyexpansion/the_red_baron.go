@@ -23,16 +23,22 @@ var TheRedBaron = set.New(
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Pirate),
 	card.WithConstant(card.ConstantAbility{
-		Target:         card.Target.This,
-		WhileCondition: card.KeyColorForged{Player: card.Controller, Color: card.KeyColor.Red},
+		Target: card.Target.This,
+		WhileCondition: card.KeyColorForged{
+			Player: card.Controller,
+			Color:  card.KeyColor.Red,
+		},
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Reap,
 			Effect:  card.StealAember{Amount: 1},
 		}},
 	}),
 	card.WithConstant(card.ConstantAbility{
-		Target:         card.Target.This,
-		WhileCondition: card.KeyColorForged{Player: card.Opponent, Color: card.KeyColor.Red},
-		Keywords:       card.Keywords(card.Keyword.Elusive),
+		Target: card.Target.This,
+		WhileCondition: card.KeyColorForged{
+			Player: card.Opponent,
+			Color:  card.KeyColor.Red,
+		},
+		Keywords: card.Keywords(card.Keyword.Elusive),
 	}),
 )

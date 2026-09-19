@@ -14,7 +14,10 @@ func (bareEffect) Text() string           { return "do nothing" }
 func (bareEffect) Resolve(*EffectContext) {}
 
 func TestMayText(t *testing.T) {
-	e := May{Do: GainAember{Player: Controller, Amount: 1}}
+	e := May{Do: GainAember{
+		Player: Controller,
+		Amount: 1,
+	}}
 	if got := e.Text(); got != "you may gain 1 Æmber" {
 		t.Errorf("text = %q", got)
 	}
@@ -23,9 +26,15 @@ func TestMayText(t *testing.T) {
 func TestMayResolvesWhenAccepted(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetChooser(0, optionPicker{idx: 0}) // "Yes"
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
-	May{Do: GainAember{Player: Controller, Amount: 2}}.Resolve(ctx)
+	May{Do: GainAember{
+		Player: Controller,
+		Amount: 2,
+	}}.Resolve(ctx)
 	if g.Aember(0) != 2 {
 		t.Errorf("accepted: aember = %d, want 2", g.Aember(0))
 	}
@@ -34,9 +43,15 @@ func TestMayResolvesWhenAccepted(t *testing.T) {
 func TestMayDeclined(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetChooser(0, optionPicker{idx: 1}) // "No"
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
-	May{Do: GainAember{Player: Controller, Amount: 2}}.Resolve(ctx)
+	May{Do: GainAember{
+		Player: Controller,
+		Amount: 2,
+	}}.Resolve(ctx)
 	if g.Aember(0) != 0 {
 		t.Errorf("declined: aember = %d, want 0", g.Aember(0))
 	}
@@ -69,7 +84,10 @@ func TestMayDeclinableIsAskedAsACardChoice(t *testing.T) {
 	g.SetChooser(0, ch)
 	keep := g.AddToBattleline(testCreature("Keep", 3), 0)
 	doomed := g.AddToBattleline(testCreature("Doomed", 3), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	e := May{Do: Destroy{Target: Target{Kind: TargetChosenFriendlyCreature}}}
 	if !e.Do.(declinableEffect).declinable() {
@@ -92,7 +110,10 @@ func TestMayDeclinableDeclined(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetChooser(0, &cardDecliner{decline: true})
 	doomed := g.AddToBattleline(testCreature("Doomed", 3), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	May{Do: Destroy{Target: Target{Kind: TargetChosenFriendlyCreature}}}.Resolve(ctx)
 	if !stillInPlay(g, doomed) {
@@ -103,8 +124,11 @@ func TestMayDeclinableDeclined(t *testing.T) {
 // A gate's follow-up still hangs off its first half happening.
 func TestMayDeclinableGate(t *testing.T) {
 	e := May{Do: Then{
-		First:  Destroy{Target: Target{Kind: TargetChosenFriendlyCreature}},
-		Result: GainAember{Player: Controller, Amount: 2},
+		First: Destroy{Target: Target{Kind: TargetChosenFriendlyCreature}},
+		Result: GainAember{
+			Player: Controller,
+			Amount: 2,
+		},
 	}}
 	if !e.Do.(declinableEffect).declinable() {
 		t.Fatal("a gate on a chosen-target Destroy should be declinable")
@@ -113,7 +137,10 @@ func TestMayDeclinableGate(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetChooser(0, &cardDecliner{})
 	g.AddToBattleline(testCreature("Doomed", 3), 0)
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.Aember(0) != 2 {
 		t.Errorf("accepted gate: aember = %d, want 2", g.Aember(0))
 	}
@@ -121,7 +148,10 @@ func TestMayDeclinableGate(t *testing.T) {
 	declined := NewGame("A", "B", 1)
 	declined.SetChooser(0, &cardDecliner{decline: true})
 	declined.AddToBattleline(testCreature("Doomed", 3), 0)
-	e.Resolve(&EffectContext{Resolver: declined, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   declined,
+		Controller: 0,
+	})
 	if declined.Aember(0) != 0 {
 		t.Errorf("declined gate: aember = %d, want 0", declined.Aember(0))
 	}
@@ -142,7 +172,10 @@ func TestMayDeclinableChosenCreatureVerbs(t *testing.T) {
 	g.SetChooser(0, &cardDecliner{})
 	ally := g.AddToBattleline(testCreature("Ally", 3), 0)
 	g.SetExhausted(ally, true)
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.Exhausted(ally) {
 		t.Error("the chosen creature should have been readied")
 	}
@@ -151,7 +184,10 @@ func TestMayDeclinableChosenCreatureVerbs(t *testing.T) {
 	declined.SetChooser(0, &cardDecliner{decline: true})
 	other := declined.AddToBattleline(testCreature("Ally", 3), 0)
 	declined.SetExhausted(other, true)
-	e.Resolve(&EffectContext{Resolver: declined, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   declined,
+		Controller: 0,
+	})
 	if !declined.Exhausted(other) {
 		t.Error("a declined May should ready nothing")
 	}
@@ -170,7 +206,11 @@ func TestMayWithoutACardChoiceStaysYesNo(t *testing.T) {
 	g.SetChooser(0, ch)
 	doomed := g.AddToBattleline(testCreature("Doomed", 3), 0)
 	tactic := g.AddToHand(testCreature("Tactic", 1), 0)
-	e.Resolve(&EffectContext{Resolver: g, Source: tactic, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     tactic,
+		Controller: 0,
+	})
 	if ch.asked != 0 {
 		t.Errorf("declinable prompts = %d, want 0", ch.asked)
 	}
@@ -188,7 +228,11 @@ func TestMayWithoutACardChoiceClicksItsSource(t *testing.T) {
 	g.SetChooser(0, &cardDecliner{})
 	source := g.AddToBattleline(testCreature("Source", 3), 0)
 	doomed := g.AddToBattleline(testCreature("Doomed", 3), 1)
-	e.Resolve(&EffectContext{Resolver: g, Source: source, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     source,
+		Controller: 0,
+	})
 	if g.InPlay(doomed) {
 		t.Error("clicking the source should have resolved the effect")
 	}
@@ -197,7 +241,11 @@ func TestMayWithoutACardChoiceClicksItsSource(t *testing.T) {
 	declined.SetChooser(0, &cardDecliner{decline: true})
 	src := declined.AddToBattleline(testCreature("Source", 3), 0)
 	spared := declined.AddToBattleline(testCreature("Doomed", 3), 1)
-	e.Resolve(&EffectContext{Resolver: declined, Source: src, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   declined,
+		Source:     src,
+		Controller: 0,
+	})
 	if !declined.InPlay(spared) {
 		t.Error("declining the source click should resolve nothing")
 	}
@@ -209,7 +257,10 @@ func TestMayWithoutACardChoiceClicksItsSource(t *testing.T) {
 	att := fighting.AddToBattleline(testCreature("Source", 3), 0)
 	def := fighting.AddToBattleline(testCreature("Doomed", 3), 1)
 	fighting.State.FightersPlus = [2]LocalID{att + 1, def + 1}
-	if (May{}).offeredOnSource(&EffectContext{Resolver: fighting, Source: att}) {
+	if (May{}).offeredOnSource(&EffectContext{
+		Resolver: fighting,
+		Source:   att,
+	}) {
 		t.Error("a creature resolving its own fight should keep the Yes/No")
 	}
 }
@@ -249,7 +300,10 @@ func TestMayWithNothingToDoIsNotOffered(t *testing.T) {
 	ch := &optionRecorder{}
 	g.SetChooser(0, ch)
 	safe := g.AddToBattleline(testCreature("Bystander", 3), 0)
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if ch.asked != 0 {
 		t.Errorf("Yes/No prompts = %d, want 0", ch.asked)
 	}
@@ -260,18 +314,28 @@ func TestMayWithNothingToDoIsNotOffered(t *testing.T) {
 	mars := testCreature("Raider", 3)
 	mars.House = Mars
 	g.AddToBattleline(mars, 0)
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if ch.asked != 1 {
 		t.Errorf("Yes/No prompts with a target = %d, want 1", ch.asked)
 	}
 }
 
 func TestMayValidate(t *testing.T) {
-	bad := May{Do: Heal{Fully: true, Amount: 1, Target: Target{Kind: TargetThisCreature}}}
+	bad := May{Do: Heal{
+		Fully:  true,
+		Amount: 1,
+		Target: Target{Kind: TargetThisCreature},
+	}}
 	if validateEffect(bad) == nil {
 		t.Error("May wrapping an invalid effect should fail validation")
 	}
-	good := May{Do: GainAember{Player: Controller, Amount: 1}}
+	good := May{Do: GainAember{
+		Player: Controller,
+		Amount: 1,
+	}}
 	if validateEffect(good) != nil {
 		t.Error("May wrapping a valid effect should pass validation")
 	}

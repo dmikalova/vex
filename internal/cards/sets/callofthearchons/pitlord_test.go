@@ -23,7 +23,10 @@ import (
 func TestPitlord(t *testing.T) {
 	t.Run("its controller must choose Dis while it is in play", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Pitlord)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(Pitlord),
+			},
 			P2: ct.Side{House: card.House.Mars},
 		})
 
@@ -43,7 +46,10 @@ func TestPitlord(t *testing.T) {
 
 	t.Run("it does not lock the opponent's choice", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Pitlord)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(Pitlord),
+			},
 			P2: ct.Side{House: card.House.Mars},
 		})
 

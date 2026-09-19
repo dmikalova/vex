@@ -5,17 +5,28 @@ import (
 )
 
 func TestCardsDiscarded(t *testing.T) {
-	e := CardsDiscarded{Player: Controller, House: namedHouse(Untamed), Amount: 1}
+	e := CardsDiscarded{
+		Player: Controller,
+		House:  namedHouse(Untamed),
+		Amount: 1,
+	}
 	if got := e.CondText(); got != "if you have discarded an Untamed card from your hand this turn" {
 		t.Errorf("CondText() = %q", got)
 	}
-	eOpp := CardsDiscarded{Player: Opponent, House: namedHouse(Mars), Amount: 1}
+	eOpp := CardsDiscarded{
+		Player: Opponent,
+		House:  namedHouse(Mars),
+		Amount: 1,
+	}
 	if got := eOpp.CondText(); got != "if your opponent has discarded a Mars card from their hand this turn" {
 		t.Errorf("CondText() = %q", got)
 	}
 
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	if e.Met(ctx) {
 		t.Error("Met() should be false initially")
@@ -28,19 +39,32 @@ func TestCardsDiscarded(t *testing.T) {
 	if e.validate() != nil {
 		t.Errorf("validate() = %v, want nil", e.validate())
 	}
-	if (CardsDiscarded{Player: Controller, House: namedHouse(Untamed)}).validate() == nil {
+	if (CardsDiscarded{
+		Player: Controller,
+		House:  namedHouse(Untamed),
+	}).validate() == nil {
 		t.Error("validate() should reject a zero Amount")
 	}
-	eAmount := CardsDiscarded{Player: Controller, House: namedHouse(Untamed), Amount: 3}
+	eAmount := CardsDiscarded{
+		Player: Controller,
+		House:  namedHouse(Untamed),
+		Amount: 3,
+	}
 	if got := eAmount.CondText(); got != "if you have discarded 3 Untamed cards from your hand this turn" {
 		t.Errorf("eAmount.CondText() = %q", got)
 	}
 	// HouseNone omits the house: "a card" for one, "N cards" for more.
-	eAny := CardsDiscarded{Player: Controller, Amount: 1}
+	eAny := CardsDiscarded{
+		Player: Controller,
+		Amount: 1,
+	}
 	if got := eAny.CondText(); got != "if you have discarded a card from your hand this turn" {
 		t.Errorf("eAny.CondText() = %q", got)
 	}
-	eAnyMany := CardsDiscarded{Player: Controller, Amount: 2}
+	eAnyMany := CardsDiscarded{
+		Player: Controller,
+		Amount: 2,
+	}
 	if got := eAnyMany.CondText(); got != "if you have discarded 2 cards from your hand this turn" {
 		t.Errorf("eAnyMany.CondText() = %q", got)
 	}
@@ -64,6 +88,9 @@ func TestNewCardRejectsZeroAmountUseCondition(t *testing.T) {
 		}
 	}()
 	NewCard("bad", Untamed, Creature, Rare, WithRestrictions(Restrictions{
-		UseCondition: CardsDiscarded{Player: Controller, House: namedHouse(Untamed)},
+		UseCondition: CardsDiscarded{
+			Player: Controller,
+			House:  namedHouse(Untamed),
+		},
 	}))
 }

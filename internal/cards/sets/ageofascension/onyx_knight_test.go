@@ -20,7 +20,10 @@ func TestOnyxKnight(t *testing.T) {
 	t.Run("destroys each creature with odd power", func(t *testing.T) {
 		var odd, even ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(OnyxKnight)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(OnyxKnight),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&odd, ct.Creature(ct.Power(3))),
 				ct.Bind(&even, ct.Creature(ct.Power(4))),

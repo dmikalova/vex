@@ -20,7 +20,10 @@ import (
 func TestDrumble(t *testing.T) {
 	t.Run("captures the opponent's whole pool at 7+ Æmber", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(Drumble)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(Drumble),
+			},
 			P2: ct.Side{Amber: 7},
 		})
 
@@ -32,7 +35,10 @@ func TestDrumble(t *testing.T) {
 
 	t.Run("captures nothing below the threshold", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(Drumble)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(Drumble),
+			},
 			P2: ct.Side{Amber: 6},
 		})
 

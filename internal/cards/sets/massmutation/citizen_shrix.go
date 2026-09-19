@@ -22,7 +22,10 @@ var CitizenShrix = set.New(
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(
 		card.Trigger.PlayReap, card.Sequence{Effects: []card.Effect{
-			card.Exalt{Target: card.Target.This, Amount: 1},
+			card.Exalt{
+				Target: card.Target.This,
+				Amount: 1,
+			},
 			card.StealAember{Amount: 1},
 		}}),
 )

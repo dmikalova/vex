@@ -18,7 +18,10 @@ func TestMightyLance(t *testing.T) {
 	t.Run("deals 3 to a creature and 3 to a chosen neighbor", func(t *testing.T) {
 		var left, mid, right ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(MightyLance)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(MightyLance),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&left, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(10))),
 				ct.Bind(&mid, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(10))),

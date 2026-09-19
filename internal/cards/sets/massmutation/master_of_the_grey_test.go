@@ -22,7 +22,10 @@ func TestMasterOfTheGrey(t *testing.T) {
 		var bearer ct.Card
 		h := ct.Play(t, ct.Setup{
 			// P1 controls Master of the Grey; P2 is the barred opponent.
-			P1: ct.Side{House: card.House.Sanctum, InPlay: ct.Cards(MasterOfTheGrey)},
+			P1: ct.Side{
+				House:  card.House.Sanctum,
+				InPlay: ct.Cards(MasterOfTheGrey),
+			},
 			P2: ct.Side{
 				House: card.House.Untamed,
 				Hand: ct.Cards(

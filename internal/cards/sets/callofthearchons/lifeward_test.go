@@ -23,7 +23,10 @@ func TestLifeward(t *testing.T) {
 		"destroys itself and bars the opponent from playing creatures next turn",
 		func(t *testing.T) {
 			h := ct.Play(t, ct.Setup{
-				P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Lifeward)},
+				P1: ct.Side{
+					House:  card.House.Dis,
+					InPlay: ct.Cards(Lifeward),
+				},
 			})
 
 			h.P1.UseAction(Lifeward)

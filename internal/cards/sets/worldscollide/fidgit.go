@@ -25,7 +25,10 @@ var Fidgit = set.New(
 		card.Trigger.Reap, card.Sequence{Effects: []card.Effect{
 			card.DiscardFromOpponent{Sources: []card.Zone{card.Archives, card.Deck}},
 			card.Conditional{
-				Cond: card.ItIs{Type: card.Type.Tactic, Noun: card.ItNoun.ThatCard},
+				Cond: card.ItIs{
+					Type: card.Type.Tactic,
+					Noun: card.ItNoun.ThatCard,
+				},
 				Then: card.PlayItFromOpponentDiscard{},
 			},
 		}},

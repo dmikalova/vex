@@ -19,7 +19,10 @@ func TestBerserkerSlam(t *testing.T) {
 	t.Run("destroys a flank creature and its controller loses 1 Æmber", func(t *testing.T) {
 		var flank ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(BerserkerSlam)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(BerserkerSlam),
+			},
 			P2: ct.Side{
 				Amber:  2,
 				InPlay: ct.Cards(ct.Bind(&flank, ct.Creature(ct.Power(3)))),
@@ -35,7 +38,10 @@ func TestBerserkerSlam(t *testing.T) {
 	t.Run("no Æmber lost when the creature survives", func(t *testing.T) {
 		var flank ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(BerserkerSlam)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(BerserkerSlam),
+			},
 			P2: ct.Side{
 				Amber:  2,
 				InPlay: ct.Cards(ct.Bind(&flank, ct.Creature(ct.Power(6)))),

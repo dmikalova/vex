@@ -22,7 +22,10 @@ import (
 func TestGeneralOrder24DestroysChosenHouse(t *testing.T) {
 	var mars1, mars2, sanctum ct.Card
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.StarAlliance, InPlay: ct.Cards(GeneralOrder24)},
+		P1: ct.Side{
+			House:  card.House.StarAlliance,
+			InPlay: ct.Cards(GeneralOrder24),
+		},
 		P2: ct.Side{House: card.House.Mars, InPlay: ct.Cards(
 			ct.Bind(&mars1, ct.Creature(ct.OfHouse(card.House.Mars))),
 			ct.Bind(&mars2, ct.Creature(ct.OfHouse(card.House.Mars))),
@@ -42,7 +45,10 @@ func TestGeneralOrder24DestroysChosenHouse(t *testing.T) {
 // no friendly creatures to choose, the artifact destroys itself.
 func TestGeneralOrder24SelfDestructsWithoutCreatures(t *testing.T) {
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.StarAlliance, InPlay: ct.Cards(GeneralOrder24)},
+		P1: ct.Side{
+			House:  card.House.StarAlliance,
+			InPlay: ct.Cards(GeneralOrder24),
+		},
 		P2: ct.Side{House: card.House.Mars},
 	})
 

@@ -21,5 +21,8 @@ var ResearchSmoko = set.New(
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(
 		card.Trigger.Destroyed,
-		card.ArchiveCard{Zone: card.Deck, Selection: card.Top{}}),
+		card.ArchiveCard{
+			Zone:      card.Deck,
+			Selection: card.Top{},
+		}),
 )

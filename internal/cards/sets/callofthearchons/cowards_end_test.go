@@ -18,7 +18,10 @@ func TestCowardsEnd(t *testing.T) {
 	t.Run("destroys each undamaged creature and gains 3 chains", func(t *testing.T) {
 		var healthy, hurt ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(CowardsEnd)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(CowardsEnd),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&healthy, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),

@@ -17,6 +17,9 @@ var FollowTheLeader = set.New(
 	card.Provenance(card.CotA, "8"),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.MayPlayOrUse{Houses: card.GrantHouses.Any, Grant: card.GrantFight},
+		card.MayPlayOrUse{
+			Houses: card.GrantHouses.Any,
+			Grant:  card.GrantFight,
+		},
 	),
 )

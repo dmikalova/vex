@@ -22,7 +22,10 @@ func TestYxilxDominator(t *testing.T) {
 	t.Run("enters play stunned", func(t *testing.T) {
 		var yxilx ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Mars, Hand: ct.Cards(ct.Bind(&yxilx, YxilxDominator))},
+			P1: ct.Side{
+				House: card.House.Mars,
+				Hand:  ct.Cards(ct.Bind(&yxilx, YxilxDominator)),
+			},
 		})
 
 		h.P1.Play(YxilxDominator)

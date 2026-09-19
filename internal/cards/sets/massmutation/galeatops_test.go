@@ -20,7 +20,10 @@ func TestGaleatops(t *testing.T) {
 	t.Run("only deals 4 damage when fighting", func(t *testing.T) {
 		var enemy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, InPlay: ct.Cards(Galeatops)},
+			P1: ct.Side{
+				House:  card.House.Saurian,
+				InPlay: ct.Cards(Galeatops),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(12))),

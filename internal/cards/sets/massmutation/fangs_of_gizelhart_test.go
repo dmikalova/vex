@@ -19,7 +19,10 @@ func TestFangsOfGizelhart(t *testing.T) {
 	t.Run("purges the most powerful creature", func(t *testing.T) {
 		var strong, weak ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(FangsOfGizelhart)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(FangsOfGizelhart),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&strong, ct.Creature(ct.Power(6))),
 				ct.Bind(&weak, ct.Creature(ct.Power(2))),

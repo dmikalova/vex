@@ -21,6 +21,9 @@ var ForgemasterOg = set.New(
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.AfterPlayerForgesKey,
-		card.LoseAember{Player: card.ThatPlayer, By: card.AllAember},
+		card.LoseAember{
+			Player: card.ThatPlayer,
+			By:     card.AllAember,
+		},
 	),
 )

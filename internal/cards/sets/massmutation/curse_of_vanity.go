@@ -19,7 +19,13 @@ var CurseOfVanity = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Exalt{Target: card.Target.FriendlyCreature, Amount: 1},
-			card.Exalt{Target: card.Target.EnemyCreature, Amount: 1},
+			card.Exalt{
+				Target: card.Target.FriendlyCreature,
+				Amount: 1,
+			},
+			card.Exalt{
+				Target: card.Target.EnemyCreature,
+				Amount: 1,
+			},
 		}}),
 )

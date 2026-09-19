@@ -20,7 +20,10 @@ func TestHebeTheHuge(t *testing.T) {
 	t.Run("deals 2 damage to each other undamaged creature", func(t *testing.T) {
 		var healthy, hurt ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(HebeTheHuge)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(HebeTheHuge),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&healthy, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),

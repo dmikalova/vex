@@ -20,7 +20,10 @@ func TestMegaMogghunter(t *testing.T) {
 	t.Run("deals 2 damage to a flank creature when it fights", func(t *testing.T) {
 		var bruiser, squishy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(MegaMogghunter)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(MegaMogghunter),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&bruiser, ct.Creature(ct.Power(3), ct.Armor(8))),
 				ct.Bind(&squishy, ct.Creature(ct.Power(5))),

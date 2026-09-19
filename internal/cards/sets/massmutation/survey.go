@@ -23,7 +23,10 @@ var Survey = set.New(
 		card.Trigger.Play, card.LookAtTopOfDeck{
 			Amount: 2,
 			Then: []card.TopAct{
-				card.ChooseAndMove{Cards: 1, Dest: card.Into.Discard},
+				card.ChooseAndMove{
+					Cards: 1,
+					Dest:  card.Into.Discard,
+				},
 			},
 		}),
 )

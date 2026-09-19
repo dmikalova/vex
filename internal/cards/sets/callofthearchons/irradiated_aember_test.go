@@ -19,7 +19,10 @@ func TestIrradiatedAember(t *testing.T) {
 	t.Run("deals 3 to each enemy creature when the opponent has 6 or more", func(t *testing.T) {
 		var toughFoe, weakFoe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Mars, Hand: ct.Cards(IrradiatedAember)},
+			P1: ct.Side{
+				House: card.House.Mars,
+				Hand:  ct.Cards(IrradiatedAember),
+			},
 			P2: ct.Side{
 				Amber: 6,
 				InPlay: ct.Cards(
@@ -38,7 +41,10 @@ func TestIrradiatedAember(t *testing.T) {
 	t.Run("does nothing when the opponent is below 6", func(t *testing.T) {
 		var survivor ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Mars, Hand: ct.Cards(IrradiatedAember)},
+			P1: ct.Side{
+				House: card.House.Mars,
+				Hand:  ct.Cards(IrradiatedAember),
+			},
 			P2: ct.Side{
 				Amber: 5,
 				InPlay: ct.Cards(

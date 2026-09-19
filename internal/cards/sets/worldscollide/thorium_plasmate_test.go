@@ -19,7 +19,10 @@ func TestThoriumPlasmate(t *testing.T) {
 	t.Run("deals 2 per neighbor sharing the moved creature's house", func(t *testing.T) {
 		var moved, ally ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(ThoriumPlasmate)},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(ThoriumPlasmate),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&moved, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(6))),
@@ -39,7 +42,10 @@ func TestThoriumPlasmate(t *testing.T) {
 	t.Run("deals nothing when no neighbor shares the moved creature's house", func(t *testing.T) {
 		var moved, ally ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(ThoriumPlasmate)},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(ThoriumPlasmate),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&moved, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(6))),

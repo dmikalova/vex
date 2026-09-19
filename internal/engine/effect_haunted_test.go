@@ -9,7 +9,10 @@ func TestHaunted(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	if c.Met(ctx) {
 		t.Error("empty discard pile should not be haunted")
@@ -32,7 +35,10 @@ func TestHaunted(t *testing.T) {
 	for range 10 {
 		g2.AddToDiscard(testCreature("theirs", 1), 1)
 	}
-	if c.Met(&EffectContext{Resolver: g2, Controller: 0}) {
+	if c.Met(&EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	}) {
 		t.Error("opponent's discard pile should not haunt the controller")
 	}
 }

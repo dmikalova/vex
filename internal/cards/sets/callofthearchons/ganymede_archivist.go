@@ -21,6 +21,9 @@ var GanymedeArchivist = set.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.Reap,
-		card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
+		card.ArchiveCard{
+			Zone:      card.Hand,
+			Selection: card.Chosen{},
+		},
 	),
 )

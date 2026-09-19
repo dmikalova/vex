@@ -6,7 +6,10 @@ import (
 )
 
 func TestReveal(t *testing.T) {
-	if got := (RevealHand{Player: Controller, House: namedHouse(Mars)}).Text(); got != "reveal any number of Mars cards from your hand" {
+	if got := (RevealHand{
+		Player: Controller,
+		House:  namedHouse(Mars),
+	}).Text(); got != "reveal any number of Mars cards from your hand" {
 		t.Errorf("house text = %q", got)
 	}
 	if got := (RevealHand{Player: Opponent}).Text(); got != "reveal your opponent's hand" {
@@ -17,10 +20,16 @@ func TestReveal(t *testing.T) {
 	g.AddToHand(NewCard("Marauder", Mars, Creature, Common, WithPower(1)), 0)
 	g.AddToHand(NewCard("Missile", Mars, Tactic, Common), 0)
 	g.AddToHand(NewCard("Brute", Brobnar, Creature, Common, WithPower(1)), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// Revealing your Mars cards counts and logs both; the Brobnar card is untouched.
-	RevealHand{Player: Controller, House: namedHouse(Mars)}.Resolve(ctx)
+	RevealHand{
+		Player: Controller,
+		House:  namedHouse(Mars),
+	}.Resolve(ctx)
 	if ctx.Produced.Revealed != 2 {
 		t.Errorf("revealed = %d, want 2", ctx.Produced.Revealed)
 	}
@@ -41,7 +50,10 @@ func TestReveal(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	g2.AddToHand(NewCard("x", Mars, Tactic, Common), 1)
 	g2.AddToHand(NewCard("y", Brobnar, Tactic, Common), 1)
-	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	ctx2 := &EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	}
 	RevealHand{Player: Opponent}.Resolve(ctx2)
 	if ctx2.Produced.Revealed != 2 {
 		t.Errorf("whole-hand revealed = %d, want 2", ctx2.Produced.Revealed)
@@ -49,9 +61,15 @@ func TestReveal(t *testing.T) {
 
 	// Revealing nothing counts zero and writes no log line.
 	g3 := NewGame("A", "B", 1)
-	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
+	ctx3 := &EffectContext{
+		Resolver:   g3,
+		Controller: 0,
+	}
 	before := len(g3.Log)
-	RevealHand{Player: Controller, House: namedHouse(Mars)}.Resolve(ctx3)
+	RevealHand{
+		Player: Controller,
+		House:  namedHouse(Mars),
+	}.Resolve(ctx3)
 	if ctx3.Produced.Revealed != 0 {
 		t.Errorf("revealed = %d, want 0", ctx3.Produced.Revealed)
 	}
@@ -64,9 +82,15 @@ func TestReveal(t *testing.T) {
 	g4.AddToHand(NewCard("Marauder", Mars, Creature, Common, WithPower(1)), 0)
 	g4.AddToHand(NewCard("Missile", Mars, Tactic, Common), 0)
 	g4.SetChooser(0, &cardDecliner{decline: true})
-	ctx4 := &EffectContext{Resolver: g4, Controller: 0}
+	ctx4 := &EffectContext{
+		Resolver:   g4,
+		Controller: 0,
+	}
 	before4 := len(g4.Log)
-	RevealHand{Player: Controller, House: namedHouse(Mars)}.Resolve(ctx4)
+	RevealHand{
+		Player: Controller,
+		House:  namedHouse(Mars),
+	}.Resolve(ctx4)
 	if ctx4.Produced.Revealed != 0 {
 		t.Errorf("declined reveal = %d, want 0", ctx4.Produced.Revealed)
 	}
@@ -85,7 +109,10 @@ func TestRevealChosenFromHand(t *testing.T) {
 	g.AddToHand(NewCard("Marauder", Mars, Creature, Common, WithPower(1)), 0)
 	pick := g.AddToHand(NewCard("Missile", Mars, Tactic, Common), 0)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{pick}})
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	RevealChosenFromHand{}.Resolve(ctx)
 	if !ctx.HasIt || ctx.It != pick {
 		t.Errorf("It = %v/%v, want %v", ctx.It, ctx.HasIt, pick)
@@ -97,7 +124,10 @@ func TestRevealChosenFromHand(t *testing.T) {
 
 	// An empty hand reveals nothing and leaves no card in context.
 	g2 := NewGame("A", "B", 1)
-	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	ctx2 := &EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	}
 	before := len(g2.Log)
 	RevealChosenFromHand{}.Resolve(ctx2)
 	if ctx2.HasIt {
@@ -110,7 +140,10 @@ func TestRevealChosenFromHand(t *testing.T) {
 	// A sole candidate is offered and chosen without a decline path.
 	g3 := NewGame("A", "B", 1)
 	only := g3.AddToHand(NewCard("Solo", Mars, Tactic, Common), 0)
-	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
+	ctx3 := &EffectContext{
+		Resolver:   g3,
+		Controller: 0,
+	}
 	RevealChosenFromHand{}.Resolve(ctx3)
 	if !ctx3.HasIt || ctx3.It != only {
 		t.Errorf("sole candidate It = %v/%v, want %v", ctx3.It, ctx3.HasIt, only)

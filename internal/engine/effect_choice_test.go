@@ -12,11 +12,20 @@ func (o optionPicker) ChooseOption(_, _ string, _ []string) int { return o.idx }
 
 func TestChooseOne(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	e := ChooseOne{
 		Options: []Effect{
-			GainAember{Player: Controller, Amount: 1},
-			GainAember{Player: Controller, Amount: 5},
+			GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
+			GainAember{
+				Player: Controller,
+				Amount: 5,
+			},
 		},
 	}
 	if e.Text() != "choose one:\n- Gain 1 Æmber\n- Gain 5 Æmber" {
@@ -46,12 +55,19 @@ func TestChooseOne(t *testing.T) {
 
 func TestChooseOneValidate(t *testing.T) {
 	bad := ChooseOne{
-		Options: []Effect{Heal{Fully: true, Amount: 1, Target: Target{Kind: TargetThisCreature}}},
+		Options: []Effect{Heal{
+			Fully:  true,
+			Amount: 1,
+			Target: Target{Kind: TargetThisCreature},
+		}},
 	}
 	if validateEffect(bad) == nil {
 		t.Error("ChooseOne with an invalid option should fail validation")
 	}
-	good := ChooseOne{Options: []Effect{GainAember{Player: Controller, Amount: 1}, Draw{Amount: 1}}}
+	good := ChooseOne{Options: []Effect{GainAember{
+		Player: Controller,
+		Amount: 1,
+	}, Draw{Amount: 1}}}
 	if validateEffect(good) != nil {
 		t.Error("ChooseOne with valid options should pass validation")
 	}
@@ -61,7 +77,10 @@ func TestChooseHouseThen(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mars := g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(3)), 1)
 	sanc := g.AddToBattleline(NewCard("s", Sanctum, Creature, Common, WithPower(3)), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	e := ChooseHouseThen{
 		Then: Stun{Target: Target{Kind: TargetEachEnemyCreature}.House(chosenHouse)},
@@ -85,7 +104,10 @@ func TestChooseHouseThen(t *testing.T) {
 func TestOpponentNamesHouse(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	// The opponent of controller 0 is player 1; they name the house.
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	e := OpponentNamesHouse{}
 	if e.Text() != "they name a house" {
@@ -111,7 +133,10 @@ func TestOpponentNamesHouse(t *testing.T) {
 func TestChooseHouseThenGuardsAndValidate(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mars := g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(3)), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// An out-of-range house choice resolves nothing.
 	g.SetChooser(0, optionPicker{idx: 99})
@@ -125,7 +150,11 @@ func TestChooseHouseThenGuardsAndValidate(t *testing.T) {
 	}
 
 	bad := ChooseHouseThen{
-		Then: Heal{Fully: true, Amount: 1, Target: Target{Kind: TargetThisCreature}},
+		Then: Heal{
+			Fully:  true,
+			Amount: 1,
+			Target: Target{Kind: TargetThisCreature},
+		},
 	}
 	if validateEffect(bad) == nil {
 		t.Error("ChooseHouseThen should surface an invalid Then via validate")

@@ -163,7 +163,10 @@ const (
 
 // newPacer returns a pacer at the polite starting thresholds.
 func newPacer() *pacer {
-	return &pacer{pace: pacerBasePace, longest: pacerFloor}
+	return &pacer{
+		pace:    pacerBasePace,
+		longest: pacerFloor,
+	}
 }
 
 // throttled ratchets the inter-page pace up one second, capped at pacerMaxPace.

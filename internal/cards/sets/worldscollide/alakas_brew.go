@@ -30,7 +30,10 @@ var AlakasBrew = set.New(
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Fight,
 			Effect: card.Then{
-				First:  card.PlayFrom{From: card.Hand, Types: card.Types.Of(card.Type.Creature)},
+				First: card.PlayFrom{
+					From:  card.Hand,
+					Types: card.Types.Of(card.Type.Creature),
+				},
 				Result: card.Ready{Target: card.Target.Triggering},
 			},
 		}},

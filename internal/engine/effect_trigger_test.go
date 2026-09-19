@@ -14,7 +14,10 @@ func TestTriggerAbility(t *testing.T) {
 	if (TriggerAbility{Trigger: TriggerAfterReap}).validate() == nil {
 		t.Error("unset target should be invalid")
 	}
-	if (TriggerAbility{Trigger: TriggerAfterForgeKey, Target: Target{Kind: TargetChosenCreature}}).
+	if (TriggerAbility{
+		Trigger: TriggerAfterForgeKey,
+		Target:  Target{Kind: TargetChosenCreature},
+	}).
 		validate() == nil {
 		t.Error("a trigger with no effect noun should be invalid")
 	}
@@ -30,14 +33,21 @@ func TestTriggerAbility(t *testing.T) {
 	// The source reaps and fires the only other creature carrying a Reap ability.
 	g := started(t)
 	gainer := testCreature("Gainer", 2, WithAbility(
-		TriggerAfterReap, GainAember{Amount: 1, Player: Controller}))
+		TriggerAfterReap, GainAember{
+			Amount: 1,
+			Player: Controller,
+		}))
 	g.AddToBattleline(testCreature("Source", 2), 0)
 	g.AddToBattleline(gainer, 0)
 	g.AddToBattleline(testCreature("Bystander", 2), 0)
 	src := g.Battleline(0)[0]
 	other := g.Battleline(0)[1]
 
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: src})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     src,
+	})
 	if g.Aember(0) != 1 {
 		t.Errorf("Æmber = %d, want 1", g.Aember(0))
 	}
@@ -55,7 +65,10 @@ func TestTriggerAbilityBoundedByRuleOfSix(t *testing.T) {
 	// six the two share, and the pass whose trigger is finally blocked still gains
 	// its Æmber — so the chain yields RuleOfSix+2 gains.
 	replicate := Sequence{Effects: []Effect{
-		GainAember{Amount: 1, Player: Controller},
+		GainAember{
+			Amount: 1,
+			Player: Controller,
+		},
 		TriggerAbility{
 			Trigger: TriggerAfterReap,
 			Target:  Target{Kind: TargetChosenCreature}.Other(),
@@ -67,7 +80,11 @@ func TestTriggerAbilityBoundedByRuleOfSix(t *testing.T) {
 	g.AddToBattleline(def, 0)
 	src := g.Battleline(0)[0]
 
-	replicate.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: src})
+	replicate.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     src,
+	})
 
 	if g.Aember(0) != RuleOfSix+2 {
 		t.Errorf(
@@ -92,7 +109,11 @@ func TestTriggerAbilityChargesTheCascadeRoot(t *testing.T) {
 	root := g.Battleline(0)[0]
 	other := g.Battleline(0)[1]
 
-	reachReap.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: root})
+	reachReap.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     root,
+	})
 
 	if got := g.nameUsagesThisTurn(root); got != RuleOfSix {
 		t.Errorf("root name pool = %d, want %d", got, RuleOfSix)
@@ -109,5 +130,9 @@ func TestTriggerAbilityNoCandidate(t *testing.T) {
 	TriggerAbility{
 		Trigger: TriggerAfterReap,
 		Target:  Target{Kind: TargetChosenCreature}.Other(),
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: src})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     src,
+	})
 }

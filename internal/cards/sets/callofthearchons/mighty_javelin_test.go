@@ -21,7 +21,10 @@ func TestMightyJavelin(t *testing.T) {
 	t.Run("destroys itself and deals 4 damage to a creature", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(MightyJavelin)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(MightyJavelin),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(6))),

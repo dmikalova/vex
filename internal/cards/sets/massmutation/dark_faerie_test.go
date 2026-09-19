@@ -21,7 +21,10 @@ func TestDarkFaerie(t *testing.T) {
 	t.Run("gains 2 aember when it fights", func(t *testing.T) {
 		var enemy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(DarkFaerie)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(DarkFaerie),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(1))),
 			)},

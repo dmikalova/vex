@@ -5,7 +5,10 @@ import "testing"
 // TestGainAssaultText covers the printed clause, standalone and folded under a
 // shared duration with a keyword grant.
 func TestGainAssaultText(t *testing.T) {
-	e := GainAssault{Target: Target{Kind: TargetTriggeringCreature}, Amount: PowerOfChosen{}}
+	e := GainAssault{
+		Target: Target{Kind: TargetTriggeringCreature},
+		Amount: PowerOfChosen{},
+	}
 	if got := e.Text(); got != "for the remainder of the turn, it gains assault equal to its power" {
 		t.Errorf("text = %q", got)
 	}
@@ -17,7 +20,10 @@ func TestGainAssaultText(t *testing.T) {
 				Keywords: []Keyword{Skirmish},
 				Duration: RemainderOfPlayerTurn,
 			},
-			GainAssault{Target: Target{Kind: TargetTriggeringCreature}, Amount: PowerOfChosen{}},
+			GainAssault{
+				Target: Target{Kind: TargetTriggeringCreature},
+				Amount: PowerOfChosen{},
+			},
 		},
 	}
 	want := "for the remainder of the turn, it gains skirmish and assault equal to its power"
@@ -26,7 +32,10 @@ func TestGainAssaultText(t *testing.T) {
 	}
 
 	// A Fixed amount renders a plain number, not "equal to".
-	fixed := GainAssault{Target: Target{Kind: TargetThisCreature}, Amount: Fixed(2)}
+	fixed := GainAssault{
+		Target: Target{Kind: TargetThisCreature},
+		Amount: Fixed(2),
+	}
 	if got := fixed.Text(); got != "for the remainder of the turn, "+SelfName+" gains assault 2" {
 		t.Errorf("fixed text = %q", got)
 	}
@@ -54,7 +63,12 @@ func TestGainAssaultResolve(t *testing.T) {
 	g := started(t)
 	g.SetRecording(true)
 	beast := g.AddToBattleline(testCreature("beast", 4), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0, It: beast, HasIt: true}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         beast,
+		HasIt:      true,
+	}
 
 	GainAssault{
 		Target: Target{Kind: TargetTriggeringCreature},
@@ -82,9 +96,17 @@ func TestGainAssaultResolve(t *testing.T) {
 func TestGainAssaultZeroAndGone(t *testing.T) {
 	g := started(t)
 	beast := g.AddToBattleline(testCreature("beast", 4), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0, It: beast, HasIt: true}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         beast,
+		HasIt:      true,
+	}
 
-	GainAssault{Target: Target{Kind: TargetTriggeringCreature}, Amount: Fixed(0)}.Resolve(ctx)
+	GainAssault{
+		Target: Target{Kind: TargetTriggeringCreature},
+		Amount: Fixed(0),
+	}.Resolve(ctx)
 	if g.State.Cards[beast].TempAssaultBonus != 0 {
 		t.Error("a non-positive amount should grant nothing")
 	}
@@ -117,7 +139,10 @@ func TestChooseCreatureGainsSkirmishAndAssault(t *testing.T) {
 	g := started(t)
 	chosen := g.AddToBattleline(testCreature("chosen", 4), 0)
 	defender := g.AddToBattleline(testCreature("defender", 5), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	grant := ChooseCreatureThen{
 		Target: Target{Kind: TargetChosenCreature},
@@ -206,8 +231,16 @@ func TestGainAssaultUntilNextTurnResolve(t *testing.T) {
 	g.SetRecording(true)
 	beast := g.AddToBattleline(testCreature("beast", 4), 0)
 
-	GainAssaultUntilNextTurn{Target: Target{Kind: TargetTriggeringCreature}, Amount: Fixed(3)}.
-		Resolve(&EffectContext{Resolver: g, Controller: 0, It: beast, HasIt: true})
+	GainAssaultUntilNextTurn{
+		Target: Target{Kind: TargetTriggeringCreature},
+		Amount: Fixed(3),
+	}.
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			It:         beast,
+			HasIt:      true,
+		})
 	if got := g.assault(beast); got != 3 {
 		t.Errorf("assault = %d, want 3", got)
 	}
@@ -228,8 +261,16 @@ func TestGainAssaultUntilNextTurnResolve(t *testing.T) {
 	}
 
 	// A non-positive amount grants nothing.
-	GainAssaultUntilNextTurn{Target: Target{Kind: TargetTriggeringCreature}, Amount: Fixed(0)}.
-		Resolve(&EffectContext{Resolver: g, Controller: 0, It: beast, HasIt: true})
+	GainAssaultUntilNextTurn{
+		Target: Target{Kind: TargetTriggeringCreature},
+		Amount: Fixed(0),
+	}.
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			It:         beast,
+			HasIt:      true,
+		})
 	if g.assault(beast) != 0 {
 		t.Error("a non-positive amount should grant nothing")
 	}

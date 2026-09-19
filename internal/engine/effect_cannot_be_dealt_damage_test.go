@@ -6,7 +6,10 @@ func TestCannotBeDealtDamage(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	friend := g.AddToBattleline(testCreature("friend", 5), 0)
 	foe := g.AddToBattleline(testCreature("foe", 5), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	e := CannotBeDealtDamage{
 		Target:   Target{Kind: TargetEachFriendlyCreature},
@@ -26,14 +29,20 @@ func TestCannotBeDealtDamage(t *testing.T) {
 	}
 
 	e.Resolve(ctx)
-	g.applyRawDamage(DamageTarget{ID: friend, Amount: 3})
+	g.applyRawDamage(DamageTarget{
+		ID:     friend,
+		Amount: 3,
+	})
 	if g.Damage(friend) != 0 {
 		t.Errorf("protected creature took %d damage, want 0", g.Damage(friend))
 	}
 	// A friendly creature that arrives after the immunity resolves is protected too:
 	// the side-wide mask is read live, not a snapshot of who was in play.
 	late := g.AddToBattleline(testCreature("late", 5), 0)
-	g.applyRawDamage(DamageTarget{ID: late, Amount: 3})
+	g.applyRawDamage(DamageTarget{
+		ID:     late,
+		Amount: 3,
+	})
 	if g.Damage(late) != 0 {
 		t.Errorf("late-arriving friendly creature took %d damage, want 0", g.Damage(late))
 	}
@@ -48,7 +57,10 @@ func TestCannotBeDealtDamage(t *testing.T) {
 	if !g.DamageImmune(foe) {
 		t.Fatal("enemy side should be protected")
 	}
-	g.applyRawDamage(DamageTarget{ID: foe, Amount: 3})
+	g.applyRawDamage(DamageTarget{
+		ID:     foe,
+		Amount: 3,
+	})
 	if g.Damage(foe) != 0 {
 		t.Errorf("protected enemy creature took %d damage, want 0", g.Damage(foe))
 	}

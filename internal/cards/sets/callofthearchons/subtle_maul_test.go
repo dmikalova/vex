@@ -18,7 +18,10 @@ import (
 func TestSubtleMaul(t *testing.T) {
 	t.Run("opponent discards a random card as an action", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(SubtleMaul)},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(SubtleMaul),
+			},
 			P2: ct.Side{Hand: ct.Cards(ct.Creature(), ct.Creature())},
 		})
 

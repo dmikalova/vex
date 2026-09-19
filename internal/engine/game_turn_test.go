@@ -61,17 +61,26 @@ func TestPlayerHasHouse(t *testing.T) {
 
 func TestDrawModifierText(t *testing.T) {
 	if got := drawModifierText(
-		DrawModifier{Player: Controller, Amount: 1},
+		DrawModifier{
+			Player: Controller,
+			Amount: 1,
+		},
 	); got != `Your hand size is 1 more.` {
 		t.Errorf("controller text = %q", got)
 	}
 	if got := drawModifierText(
-		DrawModifier{Player: Opponent, Amount: -1},
+		DrawModifier{
+			Player: Opponent,
+			Amount: -1,
+		},
 	); got != `Your opponent's hand size is 1 less.` {
 		t.Errorf("opponent text = %q", got)
 	}
 	if got := drawModifierText(
-		DrawModifier{Player: EachPlayer, Amount: 2},
+		DrawModifier{
+			Player: EachPlayer,
+			Amount: 2,
+		},
 	); got != `Each player's hand size is 2 more.` {
 		t.Errorf("each-player text = %q", got)
 	}
@@ -79,12 +88,20 @@ func TestDrawModifierText(t *testing.T) {
 		t.Errorf("zero modifier text = %q, want empty", got)
 	}
 	if got := drawModifierText(
-		DrawModifier{Player: Opponent, Amount: -1, OnlyWhileOffFlank: true},
+		DrawModifier{
+			Player:            Opponent,
+			Amount:            -1,
+			OnlyWhileOffFlank: true,
+		},
 	); got != `While `+SelfName+` is not on a flank, your opponent's hand size is 1 less.` {
 		t.Errorf("off-flank text = %q", got)
 	}
 	if got := drawModifierText(
-		DrawModifier{Player: Controller, Amount: 2, OnlyWhileInCenter: true},
+		DrawModifier{
+			Player:            Controller,
+			Amount:            2,
+			OnlyWhileInCenter: true,
+		},
 	); got != `While `+SelfName+` is in the center of the battleline, your hand size is 2 more.` {
 		t.Errorf("in-center text = %q", got)
 	}
@@ -92,7 +109,11 @@ func TestDrawModifierText(t *testing.T) {
 		DrawModifier{
 			Player: Controller,
 			Amount: 1,
-			Per:    CardsInPlay{Player: Controller, Type: Creature, Trait: Sin},
+			Per: CardsInPlay{
+				Player: Controller,
+				Type:   Creature,
+				Trait:  Sin,
+			},
 		},
 	); got != `For each friendly Sin creature your hand size is 1 more.` {
 		t.Errorf("per text = %q", got)
@@ -100,15 +121,24 @@ func TestDrawModifierText(t *testing.T) {
 }
 
 func TestDrawModifierAffects(t *testing.T) {
-	self := DrawModifier{Player: Controller, Amount: 1}
+	self := DrawModifier{
+		Player: Controller,
+		Amount: 1,
+	}
 	if !self.affects(0, 0) || self.affects(0, 1) {
 		t.Error("Controller modifier should affect only its owner")
 	}
-	foe := DrawModifier{Player: Opponent, Amount: 1}
+	foe := DrawModifier{
+		Player: Opponent,
+		Amount: 1,
+	}
 	if foe.affects(0, 0) || !foe.affects(0, 1) {
 		t.Error("Opponent modifier should affect only the other player")
 	}
-	both := DrawModifier{Player: EachPlayer, Amount: 1}
+	both := DrawModifier{
+		Player: EachPlayer,
+		Amount: 1,
+	}
 	if !both.affects(0, 0) || !both.affects(0, 1) {
 		t.Error("EachPlayer modifier should affect both players")
 	}
@@ -162,7 +192,11 @@ func TestDrawStepModifierPer(t *testing.T) {
 			WithDrawModifierPer(
 				Controller,
 				1,
-				CardsInPlay{Player: Controller, Type: Creature, Trait: Sin},
+				CardsInPlay{
+					Player: Controller,
+					Type:   Creature,
+					Trait:  Sin,
+				},
 			),
 		),
 		0,
@@ -249,7 +283,10 @@ func TestDrawModifierInCenter(t *testing.T) {
 func TestForgemasterOgDrainsForger(t *testing.T) {
 	og := NewCard("Forgemaster Og", Brobnar, Creature, Rare, WithPower(4),
 		WithAbility(TriggerAfterPlayerForgesKey,
-			LoseAember{Player: ThatPlayer, By: AllAember}))
+			LoseAember{
+				Player: ThatPlayer,
+				By:     AllAember,
+			}))
 
 	if got := RenderCardRules(&og); !strings.Contains(got,
 		"After a player forges a key, that player loses all their Æmber.") {
@@ -281,7 +318,10 @@ func TestForgemasterOgDrainsForger(t *testing.T) {
 // the opponent forges and not when its own controller does.
 func TestAfterOpponentForgesKeyFiresOnlyOnOpponentForge(t *testing.T) {
 	watcher := NewCard("Watcher", Logos, Creature, Common, WithPower(3),
-		WithAbility(TriggerAfterOpponentForgesKey, GainAember{Player: Controller, Amount: 2}))
+		WithAbility(TriggerAfterOpponentForgesKey, GainAember{
+			Player: Controller,
+			Amount: 2,
+		}))
 	if got := RenderCardRules(&watcher); !strings.Contains(got,
 		"After your opponent forges a key, gain 2 Æmber.") {
 		t.Fatalf("Watcher rules = %q", got)

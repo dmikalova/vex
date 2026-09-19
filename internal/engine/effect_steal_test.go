@@ -8,7 +8,11 @@ import (
 func TestStealAemberEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 1), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 	g.State.Aember[1] = 1
 
 	e := StealAember{Amount: 3}
@@ -24,7 +28,11 @@ func TestStealAemberEffect(t *testing.T) {
 func TestStealAemberBy(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 1), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 	g.State.Aember[1] = 10
 
 	e := StealAember{By: AllBut(6)}
@@ -35,7 +43,10 @@ func TestStealAemberBy(t *testing.T) {
 	if g.State.Aember[0] != 4 || g.State.Aember[1] != 6 {
 		t.Errorf("after steal: you=%d opp=%d, want 4/6", g.State.Aember[0], g.State.Aember[1])
 	}
-	if err := validateEffect(StealAember{Amount: 1, By: AllBut(6)}); err == nil {
+	if err := validateEffect(StealAember{
+		Amount: 1,
+		By:     AllBut(6),
+	}); err == nil {
 		t.Error("want error for both Amount and By")
 	}
 	if err := validateEffect(StealAember{Amount: 1}); err != nil {
@@ -47,10 +58,21 @@ func TestStealAemberPer(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 1), 0)
 	g.AddToBattleline(testCreature("mate", 1), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 	g.State.Aember[1] = 5
 
-	e := StealAember{Amount: 1, Per: CardsInPlay{Player: Controller, Type: Creature, Ready: true}}
+	e := StealAember{
+		Amount: 1,
+		Per: CardsInPlay{
+			Player: Controller,
+			Type:   Creature,
+			Ready:  true,
+		},
+	}
 	if want := "for each friendly ready creature in play, steal 1 Æmber"; e.Text() != want {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -63,14 +85,20 @@ func TestStealAemberPer(t *testing.T) {
 // TestStealAemberReversed covers the theft turned around, so the opponent takes
 // from the controller (Magda the Rat as she leaves play).
 func TestStealAemberReversed(t *testing.T) {
-	e := StealAember{Player: Opponent, Amount: 2}
+	e := StealAember{
+		Player: Opponent,
+		Amount: 2,
+	}
 	if got := e.Text(); got != "your opponent steals 2 Æmber" {
 		t.Errorf("text = %q", got)
 	}
 
 	g := NewGame("A", "B", 1)
 	g.SetAember(0, 5)
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.Aember(0) != 3 || g.Aember(1) != 2 {
 		t.Errorf("pools = %d/%d, want 3/2", g.Aember(0), g.Aember(1))
 	}
@@ -82,10 +110,17 @@ func TestStealAemberReversed(t *testing.T) {
 func TestStealAemberCapturedByRedirect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.AddToBattleline(testCreature("garg", 16,
-		WithReplaces(Instead{Of: EventAemberStolen, With: Capture})), 1)
+		WithReplaces(Instead{
+			Of:   EventAemberStolen,
+			With: Capture,
+		})), 1)
 	thief := g.AddToBattleline(testCreature("thief", 3), 0)
 	g.State.Aember[1] = 5
-	ctx := &EffectContext{Resolver: g, Source: thief, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     thief,
+		Controller: 0,
+	}
 
 	StealAember{Amount: 2}.Resolve(ctx)
 	if g.Aember(0) != 0 {
@@ -105,9 +140,16 @@ func TestStealAemberCapturedByRedirect(t *testing.T) {
 func TestStealAemberRedirectNoCreatureFallsBack(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	garg := g.AddToBattleline(testCreature("garg", 16,
-		WithReplaces(Instead{Of: EventAemberStolen, With: Capture})), 1)
+		WithReplaces(Instead{
+			Of:   EventAemberStolen,
+			With: Capture,
+		})), 1)
 	g.State.Aember[1] = 5
-	ctx := &EffectContext{Resolver: g, Source: garg, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     garg,
+		Controller: 0,
+	}
 
 	StealAember{Amount: 2}.Resolve(ctx)
 	if g.Aember(0) != 2 {
@@ -123,12 +165,19 @@ func TestStealAemberRedirectNoCreatureFallsBack(t *testing.T) {
 func TestStealAemberRedirectChoosesCaptor(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.AddToBattleline(testCreature("garg", 16,
-		WithReplaces(Instead{Of: EventAemberStolen, With: Capture})), 1)
+		WithReplaces(Instead{
+			Of:   EventAemberStolen,
+			With: Capture,
+		})), 1)
 	first := g.AddToBattleline(testCreature("first", 3), 0)
 	second := g.AddToBattleline(testCreature("second", 3), 0)
 	g.State.Aember[1] = 5
 	g.SetChooser(0, idChooser{id: second})
-	ctx := &EffectContext{Resolver: g, Source: first, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     first,
+		Controller: 0,
+	}
 
 	StealAember{Amount: 2}.Resolve(ctx)
 	if got := g.AmberOn(second); got != 2 {
@@ -145,13 +194,20 @@ func TestStealAemberRedirectChoosesCaptor(t *testing.T) {
 func TestStealAemberRedirectDeclineFallsToFirst(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	garg := g.AddToBattleline(testCreature("garg", 16,
-		WithReplaces(Instead{Of: EventAemberStolen, With: Capture})), 1)
+		WithReplaces(Instead{
+			Of:   EventAemberStolen,
+			With: Capture,
+		})), 1)
 	first := g.AddToBattleline(testCreature("first", 3), 0)
 	g.AddToBattleline(testCreature("second", 3), 0)
 	g.State.Aember[1] = 5
 	// A chooser that never matches a candidate declines, so the fallback applies.
 	g.SetChooser(0, idChooser{id: garg})
-	ctx := &EffectContext{Resolver: g, Source: first, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     first,
+		Controller: 0,
+	}
 
 	StealAember{Amount: 2}.Resolve(ctx)
 	if got := g.AmberOn(first); got != 2 {
@@ -162,7 +218,10 @@ func TestStealAemberRedirectDeclineFallsToFirst(t *testing.T) {
 // TestCaptureStolenAemberText renders Gargantodon's continuous replacement line.
 func TestCaptureStolenAemberText(t *testing.T) {
 	def := testCreature("garg", 16,
-		WithReplaces(Instead{Of: EventAemberStolen, With: Capture}))
+		WithReplaces(Instead{
+			Of:   EventAemberStolen,
+			With: Capture,
+		}))
 	want := "Each Æmber that would be stolen is captured by a creature controlled by the active player instead."
 	if got := RenderCardRules(&def); !strings.Contains(got, want) {
 		t.Errorf("rules missing redirect line:\n%s", got)

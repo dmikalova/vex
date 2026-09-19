@@ -39,23 +39,38 @@ func TestCardFilter(t *testing.T) {
 		{"trait mismatch", CardFilter{Trait: Robot}, human, false},
 		{"name match", CardFilter{Name: "droid"}, robot, true},
 		{"name mismatch", CardFilter{Name: "droid"}, human, false},
-		{"conjunction admits", CardFilter{Type: Creature, Trait: Robot}, robot, true},
-		{"conjunction rejects on trait", CardFilter{Type: Creature, Trait: Robot}, human, false},
+		{"conjunction admits", CardFilter{
+			Type:  Creature,
+			Trait: Robot,
+		}, robot, true},
+		{"conjunction rejects on trait", CardFilter{
+			Type:  Creature,
+			Trait: Robot,
+		}, human, false},
 		{
 			"disjunction via Or admits type",
-			CardFilter{Type: Upgrade, Or: []CardFilter{{Trait: Robot}}},
+			CardFilter{
+				Type: Upgrade,
+				Or:   []CardFilter{{Trait: Robot}},
+			},
 			upgrade,
 			true,
 		},
 		{
 			"disjunction via Or admits alt",
-			CardFilter{Type: Upgrade, Or: []CardFilter{{Trait: Robot}}},
+			CardFilter{
+				Type: Upgrade,
+				Or:   []CardFilter{{Trait: Robot}},
+			},
 			robot,
 			true,
 		},
 		{
 			"disjunction via Or rejects neither",
-			CardFilter{Type: Upgrade, Or: []CardFilter{{Trait: Robot}}},
+			CardFilter{
+				Type: Upgrade,
+				Or:   []CardFilter{{Trait: Robot}},
+			},
 			human,
 			false,
 		},

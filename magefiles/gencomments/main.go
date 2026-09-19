@@ -444,7 +444,10 @@ func sprintfTemplate(expr ast.Expr, params map[string]int) (nameTemplate, bool) 
 		}
 		args = append(args, idx)
 	}
-	return nameTemplate{format: format, args: args}, true
+	return nameTemplate{
+		format: format,
+		args:   args,
+	}, true
 }
 
 // paramIndex maps each named parameter of ft to its positional index.

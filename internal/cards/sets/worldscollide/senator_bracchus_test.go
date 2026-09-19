@@ -21,7 +21,10 @@ import (
 func TestSenatorBracchus(t *testing.T) {
 	t.Run("reaping exalts Senator Bracchus", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, InPlay: ct.Cards(SenatorBracchus)},
+			P1: ct.Side{
+				House:  card.House.Saurian,
+				InPlay: ct.Cards(SenatorBracchus),
+			},
 		})
 
 		h.P1.Reap(SenatorBracchus)
@@ -32,7 +35,10 @@ func TestSenatorBracchus(t *testing.T) {
 	t.Run("fighting exalts Senator Bracchus", func(t *testing.T) {
 		var enemy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, InPlay: ct.Cards(SenatorBracchus)},
+			P1: ct.Side{
+				House:  card.House.Saurian,
+				InPlay: ct.Cards(SenatorBracchus),
+			},
 			// A low-power, well-armored enemy so Bracchus survives to exalt itself.
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&enemy, ct.Creature(ct.Power(1), ct.Armor(5))),

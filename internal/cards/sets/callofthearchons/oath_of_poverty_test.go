@@ -41,7 +41,10 @@ func TestOathOfPoverty(t *testing.T) {
 
 	t.Run("gains nothing when you control no artifacts", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(OathOfPoverty)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(OathOfPoverty),
+			},
 		})
 
 		h.P1.Play(OathOfPoverty)

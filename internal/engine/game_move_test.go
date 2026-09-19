@@ -10,9 +10,20 @@ func TestMoveCardRefusesImpossibleMoves(t *testing.T) {
 		before := g.State.Hand[0].Count
 
 		if g.moveCard(id,
-			zoneRef{Player: 0, Zone: Hand},
-			zoneRef{Player: 0, Zone: InPlay},
-			CardMoved{Player: 0, Card: id, From: Hand, To: InPlay}) {
+			zoneRef{
+				Player: 0,
+				Zone:   Hand,
+			},
+			zoneRef{
+				Player: 0,
+				Zone:   InPlay,
+			},
+			CardMoved{
+				Player: 0,
+				Card:   id,
+				From:   Hand,
+				To:     InPlay,
+			}) {
 			t.Fatal("moveCard into play reported a move")
 		}
 		if g.State.Hand[0].Count != before {
@@ -26,9 +37,20 @@ func TestMoveCardRefusesImpossibleMoves(t *testing.T) {
 		g.State.Hand[0].add(id)
 
 		if g.moveCard(id,
-			zoneRef{Player: 0, Zone: Discard},
-			zoneRef{Player: 0, Zone: Purged},
-			CardMoved{Player: 0, Card: id, From: Discard, To: Purged}) {
+			zoneRef{
+				Player: 0,
+				Zone:   Discard,
+			},
+			zoneRef{
+				Player: 0,
+				Zone:   Purged,
+			},
+			CardMoved{
+				Player: 0,
+				Card:   id,
+				From:   Discard,
+				To:     Purged,
+			}) {
 			t.Fatal("moveCard reported moving a card that was not there")
 		}
 		if g.State.Purge[0].Count != 0 {

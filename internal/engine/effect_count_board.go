@@ -52,7 +52,10 @@ func (e ExcessCreatures) sideCount(ctx *EffectContext, player int) int {
 // scan only walks battlelines, so filter().noun() renders "creature" rather than
 // the generic "card".
 func (e ExcessCreatures) filter() CardFilter {
-	return CardFilter{Type: Creature, Trait: e.Trait}
+	return CardFilter{
+		Type:  Creature,
+		Trait: e.Trait,
+	}
 }
 
 // CountText renders the singular noun the "for each" clause repeats.
@@ -143,7 +146,11 @@ func (e CardsInPlay) Value(ctx *EffectContext) int {
 // filter is the identity predicate a counted card must satisfy, conjoining the
 // Type, Trait, and Name filters (Chosen's filter has the same shape).
 func (e CardsInPlay) filter() CardFilter {
-	return CardFilter{Type: e.Type, Trait: e.Trait, Name: e.Name}
+	return CardFilter{
+		Type:  e.Type,
+		Trait: e.Trait,
+		Name:  e.Name,
+	}
 }
 
 // Met reports whether at least Amount (default one) matching cards are in play,

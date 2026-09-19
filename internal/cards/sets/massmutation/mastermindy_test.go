@@ -28,7 +28,10 @@ func TestMastermindy(t *testing.T) {
 					House:  card.House.Shadows,
 					InPlay: ct.Cards(ct.Bind(&mindy, Mastermindy)),
 				},
-				P2: ct.Side{House: card.House.Shadows, Amber: 5},
+				P2: ct.Side{
+					House: card.House.Shadows,
+					Amber: 5,
+				},
 			})
 
 			// Two of P1's turns end, each placing a scheme counter.
@@ -55,7 +58,10 @@ func TestMastermindy(t *testing.T) {
 				House:  card.House.Shadows,
 				InPlay: ct.Cards(Mastermindy),
 			},
-			P2: ct.Side{House: card.House.Shadows, Amber: 4},
+			P2: ct.Side{
+				House: card.House.Shadows,
+				Amber: 4,
+			},
 		})
 
 		h.P1.UseAction(Mastermindy)

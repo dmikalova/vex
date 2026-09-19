@@ -57,7 +57,10 @@ func TestCannotBeUsedWhileText(t *testing.T) {
 func TestEntersPlayAbilityText(t *testing.T) {
 	// A Stun effect renders as the "stunned" state word.
 	stun := RenderAbility(
-		Ability{Trigger: TriggerEntersPlay, Effect: Stun{Target: Target{Kind: TargetThisCreature}}},
+		Ability{
+			Trigger: TriggerEntersPlay,
+			Effect:  Stun{Target: Target{Kind: TargetThisCreature}},
+		},
 	)
 	if want := SelfName + " enters play stunned."; stun != want {
 		t.Errorf("enters-play stun = %q, want %q", stun, want)
@@ -97,7 +100,13 @@ func TestEntersPlayAbilityText(t *testing.T) {
 	}
 	// An effect without a dedicated enter word falls back to its ordinary text.
 	other := RenderAbility(
-		Ability{Trigger: TriggerEntersPlay, Effect: GainAember{Player: Controller, Amount: 1}},
+		Ability{
+			Trigger: TriggerEntersPlay,
+			Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
+		},
 	)
 	if want := SelfName + " enters play gain 1 Æmber."; other != want {
 		t.Errorf("enters-play fallback = %q, want %q", other, want)
@@ -107,7 +116,13 @@ func TestEntersPlayAbilityText(t *testing.T) {
 func TestTriggerPrefixDefault(t *testing.T) {
 	// An unknown trigger renders with no prefix and a capitalized effect.
 	got := RenderAbility(
-		Ability{Trigger: Trigger(99), Effect: GainAember{Player: Controller, Amount: 1}},
+		Ability{
+			Trigger: Trigger(99),
+			Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
+		},
 	)
 	if got != "Gain 1 Æmber." {
 		t.Errorf("RenderAbility(unknown) = %q", got)
@@ -116,7 +131,13 @@ func TestTriggerPrefixDefault(t *testing.T) {
 
 func TestEndOfTurnAbilityText(t *testing.T) {
 	got := RenderAbility(
-		Ability{Trigger: TriggerEndOfTurn, Effect: LoseAember{Player: Opponent, Amount: 1}},
+		Ability{
+			Trigger: TriggerEndOfTurn,
+			Effect: LoseAember{
+				Player: Opponent,
+				Amount: 1,
+			},
+		},
 	)
 	if want := "At the end of your turn, your opponent loses 1 Æmber."; got != want {
 		t.Errorf("end-of-turn text = %q, want %q", got, want)
@@ -128,7 +149,10 @@ func TestAfterYouPlayFolding(t *testing.T) {
 	folded := RenderAbility(
 		Ability{
 			Trigger: TriggerAfterCardPlayed,
-			Effect:  Conditional{Cond: ItIs{Type: Artifact}, Then: StealAember{Amount: 1}},
+			Effect: Conditional{
+				Cond: ItIs{Type: Artifact},
+				Then: StealAember{Amount: 1},
+			},
 		},
 	)
 	if want := "After you play an artifact, steal 1 Æmber."; folded != want {
@@ -140,7 +164,10 @@ func TestAfterYouPlayFolding(t *testing.T) {
 			Trigger: TriggerAfterCardPlayed,
 			Effect: Conditional{
 				Cond: ItIsNamed{Name: "Subtle Chain"},
-				Then: GainAember{Player: Controller, Amount: 1},
+				Then: GainAember{
+					Player: Controller,
+					Amount: 1,
+				},
 			},
 		},
 	)
@@ -163,7 +190,13 @@ func TestAfterYouPlayFolding(t *testing.T) {
 	}
 	// A non-Conditional reaction keeps the broad prefix.
 	plain := RenderAbility(
-		Ability{Trigger: TriggerAfterCardPlayed, Effect: GainAember{Player: Controller, Amount: 1}},
+		Ability{
+			Trigger: TriggerAfterCardPlayed,
+			Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
+		},
 	)
 	if want := "After you play a card, gain 1 Æmber."; plain != want {
 		t.Errorf("plain = %q, want %q", plain, want)
@@ -173,8 +206,15 @@ func TestAfterYouPlayFolding(t *testing.T) {
 		Ability{
 			Trigger: TriggerAfterCardPlayed,
 			Effect: Conditional{
-				Cond: PoolAember{Player: Opponent, Is: AtLeast, Amount: 1},
-				Then: GainAember{Player: Controller, Amount: 1},
+				Cond: PoolAember{
+					Player: Opponent,
+					Is:     AtLeast,
+					Amount: 1,
+				},
+				Then: GainAember{
+					Player: Controller,
+					Amount: 1,
+				},
 			},
 		},
 	)
@@ -188,7 +228,10 @@ func TestAfterYouPlayFolding(t *testing.T) {
 			Trigger: TriggerAfterCardPlayed,
 			Effect: Conditional{
 				Cond: ItHasBonusIcon{},
-				Then: GainAember{Player: Controller, Amount: 1},
+				Then: GainAember{
+					Player: Controller,
+					Amount: 1,
+				},
 			},
 		},
 	)
@@ -205,7 +248,10 @@ func TestAfterYouUseFolding(t *testing.T) {
 			Trigger: TriggerAfterUse,
 			Effect: Conditional{
 				Cond: ItIs{Type: Artifact},
-				Then: GainAember{Player: Controller, Amount: 1},
+				Then: GainAember{
+					Player: Controller,
+					Amount: 1,
+				},
 			},
 		},
 	)
@@ -214,7 +260,13 @@ func TestAfterYouUseFolding(t *testing.T) {
 	}
 	// A non-Conditional use reaction keeps the broad prefix.
 	plain := RenderAbility(
-		Ability{Trigger: TriggerAfterUse, Effect: GainAember{Player: Controller, Amount: 1}},
+		Ability{
+			Trigger: TriggerAfterUse,
+			Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
+		},
 	)
 	if want := "After you use a card, gain 1 Æmber."; plain != want {
 		t.Errorf("plain = %q, want %q", plain, want)
@@ -245,7 +297,10 @@ func TestAfterYouDiscardFolding(t *testing.T) {
 	plain := RenderAbility(
 		Ability{
 			Trigger: TriggerAfterDiscardFromHand,
-			Effect:  GainAember{Player: Controller, Amount: 1},
+			Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
 		},
 	)
 	if want := "After you discard a card from your hand, gain 1 Æmber."; plain != want {
@@ -274,7 +329,10 @@ func TestAfterCreaturePlayedAdjacentFolding(t *testing.T) {
 	}
 	// A non-Conditional played-adjacent reaction keeps the broad prefix.
 	plain := RenderAbility(
-		Ability{Trigger: TriggerAfterCreaturePlayedAdjacent, Effect: Draw{Amount: 1}},
+		Ability{
+			Trigger: TriggerAfterCreaturePlayedAdjacent,
+			Effect:  Draw{Amount: 1},
+		},
 	)
 	if want := "After a creature is played adjacent to " + SelfName +
 		", draw a card."; plain != want {
@@ -286,7 +344,11 @@ func TestAfterCreaturePlayedAdjacentFolding(t *testing.T) {
 		Ability{
 			Trigger: TriggerAfterCreaturePlayedAdjacent,
 			Effect: Conditional{
-				Cond: PoolAember{Player: Opponent, Is: AtLeast, Amount: 1},
+				Cond: PoolAember{
+					Player: Opponent,
+					Is:     AtLeast,
+					Amount: 1,
+				},
 				Then: Draw{Amount: 1},
 			},
 		},
@@ -312,8 +374,14 @@ func TestAfterEnemyPlaysCreatureOnFlankFolding(t *testing.T) {
 			Ability{
 				Trigger: TriggerAfterEnemyCardPlayed,
 				Effect: Conditional{
-					Cond: OnFlank{OfIt: true, Where: tc.where},
-					Then: LoseAember{Player: Opponent, Amount: 1},
+					Cond: OnFlank{
+						OfIt:  true,
+						Where: tc.where,
+					},
+					Then: LoseAember{
+						Player: Opponent,
+						Amount: 1,
+					},
 				},
 			},
 		)
@@ -323,7 +391,10 @@ func TestAfterEnemyPlaysCreatureOnFlankFolding(t *testing.T) {
 	}
 	// A non-Conditional enemy-play reaction keeps the broad prefix.
 	plain := RenderAbility(
-		Ability{Trigger: TriggerAfterEnemyCardPlayed, Effect: Draw{Amount: 1}},
+		Ability{
+			Trigger: TriggerAfterEnemyCardPlayed,
+			Effect:  Draw{Amount: 1},
+		},
 	)
 	if want := "After your opponent plays a card, draw a card."; plain != want {
 		t.Errorf("plain = %q, want %q", plain, want)
@@ -335,9 +406,18 @@ func TestAfterEnemyPlaysCreatureOnFlankFolding(t *testing.T) {
 		cond Condition
 		els  Effect
 	}{
-		{"else", OnFlank{OfIt: true, Where: RightFlank}, Draw{Amount: 1}},
-		{"any-flank", OnFlank{OfIt: true, Where: AnyFlank}, nil},
-		{"source-flank", OnFlank{OfIt: false, Where: RightFlank}, nil},
+		{"else", OnFlank{
+			OfIt:  true,
+			Where: RightFlank,
+		}, Draw{Amount: 1}},
+		{"any-flank", OnFlank{
+			OfIt:  true,
+			Where: AnyFlank,
+		}, nil},
+		{"source-flank", OnFlank{
+			OfIt:  false,
+			Where: RightFlank,
+		}, nil},
 		{"non-flank", ItIsOfTrait{Trait: Giant}, nil},
 	}
 	for _, tc := range literal {
@@ -346,7 +426,10 @@ func TestAfterEnemyPlaysCreatureOnFlankFolding(t *testing.T) {
 				Trigger: TriggerAfterEnemyCardPlayed,
 				Effect: Conditional{
 					Cond: tc.cond,
-					Then: LoseAember{Player: Opponent, Amount: 1},
+					Then: LoseAember{
+						Player: Opponent,
+						Amount: 1,
+					},
 					Else: tc.els,
 				},
 			},
@@ -370,27 +453,57 @@ func TestAfterCreatureScopeFolding(t *testing.T) {
 	}{
 		{
 			"enemy reaps",
-			Ability{Trigger: TriggerAfterCreatureReaps, Effect: Conditional{Cond: ItIsEnemy{}, Then: draw}},
+			Ability{
+				Trigger: TriggerAfterCreatureReaps,
+				Effect: Conditional{
+					Cond: ItIsEnemy{},
+					Then: draw,
+				},
+			},
 			"After an enemy creature reaps, draw a card.",
 		},
 		{
 			"friendly reaps",
-			Ability{Trigger: TriggerAfterCreatureReaps, Effect: Conditional{Cond: ItIsFriendly{}, Then: draw}},
+			Ability{
+				Trigger: TriggerAfterCreatureReaps,
+				Effect: Conditional{
+					Cond: ItIsFriendly{},
+					Then: draw,
+				},
+			},
 			"After a friendly creature reaps, draw a card.",
 		},
 		{
 			"friendly destroyed",
-			Ability{Trigger: TriggerAfterCreatureDestroyed, Effect: Conditional{Cond: ItIsFriendly{}, Then: draw}},
+			Ability{
+				Trigger: TriggerAfterCreatureDestroyed,
+				Effect: Conditional{
+					Cond: ItIsFriendly{},
+					Then: draw,
+				},
+			},
 			"After a friendly creature is destroyed, draw a card.",
 		},
 		{
 			"enemy destroyed during your turn",
-			Ability{Trigger: TriggerAfterCreatureDestroyed, Effect: Conditional{Cond: enemyTurn, Then: draw}},
+			Ability{
+				Trigger: TriggerAfterCreatureDestroyed,
+				Effect: Conditional{
+					Cond: enemyTurn,
+					Then: draw,
+				},
+			},
 			"After an enemy creature is destroyed during your turn, draw a card.",
 		},
 		{
 			"friendly fights",
-			Ability{Trigger: TriggerAfterCreatureFights, Effect: Conditional{Cond: ItIsFriendly{}, Then: draw}},
+			Ability{
+				Trigger: TriggerAfterCreatureFights,
+				Effect: Conditional{
+					Cond: ItIsFriendly{},
+					Then: draw,
+				},
+			},
 			"After a friendly creature is used to fight, draw a card.",
 		},
 	} {
@@ -407,52 +520,106 @@ func TestAfterCreatureScopeFolding(t *testing.T) {
 	}{
 		{
 			"plain reap",
-			Ability{Trigger: TriggerAfterCreatureReaps, Effect: draw},
+			Ability{
+				Trigger: TriggerAfterCreatureReaps,
+				Effect:  draw,
+			},
 			"After a creature reaps, ",
 		},
 		{
 			"reap with else",
-			Ability{Trigger: TriggerAfterCreatureReaps, Effect: Conditional{Cond: ItIsEnemy{}, Then: draw, Else: draw}},
+			Ability{
+				Trigger: TriggerAfterCreatureReaps,
+				Effect: Conditional{
+					Cond: ItIsEnemy{},
+					Then: draw,
+					Else: draw,
+				},
+			},
 			"After a creature reaps, ",
 		},
 		{
 			"reap gated on a non-scope condition",
-			Ability{Trigger: TriggerAfterCreatureReaps, Effect: Conditional{Cond: ItIsOfTrait{Trait: Giant}, Then: draw}},
+			Ability{
+				Trigger: TriggerAfterCreatureReaps,
+				Effect: Conditional{
+					Cond: ItIsOfTrait{Trait: Giant},
+					Then: draw,
+				},
+			},
 			"After a creature reaps, ",
 		},
 		{
 			"plain destroyed",
-			Ability{Trigger: TriggerAfterCreatureDestroyed, Effect: draw},
+			Ability{
+				Trigger: TriggerAfterCreatureDestroyed,
+				Effect:  draw,
+			},
 			"After a creature is destroyed, ",
 		},
 		{
 			"destroyed with else",
-			Ability{Trigger: TriggerAfterCreatureDestroyed, Effect: Conditional{Cond: ItIsFriendly{}, Then: draw, Else: draw}},
+			Ability{
+				Trigger: TriggerAfterCreatureDestroyed,
+				Effect: Conditional{
+					Cond: ItIsFriendly{},
+					Then: draw,
+					Else: draw,
+				},
+			},
 			"After a creature is destroyed, ",
 		},
 		{
 			"destroyed enemy without your turn",
-			Ability{Trigger: TriggerAfterCreatureDestroyed, Effect: Conditional{Cond: And{Conditions: []Condition{ItIsEnemy{}}}, Then: draw}},
+			Ability{
+				Trigger: TriggerAfterCreatureDestroyed,
+				Effect: Conditional{
+					Cond: And{Conditions: []Condition{ItIsEnemy{}}},
+					Then: draw,
+				},
+			},
 			"After a creature is destroyed, ",
 		},
 		{
 			"destroyed and but not enemy-your-turn",
-			Ability{Trigger: TriggerAfterCreatureDestroyed, Effect: Conditional{Cond: And{Conditions: []Condition{ItIsFriendly{}, ItIsEnemy{}}}, Then: draw}},
+			Ability{
+				Trigger: TriggerAfterCreatureDestroyed,
+				Effect: Conditional{
+					Cond: And{Conditions: []Condition{ItIsFriendly{}, ItIsEnemy{}}},
+					Then: draw,
+				},
+			},
 			"After a creature is destroyed, ",
 		},
 		{
 			"plain fight",
-			Ability{Trigger: TriggerAfterCreatureFights, Effect: draw},
+			Ability{
+				Trigger: TriggerAfterCreatureFights,
+				Effect:  draw,
+			},
 			"After a creature is used to fight, ",
 		},
 		{
 			"fight with else",
-			Ability{Trigger: TriggerAfterCreatureFights, Effect: Conditional{Cond: ItIsFriendly{}, Then: draw, Else: draw}},
+			Ability{
+				Trigger: TriggerAfterCreatureFights,
+				Effect: Conditional{
+					Cond: ItIsFriendly{},
+					Then: draw,
+					Else: draw,
+				},
+			},
 			"After a creature is used to fight, ",
 		},
 		{
 			"fight gated on a non-scope condition",
-			Ability{Trigger: TriggerAfterCreatureFights, Effect: Conditional{Cond: ItIsOfTrait{Trait: Giant}, Then: draw}},
+			Ability{
+				Trigger: TriggerAfterCreatureFights,
+				Effect: Conditional{
+					Cond: ItIsOfTrait{Trait: Giant},
+					Then: draw,
+				},
+			},
 			"After a creature is used to fight, ",
 		},
 	} {
@@ -467,18 +634,30 @@ func TestIsFightReapPair(t *testing.T) {
 		Cond: SourceFirstUseThisTurn{},
 		Then: Ready{Target: Target{Kind: TargetThisCreature}},
 	}
-	reap := Ability{Trigger: TriggerAfterReap, Effect: ready}
-	fight := Ability{Trigger: TriggerAfterFight, Effect: ready}
+	reap := Ability{
+		Trigger: TriggerAfterReap,
+		Effect:  ready,
+	}
+	fight := Ability{
+		Trigger: TriggerAfterFight,
+		Effect:  ready,
+	}
 	if !isFightReapPair(reap, fight) {
 		t.Error("Reap+Fight sharing one effect should pair")
 	}
 	if !isFightReapPair(fight, reap) {
 		t.Error("Fight+Reap (reversed order) should also pair")
 	}
-	if isFightReapPair(reap, Ability{Trigger: TriggerAfterReap, Effect: ready}) {
+	if isFightReapPair(reap, Ability{
+		Trigger: TriggerAfterReap,
+		Effect:  ready,
+	}) {
 		t.Error("Reap+Reap is not a Fight/Reap pair")
 	}
-	if isFightReapPair(reap, Ability{Trigger: TriggerAfterFight, Effect: StealAember{Amount: 1}}) {
+	if isFightReapPair(reap, Ability{
+		Trigger: TriggerAfterFight,
+		Effect:  StealAember{Amount: 1},
+	}) {
 		t.Error("differing effects should not pair")
 	}
 }
@@ -520,7 +699,13 @@ func TestAllTriggerPrefixes(t *testing.T) {
 	}
 	for tr, want := range cases {
 		got := RenderAbility(
-			Ability{Trigger: tr, Effect: GainAember{Player: Controller, Amount: 1}},
+			Ability{
+				Trigger: tr,
+				Effect: GainAember{
+					Player: Controller,
+					Amount: 1,
+				},
+			},
 		)
 		if got != want {
 			t.Errorf("trigger %d prefix = %q, want %q", tr, got, want)
@@ -614,7 +799,10 @@ func TestGeneratedCardText(t *testing.T) {
 				Artifact,
 				Rare,
 				WithTraits(Item),
-				WithBonusInstead(BonusInstead{May: true, As: BonusCapture}),
+				WithBonusInstead(BonusInstead{
+					May: true,
+					As:  BonusCapture,
+				}),
 			),
 			"House:  Saurian\nType:   Artifact\nRarity: Rare\nTraits: Item\n\nWhen resolving a bonus icon, you may resolve it as a Capture bonus icon instead.",
 		},
@@ -626,7 +814,10 @@ func TestGeneratedCardText(t *testing.T) {
 				Uncommon,
 				WithPower(3),
 				WithTraits(Mutant),
-				WithBonusInstead(BonusInstead{From: BonusCapture, Instead: StealAember{Amount: 1}}),
+				WithBonusInstead(BonusInstead{
+					From:    BonusCapture,
+					Instead: StealAember{Amount: 1},
+				}),
 			),
 			"House:  Sanctum\nType:   Creature\nRarity: Uncommon\nPower:  3\nTraits: Mutant\n\nWhen you resolve a Capture bonus icon, steal 1 Æmber instead.",
 		},
@@ -676,7 +867,10 @@ func TestGeneratedCardText(t *testing.T) {
 				Common,
 				WithPower(6),
 				WithTraits(Giant),
-				WithAttackDamage(AttackDamage{Amount: 2, FlankOnly: true}),
+				WithAttackDamage(AttackDamage{
+					Amount:    2,
+					FlankOnly: true,
+				}),
 			),
 			"House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  6\nTraits: Giant\n\nValdr deals +2 damage while attacking an enemy creature on the flank.",
 		},
@@ -687,7 +881,10 @@ func TestGeneratedCardText(t *testing.T) {
 				Creature,
 				Common,
 				WithPower(7),
-				WithAttackDamage(AttackDamage{Fixed: true, Amount: 0}),
+				WithAttackDamage(AttackDamage{
+					Fixed:  true,
+					Amount: 0,
+				}),
 			),
 			"House:  Mars\nType:   Creature\nRarity: Common\nPower:  7\n\nSpider deals no damage when fighting.",
 		},
@@ -698,8 +895,15 @@ func TestGeneratedCardText(t *testing.T) {
 				Creature,
 				Uncommon,
 				WithPower(7),
-				WithAttackDamage(AttackDamage{Fixed: true, Amount: 0}),
-				WithReplaces(Instead{Of: EventAemberAddedToPool, Player: Opponent, With: Capture}),
+				WithAttackDamage(AttackDamage{
+					Fixed:  true,
+					Amount: 0,
+				}),
+				WithReplaces(Instead{
+					Of:     EventAemberAddedToPool,
+					Player: Opponent,
+					With:   Capture,
+				}),
 			),
 			"House:  Mars\nType:   Creature\nRarity: Uncommon\nPower:  7\n\nEther Spider deals no damage when fighting.\nIf Æmber would be added to your opponent's pool, instead Ether Spider captures it.",
 		},
@@ -710,7 +914,10 @@ func TestGeneratedCardText(t *testing.T) {
 				Creature,
 				Common,
 				WithPower(8),
-				WithAttackDamage(AttackDamage{Fixed: true, Amount: 5}),
+				WithAttackDamage(AttackDamage{
+					Fixed:  true,
+					Amount: 5,
+				}),
 			),
 			"House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  8\n\nBruiser deals 5 damage when fighting.",
 		},
@@ -892,7 +1099,10 @@ func TestGeneratedCardText(t *testing.T) {
 							{
 								Trigger: TriggerAfterCardPlayed,
 								Effect: Conditional{
-									Cond: ItIs{House: namedHouse(Mars), Type: Creature},
+									Cond: ItIs{
+										House: namedHouse(Mars),
+										Type:  Creature,
+									},
 									Then: Sequence{
 										Effects: []Effect{
 											Ready{Target: Target{Kind: TargetThisCreature}},
@@ -942,7 +1152,10 @@ func TestGeneratedCardText(t *testing.T) {
 				WithPower(2),
 				WithTraits(Imp),
 				WithRestrictions(
-					Restrictions{PlayCardLimit: PlayCardLimit{Player: Opponent, Amount: 2}},
+					Restrictions{PlayCardLimit: PlayCardLimit{
+						Player: Opponent,
+						Amount: 2,
+					}},
 				),
 			),
 			"House:  Dis\nType:   Creature\nRarity: Common\nPower:  2\nTraits: Imp\n\nYour opponent cannot play more than 2 cards each turn.",
@@ -954,7 +1167,10 @@ func TestGeneratedCardText(t *testing.T) {
 				Creature,
 				Rare,
 				WithPower(4),
-				WithPlayPermission(PlayPermission{House: Untamed, Amount: 1}),
+				WithPlayPermission(PlayPermission{
+					House:  Untamed,
+					Amount: 1,
+				}),
 			),
 			"House:  Untamed\nType:   Creature\nRarity: Rare\nPower:  4\n\nEach turn you may play one Untamed card.",
 		},
@@ -965,7 +1181,10 @@ func TestGeneratedCardText(t *testing.T) {
 				Creature,
 				Rare,
 				WithPower(4),
-				WithPlayPermission(PlayPermission{House: Untamed, Amount: 2}),
+				WithPlayPermission(PlayPermission{
+					House:  Untamed,
+					Amount: 2,
+				}),
 			),
 			"House:  Untamed\nType:   Creature\nRarity: Rare\nPower:  4\n\nEach turn you may play 2 Untamed cards.",
 		},
@@ -1356,7 +1575,10 @@ func TestStaticText(t *testing.T) {
 	if staticText(StaticModifier{}) != "" {
 		t.Error("empty static modifier should render empty")
 	}
-	got := staticText(StaticModifier{PowerBonus: 5, ArmorBonus: 2})
+	got := staticText(StaticModifier{
+		PowerBonus: 5,
+		ArmorBonus: 2,
+	})
 	if got != "This creature gains +5 power and +2 armor." {
 		t.Errorf("staticText = %q", got)
 	}
@@ -1366,7 +1588,10 @@ func TestStaticText(t *testing.T) {
 		t.Errorf("assault staticText = %q", got)
 	}
 	if got := staticText(
-		StaticModifier{PowerBonus: 2, HazardousBonus: 2},
+		StaticModifier{
+			PowerBonus:     2,
+			HazardousBonus: 2,
+		},
 	); got != "This creature gains +2 power and +2 hazardous." {
 		t.Errorf("hazardous staticText = %q", got)
 	}
@@ -1386,12 +1611,19 @@ func TestStaticText(t *testing.T) {
 		t.Errorf("two-keyword staticText = %q", got)
 	}
 	if got := staticText(
-		StaticModifier{ArmorBonus: 1, Keywords: []Keyword{Taunt}},
+		StaticModifier{
+			ArmorBonus: 1,
+			Keywords:   []Keyword{Taunt},
+		},
 	); got != "This creature gains +1 armor and taunt." {
 		t.Errorf("armor+keyword staticText = %q", got)
 	}
 	if got := staticText(
-		StaticModifier{PowerBonus: 1, ArmorBonus: 1, Per: UpgradesOnIt},
+		StaticModifier{
+			PowerBonus: 1,
+			ArmorBonus: 1,
+			Per:        UpgradesOnIt,
+		},
 	); got != "This creature gains +1 power and +1 armor for each upgrade attached to it." {
 		t.Errorf("per-upgrade staticText = %q", got)
 	}
@@ -1570,7 +1802,10 @@ func TestGrantedAbilityCapitalizesSelfReference(t *testing.T) {
 	}
 
 	// A body with no trigger prefix capitalizes its first letter instead.
-	noPrefix := Ability{Trigger: TriggerEntersPlay, Effect: Draw{Amount: 1}}
+	noPrefix := Ability{
+		Trigger: TriggerEntersPlay,
+		Effect:  Draw{Amount: 1},
+	}
 	if got := grantedAbilityText(noPrefix, "Horn"); got != capitalizeFirst(got) {
 		t.Errorf("prefixless granted text = %q, want it capitalized", got)
 	}
@@ -1592,7 +1827,10 @@ func TestBeforeFightTargetReadsInPresentTense(t *testing.T) {
 		t.Errorf("before-fight ability = %q, want %q", got, want)
 	}
 
-	after := Ability{Trigger: TriggerAfterFight, Effect: Stun{Target: fought}}
+	after := Ability{
+		Trigger: TriggerAfterFight,
+		Effect:  Stun{Target: fought},
+	}
 	wantAfter := "Fight: Stun the creature " + SelfName + " fought."
 	if got := RenderAbility(after); got != wantAfter {
 		t.Errorf("fight ability = %q, want %q", got, wantAfter)

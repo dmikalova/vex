@@ -18,7 +18,10 @@ import (
 func TestSubtleChain(t *testing.T) {
 	t.Run("opponent discards a random card from hand", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(SubtleChain)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(SubtleChain),
+			},
 			P2: ct.Side{Hand: ct.Cards(ct.Creature(), ct.Creature())},
 		})
 

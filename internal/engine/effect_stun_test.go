@@ -7,7 +7,11 @@ func TestStunEffects(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	friend := g.AddToBattleline(testCreature("friend", 3), 0)
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	stun := Stun{Target: Target{Kind: TargetEachFriendlyCreature}}
 	if stun.Text() != "stun each friendly creature" {
@@ -52,7 +56,10 @@ func TestStunAndNeighbors(t *testing.T) {
 	left := g.AddToBattleline(testCreature("left", 3), 1)
 	mid := g.AddToBattleline(testCreature("mid", 3), 1)
 	right := g.AddToBattleline(testCreature("right", 3), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	e := Stun{Target: Target{Kind: TargetChosenCreature}.AndNeighbors()}
 	if e.Text() != "stun a creature and each of its neighbors" {
@@ -77,7 +84,12 @@ func TestNeighborsOfCreatureFought(t *testing.T) {
 	left := g.AddToBattleline(testCreature("left", 3), 1)
 	mid := g.AddToBattleline(testCreature("mid", 3), 1)
 	right := g.AddToBattleline(testCreature("right", 3), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0, It: mid, HasIt: true}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         mid,
+		HasIt:      true,
+	}
 
 	e := Stun{Target: Target{Kind: TargetCreatureFought}.NeighborsOf()}
 	// The effect renders the past; fightTense puts a Before Fight: ability's line
@@ -105,7 +117,12 @@ func TestNeighborsOfFoughtCreatureThatLeftPlay(t *testing.T) {
 	mid := g.Register(testCreature("mid", 3), 1)
 	g.State.Discard[1].add(mid) // the fought creature died in the fight
 	right := g.AddToBattleline(testCreature("right", 3), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0, It: mid, HasIt: true}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         mid,
+		HasIt:      true,
+	}
 	ctx.Produced.Neighbors = []LocalID{left, right}
 
 	Stun{Target: Target{Kind: TargetTheFoughtCreature}.NeighborsOf()}.Resolve(ctx)
@@ -117,7 +134,11 @@ func TestNeighborsOfFoughtCreatureThatLeftPlay(t *testing.T) {
 func TestExhaust(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 3), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	e := Exhaust{Target: Target{Kind: TargetThisCreature}}
 	if e.Text() != "exhaust "+SelfName {
@@ -133,7 +154,11 @@ func TestReady(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	g.State.Cards[src].Exhausted = true
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	e := Ready{Target: Target{Kind: TargetThisCreature}}
 	if e.Text() != "ready "+SelfName {
@@ -157,14 +182,20 @@ func TestStunDeclinable(t *testing.T) {
 	}
 
 	empty := NewGame("A", "B", 1)
-	if !chosen.vacuous(&EffectContext{Resolver: empty, Controller: 0}) {
+	if !chosen.vacuous(&EffectContext{
+		Resolver:   empty,
+		Controller: 0,
+	}) {
 		t.Error("a Stun with no creature to stun should be vacuous")
 	}
 
 	taken := NewGame("A", "B", 1)
 	taken.SetChooser(0, &cardDecliner{})
 	foe := taken.AddToBattleline(testCreature("foe", 3), 1)
-	if !chosen.resolveOptional(&EffectContext{Resolver: taken, Controller: 0}) {
+	if !chosen.resolveOptional(&EffectContext{
+		Resolver:   taken,
+		Controller: 0,
+	}) {
 		t.Error("clicking the creature should report the stun resolved")
 	}
 	if !taken.Stunned(foe) {
@@ -174,7 +205,10 @@ func TestStunDeclinable(t *testing.T) {
 	declined := NewGame("A", "B", 1)
 	declined.SetChooser(0, &cardDecliner{decline: true})
 	spared := declined.AddToBattleline(testCreature("spared", 3), 1)
-	if chosen.resolveOptional(&EffectContext{Resolver: declined, Controller: 0}) {
+	if chosen.resolveOptional(&EffectContext{
+		Resolver:   declined,
+		Controller: 0,
+	}) {
 		t.Error("declining should report nothing resolved")
 	}
 	if declined.Stunned(spared) {

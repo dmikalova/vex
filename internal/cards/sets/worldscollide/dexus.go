@@ -20,7 +20,13 @@ var Dexus = set.New(
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(card.Trigger.AfterEnemyCardPlayed, card.Conditional{
-		Cond: card.OnFlank{OfIt: true, Where: card.RightFlank},
-		Then: card.LoseAember{Player: card.Opponent, Amount: 1},
+		Cond: card.OnFlank{
+			OfIt:  true,
+			Where: card.RightFlank,
+		},
+		Then: card.LoseAember{
+			Player: card.Opponent,
+			Amount: 1,
+		},
 	}),
 )

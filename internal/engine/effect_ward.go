@@ -46,11 +46,18 @@ func (e Ward) Text() string {
 // the source still had to choose it — just without a state change.
 func (e Ward) applyWard(ctx *EffectContext, id LocalID) {
 	if ctx.Resolver.Warded(id) {
-		ctx.Resolver.Record(CreatureWarded{Creature: id, By: ctx.Source, AlreadyWarded: true})
+		ctx.Resolver.Record(CreatureWarded{
+			Creature:      id,
+			By:            ctx.Source,
+			AlreadyWarded: true,
+		})
 		return
 	}
 	ctx.Resolver.SetWarded(id, true)
-	ctx.Resolver.Record(CreatureWarded{Creature: id, By: ctx.Source})
+	ctx.Resolver.Record(CreatureWarded{
+		Creature: id,
+		By:       ctx.Source,
+	})
 }
 
 // Resolve wards the selected creatures. With Amount set, the controller chooses

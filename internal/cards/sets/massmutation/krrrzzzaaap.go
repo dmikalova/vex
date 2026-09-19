@@ -18,6 +18,9 @@ var Krrrzzzaaap = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.EachCreature.ExceptTrait(card.Traits.Mutant)},
-			card.GainChains{Player: card.Controller, Amount: 1},
+			card.GainChains{
+				Player: card.Controller,
+				Amount: 1,
+			},
 		}}),
 )

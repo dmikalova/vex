@@ -22,6 +22,9 @@ var TitanLibrarian = set.New(
 	card.WithAbility(
 		card.Trigger.EndOfTurn, card.Conditional{
 			Cond: card.Not{Cond: card.OnFlank{}},
-			Then: card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
+			Then: card.ArchiveCard{
+				Zone:      card.Hand,
+				Selection: card.Chosen{},
+			},
 		}),
 )

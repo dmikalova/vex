@@ -19,7 +19,10 @@ import (
 func TestCharette(t *testing.T) {
 	t.Run("captures 3 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(Charette)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(Charette),
+			},
 			P2: ct.Side{Amber: 5},
 		})
 

@@ -27,7 +27,10 @@ var Resurgence = set.New(
 			card.Conditional{
 				Cond: card.ItIsOfTrait{Trait: card.Traits.Mutant},
 				Then: card.PutCard{Zones: []card.Zone{card.Discard},
-					Selection:   card.Chosen{Type: card.Type.Creature, Another: true},
+					Selection: card.Chosen{
+						Type:    card.Type.Creature,
+						Another: true,
+					},
 					Destination: card.To.Hand,
 				},
 			},

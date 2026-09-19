@@ -24,7 +24,10 @@ var ShatterStorm = set.New(
 			card.LoseAember{
 				Player: card.Opponent,
 				Amount: 3,
-				Per:    card.ProducedThisWay{Tally: card.Tally.AemberLost, Player: card.Controller},
+				Per: card.ProducedThisWay{
+					Tally:  card.Tally.AemberLost,
+					Player: card.Controller,
+				},
 			},
 		}}),
 )

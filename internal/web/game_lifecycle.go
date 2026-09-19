@@ -155,7 +155,10 @@ func (g *game) scrollUsableRowsIntoView() {
 			if el := app.Window().GetElementByID(domID); el.Truthy() {
 				el.Call(
 					"scrollIntoView",
-					map[string]any{"block": "nearest", "inline": "nearest"},
+					map[string]any{
+						"block":  "nearest",
+						"inline": "nearest",
+					},
 				)
 			}
 			break
@@ -184,7 +187,10 @@ func (g *game) scrollCursorIntoView() {
 	}
 	el.Call(
 		"scrollIntoView",
-		map[string]any{"block": "nearest", "inline": "nearest"},
+		map[string]any{
+			"block":  "nearest",
+			"inline": "nearest",
+		},
 	)
 	g.cursorScrolled = id
 }

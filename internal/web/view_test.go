@@ -998,13 +998,19 @@ func TestPlayerStandingHighlightsAemberAtCheck(t *testing.T) {
 	c := newClient(t)
 	cost := c.g.g.CurrentKeyCost(0)
 
-	atCheck := engine.PlayerStanding{Player: 0, Aember: cost}
+	atCheck := engine.PlayerStanding{
+		Player: 0,
+		Aember: cost,
+	}
 	h := app.HTMLString(app.Div().Body(c.g.playerStandingSegments(atCheck)...))
 	if !strings.Contains(h, "log-aember") {
 		t.Error("a standing at check did not highlight the Æmber amount")
 	}
 
-	below := engine.PlayerStanding{Player: 0, Aember: cost - 1}
+	below := engine.PlayerStanding{
+		Player: 0,
+		Aember: cost - 1,
+	}
 	h = app.HTMLString(app.Div().Body(c.g.playerStandingSegments(below)...))
 	if strings.Contains(h, "log-aember") {
 		t.Error("a standing below check highlighted the Æmber amount")

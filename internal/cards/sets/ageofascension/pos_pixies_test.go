@@ -33,7 +33,10 @@ func TestPosPixies(t *testing.T) {
 			g := h.Game()
 			// The opponent steals 2 from the Pixies controller; the Pixies keep the pool
 			// intact and the 2 come from the common supply instead.
-			engine.StealAember{Amount: 2, Player: engine.Opponent}.Resolve(&engine.EffectContext{
+			engine.StealAember{
+				Amount: 2,
+				Player: engine.Opponent,
+			}.Resolve(&engine.EffectContext{
 				Resolver:   g,
 				Controller: 0,
 			})

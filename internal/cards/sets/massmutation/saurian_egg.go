@@ -30,13 +30,22 @@ var SaurianEgg = set.New(
 	card.WithCannotBeUsedTo(card.UseKind.Fight, card.UseKind.Reap),
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
-			card.DiscardTop{Player: card.Controller, Amount: 2},
+			card.DiscardTop{
+				Player: card.Controller,
+				Amount: 2,
+			},
 			card.ForEachDiscarded{
 				House: card.Houses.Named(card.House.Self),
 				Type:  card.Type.Creature,
 				Do: card.Sequence{Effects: []card.Effect{
-					card.PutIntoPlay{Target: card.Target.Triggering, Ready: true},
-					card.AddPowerCounter{Target: card.Target.Triggering, Amount: 3},
+					card.PutIntoPlay{
+						Target: card.Target.Triggering,
+						Ready:  true,
+					},
+					card.AddPowerCounter{
+						Target: card.Target.Triggering,
+						Amount: 3,
+					},
 				}},
 			},
 			card.Conditional{

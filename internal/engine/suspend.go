@@ -201,7 +201,10 @@ func (r Request) LegalCommands() []Command {
 func pickCommands(cards []LocalID, declinable bool) []Command {
 	cmds := make([]Command, 0, len(cards)+1)
 	for _, id := range cards {
-		cmds = append(cmds, Command{Kind: CommandPickCard, Card: id})
+		cmds = append(cmds, Command{
+			Kind: CommandPickCard,
+			Card: id,
+		})
 	}
 	if declinable {
 		cmds = append(cmds, Command{Kind: CommandDecline})
@@ -213,7 +216,10 @@ func pickCommands(cards []LocalID, declinable bool) []Command {
 func indexCommands(kind CommandKind, n int) []Command {
 	cmds := make([]Command, n)
 	for i := range cmds {
-		cmds[i] = Command{Kind: kind, Index: i}
+		cmds[i] = Command{
+			Kind:  kind,
+			Index: i,
+		}
 	}
 	return cmds
 }
@@ -312,7 +318,11 @@ func (c *suspendChooser) ChooseReaction(prompt string, reactions []OrderableReac
 // the Request so the driving side can render and validate the answer, which is a
 // root Command ApplyAction performs.
 func (c *suspendChooser) ChooseAction(actions []Command) Command {
-	return c.yield(Request{Player: c.player, Kind: RequestAction, Actions: actions})
+	return c.yield(Request{
+		Player:  c.player,
+		Kind:    RequestAction,
+		Actions: actions,
+	})
 }
 
 // Stepper runs one engine action to completion on a goroutine, suspending it at

@@ -102,8 +102,14 @@ var mutantHouses = map[engine.House]mutantHouse{
 			Trigger: card.Trigger.Play,
 			Effect: card.May{
 				Do: card.Then{
-					First:  card.Exalt{Target: card.Target.This, Amount: 1},
-					Result: card.DealDamage{Amount: 3, Target: card.Target.Creature},
+					First: card.Exalt{
+						Target: card.Target.This,
+						Amount: 1,
+					},
+					Result: card.DealDamage{
+						Amount: 3,
+						Target: card.Target.Creature,
+					},
 				},
 			},
 		}},
@@ -119,8 +125,14 @@ var mutantHouses = map[engine.House]mutantHouse{
 			Effect: card.LookAtTopOfDeck{
 				Amount: 3,
 				Then: []card.TopAct{
-					card.ChooseAndMove{Cards: 1, Dest: card.Into.Hand},
-					card.ChooseAndMove{Cards: 1, Dest: card.Into.BottomOfDeck},
+					card.ChooseAndMove{
+						Cards: 1,
+						Dest:  card.Into.Hand,
+					},
+					card.ChooseAndMove{
+						Cards: 1,
+						Dest:  card.Into.BottomOfDeck,
+					},
 				},
 			},
 		}},

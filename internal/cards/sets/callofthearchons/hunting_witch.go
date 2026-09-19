@@ -20,7 +20,10 @@ var HuntingWitch = set.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{
-		Cond: card.ItIs{Type: card.Type.Creature, Other: true},
+		Cond: card.ItIs{
+			Type:  card.Type.Creature,
+			Other: true,
+		},
 		Then: card.GainAember{
 			Player: card.Controller,
 			Amount: 1,

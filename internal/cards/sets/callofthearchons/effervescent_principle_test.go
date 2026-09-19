@@ -16,7 +16,11 @@ import (
 //	Play: Each player loses half of their Æmber, rounded down. Gain 1 chain.
 func TestEffervescentPrinciple(t *testing.T) {
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(EffervescentPrinciple), Amber: 5},
+		P1: ct.Side{
+			House: card.House.Logos,
+			Hand:  ct.Cards(EffervescentPrinciple),
+			Amber: 5,
+		},
 		P2: ct.Side{Amber: 4},
 	})
 

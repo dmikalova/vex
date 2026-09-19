@@ -19,7 +19,10 @@ import (
 func TestLomirFlamefist(t *testing.T) {
 	t.Run("drains 2 Æmber when the opponent has 7 or more", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(LomirFlamefist)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(LomirFlamefist),
+			},
 			P2: ct.Side{Amber: 7},
 		})
 
@@ -30,7 +33,10 @@ func TestLomirFlamefist(t *testing.T) {
 
 	t.Run("does nothing when the opponent has fewer than 7", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(LomirFlamefist)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(LomirFlamefist),
+			},
 			P2: ct.Side{Amber: 6},
 		})
 

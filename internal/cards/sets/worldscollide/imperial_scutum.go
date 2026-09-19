@@ -22,7 +22,10 @@ var ImperialScutum = set.New(
 		ArmorBonus: 2,
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Destroyed,
-			Effect:  card.MoveAemberToSupply{All: true, Target: card.Target.This},
+			Effect: card.MoveAemberToSupply{
+				All:    true,
+				Target: card.Target.This,
+			},
 		}},
 	}),
 )

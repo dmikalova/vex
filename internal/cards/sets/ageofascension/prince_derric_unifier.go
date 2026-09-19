@@ -24,7 +24,10 @@ var PrinceDerricUnifier = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.CountIs{
-				Count:  card.HousesAmong{Player: card.Controller, Type: card.Type.Creature},
+				Count: card.HousesAmong{
+					Player: card.Controller,
+					Type:   card.Type.Creature,
+				},
 				Is:     card.AtLeast,
 				Amount: 3,
 			},

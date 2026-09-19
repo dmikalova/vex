@@ -30,7 +30,10 @@ var Infurnace = set.New(
 			card.LoseAember{
 				Player: card.Opponent,
 				Amount: 1,
-				Per:    card.BonusIconsOf{Over: card.ThePurgedCards{}, Kind: card.Bonus.Aember},
+				Per: card.BonusIconsOf{
+					Over: card.ThePurgedCards{},
+					Kind: card.Bonus.Aember,
+				},
 			},
 		}},
 	),

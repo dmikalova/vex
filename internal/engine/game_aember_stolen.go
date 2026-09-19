@@ -23,7 +23,11 @@ func (g *Game) EmitAemberStolenFrom(victim, amount int) {
 				Grantor:    t.grantor,
 				HasGrantor: t.grantor != id,
 			})
-			ctx := &EffectContext{Resolver: g, Source: id, Controller: victim}
+			ctx := &EffectContext{
+				Resolver:   g,
+				Source:     id,
+				Controller: victim,
+			}
 			ctx.Produced.AemberStolen = amount
 			t.ability.Effect.Resolve(ctx)
 			closeFrame()

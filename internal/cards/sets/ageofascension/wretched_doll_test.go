@@ -20,7 +20,10 @@ func TestWretchedDoll(t *testing.T) {
 	t.Run("play puts a doom counter on a creature", func(t *testing.T) {
 		var target ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(WretchedDoll)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(WretchedDoll),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&target, ct.Creature(ct.Power(4))),
 			)},
@@ -37,7 +40,10 @@ func TestWretchedDoll(t *testing.T) {
 	t.Run("action destroys doomed creatures and marks another", func(t *testing.T) {
 		var doomed, survivor ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(WretchedDoll)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(WretchedDoll),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&doomed, ct.Creature(ct.Power(4))),
 				ct.Bind(&survivor, ct.Creature(ct.Power(4))),

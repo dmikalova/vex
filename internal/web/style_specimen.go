@@ -62,7 +62,10 @@ func randomMatch(caption string, want func(*engine.CardDefinition) bool) specime
 		return specimen{Caption: caption}
 	}
 	r := rand.New(rand.NewSource(styleSeed ^ captionSeed(caption)))
-	return specimen{Caption: caption, Def: &all[matches[r.Intn(len(matches))]]}
+	return specimen{
+		Caption: caption,
+		Def:     &all[matches[r.Intn(len(matches))]],
+	}
 }
 
 // houseGrid returns the House-by-Card-type table of specimens, row-major with
@@ -196,7 +199,10 @@ func newCardCursor() *cardCursor {
 	// styleSeed so it reshuffles on reload but stays fixed for the life of a load.
 	r := rand.New(rand.NewSource(styleSeed ^ captionSeed("attach")))
 	r.Shuffle(len(order), func(a, b int) { order[a], order[b] = order[b], order[a] })
-	return &cardCursor{all: all, order: order}
+	return &cardCursor{
+		all:   all,
+		order: order,
+	}
 }
 
 func (c *cardCursor) next() engine.CardDefinition {
@@ -277,7 +283,10 @@ func buildAttachments(g *engine.Game) []attachSpecimen {
 	// peek id, so hovering it previews the real face rather than a card back.
 	yours := host(0)
 	g.AttachUnder(yours, g.Register(cur.next(), 0), true)
-	out = append(out, attachSpecimen{caption: "1 under, facedown (you peek)", host: yours})
+	out = append(out, attachSpecimen{
+		caption: "1 under, facedown (you peek)",
+		host:    yours,
+	})
 
 	// Combined: upgrades and under-cards on the same opponent host.
 	for _, n := range []int{2, 3} {

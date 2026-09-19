@@ -409,7 +409,10 @@ func materializedDefs(rc card.RegisteredCard) []engine.CardDefinition {
 	if rc.Materializer == nil {
 		return []engine.CardDefinition{rc.Def}
 	}
-	ctx := deckgen.SlotContext{House: rc.Def.House, Rarity: rc.Def.Rarity}
+	ctx := deckgen.SlotContext{
+		House:  rc.Def.House,
+		Rarity: rc.Def.Rarity,
+	}
 	r := rand.New(rand.NewSource(1))
 	seen := map[string]engine.CardDefinition{}
 	stale := 0

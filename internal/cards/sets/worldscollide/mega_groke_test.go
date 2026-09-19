@@ -20,7 +20,10 @@ func TestMegaGroke(t *testing.T) {
 	t.Run("opponent loses 1 Æmber when it fights", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(MegaGroke)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(MegaGroke),
+			},
 			P2: ct.Side{
 				Amber:  3,
 				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(3)))),

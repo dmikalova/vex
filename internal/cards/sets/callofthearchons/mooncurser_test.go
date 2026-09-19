@@ -21,7 +21,10 @@ func TestMooncurser(t *testing.T) {
 	t.Run("steals 1 Æmber when it fights", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(Mooncurser)},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(Mooncurser),
+			},
 			P2: ct.Side{
 				Amber: 3,
 				InPlay: ct.Cards(

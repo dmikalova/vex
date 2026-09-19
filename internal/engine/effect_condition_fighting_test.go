@@ -12,7 +12,10 @@ func TestSourceIsFightingCondition(t *testing.T) {
 	g := started(t)
 	c := g.AddToBattleline(testCreature("c", 3), 0)
 	other := g.AddToBattleline(testCreature("other", 3), 1)
-	ctx := &EffectContext{Resolver: g, Source: c}
+	ctx := &EffectContext{
+		Resolver: g,
+		Source:   c,
+	}
 	if (SourceIsFighting{}).Met(ctx) {
 		t.Error("not fighting: condition should be unmet")
 	}

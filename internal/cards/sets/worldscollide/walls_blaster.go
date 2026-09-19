@@ -30,7 +30,10 @@ var WallsBlaster = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
-			card.DealDamage{Amount: 2, Target: card.Target.Creature},
+			card.DealDamage{
+				Amount: 2,
+				Target: card.Target.Creature,
+			},
 			card.Then{
 				First: card.AttachSelfTo{
 					Target: card.Target.FriendlyCreature.Named(ChiefEngineerWalls.Name),

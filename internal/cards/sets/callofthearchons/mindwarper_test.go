@@ -21,7 +21,10 @@ func TestMindwarper(t *testing.T) {
 	t.Run("an enemy creature captures 1 Æmber from its own side", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Mars, InPlay: ct.Cards(Mindwarper)},
+			P1: ct.Side{
+				House:  card.House.Mars,
+				InPlay: ct.Cards(Mindwarper),
+			},
 			P2: ct.Side{
 				Amber:  3,
 				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Brobnar)))),

@@ -16,7 +16,10 @@ func (g *Game) SwapCards(a, b LocalID) {
 			continue
 		}
 		line.IDs[ai], line.IDs[bi] = line.IDs[bi], line.IDs[ai]
-		g.record(PositionsSwapped{A: a, B: b})
+		g.record(PositionsSwapped{
+			A: a,
+			B: b,
+		})
 		return
 	}
 	g.swapAcrossZones(a, b)
@@ -50,7 +53,12 @@ func (g *Game) swapAcrossZones(a, b LocalID) {
 	if idx < 0 {
 		return // the in-play card is an artifact; cross-zone artifact swap is unsupported
 	}
-	g.record(CardsSwapped{A: inPlay, B: resting, FromPlayer: restingOwner, FromZone: Discard})
+	g.record(CardsSwapped{
+		A:          inPlay,
+		B:          resting,
+		FromPlayer: restingOwner,
+		FromZone:   Discard,
+	})
 	// Filing, not an attempt: the swap already settled, so it owes no ward check.
 	g.fileFromPlay(inPlay, func(half LocalID, o int) { g.State.Discard[o].add(half) })
 	g.State.Discard[restingOwner].remove(resting)
@@ -77,7 +85,10 @@ func (g *Game) MoveToFlank(id LocalID, right bool) {
 		} else {
 			line.insertAt(0, id)
 		}
-		g.record(MovedToFlank{Creature: id, Right: right})
+		g.record(MovedToFlank{
+			Creature: id,
+			Right:    right,
+		})
 		return
 	}
 }

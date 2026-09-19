@@ -40,7 +40,10 @@ func TestConditionalPlayBarText(t *testing.T) {
 		StarAlliance,
 		Artifact,
 		Rare,
-		WithCannotPlayWhile(ConditionalPlayBar{Type: Creature, When: ControlsMoreCreatures{}}),
+		WithCannotPlayWhile(ConditionalPlayBar{
+			Type: Creature,
+			When: ControlsMoreCreatures{},
+		}),
 	)
 	rules := cardRules(&def, false)
 	want := "If a player has more creatures in play than their opponent, they cannot play creatures."
@@ -73,7 +76,10 @@ func TestConditionalPlayBarBarsAheadPlayer(t *testing.T) {
 			StarAlliance,
 			Artifact,
 			Rare,
-			WithCannotPlayWhile(ConditionalPlayBar{Type: Creature, When: ControlsMoreCreatures{}}),
+			WithCannotPlayWhile(ConditionalPlayBar{
+				Type: Creature,
+				When: ControlsMoreCreatures{},
+			}),
 		),
 		1, // controlled by the opponent, yet it bars whichever side is ahead
 	)
@@ -284,10 +290,16 @@ func TestSourceInCenterOfBattlelineCondition(t *testing.T) {
 	if c.CondText() != "if "+SelfName+" is in the center of your battleline" {
 		t.Errorf("CondText = %q", c.CondText())
 	}
-	if !c.Met(&EffectContext{Resolver: g, Source: mid}) {
+	if !c.Met(&EffectContext{
+		Resolver: g,
+		Source:   mid,
+	}) {
 		t.Error("middle creature should satisfy SourceInCenterOfBattleline")
 	}
-	if c.Met(&EffectContext{Resolver: g, Source: left}) {
+	if c.Met(&EffectContext{
+		Resolver: g,
+		Source:   left,
+	}) {
 		t.Error("flank creature should not satisfy SourceInCenterOfBattleline")
 	}
 }
@@ -356,7 +368,11 @@ func TestConstantAbilityWhileDamaged(t *testing.T) {
 	}
 
 	// One point of damage turns the buff on.
-	g.applyRawDamage(DamageTarget{ID: gron, Amount: 1, IgnoreArmor: true})
+	g.applyRawDamage(DamageTarget{
+		ID:          gron,
+		Amount:      1,
+		IgnoreArmor: true,
+	})
 	if got := g.Power(gron); got != 12 {
 		t.Errorf("damaged power = %d, want 12 (8 + 4)", got)
 	}
@@ -444,7 +460,10 @@ func TestConstantAbilityFriendlyTarget(t *testing.T) {
 		Artifact,
 		Rare,
 		WithConstantAbility(
-			ConstantAbility{PowerBonus: 1, Target: Target{Kind: TargetEachFriendlyCreature}},
+			ConstantAbility{
+				PowerBonus: 1,
+				Target:     Target{Kind: TargetEachFriendlyCreature},
+			},
 		),
 	), 0)
 	g.State.Artifacts[0].add(banner)
@@ -476,7 +495,10 @@ func TestConstantAbilityNeighboringTarget(t *testing.T) {
 		WithPower(4),
 		WithArmor(2),
 		WithConstantAbility(
-			ConstantAbility{ArmorBonus: 2, Target: Target{Kind: TargetEachCreature}.Neighboring()},
+			ConstantAbility{
+				ArmorBonus: 2,
+				Target:     Target{Kind: TargetEachCreature}.Neighboring(),
+			},
 		),
 	)
 	left := g.AddToBattleline(testCreature("left", 3), 0)
@@ -567,7 +589,10 @@ func TestHasTriggerFromConstantAbility(t *testing.T) {
 		WithConstantAbility(ConstantAbility{
 			Target: Target{Kind: TargetEachFriendlyCreature},
 			Granted: []Ability{
-				{Trigger: TriggerAfterReap, Effect: GainAember{Player: Controller, Amount: 1}},
+				{Trigger: TriggerAfterReap, Effect: GainAember{
+					Player: Controller,
+					Amount: 1,
+				}},
 			},
 		})), 0)
 	friend := g.AddToBattleline(testCreature("friend", 3), 0)
@@ -609,7 +634,10 @@ func TestConstantText(t *testing.T) {
 		Artifact,
 		Rare,
 		WithConstantAbility(
-			ConstantAbility{PowerBonus: 1, Target: Target{Kind: TargetEachFriendlyCreature}},
+			ConstantAbility{
+				PowerBonus: 1,
+				Target:     Target{Kind: TargetEachFriendlyCreature},
+			},
 		),
 	)
 	if got := constantText(&banner); got != "Each friendly creature gains +1 power." {
@@ -626,7 +654,10 @@ func TestConstantText(t *testing.T) {
 		Common,
 		WithPower(4),
 		WithConstantAbility(
-			ConstantAbility{ArmorBonus: 2, Target: Target{Kind: TargetEachCreature}.Neighboring()},
+			ConstantAbility{
+				ArmorBonus: 2,
+				Target:     Target{Kind: TargetEachCreature}.Neighboring(),
+			},
 		),
 	)
 	if got := constantText(&bulwark); got != "Each neighboring creature gains +2 armor." {
@@ -679,7 +710,10 @@ func TestConstantText(t *testing.T) {
 		Common,
 		WithPower(4),
 		WithConstantAbility(
-			ConstantAbility{PowerBonus: 2, Target: Target{Kind: TargetThisCreature}.OnFlank()},
+			ConstantAbility{
+				PowerBonus: 2,
+				Target:     Target{Kind: TargetThisCreature}.OnFlank(),
+			},
 		),
 	)
 	if got := constantText(&flank); got != "Staunch Knight gains +2 power while it is on a flank." {
@@ -698,7 +732,10 @@ func TestConstantText(t *testing.T) {
 		Rare,
 		WithPower(4),
 		WithConstantAbility(
-			ConstantAbility{Target: Target{Kind: TargetEachArtifact}, BlankText: true},
+			ConstantAbility{
+				Target:    Target{Kind: TargetEachArtifact},
+				BlankText: true,
+			},
 		),
 	)
 	if got := constantText(&blank); got !=
@@ -868,7 +905,11 @@ func TestConstantPerCount(t *testing.T) {
 		t.Errorf("AemberOnThis count text = %q", got)
 	}
 	g.AddAmberOn(id, 2)
-	if got := onThis.Value(&EffectContext{Resolver: g, Source: id, Controller: 0}); got != 2 {
+	if got := onThis.Value(&EffectContext{
+		Resolver:   g,
+		Source:     id,
+		Controller: 0,
+	}); got != 2 {
 		t.Errorf("AemberOnThis value = %d, want 2", got)
 	}
 
@@ -878,7 +919,11 @@ func TestConstantPerCount(t *testing.T) {
 		t.Errorf("DamageOnThis count text = %q", got)
 	}
 	g.SetDamage(id, 3)
-	if got := dmgOnThis.Value(&EffectContext{Resolver: g, Source: id, Controller: 0}); got != 3 {
+	if got := dmgOnThis.Value(&EffectContext{
+		Resolver:   g,
+		Source:     id,
+		Controller: 0,
+	}); got != 3 {
 		t.Errorf("DamageOnThis value = %d, want 3", got)
 	}
 }
@@ -887,10 +932,19 @@ func TestConstantPerCount(t *testing.T) {
 // colour, covering The Red Baron.
 func TestKeyColorForgedCondition(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
-	own := KeyColorForged{Player: Controller, Color: KeyColorRed}
-	opp := KeyColorForged{Player: Opponent, Color: KeyColorRed}
+	own := KeyColorForged{
+		Player: Controller,
+		Color:  KeyColorRed,
+	}
+	opp := KeyColorForged{
+		Player: Opponent,
+		Color:  KeyColorRed,
+	}
 
 	if own.CondText() != "if your red key is forged" {
 		t.Errorf("own CondText = %q", own.CondText())
@@ -929,8 +983,11 @@ func TestConstantAbilityWhileConditionGranted(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	def := NewCard("Baron", Brobnar, Creature, Special, WithPower(4),
 		WithConstantAbility(ConstantAbility{
-			Target:         Target{Kind: TargetThisCreature},
-			WhileCondition: KeyColorForged{Player: Controller, Color: KeyColorRed},
+			Target: Target{Kind: TargetThisCreature},
+			WhileCondition: KeyColorForged{
+				Player: Controller,
+				Color:  KeyColorRed,
+			},
 			Granted: []Ability{{
 				Trigger: TriggerAfterReap,
 				Effect:  StealAember{Amount: 1},
@@ -962,9 +1019,12 @@ func TestConstantAbilityWhileConditionKeyword(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	def := NewCard("Baron", Brobnar, Creature, Special, WithPower(4),
 		WithConstantAbility(ConstantAbility{
-			Target:         Target{Kind: TargetThisCreature},
-			WhileCondition: KeyColorForged{Player: Opponent, Color: KeyColorRed},
-			Keywords:       []Keyword{Elusive},
+			Target: Target{Kind: TargetThisCreature},
+			WhileCondition: KeyColorForged{
+				Player: Opponent,
+				Color:  KeyColorRed,
+			},
+			Keywords: []Keyword{Elusive},
 		}))
 
 	if !strings.Contains(RenderCardRules(&def),
@@ -1247,7 +1307,11 @@ func TestEntersPlayReady(t *testing.T) {
 		"a pool-gated, house-filtered grant readies only off-house cards while rich",
 		func(t *testing.T) {
 			// Fandangle: while you have 4+ Æmber, your non-Untamed creatures enter ready.
-			grant := EntersReadyGrant{Type: Creature, MinAember: 4, ExceptHouse: Untamed}
+			grant := EntersReadyGrant{
+				Type:        Creature,
+				MinAember:   4,
+				ExceptHouse: Untamed,
+			}
 			g := NewGame("A", "B", 1)
 			g.StartTurn(0)
 			granter := g.AddToHand(
@@ -1352,7 +1416,12 @@ func TestForgeKeyNumberBarred(t *testing.T) {
 
 // TestOrdinalWord covers the ordinal words the Key Imps print.
 func TestOrdinalWord(t *testing.T) {
-	for n, want := range map[int]string{1: "first", 2: "second", 3: "third", 4: "4th"} {
+	for n, want := range map[int]string{
+		1: "first",
+		2: "second",
+		3: "third",
+		4: "4th",
+	} {
 		if got := ordinalWord(n); got != want {
 			t.Errorf("ordinalWord(%d) = %q, want %q", n, got, want)
 		}

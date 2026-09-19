@@ -20,7 +20,10 @@ import (
 func TestPsychicBug(t *testing.T) {
 	t.Run("reveals the opponent's hand when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(PsychicBug)},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(PsychicBug),
+			},
 			P2: ct.Side{Hand: ct.Cards(ct.Creature(), ct.Creature())},
 		})
 

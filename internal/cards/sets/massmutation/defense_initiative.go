@@ -21,7 +21,10 @@ var DefenseInitiative = set.New(
 			Then: card.Sequence{Effects: []card.Effect{
 				card.Ward{Target: card.Target.TheChosenCreature},
 				card.May{Do: card.Then{
-					First:  card.Exalt{Target: card.Target.TheChosenCreature, Amount: 1},
+					First: card.Exalt{
+						Target: card.Target.TheChosenCreature,
+						Amount: 1,
+					},
 					Result: card.Ward{Target: card.Target.TheChosenCreature.NeighborsOf()},
 				}},
 			}},

@@ -25,10 +25,16 @@ func TestGainKeywordsText(t *testing.T) {
 // TestGainKeywordsValidate rejects a missing target, an empty keyword list, an
 // unset keyword, and an unsupported duration.
 func TestGainKeywordsValidate(t *testing.T) {
-	if err := (GainKeywords{Keywords: []Keyword{Elusive}, Duration: StartOfPlayerNextTurn}).validate(); err == nil {
+	if err := (GainKeywords{
+		Keywords: []Keyword{Elusive},
+		Duration: StartOfPlayerNextTurn,
+	}).validate(); err == nil {
 		t.Error("a missing target should be rejected")
 	}
-	if err := (GainKeywords{Target: Target{Kind: TargetEachFriendlyCreature}, Duration: StartOfPlayerNextTurn}).validate(); err == nil {
+	if err := (GainKeywords{
+		Target:   Target{Kind: TargetEachFriendlyCreature},
+		Duration: StartOfPlayerNextTurn,
+	}).validate(); err == nil {
 		t.Error("an empty keyword list should be rejected")
 	}
 	if err := (GainKeywords{
@@ -73,7 +79,10 @@ func TestGainKeywordsResolveNextTurn(t *testing.T) {
 		Target:   Target{Kind: TargetEachFriendlyCreature},
 		Keywords: []Keyword{Elusive},
 		Duration: StartOfPlayerNextTurn,
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	if !g.hasKeyword(one, Elusive) || !g.hasKeyword(two, Elusive) {
 		t.Error("both friendly creatures should have gained elusive")
@@ -110,7 +119,12 @@ func TestGainKeywordsResolveForTurn(t *testing.T) {
 	g := started(t)
 	one := g.AddToBattleline(testCreature("one", 3), 0)
 	two := g.AddToBattleline(testCreature("two", 3), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0, It: one, HasIt: true}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         one,
+		HasIt:      true,
+	}
 
 	GainKeywords{
 		Target:   Target{Kind: TargetTriggeringCreature},

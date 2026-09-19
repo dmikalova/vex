@@ -20,7 +20,10 @@ func TestGiantGnawbill(t *testing.T) {
 	t.Run("the chooser destroys an artifact of the chosen house", func(t *testing.T) {
 		var relic, other ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(GiantGnawbill)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(GiantGnawbill),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&relic, ct.Artifact(ct.OfHouse(card.House.Untamed))),
 				ct.Bind(&other, ct.Artifact(ct.OfHouse(card.House.Logos))),
@@ -37,7 +40,10 @@ func TestGiantGnawbill(t *testing.T) {
 	t.Run("does nothing when no artifact of the chosen house is in play", func(t *testing.T) {
 		var relic ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(GiantGnawbill)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(GiantGnawbill),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Creature(ct.OfHouse(card.House.Brobnar)),
 				ct.Bind(&relic, ct.Artifact(ct.OfHouse(card.House.Untamed))),

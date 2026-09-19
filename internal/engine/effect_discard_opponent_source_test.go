@@ -42,7 +42,10 @@ func TestDiscardFromOpponentEmptyArchives(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.ActivePlayer = 0
 	g.SetChooser(0, optionPicker{idx: 0}) // your opponent's archives
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	DiscardFromOpponent{Sources: []Zone{Archives, Deck}}.Resolve(ctx)
 	if ctx.HasIt {
@@ -56,7 +59,10 @@ func TestDiscardFromOpponentEmptyDeck(t *testing.T) {
 	g.State.ActivePlayer = 0
 	g.State.Deck[1].Count = 0
 	g.SetChooser(0, optionPicker{idx: 1}) // the top card of their deck
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	DiscardFromOpponent{Sources: []Zone{Archives, Deck}}.Resolve(ctx)
 	if ctx.HasIt {
@@ -71,7 +77,10 @@ func TestDiscardFromOpponentDeckTopBindsIt(t *testing.T) {
 	top := g.Register(testCreature("t", 1), 1)
 	g.State.Deck[1].add(top)
 	g.SetChooser(0, optionPicker{idx: 1})
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	DiscardFromOpponent{Sources: []Zone{Archives, Deck}}.Resolve(ctx)
 	if !ctx.HasIt || ctx.It != top {
@@ -87,7 +96,10 @@ func TestDiscardFromOpponentArchivesBindsIt(t *testing.T) {
 	id := g.Register(testCreature("a", 1), 1)
 	g.State.Archives[1].add(id)
 	g.SetChooser(0, optionPicker{idx: 0}) // your opponent's archives
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	DiscardFromOpponent{Sources: []Zone{Archives, Deck}}.Resolve(ctx)
 	if g.State.Archives[1].contains(id) {
@@ -106,7 +118,10 @@ func TestDiscardFromOpponentSingleArchives(t *testing.T) {
 	g.State.Archives[1].add(id)
 	c := &countingChooser{}
 	g.SetChooser(0, c)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	DiscardFromOpponent{Sources: []Zone{Archives}}.Resolve(ctx)
 	if c.calls != 0 {
@@ -125,7 +140,10 @@ func TestDiscardFromOpponentSingleDeck(t *testing.T) {
 	g.State.Deck[1].add(top)
 	c := &countingChooser{}
 	g.SetChooser(0, c)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	DiscardFromOpponent{Sources: []Zone{Deck}}.Resolve(ctx)
 	if c.calls != 0 {
@@ -156,7 +174,10 @@ func TestDiscardFromOpponentValidate(t *testing.T) {
 func TestPlayItFromOpponentDiscardNoContext(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.ActivePlayer = 0
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	PlayItFromOpponentDiscard{}.Resolve(ctx) // must not panic
 	if ctx.HasIt {
 		t.Error("no card should be in context")
@@ -169,7 +190,12 @@ func TestPlayItFromOpponentDiscardPlaysContext(t *testing.T) {
 	g.State.ActivePlayer = 0
 	id := g.Register(testCreature("c", 1), 1)
 	g.State.Discard[1].add(id)
-	ctx := &EffectContext{Resolver: g, Controller: 0, It: id, HasIt: true}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         id,
+		HasIt:      true,
+	}
 
 	PlayItFromOpponentDiscard{}.Resolve(ctx)
 	if g.State.Discard[1].indexOf(id) >= 0 {

@@ -19,7 +19,10 @@ func TestRadiantTruth(t *testing.T) {
 	t.Run("stuns each enemy creature that is not on a flank", func(t *testing.T) {
 		var left, mid, right ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(RadiantTruth)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(RadiantTruth),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&left, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),

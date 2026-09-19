@@ -19,7 +19,10 @@ import (
 func TestShooler(t *testing.T) {
 	t.Run("steals 1 Æmber when the opponent has 4 or more", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(Shooler)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(Shooler),
+			},
 			P2: ct.Side{Amber: 4},
 		})
 
@@ -31,7 +34,10 @@ func TestShooler(t *testing.T) {
 
 	t.Run("does nothing when the opponent has fewer than 4", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(Shooler)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(Shooler),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 

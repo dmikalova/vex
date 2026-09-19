@@ -20,7 +20,10 @@ import (
 func TestNoddyTheThief(t *testing.T) {
 	t.Run("steals 1 Æmber as an action", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(NoddyTheThief)},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(NoddyTheThief),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 

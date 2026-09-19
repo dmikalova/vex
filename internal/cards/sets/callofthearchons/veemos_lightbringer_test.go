@@ -20,7 +20,10 @@ func TestVeemosLightbringer(t *testing.T) {
 	t.Run("destroys each elusive creature when played", func(t *testing.T) {
 		var elusive, plain ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(VeemosLightbringer)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(VeemosLightbringer),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(

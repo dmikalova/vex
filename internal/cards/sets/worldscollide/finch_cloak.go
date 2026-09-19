@@ -20,7 +20,10 @@ var FinchCloak = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithAbility(card.Trigger.FightReap, card.Conditional{
-		Cond: card.PoolAember{Player: card.Opponent, Is: card.MoreThanYou},
+		Cond: card.PoolAember{
+			Player: card.Opponent,
+			Is:     card.MoreThanYou,
+		},
 		Then: card.StealAember{Amount: 1},
 		Else: card.GainAember{
 			Player: card.EachPlayer,

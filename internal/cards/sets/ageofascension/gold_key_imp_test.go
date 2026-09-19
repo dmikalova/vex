@@ -20,7 +20,10 @@ import (
 //	Players cannot forge their third key.
 func TestGoldKeyImp(t *testing.T) {
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(GoldKeyImp)},
+		P1: ct.Side{
+			House:  card.House.Dis,
+			InPlay: ct.Cards(GoldKeyImp),
+		},
 	})
 	g := h.Game()
 

@@ -20,6 +20,9 @@ var MemoryChip = set.New(
 	card.WithAbility(
 		card.Trigger.AfterChooseHouse, card.Conditional{
 			Cond: card.ChoseHouse{House: card.House.Self},
-			Then: card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
+			Then: card.ArchiveCard{
+				Zone:      card.Hand,
+				Selection: card.Chosen{},
+			},
 		}),
 )

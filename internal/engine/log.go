@@ -138,7 +138,10 @@ type Record struct {
 // reads with the source card as its subject ("Batdrone deals 2 damage") rather
 // than the acting player (ADR 0011).
 func (r Record) Text(n Namer) string {
-	return r.Entry.Text(framedNamer{Namer: n, frame: r.Frame})
+	return r.Entry.Text(framedNamer{
+		Namer: n,
+		frame: r.Frame,
+	})
 }
 
 // sourced is a Namer that knows the source card of the frame an entry is
@@ -225,7 +228,10 @@ func (g *Game) record(e LogEntry) {
 	if !g.recording {
 		return
 	}
-	g.Log = append(g.Log, Record{Frame: g.frame(), Entry: e})
+	g.Log = append(g.Log, Record{
+		Frame: g.frame(),
+		Entry: e,
+	})
 	if g.Verbose {
 		fmt.Println(e.Text(g))
 	}

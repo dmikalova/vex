@@ -56,7 +56,11 @@ func TestTargetSelect(t *testing.T) {
 	enemy := g.AddToBattleline(testCreature("enemy", 1), 1)
 	myArt := g.AddArtifact(NewCard("myrelic", Brobnar, Artifact, Rare), 0)
 	enemyArt := g.AddArtifact(NewCard("enemyrelic", Brobnar, Artifact, Rare), 1)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	if ids := (Target{Kind: TargetThisCreature}).Select(ctx); len(ids) != 1 || ids[0] != src {
 		t.Errorf("this-creature select = %v", ids)
@@ -101,7 +105,10 @@ func TestTargetSelect(t *testing.T) {
 	if ids := (Target{Kind: TargetChosenCreature}).Select(ctx); ids != nil {
 		t.Errorf("chosen-creature (reject) = %v, want nil", ids)
 	}
-	empty := &EffectContext{Resolver: NewGame("A", "B", 1), Controller: 0}
+	empty := &EffectContext{
+		Resolver:   NewGame("A", "B", 1),
+		Controller: 0,
+	}
 	if ids := (Target{Kind: TargetChosenCreature}).Select(empty); ids != nil {
 		t.Errorf("chosen-creature (no candidates) = %v, want nil", ids)
 	}
@@ -222,13 +229,21 @@ func TestTargetSharingTrait(t *testing.T) {
 	target := Target{Kind: TargetEachCreature}.SharingTrait()
 
 	// Without a context card the filter matches nothing.
-	noIt := &EffectContext{Resolver: g, Controller: 0}
+	noIt := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	if ids := target.Select(noIt); len(ids) != 0 {
 		t.Errorf("shares-trait without It = %v, want empty", ids)
 	}
 
 	// With the Beast in context, only trait-sharing creatures pass.
-	ctx := &EffectContext{Resolver: g, Controller: 0, It: kin, HasIt: true}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         kin,
+		HasIt:      true,
+	}
 	ids := target.Select(ctx)
 	if len(ids) != 2 || ids[0] != kin || ids[1] != prey {
 		t.Errorf("shares-trait select = %v, want [%d %d]", ids, kin, prey)
@@ -240,7 +255,10 @@ func TestTargetPowerFilters(t *testing.T) {
 	p2 := g.AddToBattleline(testCreature("p2", 2), 0)
 	p4 := g.AddToBattleline(testCreature("p4", 4), 0)
 	p6 := g.AddToBattleline(testCreature("p6", 6), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	if ids := (Target{Kind: TargetEachCreature}).PowerAtMost(3).
 		Select(ctx); len(ids) != 1 ||
@@ -273,7 +291,10 @@ func TestTargetPowerParity(t *testing.T) {
 	p2 := g.AddToBattleline(testCreature("p2", 2), 0)
 	p3 := g.AddToBattleline(testCreature("p3", 3), 0)
 	p4 := g.AddToBattleline(testCreature("p4", 4), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	if ids := (Target{Kind: TargetEachCreature}).OddPower().
 		Select(ctx); len(ids) != 1 ||
@@ -301,7 +322,11 @@ func TestTargetUndamagedAndOther(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	hurt := g.AddToBattleline(testCreature("hurt", 3), 0)
 	g.State.Cards[hurt].Damage = 1
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	if ids := (Target{Kind: TargetEachCreature}).Undamaged().
 		Select(ctx); len(ids) != 1 ||
@@ -325,7 +350,11 @@ func TestTargetReady(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	spent := g.AddToBattleline(testCreature("spent", 3), 0)
 	g.State.Cards[spent].Exhausted = true
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	if ids := (Target{Kind: TargetEachCreature}).Ready().
 		Select(ctx); len(ids) != 1 ||
@@ -344,7 +373,10 @@ func TestTargetWithAemberAndLeastPowerful(t *testing.T) {
 	g.State.Cards[rich].Amber = 2
 	weak := g.AddToBattleline(testCreature("weak", 1), 1)
 	g.AddToBattleline(testCreature("mid", 3), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	if ids := (Target{Kind: TargetEachCreature}).WithAember().
 		Select(ctx); len(ids) != 1 ||
@@ -365,7 +397,10 @@ func TestTargetWithAemberAndLeastPowerful(t *testing.T) {
 		t.Errorf("LeastPowerful text = %q", got)
 	}
 	// An empty set selects nothing.
-	empty := &EffectContext{Resolver: NewGame("A", "B", 1), Controller: 0}
+	empty := &EffectContext{
+		Resolver:   NewGame("A", "B", 1),
+		Controller: 0,
+	}
 	if ids := (Target{Kind: TargetEachCreature}).Refine(LeastPowerful).Select(empty); ids != nil {
 		t.Errorf("LeastPowerful empty = %v, want nil", ids)
 	}
@@ -376,7 +411,10 @@ func TestTargetWithoutAember(t *testing.T) {
 	rich := g.AddToBattleline(testCreature("rich", 5), 0)
 	g.State.Cards[rich].Amber = 2
 	bare := g.AddToBattleline(testCreature("bare", 3), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	if ids := (Target{Kind: TargetEachCreature}).WithoutAember().
 		Select(ctx); len(ids) != 1 || ids[0] != bare {
@@ -392,7 +430,10 @@ func TestTargetWithoutBonusIcons(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.AddToBattleline(testCreature("iconed", 5, WithBonus(BonusAember)), 0)
 	bare := g.AddToBattleline(testCreature("bare", 3), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	if ids := (Target{Kind: TargetEachCreature}).WithoutBonusIcons().
 		Select(ctx); len(ids) != 1 || ids[0] != bare {
@@ -410,7 +451,10 @@ func TestLeastPowerfulTieChoice(t *testing.T) {
 	b := g.AddToBattleline(testCreature("b", 2), 1)
 	g.AddToBattleline(testCreature("big", 5), 1)
 	g.SetChooser(0, idChooser{id: b})
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	ids := (Target{Kind: TargetEachEnemyCreature}).Refine(LeastPowerful).Select(ctx)
 	if len(ids) != 1 || ids[0] != b {
 		t.Errorf("tie choice = %v, want [%d]; a=%d", ids, b, a)
@@ -427,7 +471,10 @@ func TestAnyOfPowerTiers(t *testing.T) {
 	}
 
 	// An empty set selects nothing.
-	empty := &EffectContext{Resolver: NewGame("A", "B", 1), Controller: 0}
+	empty := &EffectContext{
+		Resolver:   NewGame("A", "B", 1),
+		Controller: 0,
+	}
 	if ids := (Target{Kind: TargetEachCreature}).Refine(tiers).
 		Select(empty); ids != nil {
 		t.Errorf("empty = %v, want nil", ids)
@@ -442,7 +489,10 @@ func TestAnyOfPowerTiers(t *testing.T) {
 	lowB := g.AddToBattleline(testCreature("lowB", 2), 1)
 	high := g.AddToBattleline(testCreature("high", 6), 1)
 	got := (Target{Kind: TargetEachCreature}).Refine(tiers).
-		Select(&EffectContext{Resolver: g, Controller: 0})
+		Select(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		})
 	if len(got) != 3 || !containsID(got, lowA) || !containsID(got, lowB) ||
 		!containsID(got, high) {
 		t.Errorf("AnyOf(LowestPower, HighestPower) = %v, want [%d %d %d]", got, lowA, lowB, high)
@@ -452,7 +502,10 @@ func TestAnyOfPowerTiers(t *testing.T) {
 	g1 := NewGame("A", "B", 1)
 	only := g1.AddToBattleline(testCreature("only", 3), 0)
 	all := (Target{Kind: TargetEachCreature}).Refine(tiers).
-		Select(&EffectContext{Resolver: g1, Controller: 0})
+		Select(&EffectContext{
+			Resolver:   g1,
+			Controller: 0,
+		})
 	if len(all) != 1 || all[0] != only {
 		t.Errorf("single-power set = %v, want [%d]", all, only)
 	}
@@ -516,7 +569,10 @@ func TestMostPowerfulN(t *testing.T) {
 	g0 := NewGame("A", "B", 1)
 	g0.AddToBattleline(testCreature("only", 3), 1)
 	ids := (Target{Kind: TargetEachEnemyCreature}).Refine(MostPowerfulN(3)).
-		Select(&EffectContext{Resolver: g0, Controller: 0})
+		Select(&EffectContext{
+			Resolver:   g0,
+			Controller: 0,
+		})
 	if len(ids) != 1 {
 		t.Errorf("MostPowerfulN(3) of one creature = %v, want the single creature", ids)
 	}
@@ -528,7 +584,10 @@ func TestMostPowerfulN(t *testing.T) {
 	c := g1.AddToBattleline(testCreature("c", 3), 1)
 	g1.AddToBattleline(testCreature("d", 2), 1)
 	got := (Target{Kind: TargetEachEnemyCreature}).Refine(MostPowerfulN(3)).
-		Select(&EffectContext{Resolver: g1, Controller: 0})
+		Select(&EffectContext{
+			Resolver:   g1,
+			Controller: 0,
+		})
 	if len(got) != 3 || !containsID(got, a) || !containsID(got, b) || !containsID(got, c) {
 		t.Errorf("MostPowerfulN(3) = %v, want the top three [%d %d %d]", got, a, b, c)
 	}
@@ -541,7 +600,10 @@ func TestMostPowerfulN(t *testing.T) {
 	g2.AddToBattleline(testCreature("t3", 3), 1)
 	g2.SetChooser(0, idChooser{id: t2})
 	chosen := (Target{Kind: TargetEachEnemyCreature}).Refine(MostPowerfulN(2)).
-		Select(&EffectContext{Resolver: g2, Controller: 0})
+		Select(&EffectContext{
+			Resolver:   g2,
+			Controller: 0,
+		})
 	if len(chosen) != 2 || !containsID(chosen, top) || !containsID(chosen, t2) {
 		t.Errorf("MostPowerfulN(2) tie = %v, want [%d %d]; t1=%d", chosen, top, t2, t1)
 	}
@@ -554,7 +616,10 @@ func TestMostPowerfulN(t *testing.T) {
 	g3.AddToBattleline(testCreature("lo3", 3), 1)
 	g3.SetChooser(0, orderRejectChooser{})
 	fallback := (Target{Kind: TargetEachEnemyCreature}).Refine(MostPowerfulN(2)).
-		Select(&EffectContext{Resolver: g3, Controller: 0})
+		Select(&EffectContext{
+			Resolver:   g3,
+			Controller: 0,
+		})
 	if len(fallback) != 2 || !containsID(fallback, hi) || !containsID(fallback, lo1) {
 		t.Errorf("declined tie = %v, want [%d %d]", fallback, hi, lo1)
 	}
@@ -567,7 +632,10 @@ func TestCandidatesAppliesRefinement(t *testing.T) {
 	top := g.AddToBattleline(testCreature("top", 5), 1)
 	g.AddToBattleline(testCreature("low", 2), 1)
 	got := Target{Kind: TargetEachEnemyCreature}.Refine(MostPowerful).
-		candidates(&EffectContext{Resolver: g, Controller: 0})
+		candidates(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		})
 	if len(got) != 1 || got[0] != top {
 		t.Errorf("candidates(MostPowerful) = %v, want [%d]", got, top)
 	}
@@ -589,7 +657,10 @@ func TestHouseWithAtLeast(t *testing.T) {
 	m2 := g.AddToBattleline(NewCard("m2", Mars, Creature, Common, WithPower(3)), 0)
 	m3 := g.AddToBattleline(NewCard("m3", Mars, Creature, Common, WithPower(3)), 1)
 	g.AddToBattleline(NewCard("s1", Sanctum, Creature, Common, WithPower(3)), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	got := (Target{Kind: TargetEachCreature}).Refine(HouseWithAtLeast(3)).Select(ctx)
 	if len(got) != 3 || !containsID(got, m1) || !containsID(got, m2) || !containsID(got, m3) {
 		t.Errorf("HouseWithAtLeast(3) = %v, want the three Mars creatures", got)
@@ -625,7 +696,10 @@ func TestWithoutSharedTrait(t *testing.T) {
 		NewCard("h1", Sanctum, Creature, Common, WithPower(3), WithTraits(Human)),
 		1,
 	)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	got := (Target{Kind: TargetEachCreature}).Refine(WithoutSharedTrait()).Select(ctx)
 	if len(got) != 2 || !containsID(got, h0) || !containsID(got, h1) {
@@ -640,7 +714,10 @@ func TestTargetKeyword(t *testing.T) {
 		0,
 	)
 	g.AddToBattleline(testCreature("plain", 3), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	if ids := (Target{Kind: TargetEachCreature}).Keyword(Elusive).
 		Select(ctx); len(ids) != 1 ||
@@ -657,7 +734,11 @@ func TestTargetOfHouse(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mars := g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(3)), 0)
 	g.AddToBattleline(NewCard("s", Sanctum, Creature, Common, WithPower(3)), 0)
-	ctx := &EffectContext{Resolver: g, Source: mars, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     mars,
+		Controller: 0,
+	}
 
 	ids := (Target{Kind: TargetEachFriendlyCreature}).House(namedHouse(Mars)).Select(ctx)
 	if len(ids) != 1 || ids[0] != mars {
@@ -676,7 +757,10 @@ func TestTargetOfActiveHouse(t *testing.T) {
 	g.State.ActiveHouse = Mars
 	mars := g.AddArtifact(NewCard("m", Mars, Artifact, Common), 0)
 	g.AddArtifact(NewCard("s", Sanctum, Artifact, Common), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	ids := (Target{Kind: TargetEachArtifact}).House(activeHouse).Select(ctx)
 	if len(ids) != 1 || ids[0] != mars {
@@ -702,7 +786,11 @@ func TestTargetMatchingAny(t *testing.T) {
 		NewCard("mr", Mars, Creature, Common, WithPower(3), WithTraits(Robot)), 0)
 	neither := g.AddToBattleline(
 		NewCard("n", Logos, Creature, Common, WithPower(3)), 0)
-	ctx := &EffectContext{Resolver: g, Source: martian, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     martian,
+		Controller: 0,
+	}
 
 	either := (Target{Kind: TargetEachCreature}).House(namedHouse(Mars)).
 		WithTrait(Robot).MatchingAny()
@@ -761,7 +849,11 @@ func TestTargetExceptTrait(t *testing.T) {
 		NewCard("m", Mars, Creature, Common, WithPower(3), WithTraits(Martian)),
 		0,
 	)
-	ctx := &EffectContext{Resolver: g, Source: agent, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     agent,
+		Controller: 0,
+	}
 
 	ids := (Target{Kind: TargetEachCreature}).House(namedHouse(Mars)).ExceptTrait(Agent).Select(ctx)
 	if len(ids) != 1 || ids[0] != martian {
@@ -792,7 +884,11 @@ func TestOfHouseWithMostCreatures(t *testing.T) {
 		g.AddToBattleline(NewCard("b", Brobnar, Creature, Common, WithPower(3)), 0)
 		g.AddToBattleline(NewCard("b2", Brobnar, Creature, Common, WithPower(3)), 1)
 		dis := g.AddToBattleline(NewCard("d", Dis, Creature, Common, WithPower(3)), 1)
-		ctx := &EffectContext{Resolver: g, Source: dis, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     dis,
+			Controller: 0,
+		}
 
 		ids := (Target{Kind: TargetEachCreature}).OfHouseWithMostCreatures().Select(ctx)
 		if len(ids) != 3 {
@@ -811,7 +907,11 @@ func TestOfHouseWithMostCreatures(t *testing.T) {
 		g.AddToBattleline(NewCard("m2", Mars, Creature, Common, WithPower(3)), 0)
 		g.AddToBattleline(NewCard("b", Brobnar, Creature, Common, WithPower(3)), 1)
 		g.AddToBattleline(NewCard("b2", Brobnar, Creature, Common, WithPower(3)), 1)
-		ctx := &EffectContext{Resolver: g, Source: m1, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     m1,
+			Controller: 0,
+		}
 
 		ids := (Target{Kind: TargetEachCreature}).OfHouseWithMostCreatures().Select(ctx)
 		if len(ids) != 4 {
@@ -825,7 +925,10 @@ func TestNeighbors(t *testing.T) {
 	a := g.AddToBattleline(testCreature("a", 1), 0)
 	b := g.AddToBattleline(testCreature("b", 1), 0)
 	c := g.AddToBattleline(testCreature("c", 1), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// The left flank has only a right neighbor; the right flank only a left one.
 	if got := neighbors(ctx, a); len(got) != 1 || got[0] != b {
@@ -854,7 +957,11 @@ func TestTargetEachNeighbor(t *testing.T) {
 	left := g.AddToBattleline(testCreature("left", 1), 0)
 	mid := g.AddToBattleline(testCreature("mid", 1), 0)
 	right := g.AddToBattleline(testCreature("right", 1), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0, Source: mid}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     mid,
+	}
 
 	ids := (Target{Kind: TargetEachNeighbor}).Select(ctx)
 	if len(ids) != 2 || ids[0] != left || ids[1] != right {
@@ -874,7 +981,10 @@ func TestTargetInCenter(t *testing.T) {
 	g.AddToBattleline(testCreature("left", 1), 0)
 	mid := g.AddToBattleline(testCreature("mid", 1), 0)
 	g.AddToBattleline(testCreature("right", 1), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	ids := (Target{Kind: TargetChosenCreature}).InCenter().Select(ctx)
 	if len(ids) != 1 || ids[0] != mid {
@@ -893,7 +1003,11 @@ func TestTargetEachUpgradeOnThis(t *testing.T) {
 	host := g.AddToBattleline(testCreature("host", 3), 0)
 	up1 := attachUpgrade(g, host, NewCard("coil", Mars, Upgrade, Common))
 	up2 := attachUpgrade(g, host, NewCard("plate", Mars, Upgrade, Common))
-	ctx := &EffectContext{Resolver: g, Controller: 0, Source: host}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     host,
+	}
 
 	ids := (Target{Kind: TargetEachUpgradeOnThis}).Select(ctx)
 	if len(ids) != 2 || ids[0] != up1 || ids[1] != up2 {
@@ -906,7 +1020,10 @@ func TestTargetWithUpgrade(t *testing.T) {
 	upgraded := g.AddToBattleline(testCreature("up", 3), 0)
 	bare := g.AddToBattleline(testCreature("bare", 3), 0)
 	attachUpgrade(g, upgraded, NewCard("plating", Mars, Upgrade, Common))
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	if ids := (Target{Kind: TargetEachCreature}).WithUpgrade().
 		Select(ctx); len(ids) != 1 || ids[0] != upgraded {
@@ -924,7 +1041,10 @@ func TestTargetSharesHouseWithNeighbors(t *testing.T) {
 	left := g.AddToBattleline(NewCard("l", Mars, Creature, Common, WithPower(3)), 0)
 	mid := g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(3)), 0)
 	right := g.AddToBattleline(NewCard("r", Mars, Creature, Common, WithPower(3)), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// Every creature shares its house with at least one neighbor.
 	if ids := (Target{Kind: TargetEachCreature}).SharesHouseWithNeighbors(1).
@@ -961,7 +1081,10 @@ func TestNotMostPowerful(t *testing.T) {
 	weak := g.AddToBattleline(testCreature("weak", 3), 0)
 	strong := g.AddToBattleline(testCreature("strong", 7), 0)
 	mid := g.AddToBattleline(testCreature("mid", 5), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	got := Target{Kind: TargetEachFriendlyCreature}.Refine(Except(MostPowerful)).Select(ctx)
 	if len(got) != 2 || !containsID(got, weak) || !containsID(got, mid) || containsID(got, strong) {
 		t.Errorf("select = %v, want [weak mid] (most powerful spared)", got)
@@ -970,7 +1093,10 @@ func TestNotMostPowerful(t *testing.T) {
 	// One creature (or none) is its own most powerful, so nothing is selected.
 	g2 := NewGame("A", "B", 1)
 	g2.AddToBattleline(testCreature("lone", 3), 0)
-	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	ctx2 := &EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	}
 	if got := (Target{Kind: TargetEachFriendlyCreature}.Refine(Except(MostPowerful))).Select(
 		ctx2,
 	); got != nil {
@@ -988,7 +1114,10 @@ func TestNotMostPowerful(t *testing.T) {
 	b := g3.AddToBattleline(testCreature("b", 5), 0)
 	small := g3.AddToBattleline(testCreature("small", 2), 0)
 	g3.SetChooser(0, orderLastChooser{}) // keep the last tied creature (b)
-	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
+	ctx3 := &EffectContext{
+		Resolver:   g3,
+		Controller: 0,
+	}
 	got = Target{Kind: TargetEachFriendlyCreature}.Refine(Except(MostPowerful)).Select(ctx3)
 	if len(got) != 2 || !containsID(got, a) || !containsID(got, small) || containsID(got, b) {
 		t.Errorf("tie select = %v, want [a small] (b kept)", got)
@@ -999,7 +1128,10 @@ func TestNotMostPowerful(t *testing.T) {
 	first := g4.AddToBattleline(testCreature("first", 5), 0)
 	second := g4.AddToBattleline(testCreature("second", 5), 0)
 	g4.SetChooser(0, orderRejectChooser{})
-	ctx4 := &EffectContext{Resolver: g4, Controller: 0}
+	ctx4 := &EffectContext{
+		Resolver:   g4,
+		Controller: 0,
+	}
 	got = Target{Kind: TargetEachFriendlyCreature}.Refine(Except(MostPowerful)).Select(ctx4)
 	if len(got) != 1 || got[0] != second || containsID(got, first) {
 		t.Errorf("rejected tie select = %v, want [second] (first kept)", got)
@@ -1020,11 +1152,18 @@ func TestPowerLessThan(t *testing.T) {
 	weak := g.AddToBattleline(testCreature("weak", 1), 1)
 	equal := g.AddToBattleline(testCreature("equal", 2), 1)
 	strong := g.AddToBattleline(testCreature("strong", 3), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// Threshold is the two friendly Mars creatures, so only power < 2 is kept:
 	// power == 2 and power 3 both survive.
-	limit := CardsInPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)}
+	limit := CardsInPlay{
+		Player: Controller,
+		Type:   Creature,
+		House:  namedHouse(Mars),
+	}
 	got := Target{Kind: TargetEachEnemyCreature}.Refine(PowerLessThan(limit)).Select(ctx)
 	if len(got) != 1 || got[0] != weak || containsID(got, equal) || containsID(got, strong) {
 		t.Errorf("PowerLessThan = %v, want [weak]", got)
@@ -1037,7 +1176,10 @@ func TestPowerLessThan(t *testing.T) {
 	}
 
 	// An empty set keeps nothing.
-	empty := &EffectContext{Resolver: NewGame("A", "B", 1), Controller: 0}
+	empty := &EffectContext{
+		Resolver:   NewGame("A", "B", 1),
+		Controller: 0,
+	}
 	if ids := (Target{Kind: TargetEachEnemyCreature}).Refine(PowerLessThan(limit)).
 		Select(empty); len(
 		ids,
@@ -1047,7 +1189,11 @@ func TestPowerLessThan(t *testing.T) {
 
 	// The SelfHouse sentinel in the count resolves to the card's own house, even
 	// though it lives in the refinement's unexported field.
-	selfLimit := CardsInPlay{Player: Controller, Type: Creature, House: namedHouse(SelfHouse)}
+	selfLimit := CardsInPlay{
+		Player: Controller,
+		Type:   Creature,
+		House:  namedHouse(SelfHouse),
+	}
 	resolved := replacedIn(
 		(Target{Kind: TargetEachEnemyCreature}).Refine(PowerLessThan(selfLimit)),
 		SelfHouse,
@@ -1069,7 +1215,11 @@ func TestPowerLessThanSource(t *testing.T) {
 	weak := g.AddToBattleline(testCreature("weak", 1), 1)
 	equal := g.AddToBattleline(testCreature("equal", 3), 1)
 	strong := g.AddToBattleline(testCreature("strong", 5), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0, Source: source}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     source,
+	}
 
 	got := Target{Kind: TargetEachEnemyCreature}.Refine(PowerLessThanSource()).Select(ctx)
 	if len(got) != 1 || got[0] != weak || containsID(got, equal) || containsID(got, strong) {
@@ -1094,7 +1244,10 @@ func TestUnionableAxisRefinements(t *testing.T) {
 	bigDino := g.AddToBattleline(
 		NewCard("bigDino", Untamed, Creature, Common, WithPower(7), WithTraits(Dinosaur)), 1)
 	small := g.AddToBattleline(testCreature("small", 3), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	each := Target{Kind: TargetEachEnemyCreature}
 	union := each.Refine(AnyOf(OfTrait(Dinosaur), PowerAtLeast(6)))
@@ -1135,7 +1288,11 @@ func TestTargetChosenOtherFriendly(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	other := g.AddToBattleline(testCreature("other", 3), 0)
 	g.AddToBattleline(testCreature("enemy", 3), 1)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	// The source is excluded, leaving one candidate that is auto-selected.
 	if ids := (Target{Kind: TargetChosenOtherFriendlyCreature}).Select(
@@ -1155,7 +1312,11 @@ func TestTargetChosenOtherFriendly(t *testing.T) {
 	// A lone source has no other friendly creatures to choose.
 	g2 := NewGame("A", "B", 1)
 	lone := g2.AddToBattleline(testCreature("lone", 3), 0)
-	ctx2 := &EffectContext{Resolver: g2, Source: lone, Controller: 0}
+	ctx2 := &EffectContext{
+		Resolver:   g2,
+		Source:     lone,
+		Controller: 0,
+	}
 	if ids := (Target{Kind: TargetChosenOtherFriendlyCreature}).Select(ctx2); ids != nil {
 		t.Errorf("lone source chosen-other-friendly = %v, want nil", ids)
 	}
@@ -1166,7 +1327,10 @@ func TestTargetNamed(t *testing.T) {
 	bear := g.Register(NewCard("Ancient Bear", Untamed, Creature, Common, WithPower(6)), 0)
 	g.State.Battleline[0].add(bear)
 	other := g.AddToBattleline(testCreature("Chuff Ape", 6), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	tgt := Target{Kind: TargetEachFriendlyCreature}.Named("Ancient Bear")
 	// A named card needs no describing, so the name replaces the noun outright.
@@ -1189,7 +1353,10 @@ func TestTargetChosenEnemyCreatureOrArtifact(t *testing.T) {
 	g.AddToBattleline(testCreature("mine", 3), 0)
 	foe := g.AddToBattleline(testCreature("theirs", 3), 1)
 	art := g.AddArtifact(NewCard("Their Relic", Logos, Artifact, Common), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// Both enemy halves are candidates; the chooser takes the first.
 	if got := tgt.Select(ctx); len(got) != 1 || got[0] != foe {
@@ -1214,7 +1381,10 @@ func TestTargetChosenUpgrade(t *testing.T) {
 	up2 := g.Register(NewCard("up2", Brobnar, Upgrade, Common), 1)
 	g.AttachUpgrade(mine, up1)
 	g.AttachUpgrade(theirs, up2)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	if ids := (Target{Kind: TargetChosenUpgrade}).selectBase(ctx); len(ids) != 2 ||
 		ids[0] != up1 || ids[1] != up2 {
@@ -1238,7 +1408,10 @@ func TestKeepPerSideRefinement(t *testing.T) {
 	}
 
 	// An empty board selects nothing.
-	empty := &EffectContext{Resolver: NewGame("A", "B", 1), Controller: 0}
+	empty := &EffectContext{
+		Resolver:   NewGame("A", "B", 1),
+		Controller: 0,
+	}
 	if ids := tgt.Select(empty); ids != nil {
 		t.Errorf("empty = %v, want nil", ids)
 	}
@@ -1254,7 +1427,10 @@ func TestKeepPerSideRefinement(t *testing.T) {
 	e2 := g.AddToBattleline(testCreature("e2", 3), 1)
 	e3 := g.AddToBattleline(testCreature("e3", 3), 1)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{f0, f1, f2, e0, e1, e2}})
-	got := tgt.Select(&EffectContext{Resolver: g, Controller: 0})
+	got := tgt.Select(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if len(got) != 2 || !containsID(got, f3) || !containsID(got, e3) {
 		t.Errorf("KeepPerSide(3) leftover = %v, want [%d %d]", got, f3, e3)
 	}
@@ -1273,7 +1449,10 @@ func TestKeepPerSideRefinementFewerThanKeepCount(t *testing.T) {
 	g.AddToBattleline(testCreature("e0", 3), 1)
 	spy := &countingChooser{}
 	g.SetChooser(0, spy)
-	if ids := tgt.Select(&EffectContext{Resolver: g, Controller: 0}); ids != nil {
+	if ids := tgt.Select(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}); ids != nil {
 		t.Errorf("fewer-than-keep leftover = %v, want nil", ids)
 	}
 	if spy.calls != 0 {
@@ -1299,7 +1478,10 @@ func TestPortionPerSideRefinement(t *testing.T) {
 	}
 
 	// An empty board selects nothing.
-	empty := &EffectContext{Resolver: NewGame("A", "B", 1), Controller: 0}
+	empty := &EffectContext{
+		Resolver:   NewGame("A", "B", 1),
+		Controller: 0,
+	}
 	if ids := tgt.Select(empty); ids != nil {
 		t.Errorf("empty = %v, want nil", ids)
 	}
@@ -1315,7 +1497,10 @@ func TestPortionPerSideRefinement(t *testing.T) {
 	g.AddToBattleline(testCreature("e2", 3), 1)
 	g.AddToBattleline(testCreature("e3", 3), 1)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{e0, e1, f0, f1}})
-	got := tgt.Select(&EffectContext{Resolver: g, Controller: 0})
+	got := tgt.Select(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if len(got) != 4 || !containsID(got, e0) || !containsID(got, e1) ||
 		!containsID(got, f0) || !containsID(got, f1) {
 		t.Errorf("PortionPerSide(third) = %v, want [%d %d %d %d]", got, e0, e1, f0, f1)
@@ -1331,7 +1516,10 @@ func TestPortionPerSideRefinementRounding(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	f0 := g.AddToBattleline(testCreature("f0", 3), 0)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{f0}})
-	got := tgt.Select(&EffectContext{Resolver: g, Controller: 0})
+	got := tgt.Select(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if len(got) != 1 || got[0] != f0 {
 		t.Errorf("ceil(1/3) = %v, want [%d]", got, f0)
 	}
@@ -1349,7 +1537,11 @@ func TestTargetGrantingCard(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	artifact := g.AddArtifact(NewCard("Grantor", StarAlliance, Artifact, Rare), 0)
 
-	withGrantor := &EffectContext{Resolver: g, Grantor: artifact, HasGrantor: true}
+	withGrantor := &EffectContext{
+		Resolver:   g,
+		Grantor:    artifact,
+		HasGrantor: true,
+	}
 	got := Target{Kind: TargetGrantingCard}.selectBase(withGrantor)
 	if len(got) != 1 || got[0] != artifact {
 		t.Errorf("selectBase with a grantor = %v, want [%d]", got, artifact)
@@ -1386,7 +1578,12 @@ func TestItIsAmongNonMembershipRefinement(t *testing.T) {
 	g := started(t)
 	weak := g.AddToBattleline(testCreature("weak", 2), 1)
 	g.AddToBattleline(testCreature("strong", 6), 1)
-	if !cond.Met(&EffectContext{Resolver: g, Controller: 0, It: weak, HasIt: true}) {
+	if !cond.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         weak,
+		HasIt:      true,
+	}) {
 		t.Error("the least powerful enemy should be among the candidates")
 	}
 }

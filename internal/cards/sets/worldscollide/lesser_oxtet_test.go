@@ -43,7 +43,10 @@ func TestLesserOxtet(t *testing.T) {
 				House:  card.House.Dis,
 				InPlay: ct.Cards(ct.Bind(&oxtet, LesserOxtet)),
 			},
-			P2: ct.Side{House: card.House.Dis, Amber: 8},
+			P2: ct.Side{
+				House: card.House.Dis,
+				Amber: 8,
+			},
 		})
 
 		h.P1.Reap(oxtet)

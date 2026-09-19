@@ -43,13 +43,29 @@ type Fraction struct {
 
 var (
 	// HalfRoundedDown is half a quantity, rounded down (lose half your Æmber).
-	HalfRoundedDown = Fraction{denominator: 2, ordinal: "half", round: RoundDown}
+	HalfRoundedDown = Fraction{
+		denominator: 2,
+		ordinal:     "half",
+		round:       RoundDown,
+	}
 	// HalfRoundedUp is half a quantity, rounded up.
-	HalfRoundedUp = Fraction{denominator: 2, ordinal: "half", round: RoundUp}
+	HalfRoundedUp = Fraction{
+		denominator: 2,
+		ordinal:     "half",
+		round:       RoundUp,
+	}
 	// ThirdRoundedDown is a third of a quantity, rounded down.
-	ThirdRoundedDown = Fraction{denominator: 3, ordinal: "third", round: RoundDown}
+	ThirdRoundedDown = Fraction{
+		denominator: 3,
+		ordinal:     "third",
+		round:       RoundDown,
+	}
 	// ThirdRoundedUp is a third of a quantity, rounded up (Tertiate).
-	ThirdRoundedUp = Fraction{denominator: 3, ordinal: "third", round: RoundUp}
+	ThirdRoundedUp = Fraction{
+		denominator: 3,
+		ordinal:     "third",
+		round:       RoundUp,
+	}
 )
 
 // valid reports that the fraction was built from one of the package vars.

@@ -22,7 +22,11 @@ var reprints []ReprintRef
 // once per reprint so the card joins that set's pool without the package importing
 // another set. It is a deck-generation membership claim, never read by the engine.
 func Reprint(set provenance.SourceSet, number string, name string) {
-	reprints = append(reprints, ReprintRef{Set: set, Number: number, Name: name})
+	reprints = append(reprints, ReprintRef{
+		Set:    set,
+		Number: number,
+		Name:   name,
+	})
 }
 
 // ReprintRefs returns a copy of every registered reprint claim. The cards

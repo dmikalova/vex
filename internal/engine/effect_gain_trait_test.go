@@ -4,7 +4,10 @@ import "testing"
 
 // TestGainTraitText covers the printed clause, standalone.
 func TestGainTraitText(t *testing.T) {
-	e := GainTrait{Target: Target{Kind: TargetTriggeringCreature}, Trait: Mutant}
+	e := GainTrait{
+		Target: Target{Kind: TargetTriggeringCreature},
+		Trait:  Mutant,
+	}
 	want := "it gains the Mutant trait until the start of your next turn"
 	if got := e.Text(); got != want {
 		t.Errorf("text = %q, want %q", got, want)
@@ -36,8 +39,16 @@ func TestGainTraitResolve(t *testing.T) {
 	g.SetRecording(true)
 	beast := g.AddToBattleline(testCreature("beast", 4), 0)
 
-	GainTrait{Target: Target{Kind: TargetTriggeringCreature}, Trait: Mutant}.
-		Resolve(&EffectContext{Resolver: g, Controller: 0, It: beast, HasIt: true})
+	GainTrait{
+		Target: Target{Kind: TargetTriggeringCreature},
+		Trait:  Mutant,
+	}.
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			It:         beast,
+			HasIt:      true,
+		})
 
 	if !g.HasTrait(beast, Mutant) {
 		t.Error("the creature should have gained the Mutant trait")

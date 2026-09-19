@@ -34,7 +34,10 @@ func TestMoveFromDeckRowsAreDistinct(t *testing.T) {
 			g.State.Deck[0].add(top)
 			g.State.Deck[0].add(rest)
 
-			ctx := &EffectContext{Resolver: g, Controller: 0}
+			ctx := &EffectContext{
+				Resolver:   g,
+				Controller: 0,
+			}
 			tc.dest.moveFrom(ctx, Deck, 0, top)
 
 			if g.State.Hand[0].contains(top) {
@@ -58,7 +61,11 @@ func TestMoveSourceSkipsCardAlreadyInAPile(t *testing.T) {
 	id := g.Register(NewCard("gone", Untamed, Tactic, Common), 0)
 	g.State.Discard[0].add(id)
 
-	ctx := &EffectContext{Resolver: g, Controller: 0, Source: id}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     id,
+	}
 	toPurged.moveSource(ctx)
 
 	if !g.State.Discard[0].contains(id) {

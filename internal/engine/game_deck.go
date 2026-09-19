@@ -96,7 +96,10 @@ func (g *Game) DiscardTopOfDeck(player int) (LocalID, bool) {
 	}
 	id := deck.removeAt(0)
 	g.State.Discard[player].add(id)
-	g.record(TopOfDeckDiscarded{Player: player, Card: id})
+	g.record(TopOfDeckDiscarded{
+		Player: player,
+		Card:   id,
+	})
 	return id, true
 }
 

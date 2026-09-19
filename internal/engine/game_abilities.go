@@ -80,7 +80,11 @@ func (g *Game) usable(player int, id LocalID) error {
 	}
 	def := g.cat.def(id)
 	if def.Restricts.UseCondition != nil {
-		ctx := &EffectContext{Resolver: g, Source: id, Controller: player}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     id,
+			Controller: player,
+		}
 		if !def.Restricts.UseCondition.Met(ctx) {
 			return ErrCannotUse
 		}
@@ -88,7 +92,11 @@ func (g *Game) usable(player int, id LocalID) error {
 	// An attached Upgrade may also bar the host's use (Earthbind).
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		if c := g.cat.def(up).Restricts.UseCondition; c != nil {
-			ctx := &EffectContext{Resolver: g, Source: id, Controller: player}
+			ctx := &EffectContext{
+				Resolver:   g,
+				Source:     id,
+				Controller: player,
+			}
 			if !c.Met(ctx) {
 				return ErrCannotUse
 			}
@@ -570,10 +578,17 @@ func (g *Game) gainReapAember(p int, source LocalID) {
 		return
 	}
 	if capturer, ok := g.gainAember(p, 1); ok {
-		g.record(ReapedCaptured{Player: p, Card: source, Creature: capturer})
+		g.record(ReapedCaptured{
+			Player:   p,
+			Card:     source,
+			Creature: capturer,
+		})
 		return
 	}
-	g.record(Reaped{Player: p, Card: source})
+	g.record(Reaped{
+		Player: p,
+		Card:   source,
+	})
 }
 
 // UseAction uses a creature's or artifact's "Action:" ability.
@@ -614,7 +629,10 @@ func (g *Game) useActionOf(actor int, id LocalID) {
 		return
 	}
 	g.State.Cards[id].Exhausted = true
-	g.record(ActionAbilityUsed{Player: actor, Card: id})
+	g.record(ActionAbilityUsed{
+		Player: actor,
+		Card:   id,
+	})
 	pending := g.actionReactions(actor, id)
 	pending = append(pending, g.lastingReactions(EventUsed, actor, id)...)
 	g.resolveWindow(g.orderTriggered(actor, pending))
@@ -685,7 +703,11 @@ func (g *Game) validateFight(player int, attacker, defender LocalID) error {
 		return ErrNoTarget
 	}
 	if fr := g.cat.def(attacker).FightRestriction; fr != (Target{}) &&
-		!fr.allows(&EffectContext{Resolver: g, Source: attacker, Controller: player}, defender) {
+		!fr.allows(&EffectContext{
+			Resolver:   g,
+			Source:     attacker,
+			Controller: player,
+		}, defender) {
 		return ErrNoTarget
 	}
 	return nil
@@ -765,7 +787,11 @@ func (g *Game) fightAllows(player int, attacker, def LocalID) bool {
 	}
 	fr := g.cat.def(attacker).FightRestriction
 	return fr == (Target{}) ||
-		fr.allows(&EffectContext{Resolver: g, Source: attacker, Controller: player}, def)
+		fr.allows(&EffectContext{
+			Resolver:   g,
+			Source:     attacker,
+			Controller: player,
+		}, def)
 }
 
 // canFightSomeEnemy reports whether attacker has at least one legal fight target,
@@ -793,7 +819,10 @@ func (g *Game) recoverFromStun(id LocalID) bool {
 	}
 	core.Stunned = false
 	core.Exhausted = true
-	g.record(StunRecovered{Player: g.controller(id), Creature: id})
+	g.record(StunRecovered{
+		Player:   g.controller(id),
+		Creature: id,
+	})
 	// Spending a use to recover from a stun still counts as using the creature, so
 	// the "after you use a creature" reactions fire (Legion's March). The other use
 	// paths fold these into their own window; a stun recovery has no other window.
@@ -1116,7 +1145,11 @@ func (g *Game) printedTriggers(src LocalID, trigger Trigger) []triggeredAbility 
 	var out []triggeredAbility
 	for _, ab := range g.cat.def(src).Abilities {
 		if ab.Trigger == trigger {
-			out = append(out, triggeredAbility{source: src, grantor: src, ability: ab})
+			out = append(out, triggeredAbility{
+				source:  src,
+				grantor: src,
+				ability: ab,
+			})
 		}
 	}
 	return out
@@ -1129,7 +1162,11 @@ func (g *Game) upgradeGrantedTriggers(src LocalID, trigger Trigger) []triggeredA
 	for up, ok := g.firstUpgrade(src); ok; up, ok = g.nextUpgrade(up) {
 		for _, ab := range g.cat.def(up).Static.Granted {
 			if ab.Trigger == trigger {
-				out = append(out, triggeredAbility{source: src, grantor: up, ability: ab})
+				out = append(out, triggeredAbility{
+					source:  src,
+					grantor: up,
+					ability: ab,
+				})
 			}
 		}
 	}
@@ -1149,7 +1186,11 @@ func (g *Game) constantGrantedTriggers(src LocalID, trigger Trigger) []triggered
 			if ab.Trigger == trigger {
 				out = append(
 					out,
-					triggeredAbility{source: src, grantor: grantor, ability: ab},
+					triggeredAbility{
+						source:  src,
+						grantor: grantor,
+						ability: ab,
+					},
 				)
 			}
 		}
@@ -1170,7 +1211,11 @@ func (g *Game) alsoFiredTriggers(src LocalID, trigger Trigger) []triggeredAbilit
 	for _, from := range g.additionalTriggers(src, trigger) {
 		for _, ab := range g.cat.def(src).Abilities {
 			if ab.Trigger == from {
-				out = append(out, triggeredAbility{source: src, grantor: src, ability: ab})
+				out = append(out, triggeredAbility{
+					source:  src,
+					grantor: src,
+					ability: ab,
+				})
 			}
 		}
 	}
@@ -1189,7 +1234,11 @@ func (g *Game) textBoxTriggers(src LocalID, trigger Trigger) []triggeredAbility 
 	for _, textSource := range g.grantedTextBoxSources(src) {
 		for _, ab := range g.cat.def(textSource).Abilities {
 			if ab.Trigger == trigger {
-				out = append(out, triggeredAbility{source: src, grantor: src, ability: ab})
+				out = append(out, triggeredAbility{
+					source:  src,
+					grantor: src,
+					ability: ab,
+				})
 			}
 		}
 	}

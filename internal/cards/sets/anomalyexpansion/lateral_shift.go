@@ -19,6 +19,9 @@ var LateralShift = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.RevealHand{Player: card.Opponent},
-			card.PlayFrom{From: card.Hand, Player: card.Opponent},
+			card.PlayFrom{
+				From:   card.Hand,
+				Player: card.Opponent,
+			},
 		}}),
 )

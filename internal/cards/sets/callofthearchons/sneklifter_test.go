@@ -24,7 +24,10 @@ func TestSneklifter(t *testing.T) {
 		func(t *testing.T) {
 			var relic ct.Card
 			h := ct.Play(t, ct.Setup{
-				P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(Sneklifter)},
+				P1: ct.Side{
+					House: card.House.Shadows,
+					Hand:  ct.Cards(Sneklifter),
+				},
 				P2: ct.Side{
 					InPlay: ct.Cards(ct.Bind(&relic, ct.Artifact(ct.OfHouse(card.House.Untamed)))),
 				},
@@ -46,7 +49,10 @@ func TestSneklifter(t *testing.T) {
 	t.Run("keeps an on-identity artifact's house unchanged", func(t *testing.T) {
 		var relic ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(Sneklifter)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(Sneklifter),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(ct.Bind(&relic, ct.Artifact(ct.OfHouse(card.House.Mars)))),
 			},

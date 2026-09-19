@@ -25,6 +25,9 @@ var TemptingOffer = set.New(
 				Target:      card.Target.EnemyCreature,
 				Destination: card.To.Hand,
 			},
-			Result: card.GainAember{Player: card.Opponent, Amount: 1},
+			Result: card.GainAember{
+				Player: card.Opponent,
+				Amount: 1,
+			},
 		}),
 )

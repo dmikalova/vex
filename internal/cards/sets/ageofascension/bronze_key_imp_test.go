@@ -20,7 +20,10 @@ import (
 //	Players cannot forge their first key.
 func TestBronzeKeyImp(t *testing.T) {
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(BronzeKeyImp)},
+		P1: ct.Side{
+			House:  card.House.Dis,
+			InPlay: ct.Cards(BronzeKeyImp),
+		},
 	})
 	g := h.Game()
 

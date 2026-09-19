@@ -18,7 +18,10 @@ func TestLookOverThere(t *testing.T) {
 	t.Run("steals 1 Æmber when the creature survives the damage", func(t *testing.T) {
 		var tough ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(LookOverThere)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(LookOverThere),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&tough, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5))),
@@ -37,7 +40,10 @@ func TestLookOverThere(t *testing.T) {
 	t.Run("does not steal when the damage destroys the creature", func(t *testing.T) {
 		var frail ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(LookOverThere)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(LookOverThere),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&frail, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(1))),

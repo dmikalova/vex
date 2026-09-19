@@ -18,7 +18,10 @@ import (
 func TestMiasma(t *testing.T) {
 	t.Run("makes the opponent skip their next forge step", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(Miasma)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(Miasma),
+			},
 		})
 
 		h.P1.Play(Miasma)

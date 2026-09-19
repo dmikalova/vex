@@ -125,7 +125,11 @@ func (g *Game) Power(id LocalID) int {
 	// A variable "X" power (Picaroon's combined-neighbor power) is a blank-able part
 	// of the card's text, so it contributes only while the text is not blanked.
 	if px := g.cat.def(id).PowerX; px != nil && !g.textBlanked(id) {
-		p += px.Value(&EffectContext{Resolver: g, Source: id, Controller: g.controller(id)})
+		p += px.Value(&EffectContext{
+			Resolver:   g,
+			Source:     id,
+			Controller: g.controller(id),
+		})
 	}
 	return p
 }
@@ -244,7 +248,11 @@ func (g *Game) constantBonus(id LocalID, pick func(ConstantAbility) int) int {
 // constantContext is the resolution context a constant ability reads from: its
 // own source card, seen by that card's controller.
 func (g *Game) constantContext(src LocalID) *EffectContext {
-	return &EffectContext{Resolver: g, Source: src, Controller: g.controller(src)}
+	return &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: g.controller(src),
+	}
 }
 
 // constantAffects reports whether the constant ability c on source src reaches
@@ -826,7 +834,11 @@ func (g *Game) barredByConditionalPlayBar(player int, t CardType) bool {
 			if bar.When == nil || bar.Type != t {
 				continue
 			}
-			ctx := &EffectContext{Resolver: g, Source: id, Controller: player}
+			ctx := &EffectContext{
+				Resolver:   g,
+				Source:     id,
+				Controller: player,
+			}
 			if bar.When.Met(ctx) {
 				return true
 			}
@@ -898,7 +910,11 @@ func (g *Game) cannotPlayCard(player int) bool {
 // to be stolen (The Vaultkeeper).
 func (g *Game) aemberProtected(player int) bool {
 	for _, id := range g.allInPlay(player) {
-		ctx := &EffectContext{Resolver: g, Source: id, Controller: player}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     id,
+			Controller: player,
+		}
 		if c := g.cat.def(id).AemberCannotBeStolen; c != nil && c.Met(ctx) {
 			return true
 		}

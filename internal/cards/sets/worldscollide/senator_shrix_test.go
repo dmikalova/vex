@@ -21,7 +21,10 @@ import (
 func TestSenatorShrix(t *testing.T) {
 	t.Run("may exalt itself when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(SenatorShrix)},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(SenatorShrix),
+			},
 			P2: ct.Side{},
 		})
 
@@ -33,7 +36,10 @@ func TestSenatorShrix(t *testing.T) {
 
 	t.Run("declining the exalt leaves it bare", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(SenatorShrix)},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(SenatorShrix),
+			},
 			P2: ct.Side{},
 		})
 

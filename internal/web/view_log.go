@@ -83,7 +83,11 @@ func (g *game) logBlocks() []logBlock {
 			flush(player)
 			out = append(
 				out,
-				logBlock{header: rec.Entry, rule: rule, player: player},
+				logBlock{
+					header: rec.Entry,
+					rule:   rule,
+					player: player,
+				},
 			)
 			continue
 		}
@@ -137,7 +141,11 @@ func (g *game) logToast() app.UI {
 					Class(cx("log-toast-item",
 						ifCls(b.leaving, "log-toast-item--leaving"))).
 					Body(app.Div().Class("log-toast-item-inner").Body(
-						g.logBlockView(logBlock{lines: b.lines, player: b.player, newest: i == n-1}),
+						g.logBlockView(logBlock{
+							lines:  b.lines,
+							player: b.player,
+							newest: i == n-1,
+						}),
 					),
 					)
 			}),

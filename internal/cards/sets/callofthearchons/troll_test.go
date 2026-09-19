@@ -20,7 +20,10 @@ func TestTroll(t *testing.T) {
 	t.Run("heals 3 damage from itself when it reaps", func(t *testing.T) {
 		var troll ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(ct.Bind(&troll, Troll))},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(ct.Bind(&troll, Troll)),
+			},
 		})
 
 		troll.Damaged(3)

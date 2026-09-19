@@ -20,7 +20,10 @@ var Proclamation346E = set.New(
 	card.WithKeyCost(
 		card.KeyCostChange(card.Opponent, 2).While(
 			card.Not{Cond: card.CountIs{
-				Count:  card.HousesAmong{Player: card.Opponent, Type: card.Type.Creature},
+				Count: card.HousesAmong{
+					Player: card.Opponent,
+					Type:   card.Type.Creature,
+				},
 				Is:     card.AtLeast,
 				Amount: 3,
 			}})),

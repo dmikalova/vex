@@ -26,7 +26,11 @@ func TestRedistributeCapturedAemberMovesAll(t *testing.T) {
 	// Pile all 4 onto b.
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{b, b, b, b}})
 
-	ctx := &EffectContext{Resolver: g, Source: a, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     a,
+		Controller: 0,
+	}
 	RedistributeCapturedAember{Side: Controller}.Resolve(ctx)
 
 	if got := g.AmberOn(a); got != 0 {
@@ -43,7 +47,11 @@ func TestRedistributeCapturedAemberEnemySide(t *testing.T) {
 	g.AddAmberOn(foe, 2)
 
 	// One enemy creature: the choice auto-resolves back onto it.
-	ctx := &EffectContext{Resolver: g, Source: foe, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     foe,
+		Controller: 0,
+	}
 	RedistributeCapturedAember{Side: Opponent}.Resolve(ctx)
 
 	if got := g.AmberOn(foe); got != 2 {
@@ -55,7 +63,11 @@ func TestRedistributeCapturedAemberNoAember(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	a := g.AddToBattleline(testCreature("a", 3), 0)
 
-	ctx := &EffectContext{Resolver: g, Source: a, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     a,
+		Controller: 0,
+	}
 	RedistributeCapturedAember{Side: Controller}.Resolve(ctx)
 
 	if got := g.AmberOn(a); got != 0 {
@@ -71,7 +83,11 @@ func TestRedistributeCapturedAemberDeclineFallsBackToFirst(t *testing.T) {
 	// A chooser that declines: the effect falls back to the first candidate (a).
 	g.SetChooser(0, orderRejectChooser{})
 
-	ctx := &EffectContext{Resolver: g, Source: a, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     a,
+		Controller: 0,
+	}
 	RedistributeCapturedAember{Side: Controller}.Resolve(ctx)
 
 	if got := g.AmberOn(a); got != 1 {

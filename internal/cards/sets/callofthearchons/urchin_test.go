@@ -20,7 +20,10 @@ import (
 func TestUrchin(t *testing.T) {
 	t.Run("steals 1 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(Urchin)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(Urchin),
+			},
 			P2: ct.Side{Amber: 2},
 		})
 

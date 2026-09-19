@@ -36,7 +36,11 @@ func TestReturnNamedToHand(t *testing.T) {
 		g.State.Discard[0].add(
 			g.Register(NewCard("junk", Dis, Tactic, Common), 0),
 		) // different name in discard: filtered out
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		e.Resolve(ctx) // the sole Urchin candidate is auto-chosen
 		if g.inPlay(urch) {
@@ -52,7 +56,11 @@ func TestReturnNamedToHand(t *testing.T) {
 		src := g.AddToBattleline(testCreature("faygin", 3), 0)
 		urch := urchin(g, 0)
 		g.State.Discard[0].add(urch)
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		e.Resolve(ctx)
 		if g.State.Discard[0].contains(urch) {
@@ -75,7 +83,11 @@ func TestReturnNamedToHand(t *testing.T) {
 			0,
 		)
 		g.SetChooser(0, orderRejectChooser{})
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		e.Resolve(ctx)
 		if !g.inPlay(u1) {
@@ -90,9 +102,16 @@ func TestMoveFromPlayToDeck(t *testing.T) {
 	myArt := g.AddArtifact(NewCard("myrelic", Brobnar, Artifact, Rare), 0)
 	enemyArt := g.AddArtifact(NewCard("enemyrelic", Brobnar, Artifact, Rare), 1)
 	g.State.Cards[myArt].Exhausted = true
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
-	e := PutFromPlay{Target: Target{Kind: TargetEachArtifact}, Destination: ToTopOfDeck}
+	e := PutFromPlay{
+		Target:      Target{Kind: TargetEachArtifact},
+		Destination: ToTopOfDeck,
+	}
 	if e.Text() != "put each artifact on top of its owner's deck" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -120,9 +139,16 @@ func TestMoveFromPlayToHand(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	g.State.Cards[src].Damage = 2
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
-	e := PutFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToHand}
+	e := PutFromPlay{
+		Target:      Target{Kind: TargetThisCreature},
+		Destination: ToHand,
+	}
 	if e.Text() != "put "+SelfName+" into its owner's hand" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -150,9 +176,16 @@ func TestMoveFromPlayToArchives(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	attachUpgrade(g, src, NewCard("plating", Mars, Upgrade, Common))
 	g.State.Cards[src].Damage = 1
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
-	e := PutFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToArchives}
+	e := PutFromPlay{
+		Target:      Target{Kind: TargetThisCreature},
+		Destination: ToArchives,
+	}
 	if e.Text() != "put "+SelfName+" into its owner's archives" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -178,9 +211,16 @@ func TestMoveFromPlayToArchives(t *testing.T) {
 func TestMoveFromPlayToDeckShuffled(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("chrono", 2), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
-	e := PutFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToDeckShuffled}
+	e := PutFromPlay{
+		Target:      Target{Kind: TargetThisCreature},
+		Destination: ToDeckShuffled,
+	}
 	if e.Text() != "shuffle {self} into its owner's deck" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -197,9 +237,16 @@ func TestPutFromPlayGate(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 1), 0)
 	other := g.AddToBattleline(testCreature("other", 1), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
-	e := PutFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToHand}
+	e := PutFromPlay{
+		Target:      Target{Kind: TargetThisCreature},
+		Destination: ToHand,
+	}
 	if !e.resolveGate(ctx) {
 		t.Error("resolveGate should report true when a card moved")
 	}
@@ -207,8 +254,15 @@ func TestPutFromPlayGate(t *testing.T) {
 		t.Errorf("ctx.It = %v (HasIt %v), want %d", ctx.It, ctx.HasIt, src)
 	}
 
-	ctx = &EffectContext{Resolver: g, Source: other, Controller: 0}
-	e = PutFromPlay{Target: Target{Kind: TargetThisCreature}.Damaged(), Destination: ToHand}
+	ctx = &EffectContext{
+		Resolver:   g,
+		Source:     other,
+		Controller: 0,
+	}
+	e = PutFromPlay{
+		Target:      Target{Kind: TargetThisCreature}.Damaged(),
+		Destination: ToHand,
+	}
 	if e.resolveGate(ctx) {
 		t.Error("resolveGate should report false when nothing moved")
 	}
@@ -220,14 +274,20 @@ func TestPutFromPlayGate(t *testing.T) {
 func TestMoveFromPlayValidate(t *testing.T) {
 	this := Target{Kind: TargetThisCreature}
 	for _, d := range []Destination{ToHand, ToTopOfDeck, ToDeckShuffled, ToArchives} {
-		if err := (PutFromPlay{Target: this, Destination: d}).validate(); err != nil {
+		if err := (PutFromPlay{
+			Target:      this,
+			Destination: d,
+		}).validate(); err != nil {
 			t.Errorf("destination %d should be valid, got %v", d.zone, err)
 		}
 	}
 	if err := (PutFromPlay{Target: this}).validate(); err == nil {
 		t.Error("an unset destination should be rejected")
 	}
-	if err := (PutFromPlay{Target: this, Destination: ToBottomOfDeck}).validate(); err == nil {
+	if err := (PutFromPlay{
+		Target:      this,
+		Destination: ToBottomOfDeck,
+	}).validate(); err == nil {
 		t.Error("an unsupported destination should be rejected")
 	}
 	if err := (PutFromPlay{Destination: ToHand}).validate(); err == nil {
@@ -236,7 +296,11 @@ func TestMoveFromPlayValidate(t *testing.T) {
 	// WithUpgrades sends an upgrade wherever its host is going, so it is no longer
 	// tied to the hand; TestPutFromPlayTakesUpgradesToAnyDestination moves them.
 	for _, d := range []Destination{ToHand, ToTopOfDeck, ToDeckShuffled, ToArchives} {
-		e := PutFromPlay{Target: this, Destination: d, WithUpgrades: true}
+		e := PutFromPlay{
+			Target:       this,
+			Destination:  d,
+			WithUpgrades: true,
+		}
 		if err := e.validate(); err != nil {
 			t.Errorf("WithUpgrades to destination %d should be valid, got %v", d.zone, err)
 		}
@@ -247,7 +311,11 @@ func TestPutFromPlayWithUpgrades(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	up := attachUpgrade(g, src, NewCard("plating", Mars, Upgrade, Common))
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	e := PutFromPlay{
 		Target:       Target{Kind: TargetThisCreature},
@@ -289,7 +357,11 @@ func TestPutFromPlayTakesUpgradesToAnyDestination(t *testing.T) {
 			g := NewGame("A", "B", 1)
 			src := g.AddToBattleline(testCreature("src", 3), 0)
 			up := attachUpgrade(g, src, NewCard("plating", Mars, Upgrade, Common))
-			ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+			ctx := &EffectContext{
+				Resolver:   g,
+				Source:     src,
+				Controller: 0,
+			}
 
 			PutFromPlay{
 				Target:       Target{Kind: TargetThisCreature},
@@ -320,7 +392,11 @@ func TestPutChosen(t *testing.T) {
 		ToArchives:     "put up to 3 artifacts into their owners' archives",
 	}
 	for dest, want := range cases {
-		e := PutChosen{Quantity: UpTo{N: Fixed(3)}, Target: eachArt, Destination: dest}
+		e := PutChosen{
+			Quantity:    UpTo{N: Fixed(3)},
+			Target:      eachArt,
+			Destination: dest,
+		}
 		if got := e.Text(); got != want {
 			t.Errorf("text(%d) = %q, want %q", dest.zone, got, want)
 		}
@@ -336,7 +412,11 @@ func TestPutChosen(t *testing.T) {
 	if got := mandatory.Text(); got != "shuffle 2 artifacts into their owners' decks" {
 		t.Errorf("mandatory text = %q", got)
 	}
-	one := PutChosen{Quantity: Takes{N: Fixed(1)}, Target: eachArt, Destination: ToHand}
+	one := PutChosen{
+		Quantity:    Takes{N: Fixed(1)},
+		Target:      eachArt,
+		Destination: ToHand,
+	}
 	if got := one.Text(); got != "put an artifact into its owner's hand" {
 		t.Errorf("single text = %q", got)
 	}
@@ -344,25 +424,46 @@ func TestPutChosen(t *testing.T) {
 	// validate rejects an unset target and a bad destination. It no longer rejects
 	// a non-positive count: an unset Quantity is a legal one-card move, and a
 	// Quantity has no way to say a negative number.
-	if err := (PutChosen{Quantity: Takes{N: Fixed(3)}, Destination: ToHand}).validate(); err == nil {
+	if err := (PutChosen{
+		Quantity:    Takes{N: Fixed(3)},
+		Destination: ToHand,
+	}).validate(); err == nil {
 		t.Error("unset target should be rejected")
 	}
-	if err := (PutChosen{Target: eachArt, Destination: ToHand}).validate(); err != nil {
+	if err := (PutChosen{
+		Target:      eachArt,
+		Destination: ToHand,
+	}).validate(); err != nil {
 		t.Errorf("an unset Quantity should move one card: %v", err)
 	}
-	if err := (PutChosen{Quantity: Takes{N: Fixed(1)}, Target: eachArt, Destination: ToBottomOfDeck}).validate(); err == nil {
+	if err := (PutChosen{
+		Quantity:    Takes{N: Fixed(1)},
+		Target:      eachArt,
+		Destination: ToBottomOfDeck,
+	}).validate(); err == nil {
 		t.Error("unsupported destination should be rejected")
 	}
-	if err := (PutChosen{Quantity: Takes{N: Fixed(3)}, Target: eachArt, Destination: ToHand}).validate(); err != nil {
+	if err := (PutChosen{
+		Quantity:    Takes{N: Fixed(3)},
+		Target:      eachArt,
+		Destination: ToHand,
+	}).validate(); err != nil {
 		t.Errorf("valid PutChosen = %v", err)
 	}
 
 	g := NewGame("A", "B", 1)
 	a1 := g.AddArtifact(exAutocannon(), 0)
 	a2 := g.AddArtifact(exAutocannon(), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	// Only two artifacts exist, so the loop stops when none remain (below Count).
-	PutChosen{Quantity: UpTo{N: Fixed(3)}, Target: eachArt, Destination: ToHand}.Resolve(ctx)
+	PutChosen{
+		Quantity:    UpTo{N: Fixed(3)},
+		Target:      eachArt,
+		Destination: ToHand,
+	}.Resolve(ctx)
 	if g.inPlay(a1) || g.inPlay(a2) {
 		t.Error("both artifacts should have left play")
 	}
@@ -377,7 +478,10 @@ func TestPutChosen(t *testing.T) {
 	// A mandatory count is not declinable, and stops when the pool empties.
 	g3 := NewGame("A", "B", 1)
 	solo := g3.AddArtifact(exAutocannon(), 0)
-	mandatory.Resolve(&EffectContext{Resolver: g3, Controller: 0})
+	mandatory.Resolve(&EffectContext{
+		Resolver:   g3,
+		Controller: 0,
+	})
 	if g3.inPlay(solo) {
 		t.Error("a mandatory choice should have moved the only artifact")
 	}
@@ -391,7 +495,10 @@ func TestPutChosen(t *testing.T) {
 		Target:      eachArt,
 		Destination: ToHand,
 	}.Resolve(
-		&EffectContext{Resolver: g2, Controller: 0},
+		&EffectContext{
+			Resolver:   g2,
+			Controller: 0,
+		},
 	)
 	if !g2.inPlay(art) {
 		t.Error("choosing Done should leave the artifact in play")
@@ -412,7 +519,10 @@ func TestPutChosenSkipsACardSettledOutOfPlay(t *testing.T) {
 		Quantity:    Takes{N: Fixed(2)},
 		Target:      Target{Kind: TargetEachEnemyCreature},
 		Destination: ToArchives.Yours(),
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	if g.State.Archives[0].contains(dead) {
 		t.Error("a creature settled out of play must not be abducted into archives")
@@ -438,7 +548,11 @@ func TestPutChosenGroupsShufflesByOwnerInLog(t *testing.T) {
 		Quantity:    Takes{N: Fixed(3)},
 		Target:      Target{Kind: TargetEachCreature},
 		Destination: ToDeckShuffled,
-	}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
 
 	if g.inPlay(a1) || g.inPlay(a2) || g.inPlay(b1) {
 		t.Fatal("all three creatures should have left play")
@@ -461,24 +575,36 @@ func TestPutChosenGroupsShufflesByOwnerInLog(t *testing.T) {
 // A "you may put a creature into its owner's hand" is one clickable creature, so
 // May drives it by the click rather than by a Yes/No.
 func TestPutFromPlayDeclinable(t *testing.T) {
-	chosen := PutFromPlay{Target: Target{Kind: TargetChosenCreature}, Destination: ToHand}
+	chosen := PutFromPlay{
+		Target:      Target{Kind: TargetChosenCreature},
+		Destination: ToHand,
+	}
 	if !chosen.declinable() {
 		t.Error("a chosen PutFromPlay should be declinable")
 	}
-	if (PutFromPlay{Target: Target{Kind: TargetEachCreature}, Destination: ToHand}).
+	if (PutFromPlay{
+		Target:      Target{Kind: TargetEachCreature},
+		Destination: ToHand,
+	}).
 		declinable() {
 		t.Error("an untargeted PutFromPlay should not be declinable")
 	}
 
 	empty := NewGame("A", "B", 1)
-	if !chosen.vacuous(&EffectContext{Resolver: empty, Controller: 0}) {
+	if !chosen.vacuous(&EffectContext{
+		Resolver:   empty,
+		Controller: 0,
+	}) {
 		t.Error("a PutFromPlay with no creature to move should be vacuous")
 	}
 
 	taken := NewGame("A", "B", 1)
 	taken.SetChooser(0, &cardDecliner{})
 	foe := taken.AddToBattleline(testCreature("foe", 3), 1)
-	if !chosen.resolveOptional(&EffectContext{Resolver: taken, Controller: 0}) {
+	if !chosen.resolveOptional(&EffectContext{
+		Resolver:   taken,
+		Controller: 0,
+	}) {
 		t.Error("clicking the creature should report it moved")
 	}
 	if onAnyLine(taken, foe) {
@@ -488,7 +614,10 @@ func TestPutFromPlayDeclinable(t *testing.T) {
 	declined := NewGame("A", "B", 1)
 	declined.SetChooser(0, &cardDecliner{decline: true})
 	stayed := declined.AddToBattleline(testCreature("stayed", 3), 1)
-	if chosen.resolveOptional(&EffectContext{Resolver: declined, Controller: 0}) {
+	if chosen.resolveOptional(&EffectContext{
+		Resolver:   declined,
+		Controller: 0,
+	}) {
 		t.Error("declining should report nothing moved")
 	}
 	if !onAnyLine(declined, stayed) {
@@ -530,7 +659,10 @@ func TestAbductionResolve(t *testing.T) {
 		t.Helper()
 		g := NewGame("A", "B", 1)
 		prey := g.AddToBattleline(testCreature("prey", 3), 1)
-		abduct.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		abduct.Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		})
 		if !g.State.Archives[0].contains(prey) {
 			t.Fatalf(
 				"prey should sit in the abductor's archives, got %v",
@@ -591,14 +723,22 @@ func TestPutItIntoHand(t *testing.T) {
 	if g.inPlay(dead) {
 		t.Fatal("dead should have left play")
 	}
-	(PutItIntoHand{}).Resolve(&EffectContext{Resolver: g, It: dead, HasIt: true})
+	(PutItIntoHand{}).Resolve(&EffectContext{
+		Resolver: g,
+		It:       dead,
+		HasIt:    true,
+	})
 	if !handContains(g, 1, dead) {
 		t.Error("destroyed creature should be recovered to its owner's hand")
 	}
 
 	// A creature still in play is returned straight from the battleline.
 	live := g.AddToBattleline(testCreature("live", 3), 1)
-	(PutItIntoHand{}).Resolve(&EffectContext{Resolver: g, It: live, HasIt: true})
+	(PutItIntoHand{}).Resolve(&EffectContext{
+		Resolver: g,
+		It:       live,
+		HasIt:    true,
+	})
 	if g.inPlay(live) {
 		t.Fatal("live should have left play")
 	}
@@ -619,7 +759,10 @@ func handContains(g *Game, player int, id LocalID) bool {
 func TestPutFromPlaySkipsTheSecondGiganticHalf(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	base, art := playedGigantic(g, 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	PutFromPlay{
 		Target:      Target{Kind: TargetEachCreature},

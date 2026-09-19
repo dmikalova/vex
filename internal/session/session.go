@@ -75,7 +75,12 @@ type Session struct {
 // New deals a fresh match and drives action up to its first decision. setup and
 // action are retained so an undo can rebuild the match by replaying.
 func New(seed int64, sets [2]string, setup Setup, action Action) *Session {
-	s := &Session{seed: seed, sets: sets, setup: setup, action: action}
+	s := &Session{
+		seed:   seed,
+		sets:   sets,
+		setup:  setup,
+		action: action,
+	}
 	s.start()
 	return s
 }

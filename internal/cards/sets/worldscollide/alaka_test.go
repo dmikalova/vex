@@ -41,7 +41,10 @@ func TestAlaka(t *testing.T) {
 	t.Run("enters play exhausted when you have not fought", func(t *testing.T) {
 		var alaka ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(ct.Bind(&alaka, Alaka))},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(ct.Bind(&alaka, Alaka)),
+			},
 		})
 
 		h.P1.Play(Alaka)

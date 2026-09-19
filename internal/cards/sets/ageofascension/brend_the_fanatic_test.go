@@ -21,7 +21,10 @@ import (
 func TestBrendTheFanatic(t *testing.T) {
 	t.Run("gives the opponent 1 aember when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(BrendTheFanatic)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(BrendTheFanatic),
+			},
 			P2: ct.Side{},
 		})
 

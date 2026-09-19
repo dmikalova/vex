@@ -23,7 +23,10 @@ var DrMilli = set.New(
 		Zone:      card.Hand,
 		Selection: card.Chosen{},
 		Quantity: card.Takes{
-			N: card.ExcessCreatures{Player: card.Opponent, NotCountingSelf: true},
+			N: card.ExcessCreatures{
+				Player:          card.Opponent,
+				NotCountingSelf: true,
+			},
 		},
 	}),
 )

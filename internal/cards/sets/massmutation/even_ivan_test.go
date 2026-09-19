@@ -19,7 +19,10 @@ import (
 func TestEvenIvan(t *testing.T) {
 	t.Run("steals when the opponent has an even amount of Æmber", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, InPlay: ct.Cards(EvenIvan)},
+			P1: ct.Side{
+				House:  card.House.Logos,
+				InPlay: ct.Cards(EvenIvan),
+			},
 			P2: ct.Side{Amber: 2},
 		})
 
@@ -30,7 +33,10 @@ func TestEvenIvan(t *testing.T) {
 
 	t.Run("does nothing when the opponent has an odd amount of Æmber", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, InPlay: ct.Cards(EvenIvan)},
+			P1: ct.Side{
+				House:  card.House.Logos,
+				InPlay: ct.Cards(EvenIvan),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 

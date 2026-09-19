@@ -20,7 +20,10 @@ func TestSnufflegator(t *testing.T) {
 	t.Run("takes no damage in return when it fights (skirmish)", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(Snufflegator)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(Snufflegator),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),

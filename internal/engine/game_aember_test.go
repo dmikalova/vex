@@ -5,7 +5,11 @@ import "testing"
 func testEtherSpider() CardDefinition {
 	return NewCard("Ether Spider", Mars, Creature, Uncommon,
 		WithPower(7),
-		WithReplaces(Instead{Of: EventAemberAddedToPool, Player: Opponent, With: Capture}))
+		WithReplaces(Instead{
+			Of:     EventAemberAddedToPool,
+			Player: Opponent,
+			With:   Capture,
+		}))
 }
 
 func TestCaptureOpponentAemberReplacement(t *testing.T) {
@@ -18,7 +22,11 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 			Player: Controller,
 			Amount: 2,
 		}.Resolve(
-			&EffectContext{Resolver: g, Source: src, Controller: 0},
+			&EffectContext{
+				Resolver:   g,
+				Source:     src,
+				Controller: 0,
+			},
 		)
 
 		if g.Aember(0) != 0 {
@@ -42,7 +50,11 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 				Player: Controller,
 				Amount: 2,
 			}.Resolve(
-				&EffectContext{Resolver: g, Source: src, Controller: 0},
+				&EffectContext{
+					Resolver:   g,
+					Source:     src,
+					Controller: 0,
+				},
 			)
 
 			if g.Aember(0) != 0 {
@@ -70,7 +82,11 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 				Player: Controller,
 				Amount: 2,
 			}.Resolve(
-				&EffectContext{Resolver: g, Source: src, Controller: 0},
+				&EffectContext{
+					Resolver:   g,
+					Source:     src,
+					Controller: 0,
+				},
 			)
 
 			if g.AmberOn(first) != 2 {
@@ -94,7 +110,11 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 				Player: Controller,
 				Amount: 2,
 			}.Resolve(
-				&EffectContext{Resolver: g, Source: src, Controller: 0},
+				&EffectContext{
+					Resolver:   g,
+					Source:     src,
+					Controller: 0,
+				},
 			)
 
 			if g.Aember(0) != 5 {
@@ -148,7 +168,12 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 			played := g.AddToBattleline(testCreature("played", 2), 0)
 			spider := g.AddToBattleline(testEtherSpider(), 1)
 			g.AddLasting(
-				LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 2},
+				LastingEffect{
+					On:         EventCreaturePlayed,
+					Do:         actGainAember,
+					Controller: 0,
+					Amount:     2,
+				},
 			)
 
 			g.resolveLastingWindow(EventCreaturePlayed, 0, played)
@@ -168,9 +193,21 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 		spider := g.AddToBattleline(testEtherSpider(), 1)
 		g.State.Aember[1] = 3
 
-		StealAember{Amount: 1}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
-		CaptureAember{Amount: 1, Target: Target{Kind: TargetThisCreature}, Source: Opponent}.
-			Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+		StealAember{Amount: 1}.Resolve(&EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		})
+		CaptureAember{
+			Amount: 1,
+			Target: Target{Kind: TargetThisCreature},
+			Source: Opponent,
+		}.
+			Resolve(&EffectContext{
+				Resolver:   g,
+				Source:     src,
+				Controller: 0,
+			})
 
 		if g.Aember(0) != 1 {
 			t.Errorf("player Æmber after steal = %d, want 1", g.Aember(0))

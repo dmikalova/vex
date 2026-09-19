@@ -21,7 +21,10 @@ import (
 func TestUniversalKeylock(t *testing.T) {
 	t.Run("raises each player's key cost by 3", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, InPlay: ct.Cards(UniversalKeylock)},
+			P1: ct.Side{
+				House:  card.House.Logos,
+				InPlay: ct.Cards(UniversalKeylock),
+			},
 		})
 
 		g := h.Game()

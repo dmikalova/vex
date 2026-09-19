@@ -14,13 +14,20 @@ func Generate(set Set, seed int64) Deck {
 	if set.Tuning.RarityWeights == nil {
 		set.Tuning = DefaultTuning()
 	}
-	g := &generator{set: set, r: rand.New(rand.NewSource(seed)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(seed)),
+		placed: map[string]bool{},
+	}
 	houses := set.pickHouses(g.r)
 	plans := g.planPods(houses)
 	for i := 0; i < PodCount && i < len(plans); i++ {
 		g.deckHouses[i] = plans[i].house
 	}
-	deck := Deck{Set: set.Name, Seed: seed}
+	deck := Deck{
+		Set:  set.Name,
+		Seed: seed,
+	}
 	for i := 0; i < PodCount && i < len(plans); i++ {
 		deck.Pods[i] = g.placeGiganticTutor(
 			g.placeGiganticArt(g.expandPodClusters(g.fillPodPlan(plans[i]))))
@@ -187,7 +194,10 @@ func (g *generator) placeGiganticArt(pod HousePod) HousePod {
 		if slot < 0 {
 			continue
 		}
-		pod.Slots[slot] = Slot{Rarity: art.Rarity, Card: *art}
+		pod.Slots[slot] = Slot{
+			Rarity: art.Rarity,
+			Card:   *art,
+		}
 	}
 	return pod
 }
@@ -230,8 +240,15 @@ func (g *generator) placeGiganticTutor(pod HousePod) HousePod {
 	}
 	for b := 0; b < bases && b < len(free); b++ {
 		tutor := tutors[g.r.Intn(len(tutors))]
-		ctx := SlotContext{House: pod.House, Rarity: tutor.Def.Rarity, Special: true}
-		pod.Slots[free[b]] = Slot{Rarity: tutor.Def.Rarity, Card: g.materialize(tutor, ctx)}
+		ctx := SlotContext{
+			House:   pod.House,
+			Rarity:  tutor.Def.Rarity,
+			Special: true,
+		}
+		pod.Slots[free[b]] = Slot{
+			Rarity: tutor.Def.Rarity,
+			Card:   g.materialize(tutor, ctx),
+		}
 	}
 	return pod
 }
@@ -351,12 +368,20 @@ func (g *generator) placeMemberCopies(pod *HousePod, ci clusterIndex, m Card, wa
 		maverick := m.Def.House != pod.House
 		def := g.materialize(
 			m,
-			SlotContext{House: pod.House, Rarity: m.Def.Rarity, Maverick: maverick},
+			SlotContext{
+				House:    pod.House,
+				Rarity:   m.Def.Rarity,
+				Maverick: maverick,
+			},
 		)
 		if m.Profile.OneCopyPerDeck {
 			g.placed[m.Def.Name] = true
 		}
-		pod.Slots[slot] = Slot{Rarity: m.Def.Rarity, Maverick: maverick, Card: def}
+		pod.Slots[slot] = Slot{
+			Rarity:   m.Def.Rarity,
+			Maverick: maverick,
+			Card:     def,
+		}
 	}
 }
 
@@ -441,7 +466,11 @@ func (g *generator) ensureClusterMember(pod *HousePod, ci clusterIndex, member C
 	if g.chance(g.set.Tuning.MaverickRate) {
 		place, maverick = g.otherClusterMember(ci, member), true
 	}
-	ctx := SlotContext{House: pod.House, Rarity: place.Def.Rarity, Maverick: maverick}
+	ctx := SlotContext{
+		House:    pod.House,
+		Rarity:   place.Def.Rarity,
+		Maverick: maverick,
+	}
 	def := g.materialize(place, ctx)
 	if place.Profile.OneCopyPerDeck {
 		g.placed[place.Def.Name] = true
@@ -486,7 +515,11 @@ func (g *generator) fillSlot(plan podPlan, placed []placedCard) (Slot, placedCar
 	t := g.set.Tuning
 	if len(g.set.special) > 0 && g.chance(t.SpecialRate) {
 		if c, ok := g.pick(g.set.special); ok {
-			return g.commit(c, SlotContext{House: house, Rarity: c.Def.Rarity, Special: true})
+			return g.commit(c, SlotContext{
+				House:   house,
+				Rarity:  c.Def.Rarity,
+				Special: true,
+			})
 		}
 	}
 
@@ -505,7 +538,10 @@ func (g *generator) fillSlot(plan podPlan, placed []placedCard) (Slot, placedCar
 		}
 	}
 	if c, ok := g.tryDuplicate(rarity, placed); ok {
-		return g.commit(c, SlotContext{House: house, Rarity: rarity})
+		return g.commit(c, SlotContext{
+			House:  house,
+			Rarity: rarity,
+		})
 	}
 
 	maverick := g.chance(t.MaverickRate)
@@ -513,7 +549,11 @@ func (g *generator) fillSlot(plan podPlan, placed []placedCard) (Slot, placedCar
 	if !ok {
 		return Slot{Rarity: rarity}, placedCard{rarity: rarity}
 	}
-	ctx := SlotContext{House: house, Rarity: rarity, Maverick: maverick && c.Def.House != house}
+	ctx := SlotContext{
+		House:    house,
+		Rarity:   rarity,
+		Maverick: maverick && c.Def.House != house,
+	}
 	return g.commit(c, ctx)
 }
 
@@ -531,7 +571,10 @@ func (g *generator) commit(c Card, ctx SlotContext) (Slot, placedCard) {
 		Special:  ctx.Special,
 		Card:     def,
 	}
-	return slot, placedCard{card: c, rarity: ctx.Rarity}
+	return slot, placedCard{
+		card:   c,
+		rarity: ctx.Rarity,
+	}
 }
 
 // materialize produces the final playable definition. A template binds itself via

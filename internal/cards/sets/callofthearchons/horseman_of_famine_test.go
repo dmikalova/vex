@@ -20,7 +20,10 @@ func TestHorsemanOfFamine(t *testing.T) {
 	t.Run("destroys the least powerful creature when played", func(t *testing.T) {
 		var weak, strong ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(HorsemanOfFamine)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(HorsemanOfFamine),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&weak, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1))),

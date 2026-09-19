@@ -27,7 +27,10 @@ var TheColosseum = set.New(
 		}),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{
-			Cond: card.CountersOnThisAtLeast{Kind: card.Counter.Glory, N: 6},
+			Cond: card.CountersOnThisAtLeast{
+				Kind: card.Counter.Glory,
+				N:    6,
+			},
 			Then: card.Sequence{Effects: []card.Effect{
 				card.RemoveCounters{
 					Kind:   card.Counter.Glory,

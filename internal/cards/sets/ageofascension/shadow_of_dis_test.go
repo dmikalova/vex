@@ -20,7 +20,10 @@ func TestShadowOfDis(t *testing.T) {
 	t.Run("blanks enemy creatures, stripping their keywords", func(t *testing.T) {
 		var taunter ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(ShadowOfDis)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(ShadowOfDis),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&taunter, ct.Creature(
 					ct.Power(4), ct.Keywords(card.Keyword.Taunt))),

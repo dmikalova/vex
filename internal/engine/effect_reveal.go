@@ -42,7 +42,10 @@ func (e RevealHand) Resolve(ctx *EffectContext) {
 	revealed := e.reveal(ctx, owner)
 	ctx.Produced.Revealed = len(revealed)
 	if len(revealed) > 0 {
-		ctx.Resolver.Record(CardsRevealedToAll{Player: owner, Cards: revealed})
+		ctx.Resolver.Record(CardsRevealedToAll{
+			Player: owner,
+			Cards:  revealed,
+		})
 	}
 }
 
@@ -87,7 +90,10 @@ func (RevealRandomFromHand) Resolve(ctx *EffectContext) {
 	if !ok {
 		return
 	}
-	ctx.Resolver.Record(CardsRevealedToAll{Player: ctx.Controller, Cards: []LocalID{revealed}})
+	ctx.Resolver.Record(CardsRevealedToAll{
+		Player: ctx.Controller,
+		Cards:  []LocalID{revealed},
+	})
 	ctx.It = revealed
 	ctx.HasIt = true
 }
@@ -109,7 +115,10 @@ func (RevealChosenFromHand) Resolve(ctx *EffectContext) {
 		return
 	}
 	chosen, _ := ctx.ChooseCard("Choose a card to reveal", hand)
-	ctx.Resolver.Record(CardsRevealedToAll{Player: ctx.Controller, Cards: []LocalID{chosen}})
+	ctx.Resolver.Record(CardsRevealedToAll{
+		Player: ctx.Controller,
+		Cards:  []LocalID{chosen},
+	})
 	ctx.It, ctx.HasIt = chosen, true
 }
 

@@ -19,7 +19,10 @@ func TestTwinBoltEmission(t *testing.T) {
 	t.Run("deals 2 to a creature and 2 to a different creature", func(t *testing.T) {
 		var a, b ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(TwinBoltEmission)},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(TwinBoltEmission),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&a, ct.Creature(ct.Power(5))),
 				ct.Bind(&b, ct.Creature(ct.Power(5))),

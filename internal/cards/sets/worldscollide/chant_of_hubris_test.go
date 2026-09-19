@@ -19,7 +19,10 @@ func TestChantOfHubris(t *testing.T) {
 	t.Run("moves 1 Æmber from one creature onto another", func(t *testing.T) {
 		var from, onto, bystander ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(ChantOfHubris)},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(ChantOfHubris),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&from, ct.Creature(ct.Power(3))),
 				ct.Bind(&onto, ct.Creature(ct.Power(3))),
@@ -42,7 +45,10 @@ func TestChantOfHubris(t *testing.T) {
 	t.Run("never offers the creature the Æmber is leaving", func(t *testing.T) {
 		var from, onto ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(ChantOfHubris)},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(ChantOfHubris),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&from, ct.Creature(ct.Power(3))),
 				ct.Bind(&onto, ct.Creature(ct.Power(3))),

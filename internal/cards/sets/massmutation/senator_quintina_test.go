@@ -37,7 +37,10 @@ func TestSenatorQuintina(t *testing.T) {
 	t.Run("exalts an enemy creature after it reaps", func(t *testing.T) {
 		var enemy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, InPlay: ct.Cards(SenatorQuintina)},
+			P1: ct.Side{
+				House:  card.House.Saurian,
+				InPlay: ct.Cards(SenatorQuintina),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&enemy, ct.Creature(ct.Power(3))))},
 		})
 

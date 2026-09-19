@@ -19,7 +19,10 @@ func TestPurify(t *testing.T) {
 	t.Run("purges an enemy Mutant and reanimates the dug non-Mutant", func(t *testing.T) {
 		var mutant, skipped, found, buried ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(Purify)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(Purify),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&mutant, ct.Creature(ct.Traits(card.Traits.Mutant))),
@@ -43,7 +46,10 @@ func TestPurify(t *testing.T) {
 	t.Run("does nothing when there is no Mutant to purge", func(t *testing.T) {
 		var top ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(Purify)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(Purify),
+			},
 			P2: ct.Side{Deck: ct.Cards(ct.Bind(&top, ct.Creature()))},
 		})
 

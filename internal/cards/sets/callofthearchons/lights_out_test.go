@@ -19,7 +19,10 @@ func TestLightsOut(t *testing.T) {
 	t.Run("returns up to 2 enemy creatures to hand", func(t *testing.T) {
 		var a, b ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(LightsOut)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(LightsOut),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&a, ct.Creature(ct.OfHouse(card.House.Mars))),

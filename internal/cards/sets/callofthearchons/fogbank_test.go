@@ -18,7 +18,10 @@ import (
 func TestFogbank(t *testing.T) {
 	t.Run("bars the opponent from fighting on their next turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(Fogbank)},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(Fogbank),
+			},
 		})
 
 		h.P1.Play(Fogbank)

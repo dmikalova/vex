@@ -20,7 +20,10 @@ import (
 func TestHeartOfTheForest(t *testing.T) {
 	t.Run("bars a player who leads on keys from forging", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(HeartOfTheForest)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(HeartOfTheForest),
+			},
 		})
 		g := h.Game()
 		g.State.ForgeCanonicalKeys(0, 1) // P1 leads
@@ -33,7 +36,10 @@ func TestHeartOfTheForest(t *testing.T) {
 
 	t.Run("lets a tied player forge", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(HeartOfTheForest)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(HeartOfTheForest),
+			},
 		})
 		g := h.Game()
 		g.State.Aember[0] = 3 * engine.KeyCost

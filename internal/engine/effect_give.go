@@ -53,5 +53,9 @@ func (e GiveAember) Resolve(ctx *EffectContext) {
 	}
 	ctx.Resolver.SetAember(giver, ctx.Resolver.Aember(giver)-amount)
 	ctx.Resolver.SetAember(receiver, ctx.Resolver.Aember(receiver)+amount)
-	ctx.Resolver.Record(AemberGiven{Giver: giver, Receiver: receiver, Amount: amount})
+	ctx.Resolver.Record(AemberGiven{
+		Giver:    giver,
+		Receiver: receiver,
+		Amount:   amount,
+	})
 }

@@ -19,7 +19,10 @@ import (
 func TestBumpsy(t *testing.T) {
 	t.Run("makes the opponent lose 1 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(Bumpsy)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(Bumpsy),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 

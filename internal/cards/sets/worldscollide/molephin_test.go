@@ -21,7 +21,10 @@ import (
 func TestMolephin(t *testing.T) {
 	var molephin, enemy ct.Card
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(ct.Bind(&enemy, Alaka))},
+		P1: ct.Side{
+			House:  card.House.Brobnar,
+			InPlay: ct.Cards(ct.Bind(&enemy, Alaka)),
+		},
 		P2: ct.Side{
 			House:  card.House.Untamed,
 			InPlay: ct.Cards(ct.Bind(&molephin, Molephin)),
@@ -32,7 +35,10 @@ func TestMolephin(t *testing.T) {
 	// Player 1 (active) steals 2 Æmber from player 2, who controls Molephin, so
 	// each of Molephin's enemy creatures — player 1's — takes 2 damage.
 	engine.StealAember{Amount: 2}.Resolve(
-		&engine.EffectContext{Resolver: h.Game(), Controller: 0},
+		&engine.EffectContext{
+			Resolver:   h.Game(),
+			Controller: 0,
+		},
 	)
 
 	h.Expect(enemy).Damage(2)

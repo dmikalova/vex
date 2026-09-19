@@ -18,7 +18,10 @@ func TestThrowingStars(t *testing.T) {
 	t.Run("gains 1 Æmber per creature it destroys", func(t *testing.T) {
 		var a, b ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(ThrowingStars)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(ThrowingStars),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&a, ct.Creature(ct.Power(1))),
 				ct.Bind(&b, ct.Creature(ct.Power(1))),

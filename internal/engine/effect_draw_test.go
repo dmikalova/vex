@@ -7,15 +7,31 @@ func TestDrawEffect(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 1), 0)
 	g.AddToDeck(testCreature("d1", 1), 0)
 	g.AddToDeck(testCreature("d2", 1), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	if (Draw{Amount: 1}).Text() != "draw a card" {
 		t.Errorf("single text = %q", (Draw{Amount: 1}).Text())
 	}
-	if (Draw{Amount: 1, You: true}).Text() != "you draw a card" {
-		t.Errorf("you text = %q", (Draw{Amount: 1, You: true}).Text())
+	if (Draw{
+		Amount: 1,
+		You:    true,
+	}).Text() != "you draw a card" {
+		t.Errorf("you text = %q", (Draw{
+			Amount: 1,
+			You:    true,
+		}).Text())
 	}
-	orDraw := Draw{Amount: 1, Or: OrAmount{Amount: 2, When: ControlsNamed{Name: "Hyde"}}}
+	orDraw := Draw{
+		Amount: 1,
+		Or: OrAmount{
+			Amount: 2,
+			When:   ControlsNamed{Name: "Hyde"},
+		},
+	}
 	if got := orDraw.Text(); got != "draw a card, or 2 cards if you control Hyde" {
 		t.Errorf("or text = %q", got)
 	}
@@ -37,9 +53,16 @@ func TestDrawPer(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.AddToDeck(testCreature("d1", 1), 0)
 	g.AddToDeck(testCreature("d2", 1), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0, Produced: Produced{Revealed: 2}}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Produced:   Produced{Revealed: 2},
+	}
 
-	e := Draw{Amount: 1, Per: CardsRevealed{}}
+	e := Draw{
+		Amount: 1,
+		Per:    CardsRevealed{},
+	}
 	if e.Text() != "for each card revealed this way, draw a card" {
 		t.Errorf("text = %q", e.Text())
 	}

@@ -21,7 +21,10 @@ func TestPingleWhoAnnoys(t *testing.T) {
 	t.Run("deals 1 damage to each enemy creature when played", func(t *testing.T) {
 		var a, b ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(PingleWhoAnnoys)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(PingleWhoAnnoys),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&a, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),

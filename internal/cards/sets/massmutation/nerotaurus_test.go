@@ -21,7 +21,10 @@ func TestNerotaurus(t *testing.T) {
 	t.Run("fight bars enemy creatures from reaping next turn", func(t *testing.T) {
 		var enemy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, InPlay: ct.Cards(Nerotaurus)},
+			P1: ct.Side{
+				House:  card.House.Saurian,
+				InPlay: ct.Cards(Nerotaurus),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3))),
@@ -41,7 +44,10 @@ func TestNerotaurus(t *testing.T) {
 
 	t.Run("reap bars enemy creatures from fighting next turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, InPlay: ct.Cards(Nerotaurus)},
+			P1: ct.Side{
+				House:  card.House.Saurian,
+				InPlay: ct.Cards(Nerotaurus),
+			},
 		})
 
 		h.P1.Reap(Nerotaurus)

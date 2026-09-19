@@ -126,7 +126,10 @@ func TestEveryKeywordHasASpecimenRow(t *testing.T) {
 // harness is a synthetic game, so a surface that assumes a state only a played
 // match reaches would fail here rather than in a browser.
 func TestGalleryRenders(t *testing.T) {
-	s := &style{harness: styleHarness(), attachHost: attachHarness()}
+	s := &style{
+		harness:    styleHarness(),
+		attachHost: attachHarness(),
+	}
 	s.attachments = buildAttachments(s.attachHost.g)
 	if s.Render() == nil {
 		t.Fatal("the gallery rendered nothing")

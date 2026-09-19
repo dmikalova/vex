@@ -23,7 +23,10 @@ var NeutronShark = set.New(
 		Do: card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.EnemyCreatureOrArtifact},
 			card.Destroy{Target: card.Target.FriendlyCreatureOrArtifact},
-			card.DiscardTop{Amount: 1, Player: card.Controller},
+			card.DiscardTop{
+				Amount: 1,
+				Player: card.Controller,
+			},
 		}},
 		Gate: card.While{Cond: card.Not{Cond: card.ItIs{
 			House: card.Houses.Named(card.House.Self),

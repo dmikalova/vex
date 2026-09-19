@@ -28,7 +28,10 @@ func (c *recordingBadgeChooser) PreviewBadge(b SelectionBadge) {
 func TestPreviewBadgeIgnoredWithoutCapability(_ *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetChooser(0, FirstChooser{})
-	g.PreviewBadge(0, SelectionBadge{Icon: DamageIcon, Amount: 3})
+	g.PreviewBadge(0, SelectionBadge{
+		Icon:   DamageIcon,
+		Amount: 3,
+	})
 }
 
 // TestDealDamagePerInstancePreviewsDamageBadge covers the badge a per-instance
@@ -44,9 +47,15 @@ func TestDealDamagePerInstancePreviewsDamageBadge(t *testing.T) {
 
 	DealDamage{
 		Amount: 3,
-		Per:    CardsInPlay{Player: Controller, Type: Creature},
+		Per: CardsInPlay{
+			Player: Controller,
+			Type:   Creature,
+		},
 		Target: Target{Kind: TargetChosenEnemyCreature},
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	want := []SelectionBadge{{Icon: DamageIcon, Amount: 3}, {}}
 	if len(ch.badges) != len(want) || ch.badges[0] != want[0] || ch.badges[1] != want[1] {
@@ -63,8 +72,15 @@ func TestWardAmountPreviewsWardBadge(t *testing.T) {
 	ch := &recordingBadgeChooser{ids: []LocalID{a, c}}
 	g.SetChooser(0, ch)
 
-	Ward{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: 2}.Resolve(
-		&EffectContext{Resolver: g, Source: a, Controller: 0},
+	Ward{
+		Target: Target{Kind: TargetEachFriendlyCreature},
+		Amount: 2,
+	}.Resolve(
+		&EffectContext{
+			Resolver:   g,
+			Source:     a,
+			Controller: 0,
+		},
 	)
 
 	want := []SelectionBadge{{Icon: WardIcon}, {}}

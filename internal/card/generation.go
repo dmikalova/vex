@@ -121,7 +121,12 @@ func Pulled(c Cluster, minCopies int, mean float64) Cluster {
 // Walls guaranteeing the Upgrades and Robots it retrieves. It is independent of
 // card.InCluster, so a card can lead a filtered pull and belong to a named cluster.
 func PullsMatching(name string, floor int, mean float64, match func(Definition) bool) Option {
-	fc := FilteredCluster{Name: name, Floor: floor, Mean: mean, Match: match}
+	fc := FilteredCluster{
+		Name:  name,
+		Floor: floor,
+		Mean:  mean,
+		Match: match,
+	}
 	return func(b *builder) { b.profile.Leads = &fc }
 }
 

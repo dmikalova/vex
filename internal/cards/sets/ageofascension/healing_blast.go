@@ -19,14 +19,20 @@ var HealingBlast = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Heal{Fully: true, Target: card.Target.Creature},
+			card.Heal{
+				Fully:  true,
+				Target: card.Target.Creature,
+			},
 			card.Conditional{
 				Cond: card.CountIs{
 					Count:  card.DamageHealed{},
 					Is:     card.AtLeast,
 					Amount: 4,
 				},
-				Then: card.GainAember{Player: card.Controller, Amount: 2},
+				Then: card.GainAember{
+					Player: card.Controller,
+					Amount: 2,
+				},
 			},
 		}}),
 )

@@ -24,7 +24,10 @@ var Dysania = set.New(
 			card.GainAember{
 				Player: card.Controller,
 				Amount: 1,
-				Per:    card.CardsInZone{Zone: card.Archives, Player: card.Opponent},
+				Per: card.CardsInZone{
+					Zone:   card.Archives,
+					Player: card.Opponent,
+				},
 			},
 			card.DiscardArchives{Player: card.Opponent},
 		}}),

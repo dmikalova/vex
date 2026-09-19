@@ -18,7 +18,10 @@ func TestHandOfDis(t *testing.T) {
 	t.Run("destroys a chosen creature that is not on a flank", func(t *testing.T) {
 		var left, mid, right ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(HandOfDis)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(HandOfDis),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&left, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),

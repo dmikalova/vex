@@ -22,9 +22,12 @@ var DeepProbe = set.New(
 			Then: card.Sequence{Effects: []card.Effect{
 				card.RevealHand{Player: card.Opponent},
 				card.DiscardCard{
-					Player:    card.Opponent,
-					Zones:     []card.Zone{card.Hand},
-					Selection: card.Each{Type: card.Type.Creature, House: card.Houses.Chosen},
+					Player: card.Opponent,
+					Zones:  []card.Zone{card.Hand},
+					Selection: card.Each{
+						Type:  card.Type.Creature,
+						House: card.Houses.Chosen,
+					},
 				},
 			}},
 		}),

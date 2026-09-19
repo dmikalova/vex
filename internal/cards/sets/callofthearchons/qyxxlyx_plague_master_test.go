@@ -20,7 +20,10 @@ func TestQyxxlyxPlagueMaster(t *testing.T) {
 	t.Run("deals 3 to each Human creature, bypassing armor", func(t *testing.T) {
 		var human, beast ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Mars, InPlay: ct.Cards(QyxxlyxPlagueMaster)},
+			P1: ct.Side{
+				House:  card.House.Mars,
+				InPlay: ct.Cards(QyxxlyxPlagueMaster),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(
 					&human,

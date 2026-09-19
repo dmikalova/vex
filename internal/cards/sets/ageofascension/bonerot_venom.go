@@ -20,7 +20,10 @@ var BonerotVenom = set.New(
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.UsedSelf,
-			Effect:  card.DealDamage{Amount: 2, Target: card.Target.This},
+			Effect: card.DealDamage{
+				Amount: 2,
+				Target: card.Target.This,
+			},
 		}},
 	}),
 )

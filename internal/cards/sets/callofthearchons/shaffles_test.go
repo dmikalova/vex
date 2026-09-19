@@ -19,7 +19,10 @@ import (
 func TestShaffles(t *testing.T) {
 	t.Run("drains 1 Æmber from the opponent at the end of the turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Shaffles)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(Shaffles),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 

@@ -13,7 +13,10 @@ func TestOverrideStatsMasksPowerAndArmor(t *testing.T) {
 	OverrideStats{
 		Power: 1, HasPower: true, Armor: 0, HasArmor: true,
 		Duration: RemainderOfPlayerTurn,
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	if got := g.Power(c); got != 1 {
 		t.Errorf("masked power = %d, want 1", got)
@@ -42,9 +45,15 @@ func TestOverrideStatsMaskedArmorAbsorbsNothing(t *testing.T) {
 	OverrideStats{
 		Armor: 0, HasArmor: true,
 		Duration: RemainderOfPlayerTurn,
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
-	g.applyRawDamage(DamageTarget{ID: c, Amount: 2})
+	g.applyRawDamage(DamageTarget{
+		ID:     c,
+		Amount: 2,
+	})
 	if g.Damage(c) != 2 {
 		t.Errorf("masked-armor creature took %d, want 2 (0 armor absorbed)", g.Damage(c))
 	}
@@ -60,17 +69,33 @@ func TestOverrideStatsValidate(t *testing.T) {
 	if (OverrideStats{Duration: RemainderOfPlayerTurn}).validate() == nil {
 		t.Error("no masked stat should be invalid")
 	}
-	if (OverrideStats{Power: 1, HasPower: true, Duration: OpponentNextTurn}).validate() == nil {
+	if (OverrideStats{
+		Power:    1,
+		HasPower: true,
+		Duration: OpponentNextTurn,
+	}).validate() == nil {
 		t.Error("unsupported duration should be invalid")
 	}
-	if (OverrideStats{Power: 1, HasPower: true, Duration: RemainderOfPlayerTurn}).validate() != nil {
+	if (OverrideStats{
+		Power:    1,
+		HasPower: true,
+		Duration: RemainderOfPlayerTurn,
+	}).validate() != nil {
 		t.Error("a masked power with a supported duration should be valid")
 	}
-	if got := (OverrideStats{Armor: 0, HasArmor: true, Duration: RemainderOfPlayerTurn}).
+	if got := (OverrideStats{
+		Armor:    0,
+		HasArmor: true,
+		Duration: RemainderOfPlayerTurn,
+	}).
 		Text(); got != "for the remainder of the turn, each creature is considered to have 0 armor" {
 		t.Errorf("armor-only text = %q", got)
 	}
-	if got := (OverrideStats{Power: 1, HasPower: true, Duration: RemainderOfPlayerTurn}).
+	if got := (OverrideStats{
+		Power:    1,
+		HasPower: true,
+		Duration: RemainderOfPlayerTurn,
+	}).
 		Text(); got != "for the remainder of the turn, each creature is considered to have 1 power" {
 		t.Errorf("power-only text = %q", got)
 	}
@@ -90,7 +115,10 @@ func TestOverrideStatsDestroysNewlyLethal(t *testing.T) {
 	OverrideStats{
 		Power: 1, HasPower: true,
 		Duration: RemainderOfPlayerTurn,
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	g.settleDestroyed(0) // the resolution boundary settles the mask (ADR 0029)
 
 	if g.inPlay(damaged) {

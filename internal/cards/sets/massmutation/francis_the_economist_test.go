@@ -21,7 +21,10 @@ func TestFrancisTheEconomist(t *testing.T) {
 	t.Run("each player gains 1 Æmber when it fights", func(t *testing.T) {
 		var enemy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(FrancisTheEconomist)},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(FrancisTheEconomist),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(2))),

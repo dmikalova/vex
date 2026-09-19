@@ -22,6 +22,9 @@ var Xenotraining = set.New(
 			Amount: 1,
 			Target: card.Target.FriendlyCreature,
 			Source: card.Opponent,
-			Times:  card.HousesAmong{Player: card.Controller, Type: card.Type.Creature},
+			Times: card.HousesAmong{
+				Player: card.Controller,
+				Type:   card.Type.Creature,
+			},
 		}),
 )

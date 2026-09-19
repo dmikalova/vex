@@ -12,7 +12,12 @@ import "github.com/dmikalova/vactrol/internal/cards/provenance"
 // eventually covered (see `mage tool:missing`/`mage tool:coverage`). Nothing in the engine
 // or in deck generation ever reads it, and a card's behavior never depends on it.
 func Provenance(set provenance.SourceSet, number string) Option {
-	return func(b *builder) { b.prov = append(b.prov, provenance.Ref{Set: set, Number: number}) }
+	return func(b *builder) {
+		b.prov = append(b.prov, provenance.Ref{
+			Set:    set,
+			Number: number,
+		})
+	}
 }
 
 // InSet declares the source set a card belongs to for deck generation, decoupled

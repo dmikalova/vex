@@ -20,17 +20,30 @@ func TestItIsAmongFoughtMostPowerful(t *testing.T) {
 	bigger := g.AddToBattleline(testCreature("bigger", 6), 1)
 
 	// No fought creature in context: unmet.
-	if cond.Met(&EffectContext{Resolver: g, Controller: 0}) {
+	if cond.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}) {
 		t.Error("no fought creature: condition should be unmet")
 	}
 
 	// A stronger enemy creature exists: the fought creature is not the most powerful.
-	if cond.Met(&EffectContext{Resolver: g, Controller: 0, It: fought, HasIt: true}) {
+	if cond.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         fought,
+		HasIt:      true,
+	}) {
 		t.Error("stronger enemy present: condition should be unmet")
 	}
 
 	// Fight the bigger one, which ties the top power: met.
-	if !cond.Met(&EffectContext{Resolver: g, Controller: 0, It: bigger, HasIt: true}) {
+	if !cond.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         bigger,
+		HasIt:      true,
+	}) {
 		t.Error("most powerful enemy fought: condition should be met")
 	}
 }

@@ -258,7 +258,10 @@ func (e chooseFromTopOfDeck) resolve(ctx *EffectContext) {
 	if e.public {
 		if len(top) > 0 {
 			ctx.It, ctx.HasIt = top[0], true
-			ctx.Resolver.Record(CardsRevealedToAll{Player: player, Cards: top})
+			ctx.Resolver.Record(CardsRevealedToAll{
+				Player: player,
+				Cards:  top,
+			})
 		} else {
 			ctx.HasIt = false
 		}
@@ -266,7 +269,10 @@ func (e chooseFromTopOfDeck) resolve(ctx *EffectContext) {
 	if len(top) == 0 {
 		return
 	}
-	tr := &topRead{player: player, remaining: top}
+	tr := &topRead{
+		player:    player,
+		remaining: top,
+	}
 	for _, act := range e.then {
 		act.apply(ctx, tr)
 	}
@@ -588,7 +594,10 @@ type LookAtTopOfDeck struct {
 
 // core builds the private, own-deck read this sugar wraps.
 func (e LookAtTopOfDeck) core() chooseFromTopOfDeck {
-	return chooseFromTopOfDeck{amount: e.Amount, then: e.Then}
+	return chooseFromTopOfDeck{
+		amount: e.Amount,
+		then:   e.Then,
+	}
 }
 
 // validate delegates to the core read.

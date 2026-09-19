@@ -27,7 +27,10 @@ func shortTimeout(t *testing.T) {
 func TestBridgeAnswersDegenerateChoices(t *testing.T) {
 	var lone Card
 	h := Play(t, Setup{P1: Side{InPlay: []Entry{Bind(&lone, Creature())}}})
-	b := bridgeChooser{h: h, player: 0}
+	b := bridgeChooser{
+		h:      h,
+		player: 0,
+	}
 	if _, ok := b.ChooseCreature("src", "Choose a creature", nil); ok {
 		t.Error("chose a creature from an empty set")
 	}
@@ -178,8 +181,14 @@ func TestReadyCheckDrainsThenGivesUp(t *testing.T) {
 		// Two prompts nobody is listening to: declining the first hands back a
 		// second, and declining that one leaves the harness waiting on an action
 		// goroutine that is not there.
-		first := promptReq{text: "first", reply: make(chan int, 1)}
-		second := promptReq{text: "second", reply: make(chan int, 1)}
+		first := promptReq{
+			text:  "first",
+			reply: make(chan int, 1),
+		}
+		second := promptReq{
+			text:  "second",
+			reply: make(chan int, 1),
+		}
 		h.current = &first
 		go func() { h.prompt <- second }()
 		h.checkReady()
@@ -208,7 +217,10 @@ func TestBridgeChooseReactionFollowsScript(t *testing.T) {
 		Bind(&first, Creature()),
 		Bind(&second, Creature()),
 	}}})
-	b := bridgeChooser{h: h, player: 0}
+	b := bridgeChooser{
+		h:      h,
+		player: 0,
+	}
 	reactions := []engine.OrderableReaction{
 		{Card: first.ID(), HasCard: true, Label: "first"},
 		{Card: second.ID(), HasCard: true, Label: "second"},

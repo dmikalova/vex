@@ -108,7 +108,11 @@ func (c *webChooser) ChooseCreature(
 ) (engine.LocalID, bool) {
 	outer := c.enter()
 	id, ok := c.ask(source, prompt, candidates, false)
-	c.record(outer, input{Kind: inPick, ID: id, OK: ok})
+	c.record(outer, input{
+		Kind: inPick,
+		ID:   id,
+		OK:   ok,
+	})
 	return id, ok
 }
 
@@ -123,7 +127,11 @@ func (c *webChooser) ChooseCardOrDecline(
 ) (engine.LocalID, bool) {
 	outer := c.enter()
 	id, ok := c.ask(source, prompt, candidates, true)
-	c.record(outer, input{Kind: inPick, ID: id, OK: ok})
+	c.record(outer, input{
+		Kind: inPick,
+		ID:   id,
+		OK:   ok,
+	})
 	return id, ok
 }
 
@@ -159,7 +167,10 @@ func (c *webChooser) OrderCreatures(
 				remaining[i], remaining[j] = remaining[j], remaining[i]
 			})
 			result := slices.Concat(ordered, remaining)
-			c.record(outer, input{Kind: inOrder, Order: result})
+			c.record(outer, input{
+				Kind:  inOrder,
+				Order: result,
+			})
 			return result
 		}
 		if !r.ok {
@@ -174,7 +185,10 @@ func (c *webChooser) OrderCreatures(
 		}
 	}
 	result := slices.Concat(ordered, remaining)
-	c.record(outer, input{Kind: inOrder, Order: result})
+	c.record(outer, input{
+		Kind:  inOrder,
+		Order: result,
+	})
 	return result
 }
 
@@ -189,7 +203,10 @@ func (c *webChooser) ChooseReaction(
 ) int {
 	outer := c.enter()
 	idx := c.pickReaction(prompt, reactions)
-	c.record(outer, input{Kind: inReaction, Index: idx})
+	c.record(outer, input{
+		Kind:  inReaction,
+		Index: idx,
+	})
 	return idx
 }
 
@@ -411,7 +428,10 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 	// A manual-mode Cancel already in flight drains without showing the prompt.
 	select {
 	case <-c.cancel:
-		c.record(outer, input{Kind: inOption, Index: 0})
+		c.record(outer, input{
+			Kind:  inOption,
+			Index: 0,
+		})
 		return 0
 	default:
 	}
@@ -419,7 +439,10 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 	// choice, so answer the engine's play-as-which prompt from the armed choice
 	// rather than raising it a second time in the sidebar.
 	if i, ok := c.armedUpgradeChoice(options); ok {
-		c.record(outer, input{Kind: inOption, Index: i})
+		c.record(outer, input{
+			Kind:  inOption,
+			Index: i,
+		})
 		return i
 	}
 	// Drop any stale reply so a leftover click cannot answer this prompt.
@@ -459,7 +482,10 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 		c.g.pickerNaming = false
 		c.g.pickerOpen = false
 	})
-	c.record(outer, input{Kind: inOption, Index: i})
+	c.record(outer, input{
+		Kind:  inOption,
+		Index: i,
+	})
 	return i
 }
 
@@ -497,13 +523,19 @@ func (c *webChooser) ChoosePosition(source, _ string, line []engine.LocalID) int
 	// for an empty line; this guards the web side against ever raising a choice
 	// that has no alternatives.
 	if len(line) == 0 {
-		c.record(outer, input{Kind: inPosition, Index: 0})
+		c.record(outer, input{
+			Kind:  inPosition,
+			Index: 0,
+		})
 		return 0
 	}
 	// A manual-mode Cancel already in flight drains without showing the prompt.
 	select {
 	case <-c.cancel:
-		c.record(outer, input{Kind: inPosition, Index: 0})
+		c.record(outer, input{
+			Kind:  inPosition,
+			Index: 0,
+		})
 		return 0
 	default:
 	}
@@ -538,7 +570,10 @@ func (c *webChooser) ChoosePosition(source, _ string, line []engine.LocalID) int
 		c.g.positionSideChosen = false
 		c.g.promptSource = ""
 	})
-	c.record(outer, input{Kind: inPosition, Index: pos})
+	c.record(outer, input{
+		Kind:  inPosition,
+		Index: pos,
+	})
 	return pos
 }
 
@@ -555,7 +590,10 @@ func (g *game) chooseCandidate(_ app.Context, id engine.LocalID) {
 	g.useTarget, g.hasUseTarget = id, true
 	g.recordBadge(id)
 	select {
-	case g.chooser.reply <- chooseReply{id: id, ok: true}:
+	case g.chooser.reply <- chooseReply{
+		id: id,
+		ok: true,
+	}:
 	default:
 	}
 }

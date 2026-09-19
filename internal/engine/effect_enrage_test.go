@@ -7,7 +7,11 @@ func TestEnrageEffect(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	foe1 := g.AddToBattleline(testCreature("foe1", 3), 1)
 	foe2 := g.AddToBattleline(testCreature("foe2", 3), 1)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	e := Enrage{Target: Target{Kind: TargetEachEnemyCreature}}
 	if e.Text() != "enrage each enemy creature" {

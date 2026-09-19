@@ -41,7 +41,10 @@ func TestNyzykResonator(t *testing.T) {
 
 	t.Run("does not raise the key cost with no neighbors", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Mars, InPlay: ct.Cards(NyzykResonator)},
+			P1: ct.Side{
+				House:  card.House.Mars,
+				InPlay: ct.Cards(NyzykResonator),
+			},
 		})
 
 		g := h.Game()

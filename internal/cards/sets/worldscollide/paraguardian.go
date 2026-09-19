@@ -23,7 +23,10 @@ var Paraguardian = set.New(
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),
 	card.WithAbility(
 		card.Trigger.Reap, card.May{Do: card.Sequence{Effects: []card.Effect{
-			card.Exalt{Target: card.Target.This, Amount: 1},
+			card.Exalt{
+				Target: card.Target.This,
+				Amount: 1,
+			},
 			card.Ward{Target: card.Target.This.NeighborsOf()},
 		}}}),
 )

@@ -13,7 +13,10 @@ func TestSwapDeckAndDiscard(t *testing.T) {
 	inDeck := g.AddToDeck(testCreature("deck card", 1), 0)
 	inDiscard := g.AddToDiscard(testCreature("discard card", 1), 0)
 
-	SwapDeckAndDiscard{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	SwapDeckAndDiscard{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	if g.State.Deck[0].Count != 1 || g.State.Deck[0].IDs[0] != inDiscard {
 		t.Error("the discard pile should have become the deck")
@@ -34,7 +37,10 @@ func TestSwapDeckAndDiscardFlipsTheStack(t *testing.T) {
 	bottom := g.AddToDeck(testCreature("bottom", 1), 0)
 	g.AddToDiscard(testCreature("discarded", 1), 0)
 
-	SwapDeckAndDiscard{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	SwapDeckAndDiscard{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	// A discard pile is stored bottom-first, so the old top of the deck is now
 	// buried deepest.

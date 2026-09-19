@@ -23,12 +23,18 @@ var Bawretchadontius = set.Gigantic(
 		Target: card.Target.EachFriendlyCreature.WithAember(),
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Reap,
-			Effect:  card.DealDamage{Amount: 4, Target: card.Target.Creature},
+			Effect: card.DealDamage{
+				Amount: 4,
+				Target: card.Target.Creature,
+			},
 		}},
 	}),
 	card.WithAbility(
 		card.Trigger.PlayFightReap, card.Sequence{Effects: []card.Effect{
-			card.Exalt{Target: card.Target.FriendlyCreature, Amount: 1},
+			card.Exalt{
+				Target: card.Target.FriendlyCreature,
+				Amount: 1,
+			},
 			card.Exalt{
 				Target:   card.Target.EnemyCreature,
 				Amount:   1,

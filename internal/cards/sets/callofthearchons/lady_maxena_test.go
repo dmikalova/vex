@@ -21,7 +21,10 @@ func TestLadyMaxena(t *testing.T) {
 	t.Run("stuns a chosen creature when played", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(LadyMaxena)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(LadyMaxena),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars)))),
 			},
@@ -35,7 +38,10 @@ func TestLadyMaxena(t *testing.T) {
 
 	t.Run("returns itself to hand as an action", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, InPlay: ct.Cards(LadyMaxena)},
+			P1: ct.Side{
+				House:  card.House.Sanctum,
+				InPlay: ct.Cards(LadyMaxena),
+			},
 		})
 
 		h.P1.UseAction(LadyMaxena)

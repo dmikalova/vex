@@ -20,7 +20,10 @@ func TestGub(t *testing.T) {
 	t.Run("on a flank Gub has its base power", func(t *testing.T) {
 		var gub ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(ct.Bind(&gub, Gub))},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(ct.Bind(&gub, Gub)),
+			},
 		})
 		h.Expect(gub).Power(1)
 	})

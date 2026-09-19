@@ -17,7 +17,11 @@ var BurnTheStockpile = set.New(
 	card.Provenance(card.CotA, "5"),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.PoolAember{Player: card.Opponent, Is: card.AtLeast, Amount: 7},
+			Cond: card.PoolAember{
+				Player: card.Opponent,
+				Is:     card.AtLeast,
+				Amount: 7,
+			},
 			Then: card.LoseAember{
 				Player: card.Opponent,
 				Amount: 4,

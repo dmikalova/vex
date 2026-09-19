@@ -106,13 +106,22 @@ func sampleLog(scripts [][]byte) logCoverage {
 		if err != nil || g == nil {
 			continue
 		}
-		gw := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
+		gw := &game{
+			selHand:     -1,
+			zonesPlayer: -1,
+			forgingKey:  -1,
+			handSlot:    -1,
+		}
 		gw.g = g
 		gw.defByName = names
 		if !foldsNewKind(gw, want, observed) {
 			continue
 		}
-		cov.games = append(cov.games, sampledGame{script: script, game: gw, blocks: gw.logBlocks()})
+		cov.games = append(cov.games, sampledGame{
+			script: script,
+			game:   gw,
+			blocks: gw.logBlocks(),
+		})
 	}
 	cov.cover = coverBubbles(cov.games, observed, want)
 	for t := range want {

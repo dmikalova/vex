@@ -17,7 +17,10 @@ var SauryAboutThat = set.New(
 	card.Provenance(card.WC, "228"),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
-			First:  card.Destroy{Target: card.Target.Creature},
-			Result: card.GainAember{Player: card.ItsController, Amount: 1},
+			First: card.Destroy{Target: card.Target.Creature},
+			Result: card.GainAember{
+				Player: card.ItsController,
+				Amount: 1,
+			},
 		}),
 )

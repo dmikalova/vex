@@ -79,8 +79,17 @@ func (g *Game) chargeToll(player int, action TollAction) error {
 		}
 		g.SetAember(player, g.Aember(player)-t.Amount)
 		g.SetAember(payee, g.Aember(payee)+t.Amount)
-		closeFrame := g.openFrame(Frame{Actor: payee, Source: id, HasSource: true})
-		g.record(AemberGiven{Giver: player, Receiver: payee, Amount: t.Amount, Reason: action})
+		closeFrame := g.openFrame(Frame{
+			Actor:     payee,
+			Source:    id,
+			HasSource: true,
+		})
+		g.record(AemberGiven{
+			Giver:    player,
+			Receiver: payee,
+			Amount:   t.Amount,
+			Reason:   action,
+		})
 		closeFrame()
 	}
 	return nil
@@ -573,11 +582,17 @@ func (g *Game) putIntoPlay(id LocalID, controller int) {
 		core.ArmorRemaining = int16(g.armor(id))
 		pos, _ := g.deployPosition(controller, id, flankUnset, false)
 		g.State.Battleline[controller].insertAt(pos, id)
-		g.record(CardPutIntoPlay{Player: controller, Card: id})
+		g.record(CardPutIntoPlay{
+			Player: controller,
+			Card:   id,
+		})
 		g.emitEnters(id)
 	case Artifact:
 		g.State.Artifacts[controller].add(id)
-		g.record(CardPutIntoPlay{Player: controller, Card: id})
+		g.record(CardPutIntoPlay{
+			Player: controller,
+			Card:   id,
+		})
 		g.emitEnters(id)
 	}
 }
@@ -590,7 +605,10 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 		g.State.Cards[id].Exhausted = false
 	}
 	g.State.Artifacts[player].add(id)
-	g.record(ArtifactPlayed{Player: player, Card: id})
+	g.record(ArtifactPlayed{
+		Player: player,
+		Card:   id,
+	})
 	g.resolveBonusIcons(player, id)
 	// The artifact's own "Play:", every "after you play a card" reaction, and the
 	// duration reactions on playing a card and a card entering play trigger at once,
@@ -610,7 +628,10 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 // archive itself) and why its destination is a redirect rather than a move from
 // somewhere. Pinned by TestResolvingCardRedirectIsPerCard.
 func (g *Game) playTacticCard(player int, id LocalID) {
-	g.record(TacticPlayed{Player: player, Card: id})
+	g.record(TacticPlayed{
+		Player: player,
+		Card:   id,
+	})
 	g.resolveBonusIcons(player, id)
 	// A reaction to a Tactic being played resolves before the Tactic's own effect
 	// (Encounter Suit wards its host before the Tactic can reach it).
@@ -644,7 +665,10 @@ func (g *Game) playTacticCard(player int, id LocalID) {
 	// sends this card back to its owner's hand instead of the discard pile, once.
 	if g.consumeNextTacticIntoHand(player) {
 		g.State.Hand[owner].add(id)
-		g.record(CardPutIntoHand{Card: id, Owner: owner})
+		g.record(CardPutIntoHand{
+			Card:  id,
+			Owner: owner,
+		})
 		return
 	}
 	g.State.Discard[owner].add(id)
@@ -654,7 +678,11 @@ func (g *Game) playTacticCard(player int, id LocalID) {
 // after the upgrade has been removed from its previous zone.
 func (g *Game) playUpgradeCard(player int, id, host LocalID, def *CardDefinition) {
 	g.AttachUpgrade(host, id)
-	g.record(UpgradeAttached{Player: player, Upgrade: id, Host: host})
+	g.record(UpgradeAttached{
+		Player:  player,
+		Upgrade: id,
+		Host:    host,
+	})
 	// Bonus icons resolve after the upgrade enters play (KeyForge), so a Damage icon
 	// that kills the host finds the upgrade already attached and it sheds cleanly
 	// rather than attaching to a destroyed host.
@@ -686,7 +714,10 @@ func (g *Game) discardFromHand(owner int, id LocalID) {
 	g.State.DiscardedThisTurn[owner].add(id)
 	// Discarding a card is a usage of its name toward the Rule of Six.
 	g.recordUsage(id)
-	g.record(CardDiscarded{Player: owner, Card: id})
+	g.record(CardDiscarded{
+		Player: owner,
+		Card:   id,
+	})
 	for _, watcher := range g.allInPlay(owner) {
 		g.triggerAbilities(watcher, TriggerAfterDiscardFromHand, id, true)
 	}
@@ -808,7 +839,11 @@ func (g *Game) recordCardPlayed(player int, id LocalID, opts playCardOptions) {
 		if rest := r.Aember - fromPool; rest > 0 {
 			g.drawFromSpendAsPool(player, rest)
 		}
-		g.record(AemberSpentToPlay{Player: player, Card: id, Amount: r.Aember})
+		g.record(AemberSpentToPlay{
+			Player: player,
+			Card:   id,
+			Amount: r.Aember,
+		})
 	}
 	if opts.consumePlayPermission {
 		g.consumeOffHousePlay(player, def)

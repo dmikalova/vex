@@ -41,7 +41,11 @@ func TestSearchForName(t *testing.T) {
 		g.State.Discard[0].add(
 			g.Register(NewCard("junk", Dis, Tactic, Common), 0),
 		) // non-match in discard
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		e.Resolve(ctx) // the sole Timetraveller is auto-chosen
 		if g.State.Deck[0].contains(tt) {
@@ -57,7 +61,11 @@ func TestSearchForName(t *testing.T) {
 		src := g.AddToBattleline(testCreature("helper", 1), 0)
 		tt := newTT(g, 0)
 		g.State.Discard[0].add(tt)
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		e.Resolve(ctx)
 		if g.State.Discard[0].contains(tt) {
@@ -72,7 +80,11 @@ func TestSearchForName(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		src := g.AddToBattleline(testCreature("helper", 1), 0)
 		g.State.Deck[0].add(g.Register(NewCard("plain", Logos, Creature, Common, WithPower(1)), 0))
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		e.Resolve(ctx) // no Timetraveller anywhere, so nothing moves
 		if g.State.Hand[0].Count != 0 {
@@ -107,7 +119,11 @@ func TestShuffleIntoDeck(t *testing.T) {
 	src := g.AddToBattleline(testCreature("helper", 1), 0)
 	g.State.Discard[0].add(g.Register(testCreature("a", 1), 0))
 	g.State.Discard[0].add(g.Register(testCreature("b", 1), 0))
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 	Shuffle{Zones: []Zone{Discard}}.Resolve(ctx)
 	if g.State.Discard[0].Count != 0 || g.State.Deck[0].Count != 2 {
 		t.Errorf(
@@ -123,7 +139,10 @@ func TestShuffleIntoDeck(t *testing.T) {
 	g2.State.Hand[0].add(g2.Register(testCreature("h2", 1), 0))
 	g2.State.Discard[0].add(g2.Register(testCreature("d1", 1), 0))
 	g2.State.Archives[0].add(g2.Register(testCreature("ar1", 1), 0))
-	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	ctx2 := &EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	}
 	Shuffle{Zones: []Zone{Hand, Archives, Discard}}.Resolve(ctx2)
 	if g2.State.Hand[0].Count != 0 || g2.State.Archives[0].Count != 0 ||
 		g2.State.Discard[0].Count != 0 {
@@ -157,7 +176,11 @@ func TestSearchForNameAll(t *testing.T) {
 	inDeck, inDiscard := newBear(g, 0), newBear(g, 0)
 	g.State.Deck[0].add(inDeck)
 	g.State.Discard[0].add(inDiscard)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	if !e.resolveGate(ctx) {
 		t.Error("resolveGate reported finding nothing")
@@ -178,21 +201,40 @@ func TestSearchDeck(t *testing.T) {
 	if (Search{Sources: []Zone{Deck}}).validate() == nil {
 		t.Error("a search with no destination should be invalid")
 	}
-	if (Search{Sources: []Zone{Deck}, Dest: ToDeckShuffled}).validate() == nil {
+	if (Search{
+		Sources: []Zone{Deck},
+		Dest:    ToDeckShuffled,
+	}).validate() == nil {
 		t.Error("a search to an unsupported destination should be invalid")
 	}
-	if (Search{Sources: []Zone{Deck}, Dest: ToHand}).validate() != nil {
+	if (Search{
+		Sources: []Zone{Deck},
+		Dest:    ToHand,
+	}).validate() != nil {
 		t.Error("a search naming its zone and destination should be valid")
 	}
-	if got := (Search{Sources: []Zone{Deck}, Dest: ToHand}).Text(); got !=
+	if got := (Search{
+		Sources: []Zone{Deck},
+		Dest:    ToHand,
+	}).Text(); got !=
 		"search your deck for a card and put it into your hand" {
 		t.Errorf("unrestricted text = %q", got)
 	}
-	if got := (Search{Sources: []Zone{Deck}, House: namedHouse(Saurian), Reveal: true, Dest: ToHand}).Text(); got !=
+	if got := (Search{
+		Sources: []Zone{Deck},
+		House:   namedHouse(Saurian),
+		Reveal:  true,
+		Dest:    ToHand,
+	}).Text(); got !=
 		"search your deck for a Saurian card, reveal it, and put it into your hand" {
 		t.Errorf("house text = %q", got)
 	}
-	if got := (Search{Sources: []Zone{Deck}, Filter: CardFilter{Type: Upgrade}, Reveal: true, Dest: ToHand}).Text(); got !=
+	if got := (Search{
+		Sources: []Zone{Deck},
+		Filter:  CardFilter{Type: Upgrade},
+		Reveal:  true,
+		Dest:    ToHand,
+	}).Text(); got !=
 		"search your deck for an upgrade, reveal it, and put it into your hand" {
 		t.Errorf("filter text = %q", got)
 	}
@@ -209,7 +251,11 @@ func TestSearchDeck(t *testing.T) {
 		House:   namedHouse(Saurian),
 		Dest:    ToHand,
 	}.Resolve(
-		&EffectContext{Resolver: g, Source: src, Controller: 0},
+		&EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		},
 	)
 	if !g.State.Hand[0].contains(want) {
 		t.Error("the Saurian card should be in hand")
@@ -230,7 +276,11 @@ func TestSearchDeck(t *testing.T) {
 		Filter:  CardFilter{Type: Upgrade},
 		Dest:    ToHand,
 	}.Resolve(
-		&EffectContext{Resolver: gf, Source: sf, Controller: 0},
+		&EffectContext{
+			Resolver:   gf,
+			Source:     sf,
+			Controller: 0,
+		},
 	)
 	if !gf.State.Hand[0].contains(upgrade) {
 		t.Error("the upgrade should be in hand")
@@ -248,7 +298,11 @@ func TestSearchDeck(t *testing.T) {
 		Sources: []Zone{Deck},
 		Dest:    ToHand,
 	}.Resolve(
-		&EffectContext{Resolver: g2, Source: s2, Controller: 0},
+		&EffectContext{
+			Resolver:   g2,
+			Source:     s2,
+			Controller: 0,
+		},
 	)
 	if !g2.State.Hand[0].contains(only) {
 		t.Error("the sole deck card should be put into hand")
@@ -264,7 +318,11 @@ func TestSearchDeck(t *testing.T) {
 		House:   namedHouse(Saurian),
 		Dest:    ToHand,
 	}.Resolve(
-		&EffectContext{Resolver: g3, Source: s3, Controller: 0},
+		&EffectContext{
+			Resolver:   g3,
+			Source:     s3,
+			Controller: 0,
+		},
 	)
 	if len(g3.Hand(0)) != before {
 		t.Error("a search that finds no match should put nothing into hand")
@@ -291,7 +349,11 @@ func TestSearchToArchives(t *testing.T) {
 	src := g.AddToBattleline(testCreature("saber", 11), 0)
 	found := g.Register(NewCard("relic", Logos, Tactic, Common), 0)
 	g.State.Discard[0].add(found)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 	if !e.resolveGate(ctx) {
 		t.Error("resolveGate reported taking nothing")
 	}
@@ -329,7 +391,11 @@ func TestSearchToTopOfDeck(t *testing.T) {
 		0,
 	)
 	g.State.Discard[0].add(half)
-	e.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
 	if !g.State.Deck[0].contains(half) {
 		t.Error("the gigantic half should be on the deck")
 	}
@@ -349,7 +415,11 @@ func TestShuffleDeck(t *testing.T) {
 		g.State.Deck[0].add(g.Register(NewCard("c", Logos, Creature, Common, WithPower(1)), 0))
 	}
 	before := g.State.Deck[0].Count
-	Shuffle{}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	Shuffle{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
 	if g.State.Deck[0].Count != before {
 		t.Errorf("shuffle changed deck size: %d, want %d", g.State.Deck[0].Count, before)
 	}
@@ -407,7 +477,11 @@ func TestSearchUpToMaxGiganticHalves(t *testing.T) {
 		g.State.Deck[0].add(base)
 		g.State.Discard[0].add(art)
 		g.State.Deck[0].add(plain)
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		if !twoHalves.resolveGate(ctx) {
 			t.Error("resolveGate reported taking nothing")
@@ -426,7 +500,11 @@ func TestSearchUpToMaxGiganticHalves(t *testing.T) {
 		g.State.Deck[0].add(newHalf(g, GiganticBase))
 		g.State.Deck[0].add(newHalf(g, GiganticArt))
 		g.SetChooser(0, &cardDecliner{decline: true})
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		if twoHalves.resolveGate(ctx) {
 			t.Error("declining every choice should report taking nothing")
@@ -442,7 +520,11 @@ func TestSearchUpToMaxGiganticHalves(t *testing.T) {
 		src := g.AddToBattleline(testCreature("digger", 3), 0)
 		base := newHalf(g, GiganticBase) // the only half available
 		g.State.Deck[0].add(base)
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		if !twoHalves.resolveGate(ctx) {
 			t.Error("the sole half should be taken")
@@ -497,7 +579,11 @@ func TestSearchShuffleBeforePlacing(t *testing.T) {
 		g.State.Deck[0].add(base) // one half starts in the deck
 		g.State.Deck[0].add(plain)
 		g.State.Discard[0].add(art) // the other in the discard pile
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		if !twoHalves.resolveGate(ctx) {
 			t.Error("resolveGate reported taking nothing")
@@ -533,7 +619,11 @@ func TestSearchShuffleBeforePlacing(t *testing.T) {
 		src := g.AddToBattleline(testCreature("digger", 3), 0)
 		base := newHalf(g, GiganticBase) // sole candidate, taken automatically
 		g.State.Deck[0].add(base)
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		if !single.resolveGate(ctx) {
 			t.Error("the sole half should be taken")
@@ -551,7 +641,11 @@ func TestSearchShuffleBeforePlacing(t *testing.T) {
 		g.State.Deck[0].add(base)
 		g.State.Deck[0].add(art)
 		g.SetChooser(0, &cardDecliner{decline: true})
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		if twoHalves.resolveGate(ctx) {
 			t.Error("declining should report taking nothing")
@@ -567,7 +661,11 @@ func TestSearchShuffleBeforePlacing(t *testing.T) {
 		src := g.AddToBattleline(testCreature("digger", 3), 0)
 		base := newHalf(g, GiganticBase) // the only half available
 		g.State.Deck[0].add(base)
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		if !twoHalves.resolveGate(ctx) {
 			t.Error("the sole half should be taken")

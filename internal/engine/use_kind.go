@@ -48,7 +48,11 @@ func (g *Game) cannotBeUsedTo(id LocalID, kind UseKind) bool {
 		return true
 	}
 	if c := g.cat.def(id).CannotBeUsedWhile; c != nil {
-		ctx := &EffectContext{Resolver: g, Source: id, Controller: g.controller(id)}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     id,
+			Controller: g.controller(id),
+		}
 		if c.Met(ctx) {
 			return true
 		}

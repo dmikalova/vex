@@ -18,8 +18,14 @@ import (
 func TestFurtiveInvestors(t *testing.T) {
 	t.Run("gains 1 aember per opponent key when the opponent has more aember", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(FurtiveInvestors)},
-			P2: ct.Side{Amber: 5, Keys: 2},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(FurtiveInvestors),
+			},
+			P2: ct.Side{
+				Amber: 5,
+				Keys:  2,
+			},
 		})
 
 		h.P1.Play(FurtiveInvestors)

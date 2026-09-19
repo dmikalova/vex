@@ -20,7 +20,10 @@ func TestValdr(t *testing.T) {
 	t.Run("deals +2 damage while attacking a flank creature", func(t *testing.T) {
 		var flank ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(Valdr)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(Valdr),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&flank, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(10))),
 			)},
@@ -34,7 +37,10 @@ func TestValdr(t *testing.T) {
 	t.Run("deals no bonus against a creature that is not on a flank", func(t *testing.T) {
 		var middle ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(Valdr)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(Valdr),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(10)),
 				ct.Bind(&middle, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(10))),

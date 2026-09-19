@@ -19,7 +19,10 @@ import (
 //	After a player forges a key, that player loses all their Æmber.
 func TestForgemasterOg(t *testing.T) {
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(ForgemasterOg)},
+		P1: ct.Side{
+			House:  card.House.Brobnar,
+			InPlay: ct.Cards(ForgemasterOg),
+		},
 	})
 	g := h.Game()
 

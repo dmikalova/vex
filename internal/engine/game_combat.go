@@ -192,14 +192,22 @@ func (g *Game) exchangeFightDamage(
 			})
 		} else {
 			targets = append(targets,
-				DamageTarget{ID: attacker, Amount: retaliation, Source: defender})
+				DamageTarget{
+					ID:     attacker,
+					Amount: retaliation,
+					Source: defender,
+				})
 		}
 	}
 	// Splash-attack deals its damage to each neighbor of the creature the
 	// attacker fights, at the same time as fight damage.
 	if s := g.splashAttack(attacker); s > 0 {
 		for _, n := range neighbors(&EffectContext{Resolver: g}, defender) {
-			targets = append(targets, DamageTarget{ID: n, Amount: s, Source: attacker})
+			targets = append(targets, DamageTarget{
+				ID:     n,
+				Amount: s,
+				Source: attacker,
+			})
 		}
 	}
 	// Snapshot each target's damage so poison can tell which creatures the
@@ -392,7 +400,10 @@ func (g *Game) applyFightPoison(
 			}
 			source = attacker
 		}
-		g.record(PoisonKills{Source: source, Victim: t.ID})
+		g.record(PoisonKills{
+			Source: source,
+			Victim: t.ID,
+		})
 		poisoned = append(poisoned, t.ID)
 	}
 	g.destroyEach(g.controller(attacker), poisoned)
@@ -518,7 +529,11 @@ func (g *Game) applyRawDamage(t DamageTarget) LocalID {
 	// re-trigger the effect on the same instance.
 	if bonus := g.lastingExtraDamage(id); bonus > 0 {
 		core.Damage += int16(bonus)
-		g.record(DamageTaken{Creature: id, Amount: bonus, Total: int(core.Damage)})
+		g.record(DamageTaken{
+			Creature: id,
+			Amount:   bonus,
+			Total:    int(core.Damage),
+		})
 	}
 	return id
 }
@@ -547,7 +562,10 @@ func (g *Game) mitigateDamage(id LocalID, amount int, ignoreArmor bool, source L
 		if absorbed := min(available, amount); absorbed > 0 {
 			core.ArmorRemaining -= int16(absorbed)
 			amount -= absorbed
-			g.record(ArmorAbsorbed{Creature: id, Amount: absorbed})
+			g.record(ArmorAbsorbed{
+				Creature: id,
+				Amount:   absorbed,
+			})
 		}
 	}
 	return amount
@@ -665,7 +683,11 @@ func (g *Game) emitArmorPrevented(watchers []LocalID, armorBefore map[LocalID]in
 				Grantor:    t.grantor,
 				HasGrantor: t.grantor != id,
 			})
-			ctx := &EffectContext{Resolver: g, Source: id, Controller: actor}
+			ctx := &EffectContext{
+				Resolver:   g,
+				Source:     id,
+				Controller: actor,
+			}
 			ctx.Produced.ArmorPrevented = prevented
 			t.ability.Effect.Resolve(ctx)
 			closeFrame()
@@ -747,7 +769,11 @@ func (g *Game) shouldDestroy(id LocalID) bool {
 		return false
 	}
 	if dw := def.DestroyedWhen; dw != nil {
-		ctx := &EffectContext{Resolver: g, Source: id, Controller: g.controller(id)}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     id,
+			Controller: g.controller(id),
+		}
 		if dw.Met(ctx) {
 			return true
 		}
@@ -769,6 +795,10 @@ func (g *Game) artifactShouldSelfDestroy(id LocalID) bool {
 	if dw == nil {
 		return false
 	}
-	ctx := &EffectContext{Resolver: g, Source: id, Controller: g.controller(id)}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     id,
+		Controller: g.controller(id),
+	}
 	return dw.Met(ctx)
 }

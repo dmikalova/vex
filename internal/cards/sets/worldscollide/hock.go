@@ -19,7 +19,10 @@ var Hock = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
-			First:  card.Destroy{Target: card.Target.Artifact},
-			Result: card.GainAember{Player: card.Controller, Amount: 1},
+			First: card.Destroy{Target: card.Target.Artifact},
+			Result: card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
 		}),
 )

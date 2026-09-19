@@ -80,7 +80,11 @@ func (e Search) noun() string { return e.House.qualify(e.Filter.noun()) }
 
 // zonesPhrase renders the searched zones, e.g. "deck" or "deck and discard pile".
 func (e Search) zonesPhrase() string {
-	names := map[Zone]string{Deck: "deck", Discard: "discard pile", Hand: "hand"}
+	names := map[Zone]string{
+		Deck:    "deck",
+		Discard: "discard pile",
+		Hand:    "hand",
+	}
 	parts := make([]string, 0, len(e.Sources))
 	for _, z := range e.Sources {
 		parts = append(parts, names[z])
@@ -148,7 +152,11 @@ func (e Search) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // resolveGate searches and reports whether it took anything, so a Then can hang a
 // follow-up off the search succeeding (Bear Flute reshuffles only if it did).
 func (e Search) resolveGate(ctx *EffectContext) bool {
-	mover := crossZoneMover{Player: ctx.Controller, Dest: e.Dest, Sources: e.Sources}
+	mover := crossZoneMover{
+		Player:  ctx.Controller,
+		Dest:    e.Dest,
+		Sources: e.Sources,
+	}
 	if e.ShuffleBeforePlacing {
 		return e.resolveShuffleBeforePlacing(ctx, mover)
 	}
@@ -205,7 +213,10 @@ func (e Search) resolveUpToMax(ctx *EffectContext, mover crossZoneMover) bool {
 func (e Search) resolveShuffleBeforePlacing(ctx *EffectContext, mover crossZoneMover) bool {
 	chosen := e.chooseFound(ctx, mover)
 	if e.revealsFound() && len(chosen) > 0 {
-		ctx.Resolver.Record(CardsRevealedToAll{Player: ctx.Controller, Cards: chosen})
+		ctx.Resolver.Record(CardsRevealedToAll{
+			Player: ctx.Controller,
+			Cards:  chosen,
+		})
 	}
 	ctx.Resolver.Shuffle(ctx.Controller)
 	ctx.Resolver.Record(DeckShuffled{Player: ctx.Controller})
@@ -257,7 +268,10 @@ func (e Search) chooseFound(ctx *EffectContext, mover crossZoneMover) []LocalID 
 // destination from whichever source zone holds it.
 func (e Search) take(ctx *EffectContext, mover crossZoneMover, id LocalID) {
 	if e.revealsFound() {
-		ctx.Resolver.Record(CardsRevealedToAll{Player: ctx.Controller, Cards: []LocalID{id}})
+		ctx.Resolver.Record(CardsRevealedToAll{
+			Player: ctx.Controller,
+			Cards:  []LocalID{id},
+		})
 	}
 	mover.move(ctx, id)
 }

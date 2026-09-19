@@ -18,7 +18,10 @@ import (
 func TestCutthroatResearch(t *testing.T) {
 	t.Run("steals 2 when the opponent has 8 Æmber", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(CutthroatResearch)},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(CutthroatResearch),
+			},
 			P2: ct.Side{Amber: 8},
 		})
 
@@ -30,7 +33,10 @@ func TestCutthroatResearch(t *testing.T) {
 
 	t.Run("steals nothing below 8 Æmber", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(CutthroatResearch)},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(CutthroatResearch),
+			},
 			P2: ct.Side{Amber: 7},
 		})
 

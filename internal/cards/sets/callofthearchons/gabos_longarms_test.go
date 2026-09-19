@@ -19,7 +19,10 @@ import (
 func TestGabosLongarms(t *testing.T) {
 	var def, bystander ct.Card
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(GabosLongarms)},
+		P1: ct.Side{
+			House:  card.House.Dis,
+			InPlay: ct.Cards(GabosLongarms),
+		},
 		P2: ct.Side{InPlay: ct.Cards(
 			ct.Bind(&def, ct.Creature(ct.Power(3))),
 			ct.Bind(&bystander, ct.Creature(ct.Power(2))),

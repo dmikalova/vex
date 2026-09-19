@@ -19,7 +19,10 @@ func TestImperialTraitor(t *testing.T) {
 	t.Run("purges a chosen Sanctum card from the opponent's hand", func(t *testing.T) {
 		var sanctum, shadows ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(ImperialTraitor)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(ImperialTraitor),
+			},
 			P2: ct.Side{Hand: ct.Cards(
 				ct.Bind(&sanctum, ct.Creature(ct.OfHouse(card.House.Sanctum))),
 				ct.Bind(&shadows, ct.Creature(ct.OfHouse(card.House.Shadows))),
@@ -36,7 +39,10 @@ func TestImperialTraitor(t *testing.T) {
 	t.Run("does nothing when the opponent reveals no Sanctum card", func(t *testing.T) {
 		var shadows ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(ImperialTraitor)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(ImperialTraitor),
+			},
 			P2: ct.Side{Hand: ct.Cards(
 				ct.Bind(&shadows, ct.Creature(ct.OfHouse(card.House.Shadows))),
 			)},

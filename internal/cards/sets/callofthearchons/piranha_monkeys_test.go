@@ -20,7 +20,10 @@ func TestPiranhaMonkeys(t *testing.T) {
 	t.Run("deals 2 damage to each other creature when played", func(t *testing.T) {
 		var a, b ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(PiranhaMonkeys)},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(PiranhaMonkeys),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&a, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),

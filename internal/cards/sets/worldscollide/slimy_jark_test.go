@@ -21,7 +21,10 @@ func TestSlimyJark(t *testing.T) {
 	t.Run("enrages the creature it fights and takes no damage back", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(SlimyJark)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(SlimyJark),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(3))))},
 		})
 

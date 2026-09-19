@@ -17,17 +17,26 @@ func TestRequestLegalCommands(t *testing.T) {
 	}{
 		{
 			"pick card",
-			Request{Kind: RequestPickCard, Cards: []LocalID{1, 2}},
+			Request{
+				Kind:  RequestPickCard,
+				Cards: []LocalID{1, 2},
+			},
 			[]Command{{Kind: CommandPickCard, Card: 1}, {Kind: CommandPickCard, Card: 2}},
 		},
 		{
 			"pick or decline",
-			Request{Kind: RequestPickCardOrDecline, Cards: []LocalID{5}},
+			Request{
+				Kind:  RequestPickCardOrDecline,
+				Cards: []LocalID{5},
+			},
 			[]Command{{Kind: CommandPickCard, Card: 5}, {Kind: CommandDecline}},
 		},
 		{
 			"option",
-			Request{Kind: RequestOption, Options: []string{"a", "b", "c"}},
+			Request{
+				Kind:    RequestOption,
+				Options: []string{"a", "b", "c"},
+			},
 			[]Command{
 				{Kind: CommandOption, Index: 0},
 				{Kind: CommandOption, Index: 1},
@@ -36,7 +45,10 @@ func TestRequestLegalCommands(t *testing.T) {
 		},
 		{
 			"position",
-			Request{Kind: RequestPosition, Cards: []LocalID{3}},
+			Request{
+				Kind:  RequestPosition,
+				Cards: []LocalID{3},
+			},
 			[]Command{{Kind: CommandPosition, Index: 0}, {Kind: CommandPosition, Index: 1}},
 		},
 		{
@@ -73,7 +85,10 @@ func TestRequestLegalCommands(t *testing.T) {
 				}
 			}
 			// A command of an index/id the request never offered is rejected.
-			if tc.req.IsLegal(Command{Kind: CommandReaction, Index: 42}) {
+			if tc.req.IsLegal(Command{
+				Kind:  CommandReaction,
+				Index: 42,
+			}) {
 				t.Errorf("IsLegal accepted an unrelated command")
 			}
 		})
@@ -109,17 +124,26 @@ func TestStepperDrivesEachCapability(t *testing.T) {
 		t.Fatalf("first request = %+v done=%v, want a player-0 card pick", req, done)
 	}
 
-	req, done, _ = s.Advance(Command{Kind: CommandPickCard, Card: 2})
+	req, done, _ = s.Advance(Command{
+		Kind: CommandPickCard,
+		Card: 2,
+	})
 	if done || req.Kind != RequestOption {
 		t.Fatalf("after card pick got %+v done=%v, want an option request", req, done)
 	}
 
-	req, done, _ = s.Advance(Command{Kind: CommandOption, Index: 1})
+	req, done, _ = s.Advance(Command{
+		Kind:  CommandOption,
+		Index: 1,
+	})
 	if done || req.Kind != RequestPosition {
 		t.Fatalf("after option got %+v done=%v, want a position request", req, done)
 	}
 
-	req, done, _ = s.Advance(Command{Kind: CommandPosition, Index: 1})
+	req, done, _ = s.Advance(Command{
+		Kind:  CommandPosition,
+		Index: 1,
+	})
 	if done || req.Kind != RequestPickCardOrDecline {
 		t.Fatalf("after position got %+v done=%v, want a declinable request", req, done)
 	}
@@ -129,7 +153,10 @@ func TestStepperDrivesEachCapability(t *testing.T) {
 		t.Fatalf("after decline got %+v done=%v, want a reaction request", req, done)
 	}
 
-	_, done, _ = s.Advance(Command{Kind: CommandReaction, Index: 0})
+	_, done, _ = s.Advance(Command{
+		Kind:  CommandReaction,
+		Index: 0,
+	})
 	if !done {
 		t.Fatal("the action did not finish after the last answer")
 	}
@@ -209,7 +236,10 @@ func TestStepperCloseReleasesGoroutine(t *testing.T) {
 		s.Close()
 		requireReleased(t, released)
 		s.Close() // idempotent: already done, no double close of cancel
-		if _, done, _ := s.Advance(Command{Kind: CommandPickCard, Card: 1}); !done {
+		if _, done, _ := s.Advance(Command{
+			Kind: CommandPickCard,
+			Card: 1,
+		}); !done {
 			t.Fatal("Advance after Close should report done")
 		}
 	})
@@ -261,7 +291,10 @@ func TestStepperDeclineAndNoDecision(t *testing.T) {
 	}
 	s = NewStepper(g, takeAction)
 	s.Start()
-	if _, done, _ := s.Advance(Command{Kind: CommandPickCard, Card: 8}); !done {
+	if _, done, _ := s.Advance(Command{
+		Kind: CommandPickCard,
+		Card: 8,
+	}); !done {
 		t.Fatal("the action did not finish after taking the declinable pick")
 	}
 	if !tookIt || pickedID != 8 {
@@ -284,7 +317,10 @@ func TestStepperReportsBarrier(t *testing.T) {
 	}
 	s := NewStepper(g, action)
 	s.Start()
-	_, _, info := s.Advance(Command{Kind: CommandPickCard, Card: 1})
+	_, _, info := s.Advance(Command{
+		Kind: CommandPickCard,
+		Card: 1,
+	})
 	if !info.CrossedBarrier {
 		t.Error("a step that drew from the PRNG did not report a barrier crossing")
 	}

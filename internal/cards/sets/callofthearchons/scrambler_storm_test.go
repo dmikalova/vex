@@ -19,7 +19,10 @@ import (
 func TestScramblerStorm(t *testing.T) {
 	t.Run("bars the opponent from playing Tactics next turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(ScramblerStorm)},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(ScramblerStorm),
+			},
 		})
 
 		h.P1.Play(ScramblerStorm)

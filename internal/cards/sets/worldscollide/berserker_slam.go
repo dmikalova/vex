@@ -22,6 +22,9 @@ var BerserkerSlam = set.New(
 			Amount: 4,
 			After:  card.IfDestroyed,
 			Target: card.Target.Creature.OnFlank(),
-			Then:   card.LoseAember{Player: card.ItsOwner, Amount: 1},
+			Then: card.LoseAember{
+				Player: card.ItsOwner,
+				Amount: 1,
+			},
 		}),
 )

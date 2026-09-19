@@ -26,7 +26,12 @@ func TestResolveBonusIconsResolvesForeignCard(t *testing.T) {
 	g := started(t)
 	relic := g.AddToDiscard(
 		NewCard("Relic", Brobnar, Artifact, Common, WithBonus(BonusAember, BonusAember)), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0, It: relic, HasIt: true}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         relic,
+		HasIt:      true,
+	}
 	before := g.State.Aember[0]
 	ResolveBonusIcons{Target: Target{Kind: TargetTriggeringCreature}}.Resolve(ctx)
 	if got := g.State.Aember[0] - before; got != 2 {
@@ -37,7 +42,10 @@ func TestResolveBonusIconsResolvesForeignCard(t *testing.T) {
 // With no card in context the node selects nothing and resolves no icons.
 func TestResolveBonusIconsNoContextCard(t *testing.T) {
 	g := started(t)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	before := g.State.Aember[0]
 	ResolveBonusIcons{Target: Target{Kind: TargetTriggeringCreature}}.Resolve(ctx)
 	if g.State.Aember[0] != before {
@@ -71,7 +79,10 @@ func TestExtraBonusIconResolutionText(t *testing.T) {
 // Resolve arms a one-shot boost the play path later consumes.
 func TestExtraBonusIconResolutionArms(t *testing.T) {
 	g := started(t)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	ExtraBonusIconResolution{}.Resolve(ctx)
 	if !g.consumeBonusIconBoost(0) {
 		t.Fatal("boost was not armed")
@@ -85,8 +96,16 @@ func TestExtraBonusIconResolutionArms(t *testing.T) {
 // later effect slides down into its place and survives.
 func TestConsumeBonusIconBoostCompactsRegistry(t *testing.T) {
 	g := started(t)
-	g.AddLasting(LastingEffect{On: EventBonusIconBoost, Do: actResolveBonusAgain, Once: true})
-	g.AddLasting(LastingEffect{On: EventReapAember, Do: actSteal, Controller: 0})
+	g.AddLasting(LastingEffect{
+		On:   EventBonusIconBoost,
+		Do:   actResolveBonusAgain,
+		Once: true,
+	})
+	g.AddLasting(LastingEffect{
+		On:         EventReapAember,
+		Do:         actSteal,
+		Controller: 0,
+	})
 	if !g.consumeBonusIconBoost(0) {
 		t.Fatal("boost was not armed")
 	}
@@ -104,7 +123,11 @@ func TestExtraBonusIconResolutionDoublesIcons(t *testing.T) {
 	g := started(t)
 	src := g.AddToBattleline(
 		NewCard("Bud", Untamed, Creature, Common, WithPower(2), WithBonus(BonusAember)), 0)
-	g.AddLasting(LastingEffect{On: EventBonusIconBoost, Do: actResolveBonusAgain, Once: true})
+	g.AddLasting(LastingEffect{
+		On:   EventBonusIconBoost,
+		Do:   actResolveBonusAgain,
+		Once: true,
+	})
 	before := g.State.Aember[0]
 	g.resolveBonusIcons(0, src)
 	if got := g.State.Aember[0] - before; got != 2 {
@@ -125,7 +148,11 @@ func TestExtraBonusIconResolutionSpentOnIconlessCard(t *testing.T) {
 		NewCard("Blank", Untamed, Creature, Common, WithPower(2)), 0)
 	withIcon := g.AddToBattleline(
 		NewCard("Bud", Untamed, Creature, Common, WithPower(2), WithBonus(BonusAember)), 0)
-	g.AddLasting(LastingEffect{On: EventBonusIconBoost, Do: actResolveBonusAgain, Once: true})
+	g.AddLasting(LastingEffect{
+		On:   EventBonusIconBoost,
+		Do:   actResolveBonusAgain,
+		Once: true,
+	})
 	g.resolveBonusIcons(0, iconless) // consumes the boost, does nothing
 	before := g.State.Aember[0]
 	g.resolveBonusIcons(0, withIcon)
@@ -141,7 +168,11 @@ func TestExtraBonusIconResolutionBoostRespectsBar(t *testing.T) {
 		NewCard("Bud", Untamed, Creature, Common, WithPower(2), WithBonus(BonusAember)), 0)
 	g.AddToBattleline(NewCard("Grey", Sanctum, Creature, Rare, WithPower(4),
 		WithRestrictions(Restrictions{BonusIcons: Opponent})), 1)
-	g.AddLasting(LastingEffect{On: EventBonusIconBoost, Do: actResolveBonusAgain, Once: true})
+	g.AddLasting(LastingEffect{
+		On:   EventBonusIconBoost,
+		Do:   actResolveBonusAgain,
+		Once: true,
+	})
 	before := g.State.Aember[0]
 	g.resolveBonusIcons(0, src)
 	if got := g.State.Aember[0] - before; got != 0 {

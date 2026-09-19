@@ -20,7 +20,10 @@ import (
 func TestControlTheWeak(t *testing.T) {
 	t.Run("forces the opponent's active house on their next turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(ControlTheWeak)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(ControlTheWeak),
+			},
 			P2: ct.Side{House: card.House.Mars},
 		})
 

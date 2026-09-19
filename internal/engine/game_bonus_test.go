@@ -152,7 +152,11 @@ func TestBonusAemberGainedToPool(t *testing.T) {
 func TestBonusAemberInterceptedByCaptor(t *testing.T) {
 	g := started(t)
 	spider := g.AddToBattleline(NewCard("Spider", Brobnar, Creature, Common, WithPower(3),
-		WithReplaces(Instead{Of: EventAemberAddedToPool, Player: Opponent, With: Capture})), 1)
+		WithReplaces(Instead{
+			Of:     EventAemberAddedToPool,
+			Player: Opponent,
+			With:   Capture,
+		})), 1)
 	src := g.AddArtifact(NewCard("Coin", Brobnar, Artifact, Common, WithBonus(BonusAember)), 0)
 	g.resolveBonusIcons(0, src)
 	if g.State.Aember[0] != 0 {
@@ -236,7 +240,10 @@ func TestNewCardRejectsUnsetBonus(t *testing.T) {
 func TestBonusInsteadAsIconSwap(t *testing.T) {
 	g := started(t)
 	g.AddArtifact(NewCard("Amphora", Saurian, Artifact, Rare,
-		WithBonusInstead(BonusInstead{May: true, As: BonusCapture})), 0)
+		WithBonusInstead(BonusInstead{
+			May: true,
+			As:  BonusCapture,
+		})), 0)
 	src := g.AddToBattleline(
 		NewCard("Coin", Brobnar, Creature, Common, WithPower(3), WithBonus(BonusAember)), 0)
 	g.State.Aember[1] = 2
@@ -255,7 +262,10 @@ func TestBonusInsteadAsIconSwap(t *testing.T) {
 func TestBonusInsteadAsEffect(t *testing.T) {
 	g := started(t)
 	g.AddToBattleline(NewCard("Scrivener", Sanctum, Creature, Uncommon, WithPower(3),
-		WithBonusInstead(BonusInstead{From: BonusCapture, Instead: StealAember{Amount: 1}})), 0)
+		WithBonusInstead(BonusInstead{
+			From:    BonusCapture,
+			Instead: StealAember{Amount: 1},
+		})), 0)
 	src := g.AddToBattleline(
 		NewCard("Captor", Sanctum, Creature, Common, WithPower(3), WithBonus(BonusCapture)), 0)
 	g.State.Aember[1] = 2
@@ -279,7 +289,11 @@ func TestBonusInsteadDeclined(t *testing.T) {
 		Artifact,
 		Rare,
 		WithBonusInstead(
-			BonusInstead{May: true, From: BonusCapture, Instead: StealAember{Amount: 1}},
+			BonusInstead{
+				May:     true,
+				From:    BonusCapture,
+				Instead: StealAember{Amount: 1},
+			},
 		),
 	), 0)
 	src := g.AddToBattleline(
@@ -301,9 +315,15 @@ func TestBonusInsteadDeclined(t *testing.T) {
 func TestBonusInsteadChainsAcrossCards(t *testing.T) {
 	g := started(t)
 	g.AddArtifact(NewCard("Amphora", Saurian, Artifact, Rare,
-		WithBonusInstead(BonusInstead{May: true, As: BonusCapture})), 0)
+		WithBonusInstead(BonusInstead{
+			May: true,
+			As:  BonusCapture,
+		})), 0)
 	g.AddToBattleline(NewCard("Scrivener", Sanctum, Creature, Uncommon, WithPower(3),
-		WithBonusInstead(BonusInstead{From: BonusCapture, Instead: StealAember{Amount: 1}})), 0)
+		WithBonusInstead(BonusInstead{
+			From:    BonusCapture,
+			Instead: StealAember{Amount: 1},
+		})), 0)
 	src := g.AddToBattleline(
 		NewCard("Coin", Brobnar, Creature, Common, WithPower(3), WithBonus(BonusAember)), 0)
 	g.State.Aember[1] = 2
@@ -322,7 +342,10 @@ func TestBonusInsteadChainsAcrossCards(t *testing.T) {
 func TestBonusInsteadVacuousSwapNotOffered(t *testing.T) {
 	g := started(t)
 	g.AddArtifact(NewCard("Amphora", Saurian, Artifact, Rare,
-		WithBonusInstead(BonusInstead{May: true, As: BonusCapture})), 0)
+		WithBonusInstead(BonusInstead{
+			May: true,
+			As:  BonusCapture,
+		})), 0)
 	src := g.AddToBattleline(
 		NewCard("Captor", Sanctum, Creature, Common, WithPower(3), WithBonus(BonusCapture)), 0)
 	g.State.Aember[1] = 2
@@ -341,7 +364,10 @@ func TestNewCardRejectsBonusInsteadBothSet(t *testing.T) {
 		}
 	}()
 	NewCard("Bad", Brobnar, Artifact, Common,
-		WithBonusInstead(BonusInstead{As: BonusCapture, Instead: StealAember{Amount: 1}}))
+		WithBonusInstead(BonusInstead{
+			As:      BonusCapture,
+			Instead: StealAember{Amount: 1},
+		}))
 }
 
 func TestNewCardRejectsUnsetEnhance(t *testing.T) {

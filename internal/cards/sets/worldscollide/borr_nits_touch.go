@@ -23,7 +23,10 @@ var BorrNitsTouch = set.New(
 			Amount:          5,
 			ChooseWhoseDeck: true,
 			Then: []card.TopAct{
-				card.ChooseAndMove{Cards: 1, Dest: card.Into.Purge},
+				card.ChooseAndMove{
+					Cards: 1,
+					Dest:  card.Into.Purge,
+				},
 				card.Shuffle{},
 			},
 		},

@@ -19,7 +19,10 @@ import (
 func TestOddClawde(t *testing.T) {
 	t.Run("steals when the opponent has an odd amount of Æmber", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, InPlay: ct.Cards(OddClawde)},
+			P1: ct.Side{
+				House:  card.House.Logos,
+				InPlay: ct.Cards(OddClawde),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 
@@ -30,7 +33,10 @@ func TestOddClawde(t *testing.T) {
 
 	t.Run("does nothing when the opponent has an even amount of Æmber", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, InPlay: ct.Cards(OddClawde)},
+			P1: ct.Side{
+				House:  card.House.Logos,
+				InPlay: ct.Cards(OddClawde),
+			},
 			P2: ct.Side{Amber: 2},
 		})
 

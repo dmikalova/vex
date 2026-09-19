@@ -52,7 +52,12 @@ const (
 // NewGame returns the root component for a fresh browser client session. The
 // match itself is seeded on the client in OnMount.
 func NewGame() app.Composer {
-	return &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
+	return &game{
+		selHand:     -1,
+		zonesPlayer: -1,
+		forgingKey:  -1,
+		handSlot:    -1,
+	}
 }
 
 // game is the root component: it owns the live engine.Game and all UI state.

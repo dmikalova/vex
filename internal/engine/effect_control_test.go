@@ -21,7 +21,12 @@ func TestTakeControl(t *testing.T) {
 	collar := g.Register(NewCard("collar", Dis, Upgrade, Rare), 0)
 
 	(TakeControl{Duration: UntilThisLeavesPlay}).Resolve(
-		&EffectContext{Resolver: g, Source: host, Upgrade: collar, Controller: 0},
+		&EffectContext{
+			Resolver:   g,
+			Source:     host,
+			Upgrade:    collar,
+			Controller: 0,
+		},
 	)
 
 	if g.owner(host) != 1 {
@@ -53,7 +58,11 @@ func TestTakeControlAndExhaust(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
-	take.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	take.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
 
 	if g.controller(foe) != 0 {
 		t.Fatalf("controller = %d, want P1", g.controller(foe))
@@ -78,7 +87,11 @@ func TestTakeControlPlacesSeizedCreatureOnChosenFlank(t *testing.T) {
 	mine := g.AddToBattleline(testCreature("mine", 3), 0)
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
 	g.SetChooser(0, optionPicker{idx: 1}) // right flank
-	take.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	take.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
 	if got, want := g.Battleline(0), []LocalID{src, mine, foe}; !slices.Equal(got, want) {
 		t.Fatalf("right-flank placement = %v, want %v", got, want)
 	}
@@ -88,7 +101,11 @@ func TestTakeControlPlacesSeizedCreatureOnChosenFlank(t *testing.T) {
 	s2 := g2.AddToBattleline(testCreature("s2", 3), 0)
 	f2 := g2.AddToBattleline(testCreature("f2", 3), 1)
 	g2.SetChooser(0, optionPicker{idx: 0})
-	take.Resolve(&EffectContext{Resolver: g2, Source: s2, Controller: 0})
+	take.Resolve(&EffectContext{
+		Resolver:   g2,
+		Source:     s2,
+		Controller: 0,
+	})
 	if got, want := g2.Battleline(0), []LocalID{f2, s2}; !slices.Equal(got, want) {
 		t.Fatalf("left-flank placement = %v, want %v", got, want)
 	}
@@ -97,7 +114,11 @@ func TestTakeControlPlacesSeizedCreatureOnChosenFlank(t *testing.T) {
 	g3 := NewGame("A", "B", 1)
 	box := g3.AddArtifact(NewCard("box", Logos, Artifact, Rare), 0)
 	f3 := g3.AddToBattleline(testCreature("f3", 3), 1)
-	take.Resolve(&EffectContext{Resolver: g3, Source: box, Controller: 0})
+	take.Resolve(&EffectContext{
+		Resolver:   g3,
+		Source:     box,
+		Controller: 0,
+	})
 	if got, want := g3.Battleline(0), []LocalID{f3}; !slices.Equal(got, want) {
 		t.Fatalf("single placement = %v, want %v", got, want)
 	}
@@ -117,7 +138,12 @@ func TestCollarPromptsForFlankOnTakeControl(t *testing.T) {
 	collar := g.Register(NewCard("collar", Dis, Upgrade, Rare), 0)
 	g.AttachUpgrade(host, collar)
 	g.SetChooser(0, optionPicker{idx: 0}) // left flank
-	take.Resolve(&EffectContext{Resolver: g, Source: host, Upgrade: collar, Controller: 0})
+	take.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     host,
+		Upgrade:    collar,
+		Controller: 0,
+	})
 	if got, want := g.Battleline(0), []LocalID{host, mine}; !slices.Equal(got, want) {
 		t.Fatalf("left-flank placement = %v, want %v", got, want)
 	}
@@ -127,7 +153,12 @@ func TestCollarPromptsForFlankOnTakeControl(t *testing.T) {
 	host2 := g2.AddToBattleline(testCreature("host2", 3), 1)
 	collar2 := g2.Register(NewCard("collar2", Dis, Upgrade, Rare), 0)
 	g2.AttachUpgrade(host2, collar2)
-	take.Resolve(&EffectContext{Resolver: g2, Source: host2, Upgrade: collar2, Controller: 0})
+	take.Resolve(&EffectContext{
+		Resolver:   g2,
+		Source:     host2,
+		Upgrade:    collar2,
+		Controller: 0,
+	})
 	if got, want := g2.Battleline(0), []LocalID{host2}; !slices.Equal(got, want) {
 		t.Fatalf("single placement = %v, want %v", got, want)
 	}
@@ -204,14 +235,20 @@ func TestTakeControlArtifact(t *testing.T) {
 	if (TakeControl{Duration: UntilCardLeavesPlay}).validate() != nil {
 		t.Error("UntilCardLeavesPlay should be a valid duration")
 	}
-	if got := (TakeControl{Target: Target{Kind: TargetChosenEnemyCreature}, Duration: UntilThisLeavesPlay}).Text(); got != "take control of an enemy creature until "+SelfName+" leaves play" {
+	if got := (TakeControl{
+		Target:   Target{Kind: TargetChosenEnemyCreature},
+		Duration: UntilThisLeavesPlay,
+	}).Text(); got != "take control of an enemy creature until "+SelfName+" leaves play" {
 		t.Errorf("targeted reverting text = %q", got)
 	}
 
 	t.Run("takes permanent control of a chosen enemy artifact and records it", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		art := g.AddArtifact(NewCard("Gizmo", Mars, Artifact, Common), 1)
-		ctx := &EffectContext{Resolver: g, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		}
 		permArt.Resolve(ctx)
 		if g.controller(art) != 0 {
 			t.Errorf("controller = %d, want 0", g.controller(art))
@@ -225,7 +262,11 @@ func TestTakeControlArtifact(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		src := g.AddToBattleline(testCreature("src", 3), 0)
 		foe := g.AddToBattleline(testCreature("foe", 3), 1)
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 		TakeControl{
 			Target:   Target{Kind: TargetChosenEnemyCreature},
 			Duration: UntilThisLeavesPlay,
@@ -252,7 +293,11 @@ func TestTakeControlArtifact(t *testing.T) {
 
 		g := NewGame("A", "B", 1)
 		art := g.AddArtifact(NewCard("Spangler Box", Logos, Artifact, Rare), 0)
-		ctx := &EffectContext{Resolver: g, Source: art, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     art,
+			Controller: 0,
+		}
 		TakeControl{
 			Target:     Target{Kind: TargetThisCreature},
 			Duration:   UntilCardLeavesPlay,
@@ -275,7 +320,10 @@ func TestTakeControlArtifact(t *testing.T) {
 
 		g := NewGame("A", "B", 1)
 		art := g.AddArtifact(NewCard("Gizmo", Sanctum, Artifact, Common), 0)
-		ctx := &EffectContext{Resolver: g, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		}
 		if !give.resolveGate(ctx) {
 			t.Error("giving an artifact away should report progress")
 		}
@@ -284,7 +332,10 @@ func TestTakeControlArtifact(t *testing.T) {
 		}
 
 		empty := NewGame("A", "B", 1)
-		if give.resolveGate(&EffectContext{Resolver: empty, Controller: 0}) {
+		if give.resolveGate(&EffectContext{
+			Resolver:   empty,
+			Controller: 0,
+		}) {
 			t.Error("no friendly artifact should report no progress")
 		}
 	})
@@ -301,13 +352,26 @@ func TestItIsOffIdentity(t *testing.T) {
 	off := g.AddArtifact(NewCard("Gizmo", Untamed, Artifact, Common), 0)
 	on := g.AddArtifact(NewCard("Relic", Logos, Artifact, Common), 0)
 
-	if !c.Met(&EffectContext{Resolver: g, Controller: 0, It: off, HasIt: true}) {
+	if !c.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         off,
+		HasIt:      true,
+	}) {
 		t.Error("an off-identity card should meet the condition")
 	}
-	if c.Met(&EffectContext{Resolver: g, Controller: 0, It: on, HasIt: true}) {
+	if c.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         on,
+		HasIt:      true,
+	}) {
 		t.Error("an on-identity card should not meet the condition")
 	}
-	if c.Met(&EffectContext{Resolver: g, Controller: 0}) {
+	if c.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}) {
 		t.Error("no card in context should not meet the condition")
 	}
 }
@@ -420,7 +484,10 @@ func TestRevertibleControlDedupesBySource(t *testing.T) {
 func TestTakeControlDestroysNewlyLethalCreature(t *testing.T) {
 	g := started(t)
 	g.AddArtifact(NewCard("Banner", Brobnar, Artifact, Rare, WithConstantAbility(
-		ConstantAbility{PowerBonus: 2, Target: Target{Kind: TargetEachFriendlyCreature}},
+		ConstantAbility{
+			PowerBonus: 2,
+			Target:     Target{Kind: TargetEachFriendlyCreature},
+		},
 	)), 1)
 	ape := g.AddToBattleline(testCreature("ape", 3), 1)
 	g.State.Cards[ape].Damage = 3
@@ -448,7 +515,10 @@ func TestTakeControlIsNotLeavingPlay(t *testing.T) {
 		testCreature(
 			"foe",
 			3,
-			WithAbility(TriggerLeavesPlay, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerLeavesPlay, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		),
 		1,
 	)
@@ -486,14 +556,21 @@ func TestTakeControlTargeted(t *testing.T) {
 	if got := tgt.Text(); got != "take control of an enemy flank creature until "+SelfName+" leaves play" {
 		t.Errorf("targeted text = %q", got)
 	}
-	if (TakeControl{Target: Target{Kind: TargetChosenEnemyCreature}, Duration: RemainderOfPlayerTurn}).validate() == nil {
+	if (TakeControl{
+		Target:   Target{Kind: TargetChosenEnemyCreature},
+		Duration: RemainderOfPlayerTurn,
+	}).validate() == nil {
 		t.Error("only UntilThisLeavesPlay should be valid")
 	}
 
 	g := NewGame("A", "B", 1)
 	harland := g.AddToBattleline(testCreature("harland", 1), 0)
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
-	tgt.Resolve(&EffectContext{Resolver: g, Source: harland, Controller: 0})
+	tgt.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     harland,
+		Controller: 0,
+	})
 	if g.controller(foe) != 0 {
 		t.Errorf("controller of the seized creature = %d, want 0", g.controller(foe))
 	}

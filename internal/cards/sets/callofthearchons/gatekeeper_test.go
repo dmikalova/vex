@@ -20,7 +20,10 @@ import (
 func TestGatekeeper(t *testing.T) {
 	t.Run("captures the Æmber above five when the opponent has seven or more", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(Gatekeeper)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(Gatekeeper),
+			},
 			P2: ct.Side{Amber: 9},
 		})
 
@@ -32,7 +35,10 @@ func TestGatekeeper(t *testing.T) {
 
 	t.Run("captures nothing when the opponent has fewer than seven", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(Gatekeeper)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(Gatekeeper),
+			},
 			P2: ct.Side{Amber: 6},
 		})
 

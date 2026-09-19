@@ -27,8 +27,14 @@ var GamblingDen = set.New(
 						card.RevealTopOfDeck{Amount: 1},
 						card.Conditional{
 							Cond: card.ItIs{House: card.Houses.Chosen},
-							Then: card.GainAember{Player: card.Controller, Amount: 2},
-							Else: card.LoseAember{Player: card.Controller, Amount: 2},
+							Then: card.GainAember{
+								Player: card.Controller,
+								Amount: 2,
+							},
+							Else: card.LoseAember{
+								Player: card.Controller,
+								Amount: 2,
+							},
 						},
 					},
 				},

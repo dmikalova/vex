@@ -10,7 +10,10 @@ func TestOffHousePermitFrees(t *testing.T) {
 	g := started(t)
 	g.AddToBattleline(testCreature("brute", 3), 0) // a Brobnar card in play
 
-	base := OffHousePermit{Grant: GrantPlay, Remaining: 1}
+	base := OffHousePermit{
+		Grant:     GrantPlay,
+		Remaining: 1,
+	}
 	if !base.frees(g, 0, Mars, Creature) {
 		t.Error("an open permit should free any card")
 	}
@@ -49,7 +52,10 @@ func TestOffHousePermitFrees(t *testing.T) {
 func TestAddOffHousePermitCap(t *testing.T) {
 	g := started(t)
 	for range maxOffHousePermits + 2 {
-		g.addOffHousePermit(0, OffHousePermit{Grant: GrantPlay, Remaining: 1})
+		g.addOffHousePermit(0, OffHousePermit{
+			Grant:     GrantPlay,
+			Remaining: 1,
+		})
 	}
 	if int(g.State.OffHousePermitCount[0]) != maxOffHousePermits {
 		t.Errorf("permit count = %d, want %d", g.State.OffHousePermitCount[0], maxOffHousePermits)
@@ -61,7 +67,11 @@ func TestAddOffHousePermitCap(t *testing.T) {
 func TestOffHousePlayViaPermit(t *testing.T) {
 	t.Run("bounded permit decrements and runs out", func(t *testing.T) {
 		g := started(t) // Brobnar active
-		g.addOffHousePermit(0, OffHousePermit{Except: StarAlliance, Grant: GrantPlay, Remaining: 1})
+		g.addOffHousePermit(0, OffHousePermit{
+			Except:    StarAlliance,
+			Grant:     GrantPlay,
+			Remaining: 1,
+		})
 		first := g.AddToHand(NewCard("mars a", Mars, Creature, Common, WithPower(3)), 0)
 		second := g.AddToHand(NewCard("mars b", Mars, Creature, Common, WithPower(3)), 0)
 
@@ -81,7 +91,11 @@ func TestOffHousePlayViaPermit(t *testing.T) {
 
 	t.Run("excluded house is not freed", func(t *testing.T) {
 		g := started(t)
-		g.addOffHousePermit(0, OffHousePermit{Except: StarAlliance, Grant: GrantPlay, Remaining: 1})
+		g.addOffHousePermit(0, OffHousePermit{
+			Except:    StarAlliance,
+			Grant:     GrantPlay,
+			Remaining: 1,
+		})
 		sa := g.AddToHand(NewCard("sa card", StarAlliance, Creature, Common, WithPower(3)), 0)
 		if err := g.CanPlay(0, sa); !errors.Is(err, ErrWrongHouse) {
 			t.Fatalf("CanPlay excluded house = %v, want ErrWrongHouse", err)
@@ -90,7 +104,10 @@ func TestOffHousePlayViaPermit(t *testing.T) {
 
 	t.Run("unbounded permit is untouched", func(t *testing.T) {
 		g := started(t)
-		g.addOffHousePermit(0, OffHousePermit{Grant: GrantPlay, Remaining: permitUnlimited})
+		g.addOffHousePermit(0, OffHousePermit{
+			Grant:     GrantPlay,
+			Remaining: permitUnlimited,
+		})
 		a := g.AddToHand(NewCard("mars a", Mars, Creature, Common, WithPower(3)), 0)
 		b := g.AddToHand(NewCard("mars b", Mars, Creature, Common, WithPower(3)), 0)
 		if _, err := g.PlayCreature(0, handIdxByID(g, 0, a), false); err != nil {
@@ -110,7 +127,11 @@ func TestOffHousePlayViaPermit(t *testing.T) {
 func TestOffHouseUseViaPermit(t *testing.T) {
 	t.Run("reap spends one use", func(t *testing.T) {
 		g := started(t) // Brobnar active
-		g.addOffHousePermit(0, OffHousePermit{Except: StarAlliance, Grant: GrantUse, Remaining: 2})
+		g.addOffHousePermit(0, OffHousePermit{
+			Except:    StarAlliance,
+			Grant:     GrantUse,
+			Remaining: 2,
+		})
 		mars := g.AddToBattleline(NewCard("mars reaper", Mars, Creature, Common, WithPower(3)), 0)
 		if err := g.Reap(0, mars); err != nil {
 			t.Fatalf("off-house reap = %v", err)
@@ -122,7 +143,11 @@ func TestOffHouseUseViaPermit(t *testing.T) {
 
 	t.Run("active-house use spends nothing", func(t *testing.T) {
 		g := started(t)
-		g.addOffHousePermit(0, OffHousePermit{Except: StarAlliance, Grant: GrantUse, Remaining: 1})
+		g.addOffHousePermit(0, OffHousePermit{
+			Except:    StarAlliance,
+			Grant:     GrantUse,
+			Remaining: 1,
+		})
 		brob := g.AddToBattleline(testCreature("brob reaper", 3), 0)
 		if err := g.Reap(0, brob); err != nil {
 			t.Fatalf("active-house reap = %v", err)
@@ -134,7 +159,11 @@ func TestOffHouseUseViaPermit(t *testing.T) {
 
 	t.Run("fight spends one use", func(t *testing.T) {
 		g := started(t)
-		g.addOffHousePermit(0, OffHousePermit{Except: StarAlliance, Grant: GrantUse, Remaining: 1})
+		g.addOffHousePermit(0, OffHousePermit{
+			Except:    StarAlliance,
+			Grant:     GrantUse,
+			Remaining: 1,
+		})
 		attacker := g.AddToBattleline(
 			NewCard("mars fighter", Mars, Creature, Common, WithPower(4)),
 			0,
@@ -150,14 +179,21 @@ func TestOffHouseUseViaPermit(t *testing.T) {
 
 	t.Run("action ability spends one use", func(t *testing.T) {
 		g := started(t)
-		g.addOffHousePermit(0, OffHousePermit{Except: StarAlliance, Grant: GrantUse, Remaining: 1})
+		g.addOffHousePermit(0, OffHousePermit{
+			Except:    StarAlliance,
+			Grant:     GrantUse,
+			Remaining: 1,
+		})
 		def := NewCard(
 			"mars actor",
 			Mars,
 			Creature,
 			Common,
 			WithPower(3),
-			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerAction, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		)
 		actor := g.AddToBattleline(def, 0)
 		if err := g.UseAction(0, actor); err != nil {
@@ -180,7 +216,11 @@ func TestNonActivePlayPermission(t *testing.T) {
 		Rare,
 		WithPower(5),
 		WithPlayPermission(
-			PlayPermission{NonActive: true, Condition: SourceInCenterOfBattleline{}, Amount: 1},
+			PlayPermission{
+				NonActive: true,
+				Condition: SourceInCenterOfBattleline{},
+				Amount:    1,
+			},
 		),
 	)
 
@@ -234,7 +274,10 @@ func TestNonActivePlayLimitUncentered(t *testing.T) {
 		Creature,
 		Rare,
 		WithPower(3),
-		WithPlayPermission(PlayPermission{NonActive: true, Amount: 1}),
+		WithPlayPermission(PlayPermission{
+			NonActive: true,
+			Amount:    1,
+		}),
 	)
 	g.AddToBattleline(anywhere, 0)
 	if got := g.nonActivePlayLimit(0); got != 1 {
@@ -253,13 +296,20 @@ func TestNonActivePlayLimitUncentered(t *testing.T) {
 // uncentered NonActive form.
 func TestNonActivePlayPermissionText(t *testing.T) {
 	centered := playPermissionText(
-		PlayPermission{NonActive: true, Condition: SourceInCenterOfBattleline{}, Amount: 1},
+		PlayPermission{
+			NonActive: true,
+			Condition: SourceInCenterOfBattleline{},
+			Amount:    1,
+		},
 	)
 	want := "During your turn, if " + SelfName + " is in the center of your battleline, you may play one card that is not of the active house."
 	if centered != want {
 		t.Errorf("centered text = %q, want %q", centered, want)
 	}
-	uncentered := playPermissionText(PlayPermission{NonActive: true, Amount: 2})
+	uncentered := playPermissionText(PlayPermission{
+		NonActive: true,
+		Amount:    2,
+	})
 	wantU := "During your turn you may play 2 cards that is not of the active house."
 	if uncentered != wantU {
 		t.Errorf("uncentered text = %q, want %q", uncentered, wantU)

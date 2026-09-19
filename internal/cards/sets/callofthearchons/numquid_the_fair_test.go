@@ -20,7 +20,10 @@ func TestNumquidTheFair(t *testing.T) {
 	t.Run("destroys enemy creatures while overwhelmed", func(t *testing.T) {
 		var foe1, foe2 ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(NumquidTheFair)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(NumquidTheFair),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&foe1, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),
 				ct.Bind(&foe2, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),

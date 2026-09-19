@@ -4,19 +4,45 @@ import "testing"
 
 func TestPurge(t *testing.T) {
 	// Text variants.
-	if got := (PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer, Selection: Chosen{Optional: true}, Quantity: UpTo{N: Fixed(2)}}).Text(); got != "purge up to 2 cards from a discard pile" {
+	if got := (PurgeCard{
+		Zones:     []Zone{Discard},
+		Player:    ChosenPlayer,
+		Selection: Chosen{Optional: true},
+		Quantity:  UpTo{N: Fixed(2)},
+	}).Text(); got != "purge up to 2 cards from a discard pile" {
 		t.Errorf("up-to text = %q", got)
 	}
-	if got := (PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer, Selection: Chosen{Type: Creature}}).Text(); got != "purge a creature from a discard pile" {
+	if got := (PurgeCard{
+		Zones:     []Zone{Discard},
+		Player:    ChosenPlayer,
+		Selection: Chosen{Type: Creature},
+	}).Text(); got != "purge a creature from a discard pile" {
 		t.Errorf("single text = %q", got)
 	}
-	if got := (PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer, Selection: Chosen{}, Quantity: Takes{N: Fixed(2)}}).Text(); got != "purge 2 cards from a discard pile" {
+	if got := (PurgeCard{
+		Zones:     []Zone{Discard},
+		Player:    ChosenPlayer,
+		Selection: Chosen{},
+		Quantity:  Takes{N: Fixed(2)},
+	}).Text(); got != "purge 2 cards from a discard pile" {
 		t.Errorf("count text = %q", got)
 	}
-	if got := (PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer, Selection: Chosen{House: namedHouse(Dis)}}).Text(); got != "purge a Dis card from a discard pile" {
+	if got := (PurgeCard{
+		Zones:     []Zone{Discard},
+		Player:    ChosenPlayer,
+		Selection: Chosen{House: namedHouse(Dis)},
+	}).Text(); got != "purge a Dis card from a discard pile" {
 		t.Errorf("house text = %q", got)
 	}
-	if got := (PurgeCard{Zones: []Zone{Discard}, Player: EachPlayer, Selection: Each{House: namedHouse(Untamed), Type: Creature}, GainOwnerAember: true}).Text(); got != "purge each Untamed creature from each player's discard pile. For each card purged this way, its owner gains 1 Æmber" {
+	if got := (PurgeCard{
+		Zones:  []Zone{Discard},
+		Player: EachPlayer,
+		Selection: Each{
+			House: namedHouse(Untamed),
+			Type:  Creature,
+		},
+		GainOwnerAember: true,
+	}).Text(); got != "purge each Untamed creature from each player's discard pile. For each card purged this way, its owner gains 1 Æmber" {
 		t.Errorf("each text = %q", got)
 	}
 
@@ -28,8 +54,16 @@ func TestPurge(t *testing.T) {
 	g.State.Discard[0].add(a)
 	g.State.Discard[0].add(b)
 	g.State.Discard[0].add(c)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-	if !(PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer, Selection: Chosen{Optional: true}, Quantity: UpTo{N: Fixed(2)}}).resolveGate(
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
+	if !(PurgeCard{
+		Zones:     []Zone{Discard},
+		Player:    ChosenPlayer,
+		Selection: Chosen{Optional: true},
+		Quantity:  UpTo{N: Fixed(2)},
+	}).resolveGate(
 		ctx,
 	) {
 		t.Error("purging cards should report success")
@@ -49,7 +83,10 @@ func TestPurge(t *testing.T) {
 	n := g2.Register(testCreature("n", 1), 1)
 	g2.State.Discard[0].add(m)
 	g2.State.Discard[1].add(n)
-	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	ctx2 := &EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	}
 	PurgeCard{
 		Zones:     []Zone{Discard},
 		Player:    ChosenPlayer,
@@ -69,9 +106,17 @@ func TestPurge(t *testing.T) {
 	g3 := NewGame("A", "B", 1)
 	x := g3.Register(testCreature("x", 1), 0)
 	g3.State.Discard[0].add(x)
-	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
+	ctx3 := &EffectContext{
+		Resolver:   g3,
+		Controller: 0,
+	}
 	g3.SetChooser(0, optionPicker{idx: 1}) // options [x, Done] -> idx 1 is Done
-	if (PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer, Selection: Chosen{Optional: true}, Quantity: UpTo{N: Fixed(2)}}).resolveGate(
+	if (PurgeCard{
+		Zones:     []Zone{Discard},
+		Player:    ChosenPlayer,
+		Selection: Chosen{Optional: true},
+		Quantity:  UpTo{N: Fixed(2)},
+	}).resolveGate(
 		ctx3,
 	) {
 		t.Error("declining should report no purge")
@@ -86,8 +131,15 @@ func TestPurge(t *testing.T) {
 	act := g4.Register(NewCard("act", Dis, Tactic, Common), 1)
 	g4.State.Discard[1].add(act)
 	g4.State.Discard[1].add(crea)
-	ctx4 := &EffectContext{Resolver: g4, Controller: 0}
-	if !(PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer, Selection: Chosen{Type: Creature}}).resolveGate(
+	ctx4 := &EffectContext{
+		Resolver:   g4,
+		Controller: 0,
+	}
+	if !(PurgeCard{
+		Zones:     []Zone{Discard},
+		Player:    ChosenPlayer,
+		Selection: Chosen{Type: Creature},
+	}).resolveGate(
 		ctx4,
 	) {
 		t.Error("purging a creature should report success")
@@ -104,8 +156,15 @@ func TestPurge(t *testing.T) {
 	g5.State.Discard[0].add(
 		g5.Register(NewCard("act2", Dis, Tactic, Common), 0),
 	)
-	ctx5 := &EffectContext{Resolver: g5, Controller: 0}
-	if (PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer, Selection: Chosen{Type: Creature}}).resolveGate(
+	ctx5 := &EffectContext{
+		Resolver:   g5,
+		Controller: 0,
+	}
+	if (PurgeCard{
+		Zones:     []Zone{Discard},
+		Player:    ChosenPlayer,
+		Selection: Chosen{Type: Creature},
+	}).resolveGate(
 		ctx5,
 	) {
 		t.Error("no creature to purge should report failure")
@@ -120,8 +179,15 @@ func TestPurge(t *testing.T) {
 	)
 	g6.State.Discard[1].add(logos)
 	g6.State.Discard[1].add(dis)
-	ctx6 := &EffectContext{Resolver: g6, Controller: 0}
-	if !(PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer, Selection: Chosen{House: namedHouse(Dis)}}).resolveGate(
+	ctx6 := &EffectContext{
+		Resolver:   g6,
+		Controller: 0,
+	}
+	if !(PurgeCard{
+		Zones:     []Zone{Discard},
+		Player:    ChosenPlayer,
+		Selection: Chosen{House: namedHouse(Dis)},
+	}).resolveGate(
 		ctx6,
 	) {
 		t.Error("purging a Dis card should report success")
@@ -135,7 +201,11 @@ func TestPurge(t *testing.T) {
 // Flowers: every matching card is purged from both discard piles at once and each
 // purged card's owner gains 1 Æmber.
 func TestPurgeEachFromBothPiles(t *testing.T) {
-	if got := (PurgeCard{Zones: []Zone{Discard}, Player: EachPlayer, Selection: Each{}}).Text(); got != "purge each card from each player's discard pile" {
+	if got := (PurgeCard{
+		Zones:     []Zone{Discard},
+		Player:    EachPlayer,
+		Selection: Each{},
+	}).Text(); got != "purge each card from each player's discard pile" {
 		t.Errorf("bare text = %q", got)
 	}
 
@@ -149,12 +219,18 @@ func TestPurgeEachFromBothPiles(t *testing.T) {
 	g.State.Discard[0].add(mine)
 	g.State.Discard[0].add(minesafe)
 	g.State.Discard[1].add(theirs)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	(PurgeCard{
-		Zones:           []Zone{Discard},
-		Player:          EachPlayer,
-		Selection:       Each{House: namedHouse(Untamed), Type: Creature},
+		Zones:  []Zone{Discard},
+		Player: EachPlayer,
+		Selection: Each{
+			House: namedHouse(Untamed),
+			Type:  Creature,
+		},
 		GainOwnerAember: true,
 	}).Resolve(ctx)
 
@@ -184,21 +260,39 @@ func TestPurgeFromHand(t *testing.T) {
 	if err := (PurgeCard{Zones: []Zone{Hand}}).validate(); err == nil {
 		t.Error("unset player should fail validation")
 	}
-	if err := (PurgeCard{Zones: []Zone{Hand}, Player: Opponent}).validate(); err == nil {
+	if err := (PurgeCard{
+		Zones:  []Zone{Hand},
+		Player: Opponent,
+	}).validate(); err == nil {
 		t.Error("unset selection should fail validation")
 	}
-	if err := (PurgeCard{Zones: []Zone{Hand}, Player: Opponent, Selection: Chosen{}}).validate(); err != nil {
+	if err := (PurgeCard{
+		Zones:     []Zone{Hand},
+		Player:    Opponent,
+		Selection: Chosen{},
+	}).validate(); err != nil {
 		t.Errorf("valid player and selection should pass validation: %v", err)
 	}
 	// The archives became a legal source when PurgeArchives folded into this node;
 	// the deck is still not one, because no card purges from a deck.
-	if err := (PurgeCard{Zones: []Zone{Archives}, Player: Opponent, Selection: Chosen{}}).validate(); err != nil {
+	if err := (PurgeCard{
+		Zones:     []Zone{Archives},
+		Player:    Opponent,
+		Selection: Chosen{},
+	}).validate(); err != nil {
 		t.Errorf("the archives should be a legal purge source: %v", err)
 	}
-	if err := (PurgeCard{Zones: []Zone{Deck}, Player: Opponent, Selection: Chosen{}}).validate(); err == nil {
+	if err := (PurgeCard{
+		Zones:     []Zone{Deck},
+		Player:    Opponent,
+		Selection: Chosen{},
+	}).validate(); err == nil {
 		t.Error("a zone no purge draws from should fail validation")
 	}
-	if err := (PurgeCard{Player: Opponent, Selection: Chosen{}}).validate(); err == nil {
+	if err := (PurgeCard{
+		Player:    Opponent,
+		Selection: Chosen{},
+	}).validate(); err == nil {
 		t.Error("a purge with no source zone should fail validation")
 	}
 	// Naming two piles pools them into one source, the way Discard does.
@@ -211,16 +305,38 @@ func TestPurgeFromHand(t *testing.T) {
 	}
 
 	// Text and object variants across the three selections.
-	if got := (PurgeCard{Zones: []Zone{Hand}, Player: Opponent, Selection: Chosen{House: namedHouse(Sanctum), Optional: true}}).Text(); got != "you may purge a Sanctum card from your opponent's hand" {
+	if got := (PurgeCard{
+		Zones:  []Zone{Hand},
+		Player: Opponent,
+		Selection: Chosen{
+			House:    namedHouse(Sanctum),
+			Optional: true,
+		},
+	}).Text(); got != "you may purge a Sanctum card from your opponent's hand" {
 		t.Errorf("chosen house text = %q", got)
 	}
-	if got := (PurgeCard{Zones: []Zone{Hand}, Player: Controller, Selection: Chosen{Optional: true}}).Text(); got != "you may purge a card from your hand" {
+	if got := (PurgeCard{
+		Zones:     []Zone{Hand},
+		Player:    Controller,
+		Selection: Chosen{Optional: true},
+	}).Text(); got != "you may purge a card from your hand" {
 		t.Errorf("chosen any-card text = %q", got)
 	}
-	if got := (PurgeCard{Zones: []Zone{Hand}, Player: Opponent, Selection: Random{}}).Text(); got != "your opponent purges a random card from their hand" {
+	if got := (PurgeCard{
+		Zones:     []Zone{Hand},
+		Player:    Opponent,
+		Selection: Random{},
+	}).Text(); got != "your opponent purges a random card from their hand" {
 		t.Errorf("random text = %q", got)
 	}
-	if got := (PurgeCard{Zones: []Zone{Hand}, Player: Controller, Selection: Each{Type: Creature, House: exceptHouse(Mars)}}).Text(); got != "purge each non-Mars creature from your hand" {
+	if got := (PurgeCard{
+		Zones:  []Zone{Hand},
+		Player: Controller,
+		Selection: Each{
+			Type:  Creature,
+			House: exceptHouse(Mars),
+		},
+	}).Text(); got != "purge each non-Mars creature from your hand" {
 		t.Errorf("each text = %q", got)
 	}
 
@@ -236,11 +352,17 @@ func TestPurgeFromHand(t *testing.T) {
 	)
 	g.State.Hand[1].add(sanctum)
 	g.State.Hand[1].add(other)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	PurgeCard{
-		Zones:     []Zone{Hand},
-		Player:    Opponent,
-		Selection: Chosen{House: namedHouse(Sanctum), Optional: true},
+		Zones:  []Zone{Hand},
+		Player: Opponent,
+		Selection: Chosen{
+			House:    namedHouse(Sanctum),
+			Optional: true,
+		},
 	}.Resolve(
 		ctx,
 	)
@@ -258,15 +380,21 @@ func TestPurgeFromHand(t *testing.T) {
 		1,
 	)
 	g2.State.Hand[1].add(holy)
-	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	ctx2 := &EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	}
 	g2.SetChooser(
 		0,
 		optionPicker{idx: 1},
 	) // options [holy, Done] -> idx 1 is Done
 	PurgeCard{
-		Zones:     []Zone{Hand},
-		Player:    Opponent,
-		Selection: Chosen{House: namedHouse(Sanctum), Optional: true},
+		Zones:  []Zone{Hand},
+		Player: Opponent,
+		Selection: Chosen{
+			House:    namedHouse(Sanctum),
+			Optional: true,
+		},
 	}.Resolve(
 		ctx2,
 	)
@@ -282,11 +410,17 @@ func TestPurgeFromHand(t *testing.T) {
 			1,
 		),
 	)
-	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
+	ctx3 := &EffectContext{
+		Resolver:   g3,
+		Controller: 0,
+	}
 	PurgeCard{
-		Zones:     []Zone{Hand},
-		Player:    Opponent,
-		Selection: Chosen{House: namedHouse(Sanctum), Optional: true},
+		Zones:  []Zone{Hand},
+		Player: Opponent,
+		Selection: Chosen{
+			House:    namedHouse(Sanctum),
+			Optional: true,
+		},
 	}.Resolve(
 		ctx3,
 	)
@@ -295,7 +429,11 @@ func TestPurgeFromHand(t *testing.T) {
 	}
 
 	// Under a May a Chosen purge is offered as its own single optional choice.
-	if !(PurgeCard{Zones: []Zone{Hand}, Player: Opponent, Selection: Chosen{Optional: true}}).declinable() {
+	if !(PurgeCard{
+		Zones:     []Zone{Hand},
+		Player:    Opponent,
+		Selection: Chosen{Optional: true},
+	}).declinable() {
 		t.Error("an Optional Chosen purge should be declinable")
 	}
 	g4 := NewGame("A", "B", 1)
@@ -304,9 +442,16 @@ func TestPurgeFromHand(t *testing.T) {
 		1,
 	)
 	g4.State.Hand[1].add(card4)
-	ctx4 := &EffectContext{Resolver: g4, Controller: 0}
+	ctx4 := &EffectContext{
+		Resolver:   g4,
+		Controller: 0,
+	}
 	May{
-		Do: PurgeCard{Zones: []Zone{Hand}, Player: Opponent, Selection: Chosen{Optional: true}},
+		Do: PurgeCard{
+			Zones:     []Zone{Hand},
+			Player:    Opponent,
+			Selection: Chosen{Optional: true},
+		},
 	}.Resolve(
 		ctx4,
 	)
@@ -316,10 +461,18 @@ func TestPurgeFromHand(t *testing.T) {
 
 	// Default: no "you may", cannot be declined, and forces the purge when a
 	// card is in hand; an empty hand still purges nothing (Greater Oxtet).
-	if got := (PurgeCard{Zones: []Zone{Hand}, Player: Controller, Selection: Chosen{}}).Text(); got != "purge a card from your hand" {
+	if got := (PurgeCard{
+		Zones:     []Zone{Hand},
+		Player:    Controller,
+		Selection: Chosen{},
+	}).Text(); got != "purge a card from your hand" {
 		t.Errorf("mandatory text = %q", got)
 	}
-	if (PurgeCard{Zones: []Zone{Hand}, Player: Controller, Selection: Chosen{}}).declinable() {
+	if (PurgeCard{
+		Zones:     []Zone{Hand},
+		Player:    Controller,
+		Selection: Chosen{},
+	}).declinable() {
 		t.Error("a mandatory purge should not be declinable")
 	}
 	g5 := NewGame("A", "B", 1)
@@ -333,7 +486,10 @@ func TestPurgeFromHand(t *testing.T) {
 		Player:    Controller,
 		Selection: Chosen{},
 	}.Resolve(
-		&EffectContext{Resolver: g5, Controller: 0},
+		&EffectContext{
+			Resolver:   g5,
+			Controller: 0,
+		},
 	)
 	if got := g5.Purge(0); len(got) != 1 || got[0] != forced {
 		t.Errorf("mandatory purge = %v, want [forced]", got)
@@ -344,7 +500,10 @@ func TestPurgeFromHand(t *testing.T) {
 		Player:    Controller,
 		Selection: Chosen{},
 	}.Resolve(
-		&EffectContext{Resolver: g6, Controller: 0},
+		&EffectContext{
+			Resolver:   g6,
+			Controller: 0,
+		},
 	)
 	if len(g6.Purge(0)) != 0 {
 		t.Error("mandatory purge with empty hand should purge nothing")
@@ -359,8 +518,15 @@ func TestPurgeFromHandRandom(t *testing.T) {
 		1,
 	)
 	g.State.Hand[1].add(only)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-	if !(PurgeCard{Zones: []Zone{Hand}, Player: Opponent, Selection: Random{}}).resolveGate(
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
+	if !(PurgeCard{
+		Zones:     []Zone{Hand},
+		Player:    Opponent,
+		Selection: Random{},
+	}).resolveGate(
 		ctx,
 	) {
 		t.Error("purging a card should report true")
@@ -374,8 +540,15 @@ func TestPurgeFromHandRandom(t *testing.T) {
 
 	// An empty hand purges nothing and reports false.
 	g2 := NewGame("A", "B", 1)
-	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	if (PurgeCard{Zones: []Zone{Hand}, Player: Opponent, Selection: Random{}}).resolveGate(
+	ctx2 := &EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	}
+	if (PurgeCard{
+		Zones:     []Zone{Hand},
+		Player:    Opponent,
+		Selection: Random{},
+	}).resolveGate(
 		ctx2,
 	) {
 		t.Error("empty hand should report false")
@@ -403,7 +576,10 @@ func TestPurgeFromHandRandomCount(t *testing.T) {
 	for _, name := range []string{"a", "b", "c"} {
 		g.State.Hand[1].add(g.Register(NewCard(name, Shadows, Creature, Common, WithPower(3)), 1))
 	}
-	two.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	two.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if len(g.Purge(1)) != 2 {
 		t.Errorf("purged = %d, want 2", len(g.Purge(1)))
 	}
@@ -414,7 +590,10 @@ func TestPurgeFromHandRandomCount(t *testing.T) {
 	// A hand of one still purges only what it holds.
 	g2 := NewGame("A", "B", 1)
 	g2.State.Hand[1].add(g2.Register(NewCard("only", Shadows, Creature, Common, WithPower(3)), 1))
-	two.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	two.Resolve(&EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	})
 	if len(g2.Purge(1)) != 1 {
 		t.Errorf("purged = %d, want 1", len(g2.Purge(1)))
 	}
@@ -423,7 +602,11 @@ func TestPurgeFromHandRandomCount(t *testing.T) {
 func TestPurgeFromHandChosenCreature(t *testing.T) {
 	// A mandatory Chosen restricted to creatures is Custom Virus's "purge a
 	// creature from your hand", which puts the purged card in context (ctx.It).
-	e := PurgeCard{Zones: []Zone{Hand}, Player: Controller, Selection: Chosen{Type: Creature}}
+	e := PurgeCard{
+		Zones:     []Zone{Hand},
+		Player:    Controller,
+		Selection: Chosen{Type: Creature},
+	}
 	if e.Text() != "purge a creature from your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -433,7 +616,10 @@ func TestPurgeFromHandChosenCreature(t *testing.T) {
 		func(t *testing.T) {
 			g := NewGame("A", "B", 1)
 			kin := g.AddToHand(testCreature("kin", 3, WithTraits(Beast)), 0)
-			ctx := &EffectContext{Resolver: g, Controller: 0}
+			ctx := &EffectContext{
+				Resolver:   g,
+				Controller: 0,
+			}
 
 			e.Resolve(ctx)
 
@@ -459,7 +645,10 @@ func TestPurgeFromHandChosenCreature(t *testing.T) {
 				NewCard("Action", Brobnar, Tactic, Common),
 				0,
 			) // not a creature
-			ctx := &EffectContext{Resolver: g, Controller: 0}
+			ctx := &EffectContext{
+				Resolver:   g,
+				Controller: 0,
+			}
 			e.Resolve(ctx)
 			if len(g.Purge(0)) != 0 {
 				t.Error("nothing should be purged when no creature is in hand")
@@ -475,7 +664,10 @@ func TestPurgeFromHandChosenCreature(t *testing.T) {
 		g.AddToHand(testCreature("kin1", 3, WithTraits(Beast)), 0)
 		g.AddToHand(testCreature("kin2", 3, WithTraits(Beast)), 0)
 		g.SetChooser(0, orderRejectChooser{})
-		ctx := &EffectContext{Resolver: g, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		}
 		e.Resolve(ctx)
 		if len(g.Purge(0)) != 0 {
 			t.Error("declining should purge nothing")
@@ -495,7 +687,11 @@ func TestCardsPurgedCount(t *testing.T) {
 		NewCard("off-house", Mars, Creature, Common, WithPower(3)),
 		0,
 	)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	if got := (CardsPurged{}).CountText(); got != "card purged this way" {
 		t.Errorf("count text = %q", got)
@@ -519,7 +715,10 @@ func TestPurgeCreatureBindsSinglePurgedCard(t *testing.T) {
 	art := g.AddArtifact(
 		NewCard("Relic", Brobnar, Artifact, Common, WithBonus(BonusAember)), 0)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{art}})
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	PurgeCreature{Target: Target{Kind: TargetChosenArtifact}}.Resolve(ctx)
 	if !ctx.HasIt || ctx.It != art {
 		t.Fatalf("ctx.It = %v (has %v), want purged artifact %d", ctx.It, ctx.HasIt, art)
@@ -534,7 +733,10 @@ func TestPurgeCreatureFollowsIntoDiscard(t *testing.T) {
 	g := started(t)
 	dead := g.Register(NewCard("Dead", Brobnar, Creature, Common, WithPower(1)), 1)
 	g.State.Discard[1].add(dead)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	if !(PurgeCreature{Target: Target{Kind: TargetThisCreature}}).purge(ctx, []LocalID{dead}) {
 		t.Fatal("the purge should have reached the destroyed creature")
@@ -568,7 +770,11 @@ func TestMayPurgeCreatureDeclinable(t *testing.T) {
 		g.SetChooser(0, ch)
 		src := g.AddToBattleline(testCreature("src", 3), 0)
 		neighbor := g.AddToBattleline(testCreature("neighbor", 3), 0)
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		May{Do: PurgeCreature{Target: neighboring()}}.Resolve(ctx)
 
@@ -585,7 +791,11 @@ func TestMayPurgeCreatureDeclinable(t *testing.T) {
 		g.SetChooser(0, &cardDecliner{decline: true})
 		src := g.AddToBattleline(testCreature("src", 3), 0)
 		neighbor := g.AddToBattleline(testCreature("neighbor", 3), 0)
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		May{Do: PurgeCreature{Target: neighboring()}}.Resolve(ctx)
 
@@ -599,7 +809,11 @@ func TestMayPurgeCreatureDeclinable(t *testing.T) {
 		ch := &cardDecliner{}
 		g.SetChooser(0, ch)
 		src := g.AddToBattleline(testCreature("src", 3), 0)
-		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		}
 
 		if !(PurgeCreature{Target: neighboring()}).vacuous(ctx) {
 			t.Fatal("a lone creature's neighboring target should be vacuous")
@@ -621,7 +835,11 @@ func TestPurgeSource(t *testing.T) {
 		src := g.AddToBattleline(testCreature("src", 3), 0)
 
 		PurgeSource{}.Resolve(
-			&EffectContext{Resolver: g, Controller: 0, Source: src},
+			&EffectContext{
+				Resolver:   g,
+				Controller: 0,
+				Source:     src,
+			},
 		)
 
 		if !g.State.Purge[0].contains(src) {
@@ -668,18 +886,29 @@ func TestPurgeFromHandEachText(t *testing.T) {
 		want string
 	}{
 		{
-			PurgeCard{Zones: []Zone{Hand}, Player: Controller, Selection: Each{}},
+			PurgeCard{
+				Zones:     []Zone{Hand},
+				Player:    Controller,
+				Selection: Each{},
+			},
 			"purge each card from your hand",
-		},
-		{
-			PurgeCard{Zones: []Zone{Hand}, Player: Opponent, Selection: Each{Type: Creature}},
-			"purge each creature from your opponent's hand",
 		},
 		{
 			PurgeCard{
 				Zones:     []Zone{Hand},
-				Player:    Controller,
-				Selection: Each{Type: Creature, House: exceptHouse(Mars)},
+				Player:    Opponent,
+				Selection: Each{Type: Creature},
+			},
+			"purge each creature from your opponent's hand",
+		},
+		{
+			PurgeCard{
+				Zones:  []Zone{Hand},
+				Player: Controller,
+				Selection: Each{
+					Type:  Creature,
+					House: exceptHouse(Mars),
+				},
 			},
 			"purge each non-Mars creature from your hand",
 		},
@@ -702,12 +931,18 @@ func TestPurgeFromHandEachPurgesEveryMatch(t *testing.T) {
 	brobnar := g.AddToHand(NewCard("brobnar", Brobnar, Creature, Common, WithPower(3)), 0)
 	untamed := g.AddToHand(NewCard("untamed", Untamed, Creature, Common, WithPower(3)), 0)
 	tactic := g.AddToHand(NewCard("tactic", Shadows, Tactic, Common), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	PurgeCard{
-		Zones:     []Zone{Hand},
-		Player:    Controller,
-		Selection: Each{Type: Creature, House: exceptHouse(Mars)},
+		Zones:  []Zone{Hand},
+		Player: Controller,
+		Selection: Each{
+			Type:  Creature,
+			House: exceptHouse(Mars),
+		},
 	}.
 		Resolve(
 			ctx,
@@ -761,7 +996,10 @@ func TestPurgeAnyNumberFromArchives(t *testing.T) {
 	two := g.AddToArchives(NewCard("Archived Two", Logos, Creature, Common), 0)
 	g.SetChooser(0, &declineAfterChooser{ids: []LocalID{one, two}})
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	purgeAnyArchived.Resolve(ctx)
 
 	if got := (CardsPurged{}).Value(ctx); got != 2 {
@@ -782,7 +1020,10 @@ func TestPurgeAnyNumberFromArchivesDeclined(t *testing.T) {
 	g.AddToArchives(NewCard("Archived", Logos, Creature, Common), 0)
 	g.SetChooser(0, &declineAfterChooser{}) // decline immediately
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	purgeAnyArchived.Resolve(ctx)
 
 	if got := (CardsPurged{}).Value(ctx); got != 0 {
@@ -795,7 +1036,10 @@ func TestPurgeAnyNumberFromArchivesDeclined(t *testing.T) {
 func TestPurgeAnyNumberFromEmptyArchives(t *testing.T) {
 	g := started(t)
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	purgeAnyArchived.Resolve(ctx)
 
 	if got := (CardsPurged{}).Value(ctx); got != 0 {

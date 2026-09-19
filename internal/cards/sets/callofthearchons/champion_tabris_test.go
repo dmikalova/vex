@@ -21,7 +21,10 @@ func TestChampionTabris(t *testing.T) {
 	t.Run("captures 1 Æmber when it fights", func(t *testing.T) {
 		var enemy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, InPlay: ct.Cards(ChampionTabris)},
+			P1: ct.Side{
+				House:  card.House.Sanctum,
+				InPlay: ct.Cards(ChampionTabris),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3))),

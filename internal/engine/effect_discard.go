@@ -30,7 +30,11 @@ type PutCard struct {
 
 // mover is the shared cross-zone plumbing: gather from Zones, move to Destination.
 func (e PutCard) mover(ctx *EffectContext) crossZoneMover {
-	return crossZoneMover{Player: ctx.Controller, Dest: e.Destination, Sources: e.Zones}
+	return crossZoneMover{
+		Player:  ctx.Controller,
+		Dest:    e.Destination,
+		Sources: e.Zones,
+	}
 }
 
 // sourcePhrase renders where the cards come from, e.g. "from your discard pile".

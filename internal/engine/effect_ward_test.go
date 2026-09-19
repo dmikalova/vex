@@ -7,7 +7,11 @@ func TestWardEffect(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	foe1 := g.AddToBattleline(testCreature("foe1", 3), 1)
 	foe2 := g.AddToBattleline(testCreature("foe2", 3), 1)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	e := Ward{Target: Target{Kind: TargetEachEnemyCreature}}
 	if e.Text() != "ward each enemy creature" {
@@ -42,7 +46,10 @@ func TestWardValidate(t *testing.T) {
 // TestWardAmount covers the choose-N ward: the controller picks Amount distinct
 // creatures from the target pool, and the effect renders the plural quantity.
 func TestWardAmount(t *testing.T) {
-	e := Ward{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: 2}
+	e := Ward{
+		Target: Target{Kind: TargetEachFriendlyCreature},
+		Amount: 2,
+	}
 	if got := e.Text(); got != "ward 2 friendly creatures" {
 		t.Errorf("ward amount text = %q", got)
 	}
@@ -52,7 +59,11 @@ func TestWardAmount(t *testing.T) {
 	b := g.AddToBattleline(testCreature("b", 3), 0)
 	c := g.AddToBattleline(testCreature("c", 3), 0)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{a, c}})
-	e.Resolve(&EffectContext{Resolver: g, Source: a, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     a,
+		Controller: 0,
+	})
 	if !g.Warded(a) || !g.Warded(c) {
 		t.Error("chosen creatures should be warded")
 	}
@@ -66,8 +77,15 @@ func TestWardAmount(t *testing.T) {
 func TestWardAmountRunsOut(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	a := g.AddToBattleline(testCreature("a", 3), 0)
-	Ward{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: 2}.Resolve(
-		&EffectContext{Resolver: g, Source: a, Controller: 0},
+	Ward{
+		Target: Target{Kind: TargetEachFriendlyCreature},
+		Amount: 2,
+	}.Resolve(
+		&EffectContext{
+			Resolver:   g,
+			Source:     a,
+			Controller: 0,
+		},
 	)
 	if !g.Warded(a) {
 		t.Error("the only friendly creature should be warded")
@@ -103,7 +121,10 @@ func TestWardAbsorbsDestruction(t *testing.T) {
 		testCreature(
 			"c",
 			3,
-			WithAbility(TriggerDestroyed, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerDestroyed, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		),
 		0,
 	)

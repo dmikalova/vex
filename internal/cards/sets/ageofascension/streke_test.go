@@ -41,7 +41,10 @@ func TestStreke(t *testing.T) {
 
 	t.Run("does nothing while on a flank", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Streke)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(Streke),
+			},
 			P2: ct.Side{Deck: ct.DeckOf(card.House.Logos, 10)},
 		})
 

@@ -17,7 +17,10 @@ var BlastFromThePast = set.New(
 	card.Provenance(card.MM, "200"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Exalt{Target: card.Target.FriendlyCreature, Amount: 1},
+			card.Exalt{
+				Target: card.Target.FriendlyCreature,
+				Amount: 1,
+			},
 			card.ArchiveCard{
 				Zone: card.Discard,
 				Selection: card.Chosen{

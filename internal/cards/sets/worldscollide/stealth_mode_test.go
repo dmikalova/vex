@@ -21,7 +21,10 @@ func TestStealthMode(t *testing.T) {
 		"bars both players from playing Tactics until the end of the caster's next turn",
 		func(t *testing.T) {
 			h := ct.Play(t, ct.Setup{
-				P1: ct.Side{House: card.House.StarAlliance, Hand: ct.Cards(StealthMode)},
+				P1: ct.Side{
+					House: card.House.StarAlliance,
+					Hand:  ct.Cards(StealthMode),
+				},
 			})
 
 			h.P1.Play(StealthMode)

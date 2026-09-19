@@ -22,7 +22,10 @@ var Breakkey = set.New(
 			Cond: card.HasMoreForgedKeys{Player: card.Opponent},
 			Then: card.Sequence{Effects: []card.Effect{
 				card.UnforgeKey{Player: card.Opponent},
-				card.GainAember{Player: card.Opponent, Amount: 6},
+				card.GainAember{
+					Player: card.Opponent,
+					Amount: 6,
+				},
 			}},
 		}),
 )

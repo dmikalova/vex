@@ -21,5 +21,8 @@ var Truebaru = set.New("Truebaru",
 	card.WithKeywords(card.Keyword.Taunt),
 	card.WithAemberCost(3),
 	card.WithAbility(
-		card.Trigger.Destroyed, card.GainAember{Player: card.Controller, Amount: 5}),
+		card.Trigger.Destroyed, card.GainAember{
+			Player: card.Controller,
+			Amount: 5,
+		}),
 )

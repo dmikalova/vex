@@ -25,7 +25,10 @@ func TestTraitBane(t *testing.T) {
 
 		var c1, c2, c3 ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(bane)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(bane),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&c1, ct.Creature(ct.Traits(card.MostCommonCreatureTrait(h1)))),
 				ct.Bind(&c2, ct.Creature(ct.Traits(card.MostCommonCreatureTrait(h2)))),

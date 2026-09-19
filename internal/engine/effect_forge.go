@@ -467,6 +467,9 @@ func (CancelForge) Text() string { return "they do not forge that key" }
 
 // Resolve records the prevented forge and cancels it.
 func (CancelForge) Resolve(ctx *EffectContext) {
-	ctx.Resolver.Record(KeyForgePrevented{Player: ctx.Opponent(), By: ctx.Source})
+	ctx.Resolver.Record(KeyForgePrevented{
+		Player: ctx.Opponent(),
+		By:     ctx.Source,
+	})
 	ctx.Resolver.CancelCurrentForge()
 }

@@ -23,7 +23,10 @@ var Gamgee = set.New(
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Reap, card.Conditional{
-			Cond: card.PoolAember{Player: card.Opponent, Is: card.MoreThanYou},
+			Cond: card.PoolAember{
+				Player: card.Opponent,
+				Is:     card.MoreThanYou,
+			},
 			Then: card.StealAember{Amount: 1},
 		}),
 )

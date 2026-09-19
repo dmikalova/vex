@@ -20,8 +20,14 @@ import (
 func TestRhetorGallim(t *testing.T) {
 	t.Run("taxes the opponent's next-turn keys when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(RhetorGallim)},
-			P2: ct.Side{House: card.House.Saurian, Amber: 8},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(RhetorGallim),
+			},
+			P2: ct.Side{
+				House: card.House.Saurian,
+				Amber: 8,
+			},
 		})
 
 		h.P1.Play(RhetorGallim)
@@ -40,7 +46,10 @@ func TestRhetorGallim(t *testing.T) {
 				House:  card.House.Saurian,
 				InPlay: ct.Cards(ct.Bind(&gallim, RhetorGallim)),
 			},
-			P2: ct.Side{House: card.House.Saurian, Amber: 8},
+			P2: ct.Side{
+				House: card.House.Saurian,
+				Amber: 8,
+			},
 		})
 		gallim.Ready()
 

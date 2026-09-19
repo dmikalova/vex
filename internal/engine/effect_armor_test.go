@@ -22,7 +22,10 @@ func TestLoseArmorStripsAndTallies(t *testing.T) {
 		1,
 	)
 	bare := g.AddToBattleline(testCreature("Bare", 5), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	target := Target{Kind: TargetEachEnemyCreature}.WithArmor()
 
 	// Only the armored creature is a target at all, so only it is stripped.

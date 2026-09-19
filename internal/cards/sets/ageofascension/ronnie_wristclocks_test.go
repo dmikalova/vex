@@ -19,8 +19,14 @@ import (
 func TestRonnieWristclocks(t *testing.T) {
 	t.Run("steals 1 Æmber when the opponent has fewer than 7", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(RonnieWristclocks)},
-			P2: ct.Side{House: card.House.Brobnar, Amber: 6},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(RonnieWristclocks),
+			},
+			P2: ct.Side{
+				House: card.House.Brobnar,
+				Amber: 6,
+			},
 		})
 
 		h.P1.Play(RonnieWristclocks)
@@ -31,8 +37,14 @@ func TestRonnieWristclocks(t *testing.T) {
 
 	t.Run("steals 2 Æmber when the opponent has 7 or more", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(RonnieWristclocks)},
-			P2: ct.Side{House: card.House.Brobnar, Amber: 7},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(RonnieWristclocks),
+			},
+			P2: ct.Side{
+				House: card.House.Brobnar,
+				Amber: 7,
+			},
 		})
 
 		h.P1.Play(RonnieWristclocks)

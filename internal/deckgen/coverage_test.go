@@ -12,7 +12,11 @@ func mkCard(name string, h engine.House, rr engine.Rarity) Card {
 }
 
 func gen(set Set) *generator {
-	return &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+	return &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(1)),
+		placed: map[string]bool{},
+	}
 }
 
 type matFunc func(SlotContext, *rand.Rand) engine.CardDefinition
@@ -61,7 +65,10 @@ func TestMaverickDraw(t *testing.T) {
 		mkCard("D", engine.Dis, engine.Common),
 		mkCard("L", engine.Logos, engine.Common),
 		mkCard("M", engine.Mars, engine.Common),
-	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}, MaverickRate: 1})
+	}, Tuning{
+		RarityWeights: map[engine.Rarity]float64{engine.Common: 1},
+		MaverickRate:  1,
+	})
 	for _, pod := range Generate(set, 1).Pods {
 		for _, s := range pod.Slots {
 			if s.Card.House != pod.House {
@@ -76,7 +83,10 @@ func TestMaverickSingleHouse(t *testing.T) {
 	set := NewSet("S", []Card{
 		mkCard("B1", engine.Brobnar, engine.Common),
 		mkCard("B2", engine.Brobnar, engine.Common),
-	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}, MaverickRate: 1})
+	}, Tuning{
+		RarityWeights: map[engine.Rarity]float64{engine.Common: 1},
+		MaverickRate:  1,
+	})
 	for _, s := range Generate(set, 1).Pods[0].Slots {
 		if s.Maverick {
 			t.Fatal("single-house set produced a maverick")

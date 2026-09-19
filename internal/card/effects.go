@@ -1085,13 +1085,19 @@ type houseSelectors struct {
 
 // Named frees one named house.
 func (houseSelectors) Named(h engine.House) engine.HouseSelector {
-	return engine.HouseSelector{Match: engine.HouseMatcher{Kind: engine.MatchNamedHouse, House: h}}
+	return engine.HouseSelector{Match: engine.HouseMatcher{
+		Kind:  engine.MatchNamedHouse,
+		House: h,
+	}}
 }
 
 // Except frees every house but the named one (card.House.Self for "non-Star
 // Alliance").
 func (houseSelectors) Except(h engine.House) engine.HouseSelector {
-	return engine.HouseSelector{Match: engine.HouseMatcher{Kind: engine.MatchExceptHouse, House: h}}
+	return engine.HouseSelector{Match: engine.HouseMatcher{
+		Kind:  engine.MatchExceptHouse,
+		House: h,
+	}}
 }
 
 // HouseMatcher is the house filter a per-card effect or target names — which
@@ -1136,13 +1142,19 @@ type restrictKinds struct {
 
 // Named admits only the named house ("a Mars card").
 func (houseMatchers) Named(h engine.House) engine.HouseMatcher {
-	return engine.HouseMatcher{Kind: engine.MatchNamedHouse, House: h}
+	return engine.HouseMatcher{
+		Kind:  engine.MatchNamedHouse,
+		House: h,
+	}
 }
 
 // Except admits every house but the named one (card.House.Self for "a non-Star
 // Alliance card").
 func (houseMatchers) Except(h engine.House) engine.HouseMatcher {
-	return engine.HouseMatcher{Kind: engine.MatchExceptHouse, House: h}
+	return engine.HouseMatcher{
+		Kind:  engine.MatchExceptHouse,
+		House: h,
+	}
 }
 
 // Types names the card types an effect admits: card.Types.Of(card.Type.Artifact,

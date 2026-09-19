@@ -20,7 +20,10 @@ func TestBorrow(t *testing.T) {
 	t.Run("takes control of an enemy artifact and reassigns it to Shadows", func(t *testing.T) {
 		var relic ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(Borrow)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(Borrow),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(ct.Bind(&relic, ct.Artifact(ct.OfHouse(card.House.Untamed)))),
 			},

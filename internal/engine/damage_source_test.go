@@ -28,7 +28,10 @@ func TestDamageSourceMatcher(t *testing.T) {
 		{DamageSourceMatcher{Trait: Mutant}, "Mutant creatures"},
 		{DamageSourceMatcher{MinPower: 5}, "creatures with power 5 or higher"},
 		{
-			DamageSourceMatcher{Trait: Mutant, MinPower: 5},
+			DamageSourceMatcher{
+				Trait:    Mutant,
+				MinPower: 5,
+			},
 			"Mutant creatures or creatures with power 5 or higher",
 		},
 	}
@@ -41,7 +44,10 @@ func TestDamageSourceMatcher(t *testing.T) {
 	// The passive renders into a card's rules text.
 	def := NewCard("Ardent Hero", Sanctum, Creature, Common,
 		WithPower(4),
-		WithCannotBeDealtDamageBy(DamageSourceMatcher{Trait: Mutant, MinPower: 5}))
+		WithCannotBeDealtDamageBy(DamageSourceMatcher{
+			Trait:    Mutant,
+			MinPower: 5,
+		}))
 	if got := RenderCardRules(&def); !strings.Contains(
 		got,
 		"Ardent Hero cannot be dealt damage by Mutant creatures or creatures with power 5 or higher.",
@@ -53,7 +59,10 @@ func TestDamageSourceMatcher(t *testing.T) {
 // TestRefusesDamageFrom checks the live predicate against trait, power, and the
 // uncredited-source and inactive cases.
 func TestRefusesDamageFrom(t *testing.T) {
-	m := DamageSourceMatcher{Trait: Mutant, MinPower: 5}
+	m := DamageSourceMatcher{
+		Trait:    Mutant,
+		MinPower: 5,
+	}
 	g := NewGame("A", "B", 1)
 	hero := g.AddToBattleline(testCreature("hero", 4, WithCannotBeDealtDamageBy(m)), 0)
 	plain := g.AddToBattleline(testCreature("plain", 4), 0)
@@ -79,11 +88,19 @@ func TestRefusesDamageFrom(t *testing.T) {
 
 	// The refusal reaches the damage pipeline: a Mutant's blow lands nothing, a
 	// weakling's lands in full.
-	g.applyRawDamage(DamageTarget{ID: hero, Amount: 3, Source: mutant})
+	g.applyRawDamage(DamageTarget{
+		ID:     hero,
+		Amount: 3,
+		Source: mutant,
+	})
 	if g.Damage(hero) != 0 {
 		t.Errorf("Mutant-dealt damage landed: hero has %d", g.Damage(hero))
 	}
-	g.applyRawDamage(DamageTarget{ID: hero, Amount: 3, Source: weakling})
+	g.applyRawDamage(DamageTarget{
+		ID:     hero,
+		Amount: 3,
+		Source: weakling,
+	})
 	if g.Damage(hero) != 3 {
 		t.Errorf("weak source's damage refused: hero has %d, want 3", g.Damage(hero))
 	}

@@ -18,8 +18,14 @@ import (
 func TestTheEvilEye(t *testing.T) {
 	t.Run("taxes the opponent's next turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(TheEvilEye)},
-			P2: ct.Side{House: card.House.Dis, Amber: 8},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(TheEvilEye),
+			},
+			P2: ct.Side{
+				House: card.House.Dis,
+				Amber: 8,
+			},
 		})
 
 		h.P1.Play(TheEvilEye)

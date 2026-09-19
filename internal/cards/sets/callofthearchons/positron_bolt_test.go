@@ -19,7 +19,10 @@ func TestPositronBolt(t *testing.T) {
 	t.Run("deals 3/2/1 walking inward from the chosen flank creature", func(t *testing.T) {
 		var left, mid, right ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(PositronBolt)},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(PositronBolt),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&left, ct.Creature(ct.Power(9))),
 				ct.Bind(&mid, ct.Creature(ct.Power(9))),

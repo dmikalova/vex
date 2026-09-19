@@ -22,5 +22,8 @@ type View struct {
 // identity projection today (the whole state, unredacted); the seam is here so
 // server-side redaction can be added later at this one point.
 func Project(state GameState, viewer int) View {
-	return View{Viewer: viewer, State: state}
+	return View{
+		Viewer: viewer,
+		State:  state,
+	}
 }

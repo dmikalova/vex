@@ -14,18 +14,27 @@ import (
 // shown-card count, so a filter that shrinks the list can never index past its
 // end or draw a backwards range.
 func TestGalleryWindowClamps(t *testing.T) {
-	g := &gallery{winFrom: 10, winTo: 100}
+	g := &gallery{
+		winFrom: 10,
+		winTo:   100,
+	}
 	from, to := g.window(5)
 	if from != 5 || to != 5 {
 		t.Errorf("window past the end gave [%d,%d), want [5,5)", from, to)
 	}
 
-	g = &gallery{winFrom: 1, winTo: 3}
+	g = &gallery{
+		winFrom: 1,
+		winTo:   3,
+	}
 	if from, to := g.window(10); from != 1 || to != 3 {
 		t.Errorf("in-range window gave [%d,%d), want [1,3)", from, to)
 	}
 
-	g = &gallery{winFrom: -4, winTo: 2}
+	g = &gallery{
+		winFrom: -4,
+		winTo:   2,
+	}
 	if from, to := g.window(10); from != 0 || to != 2 {
 		t.Errorf("negative from gave [%d,%d), want [0,2)", from, to)
 	}
@@ -40,10 +49,17 @@ func TestGalleryWindowsFacesButKeepsTextSearchable(t *testing.T) {
 	if len(regs) < 3 {
 		t.Skipf("need at least 3 registered cards, have %d", len(regs))
 	}
-	g := &gallery{ready: true, order: "name"}
+	g := &gallery{
+		ready: true,
+		order: "name",
+	}
 	for i := range 3 {
 		d := regs[i].Def
-		g.cards = append(g.cards, galleryCard{def: &d, nameHay: d.Name, textHay: d.Name})
+		g.cards = append(g.cards, galleryCard{
+			def:     &d,
+			nameHay: d.Name,
+			textHay: d.Name,
+		})
 	}
 	// Only the first card in the sorted grid gets a full face; the rest fall back to
 	// placeholders.

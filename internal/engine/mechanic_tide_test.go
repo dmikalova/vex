@@ -41,18 +41,30 @@ func TestTideConditions(t *testing.T) {
 	low := TideIsLow{}
 	high := TideIsHigh{}
 
-	if !high.Met(&EffectContext{Resolver: g, Controller: 0}) {
+	if !high.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}) {
 		t.Error("TideIsHigh should be met for controller 0 while the tide is high for them")
 	}
-	if low.Met(&EffectContext{Resolver: g, Controller: 0}) {
+	if low.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}) {
 		t.Error("TideIsLow should not be met for controller 0 while the tide is high for them")
 	}
-	if !low.Met(&EffectContext{Resolver: g, Controller: 1}) {
+	if !low.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 1,
+	}) {
 		t.Error(
 			"TideIsLow should be met for controller 1 while the tide is high for their opponent",
 		)
 	}
-	if high.Met(&EffectContext{Resolver: g, Controller: 1}) {
+	if high.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 1,
+	}) {
 		t.Error("TideIsHigh should not be met for controller 1 while the tide is low for them")
 	}
 

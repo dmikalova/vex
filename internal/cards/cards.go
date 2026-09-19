@@ -41,7 +41,11 @@ func setName(rc card.RegisteredCard) string {
 
 // deckgenCard adapts a registered card to a deckgen pool entry.
 func deckgenCard(rc card.RegisteredCard) deckgen.Card {
-	return deckgen.Card{Def: rc.Def, Profile: rc.Profile, Materializer: rc.Materializer}
+	return deckgen.Card{
+		Def:          rc.Def,
+		Profile:      rc.Profile,
+		Materializer: rc.Materializer,
+	}
 }
 
 // setOrder returns the source-set names in release order, so grouping is
@@ -153,7 +157,10 @@ func buildLegacy(groups map[string][]card.RegisteredCard) *deckgen.Legacy {
 	add := func(name string) {
 		seen[name] = true
 		for _, rc := range groups[name] {
-			entries = append(entries, deckgen.LegacyEntry{Card: deckgenCard(rc), Set: name})
+			entries = append(entries, deckgen.LegacyEntry{
+				Card: deckgenCard(rc),
+				Set:  name,
+			})
 		}
 	}
 	for _, name := range setOrder() {
@@ -367,7 +374,10 @@ func Sets() []Set {
 			}
 			return defs[i].Name < defs[j].Name
 		})
-		out = append(out, Set{Name: name, Cards: defs})
+		out = append(out, Set{
+			Name:  name,
+			Cards: defs,
+		})
 	}
 	return out
 }

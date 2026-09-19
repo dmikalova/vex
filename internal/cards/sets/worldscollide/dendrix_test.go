@@ -20,7 +20,10 @@ func TestDendrix(t *testing.T) {
 	t.Run("opponent discards a random card when Dendrix fights", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Dendrix)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(Dendrix),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(3)))),
 				Hand:   ct.Cards(ct.Creature(), ct.Creature()),

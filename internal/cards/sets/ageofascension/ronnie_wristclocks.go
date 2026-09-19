@@ -24,7 +24,11 @@ var RonnieWristclocks = set.New(
 			Amount: 1,
 			Or: card.OrAmount{
 				Amount: 2,
-				When:   card.PoolAember{Player: card.Opponent, Is: card.AtLeast, Amount: 7},
+				When: card.PoolAember{
+					Player: card.Opponent,
+					Is:     card.AtLeast,
+					Amount: 7,
+				},
 			},
 		}),
 )

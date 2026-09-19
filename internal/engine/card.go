@@ -428,7 +428,10 @@ func (kc KeyCostChange) houseReplaced(from, to House) any {
 // default, so a key-cost change cannot be constructed without stating whose keys
 // it changes (omitting it is a compile error at the call site).
 func NewKeyCostChange(player Player, amount int) KeyCostChange {
-	return KeyCostChange{amount: amount, player: player}
+	return KeyCostChange{
+		amount: amount,
+		player: player,
+	}
 }
 
 // affects reports whether a change on a card owned by owner applies to the key
@@ -1113,7 +1116,12 @@ func WithBonusInstead(r BonusInstead) CardOption {
 // hand-refill size by amount (Mother +1 for its controller, Succubus -1 for the
 // opponent, The Howling Pit +1 for each player).
 func WithDrawModifier(player Player, amount int) CardOption {
-	return func(c *CardDefinition) { c.DrawModifier = DrawModifier{Player: player, Amount: amount} }
+	return func(c *CardDefinition) {
+		c.DrawModifier = DrawModifier{
+			Player: player,
+			Amount: amount,
+		}
+	}
 }
 
 // WithDrawModifierOffFlank is WithDrawModifier gated on the source not being on a
@@ -1121,7 +1129,11 @@ func WithDrawModifier(player Player, amount int) CardOption {
 // the middle of the line).
 func WithDrawModifierOffFlank(player Player, amount int) CardOption {
 	return func(c *CardDefinition) {
-		c.DrawModifier = DrawModifier{Player: player, Amount: amount, OnlyWhileOffFlank: true}
+		c.DrawModifier = DrawModifier{
+			Player:            player,
+			Amount:            amount,
+			OnlyWhileOffFlank: true,
+		}
 	}
 }
 
@@ -1129,7 +1141,11 @@ func WithDrawModifierOffFlank(player Player, amount int) CardOption {
 // center of its battleline (Zenzizenzizenzic refills extra only from the middle).
 func WithDrawModifierInCenter(player Player, amount int) CardOption {
 	return func(c *CardDefinition) {
-		c.DrawModifier = DrawModifier{Player: player, Amount: amount, OnlyWhileInCenter: true}
+		c.DrawModifier = DrawModifier{
+			Player:            player,
+			Amount:            amount,
+			OnlyWhileInCenter: true,
+		}
 	}
 }
 
@@ -1138,7 +1154,11 @@ func WithDrawModifierInCenter(player Player, amount int) CardOption {
 // creature).
 func WithDrawModifierPer(player Player, amount int, per Count) CardOption {
 	return func(c *CardDefinition) {
-		c.DrawModifier = DrawModifier{Player: player, Amount: amount, Per: per}
+		c.DrawModifier = DrawModifier{
+			Player: player,
+			Amount: amount,
+			Per:    per,
+		}
 	}
 }
 
@@ -1175,7 +1195,10 @@ func WithPlayRequirement(r PlayRequirement) CardOption {
 // WithAbility appends a triggered ability to the card.
 func WithAbility(trigger Trigger, effect Effect) CardOption {
 	return func(c *CardDefinition) {
-		c.Abilities = append(c.Abilities, Ability{Trigger: trigger, Effect: effect})
+		c.Abilities = append(c.Abilities, Ability{
+			Trigger: trigger,
+			Effect:  effect,
+		})
 	}
 }
 
@@ -1187,7 +1210,11 @@ func WithEachPlayerAbility(trigger Trigger, effect Effect) CardOption {
 	return func(c *CardDefinition) {
 		c.Abilities = append(
 			c.Abilities,
-			Ability{Trigger: trigger, Effect: effect, EachPlayer: true},
+			Ability{
+				Trigger:    trigger,
+				Effect:     effect,
+				EachPlayer: true,
+			},
 		)
 	}
 }

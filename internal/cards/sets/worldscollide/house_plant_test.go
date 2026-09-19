@@ -35,7 +35,10 @@ func TestHousePlant(t *testing.T) {
 		}
 
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(def)},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(def),
+			},
 		})
 
 		h.P1.EndTurn()
@@ -48,7 +51,10 @@ func TestHousePlant(t *testing.T) {
 		def := plantFor(deckWith(engine.Brobnar), rand.New(rand.NewSource(1)))
 
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(def)},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(def),
+			},
 		})
 
 		h.P1.EndTurn()

@@ -29,7 +29,10 @@ var CybergiantRig = set.New(
 	}),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Heal{Fully: true, Target: card.Target.This},
+			card.Heal{
+				Fully:  true,
+				Target: card.Target.This,
+			},
 			card.AddPowerCounter{
 				Target: card.Target.This,
 				Amount: 1,

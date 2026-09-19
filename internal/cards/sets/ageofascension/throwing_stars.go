@@ -17,7 +17,10 @@ var ThrowingStars = set.New(
 	card.Provenance(card.AoA, "279"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.DealDamage{Spread: card.UpToCreatures{Creatures: 3, Amount: 1}},
+			card.DealDamage{Spread: card.UpToCreatures{
+				Creatures: 3,
+				Amount:    1,
+			}},
 			card.GainAember{
 				Player: card.Controller,
 				Amount: 1,

@@ -48,18 +48,17 @@ func FuzzClean() error {
 	return sh.RunV("go", "clean", "-fuzzcache")
 }
 
-// CorpusPrune prunes FuzzPlay's seed corpus of fixed bugs. Each bug that still
-// reproduces is left as one minimized entry. The soak saves every failing
-// script verbatim, so a single bug can leave hundreds of near-identical
-// multi-kilobyte entries; this replays them all, drops the ones whose bug is
-// fixed, and shrinks what remains.
+// CorpusPrune trims fixed fuzz cases. Each bug that still reproduces is left as
+// one minimized entry. The soak saves every failing script verbatim, so a single
+// bug can leave hundreds of near-identical multi-kilobyte entries; this replays
+// them all, drops the ones whose bug is fixed, and shrinks what remains.
 func CorpusPrune() error {
 	return sh.RunV("go", "run", "./magefiles/simcorpus")
 }
 
-// Debug replays a failing simulated game with the game log on. It prints the log
-// tail next to the invariant violation that ended the game, turning a soak, fuzz,
-// or property-test find into a readable sequence of plays.
+// Debug replays a failing sim game. It prints the log tail next to the invariant
+// violation that ended the game, turning a soak, fuzz, or property-test find into
+// a readable sequence of plays.
 //
 // With no -script it searches the fixed-seed property batch that `mage test` plays
 // and replays the first failure; pass -script the hex a failure printed to replay
@@ -80,10 +79,10 @@ func Debug(script *string, tail *int) error {
 	return sh.RunV("go", "run", "./magefiles/simdebug", s, tailArg)
 }
 
-// Trace writes a full game log to a file, end to end. It plays the fixed-seed
-// property games once with the log turned on, so a whole game can be read at once
-// instead of one prompt at a time. Unlike `mage debug`, which shows the tail of a
-// game that broke, a trace is the full log of games that pass.
+// Trace writes a full game log. It plays the fixed-seed property games once with
+// the log turned on so a whole game can be read at once instead of one prompt at a
+// time. Unlike `mage debug`, which shows the tail of a game that broke, a trace
+// is the full log of games that pass.
 //
 // -count sets how many of the property batch's games to play (default 1) and -out
 // the destination; it defaults to tmp/sim/trace.log, under the repo's gitignored
@@ -159,12 +158,10 @@ type perfBaseline struct {
 	FastCopyAllocs float64 `json:"fastcopy_allocs_per_op"`
 }
 
-// Profile profiles the engine under the sim workload and diffs it to a baseline.
-// It runs the sim benchmarks in internal/sim — the closest proxy the repo has for
-// the load an MCTS bot would put on the engine — writes CPU and allocation profiles
-// under tmp/sim, and prints the deterministic per-game counts next to the committed
-// baseline so a regression shows as a delta. It does not block; open the flame graph
-// afterwards with `mage profileServer`.
+// Profile measures sim performance. It runs the sim benchmarks in internal/sim,
+// writes CPU and allocation profiles under tmp/sim, and prints the deterministic
+// per-game counts next to the committed baseline so a regression shows as a delta.
+// It does not block; open the flame graph afterwards with `mage profileServer`.
 //
 // Default runs the 1000 deterministic seeded games (cpu.prof, mem.prof). -random
 // instead runs a fresh random batch — the outlier pass, whose counts vary run to run
@@ -238,10 +235,10 @@ func profileRandom() error {
 	return nil
 }
 
-// ProfileServer opens a profile from the last `mage profile` run in the interactive
-// pprof web UI (flame graph, call graph, source view) and blocks until stopped. Go's
-// flame graph is served, not printed, so this is its own target: `mage profile`
-// writes the profiles without blocking, and this serves one on demand.
+// ProfileServer serves a saved profile. It opens the last `mage profile` output in
+// the interactive pprof web UI and blocks until stopped. Go's flame graph is
+// served, not printed, so this is its own target: `mage profile` writes the
+// profiles without blocking, and this serves one on demand.
 //
 // Default serves the seeded CPU profile. -mem serves the allocation profile, -random
 // the outlier run's profiles:

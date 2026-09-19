@@ -24,7 +24,10 @@ func TestAutoVac5150(t *testing.T) {
 				InPlay:   ct.Cards(ct.Bind(&vac, AutoVac5150)),
 				Archives: ct.Cards(ct.Bind(&stored, ct.Creature())),
 			},
-			P2: ct.Side{House: card.House.Logos, Amber: 8},
+			P2: ct.Side{
+				House: card.House.Logos,
+				Amber: 8,
+			},
 		})
 
 		h.P1.UseAction(AutoVac5150)
@@ -48,7 +51,10 @@ func TestAutoVac5150(t *testing.T) {
 				Archives: ct.Cards(ct.Bind(&stored, ct.Creature())),
 				Hand:     ct.Cards(ct.Bind(&held, ct.Creature())),
 			},
-			P2: ct.Side{House: card.House.Logos, Amber: 6},
+			P2: ct.Side{
+				House: card.House.Logos,
+				Amber: 6,
+			},
 		})
 
 		h.P1.UseAction(AutoVac5150)

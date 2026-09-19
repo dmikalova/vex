@@ -37,7 +37,10 @@ func TestBookOfMalefaction(t *testing.T) {
 
 		// Player 2 steals 2 Æmber from Book's controller, arming two warrant counters.
 		engine.StealAember{Amount: 2}.Resolve(
-			&engine.EffectContext{Resolver: h.Game(), Controller: 1},
+			&engine.EffectContext{
+				Resolver:   h.Game(),
+				Controller: 1,
+			},
 		)
 
 		// The Omni removes one warrant counter and purges a creature. The lone

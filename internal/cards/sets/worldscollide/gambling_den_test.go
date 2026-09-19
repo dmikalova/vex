@@ -23,8 +23,14 @@ import (
 func TestGamblingDenGainOnMatch(t *testing.T) {
 	top := ct.Creature(ct.OfHouse(card.House.Mars))
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(GamblingDen)},
-		P2: ct.Side{House: card.House.Mars, Deck: ct.Cards(top)},
+		P1: ct.Side{
+			House:  card.House.Shadows,
+			InPlay: ct.Cards(GamblingDen),
+		},
+		P2: ct.Side{
+			House: card.House.Mars,
+			Deck:  ct.Cards(top),
+		},
 	})
 
 	h.P1.EndTurn() // P2's turn begins; Gambling Den fires with P2 as the acting player.
@@ -40,8 +46,15 @@ func TestGamblingDenGainOnMatch(t *testing.T) {
 func TestGamblingDenLoseOnMiss(t *testing.T) {
 	top := ct.Creature(ct.OfHouse(card.House.Mars))
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(GamblingDen)},
-		P2: ct.Side{House: card.House.Mars, Deck: ct.Cards(top), Amber: 3},
+		P1: ct.Side{
+			House:  card.House.Shadows,
+			InPlay: ct.Cards(GamblingDen),
+		},
+		P2: ct.Side{
+			House: card.House.Mars,
+			Deck:  ct.Cards(top),
+			Amber: 3,
+		},
 	})
 
 	h.P1.EndTurn()
@@ -56,8 +69,15 @@ func TestGamblingDenLoseOnMiss(t *testing.T) {
 func TestGamblingDenDecline(t *testing.T) {
 	top := ct.Creature(ct.OfHouse(card.House.Mars))
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(GamblingDen)},
-		P2: ct.Side{House: card.House.Mars, Deck: ct.Cards(top), Amber: 2},
+		P1: ct.Side{
+			House:  card.House.Shadows,
+			InPlay: ct.Cards(GamblingDen),
+		},
+		P2: ct.Side{
+			House: card.House.Mars,
+			Deck:  ct.Cards(top),
+			Amber: 2,
+		},
 	})
 
 	h.P1.EndTurn()

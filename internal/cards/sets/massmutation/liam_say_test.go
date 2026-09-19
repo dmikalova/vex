@@ -21,7 +21,10 @@ func TestLiamSay(t *testing.T) {
 	t.Run("may deal 1 damage to a creature at the start of your turn", func(t *testing.T) {
 		var enemy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(LiamSay)},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(LiamSay),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(ct.Bind(&enemy, ct.Creature(ct.Power(5)))),
 			},
@@ -38,7 +41,10 @@ func TestLiamSay(t *testing.T) {
 	t.Run("deals no damage when declined", func(t *testing.T) {
 		var enemy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(LiamSay)},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(LiamSay),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(ct.Bind(&enemy, ct.Creature(ct.Power(5)))),
 			},

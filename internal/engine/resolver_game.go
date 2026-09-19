@@ -138,7 +138,10 @@ func (g *Game) GrantKeyword(id LocalID, k Keyword) {
 		return
 	}
 	c.GrantedKeywords |= k.bit()
-	g.record(CreatureGainedKeyword{Creature: id, Keyword: k})
+	g.record(CreatureGainedKeyword{
+		Creature: id,
+		Keyword:  k,
+	})
 }
 
 // LoseKeywordFrom takes a keyword away from one creature for the remainder of the
@@ -149,7 +152,10 @@ func (g *Game) LoseKeywordFrom(id LocalID, k Keyword) {
 		return
 	}
 	c.LostKeywords |= k.bit()
-	g.record(CreatureLostKeyword{Creature: id, Keyword: k})
+	g.record(CreatureLostKeyword{
+		Creature: id,
+		Keyword:  k,
+	})
 }
 
 // LoseKeywordUntilNextTurn takes a keyword away from one creature until the start
@@ -162,7 +168,10 @@ func (g *Game) LoseKeywordUntilNextTurn(id LocalID, k Keyword) {
 		return
 	}
 	c.LostKeywordsUntilNextTurn |= k.bit()
-	g.record(CreatureLostKeyword{Creature: id, Keyword: k})
+	g.record(CreatureLostKeyword{
+		Creature: id,
+		Keyword:  k,
+	})
 }
 
 // GrantKeywordUntilNextTurn gives one creature a keyword until the start of its
@@ -173,7 +182,10 @@ func (g *Game) GrantKeywordUntilNextTurn(id LocalID, k Keyword) {
 		return
 	}
 	c.KeywordsUntilNextTurn |= k.bit()
-	g.record(CreatureGainedKeyword{Creature: id, Keyword: k})
+	g.record(CreatureGainedKeyword{
+		Creature: id,
+		Keyword:  k,
+	})
 }
 
 // ConsideredFlank reports whether a creature counts as a flank creature for the
@@ -203,7 +215,11 @@ func (g *Game) GainStats(id LocalID, power, armor int) {
 	if armor > 0 {
 		c.ArmorRemaining += int16(armor)
 	}
-	g.record(CreatureGainedStats{Creature: id, Power: power, Armor: armor})
+	g.record(CreatureGainedStats{
+		Creature: id,
+		Power:    power,
+		Armor:    armor,
+	})
 }
 
 // GainAssault gives one creature Assault for the remainder of the turn (Creed of
@@ -214,7 +230,10 @@ func (g *Game) GainAssault(id LocalID, amount int) {
 		return
 	}
 	c.TempAssaultBonus += int16(amount)
-	g.record(CreatureGainedAssault{Creature: id, Amount: amount})
+	g.record(CreatureGainedAssault{
+		Creature: id,
+		Amount:   amount,
+	})
 }
 
 // GrantAssaultUntilNextTurn gives one creature Assault until the start of its
@@ -226,7 +245,10 @@ func (g *Game) GrantAssaultUntilNextTurn(id LocalID, amount int) {
 		return
 	}
 	c.AssaultUntilNextTurn += int16(amount)
-	g.record(CreatureGainedAssault{Creature: id, Amount: amount})
+	g.record(CreatureGainedAssault{
+		Creature: id,
+		Amount:   amount,
+	})
 }
 
 // GrantTraitUntilNextTurn gives one creature a trait until the start of its
@@ -238,7 +260,10 @@ func (g *Game) GrantTraitUntilNextTurn(id LocalID, trait Trait) {
 		return
 	}
 	c.TraitUntilNextTurn = trait
-	g.record(CreatureGainedTrait{Creature: id, Trait: trait})
+	g.record(CreatureGainedTrait{
+		Creature: id,
+		Trait:    trait,
+	})
 }
 
 // ForgeKeyAtExtraCost forges one key at its current cost plus extra and reports
@@ -451,7 +476,10 @@ func (g *Game) PutIntoBattlelineAsCreature(id LocalID, right bool, d Duration) {
 	} else {
 		g.State.Battleline[controller].insertAt(0, id)
 	}
-	g.record(TurnedIntoCreature{Card: id, Right: right})
+	g.record(TurnedIntoCreature{
+		Card:  id,
+		Right: right,
+	})
 }
 
 // revertTemporaryCreatures returns every card that turned into a creature only for
@@ -626,7 +654,10 @@ func (g *Game) PlayerHasHouse(player int, house House) bool {
 // Draw is the Resolver entry point for the internal draw.
 func (g *Game) Draw(controller, count int) {
 	if n := g.draw(controller, count); n > 0 {
-		g.record(CardsDrawnBy{Player: controller, Cards: n})
+		g.record(CardsDrawnBy{
+			Player: controller,
+			Cards:  n,
+		})
 	}
 }
 
@@ -681,7 +712,10 @@ func (g *Game) EndShuffleBatch() {
 		byOwner[o] = append(byOwner[o], id)
 	}
 	for _, o := range owners {
-		g.record(CardsShuffledIntoDeckBy{Owner: o, Cards: byOwner[o]})
+		g.record(CardsShuffledIntoDeckBy{
+			Owner: o,
+			Cards: byOwner[o],
+		})
 	}
 }
 
@@ -736,26 +770,43 @@ func (g *Game) AddPowerCounter(id LocalID, delta int) {
 // PutFromDiscardIntoHand moves a card from its owner's discard pile to their hand.
 func (g *Game) PutFromDiscardIntoHand(id LocalID) {
 	o := g.owner(id)
-	g.moveOwnCard(id, o, Discard, Hand, CardPutFromDiscardIntoHand{Player: o, Card: id})
+	g.moveOwnCard(id, o, Discard, Hand, CardPutFromDiscardIntoHand{
+		Player: o,
+		Card:   id,
+	})
 }
 
 // MoveFromDeckToHand moves a card from its owner's deck to their hand.
 func (g *Game) MoveFromDeckToHand(id LocalID) {
 	o := g.owner(id)
-	g.moveOwnCard(id, o, Deck, Hand, CardPutFromDeckIntoHand{Player: o, Card: id})
+	g.moveOwnCard(id, o, Deck, Hand, CardPutFromDeckIntoHand{
+		Player: o,
+		Card:   id,
+	})
 }
 
 // MoveFromDeckToDiscard moves a card from its owner's deck to their discard pile.
 func (g *Game) MoveFromDeckToDiscard(id LocalID) {
 	o := g.owner(id)
-	g.moveOwnCard(id, o, Deck, Discard, CardMoved{Player: o, Card: id, From: Deck, To: Discard})
+	g.moveOwnCard(id, o, Deck, Discard, CardMoved{
+		Player: o,
+		Card:   id,
+		From:   Deck,
+		To:     Discard,
+	})
 }
 
 // moveOwnCard moves a card between two of the same player's resting zones.
 func (g *Game) moveOwnCard(id LocalID, player int, from, to Zone, entry LogEntry) {
 	g.moveCard(id,
-		zoneRef{Player: player, Zone: from},
-		zoneRef{Player: player, Zone: to},
+		zoneRef{
+			Player: player,
+			Zone:   from,
+		},
+		zoneRef{
+			Player: player,
+			Zone:   to,
+		},
 		entry)
 }
 
@@ -801,7 +852,10 @@ func (g *Game) MoveFromDiscardToTopOfDeck(id LocalID) {
 	o := g.owner(id)
 	g.State.Discard[o].remove(id)
 	g.State.Deck[o].addFront(id)
-	g.record(CardPutFromDiscardOnTopOfDeck{Player: o, Card: id})
+	g.record(CardPutFromDiscardOnTopOfDeck{
+		Player: o,
+		Card:   id,
+	})
 }
 
 // MoveFromDeckToTopOfDeck repositions a card already in its owner's deck to the
@@ -810,7 +864,10 @@ func (g *Game) MoveFromDeckToTopOfDeck(id LocalID) {
 	o := g.owner(id)
 	g.State.Deck[o].remove(id)
 	g.State.Deck[o].addFront(id)
-	g.record(CardPutOnTopOfDeck{Card: id, Owner: o})
+	g.record(CardPutOnTopOfDeck{
+		Card:  id,
+		Owner: o,
+	})
 }
 
 // shuffleIntoDeckFrom moves a card out of one of its owner's zones into their
@@ -826,7 +883,10 @@ func (g *Game) shuffleIntoDeckFrom(id LocalID, from *deckList) {
 		g.shuffleBatch = append(g.shuffleBatch, id)
 		return
 	}
-	g.record(CardShuffledIntoDeck{Card: id, Owner: o})
+	g.record(CardShuffledIntoDeck{
+		Card:  id,
+		Owner: o,
+	})
 }
 
 // ShuffleFromDiscardIntoDeck moves a card from its owner's discard pile into their

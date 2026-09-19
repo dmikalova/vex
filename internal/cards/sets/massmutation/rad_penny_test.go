@@ -21,7 +21,10 @@ import (
 func TestRadPenny(t *testing.T) {
 	t.Run("steals 1 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(RadPenny)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(RadPenny),
+			},
 			P2: ct.Side{Amber: 2},
 		})
 
@@ -34,7 +37,10 @@ func TestRadPenny(t *testing.T) {
 	t.Run("shuffles itself into your deck when destroyed", func(t *testing.T) {
 		var penny ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(ct.Bind(&penny, RadPenny))},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(ct.Bind(&penny, RadPenny)),
+			},
 		})
 
 		h.Game().DestroyEach(0, []engine.LocalID{penny.ID()})

@@ -8,9 +8,15 @@ func TestEffectValidation(t *testing.T) {
 		Amount: 1,
 		Target: Target{Kind: TargetThisCreature},
 	}
-	good := Heal{Fully: true, Target: Target{Kind: TargetThisCreature}}
+	good := Heal{
+		Fully:  true,
+		Target: Target{Kind: TargetThisCreature},
+	}
 
-	if err := validateEffect(GainAember{Player: Controller, Amount: 1}); err != nil {
+	if err := validateEffect(GainAember{
+		Player: Controller,
+		Amount: 1,
+	}); err != nil {
 		t.Errorf("non-validating effect should be nil, got %v", err)
 	}
 	if err := (Sequence{Effects: []Effect{good, bad}}).validate(); err == nil {
@@ -22,29 +28,46 @@ func TestEffectValidation(t *testing.T) {
 	if err := (Sequence{Effects: []Effect{good}}).validate(); err != nil {
 		t.Errorf("sentences of valid effects should pass, got %v", err)
 	}
-	if err := (Sequence{Effects: []Effect{good, GainAember{Player: Controller, Amount: 1}}}).validate(); err != nil {
+	if err := (Sequence{Effects: []Effect{good, GainAember{
+		Player: Controller,
+		Amount: 1,
+	}}}).validate(); err != nil {
 		t.Errorf("sequence of valid effects should pass, got %v", err)
 	}
 	if err := (Conditional{Then: bad}).validate(); err == nil {
 		t.Error("conditional should surface a bad gated effect")
 	}
-	if err := (Conditional{Then: GainAember{Player: Controller, Amount: 1}}).validate(); err != nil {
+	if err := (Conditional{Then: GainAember{
+		Player: Controller,
+		Amount: 1,
+	}}).validate(); err != nil {
 		t.Errorf("conditional with a valid effect should pass, got %v", err)
 	}
 	if err := validateEffect(
-		PutCard{Selection: Chosen{}, Destination: ToHand},
+		PutCard{
+			Selection:   Chosen{},
+			Destination: ToHand,
+		},
 	); err == nil {
 		t.Error("PutFromDiscard with no source zone should be rejected")
 	}
 	if err := validateEffect(
-		PutCard{Zones: []Zone{Discard}, Selection: Chosen{}, Destination: ToBottomOfDeck},
+		PutCard{
+			Zones:       []Zone{Discard},
+			Selection:   Chosen{},
+			Destination: ToBottomOfDeck,
+		},
 	); err == nil {
 		t.Error(
 			"PutFromDiscard to an unsupported destination should be rejected",
 		)
 	}
 	if err := validateEffect(
-		PutCard{Zones: []Zone{Discard}, Selection: Chosen{}, Destination: ToTopOfDeck},
+		PutCard{
+			Zones:       []Zone{Discard},
+			Selection:   Chosen{},
+			Destination: ToTopOfDeck,
+		},
 	); err != nil {
 		t.Errorf(
 			"PutFromDiscard to the top of the deck should pass, got %v",
@@ -52,7 +75,10 @@ func TestEffectValidation(t *testing.T) {
 		)
 	}
 	if err := validateEffect(
-		PutCard{Zones: []Zone{Discard}, Destination: ToHand},
+		PutCard{
+			Zones:       []Zone{Discard},
+			Destination: ToHand,
+		},
 	); err == nil {
 		t.Error("PutFromDiscard with no selection should be rejected")
 	}
@@ -60,11 +86,18 @@ func TestEffectValidation(t *testing.T) {
 	if err := validateEffect(PurgeCard{}); err == nil {
 		t.Error("a Purge with no player should be rejected")
 	}
-	if err := validateEffect(PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer}); err == nil {
+	if err := validateEffect(PurgeCard{
+		Zones:  []Zone{Discard},
+		Player: ChosenPlayer,
+	}); err == nil {
 		t.Error("a Purge with no selection should be rejected")
 	}
 	if err := validateEffect(
-		PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer, Selection: Chosen{Type: Creature}},
+		PurgeCard{
+			Zones:     []Zone{Discard},
+			Player:    ChosenPlayer,
+			Selection: Chosen{Type: Creature},
+		},
 	); err != nil {
 		t.Errorf(
 			"a Purge naming its player and selection should pass, got %v",
@@ -74,15 +107,22 @@ func TestEffectValidation(t *testing.T) {
 	// A result gate surfaces a bad first action or a bad follow-up.
 	if err := validateEffect(
 		Then{
-			First:  PurgeCard{},
-			Result: AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: 1},
+			First: PurgeCard{},
+			Result: AddPowerCounter{
+				Target: Target{Kind: TargetThisCreature},
+				Amount: 1,
+			},
 		},
 	); err == nil {
 		t.Error("result gate should surface a bad first action")
 	}
 	if err := validateEffect(
 		Then{
-			First:  PurgeCard{Zones: []Zone{Discard}, Player: ChosenPlayer, Selection: Chosen{}},
+			First: PurgeCard{
+				Zones:     []Zone{Discard},
+				Player:    ChosenPlayer,
+				Selection: Chosen{},
+			},
 			Result: bad,
 		},
 	); err == nil {
@@ -95,7 +135,10 @@ func TestEffectValidation(t *testing.T) {
 				Player:    ChosenPlayer,
 				Selection: Chosen{Type: Creature},
 			},
-			Result: AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: 1},
+			Result: AddPowerCounter{
+				Target: Target{Kind: TargetThisCreature},
+				Amount: 1,
+			},
 		},
 	); err != nil {
 		t.Errorf("result gate with valid halves should pass, got %v", err)
@@ -111,12 +154,18 @@ func TestRequiredTargetValidation(t *testing.T) {
 		{
 			"GainAember",
 			GainAember{Amount: 1},
-			GainAember{Player: Controller, Amount: 1},
+			GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
 		},
 		{
 			"LoseAember",
 			LoseAember{Amount: 1},
-			LoseAember{Player: Controller, Amount: 1},
+			LoseAember{
+				Player: Controller,
+				Amount: 1,
+			},
 		},
 		{
 			"DiscardArchives",
@@ -125,8 +174,15 @@ func TestRequiredTargetValidation(t *testing.T) {
 		},
 		{
 			"DiscardCard",
-			DiscardCard{Zones: []Zone{Hand}, Selection: Random{}},
-			DiscardCard{Player: Opponent, Zones: []Zone{Hand}, Selection: Random{}},
+			DiscardCard{
+				Zones:     []Zone{Hand},
+				Selection: Random{},
+			},
+			DiscardCard{
+				Player:    Opponent,
+				Zones:     []Zone{Hand},
+				Selection: Random{},
+			},
 		},
 		{"Reveal", RevealHand{}, RevealHand{Player: Controller}},
 	}
@@ -148,10 +204,16 @@ func TestRequiredTargetValidation(t *testing.T) {
 		{
 			"DealDamage",
 			DealDamage{Amount: 1},
-			DealDamage{Amount: 1, Target: this},
+			DealDamage{
+				Amount: 1,
+				Target: this,
+			},
 		},
 		{"Destroy", Destroy{}, Destroy{Target: this}},
-		{"Exalt", Exalt{Amount: 1}, Exalt{Amount: 1, Target: this}},
+		{"Exalt", Exalt{Amount: 1}, Exalt{
+			Amount: 1,
+			Target: this,
+		}},
 		{"Exhaust", Exhaust{}, Exhaust{Target: this}},
 		{"Ready", Ready{}, Ready{Target: this}},
 		{"ReadyCreatures", ReadyCreatures{}, ReadyCreatures{Target: this}},
@@ -166,7 +228,10 @@ func TestRequiredTargetValidation(t *testing.T) {
 		{
 			"AddPowerCounter",
 			AddPowerCounter{Amount: 1},
-			AddPowerCounter{Amount: 1, Target: this},
+			AddPowerCounter{
+				Amount: 1,
+				Target: this,
+			},
 		},
 		{
 			"RedirectFightDamage",
@@ -185,18 +250,31 @@ func TestRequiredTargetValidation(t *testing.T) {
 
 	// Restrict needs a player, an action, and a duration.
 	if err := validateEffect(
-		Restrict{Action: RestrictFighting, Duration: OpponentNextTurn},
+		Restrict{
+			Action:   RestrictFighting,
+			Duration: OpponentNextTurn,
+		},
 	); err == nil {
 		t.Error("Restrict with an unset player should be rejected")
 	}
-	if err := validateEffect(Restrict{Player: Opponent, Duration: OpponentNextTurn}); err == nil {
+	if err := validateEffect(Restrict{
+		Player:   Opponent,
+		Duration: OpponentNextTurn,
+	}); err == nil {
 		t.Error("Restrict with an unset action should be rejected")
 	}
-	if err := validateEffect(Restrict{Player: Opponent, Action: RestrictFighting}); err == nil {
+	if err := validateEffect(Restrict{
+		Player: Opponent,
+		Action: RestrictFighting,
+	}); err == nil {
 		t.Error("Restrict with an unset duration should be rejected")
 	}
 	if err := validateEffect(
-		Restrict{Player: Opponent, Action: RestrictFighting, Duration: OpponentNextTurn},
+		Restrict{
+			Player:   Opponent,
+			Action:   RestrictFighting,
+			Duration: OpponentNextTurn,
+		},
 	); err != nil {
 		t.Errorf("Restrict fully set should pass, got %v", err)
 	}
@@ -218,7 +296,10 @@ func TestNewCardRejectsUnsetTrigger(t *testing.T) {
 		}
 	}()
 	NewCard("Bad", Brobnar, Tactic, Common,
-		WithAbility(triggerUnset, GainAember{Player: Controller, Amount: 1}))
+		WithAbility(triggerUnset, GainAember{
+			Player: Controller,
+			Amount: 1,
+		}))
 }
 
 // An unset trait (the zero value, e.g. a facade Traits field left unassigned)
@@ -303,7 +384,10 @@ func TestNewCardRejectsInvalidReplaces(t *testing.T) {
 		Mars,
 		Creature,
 		Uncommon,
-		WithReplaces(Instead{Of: EventCreaturePlayed, With: Capture}),
+		WithReplaces(Instead{
+			Of:   EventCreaturePlayed,
+			With: Capture,
+		}),
 	)
 }
 

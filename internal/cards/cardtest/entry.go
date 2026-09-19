@@ -38,7 +38,10 @@ func Cards(items ...any) []Entry {
 // built. It is the named-handle alternative to positional lookup, and the only
 // way to name a specific copy when a scenario has two of the same card.
 func Bind(dst *Card, def engine.CardDefinition) Entry {
-	return Entry{def: def, bind: dst}
+	return Entry{
+		def:  def,
+		bind: dst,
+	}
 }
 
 // Upgraded places a host card with the given upgrades already attached. The host
@@ -84,7 +87,10 @@ func toEntry(x any) Entry {
 func toUpgrade(x any) upgrade {
 	switch v := x.(type) {
 	case Entry:
-		return upgrade{def: v.def, bind: v.bind}
+		return upgrade{
+			def:  v.def,
+			bind: v.bind,
+		}
 	case engine.CardDefinition:
 		return upgrade{def: v}
 	default:

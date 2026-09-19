@@ -18,7 +18,10 @@ import (
 func TestRitualOfBalance(t *testing.T) {
 	t.Run("does nothing while the opponent is below 6 Æmber", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(RitualOfBalance)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(RitualOfBalance),
+			},
 			P2: ct.Side{Amber: 5},
 		})
 
@@ -30,7 +33,10 @@ func TestRitualOfBalance(t *testing.T) {
 
 	t.Run("steals 1 Æmber once the opponent has 6 or more", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(RitualOfBalance)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(RitualOfBalance),
+			},
 			P2: ct.Side{Amber: 6},
 		})
 

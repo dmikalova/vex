@@ -18,7 +18,10 @@ func TestSauryAboutThat(t *testing.T) {
 	t.Run("destroys a creature and its controller gains 1 Æmber", func(t *testing.T) {
 		var target ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(SauryAboutThat)},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(SauryAboutThat),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&target, ct.Creature(ct.Power(3))))},
 		})
 

@@ -18,7 +18,10 @@ func TestSicSemperTyrannosaurus(t *testing.T) {
 	t.Run("empties the most powerful creature into your pool and destroys it", func(t *testing.T) {
 		var big, small ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(SicSemperTyrannosaurus)},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(SicSemperTyrannosaurus),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&big, ct.Creature(ct.Power(6))),
 				ct.Bind(&small, ct.Creature(ct.Power(3))),

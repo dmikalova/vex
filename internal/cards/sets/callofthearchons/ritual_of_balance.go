@@ -19,7 +19,11 @@ var RitualOfBalance = set.New(
 	card.WithTraits(card.Traits.Power),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{
-			Cond: card.PoolAember{Player: card.Opponent, Is: card.AtLeast, Amount: 6},
+			Cond: card.PoolAember{
+				Player: card.Opponent,
+				Is:     card.AtLeast,
+				Amount: 6,
+			},
 			Then: card.StealAember{Amount: 1},
 		}),
 )

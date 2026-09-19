@@ -95,7 +95,10 @@ func (g *Game) legalHouseChoices(player int) []Command {
 	}
 	out := make([]Command, len(allowed))
 	for i, h := range allowed {
-		out[i] = Command{Kind: CommandChooseHouse, House: h}
+		out[i] = Command{
+			Kind:  CommandChooseHouse,
+			House: h,
+		}
 	}
 	return out
 }
@@ -114,7 +117,10 @@ func (g *Game) legalPlayActions(player int) []Command {
 			out = append(out, g.legalHandPlays(player, i, id)...)
 		}
 		if g.CanDiscard(player, id) == nil {
-			out = append(out, Command{Kind: CommandDiscardFromHand, Hand: i})
+			out = append(out, Command{
+				Kind: CommandDiscardFromHand,
+				Hand: i,
+			})
 		}
 	}
 	for _, id := range g.Battleline(player) {
@@ -122,7 +128,10 @@ func (g *Game) legalPlayActions(player int) []Command {
 	}
 	for _, id := range g.Artifacts(player) {
 		if g.CanUseArtifact(player, id) == nil {
-			out = append(out, Command{Kind: CommandUseAction, Card: id})
+			out = append(out, Command{
+				Kind: CommandUseAction,
+				Card: id,
+			})
 		}
 	}
 	return append(out, Command{Kind: CommandEndTurn})
@@ -136,7 +145,11 @@ func (g *Game) legalHandPlays(player, i int, id LocalID) []Command {
 	case Creature:
 		out := []Command{{Kind: CommandPlayCreature, Hand: i}}
 		if len(g.State.Battleline[player].slice()) > 0 {
-			out = append(out, Command{Kind: CommandPlayCreature, Hand: i, Left: true})
+			out = append(out, Command{
+				Kind: CommandPlayCreature,
+				Hand: i,
+				Left: true,
+			})
 		}
 		return out
 	case Artifact:
@@ -164,15 +177,25 @@ func (g *Game) legalCreatureUses(player int, id LocalID) []Command {
 	}
 	var out []Command
 	if g.canUseTo(player, id, ReapUse) == nil {
-		out = append(out, Command{Kind: CommandReap, Card: id})
+		out = append(out, Command{
+			Kind: CommandReap,
+			Card: id,
+		})
 	}
 	if g.canUseTo(player, id, FightUse) == nil {
 		for _, def := range g.FightTargets(player, id) {
-			out = append(out, Command{Kind: CommandFight, Card: id, Card2: def})
+			out = append(out, Command{
+				Kind:  CommandFight,
+				Card:  id,
+				Card2: def,
+			})
 		}
 	}
 	if g.hasTrigger(id, TriggerAction) && g.canUseTo(player, id, ActionUse) == nil {
-		out = append(out, Command{Kind: CommandUseAction, Card: id})
+		out = append(out, Command{
+			Kind: CommandUseAction,
+			Card: id,
+		})
 	}
 	return out
 }

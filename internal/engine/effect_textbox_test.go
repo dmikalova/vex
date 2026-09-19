@@ -77,12 +77,20 @@ func TestGainTextBoxResolve(t *testing.T) {
 			3,
 			WithTraits(Beast),
 			WithKeywords(Skirmish),
-			WithAbility(TriggerAfterReap, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerAfterReap, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		),
 		0,
 	)
 	recipient := g.AddToBattleline(testCreature("recipient", 2), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0, It: recipient, HasIt: true}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         recipient,
+		HasIt:      true,
+	}
 	g.SetChooser(0, idChooser{id: source})
 
 	GainTextBox{
@@ -114,7 +122,12 @@ func TestGainTextBoxResolve(t *testing.T) {
 	GainTextBox{
 		Target: Target{Kind: TargetTriggeringCreature},
 		Source: Target{Kind: TargetChosenCreature},
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0, It: other, HasIt: true})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         other,
+		HasIt:      true,
+	})
 	if g.State.Cards[other].TextBoxSourcePlus != 0 {
 		t.Error("a source that selects nothing should grant no text box")
 	}
@@ -160,7 +173,10 @@ func TestLendTextBoxFromHandResolve(t *testing.T) {
 	g.SetRecording(true)
 	recipient := g.AddToBattleline(testCreature("recipient", 4), 0)
 	loaner := g.AddToHand(testCreature("loaner", 2, WithTraits(Beast)), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	LendTextBoxFromHand{}.Resolve(ctx)
 
@@ -181,7 +197,10 @@ func TestLendTextBoxFromHandNoCreature(t *testing.T) {
 	g := started(t)
 	recipient := g.AddToBattleline(testCreature("recipient", 4), 0)
 	g.AddToHand(NewCard("Filler", Brobnar, Tactic, Common), 0) // not a creature
-	LendTextBoxFromHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	LendTextBoxFromHand{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.State.Cards[recipient].TextBoxTurnSourcePlus != 0 {
 		t.Error("with no creature in hand nothing should be lent")
 	}
@@ -194,7 +213,10 @@ func TestLendTextBoxFromHandDecline(t *testing.T) {
 	g.AddToHand(testCreature("a", 2), 0)
 	g.AddToHand(testCreature("b", 2), 0)
 	g.SetChooser(0, orderRejectChooser{}) // decline the reveal
-	LendTextBoxFromHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	LendTextBoxFromHand{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.State.Cards[recipient].TextBoxTurnSourcePlus != 0 {
 		t.Error("declining the reveal should lend nothing")
 	}
@@ -206,7 +228,10 @@ func TestLendTextBoxFromHandNoRecipient(t *testing.T) {
 	g := started(t)
 	loaner := g.AddToHand(testCreature("loaner", 2), 0)
 	// No creature is in play, so the reveal happens but the loan lands on nothing.
-	LendTextBoxFromHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	LendTextBoxFromHand{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if handIdxByID(g, 0, loaner) < 0 {
 		t.Error("the revealed creature should stay in hand")
 	}
@@ -218,7 +243,10 @@ func TestCreatureGainedTextBoxText(t *testing.T) {
 	g := started(t)
 	a := g.AddToBattleline(testCreature("Mimic", 1), 0)
 	b := g.AddToBattleline(testCreature("Troll", 8), 1)
-	e := CreatureGainedTextBox{Creature: a, Source: b}
+	e := CreatureGainedTextBox{
+		Creature: a,
+		Source:   b,
+	}
 	if got := e.Text(g); got != "Mimic gains the text box of Troll" {
 		t.Errorf("text = %q", got)
 	}

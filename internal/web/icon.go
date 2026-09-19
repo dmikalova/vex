@@ -60,7 +60,10 @@ type glyphLine struct {
 func cardGlyphs(def *engine.CardDefinition) []glyphLine {
 	lines := make([]glyphLine, 0, len(def.Abilities)+len(def.ConstantAbilities)+2)
 	if kw := keywordGlyphs(def); len(kw) > 0 {
-		lines = append(lines, glyphLine{glyphs: kw, covered: true})
+		lines = append(lines, glyphLine{
+			glyphs:  kw,
+			covered: true,
+		})
 	}
 	if def.FightRestriction != (engine.Target{}) {
 		lines = append(lines, glyphLine{
@@ -77,10 +80,16 @@ func cardGlyphs(def *engine.CardDefinition) []glyphLine {
 	lines = append(lines, staticLines(def.Static)...)
 	lines = append(lines, restrictionLines(def.Restricts)...)
 	if def.Replaces != (engine.Instead{}) {
-		lines = append(lines, glyphLine{glyphs: replaceGlyphs(def.Replaces), covered: true})
+		lines = append(lines, glyphLine{
+			glyphs:  replaceGlyphs(def.Replaces),
+			covered: true,
+		})
 	}
 	if len(def.KeyCostChanges) > 0 {
-		lines = append(lines, glyphLine{glyphs: keyCostChangeGlyphs(), covered: true})
+		lines = append(lines, glyphLine{
+			glyphs:  keyCostChangeGlyphs(),
+			covered: true,
+		})
 	}
 	lines = append(lines, cardFeatureLines(def)...)
 	for i := 0; i < len(def.Abilities); {
@@ -122,13 +131,23 @@ func keywordGlyphs(def *engine.CardDefinition) []glyph {
 		}
 	}
 	if def.Assault != 0 {
-		gs = append(gs, glyph{asset: "kw-assault", qty: def.Assault})
+		gs = append(gs, glyph{
+			asset: "kw-assault",
+			qty:   def.Assault,
+		})
 	}
 	if def.Hazardous != 0 {
-		gs = append(gs, glyph{asset: "kw-hazardous", qty: def.Hazardous})
+		gs = append(gs, glyph{
+			asset: "kw-hazardous",
+			qty:   def.Hazardous,
+		})
 	}
 	if def.SplashAttack != 0 {
-		gs = append(gs, glyph{asset: "damage", qty: def.SplashAttack, decor: decorEach})
+		gs = append(gs, glyph{
+			asset: "damage",
+			qty:   def.SplashAttack,
+			decor: decorEach,
+		})
 	}
 	return gs
 }
@@ -171,10 +190,16 @@ func constantLines(ca engine.ConstantAbility) []glyphLine {
 	if ca.PowerBonus != 0 || ca.ArmorBonus != 0 || len(ca.Keywords) > 0 {
 		gs := make([]glyph, 0, 4)
 		if ca.PowerBonus != 0 {
-			gs = append(gs, glyph{asset: "power", qty: ca.PowerBonus})
+			gs = append(gs, glyph{
+				asset: "power",
+				qty:   ca.PowerBonus,
+			})
 		}
 		if ca.ArmorBonus != 0 {
-			gs = append(gs, glyph{asset: "shield", qty: ca.ArmorBonus})
+			gs = append(gs, glyph{
+				asset: "shield",
+				qty:   ca.ArmorBonus,
+			})
 		}
 		for _, k := range ca.Keywords {
 			if a := keywordIcon(k); a != "" {
@@ -182,7 +207,10 @@ func constantLines(ca engine.ConstantAbility) []glyphLine {
 			}
 		}
 		gs = append(gs, arrowTo(targetGlyph(target)))
-		lines = append(lines, glyphLine{glyphs: gs, covered: true})
+		lines = append(lines, glyphLine{
+			glyphs:  gs,
+			covered: true,
+		})
 	}
 	for _, gr := range ca.Granted {
 		gs, covered := effectGlyphs(gr.Effect)
@@ -205,19 +233,35 @@ func staticLines(m engine.StaticModifier) []glyphLine {
 	var lines []glyphLine
 	gs := make([]glyph, 0, 6)
 	if m.PowerBonus != 0 {
-		gs = append(gs, glyph{asset: "power", qty: m.PowerBonus})
+		gs = append(gs, glyph{
+			asset: "power",
+			qty:   m.PowerBonus,
+		})
 	}
 	if m.ArmorBonus != 0 {
-		gs = append(gs, glyph{asset: "shield", qty: m.ArmorBonus})
+		gs = append(gs, glyph{
+			asset: "shield",
+			qty:   m.ArmorBonus,
+		})
 	}
 	if m.AssaultBonus != 0 {
-		gs = append(gs, glyph{asset: "kw-assault", qty: m.AssaultBonus})
+		gs = append(gs, glyph{
+			asset: "kw-assault",
+			qty:   m.AssaultBonus,
+		})
 	}
 	if m.HazardousBonus != 0 {
-		gs = append(gs, glyph{asset: "kw-hazardous", qty: m.HazardousBonus})
+		gs = append(gs, glyph{
+			asset: "kw-hazardous",
+			qty:   m.HazardousBonus,
+		})
 	}
 	if m.SplashAttackBonus != 0 {
-		gs = append(gs, glyph{asset: "damage", qty: m.SplashAttackBonus, decor: decorEach})
+		gs = append(gs, glyph{
+			asset: "damage",
+			qty:   m.SplashAttackBonus,
+			decor: decorEach,
+		})
 	}
 	for _, k := range m.Keywords {
 		if a := keywordIcon(k); a != "" {
@@ -226,7 +270,10 @@ func staticLines(m engine.StaticModifier) []glyphLine {
 	}
 	if m.AemberCannotBeStolen != nil {
 		gs = append(gs,
-			glyph{asset: "aember", decor: decorEnemy}, glyph{asset: "glyph-ban"})
+			glyph{
+				asset: "aember",
+				decor: decorEnemy,
+			}, glyph{asset: "glyph-ban"})
 	}
 	if m.ProtectsFromNonFlank {
 		gs = append(gs, glyph{asset: "glyph-flank"}, glyph{asset: "shield"})
@@ -235,7 +282,10 @@ func staticLines(m engine.StaticModifier) []glyphLine {
 		gs = append(gs, glyph{asset: a})
 	}
 	if len(gs) > 0 {
-		lines = append(lines, glyphLine{glyphs: gs, covered: true})
+		lines = append(lines, glyphLine{
+			glyphs:  gs,
+			covered: true,
+		})
 	}
 	for _, gr := range m.Granted {
 		egs, covered := effectGlyphs(gr.Effect)
@@ -261,7 +311,10 @@ func restrictionLines(r engine.Restrictions) []glyphLine {
 	}
 	if playerSet(r.Reaping) {
 		gs = append(gs,
-			glyph{asset: "glyph-reap", decor: playerDecor(r.Reaping)},
+			glyph{
+				asset: "glyph-reap",
+				decor: playerDecor(r.Reaping),
+			},
 			glyph{asset: "glyph-ban"})
 	}
 	if a := typeIconName(r.CannotPlay); a != "" {
@@ -284,7 +337,10 @@ func restrictionLines(r engine.Restrictions) []glyphLine {
 	}
 	if r.NoForgeKeyNumber != 0 {
 		gs = append(gs,
-			glyph{asset: "forge", qty: r.NoForgeKeyNumber}, glyph{asset: "glyph-ban"})
+			glyph{
+				asset: "forge",
+				qty:   r.NoForgeKeyNumber,
+			}, glyph{asset: "glyph-ban"})
 	}
 	if r.MustFightIfAble {
 		gs = append(gs, glyph{asset: "glyph-fight"})
@@ -296,7 +352,11 @@ func restrictionLines(r engine.Restrictions) []glyphLine {
 		}
 		gs = append(gs,
 			glyph{asset: action},
-			glyph{asset: "aember", qty: r.Toll.Amount, decor: decorEnemy})
+			glyph{
+				asset: "aember",
+				qty:   r.Toll.Amount,
+				decor: decorEnemy,
+			})
 	}
 	if len(gs) == 0 {
 		return nil
@@ -314,7 +374,10 @@ func cardFeatureLines(def *engine.CardDefinition) []glyphLine {
 	gs := make([]glyph, 0, 4)
 	if def.AemberCannotBeStolen != nil {
 		gs = append(gs,
-			glyph{asset: "aember", decor: decorEnemy}, glyph{asset: "glyph-ban"})
+			glyph{
+				asset: "aember",
+				decor: decorEnemy,
+			}, glyph{asset: "glyph-ban"})
 	}
 	if def.DealsNoDamageWhenAttacked {
 		gs = append(gs, glyph{asset: "damage"}, glyph{asset: "glyph-ban"})
@@ -324,9 +387,15 @@ func cardFeatureLines(def *engine.CardDefinition) []glyphLine {
 	}
 	if a := typeIconName(def.EntersReadyGrant.Type); a != "" {
 		gs = append(gs,
-			glyph{asset: "exhausted", decor: decorFriendly},
+			glyph{
+				asset: "exhausted",
+				decor: decorFriendly,
+			},
 			glyph{asset: "glyph-ban"},
-			arrowTo(glyph{asset: a, decor: decorFriendly}))
+			arrowTo(glyph{
+				asset: a,
+				decor: decorFriendly,
+			}))
 	}
 	if len(gs) == 0 {
 		return nil
@@ -347,13 +416,22 @@ func keyCostChangeGlyphs() []glyph {
 // Po's Pixies drawing a steal from the common supply instead of its own pool — as
 // the affected pool's Æmber swapped for the outcome the replacement substitutes.
 func replaceGlyphs(r engine.Instead) []glyph {
-	src := glyph{asset: "aember", decor: playerDecor(r.Player)}
+	src := glyph{
+		asset: "aember",
+		decor: playerDecor(r.Player),
+	}
 	var out glyph
 	switch r.With {
 	case engine.Capture:
-		out = glyph{asset: "aember", decor: decorEnemy}
+		out = glyph{
+			asset: "aember",
+			decor: decorEnemy,
+		}
 	case engine.Steal:
-		out = glyph{asset: "aember", decor: decorEnemy | decorChosen}
+		out = glyph{
+			asset: "aember",
+			decor: decorEnemy | decorChosen,
+		}
 	case engine.FromCommonSupply:
 		out = glyph{asset: "glyph-return"}
 	default:
@@ -380,7 +458,10 @@ func fightRestrictionGlyphs(fr engine.Target) []glyph {
 // (Mother draws +1, Succubus makes the opponent draw −1) as a hand glyph carrying
 // the signed amount, tinted to the player it affects. EachPlayer stays untinted.
 func drawModifierGlyphs(m engine.DrawModifier) []glyph {
-	g := glyph{asset: "zone-hand", qty: m.Amount}
+	g := glyph{
+		asset: "zone-hand",
+		qty:   m.Amount,
+	}
 	switch m.Player {
 	case engine.Controller:
 		g.decor = decorFriendly
@@ -504,7 +585,10 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.DistributeCapture:
 		return []glyph{{asset: "aember", decor: decorEnemy}}, true
 	case engine.GiveAember:
-		src := glyph{asset: "aember", decor: decorEnemy}
+		src := glyph{
+			asset: "aember",
+			decor: decorEnemy,
+		}
 		if !v.All {
 			src.qty = v.Amount
 		}
@@ -625,7 +709,10 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}
 		return []glyph{
 			{asset: zone, decor: decorEnemy},
-			arrowTo(glyph{asset: "zone-discard", decor: decorEnemy}),
+			arrowTo(glyph{
+				asset: "zone-discard",
+				decor: decorEnemy,
+			}),
 		}, true
 	case engine.PutFromPlay:
 		if a := destinationGlyph(v.Destination); a != "" {
@@ -641,19 +728,31 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.GainStats:
 		gs := make([]glyph, 0, 3)
 		if v.Power != 0 {
-			gs = append(gs, glyph{asset: "power", qty: v.Power})
+			gs = append(gs, glyph{
+				asset: "power",
+				qty:   v.Power,
+			})
 		}
 		if v.Armor != 0 {
-			gs = append(gs, glyph{asset: "shield", qty: v.Armor})
+			gs = append(gs, glyph{
+				asset: "shield",
+				qty:   v.Armor,
+			})
 		}
 		return append(gs, arrowTo(targetGlyph(v.Target))), true
 	case engine.OverrideStats:
 		gs := make([]glyph, 0, 2)
 		if v.HasPower {
-			gs = append(gs, glyph{asset: "power", qty: v.Power})
+			gs = append(gs, glyph{
+				asset: "power",
+				qty:   v.Power,
+			})
 		}
 		if v.HasArmor {
-			gs = append(gs, glyph{asset: "shield", qty: v.Armor})
+			gs = append(gs, glyph{
+				asset: "shield",
+				qty:   v.Armor,
+			})
 		}
 		return gs, true
 	case engine.GainAssault:
@@ -665,7 +764,10 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.LendTextBoxFromHand:
 		return []glyph{
 			{asset: "type-creature", decor: decorChosen},
-			arrowTo(glyph{asset: "type-creature", decor: decorChosen}),
+			arrowTo(glyph{
+				asset: "type-creature",
+				decor: decorChosen,
+			}),
 		}, true
 	case engine.FuseTriggersForTurn:
 		return []glyph{{asset: "glyph-reap"}, {asset: "glyph-swap"}, {asset: "glyph-fight"}}, true
@@ -743,7 +845,10 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.PlaceAemberOnThis:
 		return []glyph{
 			{asset: "aember", qty: v.Amount},
-			arrowTo(glyph{asset: "card-back", decor: decorThis}),
+			arrowTo(glyph{
+				asset: "card-back",
+				decor: decorThis,
+			}),
 		}, true
 	case engine.MoveAemberToSupply:
 		return []glyph{
@@ -782,11 +887,17 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		// this creature, so render the "this creature" noun rather than a blank.
 		subject := targetGlyph(v.Target)
 		if v.Target == (engine.Target{}) {
-			subject = glyph{asset: "type-creature", decor: decorThis}
+			subject = glyph{
+				asset: "type-creature",
+				decor: decorThis,
+			}
 		}
 		return []glyph{
 			subject,
-			arrowTo(glyph{asset: "type-creature", decor: decorFriendly}),
+			arrowTo(glyph{
+				asset: "type-creature",
+				decor: decorFriendly,
+			}),
 		}, true
 	case engine.PutChosen:
 		if a := destinationGlyph(v.Destination); a != "" {
@@ -961,7 +1072,10 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		gs := []glyph{targetGlyph(v.Target), {asset: triggerIcon(v.Ability.Trigger)}}
 		return append(gs, mustCompose(v.Ability.Effect)...), true
 	case engine.TakesExtraDamage:
-		return []glyph{targetGlyph(v.Target), arrowTo(glyph{asset: "damage", qty: v.Amount})}, true
+		return []glyph{targetGlyph(v.Target), arrowTo(glyph{
+			asset: "damage",
+			qty:   v.Amount,
+		})}, true
 	case engine.ReadyCreatures:
 		return []glyph{
 			{asset: "exhausted", decor: decorFriendly},
@@ -1010,12 +1124,18 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.BatchDestroy:
 		return []glyph{
 			{asset: "glyph-destroy"},
-			arrowTo(glyph{asset: "type-creature", decor: decorEach}),
+			arrowTo(glyph{
+				asset: "type-creature",
+				decor: decorEach,
+			}),
 		}, true
 	case engine.DestroyEachCreatureAtEndOfTurn:
 		return []glyph{
 			{asset: "glyph-destroy"},
-			arrowTo(glyph{asset: "type-creature", decor: decorEach}),
+			arrowTo(glyph{
+				asset: "type-creature",
+				decor: decorEach,
+			}),
 		}, true
 	case engine.PurgeSource:
 		return []glyph{{asset: "zone-purge", decor: decorThis}}, true
@@ -1026,7 +1146,10 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.CopyPrintedStats:
 		return []glyph{
 			targetGlyph(v.Source),
-			arrowTo(glyph{asset: "type-creature", decor: decorThis}),
+			arrowTo(glyph{
+				asset: "type-creature",
+				decor: decorThis,
+			}),
 		}, true
 	case engine.ScheduleOnLeave:
 		return append(
@@ -1043,7 +1166,10 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{
 			{asset: "glyph-action"},
 			{asset: "damage", qty: v.Amount},
-			arrowTo(glyph{asset: "type-creature", decor: decorEach}),
+			arrowTo(glyph{
+				asset: "type-creature",
+				decor: decorEach,
+			}),
 		}, true
 	case engine.PutDiscardedIntoPlay:
 		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "glyph-play"})}, true
@@ -1109,7 +1235,10 @@ func verbGlyphs(verbs []engine.CreatureVerb) []glyph {
 	for _, verb := range verbs {
 		switch vv := verb.(type) {
 		case engine.ReadyVerb:
-			gs = append(gs, glyph{asset: "exhausted", decor: decorFriendly})
+			gs = append(gs, glyph{
+				asset: "exhausted",
+				decor: decorFriendly,
+			})
 		case engine.ReapVerb:
 			gs = append(gs, glyph{asset: "glyph-reap"})
 		case engine.FightVerb:
@@ -1134,7 +1263,10 @@ func moveAemberDest(onto engine.Target, to engine.Player) glyph {
 	if onto != (engine.Target{}) {
 		return targetGlyph(onto)
 	}
-	return glyph{asset: "aember", decor: playerDecor(to)}
+	return glyph{
+		asset: "aember",
+		decor: playerDecor(to),
+	}
 }
 
 // damageThenGlyphs renders a "deal N damage to <target>, then <follow-up>" effect
@@ -1222,7 +1354,10 @@ func counterAsset(kind engine.CounterKind) string {
 // chooses one or more creatures; the amounts and neighbor split stay in the rules
 // text, so the strip summarises the spread as its chosen-creature noun.
 func spreadTargetGlyph() glyph {
-	return glyph{asset: "type-creature", decor: decorChosen}
+	return glyph{
+		asset: "type-creature",
+		decor: decorChosen,
+	}
 }
 
 // targetGlyph renders a Target as its noun glyph plus the decorations that carry
@@ -1231,52 +1366,109 @@ func spreadTargetGlyph() glyph {
 func targetGlyph(t engine.Target) glyph {
 	switch t.Kind {
 	case engine.TargetThisCreature:
-		return glyph{asset: "type-creature", decor: decorThis}
+		return glyph{
+			asset: "type-creature",
+			decor: decorThis,
+		}
 	case engine.TargetTriggeringCreature, engine.TargetTheOtherCreature,
 		engine.TargetTheChosenCreature, engine.TargetCreatureFought,
 		engine.TargetTheFoughtCreature, engine.TargetTheSameCreature,
 		engine.TargetAttachedHost:
-		return glyph{asset: "type-creature", decor: decorChosen}
+		return glyph{
+			asset: "type-creature",
+			decor: decorChosen,
+		}
 	case engine.TargetEachCreature:
-		return glyph{asset: "type-creature", decor: decorEach}
+		return glyph{
+			asset: "type-creature",
+			decor: decorEach,
+		}
 	case engine.TargetEachNeighbor, engine.TargetFormerNeighbors:
 		// The strip carries "each creature"; which creatures are neighbors stays in
 		// the rules text, the way the trigger pass folds AfterNeighborFights into the
 		// plain fight glyph.
-		return glyph{asset: "type-creature", decor: decorEach}
+		return glyph{
+			asset: "type-creature",
+			decor: decorEach,
+		}
 	case engine.TargetEachUpgradeOnThis:
-		return glyph{asset: "type-upgrade", decor: decorEach | decorThis}
+		return glyph{
+			asset: "type-upgrade",
+			decor: decorEach | decorThis,
+		}
 	case engine.TargetGrantingCard:
-		return glyph{asset: "card-back", decor: decorChosen}
+		return glyph{
+			asset: "card-back",
+			decor: decorChosen,
+		}
 	case engine.TargetEachFriendlyCreature, engine.TargetEachOtherFriendlyCreature:
-		return glyph{asset: "type-creature", decor: decorEach | decorFriendly}
+		return glyph{
+			asset: "type-creature",
+			decor: decorEach | decorFriendly,
+		}
 	case engine.TargetEachEnemyCreature:
-		return glyph{asset: "type-creature", decor: decorEach | decorEnemy}
+		return glyph{
+			asset: "type-creature",
+			decor: decorEach | decorEnemy,
+		}
 	case engine.TargetChosenCreature, engine.TargetChosenOtherCreature:
-		return glyph{asset: "type-creature", decor: decorChosen}
+		return glyph{
+			asset: "type-creature",
+			decor: decorChosen,
+		}
 	case engine.TargetChosenFriendlyCreature, engine.TargetChosenOtherFriendlyCreature:
-		return glyph{asset: "type-creature", decor: decorChosen | decorFriendly}
+		return glyph{
+			asset: "type-creature",
+			decor: decorChosen | decorFriendly,
+		}
 	case engine.TargetChosenEnemyCreature:
-		return glyph{asset: "type-creature", decor: decorChosen | decorEnemy}
+		return glyph{
+			asset: "type-creature",
+			decor: decorChosen | decorEnemy,
+		}
 	case engine.TargetEachArtifact:
-		return glyph{asset: "type-artifact", decor: decorEach}
+		return glyph{
+			asset: "type-artifact",
+			decor: decorEach,
+		}
 	case engine.TargetEachFriendlyArtifact:
-		return glyph{asset: "type-artifact", decor: decorEach | decorFriendly}
+		return glyph{
+			asset: "type-artifact",
+			decor: decorEach | decorFriendly,
+		}
 	case engine.TargetEachEnemyArtifact:
-		return glyph{asset: "type-artifact", decor: decorEach | decorEnemy}
+		return glyph{
+			asset: "type-artifact",
+			decor: decorEach | decorEnemy,
+		}
 	case engine.TargetChosenArtifact:
-		return glyph{asset: "type-artifact", decor: decorChosen}
+		return glyph{
+			asset: "type-artifact",
+			decor: decorChosen,
+		}
 	case engine.TargetChosenFriendlyArtifact:
-		return glyph{asset: "type-artifact", decor: decorChosen | decorFriendly}
+		return glyph{
+			asset: "type-artifact",
+			decor: decorChosen | decorFriendly,
+		}
 	case engine.TargetChosenEnemyArtifact:
-		return glyph{asset: "type-artifact", decor: decorChosen | decorEnemy}
+		return glyph{
+			asset: "type-artifact",
+			decor: decorChosen | decorEnemy,
+		}
 	case engine.TargetChosenUpgrade:
-		return glyph{asset: "type-upgrade", decor: decorChosen}
+		return glyph{
+			asset: "type-upgrade",
+			decor: decorChosen,
+		}
 	case engine.TargetEachCardInPlay, engine.TargetEachFriendlyCardInPlay,
 		engine.TargetChosenCreatureOrArtifact,
 		engine.TargetChosenFriendlyCreatureOrArtifact,
 		engine.TargetChosenEnemyCreatureOrArtifact:
-		return glyph{asset: "card-back", decor: cardInPlayDecor(t.Kind)}
+		return glyph{
+			asset: "card-back",
+			decor: cardInPlayDecor(t.Kind),
+		}
 	default:
 		return glyph{text: t.Text()}
 	}

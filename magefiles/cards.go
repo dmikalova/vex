@@ -47,25 +47,24 @@ func (Tool) Coverage(new *bool) error {
 	return sh.RunV("go", args...)
 }
 
-// Stub scaffolds a stub for each unimplemented card in a set. Each stub is
-// build-excluded (`//go:build todo`) and carries the card's printed text and a
-// TODO marker. Excluded stubs do not compile or register, so the card database and
-// coverage numbers stay honest until a card is actually implemented; to implement
-// one, remove the build tag and write the real ability. It also (re)generates the
-// set package's `0set.go`, cataloging the cards this set reprints from earlier
-// sets so they join its deck-generation pool as full members (ADR 0021). Pass a
-// set slug, e.g. `mage tool:stub callofthearchons`.
+// Stub scaffolds the set backlog. Each stub is build-excluded (`//go:build
+// todo`) and carries the card's printed text and a TODO marker. Excluded stubs do
+// not compile or register, so the card database and coverage numbers stay honest
+// until a card is actually implemented; to implement one, remove the build tag and
+// write the real ability. It also (re)generates the set package's `0set.go`,
+// cataloging the cards this set reprints from earlier sets so they join its
+// deck-generation pool as full members (ADR 0021). Pass a set slug, e.g.
+// `mage tool:stub callofthearchons`.
 func (Tool) Stub(setSlug string) error {
 	return sh.RunV("go", "run", "./magefiles/cardlookup", "stub", setSlug)
 }
 
-// NextCard prints the next unimplemented card whose stub file still carries the
-// `//go:build todo` constraint, walking a set's missing cards in collector-number
-// order and stopping at the first one on disk. It is the pick-the-next-card step
-// of the implement-cards workflow: build the card it names, drop the build tag,
-// and run it again for the next. With no set chosen it opens the interactive ↑/↓
-// picker; pass -set=<slug> to name one directly, e.g. `mage tool:nextCard
-// -set=ageofascension`.
+// NextCard prints the next stubbed card. It walks a set's missing cards in
+// collector-number order and stops at the first match on disk. It is the
+// pick-the-next-card step of the implement-cards workflow: build the card it
+// names, drop the build tag, and run it again for the next. With no set chosen
+// it opens the interactive ↑/↓ picker; pass -set=<slug> to name one directly,
+// e.g. `mage tool:nextCard -set=ageofascension`.
 func (Tool) NextCard(set *string) error {
 	args := []string{"run", "./magefiles/cardlookup", "next-card"}
 	if set != nil && *set != "" {
@@ -74,18 +73,15 @@ func (Tool) NextCard(set *string) error {
 	return sh.RunV("go", args...)
 }
 
-// NodeUsage reports how widely each card-facade node is used. It prints every
-// exported name in internal/card, grouped by the category its declaration block
-// documents, with how many card definitions name it (CARDS) and how many other
-// files reference it (OTHER) — the facade's own internals, the engine, the web
-// client, the tools, and every test. Rarest first, then a summary of the whole
-// facade. A name with no card uses is not dead if OTHER is non-zero: it is type
-// surface, registry plumbing, or an enum family member a card never writes. Low
-// usage is not a defect on its own either (half the card pool is unimplemented);
-// it marks the nodes to check are built from reusable atoms rather than
-// hard-coding one card. Pass -max=<n> to show only the nodes at most n cards use,
-// and -category=<substring> to narrow to one group, e.g.
-// `mage tool:nodeUsage -max=1 -category=damage`.
+// NodeUsage reports facade usage. It lists each exported name in internal/card,
+// grouped by category, and shows how many card definitions and other files use it.
+// Rarest first, then a summary of the whole facade. A name with no card uses is
+// not dead if OTHER is non-zero: it is type surface, registry plumbing, or an
+// enum family member a card never writes. Low usage is not a defect on its own
+// either (half the card pool is unimplemented); it marks the nodes to check are
+// built from reusable atoms rather than hard-coding one card. Pass -max=<n> to
+// show only the nodes at most n cards use, and -category=<substring> to narrow
+// to one group, e.g. `mage tool:nodeUsage -max=1 -category=damage`.
 func (Tool) NodeUsage(max *int, category *string) error {
 	args := []string{"run", "./magefiles/cardlookup", "node-usage"}
 	if max != nil && *max >= 0 {
@@ -97,12 +93,11 @@ func (Tool) NodeUsage(max *int, category *string) error {
 	return sh.RunV("go", args...)
 }
 
-// Review opens a random batch of card files for you to read. It records the ones
-// it opens so the same file is not picked again until you have seen the whole pool
-// — at which point the slate clears and a new cycle begins. It skips test files,
-// the generated 0set.go catalogs, and build-excluded stubs, opening only files
-// with a real ability. Progress is kept in .card-review.json (gitignored). Opens
-// 10 files by default; pass -n to change the batch, e.g. `mage tool:review -n=5`.
+// Review opens a random card batch. It records the files it opens so the same one
+// is not picked again until you have seen the whole pool. It skips test files,
+// generated 0set.go catalogs, and build-excluded stubs, opening only files with a
+// real ability. Progress is kept in .card-review.json (gitignored). Opens 10
+// files by default; pass -n to change the batch, e.g. `mage tool:review -n=5`.
 func (Tool) Review(n *int) error {
 	args := []string{"run", "./magefiles/cardlookup", "review"}
 	if n != nil && *n > 0 {
@@ -111,13 +106,11 @@ func (Tool) Review(n *int) error {
 	return sh.RunV("go", args...)
 }
 
-// ImportProvenance rebuilds a set's source catalog from the Master Vault decks
-// feed. It pages the feed for the set's expansion, folds each linked card into the
-// catalog shape (ASCII-folded name and text, expanded amber/damage markup,
-// normalized house and rarity, classified anomalies), and writes
+// ImportProvenance rebuilds a set catalog. It fetches the Master Vault feed,
+// folds each card into the catalog shape, and writes
 // internal/cards/provenance/<slug>.json. With no set chosen it opens an
-// interactive picker offering every set plus "All sets"; pass -set=<slug> to name
-// one, or -set=all to rebuild every set in release order (each fetched on its own).
+// interactive picker offering every set plus "All sets"; pass -set=<slug> to
+// name one, or -set=all to rebuild every set in release order.
 func (Tool) ImportProvenance(set *string) error {
 	args := []string{"run", "./magefiles/cardlookup", "import-provenance"}
 	if set != nil && *set != "" {

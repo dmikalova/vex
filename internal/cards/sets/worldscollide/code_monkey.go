@@ -28,7 +28,10 @@ var CodeMonkey = set.New(
 			},
 			card.Conditional{
 				Cond: card.ArchivedCreaturesShareHouse{},
-				Then: card.GainAember{Player: card.Controller, Amount: 2},
+				Then: card.GainAember{
+					Player: card.Controller,
+					Amount: 2,
+				},
 			},
 		}}),
 )

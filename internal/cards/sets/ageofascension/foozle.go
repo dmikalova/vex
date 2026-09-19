@@ -22,6 +22,9 @@ var Foozle = set.New(
 	card.WithAbility(
 		card.Trigger.Reap, card.Conditional{
 			Cond: card.CreatureDestroyedThisTurn{Player: card.Opponent},
-			Then: card.GainAember{Player: card.Controller, Amount: 1},
+			Then: card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
 		}),
 )

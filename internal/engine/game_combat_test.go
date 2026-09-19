@@ -90,7 +90,10 @@ func TestFightSimultaneousDestruction(t *testing.T) {
 func TestAttackDamage(t *testing.T) {
 	valdr := func() CardDefinition {
 		return NewCard("Valdr", Brobnar, Creature, Common, WithPower(6),
-			WithAttackDamage(AttackDamage{Amount: 2, FlankOnly: true}))
+			WithAttackDamage(AttackDamage{
+				Amount:    2,
+				FlankOnly: true,
+			}))
 	}
 
 	// A flank bonus adds to the damage dealt when the defender is on a flank.
@@ -120,7 +123,10 @@ func TestAttackDamage(t *testing.T) {
 	// A Fixed amount replaces power entirely (Ether Spider deals none).
 	g3 := started(t)
 	spider := g3.AddToBattleline(NewCard("spider", Brobnar, Creature, Common, WithPower(7),
-		WithAttackDamage(AttackDamage{Fixed: true, Amount: 0})), 0)
+		WithAttackDamage(AttackDamage{
+			Fixed:  true,
+			Amount: 0,
+		})), 0)
 	foe := g3.AddToBattleline(testCreature("foe", 10), 1)
 	if err := g3.Fight(0, spider, foe); err != nil {
 		t.Fatalf("Fight: %v", err)
@@ -134,7 +140,10 @@ func TestAttackDamage(t *testing.T) {
 	g4 := started(t)
 	att4 := g4.AddToBattleline(testCreature("attacker", 4), 0)
 	spider4 := g4.AddToBattleline(NewCard("spider", Brobnar, Creature, Common, WithPower(7),
-		WithAttackDamage(AttackDamage{Fixed: true, Amount: 0})), 1)
+		WithAttackDamage(AttackDamage{
+			Fixed:  true,
+			Amount: 0,
+		})), 1)
 	if err := g4.Fight(0, att4, spider4); err != nil {
 		t.Fatalf("Fight: %v", err)
 	}
@@ -150,7 +159,10 @@ func TestAttackKeywordsPoison(t *testing.T) {
 	spyyyder := func() CardDefinition {
 		return NewCard("Spyyyder", Dis, Creature, Common, WithPower(2),
 			WithKeywords(Skirmish),
-			WithAttackKeywords(AttackKeywords{Keywords: []Keyword{Poison}, FlankOnly: true}))
+			WithAttackKeywords(AttackKeywords{
+				Keywords:  []Keyword{Poison},
+				FlankOnly: true,
+			}))
 	}
 
 	// Against a flank creature that survives the fight damage, poison destroys it.
@@ -187,7 +199,10 @@ func TestAttackKeywordsPoison(t *testing.T) {
 
 func TestBeforeFightTrigger(t *testing.T) {
 	g := started(t)
-	spit := DealDamage{Amount: 1, Target: Target{Kind: TargetEachEnemyCreature}}
+	spit := DealDamage{
+		Amount: 1,
+		Target: Target{Kind: TargetEachEnemyCreature},
+	}
 
 	// Defender survives: before-fight damages every enemy, then combat proceeds.
 	att := g.AddToBattleline(testCreature("spitter", 3, WithAbility(TriggerBeforeFight, spit)), 0)
@@ -296,7 +311,10 @@ func TestAfterNeighborFightsTrigger(t *testing.T) {
 }
 
 func TestAfterDestroyedFightingTrigger(t *testing.T) {
-	gain := GainAember{Player: Controller, Amount: 1}
+	gain := GainAember{
+		Player: Controller,
+		Amount: 1,
+	}
 
 	// The attacker survives and destroys the defender: its ability fires.
 	g := started(t)
@@ -500,9 +518,15 @@ func TestBeforeFightCanCancelFight(t *testing.T) {
 		WithAssault(2),
 		WithAbility(TriggerBeforeFight, Sequence{Effects: []Effect{
 			DiscardTop{Amount: 1},
-			Conditional{Cond: ItIs{House: activeHouse}, Then: CancelFight{}},
+			Conditional{
+				Cond: ItIs{House: activeHouse},
+				Then: CancelFight{},
+			},
 		}}),
-		WithAbility(TriggerAfterFight, GainAember{Player: Controller, Amount: 1}),
+		WithAbility(TriggerAfterFight, GainAember{
+			Player: Controller,
+			Amount: 1,
+		}),
 	), 0)
 	defender := g.AddToBattleline(
 		NewCard("hazard", Brobnar, Creature, Common, WithPower(8), WithHazardous(3)),
@@ -543,9 +567,15 @@ func TestBeforeFightCancelMissStillFights(t *testing.T) {
 		WithPower(9),
 		WithAbility(TriggerBeforeFight, Sequence{Effects: []Effect{
 			DiscardTop{Amount: 1},
-			Conditional{Cond: ItIs{House: activeHouse}, Then: CancelFight{}},
+			Conditional{
+				Cond: ItIs{House: activeHouse},
+				Then: CancelFight{},
+			},
 		}}),
-		WithAbility(TriggerAfterFight, GainAember{Player: Controller, Amount: 1}),
+		WithAbility(TriggerAfterFight, GainAember{
+			Player: Controller,
+			Amount: 1,
+		}),
 	), 0)
 	defender := g.AddToBattleline(testCreature("defender", 8), 1)
 
@@ -630,7 +660,10 @@ func TestAssaultDestroysTrigger(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	att := g.AddToBattleline(
 		NewCard("skoll", Brobnar, Creature, Common, WithPower(3), WithAssault(5),
-			WithAbility(TriggerAfterAssaultDestroys, GainAember{Player: Controller, Amount: 1})),
+			WithAbility(TriggerAfterAssaultDestroys, GainAember{
+				Player: Controller,
+				Amount: 1,
+			})),
 		0,
 	)
 	def := g.AddToBattleline(testCreature("prey", 4), 1)
@@ -985,7 +1018,11 @@ func TestTauntReachesNeighborsNeighbors(t *testing.T) {
 
 	// Blanking Lady Loreena's text drops the extended range (and her taunt), so no
 	// creature beside her is shielded any longer.
-	BlankEnemyText{}.Resolve(&EffectContext{Resolver: g, Source: loreena, Controller: 0})
+	BlankEnemyText{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     loreena,
+		Controller: 0,
+	})
 	if g.tauntReachesTwo(loreena) {
 		t.Error("a blanked text box should drop the extended taunt range")
 	}
@@ -1007,7 +1044,10 @@ func TestTakesDamageFor(t *testing.T) {
 	// redirect could chain; it must not.
 	other := g.AddToBattleline(shield, 0)
 
-	g.dealDamage(0, DamageTarget{ID: ward, Amount: 2})
+	g.dealDamage(0, DamageTarget{
+		ID:     ward,
+		Amount: 2,
+	})
 	if g.Damage(ward) != 0 || g.Damage(sid) != 2 {
 		t.Errorf("ward=%d shield=%d, want 0 and 2", g.Damage(ward), g.Damage(sid))
 	}
@@ -1016,7 +1056,10 @@ func TestTakesDamageFor(t *testing.T) {
 	}
 
 	// A creature the shield does not reach takes its own damage.
-	g.dealDamage(0, DamageTarget{ID: far, Amount: 1})
+	g.dealDamage(0, DamageTarget{
+		ID:     far,
+		Amount: 1,
+	})
 	if g.Damage(far) != 0 || g.Damage(sid) != 3 {
 		t.Errorf("far=%d shield=%d, want 0 and 3", g.Damage(far), g.Damage(sid))
 	}
@@ -1025,7 +1068,10 @@ func TestTakesDamageFor(t *testing.T) {
 	}
 
 	// Damage aimed at a shield stays on it rather than hopping to its neighbor.
-	g.dealDamage(0, DamageTarget{ID: sid, Amount: 3})
+	g.dealDamage(0, DamageTarget{
+		ID:     sid,
+		Amount: 3,
+	})
 	if g.Damage(sid) != 6 {
 		t.Errorf("shield=%d, want 6 (a redirect never chains)", g.Damage(sid))
 	}
@@ -1033,7 +1079,10 @@ func TestTakesDamageFor(t *testing.T) {
 	// A creature already out of play is not redirected either; the damage is
 	// simply dropped.
 	g.destroyEach(0, []LocalID{ward})
-	g.dealDamage(0, DamageTarget{ID: ward, Amount: 1})
+	g.dealDamage(0, DamageTarget{
+		ID:     ward,
+		Amount: 1,
+	})
 	if g.Damage(sid) != 6 {
 		t.Errorf("shield=%d, want 6 (damage to a card out of play goes nowhere)",
 			g.Damage(sid))
@@ -1051,7 +1100,10 @@ func TestTakesDamageForAfterArmor(t *testing.T) {
 		WithPower(6), WithArmor(2)), 0)
 	sid := g.AddToBattleline(shield, 0)
 
-	g.dealDamage(0, DamageTarget{ID: ward, Amount: 3})
+	g.dealDamage(0, DamageTarget{
+		ID:     ward,
+		Amount: 3,
+	})
 	if g.Damage(ward) != 0 || g.Damage(sid) != 0 {
 		t.Errorf("ward=%d shield=%d, want 0 and 0 (3 - 2 armor, then the last point"+
 			" absorbed by the shield's own armor)", g.Damage(ward), g.Damage(sid))
@@ -1059,7 +1111,10 @@ func TestTakesDamageForAfterArmor(t *testing.T) {
 
 	// Both creatures' armor is spent down by what it absorbed, so the next hit is
 	// only partly blunted.
-	g.dealDamage(0, DamageTarget{ID: ward, Amount: 5})
+	g.dealDamage(0, DamageTarget{
+		ID:     ward,
+		Amount: 5,
+	})
 	if g.Damage(ward) != 0 || g.Damage(sid) != 4 {
 		t.Errorf("ward=%d shield=%d, want 0 and 4", g.Damage(ward), g.Damage(sid))
 	}
@@ -1067,7 +1122,10 @@ func TestTakesDamageForAfterArmor(t *testing.T) {
 	// Armor that fully absorbs leaves nothing to redirect, so the shield is untouched.
 	tough := g.AddToBattleline(NewCard("tough", Shadows, Creature, Common,
 		WithPower(6), WithArmor(3)), 0)
-	g.dealDamage(0, DamageTarget{ID: tough, Amount: 3})
+	g.dealDamage(0, DamageTarget{
+		ID:     tough,
+		Amount: 3,
+	})
 	if g.Damage(tough) != 0 || g.Damage(sid) != 4 {
 		t.Errorf("tough=%d shield=%d, want 0 and 4 (its own armor swallowed it whole)",
 			g.Damage(tough), g.Damage(sid))
@@ -1092,7 +1150,10 @@ func TestAlsoTakesNeighborFightDamage(t *testing.T) {
 		far := g.AddToBattleline(testCreature("far", 9), 0)
 
 		// Outside a fight there is no splash.
-		g.dealDamage(0, DamageTarget{ID: left, Amount: 2})
+		g.dealDamage(0, DamageTarget{
+			ID:     left,
+			Amount: 2,
+		})
 		if g.Damage(did) != 0 || g.Damage(left) != 2 {
 			t.Errorf("no fight: drecker=%d left=%d, want 0 and 2",
 				g.Damage(did), g.Damage(left))
@@ -1100,19 +1161,28 @@ func TestAlsoTakesNeighborFightDamage(t *testing.T) {
 
 		// While a fight is resolving, damage to a neighbor is also dealt to Drecker.
 		g.State.FightersPlus = [2]LocalID{right + 1, far + 1}
-		g.dealDamage(0, DamageTarget{ID: left, Amount: 2})
+		g.dealDamage(0, DamageTarget{
+			ID:     left,
+			Amount: 2,
+		})
 		if g.Damage(left) != 4 || g.Damage(did) != 2 {
 			t.Errorf("left=%d drecker=%d, want 4 and 2", g.Damage(left), g.Damage(did))
 		}
 
 		// A creature that is not a neighbor does not splash onto it.
-		g.dealDamage(0, DamageTarget{ID: far, Amount: 3})
+		g.dealDamage(0, DamageTarget{
+			ID:     far,
+			Amount: 3,
+		})
 		if g.Damage(did) != 2 {
 			t.Errorf("drecker=%d, want 2 (far is not a neighbor)", g.Damage(did))
 		}
 
 		// Its own fight damage does not double onto itself.
-		g.dealDamage(0, DamageTarget{ID: did, Amount: 1})
+		g.dealDamage(0, DamageTarget{
+			ID:     did,
+			Amount: 1,
+		})
 		if g.Damage(did) != 3 {
 			t.Errorf("drecker=%d, want 3 (its own damage does not double)", g.Damage(did))
 		}
@@ -1123,7 +1193,10 @@ func TestAlsoTakesNeighborFightDamage(t *testing.T) {
 		a := g.AddToBattleline(testCreature("a", 9), 0)
 		b := g.AddToBattleline(testCreature("b", 9), 0)
 		g.State.FightersPlus = [2]LocalID{a + 1, b + 1}
-		g.dealDamage(0, DamageTarget{ID: a, Amount: 2})
+		g.dealDamage(0, DamageTarget{
+			ID:     a,
+			Amount: 2,
+		})
 		if g.Damage(a) != 2 || g.Damage(b) != 0 {
 			t.Errorf("a=%d b=%d, want 2 and 0", g.Damage(a), g.Damage(b))
 		}
@@ -1135,7 +1208,10 @@ func TestAlsoTakesNeighborFightDamage(t *testing.T) {
 			WithPower(9), WithArmor(2), WithAlsoTakesNeighborFightDamage()), 0)
 		right := g.AddToBattleline(testCreature("right", 9), 0)
 		g.State.FightersPlus = [2]LocalID{right + 1, right + 1}
-		g.dealDamage(0, DamageTarget{ID: right, Amount: 3})
+		g.dealDamage(0, DamageTarget{
+			ID:     right,
+			Amount: 3,
+		})
 		if g.Damage(right) != 3 || g.Damage(did) != 1 {
 			t.Errorf("right=%d drecker=%d, want 3 and 1 (3 shared minus 2 armor)",
 				g.Damage(right), g.Damage(did))
@@ -1148,7 +1224,10 @@ func TestAlsoTakesNeighborFightDamage(t *testing.T) {
 		right := g.AddToBattleline(testCreature("right", 9), 0)
 		g.State.FightersPlus = [2]LocalID{right + 1, right + 1}
 		// A zero-amount instance to Drecker's neighbor contributes no splash.
-		g.dealDamage(0, DamageTarget{ID: right, Amount: 0})
+		g.dealDamage(0, DamageTarget{
+			ID:     right,
+			Amount: 0,
+		})
 		if g.Damage(did) != 0 {
 			t.Errorf("drecker=%d, want 0 (a zero-amount neighbor hit is not shared)",
 				g.Damage(did))
@@ -1164,7 +1243,10 @@ func TestAlsoTakesNeighborFightDamage(t *testing.T) {
 		// x's only sharer-neighbor is two; one neighbors two, not x, so it takes
 		// nothing — the splash is computed from the original batch, never from two's
 		// own shared instance.
-		g.dealDamage(0, DamageTarget{ID: x, Amount: 2})
+		g.dealDamage(0, DamageTarget{
+			ID:     x,
+			Amount: 2,
+		})
 		if g.Damage(x) != 2 || g.Damage(two) != 2 || g.Damage(one) != 0 {
 			t.Errorf("x=%d two=%d one=%d, want 2, 2, 0",
 				g.Damage(x), g.Damage(two), g.Damage(one))
@@ -1185,7 +1267,10 @@ func TestEmitAfterEnemyDestroyedFighting(t *testing.T) {
 			Rare,
 			WithAbility(
 				TriggerAfterEnemyDestroyedFighting,
-				GainAember{Player: Controller, Amount: 1},
+				GainAember{
+					Player: Controller,
+					Amount: 1,
+				},
 			),
 		)
 	}

@@ -18,7 +18,10 @@ import (
 func TestDustPixie(t *testing.T) {
 	t.Run("gains 2 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(DustPixie)},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(DustPixie),
+			},
 		})
 
 		h.P1.Play(DustPixie)

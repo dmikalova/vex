@@ -31,12 +31,18 @@ var ChansBlaster = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
-			card.DealDamage{Amount: 2, Target: card.Target.Creature},
+			card.DealDamage{
+				Amount: 2,
+				Target: card.Target.Creature,
+			},
 			card.Then{
 				First: card.AttachSelfTo{
 					Target: card.Target.FriendlyCreature.Named(CommanderChan.Name),
 				},
-				Result: card.Use{Max: 1, Target: card.Target.OtherFriendlyCreature},
+				Result: card.Use{
+					Max:    1,
+					Target: card.Target.OtherFriendlyCreature,
+				},
 			},
 		}}),
 	}),

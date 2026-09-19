@@ -23,7 +23,10 @@ func TestOverlordGreking(t *testing.T) {
 		func(t *testing.T) {
 			var foe ct.Card
 			h := ct.Play(t, ct.Setup{
-				P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(OverlordGreking)},
+				P1: ct.Side{
+					House:  card.House.Dis,
+					InPlay: ct.Cards(OverlordGreking),
+				},
 				P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(3))))},
 			})
 

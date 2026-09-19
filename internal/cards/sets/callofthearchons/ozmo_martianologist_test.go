@@ -23,7 +23,10 @@ func TestOzmo(t *testing.T) {
 	t.Run("can stun a Mars creature when it reaps", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, InPlay: ct.Cards(Ozmo)},
+			P1: ct.Side{
+				House:  card.House.Logos,
+				InPlay: ct.Cards(Ozmo),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars)))),
 			},

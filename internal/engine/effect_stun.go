@@ -51,11 +51,18 @@ func (e Stun) resolveOptional(ctx *EffectContext) bool {
 func (e Stun) stun(ctx *EffectContext, ids []LocalID) bool {
 	for _, id := range ids {
 		if ctx.Resolver.Stunned(id) {
-			ctx.Resolver.Record(CreatureStunned{Creature: id, By: ctx.Source, AlreadyStunned: true})
+			ctx.Resolver.Record(CreatureStunned{
+				Creature:       id,
+				By:             ctx.Source,
+				AlreadyStunned: true,
+			})
 			continue
 		}
 		ctx.Resolver.SetStunned(id, true)
-		ctx.Resolver.Record(CreatureStunned{Creature: id, By: ctx.Source})
+		ctx.Resolver.Record(CreatureStunned{
+			Creature: id,
+			By:       ctx.Source,
+		})
 	}
 	return len(ids) > 0
 }
@@ -92,6 +99,9 @@ func (e Unstun) Resolve(ctx *EffectContext) {
 		freed = append(freed, id)
 	}
 	if len(freed) > 0 {
-		ctx.Resolver.Record(CreaturesUnstunned{Player: ctx.Controller, Creatures: freed})
+		ctx.Resolver.Record(CreaturesUnstunned{
+			Player:    ctx.Controller,
+			Creatures: freed,
+		})
 	}
 }

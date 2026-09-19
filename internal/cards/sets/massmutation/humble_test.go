@@ -19,7 +19,10 @@ func TestHumble(t *testing.T) {
 	t.Run("exhausts a creature and moves 3 Æmber off it to the supply", func(t *testing.T) {
 		var rich ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(Humble)},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(Humble),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&rich, ct.Creature(ct.Power(4))))},
 		})
 
@@ -35,7 +38,10 @@ func TestHumble(t *testing.T) {
 	t.Run("empties a creature holding fewer than 3 Æmber", func(t *testing.T) {
 		var poor ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(Humble)},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(Humble),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&poor, ct.Creature(ct.Power(4))))},
 		})
 

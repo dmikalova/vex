@@ -23,7 +23,10 @@ func TestGrabberJammer(t *testing.T) {
 	t.Run("captures 1 Æmber when it fights or reaps", func(t *testing.T) {
 		var jammer ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Mars, InPlay: ct.Cards(ct.Bind(&jammer, GrabberJammer))},
+			P1: ct.Side{
+				House:  card.House.Mars,
+				InPlay: ct.Cards(ct.Bind(&jammer, GrabberJammer)),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 
@@ -35,7 +38,10 @@ func TestGrabberJammer(t *testing.T) {
 
 	t.Run("raises the opponent's key cost by 1 while in play", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Mars, InPlay: ct.Cards(GrabberJammer)},
+			P1: ct.Side{
+				House:  card.House.Mars,
+				InPlay: ct.Cards(GrabberJammer),
+			},
 		})
 
 		g := h.Game()

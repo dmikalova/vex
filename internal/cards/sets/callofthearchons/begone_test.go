@@ -20,7 +20,10 @@ func TestBegone(t *testing.T) {
 	t.Run("first option destroys each Dis creature", func(t *testing.T) {
 		var disGuy, other ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(Begone)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(Begone),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&disGuy, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(3))),

@@ -21,7 +21,10 @@ func TestGujiDinosaurHunter(t *testing.T) {
 	t.Run("deals 2 to an ordinary creature", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(GujiDinosaurHunter)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(GujiDinosaurHunter),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(6))))},
 		})
 
@@ -34,7 +37,10 @@ func TestGujiDinosaurHunter(t *testing.T) {
 	t.Run("deals 6 to a Dinosaur creature", func(t *testing.T) {
 		var dino ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(GujiDinosaurHunter)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(GujiDinosaurHunter),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(ct.Bind(&dino,
 					ct.Creature(ct.Power(7), ct.Traits(card.Traits.Dinosaur)))),
@@ -50,7 +56,10 @@ func TestGujiDinosaurHunter(t *testing.T) {
 	t.Run("deals 6 to a creature with Æmber on it", func(t *testing.T) {
 		var rich ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(GujiDinosaurHunter)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(GujiDinosaurHunter),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&rich, ct.Creature(ct.Power(7))))},
 		})
 		h.Game().State.Cards[rich.ID()].Amber = 1

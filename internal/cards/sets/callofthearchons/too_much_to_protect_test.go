@@ -18,7 +18,10 @@ import (
 func TestTooMuchToProtect(t *testing.T) {
 	t.Run("steals the Æmber above six", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(TooMuchToProtect)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(TooMuchToProtect),
+			},
 			P2: ct.Side{Amber: 10},
 		})
 
@@ -30,7 +33,10 @@ func TestTooMuchToProtect(t *testing.T) {
 
 	t.Run("steals nothing when the opponent has six or less", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(TooMuchToProtect)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(TooMuchToProtect),
+			},
 			P2: ct.Side{Amber: 6},
 		})
 

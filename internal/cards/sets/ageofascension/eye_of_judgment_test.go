@@ -20,7 +20,10 @@ func TestEyeOfJudgment(t *testing.T) {
 	t.Run("purges a creature from a discard pile", func(t *testing.T) {
 		var prey ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, InPlay: ct.Cards(EyeOfJudgment)},
+			P1: ct.Side{
+				House:  card.House.Sanctum,
+				InPlay: ct.Cards(EyeOfJudgment),
+			},
 			P2: ct.Side{Discard: ct.Cards(
 				ct.Bind(&prey, ct.Creature(ct.OfHouse(card.House.Brobnar))),
 			)},

@@ -139,9 +139,17 @@ func (e FuseTriggersForTurn) Text() string {
 // Resolve installs both directions of the fuse for the controller's turn.
 func (e FuseTriggersForTurn) Resolve(ctx *EffectContext) {
 	ctx.Resolver.AddLastingAlsoTriggers(
-		LastingAlsoTriggersOn{Controller: int8(ctx.Controller), From: e.A, Onto: e.B},
+		LastingAlsoTriggersOn{
+			Controller: int8(ctx.Controller),
+			From:       e.A,
+			Onto:       e.B,
+		},
 	)
 	ctx.Resolver.AddLastingAlsoTriggers(
-		LastingAlsoTriggersOn{Controller: int8(ctx.Controller), From: e.B, Onto: e.A},
+		LastingAlsoTriggersOn{
+			Controller: int8(ctx.Controller),
+			From:       e.B,
+			Onto:       e.A,
+		},
 	)
 }

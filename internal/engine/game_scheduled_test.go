@@ -5,17 +5,26 @@ import "testing"
 // TestScheduleOnLeaveText covers the arming node's rendering and the opponent
 // ForgeKey it carries, plus the validation of the effect it can schedule.
 func TestScheduleOnLeaveText(t *testing.T) {
-	arm := ScheduleOnLeave{Do: ForgeKey{Player: Opponent, FreeOfCost: true}}
+	arm := ScheduleOnLeave{Do: ForgeKey{
+		Player:     Opponent,
+		FreeOfCost: true,
+	}}
 	if got := arm.Text(); got != "when {self} leaves play, your opponent forges a key at no cost" {
 		t.Errorf("arm text = %q", got)
 	}
-	if got := (ForgeKey{Player: Opponent, FreeOfCost: true}).Text(); got != "your opponent forges a key at no cost" {
+	if got := (ForgeKey{
+		Player:     Opponent,
+		FreeOfCost: true,
+	}).Text(); got != "your opponent forges a key at no cost" {
 		t.Errorf("opponent forge text = %q", got)
 	}
 	if err := arm.validate(); err != nil {
 		t.Errorf("valid arm should validate, got %v", err)
 	}
-	if action, ok := scheduledActionOf(ForgeKey{Player: Opponent, FreeOfCost: true}); !ok ||
+	if action, ok := scheduledActionOf(ForgeKey{
+		Player:     Opponent,
+		FreeOfCost: true,
+	}); !ok ||
 		action != schedOpponentForgesKeyFree {
 		t.Errorf("scheduledActionOf(opponent forge) = %d, %v", action, ok)
 	}
@@ -27,10 +36,16 @@ func TestScheduleOnLeaveValidateRejects(t *testing.T) {
 	if err := (ScheduleOnLeave{}).validate(); err == nil {
 		t.Error("a ScheduleOnLeave with no Do should fail validation")
 	}
-	if err := (ScheduleOnLeave{Do: GainAember{Player: Controller, Amount: 1}}).validate(); err == nil {
+	if err := (ScheduleOnLeave{Do: GainAember{
+		Player: Controller,
+		Amount: 1,
+	}}).validate(); err == nil {
 		t.Error("a ScheduleOnLeave with an unschedulable Do should fail validation")
 	}
-	if _, ok := scheduledActionOf(GainAember{Player: Controller, Amount: 1}); ok {
+	if _, ok := scheduledActionOf(GainAember{
+		Player: Controller,
+		Amount: 1,
+	}); ok {
 		t.Error("GainAember is not a schedulable action")
 	}
 }
@@ -38,7 +53,10 @@ func TestScheduleOnLeaveValidateRejects(t *testing.T) {
 // TestForgeKeyOpponentValidate covers the opponent forge only being supported at
 // no cost.
 func TestForgeKeyOpponentValidate(t *testing.T) {
-	if err := (ForgeKey{Player: Opponent, FreeOfCost: true}).validate(); err != nil {
+	if err := (ForgeKey{
+		Player:     Opponent,
+		FreeOfCost: true,
+	}).validate(); err != nil {
 		t.Errorf("a free opponent forge should validate, got %v", err)
 	}
 	if err := (ForgeKey{Player: Opponent}).validate(); err == nil {
@@ -57,8 +75,15 @@ func TestScheduleOnLeaveForgesForOpponent(t *testing.T) {
 	}
 	src := g.AddToBattleline(NewCard("Turnkey", Dis, Creature, Rare, WithPower(2)), 0)
 
-	ScheduleOnLeave{Do: ForgeKey{Player: Opponent, FreeOfCost: true}}.Resolve(
-		&EffectContext{Resolver: g, Source: src, Controller: 0},
+	ScheduleOnLeave{Do: ForgeKey{
+		Player:     Opponent,
+		FreeOfCost: true,
+	}}.Resolve(
+		&EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		},
 	)
 	if g.State.ScheduledCount != 1 {
 		t.Fatalf("arming should schedule one effect, got %d", g.State.ScheduledCount)
@@ -157,8 +182,15 @@ func TestForgeKeyFreeForcedResolver(t *testing.T) {
 		t.Errorf("forced forge keys = %d, want 1", g.Keys(1))
 	}
 
-	ForgeKey{Player: Opponent, FreeOfCost: true}.Resolve(
-		&EffectContext{Resolver: g, Source: 0, Controller: 0},
+	ForgeKey{
+		Player:     Opponent,
+		FreeOfCost: true,
+	}.Resolve(
+		&EffectContext{
+			Resolver:   g,
+			Source:     0,
+			Controller: 0,
+		},
 	)
 	if g.Keys(1) != 2 {
 		t.Errorf("the opponent ForgeKey should forge again, keys = %d", g.Keys(1))
@@ -209,7 +241,11 @@ func TestDestroyEachCreatureAtEndOfTurn(t *testing.T) {
 	theirs := g.AddToBattleline(NewCard("theirs", Brobnar, Creature, Common, WithPower(3)), 1)
 
 	DestroyEachCreatureAtEndOfTurn{}.Resolve(
-		&EffectContext{Resolver: g, Source: src, Controller: 0},
+		&EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		},
 	)
 	if g.State.ScheduledCount != 1 {
 		t.Fatalf("Resolve should schedule one effect, got count %d", g.State.ScheduledCount)

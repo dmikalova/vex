@@ -27,7 +27,10 @@ var PraefectusLudo = set.New(
 		Target: card.Target.EachOtherFriendlyCreature,
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Destroyed,
-			Effect:  card.MoveAemberToSupply{All: true, Target: card.Target.This},
+			Effect: card.MoveAemberToSupply{
+				All:    true,
+				Target: card.Target.This,
+			},
 		}},
 	}),
 )

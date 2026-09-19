@@ -44,7 +44,10 @@ func TestSessionApplyRecordsAndAdvances(t *testing.T) {
 		t.Fatalf("first request = %+v done=%v, want a card pick", req, done)
 	}
 
-	if err := s.Apply(engine.Command{Kind: engine.CommandPickCard, Card: 2}); err != nil {
+	if err := s.Apply(engine.Command{
+		Kind: engine.CommandPickCard,
+		Card: 2,
+	}); err != nil {
 		t.Fatalf("apply card pick: %v", err)
 	}
 	req, done = s.Pending()
@@ -52,7 +55,10 @@ func TestSessionApplyRecordsAndAdvances(t *testing.T) {
 		t.Fatalf("after card pick got %+v done=%v, want an option request", req, done)
 	}
 
-	if err := s.Apply(engine.Command{Kind: engine.CommandOption, Index: 1}); err != nil {
+	if err := s.Apply(engine.Command{
+		Kind:  engine.CommandOption,
+		Index: 1,
+	}); err != nil {
 		t.Fatalf("apply option: %v", err)
 	}
 	if _, done := s.Pending(); !done {
@@ -80,7 +86,10 @@ func TestSessionApplyRejects(t *testing.T) {
 	s := newSession()
 	// The pending request is a card pick; an option command does not answer it.
 	if err := s.Apply(
-		engine.Command{Kind: engine.CommandOption, Index: 0},
+		engine.Command{
+			Kind:  engine.CommandOption,
+			Index: 0,
+		},
 	); !errors.Is(
 		err,
 		ErrIllegal,
@@ -89,7 +98,10 @@ func TestSessionApplyRejects(t *testing.T) {
 	}
 	// A card not among the candidates is also illegal.
 	if err := s.Apply(
-		engine.Command{Kind: engine.CommandPickCard, Card: 9},
+		engine.Command{
+			Kind: engine.CommandPickCard,
+			Card: 9,
+		},
 	); !errors.Is(
 		err,
 		ErrIllegal,
@@ -97,8 +109,14 @@ func TestSessionApplyRejects(t *testing.T) {
 		t.Fatalf("apply out-of-set card: got %v, want ErrIllegal", err)
 	}
 
-	mustApply(t, s, engine.Command{Kind: engine.CommandPickCard, Card: 1})
-	mustApply(t, s, engine.Command{Kind: engine.CommandOption, Index: 0})
+	mustApply(t, s, engine.Command{
+		Kind: engine.CommandPickCard,
+		Card: 1,
+	})
+	mustApply(t, s, engine.Command{
+		Kind:  engine.CommandOption,
+		Index: 0,
+	})
 	if err := s.Apply(engine.Command{Kind: engine.CommandOption}); !errors.Is(err, ErrFinished) {
 		t.Fatalf("apply after done: got %v, want ErrFinished", err)
 	}
@@ -108,8 +126,14 @@ func TestSessionApplyRejects(t *testing.T) {
 // Undo(n) equals the state a fresh session reaches applying the same n commands.
 func TestSessionUndoIsReplay(t *testing.T) {
 	full := newSession()
-	mustApply(t, full, engine.Command{Kind: engine.CommandPickCard, Card: 2})
-	mustApply(t, full, engine.Command{Kind: engine.CommandOption, Index: 1})
+	mustApply(t, full, engine.Command{
+		Kind: engine.CommandPickCard,
+		Card: 2,
+	})
+	mustApply(t, full, engine.Command{
+		Kind:  engine.CommandOption,
+		Index: 1,
+	})
 
 	if err := full.Undo(1); err != nil {
 		t.Fatalf("undo: %v", err)
@@ -119,7 +143,10 @@ func TestSessionUndoIsReplay(t *testing.T) {
 	}
 
 	ref := newSession()
-	mustApply(t, ref, engine.Command{Kind: engine.CommandPickCard, Card: 2})
+	mustApply(t, ref, engine.Command{
+		Kind: engine.CommandPickCard,
+		Card: 2,
+	})
 	if full.Game().State != ref.Game().State {
 		t.Fatal("undo did not reproduce the state of the same prefix replayed fresh")
 	}
@@ -136,8 +163,14 @@ func TestSessionUndoIsReplay(t *testing.T) {
 // exact same state, and a mismatched version is refused.
 func TestSessionRecordRoundTrip(t *testing.T) {
 	s := newSession()
-	mustApply(t, s, engine.Command{Kind: engine.CommandPickCard, Card: 2})
-	mustApply(t, s, engine.Command{Kind: engine.CommandOption, Index: 1})
+	mustApply(t, s, engine.Command{
+		Kind: engine.CommandPickCard,
+		Card: 2,
+	})
+	mustApply(t, s, engine.Command{
+		Kind:  engine.CommandOption,
+		Index: 1,
+	})
 
 	rec := s.Record()
 	if rec.Version != Version || rec.Seed != 7 || len(rec.Commands) != 2 {
@@ -162,7 +195,10 @@ func TestSessionRecordRoundTrip(t *testing.T) {
 // today).
 func TestSessionView(t *testing.T) {
 	s := newSession()
-	mustApply(t, s, engine.Command{Kind: engine.CommandPickCard, Card: 2})
+	mustApply(t, s, engine.Command{
+		Kind: engine.CommandPickCard,
+		Card: 2,
+	})
 	v := s.View(1)
 	if v.Viewer != 1 || v.State != s.Game().State {
 		t.Fatalf("View(1) = %+v, want the identity projection for viewer 1", v)

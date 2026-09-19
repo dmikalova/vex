@@ -18,7 +18,10 @@ func TestDoubleDoom(t *testing.T) {
 	t.Run("returns an enemy creature to hand, then a random card is discarded", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(DoubleDoom)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(DoubleDoom),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(3))))},
 		})
 

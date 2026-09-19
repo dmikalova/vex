@@ -21,7 +21,10 @@ import (
 func TestRotgrub(t *testing.T) {
 	t.Run("opponent loses 1 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(Rotgrub)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(Rotgrub),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 

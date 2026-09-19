@@ -57,7 +57,10 @@ var NiffleKong = set.Gigantic(
 				Target: card.Target.FriendlyCreature.WithTrait(card.Traits.Niffle),
 			},
 			Result: card.Sequence{Effects: []card.Effect{
-				card.DealDamage{Amount: 3, Target: card.Target.Creature},
+				card.DealDamage{
+					Amount: 3,
+					Target: card.Target.Creature,
+				},
 				card.StealAember{Amount: 1},
 				card.Destroy{Target: card.Target.EnemyArtifact},
 			}},

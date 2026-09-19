@@ -5,9 +5,16 @@ import "testing"
 func TestAddPowerCounter(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	c := g.AddToBattleline(testCreature("c", 3), 0)
-	ctx := &EffectContext{Resolver: g, Source: c, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     c,
+		Controller: 0,
+	}
 
-	e := AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: 1}
+	e := AddPowerCounter{
+		Target: Target{Kind: TargetThisCreature},
+		Amount: 1,
+	}
 	if e.Text() != "give {self} a +1 power counter" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -30,9 +37,16 @@ func TestAddPowerCounterChosenBindsContext(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	art := g.AddArtifact(testArtifact("art"), 0)
 	g.SetChooser(0, FirstChooser{})
-	ctx := &EffectContext{Resolver: g, Source: art, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     art,
+		Controller: 0,
+	}
 
-	AddPowerCounter{Target: Target{Kind: TargetChosenArtifact}, Amount: 3}.Resolve(ctx)
+	AddPowerCounter{
+		Target: Target{Kind: TargetChosenArtifact},
+		Amount: 3,
+	}.Resolve(ctx)
 
 	if !ctx.HasIt || ctx.It != art {
 		t.Fatalf("chosen counter target should be left in context: HasIt=%v It=%v",
@@ -49,9 +63,18 @@ func TestAddPowerCounterEqual(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mimic := g.AddToBattleline(testCreature("mimic", 0), 0)
 	chosen := g.AddToBattleline(testCreature("chosen", 6), 0)
-	ctx := &EffectContext{Resolver: g, Source: mimic, Controller: 0, It: chosen, HasIt: true}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     mimic,
+		Controller: 0,
+		It:         chosen,
+		HasIt:      true,
+	}
 
-	e := AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Equal: PowerOfChosen{}}
+	e := AddPowerCounter{
+		Target: Target{Kind: TargetThisCreature},
+		Equal:  PowerOfChosen{},
+	}
 	if got := e.Text(); got != "give {self} +1 power counters equal to its power" {
 		t.Errorf("text = %q", got)
 	}
@@ -71,12 +94,20 @@ func TestAddPowerCounterPer(t *testing.T) {
 	c := g.AddToBattleline(testCreature("c", 3), 0)
 	hurt := g.AddToBattleline(testCreature("hurt", 5), 1)
 	g.DealDamage(0, []DamageTarget{{ID: hurt, Amount: 1}})
-	ctx := &EffectContext{Resolver: g, Source: c, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     c,
+		Controller: 0,
+	}
 
 	e := AddPowerCounter{
 		Target: Target{Kind: TargetThisCreature},
 		Amount: 2,
-		Per:    CardsInPlay{Player: EachPlayer, Type: Creature, Damaged: true},
+		Per: CardsInPlay{
+			Player:  EachPlayer,
+			Type:    Creature,
+			Damaged: true,
+		},
 	}
 	want := "for each damaged creature in play, give {self} two +1 power counters"
 	if got := e.Text(); got != want {
@@ -116,7 +147,10 @@ func TestAddPowerCounterWalk(t *testing.T) {
 	left := g.AddToBattleline(testCreature("left", 4), 0)
 	mid := g.AddToBattleline(testCreature("mid", 4), 0)
 	right := g.AddToBattleline(testCreature("right", 4), 0)
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.Power(left) != 7 || g.Power(mid) != 6 || g.Power(right) != 5 {
 		t.Errorf(
 			"power = %d/%d/%d, want 7/6/5",
@@ -136,8 +170,15 @@ func TestAddPowerCounterSettlesLethal(t *testing.T) {
 		t.Fatal("2 damage should not destroy a 3-power creature")
 	}
 
-	AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: -1}.
-		Resolve(&EffectContext{Resolver: g, Source: c, Controller: 0})
+	AddPowerCounter{
+		Target: Target{Kind: TargetThisCreature},
+		Amount: -1,
+	}.
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Source:     c,
+			Controller: 0,
+		})
 	g.settleDestroyed(0) // the resolution boundary settles the counter (ADR 0029)
 
 	if g.inPlay(c) {

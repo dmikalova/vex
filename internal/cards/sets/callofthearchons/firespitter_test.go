@@ -21,7 +21,10 @@ func TestFirespitter(t *testing.T) {
 	t.Run("deals 1 damage to each enemy creature before fighting", func(t *testing.T) {
 		var weak, tough ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(Firespitter)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(Firespitter),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&weak, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(1))),

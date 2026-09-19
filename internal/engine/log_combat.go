@@ -184,17 +184,40 @@ func (e AbilityDamageDealt) Text(n Namer) string {
 func (t DamageTarget) damageEntry(target LocalID, dealt, total int) LogEntry {
 	switch t.SourceKeyword {
 	case assaultDamage:
-		return AssaultDealt{Source: t.Source, Amount: dealt, Target: target}
+		return AssaultDealt{
+			Source: t.Source,
+			Amount: dealt,
+			Target: target,
+		}
 	case hazardousDamage:
-		return HazardousDealt{Source: t.Source, Amount: dealt, Target: target}
+		return HazardousDealt{
+			Source: t.Source,
+			Amount: dealt,
+			Target: target,
+		}
 	case abilityDamage:
 		if t.Source != target {
-			return AbilityDamageDealt{Amount: dealt, Target: target}
+			return AbilityDamageDealt{
+				Amount: dealt,
+				Target: target,
+			}
 		}
-		return DamageTaken{Creature: target, Amount: dealt, Total: total}
+		return DamageTaken{
+			Creature: target,
+			Amount:   dealt,
+			Total:    total,
+		}
 	case bonusDamage:
-		return BonusDamageDealt{Source: t.Source, Amount: dealt, Target: target}
+		return BonusDamageDealt{
+			Source: t.Source,
+			Amount: dealt,
+			Target: target,
+		}
 	default:
-		return DamageTaken{Creature: target, Amount: dealt, Total: total}
+		return DamageTaken{
+			Creature: target,
+			Amount:   dealt,
+			Total:    total,
+		}
 	}
 }

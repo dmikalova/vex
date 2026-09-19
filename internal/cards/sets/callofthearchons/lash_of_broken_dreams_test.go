@@ -22,7 +22,10 @@ func TestLashOfBrokenDreams(t *testing.T) {
 				House:  card.House.Dis,
 				InPlay: ct.Cards(LashOfBrokenDreams),
 			},
-			P2: ct.Side{House: card.House.Dis, Amber: 8},
+			P2: ct.Side{
+				House: card.House.Dis,
+				Amber: 8,
+			},
 		})
 
 		h.P1.UseAction(LashOfBrokenDreams)
@@ -40,7 +43,10 @@ func TestLashOfBrokenDreams(t *testing.T) {
 				House:  card.House.Dis,
 				InPlay: ct.Cards(LashOfBrokenDreams),
 			},
-			P2: ct.Side{House: card.House.Dis, Amber: 6},
+			P2: ct.Side{
+				House: card.House.Dis,
+				Amber: 6,
+			},
 		})
 
 		h.P1.UseAction(LashOfBrokenDreams)

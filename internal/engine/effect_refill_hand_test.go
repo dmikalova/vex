@@ -53,7 +53,10 @@ func TestDiscardAndRefillHandEachPlayer(t *testing.T) {
 	}
 	g.AddToHand(testCreature("theirOld", 3), 1)
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	DiscardHand{Player: EachPlayer}.Resolve(ctx)
 	RefillHand{Player: EachPlayer}.Resolve(ctx)
 
@@ -78,7 +81,10 @@ func TestDiscardAndRefillHandRespectsChains(t *testing.T) {
 		g.AddToDeck(testCreature("deck", 1), 0)
 	}
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	DiscardHand{Player: EachPlayer}.Resolve(ctx)
 	RefillHand{Player: EachPlayer}.Resolve(ctx)
 
@@ -94,7 +100,10 @@ func TestDiscardAndRefillHandRespectsChains(t *testing.T) {
 func TestDiscardHandControllerOnly(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	c := g.AddToHand(testCreature("c", 2), 0)
-	DiscardHand{Player: Controller}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	DiscardHand{Player: Controller}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if !g.State.Discard[0].contains(c) {
 		t.Error("the controller's hand should be discarded")
 	}

@@ -18,7 +18,10 @@ func TestRedAlert(t *testing.T) {
 	t.Run("deals damage equal to the enemy creature surplus", func(t *testing.T) {
 		var strong, weak ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.StarAlliance, Hand: ct.Cards(RedAlert)},
+			P1: ct.Side{
+				House: card.House.StarAlliance,
+				Hand:  ct.Cards(RedAlert),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&strong, ct.Creature(ct.Power(6))),
 				ct.Bind(&weak, ct.Creature(ct.Power(4))),

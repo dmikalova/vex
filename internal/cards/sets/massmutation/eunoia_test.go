@@ -20,7 +20,10 @@ func TestEunoia(t *testing.T) {
 	t.Run("gains 1 Æmber and heals 2 when an enemy dies fighting it", func(t *testing.T) {
 		var eunoia, foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(ct.Bind(&eunoia, Eunoia))},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(ct.Bind(&eunoia, Eunoia)),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(1))))},
 		})
 

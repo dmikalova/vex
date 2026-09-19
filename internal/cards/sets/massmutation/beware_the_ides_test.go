@@ -19,7 +19,10 @@ func TestBewareTheIdes(t *testing.T) {
 	t.Run("deals 23 damage to the center creature", func(t *testing.T) {
 		var left, center, right ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(BewareTheIdes)},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(BewareTheIdes),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&left, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5))),
 				ct.Bind(&center, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5))),

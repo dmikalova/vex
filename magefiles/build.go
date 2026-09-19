@@ -107,6 +107,22 @@ func FmtCheck() error {
 	return nil
 }
 
+// Fmtmklv checks or rewrites multiline keyed composite literals. It defaults to
+// checking the whole repo and accepts a -fix flag to rewrite in place, with an
+// optional path argument for focused runs.
+func Fmtmklv(path *string, fix *bool) error {
+	args := []string{"run", "./magefiles/mklvfmt"}
+	if fix != nil && *fix {
+		args = append(args, "-fix")
+	}
+	if path != nil && *path != "" {
+		args = append(args, *path)
+	} else {
+		args = append(args, "./...")
+	}
+	return sh.RunV("go", args...)
+}
+
 // Tidy tidies module dependencies.
 func Tidy() error {
 	return sh.RunV("go", "mod", "tidy")

@@ -154,7 +154,10 @@ func loseAemberFrom(ctx *EffectContext, players []int, amountFor func(p int) int
 		}
 		ctx.Produced.AemberLost[p] += lost
 		ctx.Resolver.SetAember(p, ctx.Resolver.Aember(p)-lost)
-		ctx.Resolver.Record(AemberLost{Player: p, Amount: lost})
+		ctx.Resolver.Record(AemberLost{
+			Player: p,
+			Amount: lost,
+		})
 	}
 	return moved
 }

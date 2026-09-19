@@ -24,6 +24,9 @@ var Timequake = set.New(
 				From:      []card.Zone{card.InPlay},
 				Selection: card.Each{},
 			},
-			card.Draw{Amount: 1, Per: card.CardsShuffledIntoDeck{}},
+			card.Draw{
+				Amount: 1,
+				Per:    card.CardsShuffledIntoDeck{},
+			},
 		}}),
 )

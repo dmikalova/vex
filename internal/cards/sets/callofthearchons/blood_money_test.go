@@ -18,7 +18,10 @@ func TestBloodMoney(t *testing.T) {
 	t.Run("exalts a chosen enemy creature twice", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(BloodMoney)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(BloodMoney),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(4))),

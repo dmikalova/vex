@@ -18,7 +18,10 @@ import (
 func TestFertilityChant(t *testing.T) {
 	t.Run("gives the controller 4 Æmber pips and the opponent 2", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(FertilityChant)},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(FertilityChant),
+			},
 		})
 
 		h.P1.Play(FertilityChant)

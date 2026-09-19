@@ -8,7 +8,11 @@ func TestDestroyEffect(t *testing.T) {
 	weakFriendly := g.AddToBattleline(testCreature("weak", 3), 0)
 	strongEnemy := g.AddToBattleline(testCreature("strong", 5), 1)
 	weakEnemy := g.AddToBattleline(testCreature("weakfoe", 2), 1)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	byPower := Destroy{Target: Target{Kind: TargetEachCreature}.PowerAtMost(3)}
 	if byPower.Text() != "destroy each creature with power 3 or lower" {
@@ -54,7 +58,10 @@ func TestBatchDestroy(t *testing.T) {
 		House:  namedHouse(Untamed),
 		Ready:  true,
 	}
-	e := BatchDestroy{Gather: EachPlayerUnless{Spare: spare, Take: MostPowerfulN(1)}}
+	e := BatchDestroy{Gather: EachPlayerUnless{
+		Spare: spare,
+		Take:  MostPowerfulN(1),
+	}}
 	if err := e.validate(); err != nil {
 		t.Errorf("validate with a Gather = %v", err)
 	}
@@ -76,7 +83,10 @@ func TestBatchDestroy(t *testing.T) {
 	bigP1 := g.AddToBattleline(testCreature("bigP1", 6), 1)
 	smallP1 := g.AddToBattleline(testCreature("smallP1", 3), 1)
 
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	if !g.inPlay(readyUntamed) || !g.inPlay(bigP0) {
 		t.Error("a player with a ready Untamed creature should be spared entirely")
@@ -93,17 +103,26 @@ func TestBatchDestroy(t *testing.T) {
 // Take refinement and a Spare phrased from the controller's perspective, since
 // Spare is re-based onto each player in turn.
 func TestEachPlayerUnlessValidate(t *testing.T) {
-	spare := CardsInPlay{Player: Controller, Type: Creature}
+	spare := CardsInPlay{
+		Player: Controller,
+		Type:   Creature,
+	}
 	if (EachPlayerUnless{Spare: spare}).validate() == nil {
 		t.Error("validate should reject a nil Take")
 	}
 	if (EachPlayerUnless{
-		Spare: CardsInPlay{Player: Opponent, Type: Creature},
-		Take:  MostPowerfulN(1),
+		Spare: CardsInPlay{
+			Player: Opponent,
+			Type:   Creature,
+		},
+		Take: MostPowerfulN(1),
 	}).validate() == nil {
 		t.Error("validate should reject a Spare not phrased as the controller's")
 	}
-	if err := (EachPlayerUnless{Spare: spare, Take: MostPowerfulN(1)}).validate(); err != nil {
+	if err := (EachPlayerUnless{
+		Spare: spare,
+		Take:  MostPowerfulN(1),
+	}).validate(); err != nil {
 		t.Errorf("validate with Take and controller Spare = %v", err)
 	}
 }
@@ -137,7 +156,10 @@ func TestChosenFromEach(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	friend := g.AddToBattleline(testCreature("friend", 3), 0)
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.inPlay(friend) || g.inPlay(foe) {
 		t.Error("both picks should be destroyed")
 	}
@@ -145,7 +167,10 @@ func TestChosenFromEach(t *testing.T) {
 	// With an empty enemy battleline only the friendly pick is destroyed.
 	g2 := NewGame("A", "B", 1)
 	lone := g2.AddToBattleline(testCreature("lone", 3), 0)
-	e.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	})
 	if g2.inPlay(lone) {
 		t.Error("an empty pool should not stop the pools that can be picked")
 	}
@@ -155,7 +180,11 @@ func TestDestroyChosenArtifact(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mine := g.AddArtifact(exAutocannon(), 0)
 	theirs := g.AddArtifact(exAutocannon(), 1)
-	ctx := &EffectContext{Resolver: g, Source: mine, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     mine,
+		Controller: 0,
+	}
 
 	e := Destroy{Target: Target{Kind: TargetChosenArtifact}}
 	if e.Text() != "destroy an artifact" {
@@ -176,7 +205,10 @@ func TestDestroySamePower(t *testing.T) {
 	a := g.AddToBattleline(testCreature("a", 3), 0) // chosen (candidates[0])
 	strong := g.AddToBattleline(testCreature("strong", 5), 0)
 	c := g.AddToBattleline(testCreature("c", 3), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	e := Destroy{Target: Target{Kind: TargetEachCreature}.Refine(SamePowerAsChosen)}
 	if e.Text() != "choose a creature. Destroy each creature with the same power as the chosen creature" {
@@ -210,7 +242,10 @@ func TestDestroySamePowerEitherChosen(t *testing.T) {
 	eChosen := g.AddToBattleline(testCreature("eChosen", 4), 1)
 	eShare := g.AddToBattleline(testCreature("eShare", 4), 1) // shares enemy power
 	eSurvive := g.AddToBattleline(testCreature("eSurvive", 7), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	e := Destroy{Target: Target{Kind: TargetEachCreature}.Refine(SamePowerAsEitherChosen)}
 	want := "choose a friendly creature and an enemy creature. Destroy each " +
@@ -257,14 +292,23 @@ func TestDestroyChosen(t *testing.T) {
 	if (DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}}).validate() != nil {
 		t.Error("a DestroyChosen with a target should validate")
 	}
-	if got := (DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: 2}).Text(); got != "destroy 2 friendly creatures" {
+	if got := (DestroyChosen{
+		Target: Target{Kind: TargetEachFriendlyCreature},
+		Amount: 2,
+	}).Text(); got != "destroy 2 friendly creatures" {
 		t.Errorf("fixed-amount text = %q", got)
 	}
 	// "another creature" pluralizes to "other creatures" (Wretched Anathema).
-	if got := (DestroyChosen{Target: Target{Kind: TargetChosenOtherCreature}, Amount: 2}).Text(); got != "destroy 2 other creatures" {
+	if got := (DestroyChosen{
+		Target: Target{Kind: TargetChosenOtherCreature},
+		Amount: 2,
+	}).Text(); got != "destroy 2 other creatures" {
 		t.Errorf("other-creature text = %q", got)
 	}
-	if (DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: -1}).validate() == nil {
+	if (DestroyChosen{
+		Target: Target{Kind: TargetEachFriendlyCreature},
+		Amount: -1,
+	}).validate() == nil {
 		t.Error("a negative Amount should not validate")
 	}
 
@@ -275,9 +319,15 @@ func TestDestroyChosen(t *testing.T) {
 			g.AddToBattleline(testCreature("b", 1), 0),
 			g.AddToBattleline(testCreature("c", 1), 0),
 		}
-		ctx := &EffectContext{Resolver: g, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		}
 
-		DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: 2}.Resolve(ctx)
+		DestroyChosen{
+			Target: Target{Kind: TargetEachFriendlyCreature},
+			Amount: 2,
+		}.Resolve(ctx)
 
 		alive := 0
 		for _, id := range ids {
@@ -300,7 +350,10 @@ func TestDestroyChosen(t *testing.T) {
 			g.AddToBattleline(testCreature("b", 1), 0),
 			g.AddToBattleline(testCreature("c", 1), 0),
 		}
-		ctx := &EffectContext{Resolver: g, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		}
 
 		DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}}.Resolve(ctx)
 
@@ -318,7 +371,10 @@ func TestDestroyChosen(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		id := g.AddToBattleline(testCreature("a", 1), 0)
 		g.SetChooser(0, &cardDecliner{decline: true})
-		ctx := &EffectContext{Resolver: g, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		}
 
 		DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}}.Resolve(ctx)
 

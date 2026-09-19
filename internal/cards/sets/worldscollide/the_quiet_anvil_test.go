@@ -21,7 +21,10 @@ import (
 func TestTheQuietAnvil(t *testing.T) {
 	t.Run("lowers each player's key cost by 2", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(TheQuietAnvil)},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(TheQuietAnvil),
+			},
 		})
 
 		g := h.Game()

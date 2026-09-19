@@ -10,9 +10,15 @@ import (
 // on each creature — a creature chosen twice sums its hits.
 func TestBadgePreviewAccumulatesDamage(t *testing.T) {
 	c := newClient(t)
-	c.g.chooser.PreviewBadge(engine.SelectionBadge{Icon: engine.DamageIcon, Amount: 3})
+	c.g.chooser.PreviewBadge(engine.SelectionBadge{
+		Icon:   engine.DamageIcon,
+		Amount: 3,
+	})
 	c.settle()
-	if c.g.selBadge != (engine.SelectionBadge{Icon: engine.DamageIcon, Amount: 3}) {
+	if c.g.selBadge != (engine.SelectionBadge{
+		Icon:   engine.DamageIcon,
+		Amount: 3,
+	}) {
 		t.Fatalf("preview did not arm the badge: %+v", c.g.selBadge)
 	}
 
@@ -50,7 +56,10 @@ func TestBadgePreviewWardIsNumberless(t *testing.T) {
 // preview once the animation has run.
 func TestBadgePreviewClears(t *testing.T) {
 	c := newClient(t)
-	c.g.chooser.PreviewBadge(engine.SelectionBadge{Icon: engine.DamageIcon, Amount: 2})
+	c.g.chooser.PreviewBadge(engine.SelectionBadge{
+		Icon:   engine.DamageIcon,
+		Amount: 2,
+	})
 	c.settle()
 	c.g.recordBadge(4)
 

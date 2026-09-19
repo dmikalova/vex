@@ -19,7 +19,10 @@ func TestPhloxemSpike(t *testing.T) {
 	t.Run("destroys each non-flank creature when you control no creatures", func(t *testing.T) {
 		var left, middle, right ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Mars, Hand: ct.Cards(PhloxemSpike)},
+			P1: ct.Side{
+				House: card.House.Mars,
+				Hand:  ct.Cards(PhloxemSpike),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&left, ct.Creature(ct.Power(20))),

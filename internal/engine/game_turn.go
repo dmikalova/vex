@@ -54,7 +54,10 @@ func (g *Game) StartTurn(player int) {
 	g.State.Turn++
 	g.resetTurnTallies(player)
 	g.activateArmedBars(player)
-	g.record(TurnBegan{Player: player, Turn: g.State.Turn})
+	g.record(TurnBegan{
+		Player: player,
+		Turn:   g.State.Turn,
+	})
 	g.enterPhase(PhaseStartOfTurn)
 	g.runPhases()
 	g.assertInvariants()
@@ -137,7 +140,10 @@ func (g *Game) ChooseHouse(player int, house House) error {
 		return ErrHouseNotAllowed
 	}
 	g.State.ActiveHouse = house
-	g.record(HouseChosen{Player: player, House: house})
+	g.record(HouseChosen{
+		Player: player,
+		House:  house,
+	})
 	g.resolveHouseWagers(player, house)
 	// The snapshot is taken once, but an earlier card's ability can remove a later
 	// one from play (Strange Gizmo destroys friendly artifacts); resolveWindow drops
@@ -171,7 +177,10 @@ func (g *Game) ChooseHouse(player int, house House) error {
 // because no house is being chosen — the active house is simply reassigned.
 func (g *Game) SetActiveHouse(h House) {
 	g.State.ActiveHouse = h
-	g.record(HouseChosen{Player: g.State.ActivePlayer, House: h})
+	g.record(HouseChosen{
+		Player: g.State.ActivePlayer,
+		House:  h,
+	})
 }
 
 // playerHasHouse reports whether house is one the player may choose — a house in
@@ -211,14 +220,21 @@ func (g *Game) drawStep(player int) {
 	before := int(g.State.Hand[player].Count)
 	g.drawTo(player, target)
 	hand := int(g.State.Hand[player].Count)
-	g.record(CardsDrawn{Player: player, Cards: hand - before, Hand: hand})
+	g.record(CardsDrawn{
+		Player: player,
+		Cards:  hand - before,
+		Hand:   hand,
+	})
 	// The reduction blocked a draw only when it left the player below a full hand
 	// with cards still available to draw.
 	if chains > 0 &&
 		int(g.State.Hand[player].Count) < HandSize+g.drawModifier(player) &&
 		g.canDraw(player) {
 		g.State.Chains[player]--
-		g.record(ChainShed{Player: player, Remaining: g.State.Chains[player]})
+		g.record(ChainShed{
+			Player:    player,
+			Remaining: g.State.Chains[player],
+		})
 	}
 }
 
@@ -249,24 +265,36 @@ func (g *Game) drawModifier(player int) int {
 
 // CannotFightNextTurn arms a fight bar on a player for their next turn.
 func (g *Game) CannotFightNextTurn(player int, source LocalID) {
-	g.State.CannotFightNext[player] = Bar[bool]{Value: true, Source: source}
+	g.State.CannotFightNext[player] = Bar[bool]{
+		Value:  true,
+		Source: source,
+	}
 }
 
 // CannotPlayTypeNextTurn arms a play-type bar on a player for their next turn.
 func (g *Game) CannotPlayTypeNextTurn(player int, t CardType, source LocalID) {
-	g.State.CannotPlayTypeNext[player] = Bar[CardType]{Value: t, Source: source}
+	g.State.CannotPlayTypeNext[player] = Bar[CardType]{
+		Value:  t,
+		Source: source,
+	}
 }
 
 // CannotPlayTypeThisTurn bars a player from playing cards of the given type for
 // the rest of the current turn (Treasure Map bars every type once it pays out).
 func (g *Game) CannotPlayTypeThisTurn(player int, t CardType, source LocalID) {
-	g.State.CannotPlayTypeThis[player] = Bar[CardType]{Value: t, Source: source}
+	g.State.CannotPlayTypeThis[player] = Bar[CardType]{
+		Value:  t,
+		Source: source,
+	}
 }
 
 // CannotUseNextTurn arms a use bar on a player for their next turn, stopping them
 // reaping, fighting, or using an "Action:" ability (Skippy Timehog).
 func (g *Game) CannotUseNextTurn(player int, source LocalID) {
-	g.State.CannotUseNext[player] = Bar[bool]{Value: true, Source: source}
+	g.State.CannotUseNext[player] = Bar[bool]{
+		Value:  true,
+		Source: source,
+	}
 }
 
 // CannotUseThisTurn bars a player from reaping, fighting, or using an "Action:"
@@ -274,7 +302,10 @@ func (g *Game) CannotUseNextTurn(player int, source LocalID) {
 // directly rather than arming the next-turn form, so the ready phase lifts it at
 // the end of this turn.
 func (g *Game) CannotUseThisTurn(player int, source LocalID) {
-	g.State.CannotUse[player] = Bar[bool]{Value: true, Source: source}
+	g.State.CannotUse[player] = Bar[bool]{
+		Value:  true,
+		Source: source,
+	}
 }
 
 // CannotReapNextTurn arms a bar that stops a player reaping with any creature
@@ -282,7 +313,10 @@ func (g *Game) CannotUseThisTurn(player int, source LocalID) {
 // phase lifts it. It is narrower than CannotUseNextTurn: fighting and "Action:"
 // abilities stay open.
 func (g *Game) CannotReapNextTurn(player int, source LocalID) {
-	g.State.CannotReapNext[player] = Bar[bool]{Value: true, Source: source}
+	g.State.CannotReapNext[player] = Bar[bool]{
+		Value:  true,
+		Source: source,
+	}
 }
 
 // CannotReapThisTurn bars a player from reaping with any creature for the rest of
@@ -291,14 +325,20 @@ func (g *Game) CannotReapNextTurn(player int, source LocalID) {
 // the active player can reap on their own turn, so barring them stops reaping this
 // turn.
 func (g *Game) CannotReapThisTurn(player int, source LocalID) {
-	g.State.CannotReap[player] = Bar[bool]{Value: true, Source: source}
+	g.State.CannotReap[player] = Bar[bool]{
+		Value:  true,
+		Source: source,
+	}
 }
 
 // CannotReapHouseNextTurn arms a bar that stops a player reaping with creatures
 // of house h throughout their next turn (Seismo-entangler). StartTurn promotes
 // the armed house.
 func (g *Game) CannotReapHouseNextTurn(player int, h House, source LocalID) {
-	g.State.CannotReapHouseNext[player] = Bar[House]{Value: h, Source: source}
+	g.State.CannotReapHouseNext[player] = Bar[House]{
+		Value:  h,
+		Source: source,
+	}
 }
 
 // CreaturesCannotUntilNextTurn arms a board-wide bar that stops both players
@@ -313,7 +353,10 @@ func (g *Game) CreaturesCannotUntilNextTurn(
 	source LocalID,
 ) {
 	bar := Bar[CreatureBar]{
-		Value:  CreatureBar{Action: action, Houses: houses},
+		Value: CreatureBar{
+			Action: action,
+			Houses: houses,
+		},
 		Source: source,
 	}
 	g.State.CreaturesCannot[caster] = bar
@@ -335,7 +378,10 @@ func (g *Game) BlankEnemyText(caster int) {
 // SkipForgePhaseNextTurn makes a player skip their forge-a-key phase at the start of
 // their next turn.
 func (g *Game) SkipForgePhaseNextTurn(player int, source LocalID) {
-	g.State.SkipForgeNext[player] = Bar[bool]{Value: true, Source: source}
+	g.State.SkipForgeNext[player] = Bar[bool]{
+		Value:  true,
+		Source: source,
+	}
 }
 
 // RaiseKeyCostNextTurn raises what a player's keys cost throughout their next turn
@@ -370,7 +416,10 @@ func (g *Game) RaiseKeyCostPerHouseNextTurn(
 		per += cur.Per
 	}
 	g.State.KeyCostPerHouseNext[player] = Bar[perHouseKeySurcharge]{
-		Value:  perHouseKeySurcharge{House: house, Per: per},
+		Value: perHouseKeySurcharge{
+			House: house,
+			Per:   per,
+		},
 		Source: source,
 	}
 }
@@ -438,7 +487,10 @@ func (g *Game) GrantMayPlayOrUse(
 // phase clears the slot.
 func (g *Game) GrantMayUseTrait(player int, trait Trait) {
 	g.State.MayUseTrait[player] = trait
-	g.record(MayUseTraitGranted{Player: player, Trait: trait})
+	g.record(MayUseTraitGranted{
+		Player: player,
+		Trait:  trait,
+	})
 }
 
 // offHousePermitRemaining maps a grant's Count onto an OffHousePermit's Remaining:
@@ -470,7 +522,10 @@ func (g *Game) MustChooseHouseNextTurn(player int, h House, source LocalID) {
 		House:  h,
 		Source: source,
 	})
-	g.record(HouseForcedNextTurn{Player: player, House: h})
+	g.record(HouseForcedNextTurn{
+		Player: player,
+		House:  h,
+	})
 }
 
 // MustChooseFoughtHouseNextTurn arms a must on player's next turn to choose the
@@ -482,7 +537,10 @@ func (g *Game) MustChooseFoughtHouseNextTurn(player int, creature, source LocalI
 		Creature: creature,
 		Source:   source,
 	})
-	g.record(HouseForcedNextTurn{Player: player, House: g.House(creature)})
+	g.record(HouseForcedNextTurn{
+		Player: player,
+		House:  g.House(creature),
+	})
 }
 
 // CannotChooseHouseNextTurn arms a cannot on player's next turn barring house h
@@ -493,7 +551,10 @@ func (g *Game) CannotChooseHouseNextTurn(player int, h House, source LocalID) {
 		House:  h,
 		Source: source,
 	})
-	g.record(HouseForbiddenNextTurn{Player: player, House: h})
+	g.record(HouseForbiddenNextTurn{
+		Player: player,
+		House:  h,
+	})
 }
 
 // WagerOnHouseNextTurn arms a bet on player's next active house: if they choose h
@@ -507,7 +568,12 @@ func (g *Game) WagerOnHouseNextTurn(player int, h House, amount, predictor int, 
 		Predictor: predictor,
 		Source:    source,
 	})
-	g.record(HouseWagerArmed{Predictor: predictor, Player: player, House: h, Amount: amount})
+	g.record(HouseWagerArmed{
+		Predictor: predictor,
+		Player:    player,
+		House:     h,
+		Amount:    amount,
+	})
 }
 
 // resolveHouseWagers settles every wager in player's table once they lock in
@@ -521,7 +587,11 @@ func (g *Game) resolveHouseWagers(player int, house House) {
 		if c.Kind != constraintWager || house == HouseNone || c.House != house {
 			continue
 		}
-		ctx := &EffectContext{Resolver: g, Controller: c.Predictor, Source: c.Source}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Controller: c.Predictor,
+			Source:     c.Source,
+		}
 		StealAember{Amount: c.Amount}.Resolve(ctx)
 	}
 }
@@ -565,7 +635,11 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 			if bar.When == nil {
 				continue
 			}
-			ctx := &EffectContext{Resolver: g, Source: id, Controller: player}
+			ctx := &EffectContext{
+				Resolver:   g,
+				Source:     id,
+				Controller: player,
+			}
 			if bar.When.Met(ctx) {
 				name(id)
 			}
@@ -674,7 +748,11 @@ func (g *Game) payKeyCost(player, cost int) {
 	if gainer, ok := g.forgeAemberGainer(player); ok && total > 0 {
 		beneficiary := g.controller(gainer)
 		g.SetAember(beneficiary, g.Aember(beneficiary)+total)
-		g.record(AemberGainedFromForging{Card: gainer, From: player, Amount: total})
+		g.record(AemberGainedFromForging{
+			Card:   gainer,
+			From:   player,
+			Amount: total,
+		})
 	}
 }
 
@@ -838,6 +916,10 @@ func (g *Game) UnforgeKey(player int) bool {
 		return false
 	}
 	g.State.KeyColors[player][g.Keys(player)-1] = KeyColorNone
-	g.record(KeyUnforged{Player: player, Keys: g.Keys(player), Needed: KeysToWin})
+	g.record(KeyUnforged{
+		Player: player,
+		Keys:   g.Keys(player),
+		Needed: KeysToWin,
+	})
 	return true
 }

@@ -20,7 +20,10 @@ import (
 func TestStealthster(t *testing.T) {
 	t.Run("plays as a creature", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.StarAlliance, Hand: ct.Cards(Stealthster)},
+			P1: ct.Side{
+				House: card.House.StarAlliance,
+				Hand:  ct.Cards(Stealthster),
+			},
 		})
 
 		h.P1.Play(Stealthster)

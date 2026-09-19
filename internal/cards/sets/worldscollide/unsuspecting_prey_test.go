@@ -17,7 +17,10 @@ import (
 func TestUnsuspectingPrey(t *testing.T) {
 	var clean1, clean2, hurt ct.Card
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(UnsuspectingPrey)},
+		P1: ct.Side{
+			House: card.House.Untamed,
+			Hand:  ct.Cards(UnsuspectingPrey),
+		},
 		P2: ct.Side{InPlay: ct.Cards(
 			ct.Bind(&clean1, ct.Creature(ct.Power(6))),
 			ct.Bind(&clean2, ct.Creature(ct.Power(6))),

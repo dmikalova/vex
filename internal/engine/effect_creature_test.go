@@ -7,7 +7,11 @@ func TestOnChooseCreatureEnemyAndNoTarget(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 1), 0)
 	enemy := g.AddToBattleline(testCreature("enemy", 1), 1)
 	g.State.Cards[enemy].Exhausted = true
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	onEnemy := OnChooseCreature{
 		Target: Target{Kind: TargetChosenEnemyCreature},
@@ -29,7 +33,11 @@ func TestOnChooseCreatureEnemyAndNoTarget(t *testing.T) {
 func TestFightVerbNoEnemy(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 2), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 	FightVerb{}.Apply(ctx, src) // no enemies -> logs and returns
 	if g.State.Cards[src].Exhausted {
 		t.Error("no fight should have occurred")
@@ -43,7 +51,11 @@ func TestFightVerbRespectsTaunt(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	taunter := g.AddToBattleline(testCreature("taunter", 5, WithKeywords(Taunt)), 1)
 	shielded := g.AddToBattleline(testCreature("shielded", 3), 1)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	// Aiming at the shielded neighbor: it is filtered out, so no fight lands.
 	g.SetChooser(0, idChooser{id: shielded})
@@ -63,12 +75,19 @@ func TestFightVerbRespectsTaunt(t *testing.T) {
 // actor builds a creature with an "Action:" ability that gains 5 Æmber.
 func actor(g *Game) LocalID {
 	return g.AddToBattleline(NewCard("actor", Brobnar, Creature, Common, WithPower(3),
-		WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 5})), 0)
+		WithAbility(TriggerAction, GainAember{
+			Player: Controller,
+			Amount: 5,
+		})), 0)
 }
 
 func TestUseVerb(t *testing.T) {
 	ctxFor := func(g *Game, id LocalID) *EffectContext {
-		return &EffectContext{Resolver: g, Source: id, Controller: 0}
+		return &EffectContext{
+			Resolver:   g,
+			Source:     id,
+			Controller: 0,
+		}
 	}
 
 	// Reap (default option 0): +1 Æmber, no action fired.
@@ -117,7 +136,11 @@ func TestUseVerbOnStunnedCreatureUnstunsWithoutPrompting(t *testing.T) {
 	g.State.Cards[target].Stunned = true
 	asked := &promptRecorder{}
 	g.SetChooser(0, asked)
-	UseVerb{}.Apply(&EffectContext{Resolver: g, Source: target, Controller: 0}, target)
+	UseVerb{}.Apply(&EffectContext{
+		Resolver:   g,
+		Source:     target,
+		Controller: 0,
+	}, target)
 	if asked.asked != 0 {
 		t.Errorf("a stunned creature was asked how to use it %d times, want 0", asked.asked)
 	}
@@ -166,7 +189,11 @@ func TestUseVerbOffersOnlyReadyCreatures(t *testing.T) {
 	g.State.Cards[spent].Exhausted = true
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	g.SetChooser(0, FirstChooser{}) // takes the first candidate offered
-	e.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
 	if !g.Exhausted(ready) || g.Aember(0) != 1 {
 		t.Errorf("the ready creature should have been the one used (aember = %d)", g.Aember(0))
 	}
@@ -179,7 +206,11 @@ func TestUseVerbOffersOnlyReadyCreatures(t *testing.T) {
 	g2.State.Cards[src2].Exhausted = true
 	asked := &promptRecorder{}
 	g2.SetChooser(0, asked)
-	e.Resolve(&EffectContext{Resolver: g2, Source: src2, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g2,
+		Source:     src2,
+		Controller: 0,
+	})
 	if asked.asked != 0 || g2.Aember(0) != 0 {
 		t.Errorf("nothing to use should ask nothing, asked %d times", asked.asked)
 	}
@@ -206,7 +237,11 @@ func TestOnChooseCreatureExcludeHouse(t *testing.T) {
 	sanc := g.AddToBattleline(NewCard("s", Sanctum, Creature, Common, WithPower(3)), 0)
 	mars := g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(3)), 0)
 	g.State.Cards[mars].Exhausted = true
-	ctx := &EffectContext{Resolver: g, Source: sanc, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     sanc,
+		Controller: 0,
+	}
 
 	e := OnChooseCreature{
 		Target: Target{Kind: TargetChosenFriendlyCreature}.House(exceptHouse(Sanctum)),
@@ -288,7 +323,10 @@ func TestTriggerWindowIsFixedWhenTheEventHappens(t *testing.T) {
 					Granted: []Ability{
 						{
 							Trigger: TriggerAfterReap,
-							Effect:  GainAember{Player: Controller, Amount: 3},
+							Effect: GainAember{
+								Player: Controller,
+								Amount: 3,
+							},
 						},
 					},
 				},
@@ -319,7 +357,11 @@ func TestOnChooseCreatureNeighbors(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	g.AddToBattleline(testCreature("right", 3), 0)
 	foe := g.AddToBattleline(testCreature("foe", 10), 1)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	e := OnChooseCreature{
 		Target: Target{Kind: TargetChosenCreature}.Neighboring(),
@@ -348,7 +390,10 @@ func TestStunExhaustVerbs(t *testing.T) {
 	}
 	g := started(t)
 	id := g.AddToBattleline(testCreature("c", 3), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	StunVerb{}.Apply(ctx, id)
 	ExhaustVerb{}.Apply(ctx, id)
 	if !g.State.Cards[id].Stunned || !g.State.Cards[id].Exhausted {
@@ -369,7 +414,10 @@ func TestReapVerb(t *testing.T) {
 
 	g := started(t)
 	id := g.AddToBattleline(testCreature("c", 3), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	ReapVerb{}.Apply(ctx, id)
 	if g.Aember(0) != 1 {
 		t.Errorf("reap: aember = %d, want 1", g.Aember(0))
@@ -394,7 +442,10 @@ func TestOnChooseCreatureSkipsCreatureThatLeftPlay(t *testing.T) {
 	g.State.Discard[0].add(gone)
 
 	e := OnChooseCreature{Verbs: []CreatureVerb{ReadyVerb{}, StunVerb{}}}
-	if e.applyTo(&EffectContext{Resolver: g, Controller: 0}, []LocalID{gone}) {
+	if e.applyTo(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}, []LocalID{gone}) {
 		t.Error("applyTo acted on a creature that has left play")
 	}
 	if core := g.State.Cards[gone]; core != (CardCore{}) {
@@ -419,7 +470,12 @@ func TestUseVerbSkipsCreatureDestroyedAtChoiceBoundary(t *testing.T) {
 	OnChooseCreature{
 		Target: Target{Kind: TargetTheOtherCreature},
 		Verbs:  []CreatureVerb{UseVerb{}},
-	}.Resolve(&EffectContext{Resolver: g, It: victim, HasIt: true, Controller: 0})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		It:         victim,
+		HasIt:      true,
+		Controller: 0,
+	})
 
 	if g.inPlay(victim) {
 		t.Fatal("the damaged victim should have been swept at the choice boundary")
@@ -433,12 +489,18 @@ func TestChooseCreatureThen(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ally := g.AddToBattleline(testCreature("ally", 3), 0)
 	g.State.Cards[ally].Damage = 2
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	e := ChooseCreatureThen{
 		Target: Target{Kind: TargetChosenCreature},
 		Then: Sequence{Effects: []Effect{
-			Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
+			Heal{
+				Fully:  true,
+				Target: Target{Kind: TargetTriggeringCreature},
+			},
 			CannotBeDealtDamage{
 				Target:   Target{Kind: TargetTriggeringCreature},
 				Duration: RemainderOfPlayerTurn,
@@ -464,12 +526,18 @@ func TestChooseCreatureThenUnderMay(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ally := g.AddToBattleline(testCreature("ally", 3), 0)
 	g.State.Cards[ally].Damage = 2
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{ally}})
 
 	e := ChooseCreatureThen{
 		Target: Target{Kind: TargetChosenCreature},
-		Then:   Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
+		Then: Heal{
+			Fully:  true,
+			Target: Target{Kind: TargetTriggeringCreature},
+		},
 	}
 	if !e.declinable() {
 		t.Error("a single chosen-creature decision should be declinable")
@@ -482,7 +550,10 @@ func TestChooseCreatureThenUnderMay(t *testing.T) {
 
 func TestChooseCreatureThenNoCandidates(_ *testing.T) {
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// An empty battleline offers nothing to choose, so Then never resolves (no
 	// panic, no effect).
@@ -508,7 +579,11 @@ func TestChooseCreatureThenValidate(t *testing.T) {
 
 	badThen := ChooseCreatureThen{
 		Target: Target{Kind: TargetChosenCreature},
-		Then:   Heal{Fully: true, Amount: 1, Target: Target{Kind: TargetTriggeringCreature}},
+		Then: Heal{
+			Fully:  true,
+			Amount: 1,
+			Target: Target{Kind: TargetTriggeringCreature},
+		},
 	}
 	if validateEffect(badThen) == nil {
 		t.Error("ChooseCreatureThen should surface an invalid Then via validate")
@@ -560,7 +635,10 @@ func TestOneAtATimeActsOnDifferentCreatures(t *testing.T) {
 	for _, id := range mine {
 		g.State.Cards[id].Exhausted = true
 	}
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// Three passes over only two creatures: both are readied, then the third pass
 	// finds nobody left and stops.
@@ -586,7 +664,10 @@ func TestOneAtATimeStopsWhenDeclined(t *testing.T) {
 	g.State.Cards[a].Exhausted = true
 	g.State.Cards[b].Exhausted = true
 	g.SetChooser(0, &cardDecliner{decline: true})
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	OneAtATime{
 		Times:  Fixed(2),
@@ -622,7 +703,11 @@ func TestOneAtATimeEachSetActsOnEveryone(t *testing.T) {
 	left := g.AddToBattleline(testCreature("left", 1), 0)
 	mid := g.AddToBattleline(testCreature("mid", 1), 0)
 	right := g.AddToBattleline(testCreature("right", 1), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0, Source: mid}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     mid,
+	}
 
 	OneAtATime{
 		Target: Target{Kind: TargetEachNeighbor},
@@ -645,7 +730,11 @@ func TestOneAtATimeEachSetStopsWhenDeclined(t *testing.T) {
 	mid := g.AddToBattleline(testCreature("mid", 1), 0)
 	right := g.AddToBattleline(testCreature("right", 1), 0)
 	g.SetChooser(0, orderRejectChooser{})
-	ctx := &EffectContext{Resolver: g, Controller: 0, Source: mid}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     mid,
+	}
 
 	OneAtATime{
 		Target: Target{Kind: TargetEachNeighbor},
@@ -669,7 +758,11 @@ func TestOneAtATimeEachSetStopsWhenPoolLeaves(t *testing.T) {
 	mid := g.AddToBattleline(testCreature("mid", 1), 0)
 	right := g.AddToBattleline(testCreature("right", 1), 0)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{left}})
-	ctx := &EffectContext{Resolver: g, Controller: 0, Source: mid}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     mid,
+	}
 
 	OneAtATime{
 		Target: Target{Kind: TargetEachNeighbor},
@@ -687,7 +780,10 @@ func TestOneAtATimeEachSetStopsWhenPoolLeaves(t *testing.T) {
 // TestRepeatedFightText covers the rendered phrase and the validation of its
 // bounds.
 func TestRepeatedFightText(t *testing.T) {
-	e := RepeatedFight{Times: Fixed(3), Target: Target{Kind: TargetChosenFriendlyCreature}}
+	e := RepeatedFight{
+		Times:  Fixed(3),
+		Target: Target{Kind: TargetChosenFriendlyCreature},
+	}
 	want := "ready and fight with a friendly creature 3 times, each time against " +
 		"a different enemy creature. Resolve these fights one at a time"
 	if got := e.Text(); got != want {
@@ -715,9 +811,15 @@ func TestRepeatedFightNeverFightsTheSameEnemyTwice(t *testing.T) {
 		g.AddToBattleline(testCreature("b", 1), 1),
 		g.AddToBattleline(testCreature("c", 1), 1),
 	}
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
-	RepeatedFight{Times: Fixed(3), Target: Target{Kind: TargetChosenFriendlyCreature}}.
+	RepeatedFight{
+		Times:  Fixed(3),
+		Target: Target{Kind: TargetChosenFriendlyCreature},
+	}.
 		Resolve(ctx)
 
 	if len(g.Battleline(1)) != 0 {
@@ -737,9 +839,15 @@ func TestRepeatedFightStopsWithoutAnEnemy(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	hero := g.AddToBattleline(testCreature("hero", 10), 0)
 	g.State.Cards[hero].Exhausted = true
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
-	RepeatedFight{Times: Fixed(3), Target: Target{Kind: TargetChosenFriendlyCreature}}.
+	RepeatedFight{
+		Times:  Fixed(3),
+		Target: Target{Kind: TargetChosenFriendlyCreature},
+	}.
 		Resolve(ctx)
 
 	if !g.State.Cards[hero].Exhausted {
@@ -752,9 +860,15 @@ func TestRepeatedFightStopsWithoutAnEnemy(t *testing.T) {
 func TestRepeatedFightStopsWithoutACreature(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	foe := g.AddToBattleline(testCreature("foe", 1), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
-	RepeatedFight{Times: Fixed(3), Target: Target{Kind: TargetChosenFriendlyCreature}}.
+	RepeatedFight{
+		Times:  Fixed(3),
+		Target: Target{Kind: TargetChosenFriendlyCreature},
+	}.
 		Resolve(ctx)
 
 	if g.Damage(foe) != 0 {
@@ -770,9 +884,15 @@ func TestRepeatedFightStopsWhenDeclined(t *testing.T) {
 	g.AddToBattleline(testCreature("a", 1), 1)
 	g.AddToBattleline(testCreature("b", 1), 1)
 	g.SetChooser(0, orderRejectChooser{})
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
-	RepeatedFight{Times: Fixed(2), Target: Target{Kind: TargetChosenFriendlyCreature}}.
+	RepeatedFight{
+		Times:  Fixed(2),
+		Target: Target{Kind: TargetChosenFriendlyCreature},
+	}.
 		Resolve(ctx)
 
 	if len(g.Battleline(1)) != 2 {

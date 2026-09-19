@@ -16,16 +16,29 @@ func TestHouseFromUpgradeOverride(t *testing.T) {
 }
 
 func TestBelongToHouseValidate(t *testing.T) {
-	if err := (BelongToHouse{House: Mars, Duration: RemainderOfPlayerTurn}).validate(); err == nil {
+	if err := (BelongToHouse{
+		House:    Mars,
+		Duration: RemainderOfPlayerTurn,
+	}).validate(); err == nil {
 		t.Error("an unset target should be rejected")
 	}
-	if err := (BelongToHouse{Target: Target{Kind: TargetThisCreature}, Duration: RemainderOfPlayerTurn}).validate(); err == nil {
+	if err := (BelongToHouse{
+		Target:   Target{Kind: TargetThisCreature},
+		Duration: RemainderOfPlayerTurn,
+	}).validate(); err == nil {
 		t.Error("an unset house should be rejected")
 	}
-	if err := (BelongToHouse{Target: Target{Kind: TargetThisCreature}, House: Mars}).validate(); err == nil {
+	if err := (BelongToHouse{
+		Target: Target{Kind: TargetThisCreature},
+		House:  Mars,
+	}).validate(); err == nil {
 		t.Error("an unset duration should be rejected")
 	}
-	if err := (BelongToHouse{Target: Target{Kind: TargetThisCreature}, House: Mars, Duration: RemainderOfPlayerTurn}).validate(); err != nil {
+	if err := (BelongToHouse{
+		Target:   Target{Kind: TargetThisCreature},
+		House:    Mars,
+		Duration: RemainderOfPlayerTurn,
+	}).validate(); err != nil {
 		t.Errorf("valid BelongToHouse = %v", err)
 	}
 }
@@ -41,7 +54,11 @@ func TestBelongToHouseEndOfTurn(t *testing.T) {
 	if got := e.Text(); got != "for the remainder of the turn, {self} belongs to house Mars" {
 		t.Errorf("text = %q", got)
 	}
-	e.Resolve(&EffectContext{Resolver: g, Source: host, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     host,
+		Controller: 0,
+	})
 	if g.House(host) != Mars {
 		t.Fatalf("house = %s, want Mars", g.House(host))
 	}
@@ -88,7 +105,11 @@ func TestBelongToHouseUntilLeavesPlay(t *testing.T) {
 	if got := e.Text(); got != "{self} belongs to house Mars" {
 		t.Errorf("text = %q", got)
 	}
-	e.Resolve(&EffectContext{Resolver: g, Source: host, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     host,
+		Controller: 0,
+	})
 	if g.House(host) != Mars {
 		t.Fatalf("house = %s, want Mars", g.House(host))
 	}

@@ -23,7 +23,10 @@ var BrendTheFanatic = set.New(
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Skirmish),
 	card.WithAbility(
-		card.Trigger.Play, card.GainAember{Player: card.Opponent, Amount: 1}),
+		card.Trigger.Play, card.GainAember{
+			Player: card.Opponent,
+			Amount: 1,
+		}),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.StealAember{Amount: 3}),
 )

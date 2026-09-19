@@ -22,7 +22,10 @@ func TestGrimlocusDux(t *testing.T) {
 	t.Run("exalts itself twice when played", func(t *testing.T) {
 		var dux ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(ct.Bind(&dux, GrimlocusDux))},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(ct.Bind(&dux, GrimlocusDux)),
+			},
 		})
 
 		h.P1.Play(GrimlocusDux)

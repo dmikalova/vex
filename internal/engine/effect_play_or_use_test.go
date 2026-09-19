@@ -30,8 +30,14 @@ func TestPlayOrUseText(t *testing.T) {
 		{PlayOrUse{House: exceptHouse(StarAlliance)}, "play or use a non-Star Alliance card"},
 		{PlayOrUse{House: namedHouse(Mars)}, "play or use a Mars card"},
 		{PlayOrUse{}, "play or use a card"},
-		{PlayOrUse{House: namedHouse(Mars), Grant: GrantPlay}, "play a Mars card"},
-		{PlayOrUse{House: namedHouse(Mars), Grant: GrantUse}, "use a Mars card"},
+		{PlayOrUse{
+			House: namedHouse(Mars),
+			Grant: GrantPlay,
+		}, "play a Mars card"},
+		{PlayOrUse{
+			House: namedHouse(Mars),
+			Grant: GrantUse,
+		}, "use a Mars card"},
 	}
 	for _, c := range cases {
 		if got := c.e.Text(); got != c.want {
@@ -50,7 +56,11 @@ func TestPlayOrUsePlaysFromHand(t *testing.T) {
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{art}})
 
 	PlayOrUse{House: exceptHouse(StarAlliance)}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, Source: src},
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			Source:     src,
+		},
 	)
 
 	if !g.inPlay(art) {
@@ -68,7 +78,11 @@ func TestPlayOrUseUsesInPlay(t *testing.T) {
 	before := g.Aember(0)
 
 	PlayOrUse{House: exceptHouse(StarAlliance)}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, Source: src},
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			Source:     src,
+		},
 	)
 
 	if !g.Exhausted(mars) {
@@ -85,12 +99,19 @@ func TestPlayOrUseUsesArtifact(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("taber", 3), 0)
 	art := g.AddArtifact(NewCard("gun", Mars, Artifact, Common,
-		WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 2})), 0)
+		WithAbility(TriggerAction, GainAember{
+			Player: Controller,
+			Amount: 2,
+		})), 0)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{art}})
 	before := g.Aember(0)
 
 	PlayOrUse{House: exceptHouse(StarAlliance)}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, Source: src},
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			Source:     src,
+		},
 	)
 
 	if got := g.Aember(0); got != before+2 {
@@ -109,7 +130,11 @@ func TestPlayOrUseAdmitsAnyHouse(t *testing.T) {
 	art := g.AddToHand(NewCard("a", StarAlliance, Artifact, Common), 0)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{art}})
 
-	PlayOrUse{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: src})
+	PlayOrUse{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     src,
+	})
 
 	if !g.inPlay(art) {
 		t.Error("with no house filter any card is admitted")
@@ -125,7 +150,11 @@ func TestPlayOrUseNoCandidates(t *testing.T) {
 	g.SetChooser(0, c)
 
 	PlayOrUse{House: exceptHouse(StarAlliance)}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, Source: src},
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			Source:     src,
+		},
 	)
 
 	if c.calls != 0 {
@@ -142,7 +171,11 @@ func TestPlayOrUseDeclined(t *testing.T) {
 	g.SetChooser(0, orderRejectChooser{})
 
 	PlayOrUse{House: exceptHouse(StarAlliance)}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, Source: src},
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			Source:     src,
+		},
 	)
 
 	if g.Exhausted(mars) {
@@ -159,8 +192,15 @@ func TestPlayOrUsePlayGrantSkipsInPlay(t *testing.T) {
 	art := g.AddToHand(NewCard("art", Mars, Artifact, Common), 0)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{art}})
 
-	PlayOrUse{House: namedHouse(Mars), Grant: GrantPlay}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, Source: src},
+	PlayOrUse{
+		House: namedHouse(Mars),
+		Grant: GrantPlay,
+	}.Resolve(
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			Source:     src,
+		},
 	)
 
 	if !g.inPlay(art) {
@@ -180,8 +220,15 @@ func TestPlayOrUseUseGrantSkipsHand(t *testing.T) {
 	art := g.AddToHand(NewCard("art", Mars, Artifact, Common), 0)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{mars}})
 
-	PlayOrUse{House: namedHouse(Mars), Grant: GrantUse}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, Source: src},
+	PlayOrUse{
+		House: namedHouse(Mars),
+		Grant: GrantUse,
+	}.Resolve(
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			Source:     src,
+		},
 	)
 
 	if !g.Exhausted(mars) {

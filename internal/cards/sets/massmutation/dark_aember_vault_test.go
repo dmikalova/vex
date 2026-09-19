@@ -125,17 +125,26 @@ func TestIsMutantCreature(t *testing.T) {
 	}{
 		{
 			"mutant creature",
-			card.Definition{Type: card.Type.Creature, Traits: []card.Trait{card.Traits.Mutant}},
+			card.Definition{
+				Type:   card.Type.Creature,
+				Traits: []card.Trait{card.Traits.Mutant},
+			},
 			true,
 		},
 		{
 			"non-mutant creature",
-			card.Definition{Type: card.Type.Creature, Traits: []card.Trait{card.Traits.Knight}},
+			card.Definition{
+				Type:   card.Type.Creature,
+				Traits: []card.Trait{card.Traits.Knight},
+			},
 			false,
 		},
 		{
 			"mutant artifact",
-			card.Definition{Type: card.Type.Artifact, Traits: []card.Trait{card.Traits.Mutant}},
+			card.Definition{
+				Type:   card.Type.Artifact,
+				Traits: []card.Trait{card.Traits.Mutant},
+			},
 			false,
 		},
 	}

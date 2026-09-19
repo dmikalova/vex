@@ -31,7 +31,10 @@ func (g *Game) CopyStats(recipient, source LocalID) {
 		return
 	}
 	c.CopiedStatsSourcePlus = uint8(source) + 1
-	g.record(CreatureCopiedStats{Creature: recipient, Source: source})
+	g.record(CreatureCopiedStats{
+		Creature: recipient,
+		Source:   source,
+	})
 }
 
 // CopyPrintedStats makes the creature its Target selects copy the printed stats of

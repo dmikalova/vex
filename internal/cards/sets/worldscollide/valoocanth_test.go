@@ -23,7 +23,10 @@ func TestValoocanth(t *testing.T) {
 	t.Run("reaping exhausts a chosen enemy creature and each of its neighbors", func(t *testing.T) {
 		var left, mid, right ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(Valoocanth)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(Valoocanth),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&left, ct.Creature(mars)),
 				ct.Bind(&mid, ct.Creature(mars)),
@@ -43,7 +46,10 @@ func TestValoocanth(t *testing.T) {
 	t.Run("fighting exhausts the fought enemy and each of its neighbors", func(t *testing.T) {
 		var left, mid, right ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(Valoocanth)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(Valoocanth),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&left, ct.Creature(mars, ct.Power(1))),
 				// Enough armor to survive the fight, so it can be the exhaust anchor.

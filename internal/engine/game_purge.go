@@ -16,9 +16,18 @@ func (g *Game) purgeFromDiscard(holder int, id LocalID) {
 // pass a card already in that hand.
 func (g *Game) purgeFromHand(holder int, id LocalID) {
 	g.moveCard(id,
-		zoneRef{Player: holder, Zone: Hand},
-		zoneRef{Player: g.owner(id), Zone: Purged},
-		CardPurgedFromHand{Card: id, Owner: holder})
+		zoneRef{
+			Player: holder,
+			Zone:   Hand,
+		},
+		zoneRef{
+			Player: g.owner(id),
+			Zone:   Purged,
+		},
+		CardPurgedFromHand{
+			Card:  id,
+			Owner: holder,
+		})
 }
 
 // purgeFromArchives moves a card from a player's archives to its owner's purge
@@ -43,7 +52,18 @@ func (g *Game) purgeFromDeck(holder int, id LocalID) {
 // owner's pile. Pinned by TestPurgeFromArchivesGoesToOwnersPile.
 func (g *Game) purgeFrom(holder int, id LocalID, from Zone) {
 	g.moveCard(id,
-		zoneRef{Player: holder, Zone: from},
-		zoneRef{Player: g.owner(id), Zone: Purged},
-		CardMoved{Player: g.State.ActivePlayer, Card: id, From: from, To: Purged})
+		zoneRef{
+			Player: holder,
+			Zone:   from,
+		},
+		zoneRef{
+			Player: g.owner(id),
+			Zone:   Purged,
+		},
+		CardMoved{
+			Player: g.State.ActivePlayer,
+			Card:   id,
+			From:   from,
+			To:     Purged,
+		})
 }

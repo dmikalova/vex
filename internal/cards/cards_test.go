@@ -136,7 +136,10 @@ func TestMaterializedNamesAreUnique(t *testing.T) {
 		}
 		for h := engine.HouseNone + 1; int(h) < engine.NumHouses; h++ {
 			for seed := range int64(samplesPerHouse) {
-				ctx := deckgen.SlotContext{House: h, Rarity: rc.Def.Rarity}
+				ctx := deckgen.SlotContext{
+					House:  h,
+					Rarity: rc.Def.Rarity,
+				}
 				out := rc.Materializer.Materialize(ctx, rand.New(rand.NewSource(seed)))
 				if out.Name == rc.Def.Name {
 					// The template face's own name never reaches a deck (materialize

@@ -18,7 +18,10 @@ func TestDrainingTouch(t *testing.T) {
 	t.Run("destroys a creature with no Æmber on it", func(t *testing.T) {
 		var bare, rich ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(DrainingTouch)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(DrainingTouch),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&bare, ct.Creature(ct.Power(3))),
 				ct.Bind(&rich, ct.Creature(ct.Power(3))),

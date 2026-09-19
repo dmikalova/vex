@@ -220,8 +220,14 @@ func TestPlayUpgradeFiresPlayAbility(t *testing.T) {
 	// The upgrade carries a non-Play ability (must be skipped on attach) and a
 	// Play ability that acts on its host.
 	up := NewCard("Test Boots", Brobnar, Upgrade, Rare,
-		WithAbility(TriggerAfterReap, GainAember{Player: Controller, Amount: 1}),
-		WithAbility(TriggerAfterPlay, Heal{Fully: true, Target: Target{Kind: TargetThisCreature}}))
+		WithAbility(TriggerAfterReap, GainAember{
+			Player: Controller,
+			Amount: 1,
+		}),
+		WithAbility(TriggerAfterPlay, Heal{
+			Fully:  true,
+			Target: Target{Kind: TargetThisCreature},
+		}))
 	g.AddToHand(up, 0)
 	before := g.Aember(0)
 	if _, err := g.PlayUpgrade(0, 0); err != nil {
@@ -272,7 +278,10 @@ func TestDiscardFromHand(t *testing.T) {
 func TestDiscardFromHandFiresReactions(t *testing.T) {
 	g := started(t)
 	watcher := NewCard("Watcher", Brobnar, Creature, Common, WithPower(3),
-		WithAbility(TriggerAfterDiscardFromHand, GainAember{Player: Controller, Amount: 1}))
+		WithAbility(TriggerAfterDiscardFromHand, GainAember{
+			Player: Controller,
+			Amount: 1,
+		}))
 	g.AddToBattleline(watcher, 0)
 	brob := g.AddToHand(testCreature("brob", 3), 0)
 	if err := g.DiscardFromHand(0, handIdxByID(g, 0, brob)); err != nil {
@@ -432,7 +441,10 @@ func TestChooseHouseForcedBindsWhenAvailable(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetPlayerHouses(0, []House{Mars, Logos, Untamed})
 	g.State.ActivePlayer = 0
-	g.State.HouseConstraints[0][0] = HouseConstraint{Kind: constraintMustHouse, House: Mars}
+	g.State.HouseConstraints[0][0] = HouseConstraint{
+		Kind:  constraintMustHouse,
+		House: Mars,
+	}
 	g.State.HouseConstraintCount[0] = 1
 	if err := g.ChooseHouse(0, Logos); !errors.Is(err, ErrHouseNotAllowed) {
 		t.Errorf("choosing a different house = %v, want ErrHouseNotAllowed", err)
@@ -449,7 +461,10 @@ func TestChooseHouseForcedIgnoredWhenUnavailable(t *testing.T) {
 	g.SetPlayerHouses(0, []House{Brobnar, Logos, Untamed})
 	g.State.ActivePlayer = 0
 	// A must for a house player 0 does not have is void (cannot overrides must).
-	g.State.HouseConstraints[0][0] = HouseConstraint{Kind: constraintMustHouse, House: Mars}
+	g.State.HouseConstraints[0][0] = HouseConstraint{
+		Kind:  constraintMustHouse,
+		House: Mars,
+	}
 	g.State.HouseConstraintCount[0] = 1
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Errorf("cannot-overrides-must: an available house = %v, want nil", err)
@@ -532,14 +547,20 @@ func TestAccessorsAndChooser(t *testing.T) {
 func TestVerboseLogging(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.Verbose = true
-	g.Record(TurnBegan{Player: 0, Turn: 1})
+	g.Record(TurnBegan{
+		Player: 0,
+		Turn:   1,
+	})
 	if got := g.LogText(); len(got) != 1 || got[0] != "A begins turn 1" {
 		t.Errorf("log = %v", got)
 	}
 	// With recording off the entry is dropped rather than stored, so a bot
 	// exploring cloned positions pays nothing for narration it never reads.
 	g.SetRecording(false)
-	g.Record(TurnBegan{Player: 0, Turn: 2})
+	g.Record(TurnBegan{
+		Player: 0,
+		Turn:   2,
+	})
 	if len(g.Log) != 1 {
 		t.Errorf("log = %v, want recording off to drop the entry", g.LogText())
 	}

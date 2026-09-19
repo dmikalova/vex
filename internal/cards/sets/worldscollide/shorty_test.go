@@ -21,7 +21,10 @@ func TestShorty(t *testing.T) {
 	t.Run("enrages itself when it reaps", func(t *testing.T) {
 		var shorty ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(ct.Bind(&shorty, Shorty))},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(ct.Bind(&shorty, Shorty)),
+			},
 		})
 
 		h.P1.Reap(shorty)
@@ -35,7 +38,10 @@ func TestShorty(t *testing.T) {
 	t.Run("deals 4 damage to the attacked enemy before combat", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(Shorty)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(Shorty),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(20))))},
 		})
 

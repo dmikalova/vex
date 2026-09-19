@@ -28,7 +28,10 @@ var Gluttony = set.New(
 			Type:   card.Type.Creature,
 			Trait:  card.Traits.Sin,
 		},
-		Do: card.Exalt{Target: card.Target.This, Amount: 1},
+		Do: card.Exalt{
+			Target: card.Target.This,
+			Amount: 1,
+		},
 	}),
 	card.WithAbility(card.Trigger.Reap, card.MoveAember{
 		All:  true,

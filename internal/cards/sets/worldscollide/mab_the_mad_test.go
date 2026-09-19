@@ -20,7 +20,10 @@ import (
 func TestMabTheMad(t *testing.T) {
 	t.Run("shuffles itself into your deck when it reaps", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(MabTheMad)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(MabTheMad),
+			},
 		})
 
 		h.P1.Reap(MabTheMad)

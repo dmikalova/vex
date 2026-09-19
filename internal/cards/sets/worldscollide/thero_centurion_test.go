@@ -21,7 +21,10 @@ func TestTheroCenturion(t *testing.T) {
 	t.Run("captures 1 Æmber from the opponent when played", func(t *testing.T) {
 		var thero ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(ct.Bind(&thero, TheroCenturion))},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(ct.Bind(&thero, TheroCenturion)),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 

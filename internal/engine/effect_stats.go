@@ -29,7 +29,10 @@ func (e GainStats) validate() error {
 func (e GainStats) Text() string {
 	return fmt.Sprintf("%s, %s gains %s",
 		durationClause(RemainderOfPlayerTurn, ""),
-		e.Target.Text(), staticBonuses(StaticModifier{PowerBonus: e.Power, ArmorBonus: e.Armor}))
+		e.Target.Text(), staticBonuses(StaticModifier{
+			PowerBonus: e.Power,
+			ArmorBonus: e.Armor,
+		}))
 }
 
 // Resolve grants each selected creature the bonus for the remainder of the turn.

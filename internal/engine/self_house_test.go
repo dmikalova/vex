@@ -13,14 +13,23 @@ import (
 func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 	def := NewCard("Probe", Mars, Creature, Common,
 		WithAbility(TriggerAfterPlay, Sequence{Effects: []Effect{
-			RevealHand{Player: Controller, House: namedHouse(SelfHouse)},
+			RevealHand{
+				Player: Controller,
+				House:  namedHouse(SelfHouse),
+			},
 			Stun{Target: Target{Kind: TargetEachCreature}.
 				House(namedHouse(SelfHouse)).
 				Refine(Except(MostPowerful))},
 			Exhaust{Target: Target{Kind: TargetEachCreature}.House(exceptHouse(SelfHouse))},
 		}}),
-		WithPlayPermission(PlayPermission{House: SelfHouse, Amount: 1}),
-		WithHouseLock(HouseLock{Player: Controller, House: SelfHouse}),
+		WithPlayPermission(PlayPermission{
+			House:  SelfHouse,
+			Amount: 1,
+		}),
+		WithHouseLock(HouseLock{
+			Player: Controller,
+			House:  SelfHouse,
+		}),
 		WithKeyCost(NewKeyCostChange(Opponent, 1).Per(CardsInPlay{
 			Player: Controller,
 			Type:   Creature,
@@ -53,13 +62,22 @@ func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 func TestRehouseMovesEverySelfHouseReference(t *testing.T) {
 	def := NewCard("Probe", Mars, Creature, Common,
 		WithAbility(TriggerAfterPlay, Sequence{Effects: []Effect{
-			RevealHand{Player: Controller, House: namedHouse(SelfHouse)},
+			RevealHand{
+				Player: Controller,
+				House:  namedHouse(SelfHouse),
+			},
 			Stun{Target: Target{Kind: TargetEachCreature}.House(namedHouse(SelfHouse))},
 			// A house named outright must survive rehousing untouched.
 			Exhaust{Target: Target{Kind: TargetEachCreature}.House(namedHouse(Brobnar))},
 		}}),
-		WithPlayPermission(PlayPermission{House: SelfHouse, Amount: 1}),
-		WithHouseLock(HouseLock{Player: Controller, House: SelfHouse}),
+		WithPlayPermission(PlayPermission{
+			House:  SelfHouse,
+			Amount: 1,
+		}),
+		WithHouseLock(HouseLock{
+			Player: Controller,
+			House:  SelfHouse,
+		}),
 	)
 
 	def = Rehouse(def, Untamed)
@@ -117,7 +135,11 @@ type selfHouseProbe struct {
 
 func TestSelfHouseResolvedWalksEveryShape(t *testing.T) {
 	sentinel := SelfHouse
-	in := selfHouseProbe{Ptr: &sentinel, Map: map[string]House{"k": SelfHouse}, hidden: SelfHouse}
+	in := selfHouseProbe{
+		Ptr:    &sentinel,
+		Map:    map[string]House{"k": SelfHouse},
+		hidden: SelfHouse,
+	}
 	out := replaceHouse(reflect.ValueOf(in), SelfHouse, Dis).Interface().(selfHouseProbe)
 
 	if *out.Ptr != Dis {

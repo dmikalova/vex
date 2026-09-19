@@ -19,7 +19,10 @@ import (
 func TestTheTerror(t *testing.T) {
 	t.Run("gains 2 Æmber when the opponent has none", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(TheTerror)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(TheTerror),
+			},
 			P2: ct.Side{Amber: 0},
 		})
 
@@ -30,7 +33,10 @@ func TestTheTerror(t *testing.T) {
 
 	t.Run("does nothing when the opponent has Æmber", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(TheTerror)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(TheTerror),
+			},
 			P2: ct.Side{Amber: 1},
 		})
 

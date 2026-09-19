@@ -125,7 +125,11 @@ func TestMoveUpgradeUnattachedIsNoOp(t *testing.T) {
 func TestTargetAttachedHostUnattached(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	up := g.Register(blasterUpgrade("Commander Chan"), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0, Upgrade: up}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Upgrade:    up,
+	}
 
 	if got := (Target{Kind: TargetAttachedHost}).Select(ctx); got != nil {
 		t.Errorf("unattached AttachedHost selected %v, want nil", got)
@@ -175,7 +179,10 @@ func TestAttachSelfToDeclinable(t *testing.T) {
 	}
 
 	empty := NewGame("A", "B", 1)
-	if !chosen.vacuous(&EffectContext{Resolver: empty, Controller: 0}) {
+	if !chosen.vacuous(&EffectContext{
+		Resolver:   empty,
+		Controller: 0,
+	}) {
 		t.Error("an AttachSelfTo with no creature to attach to should be vacuous")
 	}
 
@@ -185,7 +192,11 @@ func TestAttachSelfToDeclinable(t *testing.T) {
 	up := taken.Register(NewCard("shield", StarAlliance, Upgrade, Common), 0)
 	taken.AttachUpgrade(from, up)
 	onto := taken.AddToBattleline(testCreature("onto", 3), 0)
-	ctx := &EffectContext{Resolver: taken, Upgrade: up, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   taken,
+		Upgrade:    up,
+		Controller: 0,
+	}
 	// The upgrade's own host is a friendly creature the target admits, so the
 	// already-homed shortcut returns before anything is asked.
 	if !chosen.resolveOptional(ctx) {
@@ -212,7 +223,11 @@ func TestAttachSelfToDeclinable(t *testing.T) {
 	declined.AttachUpgrade(stay, held)
 	toOther := AttachSelfTo{Target: Target{Kind: TargetChosenFriendlyCreature}.Named("other")}
 	if toOther.resolveOptional(
-		&EffectContext{Resolver: declined, Upgrade: held, Controller: 0},
+		&EffectContext{
+			Resolver:   declined,
+			Upgrade:    held,
+			Controller: 0,
+		},
 	) {
 		t.Error("declining should report nothing attached")
 	}

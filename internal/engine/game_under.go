@@ -111,7 +111,12 @@ func (g *Game) PutCardUnder(owner int, id, host LocalID, faceDown bool) {
 	}
 	hand.removeAt(i)
 	g.AttachUnder(host, id, faceDown)
-	g.record(CardPutUnder{Player: owner, Card: id, Host: host, FaceDown: faceDown})
+	g.record(CardPutUnder{
+		Player:   owner,
+		Card:     id,
+		Host:     host,
+		FaceDown: faceDown,
+	})
 }
 
 // GraftUnder moves a card from play to faceup under host, out of play (rulebook:
@@ -123,7 +128,10 @@ func (g *Game) PutCardUnder(owner int, id, host LocalID, faceDown bool) {
 func (g *Game) GraftUnder(id, host LocalID) {
 	g.leavePlayInto(id, func(half LocalID, _ int) {
 		g.AttachUnder(host, half, false)
-		g.record(CardGrafted{Card: half, Host: host})
+		g.record(CardGrafted{
+			Card: half,
+			Host: host,
+		})
 	})
 }
 
@@ -149,6 +157,9 @@ func (g *Game) ArchiveCardUnder(host LocalID) {
 		o := g.owner(u)
 		g.resetCore(u)
 		g.State.Archives[o].add(u)
-		g.record(CardPutIntoArchives{Card: u, Owner: o})
+		g.record(CardPutIntoArchives{
+			Card:  u,
+			Owner: o,
+		})
 	}
 }

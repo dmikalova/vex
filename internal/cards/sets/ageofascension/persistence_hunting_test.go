@@ -19,7 +19,10 @@ func TestPersistenceHunting(t *testing.T) {
 	t.Run("exhausts each enemy creature of the chosen house", func(t *testing.T) {
 		var foe1, foe2 ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(PersistenceHunting)},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(PersistenceHunting),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&foe1, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))),

@@ -21,7 +21,10 @@ import (
 func TestRitualOfTheHunt(t *testing.T) {
 	t.Run("destroys itself and grants use of friendly Untamed creatures", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(RitualOfTheHunt)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(RitualOfTheHunt),
+			},
 		})
 
 		h.P1.UseAction(RitualOfTheHunt)

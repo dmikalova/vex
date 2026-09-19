@@ -21,7 +21,10 @@ func TestCustomsOffice(t *testing.T) {
 	t.Run("opponent pays the controller 1 Æmber to play an artifact", func(t *testing.T) {
 		var toll ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(CustomsOffice)},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(CustomsOffice),
+			},
 			P2: ct.Side{
 				House: card.House.Brobnar,
 				Hand:  ct.Cards(ct.Bind(&toll, ct.Artifact())),
@@ -41,7 +44,10 @@ func TestCustomsOffice(t *testing.T) {
 	t.Run("opponent that cannot pay cannot play the artifact", func(t *testing.T) {
 		var toll ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(CustomsOffice)},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(CustomsOffice),
+			},
 			P2: ct.Side{
 				House: card.House.Brobnar,
 				Hand:  ct.Cards(ct.Bind(&toll, ct.Artifact())),

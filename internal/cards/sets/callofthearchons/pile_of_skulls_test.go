@@ -25,7 +25,10 @@ func TestPileOfSkulls(t *testing.T) {
 					PileOfSkulls,
 					ct.Bind(&fighter, ct.Creature(ct.Power(5))),
 				)},
-				P2: ct.Side{Amber: 3, InPlay: ct.Cards(ct.Bind(&enemy, ct.Creature(ct.Power(2))))},
+				P2: ct.Side{
+					Amber:  3,
+					InPlay: ct.Cards(ct.Bind(&enemy, ct.Creature(ct.Power(2)))),
+				},
 			})
 
 			h.P1.Fight(fighter, enemy)

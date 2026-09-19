@@ -41,7 +41,10 @@ func TestBrambleLynx(t *testing.T) {
 	t.Run("enters play exhausted when you have not reaped", func(t *testing.T) {
 		var lynx ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(ct.Bind(&lynx, BrambleLynx))},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(ct.Bind(&lynx, BrambleLynx)),
+			},
 		})
 
 		h.P1.Play(BrambleLynx)

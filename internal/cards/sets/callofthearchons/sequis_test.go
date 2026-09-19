@@ -20,7 +20,10 @@ func TestSequis(t *testing.T) {
 	t.Run("captures 1 Æmber when it reaps", func(t *testing.T) {
 		var sequis ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, InPlay: ct.Cards(ct.Bind(&sequis, Sequis))},
+			P1: ct.Side{
+				House:  card.House.Sanctum,
+				InPlay: ct.Cards(ct.Bind(&sequis, Sequis)),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 

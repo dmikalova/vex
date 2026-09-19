@@ -22,6 +22,9 @@ var Chronus = set.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(card.Trigger.AfterBonusDraw, card.May{
-		Do: card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
+		Do: card.ArchiveCard{
+			Zone:      card.Hand,
+			Selection: card.Chosen{},
+		},
 	}),
 )

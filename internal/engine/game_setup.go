@@ -93,10 +93,17 @@ func (g *Game) dealOpeningHand(player, base int) {
 	target := base - (chains+5)/6
 	g.drawTo(player, target)
 	hand := int(g.State.Hand[player].Count)
-	g.record(CardsDrawn{Player: player, Cards: hand, Hand: hand})
+	g.record(CardsDrawn{
+		Player: player,
+		Cards:  hand,
+		Hand:   hand,
+	})
 	if chains > 0 && hand < base && g.canDraw(player) {
 		g.State.Chains[player]--
-		g.record(ChainShed{Player: player, Remaining: g.State.Chains[player]})
+		g.record(ChainShed{
+			Player:    player,
+			Remaining: g.State.Chains[player],
+		})
 	}
 }
 
@@ -116,5 +123,8 @@ func (g *Game) offerMulligan(player int) {
 	g.shuffleZonesIntoDeck(player, []Zone{Hand})
 	g.record(DeckShuffled{Player: player})
 	g.drawTo(player, had-1)
-	g.record(Mulliganed{Player: player, Hand: int(g.State.Hand[player].Count)})
+	g.record(Mulliganed{
+		Player: player,
+		Hand:   int(g.State.Hand[player].Count),
+	})
 }

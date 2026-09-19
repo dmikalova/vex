@@ -28,6 +28,9 @@ var GreaterOxtet = set.New(
 				Player:    card.Controller,
 				Selection: card.Chosen{},
 			},
-			Result: card.AddPowerCounter{Target: card.Target.This, Amount: 2},
+			Result: card.AddPowerCounter{
+				Target: card.Target.This,
+				Amount: 2,
+			},
 		}),
 )

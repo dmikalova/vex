@@ -8,9 +8,15 @@ func TestExhaustCreatures(t *testing.T) {
 		a := g.AddToBattleline(testCreature("a", 3), 0)
 		b := g.AddToBattleline(testCreature("b", 3), 0)
 		g.SetChooser(0, optionPicker{idx: 0}) // always take the first candidate
-		ctx := &EffectContext{Resolver: g, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		}
 
-		e := ExhaustCreatures{Max: 3, Target: Target{Kind: TargetEachFriendlyCreature}}
+		e := ExhaustCreatures{
+			Max:    3,
+			Target: Target{Kind: TargetEachFriendlyCreature},
+		}
 		if e.Text() != "exhaust up to 3 friendly creatures" {
 			t.Errorf("text = %q", e.Text())
 		}
@@ -24,9 +30,15 @@ func TestExhaustCreatures(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		a := g.AddToBattleline(testCreature("a", 3), 0)
 		g.SetChooser(0, optionPicker{idx: 5}) // out of range -> Done
-		ctx := &EffectContext{Resolver: g, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		}
 
-		ExhaustCreatures{Max: 3, Target: Target{Kind: TargetEachFriendlyCreature}}.Resolve(ctx)
+		ExhaustCreatures{
+			Max:    3,
+			Target: Target{Kind: TargetEachFriendlyCreature},
+		}.Resolve(ctx)
 		if g.State.Cards[a].Exhausted {
 			t.Error("declining should exhaust nothing")
 		}
@@ -39,7 +51,10 @@ func TestExhaustCreatures(t *testing.T) {
 		if (ExhaustCreatures{Target: Target{Kind: TargetEachCreature}}).validate() == nil {
 			t.Error("non-positive Max should be invalid")
 		}
-		if (ExhaustCreatures{Max: 1, Target: Target{Kind: TargetEachCreature}}).validate() != nil {
+		if (ExhaustCreatures{
+			Max:    1,
+			Target: Target{Kind: TargetEachCreature},
+		}).validate() != nil {
 			t.Error("a valid ExhaustCreatures should pass")
 		}
 	})
@@ -51,9 +66,15 @@ func TestExhaustGate(t *testing.T) {
 	t.Run("exhausts, binds the creature, and reports progress", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		c := g.AddToBattleline(testCreature("c", 4), 0)
-		ctx := &EffectContext{Resolver: g, Controller: 0}
+		ctx := &EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		}
 
-		e := Exhaust{Target: Target{Kind: TargetThisCreature}, Bind: true}
+		e := Exhaust{
+			Target: Target{Kind: TargetThisCreature},
+			Bind:   true,
+		}
 		if !e.resolveGate(ctx) {
 			t.Error("exhausting a creature should report progress")
 		}
@@ -67,8 +88,14 @@ func TestExhaustGate(t *testing.T) {
 
 	t.Run("no target reports no progress and binds nothing", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
-		ctx := &EffectContext{Resolver: g, Controller: 0}
-		if (Exhaust{Target: Target{Kind: TargetEachFriendlyCreature}, Bind: true}).resolveGate(
+		ctx := &EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		}
+		if (Exhaust{
+			Target: Target{Kind: TargetEachFriendlyCreature},
+			Bind:   true,
+		}).resolveGate(
 			ctx,
 		) {
 			t.Error("exhausting with no creatures should report no progress")
@@ -103,14 +130,22 @@ func TestReadyOnFirstUse(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	g.State.Cards[src].Exhausted = true
 	g.State.Cards[src].TimesUsedThisTurn = 1
-	e.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
 	if g.Exhausted(src) {
 		t.Error("first use should ready the creature")
 	}
 
 	g.State.Cards[src].Exhausted = true
 	g.State.Cards[src].TimesUsedThisTurn = 2
-	e.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
 	if !g.Exhausted(src) {
 		t.Error("later use should not ready the creature")
 	}

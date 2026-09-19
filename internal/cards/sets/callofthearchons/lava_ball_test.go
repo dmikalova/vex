@@ -18,7 +18,10 @@ func TestLavaBall(t *testing.T) {
 	t.Run("deals 4 to a non-flank creature and 2 to its neighbors", func(t *testing.T) {
 		var left, mid, right ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(LavaBall)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(LavaBall),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&left, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(6))),
 				ct.Bind(&mid, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(6))),

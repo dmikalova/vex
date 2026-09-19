@@ -19,7 +19,10 @@ import (
 func TestMalison(t *testing.T) {
 	var defender, mid, right ct.Card
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Malison)},
+		P1: ct.Side{
+			House:  card.House.Dis,
+			InPlay: ct.Cards(Malison),
+		},
 		P2: ct.Side{
 			Amber: 5,
 			InPlay: ct.Cards(

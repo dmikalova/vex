@@ -88,8 +88,14 @@ func Play(t testing.TB, s Setup) *Harness {
 		prompt: make(chan promptReq),
 		done:   make(chan actionResult),
 	}
-	h.P1 = &Player{h: h, index: 0}
-	h.P2 = &Player{h: h, index: 1}
+	h.P1 = &Player{
+		h:     h,
+		index: 0,
+	}
+	h.P2 = &Player{
+		h:     h,
+		index: 1,
+	}
 
 	// Choose the active player's house before placing cards, so the archives
 	// offer (which fires on ChooseHouse) sees an empty archive and never prompts
@@ -115,8 +121,14 @@ func Play(t testing.TB, s Setup) *Harness {
 
 	// Install the interactive bridge only now that setup is done, so no engine
 	// choice during placement can block on a click.
-	g.SetChooser(0, bridgeChooser{h: h, player: 0})
-	g.SetChooser(1, bridgeChooser{h: h, player: 1})
+	g.SetChooser(0, bridgeChooser{
+		h:      h,
+		player: 0,
+	})
+	g.SetChooser(1, bridgeChooser{
+		h:      h,
+		player: 1,
+	})
 
 	t.Cleanup(h.checkReady)
 	return h
@@ -131,7 +143,14 @@ func (h *Harness) Game() *engine.Game { return h.g }
 func (h *Harness) Expect(card any) CardExpect {
 	h.t.Helper()
 	id := h.resolve(card, h.allIDs(), "Expect")
-	return CardExpect{h: h, c: Card{h: h, id: id, set: true}}
+	return CardExpect{
+		h: h,
+		c: Card{
+			h:   h,
+			id:  id,
+			set: true,
+		},
+	}
 }
 
 // --- player verbs ---
@@ -272,7 +291,10 @@ func (p *Player) ExpectPrompt(text string) Prompt {
 	if req.text != text {
 		p.h.t.Errorf("prompt for %s = %q, want %q", playerName(p.index), req.text, text)
 	}
-	return Prompt{h: p.h, req: req}
+	return Prompt{
+		h:   p.h,
+		req: req,
+	}
 }
 
 // Prompt is a captured pending prompt, returned by ExpectPrompt so its source can
@@ -366,7 +388,11 @@ func (h *Harness) placeInPlay(player int, e Entry) {
 // bind fills an entry's handle (if any) with the placed card.
 func (h *Harness) bind(e Entry, id engine.LocalID) {
 	if e.bind != nil {
-		*e.bind = Card{h: h, id: id, set: true}
+		*e.bind = Card{
+			h:   h,
+			id:  id,
+			set: true,
+		}
 	}
 }
 
@@ -375,7 +401,11 @@ func (h *Harness) attach(host engine.LocalID, up engine.CardDefinition) Card {
 	id := h.g.Register(up, h.ownerOf(host))
 	h.g.AttachUpgrade(host, id)
 	h.g.State.Cards[host].ArmorRemaining = int16(h.g.Armor(host))
-	return Card{h: h, id: id, set: true}
+	return Card{
+		h:   h,
+		id:  id,
+		set: true,
+	}
 }
 
 // --- lookup ---

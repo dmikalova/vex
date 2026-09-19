@@ -24,7 +24,10 @@ func TestLoseKeyword(t *testing.T) {
 	if !g.HasKeyword(hider, Elusive) {
 		t.Fatal("the creature should start elusive")
 	}
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.HasKeyword(hider, Elusive) {
 		t.Error("elusive should be lost for the remainder of the turn")
 	}
@@ -77,8 +80,11 @@ func TestAttackIgnoresKeywords(t *testing.T) {
 
 func TestAttackKeywordsText(t *testing.T) {
 	if got := attackKeywordsText(&CardDefinition{
-		Name:           "Spyyyder",
-		AttackKeywords: AttackKeywords{Keywords: []Keyword{Poison}, FlankOnly: true},
+		Name: "Spyyyder",
+		AttackKeywords: AttackKeywords{
+			Keywords:  []Keyword{Poison},
+			FlankOnly: true,
+		},
 	}); got != "Spyyyder gains poison while attacking an enemy flank creature." {
 		t.Errorf("flank-only text = %q", got)
 	}
@@ -95,7 +101,11 @@ func TestAttackKeywordsText(t *testing.T) {
 
 func TestShoulderArmorStatic(t *testing.T) {
 	armor := NewCard("Shoulder Armor", Sanctum, Upgrade, Uncommon,
-		WithStatic(StaticModifier{PowerBonus: 2, ArmorBonus: 2, WhileOnFlank: true}))
+		WithStatic(StaticModifier{
+			PowerBonus:   2,
+			ArmorBonus:   2,
+			WhileOnFlank: true,
+		}))
 	if got := staticText(armor.Static); got !=
 		"While this creature is on a flank, it gains +2 power and +2 armor." {
 		t.Errorf("text = %q", got)
@@ -143,7 +153,10 @@ func TestGrantKeyword(t *testing.T) {
 		t.Fatal("the creature should not start with skirmish")
 	}
 
-	GainKeywordVerb{Keyword: Skirmish}.Apply(&EffectContext{Resolver: g, Controller: 0}, scout)
+	GainKeywordVerb{Keyword: Skirmish}.Apply(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}, scout)
 	if !g.hasKeyword(scout, Skirmish) {
 		t.Error("the creature should have gained skirmish")
 	}

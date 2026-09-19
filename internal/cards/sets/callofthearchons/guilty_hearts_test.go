@@ -19,7 +19,10 @@ func TestGuiltyHearts(t *testing.T) {
 	t.Run("destroys each creature with Æmber on it", func(t *testing.T) {
 		var rich, poor ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(GuiltyHearts)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(GuiltyHearts),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&rich, ct.Creature(ct.OfHouse(card.House.Mars))),

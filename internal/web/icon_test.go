@@ -156,7 +156,10 @@ func TestCardGlyphsMergesActionTriggers(t *testing.T) {
 // hand-refill change (Mother: draw +1) still draws a glyph strip rather than none.
 func TestCardGlyphsShowsDrawModifier(t *testing.T) {
 	def := &engine.CardDefinition{
-		DrawModifier: engine.DrawModifier{Player: engine.Controller, Amount: 1},
+		DrawModifier: engine.DrawModifier{
+			Player: engine.Controller,
+			Amount: 1,
+		},
 	}
 	lines := cardGlyphs(def)
 	if len(lines) != 1 {
@@ -222,7 +225,10 @@ func TestRestrictionLinesBansReaping(t *testing.T) {
 // enemy Æmber owed.
 func TestRestrictionLinesShowsToll(t *testing.T) {
 	lines := restrictionLines(engine.Restrictions{
-		Toll: engine.Toll{Action: engine.TollUseArtifact, Amount: 1},
+		Toll: engine.Toll{
+			Action: engine.TollUseArtifact,
+			Amount: 1,
+		},
 	})
 	if len(lines) != 1 {
 		t.Fatalf("want one toll line, got %d", len(lines))

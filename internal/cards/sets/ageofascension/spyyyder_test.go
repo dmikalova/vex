@@ -21,7 +21,10 @@ func TestSpyyyder(t *testing.T) {
 	t.Run("poisons a flank creature it fights", func(t *testing.T) {
 		var flank ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Spyyyder)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(Spyyyder),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&flank, ct.Creature(ct.Power(10))),
 			)},
@@ -35,7 +38,10 @@ func TestSpyyyder(t *testing.T) {
 	t.Run("does not poison a creature off a flank", func(t *testing.T) {
 		var middle ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(Spyyyder)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(Spyyyder),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Creature(ct.Power(10)),
 				ct.Bind(&middle, ct.Creature(ct.Power(10))),

@@ -228,7 +228,10 @@ func (e DealDamage) resolvePerInstance(ctx *EffectContext) {
 		return
 	}
 	prompt := "Choose " + e.Target.Text()
-	ctx.previewBadge(SelectionBadge{Icon: DamageIcon, Amount: e.Amount})
+	ctx.previewBadge(SelectionBadge{
+		Icon:   DamageIcon,
+		Amount: e.Amount,
+	})
 	defer ctx.previewBadge(SelectionBadge{})
 	assigned := map[LocalID]int{}
 	order := []LocalID{}
@@ -247,7 +250,11 @@ func (e DealDamage) resolvePerInstance(ctx *EffectContext) {
 	}
 	targets := make([]DamageTarget, len(order))
 	for i, id := range order {
-		targets[i] = DamageTarget{ID: id, Amount: assigned[id], IgnoreArmor: e.IgnoreArmor}
+		targets[i] = DamageTarget{
+			ID:          id,
+			Amount:      assigned[id],
+			IgnoreArmor: e.IgnoreArmor,
+		}
 	}
 	ctx.dealDamage(targets)
 }
@@ -427,9 +434,15 @@ func (s CreatureAndNeighbors) hits(ctx *EffectContext) []DamageTarget {
 	if s.Target.Kind != targetUnset {
 		var out []DamageTarget
 		for _, id := range s.Target.Select(ctx) {
-			out = append(out, DamageTarget{ID: id, Amount: s.Amount})
+			out = append(out, DamageTarget{
+				ID:     id,
+				Amount: s.Amount,
+			})
 			for _, n := range neighbors(ctx, id) {
-				out = append(out, DamageTarget{ID: n, Amount: s.Splash})
+				out = append(out, DamageTarget{
+					ID:     n,
+					Amount: s.Splash,
+				})
 			}
 		}
 		return out
@@ -452,12 +465,18 @@ func (s CreatureAndNeighbors) hits(ctx *EffectContext) []DamageTarget {
 					n = pick
 				}
 			}
-			out = append(out, DamageTarget{ID: n, Amount: s.Splash})
+			out = append(out, DamageTarget{
+				ID:     n,
+				Amount: s.Splash,
+			})
 		}
 		return out
 	}
 	for _, n := range ns {
-		out = append(out, DamageTarget{ID: n, Amount: s.Splash})
+		out = append(out, DamageTarget{
+			ID:     n,
+			Amount: s.Splash,
+		})
 	}
 	return out
 }
@@ -487,7 +506,10 @@ func (s DifferentCreatures) hits(ctx *EffectContext) []DamageTarget {
 		func() []LocalID { return pool.Select(ctx) })
 	out := make([]DamageTarget, 0, len(picked))
 	for i, id := range picked {
-		out = append(out, DamageTarget{ID: id, Amount: amounts[i]})
+		out = append(out, DamageTarget{
+			ID:     id,
+			Amount: amounts[i],
+		})
 	}
 	return out
 }
@@ -559,7 +581,10 @@ func (s UpToCreatures) hits(ctx *EffectContext) []DamageTarget {
 		if s.WhenDamaged != 0 && ctx.Resolver.Damage(id) > 0 {
 			amount = s.WhenDamaged
 		}
-		out = append(out, DamageTarget{ID: id, Amount: amount})
+		out = append(out, DamageTarget{
+			ID:     id,
+			Amount: amount,
+		})
 	}
 	return out
 }
@@ -613,7 +638,10 @@ func (s DivideDamage) hits(ctx *EffectContext) []DamageTarget {
 	}
 	out := make([]DamageTarget, len(order))
 	for i, id := range order {
-		out[i] = DamageTarget{ID: id, Amount: assigned[id]}
+		out[i] = DamageTarget{
+			ID:     id,
+			Amount: assigned[id],
+		}
 	}
 	return out
 }
@@ -673,7 +701,10 @@ func flankWalkSteps(ctx *EffectContext, amounts []int) []flankWalkStep {
 		if pos < 0 || pos >= len(bl) {
 			break
 		}
-		out = append(out, flankWalkStep{ID: bl[pos], Amount: amt})
+		out = append(out, flankWalkStep{
+			ID:     bl[pos],
+			Amount: amt,
+		})
 	}
 	return out
 }
@@ -713,7 +744,10 @@ func (s FlankWalk) hits(ctx *EffectContext) []DamageTarget {
 	}
 	out := make([]DamageTarget, len(steps))
 	for i, st := range steps {
-		out[i] = DamageTarget{ID: st.ID, Amount: st.Amount}
+		out[i] = DamageTarget{
+			ID:     st.ID,
+			Amount: st.Amount,
+		}
 	}
 	return out
 }

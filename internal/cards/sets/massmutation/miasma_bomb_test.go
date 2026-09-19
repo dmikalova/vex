@@ -18,7 +18,10 @@ import (
 //	Enhance Damage.
 func TestMiasmaBomb(t *testing.T) {
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(MiasmaBomb)},
+		P1: ct.Side{
+			House:  card.House.Shadows,
+			InPlay: ct.Cards(MiasmaBomb),
+		},
 	})
 
 	h.P1.UseAction(MiasmaBomb)

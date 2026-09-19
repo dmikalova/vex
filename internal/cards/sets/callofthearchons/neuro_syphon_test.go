@@ -35,7 +35,10 @@ func TestNeuroSyphon(t *testing.T) {
 
 	t.Run("does nothing when not behind", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(NeuroSyphon)},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(NeuroSyphon),
+			},
 			P2: ct.Side{Amber: 0},
 		})
 

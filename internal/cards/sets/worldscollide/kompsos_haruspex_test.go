@@ -27,7 +27,10 @@ func TestKompsosHaruspex(t *testing.T) {
 		card.WithPower(3),
 		card.WithAbility(
 			card.Trigger.Play,
-			card.GainAember{Player: card.Controller, Amount: 1},
+			card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
 		),
 	)
 

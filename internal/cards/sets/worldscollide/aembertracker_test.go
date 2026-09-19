@@ -20,7 +20,10 @@ func TestAembertracker(t *testing.T) {
 	t.Run("deals 2 unpreventable damage to each enemy creature with Æmber", func(t *testing.T) {
 		var withAember, armored, bare ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.StarAlliance, Hand: ct.Cards(Aembertracker)},
+			P1: ct.Side{
+				House: card.House.StarAlliance,
+				Hand:  ct.Cards(Aembertracker),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&withAember, ct.Creature(ct.Power(5))),

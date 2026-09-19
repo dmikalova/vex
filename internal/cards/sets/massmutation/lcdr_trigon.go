@@ -21,7 +21,10 @@ var LCdrTrigon = set.New(
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(
 		card.Trigger.Reap, card.Sequence{Effects: []card.Effect{
-			card.DiscardTop{Amount: 1, Player: card.Controller},
+			card.DiscardTop{
+				Amount: 1,
+				Player: card.Controller,
+			},
 			card.ResolveBonusIcons{Target: card.Target.Triggering},
 		}}),
 )

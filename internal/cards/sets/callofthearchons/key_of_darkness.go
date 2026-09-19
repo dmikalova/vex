@@ -20,7 +20,11 @@ var KeyOfDarkness = set.New(
 			Extra: 6,
 			Or: card.OrAmount{
 				Amount: 2,
-				When:   card.PoolAember{Player: card.Opponent, Is: card.Exactly, Amount: 0},
+				When: card.PoolAember{
+					Player: card.Opponent,
+					Is:     card.Exactly,
+					Amount: 0,
+				},
 			},
 		}),
 )

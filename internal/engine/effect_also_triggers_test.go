@@ -3,31 +3,52 @@ package engine
 import "testing"
 
 func TestAlsoTriggersOnValid(t *testing.T) {
-	if !(AlsoTriggersOn{From: TriggerAfterPlay, Onto: TriggerAfterReap}).valid() {
+	if !(AlsoTriggersOn{
+		From: TriggerAfterPlay,
+		Onto: TriggerAfterReap,
+	}).valid() {
 		t.Error("play->reap rule should be valid")
 	}
-	if (AlsoTriggersOn{From: TriggerAfterPlay, Onto: TriggerDestroyed}).valid() {
+	if (AlsoTriggersOn{
+		From: TriggerAfterPlay,
+		Onto: TriggerDestroyed,
+	}).valid() {
 		t.Error("a rule onto a non-action trigger should be invalid")
 	}
-	if (AlsoTriggersOn{From: TriggerAction, Onto: TriggerAfterReap}).valid() {
+	if (AlsoTriggersOn{
+		From: TriggerAction,
+		Onto: TriggerAfterReap,
+	}).valid() {
 		t.Error("a rule from a non-action trigger should be invalid")
 	}
 }
 
 func TestFuseTriggersForTurnValidate(t *testing.T) {
-	if err := (FuseTriggersForTurn{A: TriggerAfterFight, B: TriggerAfterReap}).validate(); err != nil {
+	if err := (FuseTriggersForTurn{
+		A: TriggerAfterFight,
+		B: TriggerAfterReap,
+	}).validate(); err != nil {
 		t.Errorf("fight/reap fuse should validate, got %v", err)
 	}
-	if err := (FuseTriggersForTurn{A: TriggerAfterFight, B: TriggerAfterFight}).validate(); err == nil {
+	if err := (FuseTriggersForTurn{
+		A: TriggerAfterFight,
+		B: TriggerAfterFight,
+	}).validate(); err == nil {
 		t.Error("a fuse of a trigger with itself should be rejected")
 	}
-	if err := (FuseTriggersForTurn{A: TriggerAction, B: TriggerAfterReap}).validate(); err == nil {
+	if err := (FuseTriggersForTurn{
+		A: TriggerAction,
+		B: TriggerAfterReap,
+	}).validate(); err == nil {
 		t.Error("a fuse naming a non-action trigger should be rejected")
 	}
 }
 
 func TestFuseTriggersForTurnText(t *testing.T) {
-	got := (FuseTriggersForTurn{A: TriggerAfterFight, B: TriggerAfterReap}).Text()
+	got := (FuseTriggersForTurn{
+		A: TriggerAfterFight,
+		B: TriggerAfterReap,
+	}).Text()
 	want := "each friendly creature's fight effects and reap effects are " +
 		"fight/reap effects for the remainder of the turn"
 	if got != want {
@@ -37,8 +58,14 @@ func TestFuseTriggersForTurnText(t *testing.T) {
 
 func TestFuseTriggersForTurnResolveInstallsBothDirections(t *testing.T) {
 	g := started(t)
-	(FuseTriggersForTurn{A: TriggerAfterFight, B: TriggerAfterReap}).
-		Resolve(&EffectContext{Resolver: g, Controller: 0})
+	(FuseTriggersForTurn{
+		A: TriggerAfterFight,
+		B: TriggerAfterReap,
+	}).
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		})
 	if g.State.AlsoTriggersCount != 2 {
 		t.Fatalf("rule count = %d, want 2", g.State.AlsoTriggersCount)
 	}
@@ -56,7 +83,11 @@ func TestAddLastingAlsoTriggersCaps(t *testing.T) {
 	g := started(t)
 	for range maxAlsoTriggers + 2 {
 		g.AddLastingAlsoTriggers(
-			LastingAlsoTriggersOn{Controller: 0, From: TriggerAfterFight, Onto: TriggerAfterReap},
+			LastingAlsoTriggersOn{
+				Controller: 0,
+				From:       TriggerAfterFight,
+				Onto:       TriggerAfterReap,
+			},
 		)
 	}
 	if int(g.State.AlsoTriggersCount) != maxAlsoTriggers {
@@ -67,10 +98,18 @@ func TestAddLastingAlsoTriggersCaps(t *testing.T) {
 func TestClearLastingAlsoTriggersKeepsOtherPlayer(t *testing.T) {
 	g := started(t)
 	g.AddLastingAlsoTriggers(
-		LastingAlsoTriggersOn{Controller: 0, From: TriggerAfterFight, Onto: TriggerAfterReap},
+		LastingAlsoTriggersOn{
+			Controller: 0,
+			From:       TriggerAfterFight,
+			Onto:       TriggerAfterReap,
+		},
 	)
 	g.AddLastingAlsoTriggers(
-		LastingAlsoTriggersOn{Controller: 1, From: TriggerAfterReap, Onto: TriggerAfterFight},
+		LastingAlsoTriggersOn{
+			Controller: 1,
+			From:       TriggerAfterReap,
+			Onto:       TriggerAfterFight,
+		},
 	)
 	g.clearLastingAlsoTriggers(0)
 	if g.State.AlsoTriggersCount != 1 {
@@ -131,7 +170,11 @@ func TestAdditionalTriggersFromLastingAndDedup(t *testing.T) {
 	g.AddToBattleline(alsoTriggersConstant(), 0)
 	friend := g.AddToBattleline(testCreature("friend", 3), 0)
 	g.AddLastingAlsoTriggers(
-		LastingAlsoTriggersOn{Controller: 0, From: TriggerAfterPlay, Onto: TriggerAfterReap},
+		LastingAlsoTriggersOn{
+			Controller: 0,
+			From:       TriggerAfterPlay,
+			Onto:       TriggerAfterReap,
+		},
 	)
 	if got := g.additionalTriggers(friend, TriggerAfterReap); len(got) != 1 {
 		t.Errorf("duplicate triggers should collapse, got %v", got)
@@ -139,7 +182,11 @@ func TestAdditionalTriggersFromLastingAndDedup(t *testing.T) {
 	// A lasting rule is scoped to its owner.
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
 	g.AddLastingAlsoTriggers(
-		LastingAlsoTriggersOn{Controller: 0, From: TriggerAfterFight, Onto: TriggerAfterReap},
+		LastingAlsoTriggersOn{
+			Controller: 0,
+			From:       TriggerAfterFight,
+			Onto:       TriggerAfterReap,
+		},
 	)
 	if got := g.additionalTriggers(foe, TriggerAfterReap); got != nil {
 		t.Errorf("enemy lasting triggers = %v, want none", got)
@@ -153,7 +200,10 @@ func TestConstantAlsoTriggersFiresPlayAbilityOnReap(t *testing.T) {
 		testCreature(
 			"friend",
 			3,
-			WithAbility(TriggerAfterPlay, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerAfterPlay, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		),
 		0,
 	)
@@ -168,15 +218,24 @@ func TestConstantAlsoTriggersFiresPlayAbilityOnReap(t *testing.T) {
 
 func TestLastingFuseFiresBothWays(t *testing.T) {
 	g := started(t)
-	(FuseTriggersForTurn{A: TriggerAfterFight, B: TriggerAfterReap}).
-		Resolve(&EffectContext{Resolver: g, Controller: 0})
+	(FuseTriggersForTurn{
+		A: TriggerAfterFight,
+		B: TriggerAfterReap,
+	}).
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		})
 
 	// A creature with only a Fight ability fires it on reap.
 	reaper := g.AddToBattleline(
 		testCreature(
 			"reaper",
 			3,
-			WithAbility(TriggerAfterFight, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerAfterFight, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		),
 		0,
 	)
@@ -192,7 +251,10 @@ func TestLastingFuseFiresBothWays(t *testing.T) {
 		testCreature(
 			"fighter",
 			8,
-			WithAbility(TriggerAfterReap, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerAfterReap, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		),
 		0,
 	)
@@ -210,7 +272,10 @@ func TestLastingFuseFiresBothWays(t *testing.T) {
 		testCreature(
 			"reaper2",
 			3,
-			WithAbility(TriggerAfterFight, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerAfterFight, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		),
 		0,
 	)

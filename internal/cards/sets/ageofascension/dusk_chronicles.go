@@ -21,11 +21,17 @@ var DuskChronicles = set.New(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.Conditional{
-					Cond: card.PoolAember{Player: card.Opponent, Is: card.MoreThanYou},
+					Cond: card.PoolAember{
+						Player: card.Opponent,
+						Is:     card.MoreThanYou,
+					},
 					Then: card.Draw{Amount: 1},
 				},
 				card.Conditional{
-					Cond: card.PoolAember{Player: card.Controller, Is: card.MoreThanOpponent},
+					Cond: card.PoolAember{
+						Player: card.Controller,
+						Is:     card.MoreThanOpponent,
+					},
 					Then: card.ArchiveCard{
 						Zone:      card.Hand,
 						Selection: card.Chosen{},

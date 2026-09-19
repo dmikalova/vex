@@ -23,15 +23,25 @@ func TestHouseLockText(t *testing.T) {
 		{"unset", HouseLock{}, ""},
 		{
 			"named on play prints nothing",
-			HouseLock{Player: Opponent, Bars: true},
+			HouseLock{
+				Player: Opponent,
+				Bars:   true,
+			},
 			"",
 		}, {
 			"controller must",
-			HouseLock{Player: Controller, House: Dis},
+			HouseLock{
+				Player: Controller,
+				House:  Dis,
+			},
 			"While {self} is in play you must choose Dis as your active house.",
 		}, {
 			"opponent cannot",
-			HouseLock{Player: Opponent, House: Mars, Bars: true},
+			HouseLock{
+				Player: Opponent,
+				House:  Mars,
+				Bars:   true,
+			},
 			"While {self} is in play your opponent cannot choose Mars as their active house.",
 		},
 	}
@@ -61,7 +71,10 @@ func TestChooseHouseLockRequires(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetPlayerHouses(0, []House{Dis, Logos, Untamed})
 	g.SetPlayerHouses(1, []House{Brobnar, Mars, Shadows})
-	g.AddToBattleline(lockedCreature("Pit", HouseLock{Player: Controller, House: Dis}), 0)
+	g.AddToBattleline(lockedCreature("Pit", HouseLock{
+		Player: Controller,
+		House:  Dis,
+	}), 0)
 	g.State.ActivePlayer = 0
 	if err := g.ChooseHouse(0, Logos); !errors.Is(err, ErrHouseNotAllowed) {
 		t.Errorf("choosing another house = %v, want ErrHouseNotAllowed", err)
@@ -82,7 +95,10 @@ func TestChooseHouseLockRequires(t *testing.T) {
 func TestChooseHouseLockRequiresYieldsWhenUnavailable(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetPlayerHouses(0, []House{Brobnar, Logos, Untamed})
-	g.AddToBattleline(lockedCreature("Pit", HouseLock{Player: Controller, House: Dis}), 0)
+	g.AddToBattleline(lockedCreature("Pit", HouseLock{
+		Player: Controller,
+		House:  Dis,
+	}), 0)
 	g.State.ActivePlayer = 0
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Errorf("choosing an available house = %v, want nil", err)
@@ -95,7 +111,10 @@ func TestChooseHouseLockRequiresYieldsWhenUnavailable(t *testing.T) {
 func TestChooseHouseLockBars(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetPlayerHouses(1, []House{Brobnar, Mars, Shadows})
-	id := g.AddToBattleline(lockedCreature("Restr", HouseLock{Player: Opponent, Bars: true}), 0)
+	id := g.AddToBattleline(lockedCreature("Restr", HouseLock{
+		Player: Opponent,
+		Bars:   true,
+	}), 0)
 	g.State.ActivePlayer = 1
 	if err := g.ChooseHouse(1, Mars); err != nil {
 		t.Errorf("before a house is named = %v, want nil", err)
@@ -115,7 +134,10 @@ func TestChooseHouseLockBars(t *testing.T) {
 func TestWithHouseLockRenders(t *testing.T) {
 	pit := NewCard("Pitlord", Dis, Creature, Rare,
 		WithPower(9),
-		WithHouseLock(HouseLock{Player: Controller, House: Dis}))
+		WithHouseLock(HouseLock{
+			Player: Controller,
+			House:  Dis,
+		}))
 	want := "While Pitlord is in play you must choose Dis as your active house."
 	if got := RenderCardText(&pit); !strings.Contains(got, want) {
 		t.Errorf("RenderCardText() = %q, want it to contain %q", got, want)
@@ -147,7 +169,11 @@ func TestNameHouse(t *testing.T) {
 	t.Run("resolve records the chosen house on its source", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		id := g.AddToBattleline(testCreature("Restr", 3), 0)
-		ctx := &EffectContext{Resolver: g, Source: id, ChosenHouse: Mars}
+		ctx := &EffectContext{
+			Resolver:    g,
+			Source:      id,
+			ChosenHouse: Mars,
+		}
 		NameHouse{Player: Opponent}.Resolve(ctx)
 		if got := g.State.Cards[id].NamedHouse; got != Mars {
 			t.Errorf("named house = %v, want Mars", got)

@@ -21,7 +21,13 @@ var Eunoia = set.New(
 	card.WithTraits(card.Traits.Beast, card.Traits.Cat),
 	card.WithAbility(
 		card.Trigger.AfterDestroyedFighting, card.Sequence{Effects: []card.Effect{
-			card.GainAember{Player: card.Controller, Amount: 1},
-			card.Heal{Amount: 2, Target: card.Target.This},
+			card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
+			card.Heal{
+				Amount: 2,
+				Target: card.Target.This,
+			},
 		}}),
 )

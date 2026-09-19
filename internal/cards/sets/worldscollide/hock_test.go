@@ -19,7 +19,10 @@ func TestHock(t *testing.T) {
 	t.Run("destroys an artifact and gains 1 Æmber", func(t *testing.T) {
 		var relic ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(Hock)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(Hock),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&relic, ct.Artifact()))},
 		})
 

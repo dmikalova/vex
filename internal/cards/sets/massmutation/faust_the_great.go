@@ -28,6 +28,9 @@ var FaustTheGreat = set.New(
 	})),
 	card.WithAbility(
 		card.Trigger.Play, card.May{
-			Do: card.Exalt{Target: card.Target.FriendlyCreature, Amount: 1},
+			Do: card.Exalt{
+				Target: card.Target.FriendlyCreature,
+				Amount: 1,
+			},
 		}),
 )

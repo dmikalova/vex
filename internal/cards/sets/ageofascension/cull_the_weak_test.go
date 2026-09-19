@@ -19,7 +19,10 @@ func TestCullTheWeak(t *testing.T) {
 	t.Run("destroys the least powerful enemy creature", func(t *testing.T) {
 		var weak, strong ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(CullTheWeak)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(CullTheWeak),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&weak, ct.Creature(ct.Power(2))),
 				ct.Bind(&strong, ct.Creature(ct.Power(5))),

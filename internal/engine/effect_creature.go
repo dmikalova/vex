@@ -416,7 +416,10 @@ func (e OneAtATime) validate() error {
 
 // each is the single pass this effect repeats.
 func (e OneAtATime) each() OnChooseCreature {
-	return OnChooseCreature{Target: e.Target, Verbs: e.Verbs}
+	return OnChooseCreature{
+		Target: e.Target,
+		Verbs:  e.Verbs,
+	}
 }
 
 // Text renders the effect, e.g.

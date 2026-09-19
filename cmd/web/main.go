@@ -128,7 +128,10 @@ func gzipHandler(h http.Handler) http.Handler {
 		w.Header().Add("Vary", "Accept-Encoding")
 		gz := gzip.NewWriter(w)
 		defer func() { _ = gz.Close() }()
-		h.ServeHTTP(&gzipResponseWriter{ResponseWriter: w, gz: gz}, r)
+		h.ServeHTTP(&gzipResponseWriter{
+			ResponseWriter: w,
+			gz:             gz,
+		}, r)
 	})
 }
 

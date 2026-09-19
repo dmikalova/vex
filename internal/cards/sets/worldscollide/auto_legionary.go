@@ -21,7 +21,10 @@ var AutoLegionary = set.New(
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
-			card.AddPowerCounter{Target: card.Target.This, Amount: 5},
+			card.AddPowerCounter{
+				Target: card.Target.This,
+				Amount: 5,
+			},
 			card.TurnIntoCreature{Target: card.Target.This},
 		}}),
 )

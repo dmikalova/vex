@@ -17,7 +17,11 @@ import (
 func TestKeyCharge(t *testing.T) {
 	t.Run("loses 1 Æmber then forges a key at current cost", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(KeyCharge), Amber: 7},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(KeyCharge),
+				Amber: 7,
+			},
 		})
 
 		h.P1.Play(KeyCharge)
@@ -28,7 +32,11 @@ func TestKeyCharge(t *testing.T) {
 
 	t.Run("does not forge when there is no Æmber to lose", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(KeyCharge), Amber: 0},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(KeyCharge),
+				Amber: 0,
+			},
 		})
 
 		h.P1.Play(KeyCharge)

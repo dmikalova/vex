@@ -105,7 +105,10 @@ func TestCannotBeUsedToFightAndAction(t *testing.T) {
 	pacifist := g.AddToBattleline(
 		testCreature("pacifist", 4,
 			WithCannotBeUsedTo(FightUse),
-			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerAction, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		), 0)
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
 	if err := g.Fight(0, pacifist, foe); !errors.Is(err, ErrCannotUse) {
@@ -115,7 +118,10 @@ func TestCannotBeUsedToFightAndAction(t *testing.T) {
 	idle := g.AddToBattleline(
 		testCreature("idle", 4,
 			WithCannotBeUsedTo(ActionUse),
-			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerAction, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		), 0)
 	if err := g.UseAction(0, idle); !errors.Is(err, ErrCannotUse) {
 		t.Errorf("UseAction = %v, want ErrCannotUse", err)
@@ -144,7 +150,10 @@ func TestHasAnyUse(t *testing.T) {
 	actor := g.AddToBattleline(
 		testCreature("actor", 7,
 			WithCannotBeUsedTo(ReapUse),
-			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1}),
+			WithAbility(TriggerAction, GainAember{
+				Player: Controller,
+				Amount: 1,
+			}),
 		), 0)
 	if err := g.CanUse(0, actor); err != nil {
 		t.Errorf("CanUse with an Action ability = %v, want nil", err)
@@ -259,7 +268,11 @@ func TestDestroyedWhenRejectsInvalidCondition(t *testing.T) {
 func TestCannotBeUsedToText(t *testing.T) {
 	def := NewCard("Crocag", Brobnar, Creature, Common, WithPower(1),
 		WithCannotBeUsedTo(ReapUse, FightUse, ActionUse),
-		WithDestroyedWhen(CardsInPlay{Player: Opponent, Type: Creature, None: true}),
+		WithDestroyedWhen(CardsInPlay{
+			Player: Opponent,
+			Type:   Creature,
+			None:   true,
+		}),
 	)
 	got := cardRules(&def, false)
 	want := []string{
@@ -290,7 +303,10 @@ func TestMustFightIfAble(t *testing.T) {
 		WithRestrictions(Restrictions{MustFightIfAble: true})), 0)
 	brute := g.AddToBattleline(
 		testCreature("brute", 5,
-			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1})), 0)
+			WithAbility(TriggerAction, GainAember{
+				Player: Controller,
+				Amount: 1,
+			})), 0)
 
 	// With no enemy creature, the brute may reap or act freely.
 	if err := g.CanUseTo(0, brute, ReapUse); err != nil {

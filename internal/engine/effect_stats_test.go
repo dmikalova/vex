@@ -7,13 +7,23 @@ func TestGainStats(t *testing.T) {
 	abond := g.AddToBattleline(testCreature("abond", 3), 0)
 	friend := g.AddToBattleline(testCreature("friend", 5), 0)
 	g.State.Cards[friend].ArmorRemaining = 0
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
-	e := GainStats{Target: Target{Kind: TargetEachOtherFriendlyCreature}, Armor: 1}
+	e := GainStats{
+		Target: Target{Kind: TargetEachOtherFriendlyCreature},
+		Armor:  1,
+	}
 	if got := e.Text(); got != "for the remainder of the turn, each other friendly creature gains +1 armor" {
 		t.Errorf("text = %q", got)
 	}
-	both := GainStats{Target: Target{Kind: TargetEachFriendlyCreature}, Power: 2, Armor: 2}
+	both := GainStats{
+		Target: Target{Kind: TargetEachFriendlyCreature},
+		Power:  2,
+		Armor:  2,
+	}
 	if got := both.Text(); got != "for the remainder of the turn, each friendly creature gains +2 power and +2 armor" {
 		t.Errorf("text = %q", got)
 	}

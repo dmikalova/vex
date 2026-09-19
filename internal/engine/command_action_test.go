@@ -16,7 +16,10 @@ func TestApplyActionChooseHouse(t *testing.T) {
 	if g.State.Phase != PhaseChooseHouse {
 		t.Fatalf("phase after StartTurn = %v, want PhaseChooseHouse", g.State.Phase)
 	}
-	if err := g.ApplyAction(Command{Kind: CommandChooseHouse, House: Brobnar}); err != nil {
+	if err := g.ApplyAction(Command{
+		Kind:  CommandChooseHouse,
+		House: Brobnar,
+	}); err != nil {
 		t.Fatalf("ApplyAction ChooseHouse: %v", err)
 	}
 	if g.State.ActiveHouse != Brobnar {
@@ -96,7 +99,10 @@ func TestApplyActionReap(t *testing.T) {
 	g := started(t)
 	g.AddToBattleline(testCreature("Reaper", 3), 0)
 	before := g.Aember(0)
-	if err := g.ApplyAction(Command{Kind: CommandReap, Card: g.Battleline(0)[0]}); err != nil {
+	if err := g.ApplyAction(Command{
+		Kind: CommandReap,
+		Card: g.Battleline(0)[0],
+	}); err != nil {
 		t.Fatalf("ApplyAction Reap: %v", err)
 	}
 	if g.Aember(0) != before+1 {
@@ -108,7 +114,10 @@ func TestApplyActionUnstun(t *testing.T) {
 	g := started(t)
 	id := g.AddToBattleline(testCreature("Stunned", 3), 0)
 	g.State.Cards[id].Stunned = true
-	if err := g.ApplyAction(Command{Kind: CommandUnstun, Card: id}); err != nil {
+	if err := g.ApplyAction(Command{
+		Kind: CommandUnstun,
+		Card: id,
+	}); err != nil {
 		t.Fatalf("ApplyAction Unstun: %v", err)
 	}
 	if g.State.Cards[id].Stunned {
@@ -119,8 +128,14 @@ func TestApplyActionUnstun(t *testing.T) {
 func TestApplyActionUseAction(t *testing.T) {
 	g := started(t)
 	id := g.AddToBattleline(NewCard("Actor", Brobnar, Creature, Common,
-		WithPower(3), WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 5})), 0)
-	if err := g.ApplyAction(Command{Kind: CommandUseAction, Card: id}); err != nil {
+		WithPower(3), WithAbility(TriggerAction, GainAember{
+			Player: Controller,
+			Amount: 5,
+		})), 0)
+	if err := g.ApplyAction(Command{
+		Kind: CommandUseAction,
+		Card: id,
+	}); err != nil {
 		t.Fatalf("ApplyAction UseAction: %v", err)
 	}
 	if g.Aember(0) != 5 {
@@ -169,7 +184,10 @@ func TestApplyActionSurfacesEngineError(t *testing.T) {
 // silently doing nothing.
 func TestApplyActionRejectsNonRoot(t *testing.T) {
 	g := started(t)
-	if err := g.ApplyAction(Command{Kind: CommandPickCard, Card: 1}); !errors.Is(
+	if err := g.ApplyAction(Command{
+		Kind: CommandPickCard,
+		Card: 1,
+	}); !errors.Is(
 		err, ErrNotRootAction,
 	) {
 		t.Fatalf("ApplyAction on a card-pick command returned %v, want ErrNotRootAction", err)

@@ -19,7 +19,10 @@ import (
 func TestMacisAsp(t *testing.T) {
 	t.Run("is a 3-power creature with Skirmish and Poison", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(MacisAsp)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(MacisAsp),
+			},
 		})
 
 		h.P1.Play(MacisAsp)

@@ -21,7 +21,10 @@ var EvenIvan = set.New(
 	card.WithTraits(card.Traits.Mutant, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{
-			Cond: card.PoolAember{Player: card.Opponent, Is: card.Even},
+			Cond: card.PoolAember{
+				Player: card.Opponent,
+				Is:     card.Even,
+			},
 			Then: card.StealAember{Amount: 1},
 		}),
 )

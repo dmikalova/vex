@@ -20,7 +20,10 @@ func TestGroke(t *testing.T) {
 	t.Run("makes the opponent lose 1 Æmber when it fights", func(t *testing.T) {
 		var enemy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(Groke)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(Groke),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(ct.Bind(&enemy, ct.Creature(ct.Power(3)))),
 				Amber:  3,

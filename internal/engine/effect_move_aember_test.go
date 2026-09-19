@@ -17,7 +17,12 @@ func TestMoveAemberAll(t *testing.T) {
 	if err := e.validate(); err != nil {
 		t.Errorf("validate = %v, want nil", err)
 	}
-	if (MoveAember{All: true, Amount: 1, From: e.From, To: Controller}).validate() == nil {
+	if (MoveAember{
+		All:    true,
+		Amount: 1,
+		From:   e.From,
+		To:     Controller,
+	}).validate() == nil {
 		t.Error("All combined with Amount should not validate")
 	}
 
@@ -26,7 +31,10 @@ func TestMoveAemberAll(t *testing.T) {
 	poor := g.AddToBattleline(testCreature("poor", 4), 1)
 	g.AddAmberOn(rich, 3)
 	g.AddAmberOn(poor, 1)
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 
 	if g.AmberOn(rich) != 0 || g.AmberOn(poor) != 0 {
 		t.Errorf("Æmber left on the creatures = %d/%d, want 0/0",
@@ -42,7 +50,11 @@ func TestMoveAemberAll(t *testing.T) {
 // cannot be combined with a fixed Amount or with All.
 func TestMoveAemberFraction(t *testing.T) {
 	friendly := Target{Kind: TargetChosenFriendlyCreatureOrArtifact}
-	e := MoveAember{From: friendly, Fraction: HalfRoundedUp, To: Controller}
+	e := MoveAember{
+		From:     friendly,
+		Fraction: HalfRoundedUp,
+		To:       Controller,
+	}
 
 	want := "move half the Æmber from a friendly creature or artifact to your pool, rounding up"
 	if got := e.Text(); got != want {
@@ -51,11 +63,21 @@ func TestMoveAemberFraction(t *testing.T) {
 	if err := e.validate(); err != nil {
 		t.Errorf("validate = %v, want nil", err)
 	}
-	if (MoveAember{From: friendly, To: Controller, Fraction: HalfRoundedUp, Amount: 1}).
+	if (MoveAember{
+		From:     friendly,
+		To:       Controller,
+		Fraction: HalfRoundedUp,
+		Amount:   1,
+	}).
 		validate() == nil {
 		t.Error("Fraction combined with Amount should not validate")
 	}
-	if (MoveAember{From: friendly, To: Controller, Fraction: HalfRoundedUp, All: true}).
+	if (MoveAember{
+		From:     friendly,
+		To:       Controller,
+		Fraction: HalfRoundedUp,
+		All:      true,
+	}).
 		validate() == nil {
 		t.Error("Fraction combined with All should not validate")
 	}
@@ -64,7 +86,10 @@ func TestMoveAemberFraction(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	c := g.AddToBattleline(testCreature("c", 3), 0)
 	g.AddAmberOn(c, 3)
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.AmberOn(c) != 1 || g.Aember(0) != 2 {
 		t.Errorf("after half move: card=%d pool=%d, want 1/2", g.AmberOn(c), g.Aember(0))
 	}
@@ -74,30 +99,56 @@ func TestMoveAember(t *testing.T) {
 	friendly := Target{Kind: TargetChosenFriendlyCreatureOrArtifact}
 
 	// Text: pool destination and card destination.
-	toPool := MoveAember{Amount: 1, From: friendly, To: Controller}
+	toPool := MoveAember{
+		Amount: 1,
+		From:   friendly,
+		To:     Controller,
+	}
 	if got := toPool.Text(); got != "move 1 \u00c6mber from a friendly creature or artifact to your pool" {
 		t.Errorf("pool text = %q", got)
 	}
-	toOpp := MoveAember{Amount: 2, From: friendly, To: Opponent}
+	toOpp := MoveAember{
+		Amount: 2,
+		From:   friendly,
+		To:     Opponent,
+	}
 	if got := toOpp.Text(); got != "move 2 \u00c6mber from a friendly creature or artifact to your opponent's pool" {
 		t.Errorf("opponent-pool text = %q", got)
 	}
-	toCard := MoveAember{Amount: 1, From: friendly, Onto: Target{Kind: TargetChosenEnemyCreature}}
+	toCard := MoveAember{
+		Amount: 1,
+		From:   friendly,
+		Onto:   Target{Kind: TargetChosenEnemyCreature},
+	}
 	if got := toCard.Text(); got != "move 1 \u00c6mber from a friendly creature or artifact to an enemy creature" {
 		t.Errorf("card text = %q", got)
 	}
 
 	// validate: source and exactly one destination.
-	if (MoveAember{Amount: 1, To: Controller}).validate() == nil {
+	if (MoveAember{
+		Amount: 1,
+		To:     Controller,
+	}).validate() == nil {
 		t.Error("unset source should be invalid")
 	}
-	if (MoveAember{Amount: 1, From: friendly}).validate() == nil {
+	if (MoveAember{
+		Amount: 1,
+		From:   friendly,
+	}).validate() == nil {
 		t.Error("no destination should be invalid")
 	}
-	if (MoveAember{Amount: 1, From: friendly, To: Controller, Onto: friendly}).validate() == nil {
+	if (MoveAember{
+		Amount: 1,
+		From:   friendly,
+		To:     Controller,
+		Onto:   friendly,
+	}).validate() == nil {
 		t.Error("two destinations should be invalid")
 	}
-	if (MoveAember{From: friendly, To: Controller}).validate() == nil {
+	if (MoveAember{
+		From: friendly,
+		To:   Controller,
+	}).validate() == nil {
 		t.Error("an unset amount should be invalid without All or Fraction")
 	}
 	if toPool.validate() != nil || toCard.validate() != nil {
@@ -108,8 +159,15 @@ func TestMoveAember(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	c := g.AddToBattleline(testCreature("c", 3), 0)
 	g.AddAmberOn(c, 2)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-	MoveAember{Amount: 3, From: friendly, To: Controller}.Resolve(ctx)
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
+	MoveAember{
+		Amount: 3,
+		From:   friendly,
+		To:     Controller,
+	}.Resolve(ctx)
 	if g.AmberOn(c) != 0 || g.Aember(0) != 2 {
 		t.Errorf("after capped move: card=%d pool=%d, want 0/2", g.AmberOn(c), g.Aember(0))
 	}
@@ -119,8 +177,15 @@ func TestMoveAember(t *testing.T) {
 	src := g2.AddToBattleline(testCreature("src", 3), 0)
 	dst := g2.AddToBattleline(testCreature("dst", 3), 1)
 	g2.AddAmberOn(src, 2)
-	MoveAember{Amount: 1, From: friendly, Onto: Target{Kind: TargetChosenEnemyCreature}}.
-		Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	MoveAember{
+		Amount: 1,
+		From:   friendly,
+		Onto:   Target{Kind: TargetChosenEnemyCreature},
+	}.
+		Resolve(&EffectContext{
+			Resolver:   g2,
+			Controller: 0,
+		})
 	if g2.AmberOn(src) != 1 || g2.AmberOn(dst) != 1 {
 		t.Errorf("after card move: src=%d dst=%d, want 1/1", g2.AmberOn(src), g2.AmberOn(dst))
 	}
@@ -133,7 +198,10 @@ func TestMoveAember(t *testing.T) {
 		From:   friendly,
 		To:     Controller,
 	}.Resolve(
-		&EffectContext{Resolver: g3, Controller: 0},
+		&EffectContext{
+			Resolver:   g3,
+			Controller: 0,
+		},
 	)
 	if g3.Aember(0) != 0 {
 		t.Error("moving with no Æmber-bearing card should do nothing")
@@ -143,8 +211,15 @@ func TestMoveAember(t *testing.T) {
 	g4 := NewGame("A", "B", 1)
 	only := g4.AddToBattleline(testCreature("only", 3), 0)
 	g4.AddAmberOn(only, 1)
-	MoveAember{Amount: 1, From: friendly, Onto: Target{Kind: TargetChosenEnemyCreature}}.
-		Resolve(&EffectContext{Resolver: g4, Controller: 0})
+	MoveAember{
+		Amount: 1,
+		From:   friendly,
+		Onto:   Target{Kind: TargetChosenEnemyCreature},
+	}.
+		Resolve(&EffectContext{
+			Resolver:   g4,
+			Controller: 0,
+		})
 	if g4.AmberOn(only) != 1 {
 		t.Error("a move with no destination card should move nothing")
 	}
@@ -157,8 +232,15 @@ func TestMoveAember(t *testing.T) {
 	giver := g5.AddToBattleline(testCreature("giver", 3), 0)
 	taker := g5.AddToBattleline(testCreature("taker", 3), 0)
 	g5.AddAmberOn(giver, 1)
-	MoveAember{Amount: 1, From: friendly, Onto: Target{Kind: TargetChosenOtherCreature}}.
-		Resolve(&EffectContext{Resolver: g5, Controller: 0})
+	MoveAember{
+		Amount: 1,
+		From:   friendly,
+		Onto:   Target{Kind: TargetChosenOtherCreature},
+	}.
+		Resolve(&EffectContext{
+			Resolver:   g5,
+			Controller: 0,
+		})
 	if g5.AmberOn(giver) != 0 || g5.AmberOn(taker) != 1 {
 		t.Errorf(
 			"after move onto another creature: giver=%d taker=%d, want 0/1",
@@ -179,8 +261,16 @@ func TestMoveAemberBind(t *testing.T) {
 	big := g.AddToBattleline(testCreature("big", 6), 0)
 	small := g.AddToBattleline(testCreature("small", 3), 0)
 	g.AddAmberOn(big, 3)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-	MoveAember{All: true, From: mostPowerful, To: Controller, Bind: true}.Resolve(ctx)
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
+	MoveAember{
+		All:  true,
+		From: mostPowerful,
+		To:   Controller,
+		Bind: true,
+	}.Resolve(ctx)
 	if g.AmberOn(big) != 0 || g.Aember(0) != 3 {
 		t.Errorf("after bind move: big=%d pool=%d, want 0/3", g.AmberOn(big), g.Aember(0))
 	}
@@ -198,8 +288,16 @@ func TestMoveAemberBind(t *testing.T) {
 	strong := g2.AddToBattleline(testCreature("strong", 6), 0)
 	weak := g2.AddToBattleline(testCreature("weak", 3), 0)
 	g2.AddAmberOn(weak, 2)
-	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	MoveAember{All: true, From: mostPowerful, To: Controller, Bind: true}.Resolve(ctx2)
+	ctx2 := &EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	}
+	MoveAember{
+		All:  true,
+		From: mostPowerful,
+		To:   Controller,
+		Bind: true,
+	}.Resolve(ctx2)
 	if g2.AmberOn(strong) != 0 || g2.AmberOn(weak) != 2 || g2.Aember(0) != 0 {
 		t.Errorf("after bind of Æmber-less top: strong=%d weak=%d pool=%d, want 0/2/0",
 			g2.AmberOn(strong), g2.AmberOn(weak), g2.Aember(0))
@@ -210,8 +308,16 @@ func TestMoveAemberBind(t *testing.T) {
 
 	// No creatures at all: nothing is bound.
 	g3 := NewGame("A", "B", 1)
-	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
-	MoveAember{All: true, From: mostPowerful, To: Controller, Bind: true}.Resolve(ctx3)
+	ctx3 := &EffectContext{
+		Resolver:   g3,
+		Controller: 0,
+	}
+	MoveAember{
+		All:  true,
+		From: mostPowerful,
+		To:   Controller,
+		Bind: true,
+	}.Resolve(ctx3)
 	if ctx3.HasIt {
 		t.Error("binding with no creatures should leave ctx.It unset")
 	}
@@ -230,7 +336,10 @@ func TestMoveAemberDeclined(t *testing.T) {
 		To:     Controller,
 	}.
 		Resolve(
-			&EffectContext{Resolver: g, Controller: 0},
+			&EffectContext{
+				Resolver:   g,
+				Controller: 0,
+			},
 		)
 	if g.Aember(0) != 0 {
 		t.Error("a declined move should move nothing")

@@ -20,7 +20,10 @@ func TestEaterOfTheDead(t *testing.T) {
 	t.Run("reaping purges a creature from a discard pile and grows", func(t *testing.T) {
 		var prey ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(EaterOfTheDead)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(EaterOfTheDead),
+			},
 			P2: ct.Side{Discard: ct.Cards(
 				ct.Bind(&prey, ct.Creature(ct.OfHouse(card.House.Brobnar))),
 			)},
@@ -34,7 +37,10 @@ func TestEaterOfTheDead(t *testing.T) {
 
 	t.Run("does nothing with no creature to purge", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(EaterOfTheDead)},
+			P1: ct.Side{
+				House:  card.House.Dis,
+				InPlay: ct.Cards(EaterOfTheDead),
+			},
 		})
 
 		h.P1.Reap(EaterOfTheDead)

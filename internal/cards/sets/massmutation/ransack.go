@@ -18,7 +18,10 @@ var Ransack = set.New(
 	card.WithAbility(card.Trigger.Play, card.Repeat{
 		Do: card.Sequence{Effects: []card.Effect{
 			card.StealAember{Amount: 1},
-			card.DiscardTop{Amount: 1, Player: card.Controller},
+			card.DiscardTop{
+				Amount: 1,
+				Player: card.Controller,
+			},
 		}},
 		Gate: card.While{Cond: card.ItIs{
 			House: card.Houses.Named(card.House.Self),

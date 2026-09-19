@@ -19,7 +19,10 @@ import (
 func TestRaidingKnight(t *testing.T) {
 	t.Run("captures 1 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(RaidingKnight)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(RaidingKnight),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 

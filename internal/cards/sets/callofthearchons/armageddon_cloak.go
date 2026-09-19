@@ -23,7 +23,10 @@ var ArmageddonCloak = set.New(
 			When: card.Event.Destroyed,
 			With: card.Sequence{
 				Effects: []card.Effect{
-					card.Heal{Fully: true, Target: card.Target.Triggering},
+					card.Heal{
+						Fully:  true,
+						Target: card.Target.Triggering,
+					},
 					card.Destroy{Target: card.Target.This},
 				},
 			},

@@ -93,7 +93,11 @@ func buildClusterData() ([]clusterRow, []filteredRow) {
 		if m := rc.Profile.Cluster; !m.Empty() {
 			row := byName[m.Name]
 			if row == nil {
-				row = &clusterRow{name: m.Name, strategy: m.Strategy, trigger: m.Trigger}
+				row = &clusterRow{
+					name:     m.Name,
+					strategy: m.Strategy,
+					trigger:  m.Trigger,
+				}
 				byName[m.Name] = row
 				order = append(order, m.Name)
 			}
@@ -112,7 +116,10 @@ func buildClusterData() ([]clusterRow, []filteredRow) {
 		}
 		if rc.Profile.Leads != nil {
 			def := rc.Def
-			leads = append(leads, lead{def: &def, fc: rc.Profile.Leads})
+			leads = append(leads, lead{
+				def: &def,
+				fc:  rc.Profile.Leads,
+			})
 		}
 	}
 

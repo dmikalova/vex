@@ -20,7 +20,10 @@ var DreadboneDecimus = set.New(
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Assassin),
 	card.WithAbility(card.Trigger.PlayFight, card.May{Do: card.Then{
-		First: card.Exalt{Target: card.Target.This, Amount: 1},
+		First: card.Exalt{
+			Target: card.Target.This,
+			Amount: 1,
+		},
 		Result: card.Destroy{
 			Target: card.Target.Creature.Refine(card.PowerLessThanSource()),
 		},

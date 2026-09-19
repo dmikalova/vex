@@ -24,7 +24,10 @@ var Charybdis = set.New(
 		Target: card.Target.EachEnemyCreature,
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.BeforeFight,
-			Effect:  card.LoseAember{Player: card.Controller, Amount: 1},
+			Effect: card.LoseAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
 		}},
 	}),
 )

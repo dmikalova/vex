@@ -12,7 +12,10 @@ func TestGiveAemberValidate(t *testing.T) {
 	if (GiveAember{}).validate() == nil {
 		t.Error("neither Amount nor All should be rejected")
 	}
-	if (GiveAember{Amount: 1, All: true}).validate() == nil {
+	if (GiveAember{
+		Amount: 1,
+		All:    true,
+	}).validate() == nil {
 		t.Error("both Amount and All should be rejected")
 	}
 }
@@ -31,13 +34,19 @@ func TestGiveAemberResolve(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.StartTurn(0)
 	g.State.Aember[1] = 3
-	GiveAember{Amount: 1}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	GiveAember{Amount: 1}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.Aember(1) != 2 || g.Aember(0) != 1 {
 		t.Fatalf("fixed give: opponent=%d controller=%d, want 2/1", g.Aember(1), g.Aember(0))
 	}
 
 	// All hands over the opponent's whole pool.
-	GiveAember{All: true}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	GiveAember{All: true}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.Aember(1) != 0 || g.Aember(0) != 3 {
 		t.Fatalf("all give: opponent=%d controller=%d, want 0/3", g.Aember(1), g.Aember(0))
 	}
@@ -46,11 +55,17 @@ func TestGiveAemberResolve(t *testing.T) {
 	// empty pool gives nothing.
 	g.State.Aember[1] = 1
 	g.State.Aember[0] = 0
-	GiveAember{Amount: 5}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	GiveAember{Amount: 5}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.Aember(1) != 0 || g.Aember(0) != 1 {
 		t.Fatalf("capped give: opponent=%d controller=%d, want 0/1", g.Aember(1), g.Aember(0))
 	}
-	GiveAember{Amount: 5}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	GiveAember{Amount: 5}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.Aember(1) != 0 || g.Aember(0) != 1 {
 		t.Fatalf("empty give: opponent=%d controller=%d, want 0/1", g.Aember(1), g.Aember(0))
 	}

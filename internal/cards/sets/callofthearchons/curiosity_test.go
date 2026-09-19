@@ -19,7 +19,10 @@ func TestCuriosity(t *testing.T) {
 	t.Run("destroys each Scientist trait creature and spares others", func(t *testing.T) {
 		var sci, beast ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(Curiosity)},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(Curiosity),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(

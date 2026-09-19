@@ -25,7 +25,10 @@ func TestActiveHouseMatchesNoCardsInPlay(t *testing.T) {
 	host := g.AddToBattleline(NewCard("marine", StarAlliance, Creature, Common, WithPower(2)), 0)
 	attachUpgrade(g, host, NewCard("charm", Logos, Upgrade, Common))
 	g.AddArtifact(NewCard("relic", Shadows, Artifact, Common), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// A creature of the active house is a match, so the condition is not met.
 	g.State.ActiveHouse = StarAlliance

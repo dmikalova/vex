@@ -20,7 +20,10 @@ func TestFlamewakeShaman(t *testing.T) {
 	t.Run("deals 2 damage to a chosen creature", func(t *testing.T) {
 		var enemy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(FlamewakeShaman)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(FlamewakeShaman),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&enemy, ct.Creature(ct.Power(5))),
 			)},

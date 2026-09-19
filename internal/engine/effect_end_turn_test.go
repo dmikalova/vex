@@ -15,7 +15,10 @@ func TestEndTurnEndsTheTurn(t *testing.T) {
 	if g.State.Phase != PhasePlay {
 		t.Fatalf("phase before EndTurn = %v, want PhasePlay", g.State.Phase)
 	}
-	EndTurn{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	EndTurn{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.State.Phase != PhaseEndOfTurn {
 		t.Errorf("phase after EndTurn = %v, want PhaseEndOfTurn", g.State.Phase)
 	}

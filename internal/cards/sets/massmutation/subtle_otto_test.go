@@ -19,7 +19,10 @@ import (
 func TestSubtleOtto(t *testing.T) {
 	t.Run("opponent discards a random card from their hand when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(SubtleOtto)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(SubtleOtto),
+			},
 			P2: ct.Side{Hand: ct.Cards(ct.Creature(), ct.Creature())},
 		})
 

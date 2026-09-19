@@ -17,7 +17,10 @@ import (
 func TestBaitAndSwitch(t *testing.T) {
 	t.Run("steals 1 Æmber at a time while the opponent still leads", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(BaitAndSwitch)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(BaitAndSwitch),
+			},
 			P2: ct.Side{Amber: 5},
 		})
 
@@ -30,7 +33,10 @@ func TestBaitAndSwitch(t *testing.T) {
 
 	t.Run("steals at most 6 Æmber, the Rule of 6 bound on repeats", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(BaitAndSwitch)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(BaitAndSwitch),
+			},
 			P2: ct.Side{Amber: 20},
 		})
 

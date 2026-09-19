@@ -119,7 +119,10 @@ func TestNoPhaseLogAfterGameWon(t *testing.T) {
 func TestStartOfTurnAbilitiesResolveBeforeForging(t *testing.T) {
 	g := NewGame("Alice", "Bob", 1)
 	g.AddArtifact(NewCard("dawn", Brobnar, Artifact, Rare,
-		WithAbility(TriggerStartOfTurn, GainAember{Player: Controller, Amount: 6})), 0)
+		WithAbility(TriggerStartOfTurn, GainAember{
+			Player: Controller,
+			Amount: 6,
+		})), 0)
 
 	g.StartTurn(0)
 
@@ -174,7 +177,10 @@ func TestEachPlayerEndOfTurnResolvesAsActivePlayer(t *testing.T) {
 	// The artifact is player 0's, but its ability pays whoever's turn is ending.
 	g.AddArtifact(NewCard("pincer", Brobnar, Artifact, Rare,
 		WithEachPlayerAbility(TriggerEndOfTurn,
-			GainAember{Player: Controller, Amount: 1})), 0)
+			GainAember{
+				Player: Controller,
+				Amount: 1,
+			})), 0)
 
 	g.StartTurn(0)
 	g.EndPlayPhase(0)
@@ -210,7 +216,10 @@ func TestEachPlayerEndOfTurnFiresForBothPlayersCards(t *testing.T) {
 	// pays the active player (player 0).
 	g.AddArtifact(NewCard("pincer", Brobnar, Artifact, Rare,
 		WithEachPlayerAbility(TriggerEndOfTurn,
-			GainAember{Player: Controller, Amount: 1})), 1)
+			GainAember{
+				Player: Controller,
+				Amount: 1,
+			})), 1)
 
 	g.StartTurn(0)
 	g.EndPlayPhase(0)
@@ -228,7 +237,10 @@ func TestEachPlayerEndOfTurnFiresForBothPlayersCards(t *testing.T) {
 // TestEachPlayerEndOfTurnPrefix covers the printed prefix, mirroring the
 // start-of-turn whole-board trigger.
 func TestEachPlayerEndOfTurnPrefix(t *testing.T) {
-	got, _ := abilityPrefix(Ability{Trigger: TriggerEndOfTurn, EachPlayer: true})
+	got, _ := abilityPrefix(Ability{
+		Trigger:    TriggerEndOfTurn,
+		EachPlayer: true,
+	})
 	if want := "At the end of each player's turn, "; got != want {
 		t.Errorf("prefix = %q, want %q", got, want)
 	}
@@ -244,7 +256,10 @@ func TestEachPlayerStartOfTurnResolvesAsActivePlayer(t *testing.T) {
 	// The artifact is player 0's, but its ability pays whoever's turn is starting.
 	g.AddArtifact(NewCard("den", Brobnar, Artifact, Rare,
 		WithEachPlayerAbility(TriggerStartOfTurn,
-			GainAember{Player: Controller, Amount: 1})), 0)
+			GainAember{
+				Player: Controller,
+				Amount: 1,
+			})), 0)
 
 	g.StartTurn(0)
 	if g.State.Aember[0] != 1 {
@@ -278,7 +293,10 @@ func TestEachPlayerStartOfTurnFiresForBothPlayersCards(t *testing.T) {
 	// pays the active player (player 0).
 	g.AddArtifact(NewCard("den", Brobnar, Artifact, Rare,
 		WithEachPlayerAbility(TriggerStartOfTurn,
-			GainAember{Player: Controller, Amount: 1})), 1)
+			GainAember{
+				Player: Controller,
+				Amount: 1,
+			})), 1)
 
 	g.StartTurn(0)
 	if g.State.Aember[0] != 1 {
@@ -295,7 +313,10 @@ func TestEachPlayerStartOfTurnFiresForBothPlayersCards(t *testing.T) {
 // TestEachPlayerStartOfTurnPrefix covers the printed prefix, mirroring the
 // end-of-turn whole-board trigger.
 func TestEachPlayerStartOfTurnPrefix(t *testing.T) {
-	got, _ := abilityPrefix(Ability{Trigger: TriggerStartOfTurn, EachPlayer: true})
+	got, _ := abilityPrefix(Ability{
+		Trigger:    TriggerStartOfTurn,
+		EachPlayer: true,
+	})
 	if want := "At the start of each player's turn, "; got != want {
 		t.Errorf("prefix = %q, want %q", got, want)
 	}
@@ -311,7 +332,10 @@ func TestOwnScopeEndOfTurnDoesNotFireOnOpponentTurn(t *testing.T) {
 	// Player 1's own-scope end-of-turn drain must not fire at the end of player 0's
 	// turn — it is not EachPlayer-scoped, so the whole-board scan skips it.
 	g.AddArtifact(NewCard("drain", Brobnar, Artifact, Rare,
-		WithAbility(TriggerEndOfTurn, LoseAember{Player: Opponent, Amount: 1})), 1)
+		WithAbility(TriggerEndOfTurn, LoseAember{
+			Player: Opponent,
+			Amount: 1,
+		})), 1)
 
 	g.StartTurn(0)
 	g.EndPlayPhase(0)
@@ -328,7 +352,10 @@ func TestEndOfTurnTriggerFires(t *testing.T) {
 	g.StartTurn(0)
 	g.State.Aember[1] = 3
 	g.AddToBattleline(NewCard("Shaffles", Dis, Creature, Common, WithPower(2),
-		WithAbility(TriggerEndOfTurn, LoseAember{Player: Opponent, Amount: 1})), 0)
+		WithAbility(TriggerEndOfTurn, LoseAember{
+			Player: Opponent,
+			Amount: 1,
+		})), 0)
 
 	g.EndPlayPhase(0)
 

@@ -100,7 +100,10 @@ func facadeNodes() ([]*node, error) {
 					if !id.IsExported() {
 						continue
 					}
-					nodes = append(nodes, &node{Name: id.Name, Category: cat})
+					nodes = append(nodes, &node{
+						Name:     id.Name,
+						Category: cat,
+					})
 				}
 			}
 		}
@@ -193,7 +196,12 @@ func countNodeUses(nodes []*node) error {
 
 // skippedDirs are the trees that hold no Go reference to the facade: version
 // control, scratch output, the web client's static assets, and prose.
-var skippedDirs = map[string]bool{".git": true, "tmp": true, "web": true, "docs": true}
+var skippedDirs = map[string]bool{
+	".git": true,
+	"tmp":  true,
+	"web":  true,
+	"docs": true,
+}
 
 // countOtherRefs counts, per node, the files that reference it outside the card
 // definitions — the facade's own internals, the engine, the web client, the

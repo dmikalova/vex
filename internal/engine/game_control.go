@@ -46,7 +46,10 @@ func (g *Game) takeControl(id LocalID, controller int, source LocalID) {
 	g.supersedeControl(id, source)
 	g.pushControl(id, controller, source)
 	g.placeUnderController(id, controller)
-	g.record(ControlTaken{Player: controller, Card: id})
+	g.record(ControlTaken{
+		Player: controller,
+		Card:   id,
+	})
 }
 
 // supersedeControl drops a source's earlier control entry on a card before that
@@ -121,7 +124,10 @@ func (g *Game) releaseControlHeldBy(source LocalID) {
 		// Reverting control is a control change, so the active player chooses which
 		// flank the creature returns to (it never silently keeps the old slot).
 		g.placeGainedOnFlank(id, controller)
-		g.record(ControlReturned{Card: id, Owner: controller})
+		g.record(ControlReturned{
+			Card:  id,
+			Owner: controller,
+		})
 	}
 }
 

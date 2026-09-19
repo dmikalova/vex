@@ -22,7 +22,10 @@ func TestHiddenStash(t *testing.T) {
 		func(t *testing.T) {
 			var stolen, kept ct.Card
 			h := ct.Play(t, ct.Setup{
-				P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(HiddenStash)},
+				P1: ct.Side{
+					House: card.House.Shadows,
+					Hand:  ct.Cards(HiddenStash),
+				},
 				P2: ct.Side{Hand: ct.Cards(
 					ct.Bind(&stolen, ct.Creature()),
 					ct.Bind(&kept, ct.Creature()),

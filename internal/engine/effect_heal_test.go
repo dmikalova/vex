@@ -11,9 +11,16 @@ func TestHealEffect(t *testing.T) {
 	other := g.AddToBattleline(testCreature("other", 5), 0)
 	g.State.Cards[src].Damage = 3
 	g.State.Cards[other].Damage = 4
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
-	partial := Heal{Amount: 2, Target: Target{Kind: TargetThisCreature}}
+	partial := Heal{
+		Amount: 2,
+		Target: Target{Kind: TargetThisCreature},
+	}
 	if partial.Text() != "heal 2 damage from "+SelfName {
 		t.Errorf("partial text = %q", partial.Text())
 	}
@@ -21,14 +28,20 @@ func TestHealEffect(t *testing.T) {
 	if g.State.Cards[src].Damage != 1 {
 		t.Errorf("partial heal: src damage = %d, want 1", g.State.Cards[src].Damage)
 	}
-	(Heal{Amount: 5, Target: Target{Kind: TargetThisCreature}}).Resolve(
+	(Heal{
+		Amount: 5,
+		Target: Target{Kind: TargetThisCreature},
+	}).Resolve(
 		ctx,
 	) // over-heal floors at 0
 	if g.State.Cards[src].Damage != 0 {
 		t.Errorf("over-heal should floor at 0, got %d", g.State.Cards[src].Damage)
 	}
 
-	full := Heal{Fully: true, Target: Target{Kind: TargetEachOtherFriendlyCreature}}
+	full := Heal{
+		Fully:  true,
+		Target: Target{Kind: TargetEachOtherFriendlyCreature},
+	}
 	if full.Text() != "fully heal each other friendly creature" {
 		t.Errorf("full text = %q", full.Text())
 	}
@@ -41,7 +54,10 @@ func TestHealEffect(t *testing.T) {
 // A "you may fully heal a creature" is one card choice, so the player picks the
 // creature directly instead of first answering Yes (Protectrix).
 func TestMayDeclinableHeal(t *testing.T) {
-	e := May{Do: Heal{Fully: true, Target: Target{Kind: TargetChosenCreature}}}
+	e := May{Do: Heal{
+		Fully:  true,
+		Target: Target{Kind: TargetChosenCreature},
+	}}
 	if !e.Do.(declinableEffect).declinable() {
 		t.Fatal("a chosen-target Heal should be declinable")
 	}
@@ -51,7 +67,10 @@ func TestMayDeclinableHeal(t *testing.T) {
 	g.SetChooser(0, ch)
 	hurt := g.AddToBattleline(testCreature("Hurt", 5), 0)
 	g.State.Cards[hurt].Damage = 3
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if ch.asked != 1 {
 		t.Errorf("declinable prompts = %d, want 1", ch.asked)
 	}
@@ -63,7 +82,10 @@ func TestMayDeclinableHeal(t *testing.T) {
 	declined.SetChooser(0, &cardDecliner{decline: true})
 	other := declined.AddToBattleline(testCreature("Hurt", 5), 0)
 	declined.State.Cards[other].Damage = 3
-	e.Resolve(&EffectContext{Resolver: declined, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   declined,
+		Controller: 0,
+	})
 	if declined.Damage(other) != 3 {
 		t.Error("a declined May should heal nothing")
 	}
@@ -71,13 +93,23 @@ func TestMayDeclinableHeal(t *testing.T) {
 
 func TestHealValidate(t *testing.T) {
 	this := Target{Kind: TargetThisCreature}
-	if err := (Heal{Target: this, Fully: true, Amount: 2}).validate(); err == nil {
+	if err := (Heal{
+		Target: this,
+		Fully:  true,
+		Amount: 2,
+	}).validate(); err == nil {
 		t.Error("Heal with both Amount and Fully should be invalid")
 	}
-	if err := (Heal{Target: this, Fully: true}).validate(); err != nil {
+	if err := (Heal{
+		Target: this,
+		Fully:  true,
+	}).validate(); err != nil {
 		t.Errorf("full heal should be valid, got %v", err)
 	}
-	if err := (Heal{Target: this, Amount: 2}).validate(); err != nil {
+	if err := (Heal{
+		Target: this,
+		Amount: 2,
+	}).validate(); err != nil {
 		t.Errorf("fixed heal should be valid, got %v", err)
 	}
 	if err := (Heal{Fully: true}).validate(); err == nil {
@@ -92,11 +124,17 @@ func TestHealCountsCreaturesHealed(t *testing.T) {
 	healthy := g.AddToBattleline(testCreature("healthy", 5), 0)
 	g.State.Cards[a].Damage = 2
 	g.State.Cards[b].Damage = 1
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// Heal each creature: the two damaged ones are healed, the undamaged one is
 	// skipped, and the tally lands on the context.
-	Heal{Amount: 1, Target: Target{Kind: TargetEachCreature}}.Resolve(ctx)
+	Heal{
+		Amount: 1,
+		Target: Target{Kind: TargetEachCreature},
+	}.Resolve(ctx)
 	if g.Damage(a) != 1 || g.Damage(b) != 0 {
 		t.Errorf("damage a=%d b=%d, want 1/0", g.Damage(a), g.Damage(b))
 	}
@@ -119,8 +157,14 @@ func TestHealCountsCreaturesHealed(t *testing.T) {
 	// No damaged creatures: nothing is healed and the tally is zero.
 	g2 := NewGame("A", "B", 1)
 	g2.AddToBattleline(testCreature("c", 5), 0)
-	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	Heal{Amount: 1, Target: Target{Kind: TargetEachCreature}}.Resolve(ctx2)
+	ctx2 := &EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	}
+	Heal{
+		Amount: 1,
+		Target: Target{Kind: TargetEachCreature},
+	}.Resolve(ctx2)
 	if ctx2.Produced.Healed != 0 {
 		t.Errorf("ctx.Produced.Healed = %d, want 0 (nothing to heal)", ctx2.Produced.Healed)
 	}
@@ -149,11 +193,17 @@ func TestHealedContextIsolatedAcrossNestedAbilities(t *testing.T) {
 		5,
 		WithAbility(
 			TriggerAfterPlay,
-			Heal{Amount: 1, Target: Target{Kind: TargetEachEnemyCreature}},
+			Heal{
+				Amount: 1,
+				Target: Target{Kind: TargetEachEnemyCreature},
+			},
 		),
 	), 0)
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	seq := Sequence{Effects: []Effect{
 		Heal{
 			Amount: 1,
@@ -183,11 +233,18 @@ func TestHealedContextIsolatedAcrossNestedAbilities(t *testing.T) {
 
 func TestDealDamageAmountFrom(t *testing.T) {
 	// Text and validate for the "deal that amount of damage" mode.
-	e := DealDamage{AmountFrom: DamageHealed{}, Target: Target{Kind: TargetChosenOtherCreature}}
+	e := DealDamage{
+		AmountFrom: DamageHealed{},
+		Target:     Target{Kind: TargetChosenOtherCreature},
+	}
 	if got := e.Text(); got != "deal that amount of damage to another creature" {
 		t.Errorf("text = %q", got)
 	}
-	if (DealDamage{Target: Target{Kind: TargetEachCreature}, AmountFrom: DamageHealed{}, Per: DamageHealed{}}).validate() == nil {
+	if (DealDamage{
+		Target:     Target{Kind: TargetEachCreature},
+		AmountFrom: DamageHealed{},
+		Per:        DamageHealed{},
+	}).validate() == nil {
 		t.Error("AmountFrom + Per together should be invalid")
 	}
 	if (DamageHealed{}).CountText() != "damage healed this way" {
@@ -201,8 +258,14 @@ func TestDealDamageAmountFrom(t *testing.T) {
 	foe := g.AddToBattleline(testCreature("foe", 5), 1)
 	g.State.Cards[wounded].Damage = 3
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{wounded, foe}})
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-	Heal{Amount: 2, Target: Target{Kind: TargetChosenCreature}}.Resolve(ctx)
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
+	Heal{
+		Amount: 2,
+		Target: Target{Kind: TargetChosenCreature},
+	}.Resolve(ctx)
 	if g.Damage(wounded) != 1 || ctx.Produced.DamageHealed != 2 {
 		t.Errorf(
 			"after heal: damage=%d healed=%d, want 1/2",
@@ -219,8 +282,14 @@ func TestDealDamageAmountFrom(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	c := g2.AddToBattleline(testCreature("c", 5), 0)
 	g2.State.Cards[c].Damage = 1
-	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	Heal{Amount: 2, Target: Target{Kind: TargetEachFriendlyCreature}}.Resolve(ctx2)
+	ctx2 := &EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	}
+	Heal{
+		Amount: 2,
+		Target: Target{Kind: TargetEachFriendlyCreature},
+	}.Resolve(ctx2)
 	if g2.Damage(c) != 0 || ctx2.Produced.DamageHealed != 1 {
 		t.Errorf(
 			"clamped heal: damage=%d healed=%d, want 0/1",
@@ -236,7 +305,11 @@ func TestDealDamageAmountFrom(t *testing.T) {
 	b := g3.AddToBattleline(testCreature("b", 3), 1)
 	g3.SetChooser(0, &idQueueChooser{ids: []LocalID{b}})
 	if ids := (Target{Kind: TargetChosenOtherCreature}).Select(
-		&EffectContext{Resolver: g3, Controller: 0, Source: a},
+		&EffectContext{
+			Resolver:   g3,
+			Controller: 0,
+			Source:     a,
+		},
 	); len(ids) != 1 ||
 		ids[0] != b {
 		t.Errorf("no-context other-creature select = %v, want [%d]", ids, b)
@@ -260,9 +333,15 @@ func TestHealSkipsUndamagedNeighbor(t *testing.T) {
 	wounded := g.AddToBattleline(testCreature("wounded", 5), 0)
 	healthy := g.AddToBattleline(testCreature("healthy", 5), 0)
 	g.State.Cards[wounded].Damage = 2
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
-	e := Heal{Amount: 2, Target: Target{Kind: TargetChosenFriendlyCreature}.AndNeighbors()}
+	e := Heal{
+		Amount: 2,
+		Target: Target{Kind: TargetChosenFriendlyCreature}.AndNeighbors(),
+	}
 	e.Resolve(ctx)
 
 	if g.Damage(wounded) != 0 {
@@ -298,9 +377,15 @@ func TestHealOffersEveryCreatureEvenUndamaged(t *testing.T) {
 	b := g.AddToBattleline(testCreature("b", 5), 0)
 	spy := &healChooserSpy{}
 	g.SetChooser(0, spy)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
-	if (Heal{Amount: 2, Target: Target{Kind: TargetChosenFriendlyCreature}}).resolveGate(ctx) {
+	if (Heal{
+		Amount: 2,
+		Target: Target{Kind: TargetChosenFriendlyCreature},
+	}).resolveGate(ctx) {
 		t.Error("healing an undamaged creature should report nothing healed")
 	}
 	if !spy.asked {
@@ -315,9 +400,15 @@ func TestHealGate(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	c := g.AddToBattleline(testCreature("c", 5), 0)
 	g.State.Cards[c].Damage = 3
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
-	if !(Heal{Fully: true, Target: Target{Kind: TargetChosenFriendlyCreature}}).resolveGate(ctx) {
+	if !(Heal{
+		Fully:  true,
+		Target: Target{Kind: TargetChosenFriendlyCreature},
+	}).resolveGate(ctx) {
 		t.Error("healing a damaged creature should report a heal")
 	}
 	if !ctx.HasIt || ctx.It != c {
@@ -325,8 +416,14 @@ func TestHealGate(t *testing.T) {
 	}
 
 	// Now undamaged: the gate reports nothing healed.
-	ctx2 := &EffectContext{Resolver: g, Controller: 0}
-	if (Heal{Fully: true, Target: Target{Kind: TargetChosenFriendlyCreature}}).resolveGate(ctx2) {
+	ctx2 := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
+	if (Heal{
+		Fully:  true,
+		Target: Target{Kind: TargetChosenFriendlyCreature},
+	}).resolveGate(ctx2) {
 		t.Error("healing an undamaged creature should report no heal")
 	}
 }

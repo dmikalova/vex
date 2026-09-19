@@ -31,7 +31,10 @@ func TestPurgeArchivedCardThenResolve(t *testing.T) {
 	g.SetChooser(0, &declineAfterChooser{ids: []LocalID{archived}})
 
 	PurgeArchivedCardThen{Then: Stun{Target: Target{Kind: TargetChosenCreature}}}.
-		Resolve(&EffectContext{Resolver: g, Controller: 0})
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		})
 
 	if !g.State.Purge[0].contains(archived) {
 		t.Error("the chosen card should have been purged")
@@ -49,7 +52,10 @@ func TestPurgeArchivedCardThenDeclined(t *testing.T) {
 	g.SetChooser(0, &declineAfterChooser{})
 
 	PurgeArchivedCardThen{Then: Stun{Target: Target{Kind: TargetChosenCreature}}}.
-		Resolve(&EffectContext{Resolver: g, Controller: 0})
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		})
 
 	if g.State.Purge[0].contains(archived) {
 		t.Error("nothing should be purged when the controller declines")
@@ -65,7 +71,10 @@ func TestPurgeArchivedCardThenEmptyArchives(t *testing.T) {
 	victim := g.AddToBattleline(testCreature("victim", 3), 1)
 
 	PurgeArchivedCardThen{Then: Stun{Target: Target{Kind: TargetChosenCreature}}}.
-		Resolve(&EffectContext{Resolver: g, Controller: 0})
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		})
 
 	if g.State.Cards[victim].Stunned {
 		t.Error("the follow-up should not run with an empty archive")

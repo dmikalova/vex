@@ -104,12 +104,18 @@ func TestUpgradeOrRobot(t *testing.T) {
 		{"upgrade", card.Definition{Type: card.Type.Upgrade}, true},
 		{
 			"robot creature",
-			card.Definition{Type: card.Type.Creature, Traits: []card.Trait{card.Traits.Robot}},
+			card.Definition{
+				Type:   card.Type.Creature,
+				Traits: []card.Trait{card.Traits.Robot},
+			},
 			true,
 		},
 		{
 			"plain creature",
-			card.Definition{Type: card.Type.Creature, Traits: []card.Trait{card.Traits.Human}},
+			card.Definition{
+				Type:   card.Type.Creature,
+				Traits: []card.Trait{card.Traits.Human},
+			},
 			false,
 		},
 	}

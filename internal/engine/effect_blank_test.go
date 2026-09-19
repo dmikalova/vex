@@ -18,7 +18,11 @@ func TestBlankEnemyTextEffect(t *testing.T) {
 		t.Fatal("precondition: foe should have taunt before blanking")
 	}
 
-	BlankEnemyText{}.Resolve(&EffectContext{Resolver: g, Source: foe, Controller: 0})
+	BlankEnemyText{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     foe,
+		Controller: 0,
+	})
 
 	if !g.textBlanked(foe) {
 		t.Error("foe should be blanked")

@@ -326,7 +326,11 @@ func TestMergeCardPrefersGiganticBase(t *testing.T) {
 		CardType:   "Gigantic Creature Base",
 		Power:      "20",
 	}
-	art := mvCard{CardNumber: "197", CardTitle: "Deusillus", CardType: "Gigantic Creature Art"}
+	art := mvCard{
+		CardNumber: "197",
+		CardTitle:  "Deusillus",
+		CardType:   "Gigantic Creature Art",
+	}
 
 	t.Run("art seen first, base replaces it", func(t *testing.T) {
 		seen := map[string]int{}
@@ -359,7 +363,10 @@ func TestMergeCardPrefersGiganticBase(t *testing.T) {
 		seen := map[string]int{}
 		var got []mvCard
 		got, _ = mergeCard(got, seen, base)
-		other := mvCard{CardNumber: "198", CardTitle: "Other"}
+		other := mvCard{
+			CardNumber: "198",
+			CardTitle:  "Other",
+		}
 		var isNew bool
 		got, isNew = mergeCard(got, seen, other)
 		if !isNew || len(got) != 2 {

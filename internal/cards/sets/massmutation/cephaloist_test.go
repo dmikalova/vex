@@ -19,7 +19,11 @@ import (
 func TestCephaloist(t *testing.T) {
 	t.Run("protects its controller's Æmber while their pool is at least 4", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(Cephaloist), Amber: 4},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(Cephaloist),
+				Amber:  4,
+			},
 		})
 
 		if !h.Game().AemberProtected(0) {
@@ -29,7 +33,11 @@ func TestCephaloist(t *testing.T) {
 
 	t.Run("does not protect while the pool is below 4", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(Cephaloist), Amber: 3},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(Cephaloist),
+				Amber:  3,
+			},
 		})
 
 		if h.Game().AemberProtected(0) {

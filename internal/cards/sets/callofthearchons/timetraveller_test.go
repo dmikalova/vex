@@ -37,7 +37,10 @@ func TestTimetraveller(t *testing.T) {
 	t.Run("shuffles itself into the deck as an action", func(t *testing.T) {
 		var tt ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, InPlay: ct.Cards(ct.Bind(&tt, Timetraveller))},
+			P1: ct.Side{
+				House:  card.House.Logos,
+				InPlay: ct.Cards(ct.Bind(&tt, Timetraveller)),
+			},
 		})
 
 		h.P1.UseAction(tt)

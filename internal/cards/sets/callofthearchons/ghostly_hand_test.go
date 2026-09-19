@@ -18,7 +18,10 @@ import (
 func TestGhostlyHand(t *testing.T) {
 	t.Run("gains its bonus and steals 1 at exactly 1 opponent Æmber", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(GhostlyHand)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(GhostlyHand),
+			},
 			P2: ct.Side{Amber: 1},
 		})
 
@@ -30,7 +33,10 @@ func TestGhostlyHand(t *testing.T) {
 
 	t.Run("only gains its bonus when the opponent is not at exactly 1", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(GhostlyHand)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(GhostlyHand),
+			},
 			P2: ct.Side{Amber: 2},
 		})
 

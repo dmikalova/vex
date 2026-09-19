@@ -23,7 +23,10 @@ var Manchego = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.CountIs{
-				Count:  card.CardsInZone{Zone: card.Deck, Player: card.Controller},
+				Count: card.CardsInZone{
+					Zone:   card.Deck,
+					Player: card.Controller,
+				},
 				Is:     card.AtMost,
 				Amount: 5,
 			},

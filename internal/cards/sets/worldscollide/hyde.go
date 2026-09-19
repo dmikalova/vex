@@ -40,7 +40,10 @@ var Hyde = set.New(
 		},
 	}}),
 	card.WithAbility(card.Trigger.Destroyed, card.Then{
-		First:  card.ArchiveCard{Zone: card.Discard, Selection: card.Named{Name: Velum.Name}},
+		First: card.ArchiveCard{
+			Zone:      card.Discard,
+			Selection: card.Named{Name: Velum.Name},
+		},
 		Result: card.ArchiveFromPlay{Target: card.Target.This},
 	}),
 )

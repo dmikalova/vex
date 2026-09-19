@@ -48,7 +48,10 @@ func RenderRecord(r Record, n Namer) []LogSegment {
 // name, player, and keyword segments. The frame gives the spy the source card an
 // entry subjects itself to, so a card ability's outcome renders card-first.
 func renderWatched(e LogEntry, n Namer, frame Frame) []LogSegment {
-	spy := &namerSpy{Namer: n, frame: frame}
+	spy := &namerSpy{
+		Namer: n,
+		frame: frame,
+	}
 	text := e.Text(spy)
 	var out []LogSegment
 	plain := 0
@@ -91,28 +94,49 @@ const aemberWord = "Æmber"
 // (ADR 0011).
 func iconAt(text string, i int) (LogSegment, bool) {
 	if wordAt(text, i, aemberWord) {
-		return LogSegment{Text: aemberWord, Icon: "aember"}, true
+		return LogSegment{
+			Text: aemberWord,
+			Icon: "aember",
+		}, true
 	}
 	for h := Brobnar; h <= Untamed; h++ {
 		if name := h.String(); wordAt(text, i, name) {
-			return LogSegment{Text: name, Icon: houseIconKey(h)}, true
+			return LogSegment{
+				Text: name,
+				Icon: houseIconKey(h),
+			}, true
 		}
 	}
 	if wordAt(text, i, "stunned") {
-		return LogSegment{Text: "stunned", Icon: "stun"}, true
+		return LogSegment{
+			Text: "stunned",
+			Icon: "stun",
+		}, true
 	}
 	if wordAt(text, i, "chains") {
-		return LogSegment{Text: "chains", Icon: "chains"}, true
+		return LogSegment{
+			Text: "chains",
+			Icon: "chains",
+		}, true
 	}
 	if wordAt(text, i, "chain") {
-		return LogSegment{Text: "chain", Icon: "chains"}, true
+		return LogSegment{
+			Text: "chain",
+			Icon: "chains",
+		}, true
 	}
 	if wordAt(text, i, "keys") {
-		return LogSegment{Text: "keys", Icon: "key"}, true
+		return LogSegment{
+			Text: "keys",
+			Icon: "key",
+		}, true
 	}
 	// "key phase" names the turn phase, not an actual key, so it stays plain text.
 	if wordAt(text, i, "key") && !strings.HasPrefix(text[i+len("key"):], " phase") {
-		return LogSegment{Text: "key", Icon: keyIconBefore(text, i)}, true
+		return LogSegment{
+			Text: "key",
+			Icon: keyIconBefore(text, i),
+		}, true
 	}
 	if zone, ok := zoneIconAt(text, i); ok {
 		return zone, true
@@ -139,7 +163,10 @@ var zoneNouns = []struct {
 func zoneIconAt(text string, i int) (LogSegment, bool) {
 	for _, z := range zoneNouns {
 		if wordAt(text, i, z.word) {
-			return LogSegment{Text: z.word, Icon: z.icon}, true
+			return LogSegment{
+				Text: z.word,
+				Icon: z.icon,
+			}, true
 		}
 	}
 	return LogSegment{}, false
@@ -177,9 +204,17 @@ type namedThing struct {
 // segment turns a remembered name into the segment that stands for it.
 func (t namedThing) segment() LogSegment {
 	if t.isCard {
-		return LogSegment{Text: t.name, Card: t.card, HasCard: true}
+		return LogSegment{
+			Text:    t.name,
+			Card:    t.card,
+			HasCard: true,
+		}
 	}
-	return LogSegment{Text: t.name, Player: t.player, HasPlayer: true}
+	return LogSegment{
+		Text:      t.name,
+		Player:    t.player,
+		HasPlayer: true,
+	}
 }
 
 // namerSpy is a Namer that remembers what it was asked to name, so the rendered
@@ -193,14 +228,21 @@ type namerSpy struct {
 // Name records that id was named, then returns its name.
 func (s *namerSpy) Name(id LocalID) string {
 	name := s.Namer.Name(id)
-	s.named = append(s.named, namedThing{name: name, card: id, isCard: true})
+	s.named = append(s.named, namedThing{
+		name:   name,
+		card:   id,
+		isCard: true,
+	})
 	return name
 }
 
 // PlayerName records that player was named, then returns their name.
 func (s *namerSpy) PlayerName(player int) string {
 	name := s.Namer.PlayerName(player)
-	s.named = append(s.named, namedThing{name: name, player: player})
+	s.named = append(s.named, namedThing{
+		name:   name,
+		player: player,
+	})
 	return name
 }
 

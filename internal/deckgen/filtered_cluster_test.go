@@ -37,7 +37,11 @@ func leadCard(name string, h engine.House, fc FilteredCluster) Card {
 // richFilteredSet is a set whose lead card pulls Upgrades and Robots to a floor of
 // two, with a matching pool spread across several Houses plus vanilla filler.
 func richFilteredSet() Set {
-	fc := FilteredCluster{Name: "F", Floor: 2, Match: isUpgradeOrRobot}
+	fc := FilteredCluster{
+		Name:  "F",
+		Floor: 2,
+		Match: isUpgradeOrRobot,
+	}
 	return NewSet("S", []Card{
 		leadCard("Lead", engine.Brobnar, fc),
 		mkCard("VB", engine.Brobnar, engine.Common),
@@ -60,7 +64,10 @@ func vanillaDeck(houses [PodCount]engine.House) Deck {
 		d.Pods[i].House = h
 		for s := range d.Pods[i].Slots {
 			def := engine.NewCard("V", h, engine.Creature, engine.Common, engine.WithPower(3))
-			d.Pods[i].Slots[s] = Slot{Rarity: engine.Common, Card: def}
+			d.Pods[i].Slots[s] = Slot{
+				Rarity: engine.Common,
+				Card:   def,
+			}
 		}
 	}
 	return d
@@ -85,13 +92,22 @@ func TestBuildFilteredClustersStampsLead(t *testing.T) {
 // averages about the Mean.
 func TestFilteredTarget(t *testing.T) {
 	g := gen(richFilteredSet())
-	flat := FilteredCluster{Name: "F", Floor: 3, Match: isUpgradeOrRobot}
+	flat := FilteredCluster{
+		Name:  "F",
+		Floor: 3,
+		Match: isUpgradeOrRobot,
+	}
 	for range 200 {
 		if got := g.filteredTarget(flat); got != 3 {
 			t.Fatalf("zero-Mean target = %d, want exactly 3", got)
 		}
 	}
-	spread := FilteredCluster{Name: "F", Floor: 4, Mean: 6, Match: isUpgradeOrRobot}
+	spread := FilteredCluster{
+		Name:  "F",
+		Floor: 4,
+		Mean:  6,
+		Match: isUpgradeOrRobot,
+	}
 	sum := 0
 	const n = 2000
 	for range n {
@@ -111,12 +127,29 @@ func TestValidateFilteredClustersPanics(t *testing.T) {
 		name string
 		fc   FilteredCluster
 	}{
-		{"nil predicate", FilteredCluster{Name: "F", Floor: 2, Match: nil}},
-		{"floor below one", FilteredCluster{Name: "F", Floor: 0, Match: isUpgradeOrRobot}},
-		{"pool too small", FilteredCluster{Name: "F", Floor: 5, Match: isUpgradeOrRobot}},
+		{"nil predicate", FilteredCluster{
+			Name:  "F",
+			Floor: 2,
+			Match: nil,
+		}},
+		{"floor below one", FilteredCluster{
+			Name:  "F",
+			Floor: 0,
+			Match: isUpgradeOrRobot,
+		}},
+		{"pool too small", FilteredCluster{
+			Name:  "F",
+			Floor: 5,
+			Match: isUpgradeOrRobot,
+		}},
 		{
 			"mean below floor",
-			FilteredCluster{Name: "F", Floor: 2, Mean: 1, Match: isUpgradeOrRobot},
+			FilteredCluster{
+				Name:  "F",
+				Floor: 2,
+				Mean:  1,
+				Match: isUpgradeOrRobot,
+			},
 		},
 	}
 	for _, tc := range cases {
@@ -143,7 +176,12 @@ func TestValidateFilteredClustersMeanBelowFloor(t *testing.T) {
 			t.Fatal("expected panic for a mean below the floor")
 		}
 	}()
-	fc := FilteredCluster{Name: "F", Floor: 2, Mean: 1, Match: isUpgradeOrRobot}
+	fc := FilteredCluster{
+		Name:  "F",
+		Floor: 2,
+		Mean:  1,
+		Match: isUpgradeOrRobot,
+	}
 	NewSet("S", []Card{
 		leadCard("Lead", engine.Brobnar, fc),
 		mkCard("VB", engine.Brobnar, engine.Common),
@@ -247,7 +285,11 @@ func TestPlaceFilteredMatchNoSlot(t *testing.T) {
 }
 
 func TestPlaceFilteredMatchOneCopyPerDeck(t *testing.T) {
-	fc := FilteredCluster{Name: "F", Floor: 1, Match: isUpgradeOrRobot}
+	fc := FilteredCluster{
+		Name:  "F",
+		Floor: 1,
+		Match: isUpgradeOrRobot,
+	}
 	once := upgradeCard("UpOnce", engine.Dis)
 	once.Profile.OneCopyPerDeck = true
 	s := NewSet("S", []Card{
@@ -267,7 +309,11 @@ func TestPlaceFilteredMatchOneCopyPerDeck(t *testing.T) {
 }
 
 func TestFilteredCandidatesSkips(t *testing.T) {
-	fc := FilteredCluster{Name: "F", Floor: 1, Match: isUpgradeOrRobot}
+	fc := FilteredCluster{
+		Name:  "F",
+		Floor: 1,
+		Match: isUpgradeOrRobot,
+	}
 	once := upgradeCard("UpOnce", engine.Dis)
 	once.Profile.OneCopyPerDeck = true
 	s := NewSet("S", []Card{
@@ -290,9 +336,21 @@ func TestFilteredCandidatesSkips(t *testing.T) {
 }
 
 func TestProtectedNamesUnion(t *testing.T) {
-	whole := ClusterMembership{Name: "Horsemen", Strategy: WholePool, Trigger: ByAnyMember}
-	shard := ClusterMembership{Name: "Shard", Strategy: OnePerHouse, Trigger: ByAnyMember}
-	fc := FilteredCluster{Name: "F", Floor: 1, Match: isUpgradeOrRobot}
+	whole := ClusterMembership{
+		Name:     "Horsemen",
+		Strategy: WholePool,
+		Trigger:  ByAnyMember,
+	}
+	shard := ClusterMembership{
+		Name:     "Shard",
+		Strategy: OnePerHouse,
+		Trigger:  ByAnyMember,
+	}
+	fc := FilteredCluster{
+		Name:  "F",
+		Floor: 1,
+		Match: isUpgradeOrRobot,
+	}
 	s := NewSet("S", []Card{
 		leadCard("Lead", engine.Brobnar, fc),
 		clusterMember("H1", engine.Brobnar, whole),

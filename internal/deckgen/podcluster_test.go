@@ -13,7 +13,10 @@ import (
 func firePod(g *generator, set Set, house engine.House, member string) HousePod {
 	g.deckHouses[0] = house
 	pod := g.fillPod(house)
-	pod.Slots[0] = Slot{Rarity: engine.Rare, Card: set.byName[member].Def}
+	pod.Slots[0] = Slot{
+		Rarity: engine.Rare,
+		Card:   set.byName[member].Def,
+	}
 	return pod
 }
 
@@ -30,7 +33,11 @@ func distinctMembers(pod HousePod, ci clusterIndex) int {
 // A fired WholePool cluster places every member into the pod; without its lead it
 // stays dormant.
 func TestWholePoolPlacesAllMembers(t *testing.T) {
-	whole := ClusterMembership{Name: "H", Strategy: WholePool, Trigger: ByLead}
+	whole := ClusterMembership{
+		Name:     "H",
+		Strategy: WholePool,
+		Trigger:  ByLead,
+	}
 	lead := clusterMember("Lead", engine.Brobnar, whole)
 	lead.Profile.Cluster.Lead = true
 	set := NewSet("S", []Card{
@@ -40,7 +47,11 @@ func TestWholePoolPlacesAllMembers(t *testing.T) {
 		mkCard("FB", engine.Brobnar, engine.Common),
 	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 
-	g := &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(1)),
+		placed: map[string]bool{},
+	}
 	pod := g.expandPodClusters(firePod(g, set, engine.Brobnar, "Lead"))
 	for _, n := range []string{"Lead", "R1", "R2"} {
 		if !podHas(pod, n) {
@@ -49,7 +60,11 @@ func TestWholePoolPlacesAllMembers(t *testing.T) {
 	}
 
 	// No lead planted: the ByLead cluster does not fire (only Common rolls).
-	g = &generator{set: set, r: rand.New(rand.NewSource(2)), placed: map[string]bool{}}
+	g = &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(2)),
+		placed: map[string]bool{},
+	}
 	g.deckHouses[0] = engine.Brobnar
 	pod = g.expandPodClusters(g.fillPod(engine.Brobnar))
 	if distinctMembers(pod, set.clusters["H"]) != 0 {
@@ -114,7 +129,11 @@ func TestRandomCountByLeadExcludesLead(t *testing.T) {
 
 	ci := set.clusters["Harbinger"]
 	for seed := range int64(30) {
-		g := &generator{set: set, r: rand.New(rand.NewSource(seed)), placed: map[string]bool{}}
+		g := &generator{
+			set:    set,
+			r:      rand.New(rand.NewSource(seed)),
+			placed: map[string]bool{},
+		}
 		pod := g.expandPodClusters(firePod(g, set, engine.Untamed, "Lead"))
 		if got := countMember(pod, "Lead"); got != 1 {
 			t.Fatalf("seed %d placed the lead %d times, want only the planted one", seed, got)
@@ -142,7 +161,11 @@ func TestSelfPullPlacesCopies(t *testing.T) {
 	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 
 	for seed := range int64(50) {
-		g := &generator{set: set, r: rand.New(rand.NewSource(seed)), placed: map[string]bool{}}
+		g := &generator{
+			set:    set,
+			r:      rand.New(rand.NewSource(seed)),
+			placed: map[string]bool{},
+		}
 		pod := g.expandPodClusters(firePod(g, set, engine.Shadows, "Rat"))
 		if got := countMember(pod, "Rat"); got < 3 || got > PodSize {
 			t.Fatalf("seed %d placed %d Rats, want [3,%d]", seed, got, PodSize)
@@ -150,7 +173,11 @@ func TestSelfPullPlacesCopies(t *testing.T) {
 	}
 
 	// No Rat present: the cluster does not fire.
-	g := &generator{set: set, r: rand.New(rand.NewSource(9)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(9)),
+		placed: map[string]bool{},
+	}
 	g.deckHouses[0] = engine.Shadows
 	pod := g.expandPodClusters(g.fillPod(engine.Shadows))
 	if countMember(pod, "Rat") != 0 {
@@ -163,7 +190,11 @@ func TestSelfPullPlacesCopies(t *testing.T) {
 func TestSelfPullCount(t *testing.T) {
 	g := &generator{r: rand.New(rand.NewSource(7))}
 
-	flat := clusterIndex{strategy: SelfPull, min: 4, mean: 4}
+	flat := clusterIndex{
+		strategy: SelfPull,
+		min:      4,
+		mean:     4,
+	}
 	for range 20 {
 		if n := g.selfPullCount(flat); n != 4 {
 			t.Fatalf("Mean==Min returned %d, want 4", n)
@@ -171,7 +202,11 @@ func TestSelfPullCount(t *testing.T) {
 	}
 
 	// A high Min at the pod ceiling drives the cap; every roll stays in range.
-	capped := clusterIndex{strategy: SelfPull, min: PodSize - 1, mean: PodSize}
+	capped := clusterIndex{
+		strategy: SelfPull,
+		min:      PodSize - 1,
+		mean:     PodSize,
+	}
 	for range 500 {
 		if n := g.selfPullCount(capped); n < PodSize-1 || n > PodSize {
 			t.Fatalf("capped count %d out of range", n)
@@ -182,7 +217,11 @@ func TestSelfPullCount(t *testing.T) {
 // A WholePool member native to another House is rehoused as a maverick in the
 // pod it rides into.
 func TestWholePoolRehousesMaverickMember(t *testing.T) {
-	whole := ClusterMembership{Name: "H", Strategy: WholePool, Trigger: ByLead}
+	whole := ClusterMembership{
+		Name:     "H",
+		Strategy: WholePool,
+		Trigger:  ByLead,
+	}
 	lead := clusterMember("Lead", engine.Brobnar, whole)
 	lead.Profile.Cluster.Lead = true
 	set := NewSet("S", []Card{
@@ -192,7 +231,11 @@ func TestWholePoolRehousesMaverickMember(t *testing.T) {
 		mkCard("FD", engine.Dis, engine.Common),
 	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 
-	g := &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(1)),
+		placed: map[string]bool{},
+	}
 	pod := g.expandPodClusters(firePod(g, set, engine.Brobnar, "Lead"))
 	found := false
 	for _, s := range pod.Slots {
@@ -228,7 +271,11 @@ func TestSelfPullRecordsOneCopyPerDeck(t *testing.T) {
 		mkCard("FS", engine.Shadows, engine.Common),
 	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 
-	g := &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(1)),
+		placed: map[string]bool{},
+	}
 	g.expandPodClusters(firePod(g, set, engine.Shadows, "Rat"))
 	if !g.placed["Rat"] {
 		t.Fatal("OneCopyPerDeck member not recorded as placed")
@@ -238,7 +285,11 @@ func TestSelfPullRecordsOneCopyPerDeck(t *testing.T) {
 // With more members than a pod has slots, WholePool fills the pod and stops when
 // no cluster-free slot remains.
 func TestWholePoolStopsWhenPodFull(t *testing.T) {
-	whole := ClusterMembership{Name: "H", Strategy: WholePool, Trigger: ByLead}
+	whole := ClusterMembership{
+		Name:     "H",
+		Strategy: WholePool,
+		Trigger:  ByLead,
+	}
 	lead := clusterMember("M0", engine.Brobnar, whole)
 	lead.Profile.Cluster.Lead = true
 	cards := []Card{lead}
@@ -248,7 +299,11 @@ func TestWholePoolStopsWhenPodFull(t *testing.T) {
 	cards = append(cards, mkCard("FB", engine.Brobnar, engine.Common))
 	set := NewSet("S", cards, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 
-	g := &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(1)),
+		placed: map[string]bool{},
+	}
 	pod := g.expandPodClusters(firePod(g, set, engine.Brobnar, "M0"))
 	for _, s := range pod.Slots {
 		if !inCluster(set.clusters["H"], s.Card.Name) {
@@ -259,7 +314,11 @@ func TestWholePoolStopsWhenPodFull(t *testing.T) {
 
 // A fired PullExact cluster places one partner per lead instance in the pod.
 func TestPullExactPlacesPerLead(t *testing.T) {
-	pull := ClusterMembership{Name: "TT", Strategy: PullExact, Trigger: ByLead}
+	pull := ClusterMembership{
+		Name:     "TT",
+		Strategy: PullExact,
+		Trigger:  ByLead,
+	}
 	lead := clusterMember("Lead", engine.Logos, pull)
 	lead.Profile.Cluster.Lead = true
 	set := NewSet("S", []Card{
@@ -269,18 +328,32 @@ func TestPullExactPlacesPerLead(t *testing.T) {
 	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 
 	// One lead pulls one partner.
-	g := &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(1)),
+		placed: map[string]bool{},
+	}
 	pod := g.expandPodClusters(firePod(g, set, engine.Logos, "Lead"))
 	if got := countMember(pod, "Partner"); got != 1 {
 		t.Fatalf("one lead pulled %d partners, want 1", got)
 	}
 
 	// Two leads pull two partners.
-	g = &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+	g = &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(1)),
+		placed: map[string]bool{},
+	}
 	g.deckHouses[0] = engine.Logos
 	pod = g.fillPod(engine.Logos)
-	pod.Slots[0] = Slot{Rarity: engine.Rare, Card: set.byName["Lead"].Def}
-	pod.Slots[1] = Slot{Rarity: engine.Rare, Card: set.byName["Lead"].Def}
+	pod.Slots[0] = Slot{
+		Rarity: engine.Rare,
+		Card:   set.byName["Lead"].Def,
+	}
+	pod.Slots[1] = Slot{
+		Rarity: engine.Rare,
+		Card:   set.byName["Lead"].Def,
+	}
 	pod = g.expandPodClusters(pod)
 	if got := countMember(pod, "Partner"); got != 2 {
 		t.Fatalf("two leads pulled %d partners, want 2", got)
@@ -291,7 +364,11 @@ func TestPullExactPlacesPerLead(t *testing.T) {
 // when the lead rolls in, and stays dormant without the lead. Mean equal to Min
 // makes the count exactly Min, so the per-partner rates are checkable.
 func TestPullPlacesPerPartnerCount(t *testing.T) {
-	pull := ClusterMembership{Name: "Troop", Strategy: Pull, Trigger: ByLead}
+	pull := ClusterMembership{
+		Name:     "Troop",
+		Strategy: Pull,
+		Trigger:  ByLead,
+	}
 	lead := clusterMember("Lead", engine.Untamed, pull)
 	lead.Profile.Cluster.Lead = true
 	ape := pull
@@ -305,7 +382,11 @@ func TestPullPlacesPerPartnerCount(t *testing.T) {
 		mkCard("FL", engine.Untamed, engine.Common),
 	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 
-	g := &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(1)),
+		placed: map[string]bool{},
+	}
 	pod := g.expandPodClusters(firePod(g, set, engine.Untamed, "Lead"))
 	if got := countMember(pod, "Ape"); got != 2 {
 		t.Fatalf("pulled %d Apes, want 2", got)
@@ -315,7 +396,11 @@ func TestPullPlacesPerPartnerCount(t *testing.T) {
 	}
 
 	// No lead present: the ByLead cluster does not fire.
-	g = &generator{set: set, r: rand.New(rand.NewSource(2)), placed: map[string]bool{}}
+	g = &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(2)),
+		placed: map[string]bool{},
+	}
 	g.deckHouses[0] = engine.Untamed
 	pod = g.expandPodClusters(g.fillPod(engine.Untamed))
 	if distinctMembers(pod, set.clusters["Troop"]) != 0 {
@@ -327,7 +412,10 @@ func TestPullPlacesPerPartnerCount(t *testing.T) {
 func TestPullCount(t *testing.T) {
 	g := &generator{r: rand.New(rand.NewSource(7))}
 
-	flat := ClusterMembership{Min: 2, Mean: 2}
+	flat := ClusterMembership{
+		Min:  2,
+		Mean: 2,
+	}
 	for range 20 {
 		if n := g.pullCount(flat); n != 2 {
 			t.Fatalf("Mean==Min returned %d, want 2", n)
@@ -335,7 +423,10 @@ func TestPullCount(t *testing.T) {
 	}
 
 	// A Min past the pod ceiling always caps.
-	capped := ClusterMembership{Min: PodSize + 1, Mean: PodSize + 1}
+	capped := ClusterMembership{
+		Min:  PodSize + 1,
+		Mean: PodSize + 1,
+	}
 	if n := g.pullCount(capped); n != PodSize {
 		t.Fatalf("capped count %d, want %d", n, PodSize)
 	}
@@ -350,7 +441,11 @@ func TestExpandPodClustersSkipsOnePerHouse(t *testing.T) {
 		mkCard("FD", engine.Dis, engine.Common),
 	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 
-	g := &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(1)),
+		placed: map[string]bool{},
+	}
 	pod := firePod(g, set, engine.Brobnar, "Shard-B")
 	before := countMember(pod, "Shard-B")
 	pod = g.expandPodClusters(pod)

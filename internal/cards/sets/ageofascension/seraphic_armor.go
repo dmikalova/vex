@@ -20,5 +20,8 @@ var SeraphicArmor = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{ArmorBonus: 1}),
 	card.WithAbility(
-		card.Trigger.Play, card.Heal{Fully: true, Target: card.Target.This}),
+		card.Trigger.Play, card.Heal{
+			Fully:  true,
+			Target: card.Target.This,
+		}),
 )

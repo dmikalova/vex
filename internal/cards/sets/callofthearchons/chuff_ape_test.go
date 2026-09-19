@@ -21,7 +21,10 @@ import (
 func TestChuffApe(t *testing.T) {
 	t.Run("enters play stunned", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Mars, Hand: ct.Cards(ChuffApe)},
+			P1: ct.Side{
+				House: card.House.Mars,
+				Hand:  ct.Cards(ChuffApe),
+			},
 		})
 
 		h.P1.Play(ChuffApe)

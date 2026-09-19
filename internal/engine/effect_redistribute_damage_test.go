@@ -47,9 +47,16 @@ func TestRedistributeDamageMovesAllOntoOne(t *testing.T) {
 	g.SetDamage(a, 2)
 	g.SetDamage(b, 1)
 	// Choose own player, accept, then pile all 3 damage onto a.
-	g.SetChooser(0, &redistChooser{options: []int{0, 0}, ids: []LocalID{a, a, a}})
+	g.SetChooser(0, &redistChooser{
+		options: []int{0, 0},
+		ids:     []LocalID{a, a, a},
+	})
 
-	ctx := &EffectContext{Resolver: g, Source: a, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     a,
+		Controller: 0,
+	}
 	RedistributeDamage{}.Resolve(ctx)
 
 	if got := g.Damage(a); got != 3 {
@@ -67,7 +74,11 @@ func TestRedistributeDamageDeclineLeavesDamage(t *testing.T) {
 	// Choose own player, then decline.
 	g.SetChooser(0, &redistChooser{options: []int{0, 1}})
 
-	ctx := &EffectContext{Resolver: g, Source: a, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     a,
+		Controller: 0,
+	}
 	RedistributeDamage{}.Resolve(ctx)
 
 	if got := g.Damage(a); got != 2 {
@@ -82,9 +93,16 @@ func TestRedistributeDamageDestroysWhenPiledPastPower(t *testing.T) {
 	g.SetDamage(a, 1)
 	g.SetDamage(b, 1)
 	// Choose own player, accept, pile both damage onto a to lethal.
-	g.SetChooser(0, &redistChooser{options: []int{0, 0}, ids: []LocalID{a, a}})
+	g.SetChooser(0, &redistChooser{
+		options: []int{0, 0},
+		ids:     []LocalID{a, a},
+	})
 
-	ctx := &EffectContext{Resolver: g, Source: a, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     a,
+		Controller: 0,
+	}
 	RedistributeDamage{}.Resolve(ctx)
 
 	if g.inPlay(a) {
@@ -100,7 +118,11 @@ func TestRedistributeDamageNoDamageDoesNothing(t *testing.T) {
 	a := g.AddToBattleline(testCreature("a", 3), 0)
 	g.SetChooser(0, &redistChooser{options: []int{0}})
 
-	ctx := &EffectContext{Resolver: g, Source: a, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     a,
+		Controller: 0,
+	}
 	RedistributeDamage{}.Resolve(ctx)
 
 	if got := g.Damage(a); got != 0 {
@@ -117,7 +139,11 @@ func TestRedistributeDamageChoosesOpponent(t *testing.T) {
 	// Choose the opponent, accept; the sole enemy creature keeps its own damage.
 	g.SetChooser(0, &redistChooser{options: []int{1, 0}})
 
-	ctx := &EffectContext{Resolver: g, Source: own, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     own,
+		Controller: 0,
+	}
 	RedistributeDamage{}.Resolve(ctx)
 
 	if got := g.Damage(foe); got != 2 {
@@ -153,7 +179,11 @@ func TestRedistributeDamageFallsBackToFirstCreature(t *testing.T) {
 	// Accept, but never pick a placement target: both units fall onto creatures[0].
 	g.SetChooser(0, &redistNoPick{options: []int{0, 0}})
 
-	ctx := &EffectContext{Resolver: g, Source: a, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     a,
+		Controller: 0,
+	}
 	RedistributeDamage{}.Resolve(ctx)
 
 	if got := g.Damage(a); got != 2 {

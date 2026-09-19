@@ -21,7 +21,10 @@ func TestRegrettableMeteor(t *testing.T) {
 		func(t *testing.T) {
 			var dino, big, small, bigDino ct.Card
 			h := ct.Play(t, ct.Setup{
-				P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(RegrettableMeteor)},
+				P1: ct.Side{
+					House: card.House.Saurian,
+					Hand:  ct.Cards(RegrettableMeteor),
+				},
 				P2: ct.Side{InPlay: ct.Cards(
 					ct.Bind(&dino, ct.Creature(ct.Traits(card.Traits.Dinosaur), ct.Power(2))),
 					ct.Bind(&big, ct.Creature(ct.Power(6))),
@@ -44,7 +47,10 @@ func TestRegrettableMeteor(t *testing.T) {
 	t.Run("a warded Dinosaur with power 6 or higher survives", func(t *testing.T) {
 		var bigDino ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(RegrettableMeteor)},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(RegrettableMeteor),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&bigDino, ct.Creature(ct.Traits(card.Traits.Dinosaur), ct.Power(7))),
 			)},

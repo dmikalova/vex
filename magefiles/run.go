@@ -17,8 +17,7 @@ import (
 // bumping it is low-risk; it is pinned for reproducible fetches all the same.
 const pkgsiteVersion = "v0.4.0"
 
-// Docs serves this module's Go documentation at http://localhost:6060 with the
-// same rendering as pkg.go.dev. It runs pkgsite over the local module via
+// Docs serves the local API docs. It runs pkgsite over the local module via
 // `go run`, so the tool never enters the module's own dependency graph, and
 // blocks until Ctrl-C. The first run fetches pkgsite and may take a minute.
 func Docs() error {

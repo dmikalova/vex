@@ -22,7 +22,10 @@ func TestAubadeTheGrim(t *testing.T) {
 	t.Run("captures 3 Æmber when played", func(t *testing.T) {
 		var aubade ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(ct.Bind(&aubade, AubadeTheGrim))},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(ct.Bind(&aubade, AubadeTheGrim)),
+			},
 			P2: ct.Side{Amber: 4},
 		})
 

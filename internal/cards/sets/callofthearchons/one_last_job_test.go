@@ -44,7 +44,10 @@ func TestOneLastJob(t *testing.T) {
 
 	t.Run("steals nothing when you have no Shadows creatures", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(OneLastJob)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(OneLastJob),
+			},
 			P2: ct.Side{Amber: 5},
 		})
 

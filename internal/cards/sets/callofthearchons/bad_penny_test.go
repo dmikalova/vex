@@ -21,7 +21,10 @@ func TestBadPenny(t *testing.T) {
 	t.Run("returns to its owner's hand when destroyed", func(t *testing.T) {
 		var penny ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(ct.Bind(&penny, BadPenny))},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(ct.Bind(&penny, BadPenny)),
+			},
 		})
 
 		h.Game().DestroyEach(0, []engine.LocalID{penny.ID()})

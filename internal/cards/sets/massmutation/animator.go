@@ -19,7 +19,10 @@ var Animator = set.New(
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
-			card.AddPowerCounter{Target: card.Target.Artifact, Amount: 3},
+			card.AddPowerCounter{
+				Target: card.Target.Artifact,
+				Amount: 3,
+			},
 			card.TurnIntoCreature{
 				Target:    card.Target.TheChosenCreature,
 				Duration:  card.Duration.RemainderOfPlayerTurn,

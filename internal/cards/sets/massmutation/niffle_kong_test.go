@@ -116,17 +116,26 @@ func TestIsNiffleCreature(t *testing.T) {
 	}{
 		{
 			"niffle creature",
-			card.Definition{Type: card.Type.Creature, Traits: []card.Trait{card.Traits.Niffle}},
+			card.Definition{
+				Type:   card.Type.Creature,
+				Traits: []card.Trait{card.Traits.Niffle},
+			},
 			true,
 		},
 		{
 			"non-niffle creature",
-			card.Definition{Type: card.Type.Creature, Traits: []card.Trait{card.Traits.Beast}},
+			card.Definition{
+				Type:   card.Type.Creature,
+				Traits: []card.Trait{card.Traits.Beast},
+			},
 			false,
 		},
 		{
 			"niffle artifact",
-			card.Definition{Type: card.Type.Artifact, Traits: []card.Trait{card.Traits.Niffle}},
+			card.Definition{
+				Type:   card.Type.Artifact,
+				Traits: []card.Trait{card.Traits.Niffle},
+			},
 			false,
 		},
 	}

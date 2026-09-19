@@ -21,27 +21,45 @@ var GalacticCensus = set.New(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Conditional{
 				Cond: card.HousesRepresented{
-					Among:  card.HousesAmong{Player: card.EachPlayer, Type: card.Type.Creature},
+					Among: card.HousesAmong{
+						Player: card.EachPlayer,
+						Type:   card.Type.Creature,
+					},
 					Is:     card.AtLeast,
 					Amount: 3,
 				},
-				Then: card.GainAember{Player: card.Controller, Amount: 1},
+				Then: card.GainAember{
+					Player: card.Controller,
+					Amount: 1,
+				},
 			},
 			card.Conditional{
 				Cond: card.HousesRepresented{
-					Among:  card.HousesAmong{Player: card.EachPlayer, Type: card.Type.Creature},
+					Among: card.HousesAmong{
+						Player: card.EachPlayer,
+						Type:   card.Type.Creature,
+					},
 					Is:     card.AtLeast,
 					Amount: 5,
 				},
-				Then: card.GainAember{Player: card.Controller, Amount: 1},
+				Then: card.GainAember{
+					Player: card.Controller,
+					Amount: 1,
+				},
 			},
 			card.Conditional{
 				Cond: card.HousesRepresented{
-					Among:  card.HousesAmong{Player: card.EachPlayer, Type: card.Type.Creature},
+					Among: card.HousesAmong{
+						Player: card.EachPlayer,
+						Type:   card.Type.Creature,
+					},
 					Is:     card.AtLeast,
 					Amount: 6,
 				},
-				Then: card.GainAember{Player: card.Controller, Amount: 1},
+				Then: card.GainAember{
+					Player: card.Controller,
+					Amount: 1,
+				},
 			},
 		}}),
 )

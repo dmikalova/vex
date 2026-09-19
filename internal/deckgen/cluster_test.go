@@ -9,7 +9,11 @@ import (
 )
 
 // shardCluster is a OnePerHouse / ByAnyMember cluster, the Shards' shape.
-var shardCluster = ClusterMembership{Name: "Shard", Strategy: OnePerHouse, Trigger: ByAnyMember}
+var shardCluster = ClusterMembership{
+	Name:     "Shard",
+	Strategy: OnePerHouse,
+	Trigger:  ByAnyMember,
+}
 
 func shardMember(name string, h engine.House) Card {
 	c := mkCard(name, h, engine.Rare)
@@ -36,14 +40,21 @@ func TestOnePerHousePlacesEveryHouse(t *testing.T) {
 		engine.Dis:     "Shard-D",
 		engine.Logos:   "Shard-L",
 	}
-	g := &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(1)),
+		placed: map[string]bool{},
+	}
 	deck := Deck{Set: "S"}
 	for i, h := range houses {
 		g.deckHouses[i] = h
 		deck.Pods[i] = g.fillPod(h)
 	}
 	// Only Common rolls, so no member is drawn; plant one to fire the cycle.
-	deck.Pods[0].Slots[0] = Slot{Rarity: engine.Rare, Card: set.byName["Shard-B"].Def}
+	deck.Pods[0].Slots[0] = Slot{
+		Rarity: engine.Rare,
+		Card:   set.byName["Shard-B"].Def,
+	}
 
 	g.expandClusters(&deck)
 
@@ -66,7 +77,11 @@ func TestOnePerHouseDormantWithoutMember(t *testing.T) {
 	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 
 	houses := []engine.House{engine.Brobnar, engine.Dis, engine.Logos}
-	g := &generator{set: set, r: rand.New(rand.NewSource(2)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(2)),
+		placed: map[string]bool{},
+	}
 	deck := Deck{Set: "S"}
 	for i, h := range houses {
 		g.deckHouses[i] = h
@@ -122,7 +137,11 @@ func clusterMember(name string, h engine.House, m ClusterMembership) Card {
 // pod still receives it. A non-OnePerHouse cluster in the pool (the Horsemen) is
 // ignored by the deck-wide gate and pass, and a nil pool is a no-op.
 func TestCrossClusterErrantHouse(t *testing.T) {
-	horseman := ClusterMembership{Name: "Horsemen", Strategy: WholePool, Trigger: ByAnyMember}
+	horseman := ClusterMembership{
+		Name:     "Horsemen",
+		Strategy: WholePool,
+		Trigger:  ByAnyMember,
+	}
 	pool := NewClusterPool([]Card{
 		shardMember("Shard-B", engine.Brobnar),
 		shardMember("Shard-D", engine.Dis),
@@ -144,7 +163,11 @@ func TestCrossClusterErrantHouse(t *testing.T) {
 	// A nil pool is a no-op: neither gate nor deck-wide resolution.
 	set.WithClusters(nil)
 
-	g := &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(1)),
+		placed: map[string]bool{},
+	}
 	deck := Deck{Set: "S"}
 	houses := []engine.House{engine.Brobnar, engine.Dis, engine.Saurian}
 	for i, h := range houses {
@@ -241,7 +264,10 @@ func TestClusterValidation(t *testing.T) {
 				clusterMember(
 					"A",
 					engine.Brobnar,
-					ClusterMembership{Name: "C", Trigger: ByAnyMember},
+					ClusterMembership{
+						Name:    "C",
+						Trigger: ByAnyMember,
+					},
 				),
 			},
 			want: "no strategy",
@@ -252,7 +278,10 @@ func TestClusterValidation(t *testing.T) {
 				clusterMember(
 					"A",
 					engine.Brobnar,
-					ClusterMembership{Name: "C", Strategy: WholePool},
+					ClusterMembership{
+						Name:     "C",
+						Strategy: WholePool,
+					},
 				),
 			},
 			want: "no trigger",
@@ -263,7 +292,11 @@ func TestClusterValidation(t *testing.T) {
 				clusterMember(
 					"A",
 					engine.Brobnar,
-					ClusterMembership{Name: "C", Strategy: WholePool, Trigger: ByLead},
+					ClusterMembership{
+						Name:     "C",
+						Strategy: WholePool,
+						Trigger:  ByLead,
+					},
 				),
 			},
 			want: "no lead member",
@@ -393,7 +426,11 @@ func TestClusterValidation(t *testing.T) {
 // A valid WholePool cluster and a valid RandomCount cluster pass validation, and
 // the deck-wide pass leaves them alone (they resolve in the pod pass, not here).
 func TestNonOnePerHouseClustersSkipDeckWide(_ *testing.T) {
-	whole := ClusterMembership{Name: "Horsemen", Strategy: WholePool, Trigger: ByLead}
+	whole := ClusterMembership{
+		Name:     "Horsemen",
+		Strategy: WholePool,
+		Trigger:  ByLead,
+	}
 	lead := clusterMember("Lead", engine.Brobnar, whole)
 	lead.Profile.Cluster.Lead = true
 	sins := ClusterMembership{
@@ -412,7 +449,11 @@ func TestNonOnePerHouseClustersSkipDeckWide(_ *testing.T) {
 		mkCard("FD", engine.Dis, engine.Common),
 	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 
-	g := &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(1)),
+		placed: map[string]bool{},
+	}
 	deck := Deck{Set: "S"}
 	for i, h := range []engine.House{engine.Brobnar, engine.Dis} {
 		g.deckHouses[i] = h
@@ -424,7 +465,11 @@ func TestNonOnePerHouseClustersSkipDeckWide(_ *testing.T) {
 // A ByLead OnePerHouse cluster fires only for its lead: the lead pulls the cycle
 // in, a lone non-lead member does not.
 func TestOnePerHouseByLead(t *testing.T) {
-	cyc := ClusterMembership{Name: "C", Strategy: OnePerHouse, Trigger: ByLead}
+	cyc := ClusterMembership{
+		Name:     "C",
+		Strategy: OnePerHouse,
+		Trigger:  ByLead,
+	}
 	brob := clusterMember("C-B", engine.Brobnar, cyc)
 	brob.Profile.Cluster.Lead = true
 	set := NewSet("S", []Card{
@@ -436,7 +481,11 @@ func TestOnePerHouseByLead(t *testing.T) {
 	houses := []engine.House{engine.Brobnar, engine.Dis}
 
 	fresh := func() (*generator, Deck) {
-		g := &generator{set: set, r: rand.New(rand.NewSource(3)), placed: map[string]bool{}}
+		g := &generator{
+			set:    set,
+			r:      rand.New(rand.NewSource(3)),
+			placed: map[string]bool{},
+		}
 		deck := Deck{Set: "S"}
 		for i, h := range houses {
 			g.deckHouses[i] = h
@@ -447,7 +496,10 @@ func TestOnePerHouseByLead(t *testing.T) {
 
 	// The lead present fires the cycle.
 	g, deck := fresh()
-	deck.Pods[0].Slots[0] = Slot{Rarity: engine.Rare, Card: set.byName["C-B"].Def}
+	deck.Pods[0].Slots[0] = Slot{
+		Rarity: engine.Rare,
+		Card:   set.byName["C-B"].Def,
+	}
 	g.expandClusters(&deck)
 	if !podHas(deck.Pods[1], "C-D") {
 		t.Fatal("lead present but Dis pod missing its member")
@@ -455,7 +507,10 @@ func TestOnePerHouseByLead(t *testing.T) {
 
 	// A non-lead member alone does not fire it.
 	g, deck = fresh()
-	deck.Pods[1].Slots[0] = Slot{Rarity: engine.Rare, Card: set.byName["C-D"].Def}
+	deck.Pods[1].Slots[0] = Slot{
+		Rarity: engine.Rare,
+		Card:   set.byName["C-D"].Def,
+	}
 	g.expandClusters(&deck)
 	if podHas(deck.Pods[0], "C-B") {
 		t.Fatal("non-lead member fired a ByLead cycle")
@@ -471,16 +526,26 @@ func TestOnePerHouseMaverickSubstitution(t *testing.T) {
 		shardMember("Shard-D", engine.Dis),
 		mkCard("FB", engine.Brobnar, engine.Common),
 		mkCard("FD", engine.Dis, engine.Common),
-	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}, MaverickRate: 1})
+	}, Tuning{
+		RarityWeights: map[engine.Rarity]float64{engine.Common: 1},
+		MaverickRate:  1,
+	})
 
-	g := &generator{set: set, r: rand.New(rand.NewSource(4)), placed: map[string]bool{}}
+	g := &generator{
+		set:    set,
+		r:      rand.New(rand.NewSource(4)),
+		placed: map[string]bool{},
+	}
 	deck := Deck{Set: "S"}
 	for i, h := range []engine.House{engine.Brobnar, engine.Dis} {
 		g.deckHouses[i] = h
 		deck.Pods[i] = g.fillPod(h)
 	}
 	// Pod 2 is left HouseNone, so expandClusters skips it.
-	deck.Pods[0].Slots[0] = Slot{Rarity: engine.Rare, Card: set.byName["Shard-B"].Def}
+	deck.Pods[0].Slots[0] = Slot{
+		Rarity: engine.Rare,
+		Card:   set.byName["Shard-B"].Def,
+	}
 
 	g.expandClusters(&deck)
 

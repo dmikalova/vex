@@ -19,7 +19,10 @@ import (
 func TestCitizenShrix(t *testing.T) {
 	t.Run("exalts itself and steals 1 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(CitizenShrix)},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(CitizenShrix),
+			},
 			P2: ct.Side{Amber: 2},
 		})
 
@@ -32,7 +35,10 @@ func TestCitizenShrix(t *testing.T) {
 
 	t.Run("exalts itself and steals 1 Æmber when it reaps", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, InPlay: ct.Cards(CitizenShrix)},
+			P1: ct.Side{
+				House:  card.House.Saurian,
+				InPlay: ct.Cards(CitizenShrix),
+			},
 			P2: ct.Side{Amber: 2},
 		})
 

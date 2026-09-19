@@ -10,7 +10,10 @@ func TestDepartedSubjectPowerAfterDestroy(t *testing.T) {
 	g := started(t)
 	victim := g.AddToBattleline(testCreature("victim", 4), 0)
 	g.AddPowerCounter(victim, 2) // power 6
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// While the creature is still in play its live power is authoritative, even
 	// after a capture has been recorded.
@@ -39,7 +42,11 @@ func TestDepartedSubjectAmberAndDamageAfterDestroy(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	g.AddAmberOn(src, 2)
 	g.State.Cards[src].Damage = 1
-	ctx := &EffectContext{Resolver: g, Controller: 0, Source: src}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     src,
+	}
 
 	Destroy{Target: Target{Kind: TargetChosenCreature}}.destroy(ctx, []LocalID{src})
 	if resolverInPlay(ctx, src) {

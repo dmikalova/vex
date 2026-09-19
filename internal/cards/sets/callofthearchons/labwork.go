@@ -19,6 +19,9 @@ var Labwork = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
+		card.ArchiveCard{
+			Zone:      card.Hand,
+			Selection: card.Chosen{},
+		},
 	),
 )

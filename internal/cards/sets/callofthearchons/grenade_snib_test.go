@@ -20,7 +20,10 @@ func TestGrenadeSnib(t *testing.T) {
 	t.Run("makes the opponent lose 2 Æmber when destroyed", func(t *testing.T) {
 		var snib, foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(ct.Bind(&snib, GrenadeSnib))},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(ct.Bind(&snib, GrenadeSnib)),
+			},
 			P2: ct.Side{
 				Amber: 3,
 				InPlay: ct.Cards(

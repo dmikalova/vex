@@ -20,7 +20,11 @@ var FesteringTouch = set.New(
 	card.WithAbility(
 		card.Trigger.Play,
 		card.DealDamage{
-			Spread: card.UpToCreatures{Creatures: 2, Amount: 1, WhenDamaged: 3},
+			Spread: card.UpToCreatures{
+				Creatures:   2,
+				Amount:      1,
+				WhenDamaged: 3,
+			},
 		},
 	),
 )

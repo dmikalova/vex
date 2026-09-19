@@ -23,7 +23,10 @@ func TestAfterAemberStolenFromYouFires(t *testing.T) {
 		foe := g.AddToBattleline(testCreature("foe", 6), 0)
 		// Player 0 (thief) steals 2 Æmber from player 1, the victim who controls
 		// Molephin; each of player 1's enemy creatures (player 0's) takes 2 damage.
-		StealAember{Amount: 2}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		StealAember{Amount: 2}.Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		})
 		if g.Damage(foe) != 2 {
 			t.Errorf("damage to enemy creature = %d, want 2", g.Damage(foe))
 		}
@@ -36,7 +39,10 @@ func TestAfterAemberStolenFromYouFires(t *testing.T) {
 		foe := g.AddToBattleline(testCreature("foe", 6), 0)
 		// Player 1 steals from player 0, so nothing is stolen from Molephin's
 		// controller and its ability does not fire.
-		StealAember{Amount: 2}.Resolve(&EffectContext{Resolver: g, Controller: 1})
+		StealAember{Amount: 2}.Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 1,
+		})
 		if g.Damage(foe) != 0 {
 			t.Errorf("damage to enemy creature = %d, want 0", g.Damage(foe))
 		}

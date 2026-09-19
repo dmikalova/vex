@@ -21,14 +21,20 @@ func TestByActivePlayer(t *testing.T) {
 	}
 
 	var ignore int
-	if got := (ByActivePlayer{Do: recordController{got: &ignore, text: "reap"}}).Text(); got != "that player reaps" {
+	if got := (ByActivePlayer{Do: recordController{
+		got:  &ignore,
+		text: "reap",
+	}}).Text(); got != "that player reaps" {
 		t.Errorf("single-word text = %q", got)
 	}
 
 	g := NewGame("A", "B", 1)
 	g.State.ActivePlayer = 1
 	var seen int
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	ByActivePlayer{Do: recordController{got: &seen}}.Resolve(ctx)
 	if seen != 1 {
 		t.Errorf("inner resolved as controller %d, want the active player 1", seen)

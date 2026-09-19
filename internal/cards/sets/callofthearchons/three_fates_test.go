@@ -19,7 +19,10 @@ func TestThreeFates(t *testing.T) {
 	t.Run("destroys the three most powerful creatures", func(t *testing.T) {
 		var big, mid, small, weak ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(ThreeFates)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(ThreeFates),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&big, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(6))),
 				ct.Bind(&mid, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),

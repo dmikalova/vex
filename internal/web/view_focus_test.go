@@ -35,9 +35,14 @@ func TestTheLiftCentresOnItsCardAndStaysOnScreen(t *testing.T) {
 		{"against the bottom right", selHand, 1130, 610, 1280 - gotW - focusPad, focusPad, gotW, minH},
 	} {
 		g := &game{
-			hasFocus:   true,
-			selKind:    tc.kind,
-			focusRect:  cardRect{x: tc.x, y: tc.y, w: w, h: h},
+			hasFocus: true,
+			selKind:  tc.kind,
+			focusRect: cardRect{
+				x: tc.x,
+				y: tc.y,
+				w: w,
+				h: h,
+			},
 			focusViewW: 1280,
 			focusViewH: 800,
 		}
@@ -63,9 +68,14 @@ func TestTheLiftPutsHandVerbsAboveAndBoardVerbsBelow(t *testing.T) {
 		{"in the opposing battleline", selOther, false},
 	} {
 		g := &game{
-			hasFocus:   true,
-			selKind:    tc.kind,
-			focusRect:  cardRect{x: 600, y: 400, w: 144, h: 192},
+			hasFocus: true,
+			selKind:  tc.kind,
+			focusRect: cardRect{
+				x: 600,
+				y: 400,
+				w: 144,
+				h: 192,
+			},
 			focusViewW: 1280,
 			focusViewH: 800,
 		}
@@ -87,8 +97,13 @@ func TestAnUnmeasuredLiftKeepsItsVerbsBelow(t *testing.T) {
 // off the screen, so the anchored end of its face is the part that survives.
 func TestALiftTallerThanTheWindowPinsToTheNearEdge(t *testing.T) {
 	g := &game{
-		hasFocus:   true,
-		focusRect:  cardRect{x: 10, y: 10, w: 144, h: 400},
+		hasFocus: true,
+		focusRect: cardRect{
+			x: 10,
+			y: 10,
+			w: 144,
+			h: 400,
+		},
 		focusViewW: 1280,
 		focusViewH: 400,
 	}
@@ -115,9 +130,14 @@ func TestTheLiftGrowsOutOfItsCardsSlot(t *testing.T) {
 		{"in the player's hand", selHand, 600, 0},
 	} {
 		g := &game{
-			hasFocus:   true,
-			selKind:    tc.kind,
-			focusRect:  cardRect{x: 600, y: tc.y, w: 144, h: 192},
+			hasFocus: true,
+			selKind:  tc.kind,
+			focusRect: cardRect{
+				x: 600,
+				y: tc.y,
+				w: 144,
+				h: 192,
+			},
 			focusViewW: 1280,
 			focusViewH: 800,
 		}
@@ -196,7 +216,11 @@ func TestDeselectingACardPlaysTheLiftOut(t *testing.T) {
 	c.g.selectHandID(c.ctx, id)
 	// Off-browser nothing measures, so stand in the placement the exit shrinks to.
 	c.g.hasFocus = true
-	c.g.focusShown = focusSnapshot{id: id, w: 100, minH: 100}
+	c.g.focusShown = focusSnapshot{
+		id:   id,
+		w:    100,
+		minH: 100,
+	}
 
 	c.g.clearSelection()
 	if !c.g.measureFocus() {
@@ -300,7 +324,13 @@ func TestFormattingAMeasuredLength(t *testing.T) {
 func TestTheInspectLiftReadsACardMidPrompt(t *testing.T) {
 	// An ordinary selection lifts while choosing a house or taking the turn, but a
 	// live chooser suppresses it.
-	choosing := &game{hasSel: true, choosing: true, phase: phaseMain, sel: 1, forgingKey: -1}
+	choosing := &game{
+		hasSel:     true,
+		choosing:   true,
+		phase:      phaseMain,
+		sel:        1,
+		forgingKey: -1,
+	}
 	if _, ok := choosing.focusCardID(); ok {
 		t.Error("an ordinary selection lifted while a chooser was up")
 	}
@@ -324,7 +354,13 @@ func TestTheInspectLiftReadsACardMidPrompt(t *testing.T) {
 // Choosing a house is its own phase, and a card tapped there lifts to be read even
 // though there is no action to take on it yet, so the verbs stay off.
 func TestTheLiftReadsACardWhileChoosingAHouse(t *testing.T) {
-	g := &game{hasSel: true, phase: phaseHouse, sel: 1, selKind: selHand, forgingKey: -1}
+	g := &game{
+		hasSel:     true,
+		phase:      phaseHouse,
+		sel:        1,
+		selKind:    selHand,
+		forgingKey: -1,
+	}
 	if _, ok := g.focusCardID(); !ok {
 		t.Error("a card tapped while choosing a house did not lift")
 	}

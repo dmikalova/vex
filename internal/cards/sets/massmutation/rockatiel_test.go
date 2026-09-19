@@ -42,7 +42,10 @@ func TestRockatiel(t *testing.T) {
 	t.Run("may choose no creatures", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(Rockatiel)},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(Rockatiel),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&foe, ct.Creature(ct.Power(3))),
 				ct.Creature(ct.Power(3)),

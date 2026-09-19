@@ -29,8 +29,14 @@ var GujiDinosaurHunter = set.New(
 					card.ItIsOfTrait{Trait: card.Traits.Dinosaur},
 					card.HasAember{},
 				}},
-				Then: card.DealDamage{Amount: 6, Target: card.Target.Triggering},
-				Else: card.DealDamage{Amount: 2, Target: card.Target.Triggering},
+				Then: card.DealDamage{
+					Amount: 6,
+					Target: card.Target.Triggering,
+				},
+				Else: card.DealDamage{
+					Amount: 2,
+					Target: card.Target.Triggering,
+				},
 			},
 		}),
 )

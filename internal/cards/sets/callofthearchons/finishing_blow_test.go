@@ -19,7 +19,10 @@ func TestFinishingBlow(t *testing.T) {
 	t.Run("destroys a damaged creature and steals 1 Æmber", func(t *testing.T) {
 		var dmg ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(FinishingBlow)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(FinishingBlow),
+			},
 			P2: ct.Side{
 				Amber: 3,
 				InPlay: ct.Cards(

@@ -20,7 +20,10 @@ func TestMugwump(t *testing.T) {
 	t.Run("fully heals and gains a power counter after a kill in combat", func(t *testing.T) {
 		var mugwump, foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(ct.Bind(&mugwump, Mugwump))},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(ct.Bind(&mugwump, Mugwump)),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1))),

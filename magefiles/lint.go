@@ -36,12 +36,11 @@ func Markdownlint() error {
 		"--fix", "**/*.md")
 }
 
-// Semgrep runs the semgrep static analyzer over the tree with its curated Go
-// ruleset (p/golang). It is deliberately NOT part of `mage check`: it is an
-// external, non-Go binary that pulls remote rulesets, so it cannot be pinned via
-// `go run` and is not always installed. Install it (`brew install semgrep` or
-// `pipx install semgrep`) before running; without it this skips with a warning
-// rather than failing.
+// Semgrep checks the tree with semgrep. It is deliberately NOT part of
+// `mage check`: it is an external, non-Go binary that pulls remote rulesets, so
+// it cannot be pinned via `go run` and is not always installed. Install it
+// (`brew install semgrep` or `pipx install semgrep`) before running; without it
+// this skips with a warning rather than failing.
 //
 // Two of p/golang's rules are excluded because they are categorically wrong for
 // this codebase, not one-off suppressions:

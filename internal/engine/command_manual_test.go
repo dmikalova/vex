@@ -12,13 +12,19 @@ import (
 
 func TestApplyManualSetManual(t *testing.T) {
 	g := started(t)
-	if err := g.ApplyManual(Command{Kind: CommandSetManual, Left: true}, nil); err != nil {
+	if err := g.ApplyManual(Command{
+		Kind: CommandSetManual,
+		Left: true,
+	}, nil); err != nil {
 		t.Fatalf("ApplyManual SetManual: %v", err)
 	}
 	if !g.Manual() {
 		t.Fatal("SetManual command should turn manual mode on")
 	}
-	if err := g.ApplyManual(Command{Kind: CommandSetManual, Left: false}, nil); err != nil {
+	if err := g.ApplyManual(Command{
+		Kind: CommandSetManual,
+		Left: false,
+	}, nil); err != nil {
 		t.Fatalf("ApplyManual SetManual off: %v", err)
 	}
 	if g.Manual() {
@@ -30,7 +36,11 @@ func TestApplyManualMove(t *testing.T) {
 	g := started(t)
 	id := g.AddToHand(testCreature("c", 3), 0)
 	if err := g.ApplyManual(
-		Command{Kind: CommandManualMove, Card: id, Index: int(ManualArchives)}, nil,
+		Command{
+			Kind:  CommandManualMove,
+			Card:  id,
+			Index: int(ManualArchives),
+		}, nil,
 	); err != nil {
 		t.Fatalf("ApplyManual Move: %v", err)
 	}
@@ -42,13 +52,19 @@ func TestApplyManualMove(t *testing.T) {
 func TestApplyManualReadyAndExhaust(t *testing.T) {
 	g := started(t)
 	id := g.AddToBattleline(testCreature("c", 3), 0)
-	if err := g.ApplyManual(Command{Kind: CommandManualExhaust, Card: id}, nil); err != nil {
+	if err := g.ApplyManual(Command{
+		Kind: CommandManualExhaust,
+		Card: id,
+	}, nil); err != nil {
 		t.Fatalf("ApplyManual Exhaust: %v", err)
 	}
 	if !g.Exhausted(id) {
 		t.Fatal("ManualExhaust command should exhaust the card")
 	}
-	if err := g.ApplyManual(Command{Kind: CommandManualReady, Card: id}, nil); err != nil {
+	if err := g.ApplyManual(Command{
+		Kind: CommandManualReady,
+		Card: id,
+	}, nil); err != nil {
 		t.Fatalf("ApplyManual Ready: %v", err)
 	}
 	if g.Exhausted(id) {
@@ -61,7 +77,12 @@ func TestApplyManualAttach(t *testing.T) {
 	host := g.AddToBattleline(testCreature("host", 3), 0)
 	buried := g.AddToHand(testCreature("buried", 2), 0)
 	if err := g.ApplyManual(
-		Command{Kind: CommandManualAttach, Card: host, Card2: buried, Left: true}, nil,
+		Command{
+			Kind:  CommandManualAttach,
+			Card:  host,
+			Card2: buried,
+			Left:  true,
+		}, nil,
 	); err != nil {
 		t.Fatalf("ApplyManual Attach: %v", err)
 	}
@@ -79,7 +100,11 @@ func TestApplyManualPlace(t *testing.T) {
 	right := g.AddToBattleline(testCreature("right", 3), 0)
 	mid := g.AddToHand(testCreature("mid", 3), 0)
 	if err := g.ApplyManual(
-		Command{Kind: CommandManualPlace, Card: mid, Index: 1}, nil,
+		Command{
+			Kind:  CommandManualPlace,
+			Card:  mid,
+			Index: 1,
+		}, nil,
 	); err != nil {
 		t.Fatalf("ApplyManual Place: %v", err)
 	}
@@ -96,7 +121,10 @@ func TestApplyManualDetach(t *testing.T) {
 	host := g.AddToBattleline(testCreature("host", 3), 0)
 	up := g.Register(exBruteStrength(), 0)
 	g.AttachUpgrade(host, up)
-	if err := g.ApplyManual(Command{Kind: CommandManualDetach, Card: up}, nil); err != nil {
+	if err := g.ApplyManual(Command{
+		Kind: CommandManualDetach,
+		Card: up,
+	}, nil); err != nil {
 		t.Fatalf("ApplyManual Detach: %v", err)
 	}
 	if len(g.Hand(0)) != 1 || g.Hand(0)[0] != up {
@@ -107,7 +135,11 @@ func TestApplyManualDetach(t *testing.T) {
 func TestApplyManualAmber(t *testing.T) {
 	g := started(t)
 	if err := g.ApplyManual(
-		Command{Kind: CommandManualAmber, Player: 1, Delta: 4}, nil,
+		Command{
+			Kind:   CommandManualAmber,
+			Player: 1,
+			Delta:  4,
+		}, nil,
 	); err != nil {
 		t.Fatalf("ApplyManual Amber: %v", err)
 	}
@@ -119,7 +151,11 @@ func TestApplyManualAmber(t *testing.T) {
 func TestApplyManualChains(t *testing.T) {
 	g := started(t)
 	if err := g.ApplyManual(
-		Command{Kind: CommandManualChains, Player: 0, Delta: 3}, nil,
+		Command{
+			Kind:   CommandManualChains,
+			Player: 0,
+			Delta:  3,
+		}, nil,
 	); err != nil {
 		t.Fatalf("ApplyManual Chains: %v", err)
 	}
@@ -131,14 +167,21 @@ func TestApplyManualChains(t *testing.T) {
 func TestApplyManualForgeAndUnforge(t *testing.T) {
 	g := started(t)
 	if err := g.ApplyManual(
-		Command{Kind: CommandManualForgeColor, Player: 0, Index: int(KeyColorRed)}, nil,
+		Command{
+			Kind:   CommandManualForgeColor,
+			Player: 0,
+			Index:  int(KeyColorRed),
+		}, nil,
 	); err != nil {
 		t.Fatalf("ApplyManual ForgeColor: %v", err)
 	}
 	if g.Keys(0) != 1 || g.KeyColors(0)[0] != KeyColorRed {
 		t.Fatalf("keys = %d colors = %v, want 1 red", g.Keys(0), g.KeyColors(0))
 	}
-	if err := g.ApplyManual(Command{Kind: CommandManualUnforge, Player: 0}, nil); err != nil {
+	if err := g.ApplyManual(Command{
+		Kind:   CommandManualUnforge,
+		Player: 0,
+	}, nil); err != nil {
 		t.Fatalf("ApplyManual Unforge: %v", err)
 	}
 	if g.Keys(0) != 0 {
@@ -148,7 +191,10 @@ func TestApplyManualForgeAndUnforge(t *testing.T) {
 
 func TestApplyManualHouse(t *testing.T) {
 	g := started(t)
-	if err := g.ApplyManual(Command{Kind: CommandManualHouse, House: Dis}, nil); err != nil {
+	if err := g.ApplyManual(Command{
+		Kind:  CommandManualHouse,
+		House: Dis,
+	}, nil); err != nil {
 		t.Fatalf("ApplyManual House: %v", err)
 	}
 	if g.State.ActiveHouse != Dis {
@@ -166,7 +212,11 @@ func TestApplyManualAddCard(t *testing.T) {
 	}
 	before := len(g.Hand(1))
 	if err := g.ApplyManual(
-		Command{Kind: CommandManualAddCard, Name: "Import", Player: 1}, resolve,
+		Command{
+			Kind:   CommandManualAddCard,
+			Name:   "Import",
+			Player: 1,
+		}, resolve,
 	); err != nil {
 		t.Fatalf("ApplyManual AddCard: %v", err)
 	}
@@ -176,7 +226,10 @@ func TestApplyManualAddCard(t *testing.T) {
 
 	// A name the pool does not know fails loudly rather than adding nothing quietly,
 	// so a diverged replay is caught.
-	err := g.ApplyManual(Command{Kind: CommandManualAddCard, Name: "Unknown"}, resolve)
+	err := g.ApplyManual(Command{
+		Kind: CommandManualAddCard,
+		Name: "Unknown",
+	}, resolve)
 	if err == nil {
 		t.Fatal("ApplyManual AddCard with an unknown name should error")
 	}

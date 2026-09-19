@@ -94,7 +94,12 @@ func newBlankClient(t *testing.T) *client {
 		t.Fatalf("load probe: %v", err)
 	}
 	e.ConsumeAll()
-	c := &client{t: t, g: NewGame().(*game), e: e, ctx: p.ctx}
+	c := &client{
+		t:   t,
+		g:   NewGame().(*game),
+		e:   e,
+		ctx: p.ctx,
+	}
 	c.g.dispatch = c.ctx.Dispatch
 	return c
 }
@@ -138,7 +143,12 @@ func nullEvent() app.Event { return app.Event{Value: app.Null()} }
 // match the last one was playing.
 func (c *client) nextLoad() *client {
 	c.t.Helper()
-	next := &client{t: c.t, g: NewGame().(*game), e: c.e, ctx: c.ctx}
+	next := &client{
+		t:   c.t,
+		g:   NewGame().(*game),
+		e:   c.e,
+		ctx: c.ctx,
+	}
 	next.g.dispatch = c.ctx.Dispatch
 	return next
 }
@@ -234,7 +244,11 @@ func (c *client) deal(name string) engine.LocalID {
 	if !added {
 		c.t.Fatalf("%s was not added to hand", name)
 	}
-	c.g.record(input{Kind: inManualAddCard, Name: def.Name, Player: player})
+	c.g.record(input{
+		Kind:   inManualAddCard,
+		Name:   def.Name,
+		Player: player,
+	})
 	return id
 }
 

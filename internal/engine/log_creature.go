@@ -51,7 +51,10 @@ type CreatureGainedStats struct {
 // Text renders the creature and the stats it gained, e.g. "Card2 gains +1 armor".
 func (e CreatureGainedStats) Text(n Namer) string {
 	return fmt.Sprintf("%s gains %s", n.Name(e.Creature),
-		staticBonuses(StaticModifier{PowerBonus: e.Power, ArmorBonus: e.Armor}))
+		staticBonuses(StaticModifier{
+			PowerBonus: e.Power,
+			ArmorBonus: e.Armor,
+		}))
 }
 
 // CreatureGainedAssault narrates a creature gaining Assault for the turn (Creed of

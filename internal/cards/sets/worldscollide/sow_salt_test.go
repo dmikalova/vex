@@ -49,7 +49,10 @@ func TestSowSalt(t *testing.T) {
 	t.Run("lifts once the caster's next turn begins", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, Hand: ct.Cards(SowSalt)},
+			P1: ct.Side{
+				House: card.House.Saurian,
+				Hand:  ct.Cards(SowSalt),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3))),

@@ -31,7 +31,10 @@ func (c *client) ask(prompt string, declinable bool, cands []engine.LocalID) cha
 		} else {
 			id, ok = c.g.chooser.ChooseCreature("A Card", prompt, cands)
 		}
-		out <- chooseReply{id: id, ok: ok}
+		out <- chooseReply{
+			id: id,
+			ok: ok,
+		}
 	}()
 	return out
 }

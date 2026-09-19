@@ -21,12 +21,11 @@ import (
 	"github.com/dmikalova/vactrol/internal/engine"
 )
 
-// GameSize reports the game state and shipped web bundle sizes.
-// It prints the in-memory GameState size (the cost of one undo snapshot), the
-// number of implemented cards, and — after building a fresh wasm — the size of
-// the WebAssembly bundle and the other static assets, both raw and compressed
-// (brotli and gzip, the same levels WebAssets ships). Text assets are minified
-// before compression so the numbers match what the server sends.
+// GameSize reports web and state sizes. It prints the in-memory GameState size,
+// the number of implemented cards, and — after building a fresh wasm — the size
+// of the WebAssembly bundle and the other static assets, both raw and compressed.
+// Text assets are minified before compression so the numbers match what the
+// server sends.
 func (Tool) GameSize() error {
 	mg.Deps(WebWasm)
 

@@ -6,7 +6,10 @@ func TestItIsEnemy(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mine := g.AddToBattleline(testCreature("mine", 3), 0)
 	theirs := g.AddToBattleline(testCreature("theirs", 3), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	cond := ItIsEnemy{}
 	if got := cond.CondText(); got != "if it is an enemy creature" {

@@ -35,7 +35,10 @@ func exGiant() CardDefinition {
 		WithTraits(Giant),
 		WithAbility(
 			TriggerAfterForgeKey,
-			DealDamage{Amount: 2, Target: Target{Kind: TargetEachEnemyCreature}},
+			DealDamage{
+				Amount: 2,
+				Target: Target{Kind: TargetEachEnemyCreature},
+			},
 		),
 	)
 }
@@ -72,7 +75,10 @@ func exAutocannon() CardDefinition {
 		WithTraits(Weapon),
 		WithAbility(
 			TriggerAfterCreatureEnters,
-			DealDamage{Amount: 1, Target: Target{Kind: TargetTriggeringCreature}},
+			DealDamage{
+				Amount: 1,
+				Target: Target{Kind: TargetTriggeringCreature},
+			},
 		),
 	)
 }

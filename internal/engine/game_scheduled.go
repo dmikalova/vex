@@ -40,7 +40,10 @@ func scheduledEffectOf(a scheduledAction) Effect {
 	case schedDestroyEachCreature:
 		return Destroy{Target: Target{Kind: TargetEachCreature}}
 	case schedOpponentForgesKeyFree:
-		return ForgeKey{Player: Opponent, FreeOfCost: true}
+		return ForgeKey{
+			Player:     Opponent,
+			FreeOfCost: true,
+		}
 	}
 	return nil
 }
@@ -99,8 +102,11 @@ func (g *Game) scheduledEndOfTurn(player int) []triggeredAbility {
 		pending = append(pending, triggeredAbility{
 			source:  s.Source,
 			grantor: s.Source,
-			ability: Ability{Trigger: TriggerEndOfTurn, Effect: scheduledEffectOf(s.Do)},
-			actor:   int8(player),
+			ability: Ability{
+				Trigger: TriggerEndOfTurn,
+				Effect:  scheduledEffectOf(s.Do),
+			},
+			actor: int8(player),
 		})
 	}
 	return pending

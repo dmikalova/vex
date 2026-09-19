@@ -18,7 +18,10 @@ func TestCreepingOblivion(t *testing.T) {
 	t.Run("purges up to two cards from a discard pile", func(t *testing.T) {
 		var a, b ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(CreepingOblivion)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(CreepingOblivion),
+			},
 			P2: ct.Side{Discard: ct.Cards(
 				ct.Bind(&a, ct.Creature(ct.OfHouse(card.House.Brobnar))),
 				ct.Bind(&b, ct.Creature(ct.OfHouse(card.House.Brobnar))),

@@ -5,8 +5,18 @@ import "testing"
 // namedHouse, exceptHouse, chosenHouse, activeHouse, and contextualHouse build
 // the HouseMatcher shapes the effect tests name, mirroring the card.Houses facade
 // the cards use.
-func namedHouse(h House) HouseMatcher  { return HouseMatcher{Kind: MatchNamedHouse, House: h} }
-func exceptHouse(h House) HouseMatcher { return HouseMatcher{Kind: MatchExceptHouse, House: h} }
+func namedHouse(h House) HouseMatcher {
+	return HouseMatcher{
+		Kind:  MatchNamedHouse,
+		House: h,
+	}
+}
+func exceptHouse(h House) HouseMatcher {
+	return HouseMatcher{
+		Kind:  MatchExceptHouse,
+		House: h,
+	}
+}
 
 var (
 	anyHouse        = HouseMatcher{Kind: MatchAnyHouse}
@@ -21,7 +31,10 @@ func TestHouseMatcherMatches(t *testing.T) {
 	logos := g.AddToHand(NewCard("Logos Card", Logos, Artifact, Common), 0)
 	brobnar := g.AddToHand(NewCard("Brobnar Card", Brobnar, Artifact, Common), 0)
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	cases := []struct {
 		name    string
@@ -30,12 +43,24 @@ func TestHouseMatcherMatches(t *testing.T) {
 		want    bool
 	}{
 		{"any admits every house", HouseMatcher{Kind: MatchAnyHouse}, mars, true},
-		{"named admits its house", HouseMatcher{Kind: MatchNamedHouse, House: Mars}, mars, true},
-		{"named bars other houses", HouseMatcher{Kind: MatchNamedHouse, House: Mars}, logos, false},
-		{"except bars its house", HouseMatcher{Kind: MatchExceptHouse, House: Mars}, mars, false},
+		{"named admits its house", HouseMatcher{
+			Kind:  MatchNamedHouse,
+			House: Mars,
+		}, mars, true},
+		{"named bars other houses", HouseMatcher{
+			Kind:  MatchNamedHouse,
+			House: Mars,
+		}, logos, false},
+		{"except bars its house", HouseMatcher{
+			Kind:  MatchExceptHouse,
+			House: Mars,
+		}, mars, false},
 		{
 			"except admits other houses",
-			HouseMatcher{Kind: MatchExceptHouse, House: Mars},
+			HouseMatcher{
+				Kind:  MatchExceptHouse,
+				House: Mars,
+			},
 			logos,
 			true,
 		},
@@ -56,7 +81,11 @@ func TestHouseMatcherMatchesChosenHouse(t *testing.T) {
 	mars := g.AddToHand(NewCard("Mars Card", Mars, Artifact, Common), 0)
 	logos := g.AddToHand(NewCard("Logos Card", Logos, Artifact, Common), 0)
 
-	ctx := &EffectContext{Resolver: g, Controller: 0, ChosenHouse: Mars}
+	ctx := &EffectContext{
+		Resolver:    g,
+		Controller:  0,
+		ChosenHouse: Mars,
+	}
 	m := HouseMatcher{Kind: MatchChosenHouse}
 	if !m.matches(ctx, mars) {
 		t.Error("chosen-house matcher should admit a card of the chosen house")
@@ -74,7 +103,12 @@ func TestHouseMatcherMatchesContextualHouse(t *testing.T) {
 
 	m := HouseMatcher{Kind: MatchContextualHouse}
 
-	withIt := &EffectContext{Resolver: g, Controller: 0, It: focus, HasIt: true}
+	withIt := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         focus,
+		HasIt:      true,
+	}
 	if !m.matches(withIt, sameHouse) {
 		t.Error("contextual matcher should admit a card sharing the focused card's house")
 	}
@@ -82,7 +116,10 @@ func TestHouseMatcherMatchesContextualHouse(t *testing.T) {
 		t.Error("contextual matcher should bar a card of another house")
 	}
 
-	noIt := &EffectContext{Resolver: g, Controller: 0}
+	noIt := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	if m.matches(noIt, sameHouse) {
 		t.Error("contextual matcher should admit nothing with no card in context")
 	}
@@ -95,8 +132,14 @@ func TestHouseMatcherQualify(t *testing.T) {
 		want    string
 	}{
 		{"any", HouseMatcher{Kind: MatchAnyHouse}, "card"},
-		{"named", HouseMatcher{Kind: MatchNamedHouse, House: Mars}, "Mars card"},
-		{"except", HouseMatcher{Kind: MatchExceptHouse, House: Logos}, "non-Logos card"},
+		{"named", HouseMatcher{
+			Kind:  MatchNamedHouse,
+			House: Mars,
+		}, "Mars card"},
+		{"except", HouseMatcher{
+			Kind:  MatchExceptHouse,
+			House: Logos,
+		}, "non-Logos card"},
 		{"chosen", HouseMatcher{Kind: MatchChosenHouse}, "card of the chosen house"},
 		{"active", HouseMatcher{Kind: MatchActiveHouse}, "card of that house"},
 		{"contextual", HouseMatcher{Kind: MatchContextualHouse}, "card of that card's house"},
@@ -114,7 +157,10 @@ func TestHouseMatcherFilters(t *testing.T) {
 	if (HouseMatcher{Kind: MatchAnyHouse}).filters() {
 		t.Error("the any-house matcher should filter nothing")
 	}
-	if !(HouseMatcher{Kind: MatchNamedHouse, House: Mars}).filters() {
+	if !(HouseMatcher{
+		Kind:  MatchNamedHouse,
+		House: Mars,
+	}).filters() {
 		t.Error("a named-house matcher should filter")
 	}
 }
@@ -123,7 +169,10 @@ func TestHouseMatcherValidate(t *testing.T) {
 	if err := (HouseMatcher{Kind: MatchAnyHouse}).validate(); err != nil {
 		t.Errorf("the any-house matcher should validate: %v", err)
 	}
-	if err := (HouseMatcher{Kind: MatchNamedHouse, House: Mars}).validate(); err != nil {
+	if err := (HouseMatcher{
+		Kind:  MatchNamedHouse,
+		House: Mars,
+	}).validate(); err != nil {
 		t.Errorf("a named-house matcher with a house should validate: %v", err)
 	}
 	if err := (HouseMatcher{Kind: MatchNamedHouse}).validate(); err == nil {

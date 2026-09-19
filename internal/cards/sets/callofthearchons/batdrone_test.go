@@ -21,7 +21,10 @@ func TestBatdrone(t *testing.T) {
 	t.Run("steals 1 Æmber when it fights and Skirmish spares it return damage", func(t *testing.T) {
 		var enemy ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, InPlay: ct.Cards(Batdrone)},
+			P1: ct.Side{
+				House:  card.House.Logos,
+				InPlay: ct.Cards(Batdrone),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(3))),

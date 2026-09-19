@@ -27,7 +27,10 @@ var Ragnarok = set.New(
 				},
 				card.ForRemainderOfTurn{
 					On: card.Event.Fight,
-					Do: card.GainAember{Player: card.Controller, Amount: 1},
+					Do: card.GainAember{
+						Player: card.Controller,
+						Amount: 1,
+					},
 				},
 				card.DestroyEachCreatureAtEndOfTurn{},
 			},

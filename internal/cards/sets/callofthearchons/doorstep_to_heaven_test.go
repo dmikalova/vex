@@ -18,7 +18,11 @@ import (
 func TestDoorstepToHeaven(t *testing.T) {
 	t.Run("reduces each player with 6+ Æmber to 5", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(DoorstepToHeaven), Amber: 4},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(DoorstepToHeaven),
+				Amber: 4,
+			},
 			P2: ct.Side{Amber: 9},
 		})
 

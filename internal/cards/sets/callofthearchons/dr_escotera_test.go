@@ -19,7 +19,10 @@ import (
 func TestDrEscotera(t *testing.T) {
 	t.Run("gains 1 Æmber for each key the opponent has forged", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(DrEscotera)},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(DrEscotera),
+			},
 			P2: ct.Side{Keys: 2},
 		})
 

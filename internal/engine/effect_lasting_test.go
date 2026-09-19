@@ -38,7 +38,10 @@ func TestNextPlayed(t *testing.T) {
 		t.Errorf("a Ready EntersPlay should validate, got %v", e.validate())
 	}
 	g := NewGame("A", "B", 1)
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if le := g.State.Lasting[0]; g.State.LastingCount != 1 || le.Do != actReadyPlayed ||
 		le.House != namedHouse(Mars) ||
 		le.Type != Creature ||
@@ -67,9 +70,12 @@ func TestNextPlayed(t *testing.T) {
 	}
 	// An EntersPlay effect the flat registry cannot carry is rejected.
 	if (NextPlayed{
-		Of:         namedHouse(Mars),
-		Type:       Creature,
-		EntersPlay: GainAember{Player: Controller, Amount: 1},
+		Of:   namedHouse(Mars),
+		Type: Creature,
+		EntersPlay: GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
 	}).validate() == nil {
 		t.Error("an unsupported EntersPlay effect should be rejected")
 	}
@@ -99,18 +105,30 @@ func TestForRemainderOfTurnText(t *testing.T) {
 		{
 			ForRemainderOfTurn{
 				On: EventCreaturePlayed,
-				Do: GainAember{Player: Controller, Amount: 1},
+				Do: GainAember{
+					Player: Controller,
+					Amount: 1,
+				},
 			},
 			"for the remainder of the turn, each time you play a creature, gain 1 Æmber",
 		},
 		{
-			ForRemainderOfTurn{On: EventReap, Do: GainAember{Player: Controller, Amount: 1}},
+			ForRemainderOfTurn{
+				On: EventReap,
+				Do: GainAember{
+					Player: Controller,
+					Amount: 1,
+				},
+			},
 			"for the remainder of the turn, after a creature reaps, gain 1 Æmber",
 		},
 		{
 			ForRemainderOfTurn{
 				On: EventCreaturePlayed,
-				Do: DealDamage{Amount: 2, Target: Target{Kind: TargetChosenEnemyCreature}},
+				Do: DealDamage{
+					Amount: 2,
+					Target: Target{Kind: TargetChosenEnemyCreature},
+				},
 			},
 			"for the remainder of the turn, each time you play a creature, deal 2 damage to an enemy creature",
 		},
@@ -123,16 +141,31 @@ func TestForRemainderOfTurnText(t *testing.T) {
 }
 
 func TestForRemainderOfTurnValidate(t *testing.T) {
-	ok := ForRemainderOfTurn{On: EventCreaturePlayed, Do: GainAember{Player: Controller, Amount: 1}}
+	ok := ForRemainderOfTurn{
+		On: EventCreaturePlayed,
+		Do: GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
+	}
 	if err := ok.validate(); err != nil {
 		t.Errorf("valid reaction should pass: %v", err)
 	}
 	// A replacement event is not a reaction.
-	if err := (ForRemainderOfTurn{On: EventReapAember, Do: GainAember{Player: Controller, Amount: 1}}).validate(); err == nil {
+	if err := (ForRemainderOfTurn{
+		On: EventReapAember,
+		Do: GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
+	}).validate(); err == nil {
 		t.Error("non-reaction event should fail")
 	}
 	// Draw is a supported Do (Library Access).
-	if err := (ForRemainderOfTurn{On: EventCardPlayed, Do: Draw{Amount: 1}}).validate(); err != nil {
+	if err := (ForRemainderOfTurn{
+		On: EventCardPlayed,
+		Do: Draw{Amount: 1},
+	}).validate(); err != nil {
 		t.Errorf("Draw should be a supported Do: %v", err)
 	}
 	// An unsupported Do effect.
@@ -144,7 +177,13 @@ func TestForRemainderOfTurnValidate(t *testing.T) {
 		t.Error("unsupported Do should fail")
 	}
 	// DealDamage must target an enemy creature.
-	if err := (ForRemainderOfTurn{On: EventCreaturePlayed, Do: DealDamage{Amount: 2, Target: Target{Kind: TargetEachCreature}}}).validate(); err == nil {
+	if err := (ForRemainderOfTurn{
+		On: EventCreaturePlayed,
+		Do: DealDamage{
+			Amount: 2,
+			Target: Target{Kind: TargetEachCreature},
+		},
+	}).validate(); err == nil {
 		t.Error("DealDamage with a non-enemy target should fail")
 	}
 }
@@ -152,18 +191,33 @@ func TestForRemainderOfTurnValidate(t *testing.T) {
 // TestForOpponentNextTurnValidate checks the opponent-turn reaction shares the same
 // gate: a reaction event with a supported Do passes, a replacement event fails.
 func TestForOpponentNextTurnValidate(t *testing.T) {
-	if err := (ForOpponentNextTurn{On: EventForgeKey, Do: GiveAember{All: true}}).validate(); err != nil {
+	if err := (ForOpponentNextTurn{
+		On: EventForgeKey,
+		Do: GiveAember{All: true},
+	}).validate(); err != nil {
 		t.Errorf("valid reaction should pass: %v", err)
 	}
-	if err := (ForOpponentNextTurn{On: EventReapAember, Do: GiveAember{All: true}}).validate(); err == nil {
+	if err := (ForOpponentNextTurn{
+		On: EventReapAember,
+		Do: GiveAember{All: true},
+	}).validate(); err == nil {
 		t.Error("non-reaction event should fail")
 	}
 }
 
 func TestForRemainderOfTurnGainsOnPlay(t *testing.T) {
 	g := started(t) // player 0 active, Brobnar
-	ForRemainderOfTurn{On: EventCreaturePlayed, Do: GainAember{Player: Controller, Amount: 1}}.
-		Resolve(&EffectContext{Resolver: g, Controller: 0})
+	ForRemainderOfTurn{
+		On: EventCreaturePlayed,
+		Do: GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
+	}.
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		})
 	if g.State.LastingCount != 1 {
 		t.Fatalf("lasting count = %d, want 1", g.State.LastingCount)
 	}
@@ -184,7 +238,10 @@ func TestForRemainderOfTurnGainsOnPlay(t *testing.T) {
 // TestForRemainderOfTurnDrawsOnCardPlayed covers Library Access: the reaction
 // draws for every later card played, but not for the play that armed it.
 func TestForRemainderOfTurnDrawsOnCardPlayed(t *testing.T) {
-	e := ForRemainderOfTurn{On: EventCardPlayed, Do: Draw{Amount: 1}}
+	e := ForRemainderOfTurn{
+		On: EventCardPlayed,
+		Do: Draw{Amount: 1},
+	}
 	want := "for the remainder of the turn, each time you play another card, draw a card"
 	if got := e.Text(); got != want {
 		t.Errorf("text = %q", got)
@@ -192,7 +249,11 @@ func TestForRemainderOfTurnDrawsOnCardPlayed(t *testing.T) {
 
 	g := started(t)
 	source := g.AddToBattleline(testCreature("source", 3), 0)
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: source})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     source,
+	})
 	g.AddToDeck(testCreature("drawn", 1), 0)
 	g.AddToHand(testCreature("c", 3), 0)
 	before := len(g.Hand(0))
@@ -211,8 +272,15 @@ func TestForRemainderOfTurnDrawsOnCardPlayed(t *testing.T) {
 func TestForRemainderOfTurnExceptsItsOwnPlay(t *testing.T) {
 	g := started(t)
 	armer := g.AddToBattleline(testCreature("armer", 3), 0)
-	ForRemainderOfTurn{On: EventCardPlayed, Do: Draw{Amount: 1}}.
-		Resolve(&EffectContext{Resolver: g, Controller: 0, Source: armer})
+	ForRemainderOfTurn{
+		On: EventCardPlayed,
+		Do: Draw{Amount: 1},
+	}.
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			Source:     armer,
+		})
 	g.AddToDeck(testCreature("drawn", 1), 0)
 	before := len(g.Hand(0))
 
@@ -226,8 +294,17 @@ func TestForRemainderOfTurnExceptsItsOwnPlay(t *testing.T) {
 func TestForRemainderOfTurnGainsOnReap(t *testing.T) {
 	g := started(t)
 	creature := g.AddToBattleline(testCreature("c", 3), 0)
-	ForRemainderOfTurn{On: EventReap, Do: GainAember{Player: Controller, Amount: 1}}.
-		Resolve(&EffectContext{Resolver: g, Controller: 0})
+	ForRemainderOfTurn{
+		On: EventReap,
+		Do: GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
+	}.
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		})
 	before := g.Aember(0)
 	g.reapWith(creature)
 	if got := g.Aember(0) - before; got != 2 {
@@ -240,10 +317,16 @@ func TestForRemainderOfTurnDamageOnPlay(t *testing.T) {
 	foe := g.AddToBattleline(testCreature("foe", 5), 1)
 	ForRemainderOfTurn{
 		On: EventCreaturePlayed,
-		Do: DealDamage{Amount: 2, Target: Target{Kind: TargetChosenEnemyCreature}},
+		Do: DealDamage{
+			Amount: 2,
+			Target: Target{Kind: TargetChosenEnemyCreature},
+		},
 	}.
 		Resolve(
-			&EffectContext{Resolver: g, Controller: 0},
+			&EffectContext{
+				Resolver:   g,
+				Controller: 0,
+			},
 		)
 	g.AddToHand(testCreature("minion", 4), 0)
 	if _, err := g.PlayCreature(0, handIdx(g, 0, "minion"), false); err != nil {
@@ -255,34 +338,60 @@ func TestForRemainderOfTurnDamageOnPlay(t *testing.T) {
 }
 
 func TestInstead(t *testing.T) {
-	if got := (Instead{Of: EventReapAember, With: Steal}).Text(); got != "for the remainder of the turn, instead of gaining Æmber from reaping, steal the same amount" {
+	if got := (Instead{
+		Of:   EventReapAember,
+		With: Steal,
+	}).Text(); got != "for the remainder of the turn, instead of gaining Æmber from reaping, steal the same amount" {
 		t.Errorf("text = %q", got)
 	}
-	if err := (Instead{Of: EventReapAember, With: Steal}).validate(); err != nil {
+	if err := (Instead{
+		Of:   EventReapAember,
+		With: Steal,
+	}).validate(); err != nil {
 		t.Errorf("valid replacement should pass: %v", err)
 	}
-	if err := (Instead{Of: EventCreaturePlayed, With: Steal}).validate(); err == nil {
+	if err := (Instead{
+		Of:   EventCreaturePlayed,
+		With: Steal,
+	}).validate(); err == nil {
 		t.Error("a reaction event should fail as a replacement")
 	}
 	// Without a gerund the sentence has nothing to name the replaced event with, so
 	// it would print some other event's wording. Rejecting it at init keeps that
 	// impossible (ADR 0010).
-	if err := (Instead{Of: EventBeforeFight, With: Steal}).validate(); err == nil {
+	if err := (Instead{
+		Of:   EventBeforeFight,
+		With: Steal,
+	}).validate(); err == nil {
 		t.Error("a replacement point with no gerund should fail")
 	}
 	if err := (Instead{Of: EventReapAember}).validate(); err == nil {
 		t.Error("an unset replacement should fail")
 	}
-	if err := (Instead{Of: EventAemberAddedToPool, With: Capture}).validate(); err == nil {
+	if err := (Instead{
+		Of:   EventAemberAddedToPool,
+		With: Capture,
+	}).validate(); err == nil {
 		t.Error("a pool event without a Player should fail")
 	}
-	if err := (Instead{Of: EventAemberAddedToPool, With: Capture, Player: Opponent}).validate(); err != nil {
+	if err := (Instead{
+		Of:     EventAemberAddedToPool,
+		With:   Capture,
+		Player: Opponent,
+	}).validate(); err != nil {
 		t.Errorf("a scoped pool replacement should pass: %v", err)
 	}
-	if err := (Instead{Of: EventAemberTakenFromPool, With: FromCommonSupply}).validate(); err == nil {
+	if err := (Instead{
+		Of:   EventAemberTakenFromPool,
+		With: FromCommonSupply,
+	}).validate(); err == nil {
 		t.Error("a source pool event without a Player should fail")
 	}
-	if err := (Instead{Of: EventAemberTakenFromPool, With: FromCommonSupply, Player: Controller}).validate(); err != nil {
+	if err := (Instead{
+		Of:     EventAemberTakenFromPool,
+		With:   FromCommonSupply,
+		Player: Controller,
+	}).validate(); err != nil {
 		t.Errorf("a scoped source replacement should pass: %v", err)
 	}
 
@@ -290,7 +399,13 @@ func TestInstead(t *testing.T) {
 	g := started(t)
 	creature := g.AddToBattleline(testCreature("c", 3), 0)
 	g.State.Aember[1] = 2
-	Instead{Of: EventReapAember, With: Steal}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	Instead{
+		Of:   EventReapAember,
+		With: Steal,
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	g.reapWith(creature)
 	if g.Aember(0) != 1 || g.Aember(1) != 1 {
 		t.Errorf("after steal: p0=%d p1=%d, want 1/1", g.Aember(0), g.Aember(1))
@@ -310,8 +425,20 @@ func TestInstead(t *testing.T) {
 	g2 := started(t)
 	creature2 := g2.AddToBattleline(testCreature("c", 3), 0)
 	g2.State.Aember[1] = 3
-	Instead{Of: EventReapAember, With: Steal}.Resolve(&EffectContext{Resolver: g2, Controller: 0})
-	Instead{Of: EventReapAember, With: Steal}.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	Instead{
+		Of:   EventReapAember,
+		With: Steal,
+	}.Resolve(&EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	})
+	Instead{
+		Of:   EventReapAember,
+		With: Steal,
+	}.Resolve(&EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	})
 	g2.reapWith(creature2)
 	if g2.Aember(0) != 1 || g2.Aember(1) != 2 {
 		t.Errorf("two replacements: p0=%d p1=%d, want 1/2", g2.Aember(0), g2.Aember(1))
@@ -331,15 +458,23 @@ func TestReactionEventOf(t *testing.T) {
 }
 
 func TestGainAbilityValidate(t *testing.T) {
-	reap := func(e Effect) Ability { return Ability{Trigger: TriggerAfterReap, Effect: e} }
+	reap := func(e Effect) Ability {
+		return Ability{
+			Trigger: TriggerAfterReap,
+			Effect:  e,
+		}
+	}
 
 	if err := (GainAbility{Ability: reap(Draw{Amount: 1})}).validate(); err == nil {
 		t.Error("an unset target should be rejected")
 	}
 	// A trigger the registry cannot hang a per-creature reaction on.
 	if err := (GainAbility{
-		Target:  Target{Kind: TargetTriggeringCreature},
-		Ability: Ability{Trigger: TriggerAfterPlay, Effect: Draw{Amount: 1}},
+		Target: Target{Kind: TargetTriggeringCreature},
+		Ability: Ability{
+			Trigger: TriggerAfterPlay,
+			Effect:  Draw{Amount: 1},
+		},
 	}).validate(); err == nil {
 		t.Error("an unsupported trigger should be rejected")
 	}
@@ -360,8 +495,11 @@ func TestGainAbilityValidate(t *testing.T) {
 
 func TestGainAbilityText(t *testing.T) {
 	e := GainAbility{
-		Target:  Target{Kind: TargetTriggeringCreature},
-		Ability: Ability{Trigger: TriggerAfterReap, Effect: Draw{Amount: 1}},
+		Target: Target{Kind: TargetTriggeringCreature},
+		Ability: Ability{
+			Trigger: TriggerAfterReap,
+			Effect:  Draw{Amount: 1},
+		},
 	}
 	want := `it gains, "Reap: Draw a card."`
 	if got := e.Text(); got != want {
@@ -375,7 +513,10 @@ func TestGainAbilityRemainderOfTurnText(t *testing.T) {
 	e := GainAbility{
 		Target:   Target{Kind: TargetThisCreature},
 		Duration: RemainderOfPlayerTurn,
-		Ability:  Ability{Trigger: TriggerAfterFight, Effect: StealAember{Amount: 1}},
+		Ability: Ability{
+			Trigger: TriggerAfterFight,
+			Effect:  StealAember{Amount: 1},
+		},
 	}
 	want := `for the remainder of the turn, ` + SelfName + ` gains, "Fight: Steal 1 Æmber."`
 	if got := e.Text(); got != want {
@@ -392,7 +533,10 @@ func TestGainAbilityBeforeFightExaltValidateAndText(t *testing.T) {
 		Duration: StartOfPlayerNextTurn,
 		Ability: Ability{
 			Trigger: TriggerBeforeFight,
-			Effect:  Exalt{Target: Target{Kind: TargetThisCreature}, Amount: 1},
+			Effect: Exalt{
+				Target: Target{Kind: TargetThisCreature},
+				Amount: 1,
+			},
 		},
 	}
 	if err := e.validate(); err != nil {
@@ -407,7 +551,10 @@ func TestGainAbilityBeforeFightExaltValidateAndText(t *testing.T) {
 	bad := GainAbility{
 		Target:   Target{Kind: TargetEachCreature},
 		Duration: StartOfPlayerNextTurn,
-		Ability:  Ability{Trigger: TriggerAfterReap, Effect: Draw{Amount: 1}},
+		Ability: Ability{
+			Trigger: TriggerAfterReap,
+			Effect:  Draw{Amount: 1},
+		},
 	}
 	if err := bad.validate(); err == nil {
 		t.Error(
@@ -430,9 +577,16 @@ func TestGainAbilityBeforeFightExaltResolveAndFire(t *testing.T) {
 		Duration: StartOfPlayerNextTurn,
 		Ability: Ability{
 			Trigger: TriggerBeforeFight,
-			Effect:  Exalt{Target: Target{Kind: TargetThisCreature}, Amount: 1},
+			Effect: Exalt{
+				Target: Target{Kind: TargetThisCreature},
+				Amount: 1,
+			},
 		},
-	}.Resolve(&EffectContext{Resolver: g, Source: friendly, Controller: 0})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     friendly,
+		Controller: 0,
+	})
 
 	if g.State.LastingCount != 2 {
 		t.Fatalf("lasting count = %d, want 2 (one per creature)", g.State.LastingCount)
@@ -502,7 +656,11 @@ func TestGainAbilityFightReady(t *testing.T) {
 	GainAbility{
 		Target:  Target{Kind: TargetThisCreature},
 		Ability: e.Ability,
-	}.Resolve(&EffectContext{Resolver: g, Source: granted, Controller: 0})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     granted,
+		Controller: 0,
+	})
 
 	le := g.State.Lasting[0]
 	if le.On != EventFight || le.Do != actReadyPlayed || le.Subject != granted {
@@ -537,7 +695,11 @@ func TestGainAbilityFightSteal(t *testing.T) {
 	g := started(t)
 	granted := g.AddToBattleline(testCreature("granted", 3), 0)
 	g.SetAember(1, 2)
-	e.Resolve(&EffectContext{Resolver: g, Source: granted, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     granted,
+		Controller: 0,
+	})
 
 	le := g.State.Lasting[0]
 	if le.On != EventFight || le.Do != actSteal || le.Subject != granted {
@@ -563,9 +725,16 @@ func TestGainAbilityResolveSubjectScoped(t *testing.T) {
 	g.AddToDeck(testCreature("d2", 1), 0)
 
 	GainAbility{
-		Target:  Target{Kind: TargetThisCreature},
-		Ability: Ability{Trigger: TriggerAfterReap, Effect: Draw{Amount: 1}},
-	}.Resolve(&EffectContext{Resolver: g, Source: granted, Controller: 0})
+		Target: Target{Kind: TargetThisCreature},
+		Ability: Ability{
+			Trigger: TriggerAfterReap,
+			Effect:  Draw{Amount: 1},
+		},
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     granted,
+		Controller: 0,
+	})
 
 	if g.State.LastingCount != 1 {
 		t.Fatalf("lasting count = %d, want 1", g.State.LastingCount)
@@ -596,14 +765,20 @@ func TestGainAbilityResolveSubjectScoped(t *testing.T) {
 func TestDamageOthersAfterUsingTraitText(t *testing.T) {
 	want := "for the remainder of the turn, after you use a Dinosaur creature, " +
 		"deal 1 damage to each non-Dinosaur creature"
-	got := DamageOthersAfterUsingTrait{Trait: Dinosaur, Amount: 1}.Text()
+	got := DamageOthersAfterUsingTrait{
+		Trait:  Dinosaur,
+		Amount: 1,
+	}.Text()
 	if got != want {
 		t.Errorf("text = %q", got)
 	}
 }
 
 func TestDamageOthersAfterUsingTraitValidate(t *testing.T) {
-	if (DamageOthersAfterUsingTrait{Trait: Dinosaur, Amount: 1}).validate() != nil {
+	if (DamageOthersAfterUsingTrait{
+		Trait:  Dinosaur,
+		Amount: 1,
+	}).validate() != nil {
 		t.Error("valid effect should not error")
 	}
 	if (DamageOthersAfterUsingTrait{Amount: 1}).validate() == nil {
@@ -624,8 +799,15 @@ func marchBoard(t *testing.T) (g *Game, dino, ally, allyDino, enemy, enemyDino L
 	allyDino = g.AddToBattleline(testCreature("allyDino", 3, WithTraits(Dinosaur)), 0)
 	enemy = g.AddToBattleline(testCreature("enemy", 3), 1)
 	enemyDino = g.AddToBattleline(testCreature("enemyDino", 3, WithTraits(Dinosaur)), 1)
-	DamageOthersAfterUsingTrait{Trait: Dinosaur, Amount: 1}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, Source: dino},
+	DamageOthersAfterUsingTrait{
+		Trait:  Dinosaur,
+		Amount: 1,
+	}.Resolve(
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			Source:     dino,
+		},
 	)
 	return g, dino, ally, allyDino, enemy, enemyDino
 }
@@ -688,12 +870,22 @@ func TestDamageOthersAfterUsingTraitAction(t *testing.T) {
 	g := started(t)
 	actor := g.AddToBattleline(
 		testCreature("actor", 6, WithTraits(Dinosaur),
-			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1})),
+			WithAbility(TriggerAction, GainAember{
+				Player: Controller,
+				Amount: 1,
+			})),
 		0,
 	)
 	ally := g.AddToBattleline(testCreature("ally", 3), 0)
-	DamageOthersAfterUsingTrait{Trait: Dinosaur, Amount: 1}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, Source: actor},
+	DamageOthersAfterUsingTrait{
+		Trait:  Dinosaur,
+		Amount: 1,
+	}.Resolve(
+		&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			Source:     actor,
+		},
 	)
 	if err := g.UseAction(0, actor); err != nil {
 		t.Fatalf("UseAction: %v", err)
@@ -740,7 +932,10 @@ func TestPutNextTacticIntoHandText(t *testing.T) {
 // Resolve arms a one-shot redirect the Tactic-play path later consumes.
 func TestPutNextTacticIntoHandArms(t *testing.T) {
 	g := started(t)
-	PutNextTacticIntoHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	PutNextTacticIntoHand{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if !g.consumeNextTacticIntoHand(0) {
 		t.Fatal("redirect was not armed")
 	}
@@ -752,7 +947,10 @@ func TestPutNextTacticIntoHandArms(t *testing.T) {
 // A redirect owned by one player is not consumed by the other.
 func TestPutNextTacticIntoHandScopedToController(t *testing.T) {
 	g := started(t)
-	PutNextTacticIntoHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	PutNextTacticIntoHand{}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.consumeNextTacticIntoHand(1) {
 		t.Fatal("opponent should not consume the redirect")
 	}
@@ -768,7 +966,11 @@ func TestPutNextTacticIntoHandRedirectsPlayedTactic(t *testing.T) {
 	g.StartTurn(0)
 	first := g.AddToHand(NewCard("First Action", Sanctum, Tactic, Common), 0)
 	second := g.AddToHand(NewCard("Second Action", Sanctum, Tactic, Common), 0)
-	g.AddLasting(LastingEffect{On: EventNextTacticIntoHand, Do: actPutIntoHand, Once: true})
+	g.AddLasting(LastingEffect{
+		On:   EventNextTacticIntoHand,
+		Do:   actPutIntoHand,
+		Once: true,
+	})
 
 	if err := g.PlayTactic(0, handIdxByID(g, 0, first)); err != nil {
 		t.Fatalf("PlayTactic first: %v", err)
@@ -793,7 +995,10 @@ func TestPutNextTacticIntoHandRedirectsPlayedTactic(t *testing.T) {
 }
 
 func TestTakesExtraDamageText(t *testing.T) {
-	e := TakesExtraDamage{Target: Target{Kind: TargetChosenCreature}, Amount: 2}
+	e := TakesExtraDamage{
+		Target: Target{Kind: TargetChosenCreature},
+		Amount: 2,
+	}
 	want := "for the remainder of the turn, whenever a creature takes damage, " +
 		"it takes an additional 2 damage"
 	if e.Text() != want {
@@ -803,7 +1008,10 @@ func TestTakesExtraDamageText(t *testing.T) {
 
 func TestTakesExtraDamageValidate(t *testing.T) {
 	if err := validateEffect(
-		TakesExtraDamage{Target: Target{Kind: TargetChosenCreature}, Amount: 2},
+		TakesExtraDamage{
+			Target: Target{Kind: TargetChosenCreature},
+			Amount: 2,
+		},
 	); err != nil {
 		t.Errorf("valid effect rejected: %v", err)
 	}
@@ -811,7 +1019,10 @@ func TestTakesExtraDamageValidate(t *testing.T) {
 		t.Error("want error for missing target")
 	}
 	if validateEffect(
-		TakesExtraDamage{Target: Target{Kind: TargetChosenCreature}, Amount: 0},
+		TakesExtraDamage{
+			Target: Target{Kind: TargetChosenCreature},
+			Amount: 0,
+		},
 	) == nil {
 		t.Error("want error for non-positive amount")
 	}
@@ -820,17 +1031,30 @@ func TestTakesExtraDamageValidate(t *testing.T) {
 func TestTakesExtraDamageAugmentsDamage(t *testing.T) {
 	g := started(t)
 	victim := g.AddToBattleline(testCreature("victim", 10), 0)
-	TakesExtraDamage{Target: Target{Kind: TargetThisCreature}, Amount: 2}.Resolve(
-		&EffectContext{Resolver: g, Source: victim, Controller: 0},
+	TakesExtraDamage{
+		Target: Target{Kind: TargetThisCreature},
+		Amount: 2,
+	}.Resolve(
+		&EffectContext{
+			Resolver:   g,
+			Source:     victim,
+			Controller: 0,
+		},
 	)
 	// A single instance of 3 damage lands as 3 + 2 = 5.
-	g.dealDamage(0, DamageTarget{ID: victim, Amount: 3})
+	g.dealDamage(0, DamageTarget{
+		ID:     victim,
+		Amount: 3,
+	})
 	if got := g.Damage(victim); got != 5 {
 		t.Errorf("damage = %d, want 5 (3 + 2 bonus)", got)
 	}
 	// A creature with no augmentation takes only what it is dealt.
 	bare := g.AddToBattleline(testCreature("bare", 10), 0)
-	g.dealDamage(0, DamageTarget{ID: bare, Amount: 3})
+	g.dealDamage(0, DamageTarget{
+		ID:     bare,
+		Amount: 3,
+	})
 	if got := g.Damage(bare); got != 3 {
 		t.Errorf("bare damage = %d, want 3", got)
 	}

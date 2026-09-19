@@ -18,7 +18,10 @@ import (
 func TestFesteringTouch(t *testing.T) {
 	var clean, hurt ct.Card
 	h := ct.Play(t, ct.Setup{
-		P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(FesteringTouch)},
+		P1: ct.Side{
+			House: card.House.Dis,
+			Hand:  ct.Cards(FesteringTouch),
+		},
 		P2: ct.Side{InPlay: ct.Cards(
 			ct.Bind(&clean, ct.Creature(ct.Power(9))),
 			ct.Bind(&hurt, ct.Creature(ct.Power(9))),

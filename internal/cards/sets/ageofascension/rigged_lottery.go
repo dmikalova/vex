@@ -19,10 +19,16 @@ var RiggedLottery = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.DiscardTop{Player: card.EachPlayer, Amount: 5},
+			card.DiscardTop{
+				Player: card.EachPlayer,
+				Amount: 5,
+			},
 			card.ForEachDiscarded{
 				House: card.Houses.Named(card.House.Self),
-				Do:    card.GainAember{Player: card.ItsOwner, Amount: 1},
+				Do: card.GainAember{
+					Player: card.ItsOwner,
+					Amount: 1,
+				},
 			},
 		}}),
 )

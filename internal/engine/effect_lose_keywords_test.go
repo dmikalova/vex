@@ -34,10 +34,16 @@ func TestLoseKeywordsText(t *testing.T) {
 // TestLoseKeywordsValidate rejects a missing target, an empty keyword list, an
 // unset keyword, and an unsupported duration.
 func TestLoseKeywordsValidate(t *testing.T) {
-	if err := (LoseKeywords{Keywords: []Keyword{Elusive}, Duration: RemainderOfPlayerTurn}).validate(); err == nil {
+	if err := (LoseKeywords{
+		Keywords: []Keyword{Elusive},
+		Duration: RemainderOfPlayerTurn,
+	}).validate(); err == nil {
 		t.Error("a missing target should be rejected")
 	}
-	if err := (LoseKeywords{Target: Target{Kind: TargetTriggeringCreature}, Duration: RemainderOfPlayerTurn}).validate(); err == nil {
+	if err := (LoseKeywords{
+		Target:   Target{Kind: TargetTriggeringCreature},
+		Duration: RemainderOfPlayerTurn,
+	}).validate(); err == nil {
 		t.Error("an empty keyword list should be rejected")
 	}
 	if err := (LoseKeywords{
@@ -82,7 +88,12 @@ func TestLoseKeywordsResolveForTurn(t *testing.T) {
 		Target:   Target{Kind: TargetTriggeringCreature},
 		Keywords: []Keyword{Taunt, Elusive},
 		Duration: RemainderOfPlayerTurn,
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0, It: id, HasIt: true})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         id,
+		HasIt:      true,
+	})
 
 	if g.hasKeyword(id, Elusive) {
 		t.Error("elusive should be lost for the turn")
@@ -121,7 +132,11 @@ func TestLoseKeywordsResolveNextTurn(t *testing.T) {
 		Target:   Target{Kind: TargetThisCreature},
 		Keywords: []Keyword{Elusive},
 		Duration: StartOfPlayerNextTurn,
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: id})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     id,
+	})
 
 	if g.hasKeyword(id, Elusive) {
 		t.Error("elusive should be lost")

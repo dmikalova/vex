@@ -29,7 +29,10 @@ var WretchedAnathema = set.Gigantic(
 		},
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Action,
-			Effect:  card.GainAember{Player: card.Controller, Amount: 4},
+			Effect: card.GainAember{
+				Player: card.Controller,
+				Amount: 4,
+			},
 		}},
 	}),
 	card.WithAbility(

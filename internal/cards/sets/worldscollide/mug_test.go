@@ -19,7 +19,10 @@ func TestMug(t *testing.T) {
 	t.Run("takes 1 Æmber from a creature and deals 2 damage to it", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(Mug)},
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand:  ct.Cards(Mug),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(5))))},
 		})
 		h.Game().State.Cards[foe.ID()].Amber = 2

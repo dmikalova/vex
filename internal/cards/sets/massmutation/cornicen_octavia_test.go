@@ -20,7 +20,10 @@ import (
 func TestCornicenOctavia(t *testing.T) {
 	t.Run("captures 2 Æmber from the opponent", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Saurian, InPlay: ct.Cards(CornicenOctavia)},
+			P1: ct.Side{
+				House:  card.House.Saurian,
+				InPlay: ct.Cards(CornicenOctavia),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 

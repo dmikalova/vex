@@ -457,7 +457,11 @@ func (g *Game) removeLasting(target LastingEffect) {
 // triggering card where one is needed.
 func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 	if le.HasSource {
-		defer g.openFrame(Frame{Actor: actor, Source: le.Source, HasSource: true})()
+		defer g.openFrame(Frame{
+			Actor:     actor,
+			Source:    le.Source,
+			HasSource: true,
+		})()
 	}
 	switch le.Do {
 	case actDealDamage:
@@ -532,9 +536,16 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 		}
 	case actDraw:
 		g.draw(actor, int(le.Amount))
-		g.record(LastingDraw{Player: actor, Amount: int(le.Amount), On: le.On})
+		g.record(LastingDraw{
+			Player: actor,
+			Amount: int(le.Amount),
+			On:     le.On,
+		})
 	case actLoseAember:
-		LoseAember{Player: Opponent, Amount: int(le.Amount)}.Resolve(
+		LoseAember{
+			Player: Opponent,
+			Amount: int(le.Amount),
+		}.Resolve(
 			&EffectContext{
 				Resolver:   g,
 				Source:     subject,
@@ -568,7 +579,10 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 			})
 			return
 		}
-		g.record(AemberGained{Player: actor, Amount: int(le.Amount)})
+		g.record(AemberGained{
+			Player: actor,
+			Amount: int(le.Amount),
+		})
 	}
 }
 

@@ -20,7 +20,10 @@ func TestMegaCowfyne(t *testing.T) {
 	t.Run("deals 2 splash damage to each neighbor of the creature it fights", func(t *testing.T) {
 		var target, left, right ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(MegaCowfyne)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(MegaCowfyne),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&left, ct.Creature(ct.Power(4))),
 				ct.Bind(&target, ct.Creature(ct.Power(4))),

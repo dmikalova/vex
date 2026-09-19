@@ -19,7 +19,10 @@ import (
 func TestScreechbomb(t *testing.T) {
 	t.Run("destroys itself and drains 2 Æmber from the opponent", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(Screechbomb)},
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				InPlay: ct.Cards(Screechbomb),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 

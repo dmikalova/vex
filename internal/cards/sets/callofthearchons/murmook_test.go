@@ -20,7 +20,10 @@ import (
 func TestMurmook(t *testing.T) {
 	t.Run("raises the opponent's key cost by 1 while in play", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(Murmook)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(Murmook),
+			},
 		})
 
 		g := h.Game()

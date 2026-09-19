@@ -15,9 +15,12 @@ func TestAddLastingRejectsFilteredReplacement(t *testing.T) {
 		"type":    {On: EventReapAember, Do: actSteal, Type: Creature},
 		"trait":   {On: EventReapAember, Do: actSteal, Trait: Beast},
 		"house": {
-			On:    EventReapAember,
-			Do:    actSteal,
-			House: HouseMatcher{Kind: MatchNamedHouse, House: Mars},
+			On: EventReapAember,
+			Do: actSteal,
+			House: HouseMatcher{
+				Kind:  MatchNamedHouse,
+				House: Mars,
+			},
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -33,7 +36,10 @@ func TestAddLastingRejectsFilteredReplacement(t *testing.T) {
 
 	// The unfiltered record is what Dimension Door installs, and it still registers.
 	g := NewGame("A", "B", 1)
-	g.AddLasting(LastingEffect{On: EventReapAember, Do: actSteal})
+	g.AddLasting(LastingEffect{
+		On: EventReapAember,
+		Do: actSteal,
+	})
 	if _, ok := g.lastingReplacement(0, EventReapAember); !ok {
 		t.Error("unfiltered replacement was not registered")
 	}
@@ -63,10 +69,20 @@ func TestLastingReactionsResolveOnPlay(t *testing.T) {
 	foe := g.AddToBattleline(testCreature("foe", 5), 1)
 	// Two reactions fire on the same event; both resolve when a creature is played.
 	g.AddLasting(
-		LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 1},
+		LastingEffect{
+			On:         EventCreaturePlayed,
+			Do:         actGainAember,
+			Controller: 0,
+			Amount:     1,
+		},
 	)
 	g.AddLasting(
-		LastingEffect{On: EventCreaturePlayed, Do: actDealDamage, Controller: 0, Amount: 2},
+		LastingEffect{
+			On:         EventCreaturePlayed,
+			Do:         actDealDamage,
+			Controller: 0,
+			Amount:     2,
+		},
 	)
 
 	g.AddToHand(testCreature("minion", 4), 0)
@@ -112,10 +128,20 @@ func TestLastingOnceExpiresAtEndOfTurn(t *testing.T) {
 func TestClearLastingKeepsOtherPlayer(t *testing.T) {
 	g := started(t)
 	g.AddLasting(
-		LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 1},
+		LastingEffect{
+			On:         EventCreaturePlayed,
+			Do:         actGainAember,
+			Controller: 0,
+			Amount:     1,
+		},
 	)
 	g.AddLasting(
-		LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 1, Amount: 1},
+		LastingEffect{
+			On:         EventCreaturePlayed,
+			Do:         actGainAember,
+			Controller: 1,
+			Amount:     1,
+		},
 	) // the opponent's reaction
 
 	g.clearLasting(0)
@@ -132,7 +158,12 @@ func TestAddLastingCap(t *testing.T) {
 	g := started(t)
 	for range maxLasting + 3 {
 		g.AddLasting(
-			LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 1},
+			LastingEffect{
+				On:         EventCreaturePlayed,
+				Do:         actGainAember,
+				Controller: 0,
+				Amount:     1,
+			},
 		)
 	}
 	if int(g.State.LastingCount) != maxLasting {
@@ -262,7 +293,12 @@ func TestLastingOnceOrdersWithPersistentReaction(t *testing.T) {
 	// The one-shot sits between two persistent reactions, so removing it scans past
 	// the first and shifts the last down.
 	g.AddLasting(
-		LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 1},
+		LastingEffect{
+			On:         EventCreaturePlayed,
+			Do:         actGainAember,
+			Controller: 0,
+			Amount:     1,
+		},
 	)
 	g.AddLasting(
 		LastingEffect{
@@ -276,7 +312,12 @@ func TestLastingOnceOrdersWithPersistentReaction(t *testing.T) {
 		},
 	)
 	g.AddLasting(
-		LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 1},
+		LastingEffect{
+			On:         EventCreaturePlayed,
+			Do:         actGainAember,
+			Controller: 0,
+			Amount:     1,
+		},
 	)
 
 	g.resolveLastingWindow(EventCreaturePlayed, 0, mars) // three reactions fire; ordering path runs
@@ -344,7 +385,13 @@ func TestReapWindowInterleavesLastingReaction(t *testing.T) {
 		0,
 	)
 	g.AddLasting(
-		LastingEffect{On: EventReap, Do: actGainAember, Controller: 0, Amount: 1, Once: true},
+		LastingEffect{
+			On:         EventReap,
+			Do:         actGainAember,
+			Controller: 0,
+			Amount:     1,
+			Once:       true,
+		},
 	)
 	rec := &reactionOrderRecorder{}
 	g.SetChooser(0, rec)
@@ -390,7 +437,12 @@ func TestReapWindowFallsBackOnBadOrder(t *testing.T) {
 		0,
 	)
 	g.AddLasting(
-		LastingEffect{On: EventReap, Do: actGainAember, Controller: 0, Amount: 1},
+		LastingEffect{
+			On:         EventReap,
+			Do:         actGainAember,
+			Controller: 0,
+			Amount:     1,
+		},
 	)
 	g.SetChooser(0, &reactionOrderRecorder{invalid: true})
 
@@ -424,7 +476,11 @@ func TestCaptureChosenReactionOnCardPlayed(t *testing.T) {
 			Target: Target{Kind: TargetChosenFriendlyCreature},
 			Source: Opponent,
 		},
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: src})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     src,
+	})
 
 	capper := g.AddToBattleline(testCreature("capper", 3), 0)
 	played := g.AddToBattleline(testCreature("played", 2), 0)
@@ -457,7 +513,11 @@ func TestCaptureChosenReactionFizzlesWithoutCreature(t *testing.T) {
 			Target: Target{Kind: TargetChosenFriendlyCreature},
 			Source: Opponent,
 		},
-	}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: src})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Source:     src,
+	})
 
 	played := g.AddToDiscard(NewCard("Another", Sanctum, Tactic, Common), 0)
 	g.resolveLastingWindow(EventCardPlayed, 0, played)
@@ -486,7 +546,10 @@ func TestCaptureReactionOnFight(t *testing.T) {
 		},
 	}.
 		Resolve(
-			&EffectContext{Resolver: g, Controller: 0},
+			&EffectContext{
+				Resolver:   g,
+				Controller: 0,
+			},
 		)
 
 	att := g.AddToBattleline(NewCard("att", Brobnar, Creature, Common, WithPower(4)), 0)
@@ -512,7 +575,12 @@ func TestEnemyCreatureDestroyedReaction(t *testing.T) {
 
 	g := NewGame("A", "B", 1)
 	g.AddLasting(
-		LastingEffect{On: EventEnemyCreatureDestroyed, Do: actGainAember, Controller: 0, Amount: 1},
+		LastingEffect{
+			On:         EventEnemyCreatureDestroyed,
+			Do:         actGainAember,
+			Controller: 0,
+			Amount:     1,
+		},
 	)
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
 	g.destroyEach(0, []LocalID{foe})
@@ -526,7 +594,12 @@ func TestEnemyCreatureDestroyedReaction(t *testing.T) {
 
 func TestFightFiresLasting(t *testing.T) {
 	g := started(t)
-	g.AddLasting(LastingEffect{On: EventFight, Do: actGainAember, Controller: 0, Amount: 1})
+	g.AddLasting(LastingEffect{
+		On:         EventFight,
+		Do:         actGainAember,
+		Controller: 0,
+		Amount:     1,
+	})
 	att := g.AddToBattleline(NewCard("att", Brobnar, Creature, Common, WithPower(4)), 0)
 	def := g.AddToBattleline(testCreature("def", 2), 1)
 
@@ -543,7 +616,12 @@ func TestFightFiresLasting(t *testing.T) {
 
 func TestFightFiresLastingLoseAember(t *testing.T) {
 	g := started(t)
-	g.AddLasting(LastingEffect{On: EventFight, Do: actLoseAember, Controller: 0, Amount: 1})
+	g.AddLasting(LastingEffect{
+		On:         EventFight,
+		Do:         actLoseAember,
+		Controller: 0,
+		Amount:     1,
+	})
 	att := g.AddToBattleline(NewCard("att", Brobnar, Creature, Common, WithPower(4)), 0)
 	def := g.AddToBattleline(testCreature("def", 2), 1)
 	g.State.Aember[1] = 3

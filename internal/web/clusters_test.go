@@ -43,7 +43,10 @@ func TestBuildClusterDataGroupsBothMechanisms(t *testing.T) {
 // to the printed face reaches it too.
 func TestClustersRenderWithoutPanic(t *testing.T) {
 	named, filtered := buildClusterData()
-	c := &clusters{named: named, filtered: filtered}
+	c := &clusters{
+		named:    named,
+		filtered: filtered,
+	}
 	html := app.HTMLString(c.Render())
 	if !strings.Contains(html, "Named clusters") || !strings.Contains(html, "Filtered pulls") {
 		t.Error("clusters page did not render its section headings")

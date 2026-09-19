@@ -23,7 +23,12 @@ func AemberThreshold(n int) PlayRequirement { return PlayRequirement{Aember: n} 
 
 // AemberCost requires — and spends — n Æmber from the pool to play the card
 // (Truebaru).
-func AemberCost(n int) PlayRequirement { return PlayRequirement{Aember: n, Spend: true} }
+func AemberCost(n int) PlayRequirement {
+	return PlayRequirement{
+		Aember: n,
+		Spend:  true,
+	}
+}
 
 // required reports whether the card carries a requirement at all.
 func (r PlayRequirement) required() bool { return r.Aember > 0 }

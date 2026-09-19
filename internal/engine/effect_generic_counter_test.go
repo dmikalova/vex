@@ -24,7 +24,11 @@ func TestCountersOnAttachedUpgrade(t *testing.T) {
 		t.Errorf("opponent key cost with two counters = %d, want %d", got, KeyCost+2)
 	}
 
-	ctx := &EffectContext{Resolver: g, Source: host, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     host,
+		Controller: 0,
+	}
 	Destroy{Target: Target{Kind: TargetThisCreature}}.Resolve(ctx)
 	if g.State.CounterCount != 0 {
 		t.Errorf(
@@ -40,23 +44,41 @@ func TestPlaceCounter(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mark := g.AddToBattleline(testCreature("mark", 3), 1)
 	safe := g.AddToBattleline(testCreature("safe", 3), 1)
-	ctx := &EffectContext{Resolver: g, Source: mark, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     mark,
+		Controller: 0,
+	}
 
 	place := PlaceCounter{
 		Amount: 1,
 		Kind:   CounterDoom,
 		Target: Target{Kind: TargetEachEnemyCreature},
 	}
-	if got := (PlaceCounter{Amount: 1, Kind: CounterDoom, Target: Target{Kind: TargetChosenCreature}}).Text(); got != "put a doom counter on a creature" {
+	if got := (PlaceCounter{
+		Amount: 1,
+		Kind:   CounterDoom,
+		Target: Target{Kind: TargetChosenCreature},
+	}).Text(); got != "put a doom counter on a creature" {
 		t.Errorf("text = %q", got)
 	}
-	if got := (PlaceCounter{Kind: CounterDoom, Target: Target{Kind: TargetChosenCreature}, Amount: 2}).Text(); got != "put 2 doom counters on a creature" {
+	if got := (PlaceCounter{
+		Kind:   CounterDoom,
+		Target: Target{Kind: TargetChosenCreature},
+		Amount: 2,
+	}).Text(); got != "put 2 doom counters on a creature" {
 		t.Errorf("plural text = %q", got)
 	}
-	if err := (PlaceCounter{Amount: 1, Target: Target{Kind: TargetChosenCreature}}).validate(); err == nil {
+	if err := (PlaceCounter{
+		Amount: 1,
+		Target: Target{Kind: TargetChosenCreature},
+	}).validate(); err == nil {
 		t.Error("PlaceCounter without a kind should not validate")
 	}
-	if err := (PlaceCounter{Amount: 1, Kind: CounterDoom}).validate(); err == nil {
+	if err := (PlaceCounter{
+		Amount: 1,
+		Kind:   CounterDoom,
+	}).validate(); err == nil {
 		t.Error("PlaceCounter without a target should not validate")
 	}
 	if err := place.validate(); err != nil {
@@ -102,7 +124,11 @@ func TestCountersShedOnLeavePlay(t *testing.T) {
 	g.PlaceCounter(victim, CounterDoom, 1)
 	g.PlaceCounter(other, CounterDoom, 1)
 
-	ctx := &EffectContext{Resolver: g, Source: victim, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     victim,
+		Controller: 0,
+	}
 	Destroy{Target: Target{Kind: TargetChosenCreature}.WithCounter(CounterDoom)}.Resolve(ctx)
 
 	if g.State.CounterCount != 1 {
@@ -123,7 +149,11 @@ func TestCounterTableOverflow(t *testing.T) {
 	c := g.AddToBattleline(testCreature("overflow", 3), 1)
 	// Fill the table with entries for cards that cannot collide with c's LocalID.
 	for i := range maxCounterEntries {
-		g.State.Counters[i] = CounterEntry{Card: LocalID(128 + i), Kind: CounterDoom, N: 1}
+		g.State.Counters[i] = CounterEntry{
+			Card: LocalID(128 + i),
+			Kind: CounterDoom,
+			N:    1,
+		}
 	}
 	g.State.CounterCount = maxCounterEntries
 
@@ -140,7 +170,11 @@ func TestCounterTableOverflow(t *testing.T) {
 func TestCounterInPlay(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	c := g.AddToBattleline(testCreature("c", 3), 1)
-	ctx := &EffectContext{Resolver: g, Source: c, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     c,
+		Controller: 0,
+	}
 
 	cond := CounterInPlay{Kind: CounterDoom}
 	if cond.CondText() != "if there is a doom counter in play" {
@@ -161,9 +195,16 @@ func TestCounterInPlay(t *testing.T) {
 func TestCountersOnThisAtLeast(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	bomb := g.AddArtifact(NewCard("The Big One", Brobnar, Artifact, Rare), 0)
-	ctx := &EffectContext{Resolver: g, Source: bomb, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     bomb,
+		Controller: 0,
+	}
 
-	cond := CountersOnThisAtLeast{Kind: CounterFuse, N: 10}
+	cond := CountersOnThisAtLeast{
+		Kind: CounterFuse,
+		N:    10,
+	}
 	if want := "if there are 10 or more fuse counters on " + SelfName; cond.CondText() != want {
 		t.Errorf("cond text = %q, want %q", cond.CondText(), want)
 	}
@@ -196,7 +237,11 @@ func TestDestroyWithCounter(t *testing.T) {
 	doomed := g.AddToBattleline(testCreature("doomed", 3), 1)
 	safe := g.AddToBattleline(testCreature("safe", 3), 1)
 	g.PlaceCounter(doomed, CounterDoom, 1)
-	ctx := &EffectContext{Resolver: g, Source: doomed, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     doomed,
+		Controller: 0,
+	}
 
 	target := Target{Kind: TargetEachCreature}.WithCounter(CounterDoom)
 	if got := target.Text(); got != "each creature with a doom counter" {
@@ -252,7 +297,10 @@ func TestCountersOnThis(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	tree := g.AddArtifact(NewCard("Vineapple Tree", Untamed, Artifact, Rare), 0)
 	c := CountersOnThis{Kind: CounterGrowth}
-	ctx := &EffectContext{Resolver: g, Source: tree}
+	ctx := &EffectContext{
+		Resolver: g,
+		Source:   tree,
+	}
 
 	if got := c.Value(ctx); got != 0 {
 		t.Errorf("value with no counters = %d, want 0", got)
@@ -285,7 +333,10 @@ func TestRemoveCountersEffect(t *testing.T) {
 	if err := (RemoveCounters{Kind: CounterGrowth}).validate(); err == nil {
 		t.Error("RemoveCounters without a target should not validate")
 	}
-	e := RemoveCounters{Kind: CounterGrowth, Target: Target{Kind: TargetThisCreature}}
+	e := RemoveCounters{
+		Kind:   CounterGrowth,
+		Target: Target{Kind: TargetThisCreature},
+	}
 	if err := e.validate(); err != nil {
 		t.Errorf("valid RemoveCounters should validate, got %v", err)
 	}
@@ -297,7 +348,11 @@ func TestRemoveCountersEffect(t *testing.T) {
 	tree := g.AddArtifact(NewCard("Vineapple Tree", Untamed, Artifact, Rare), 0)
 	g.PlaceCounter(tree, CounterGrowth, 2)
 	g.PlaceCounter(tree, CounterDoom, 1)
-	e.Resolve(&EffectContext{Resolver: g, Source: tree, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     tree,
+		Controller: 0,
+	})
 	if got := g.CountersOn(tree, CounterGrowth); got != 0 {
 		t.Errorf("growth counters after remove = %d, want 0", got)
 	}
@@ -305,7 +360,11 @@ func TestRemoveCountersEffect(t *testing.T) {
 		t.Errorf("doom counters after remove = %d, want 1 (untouched)", got)
 	}
 	// Removing a kind the card no longer carries is a no-op.
-	e.Resolve(&EffectContext{Resolver: g, Source: tree, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     tree,
+		Controller: 0,
+	})
 	if got := g.CountersOn(tree, CounterGrowth); got != 0 {
 		t.Errorf("growth counters after second remove = %d, want 0", got)
 	}
@@ -322,7 +381,11 @@ func TestRemoveCountersAmount(t *testing.T) {
 	}).validate(); err == nil {
 		t.Error("RemoveCounters with a negative Amount should not validate")
 	}
-	e := RemoveCounters{Kind: CounterGlory, Target: Target{Kind: TargetThisCreature}, Amount: 6}
+	e := RemoveCounters{
+		Kind:   CounterGlory,
+		Target: Target{Kind: TargetThisCreature},
+		Amount: 6,
+	}
 	if got := e.Text(); got != "remove 6 glory counters from "+SelfName {
 		t.Errorf("text = %q", got)
 	}
@@ -330,7 +393,11 @@ func TestRemoveCountersAmount(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	arena := g.AddArtifact(NewCard("The Colosseum", Saurian, Artifact, Rare), 0)
 	g.PlaceCounter(arena, CounterGlory, 8)
-	e.Resolve(&EffectContext{Resolver: g, Source: arena, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     arena,
+		Controller: 0,
+	})
 	if got := g.CountersOn(arena, CounterGlory); got != 2 {
 		t.Errorf("glory counters after removing 6 of 8 = %d, want 2", got)
 	}
@@ -358,9 +425,16 @@ func TestVineappleTreeGrowthCycle(t *testing.T) {
 	tree := NewCard("Vineapple Tree", Untamed, Artifact, Rare,
 		WithKeyCost(NewKeyCostChange(EachPlayer, 1).Per(CountersOnThis{Kind: CounterGrowth})),
 		WithAbility(TriggerAfterPlayerForgesKey,
-			RemoveCounters{Kind: CounterGrowth, Target: Target{Kind: TargetThisCreature}}),
+			RemoveCounters{
+				Kind:   CounterGrowth,
+				Target: Target{Kind: TargetThisCreature},
+			}),
 		WithAbility(TriggerAction,
-			PlaceCounter{Amount: 1, Kind: CounterGrowth, Target: Target{Kind: TargetThisCreature}}))
+			PlaceCounter{
+				Amount: 1,
+				Kind:   CounterGrowth,
+				Target: Target{Kind: TargetThisCreature},
+			}))
 
 	g := NewGame("A", "B", 1)
 	id := g.AddArtifact(tree, 0)
@@ -411,7 +485,11 @@ func TestPlaceCounterPer(t *testing.T) {
 
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("book", 3), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 	ctx.Produced.AemberStolen = 3
 	e.Resolve(ctx)
 	if got := g.CountersOn(src, CounterWarrant); got != 3 {
@@ -434,7 +512,11 @@ func TestRemoveCountersGate(t *testing.T) {
 
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("book", 3), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	// With no counter the gate does nothing and reports false.
 	if e.resolveGate(ctx) {

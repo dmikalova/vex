@@ -18,8 +18,14 @@ import (
 func TestInformationExchange(t *testing.T) {
 	t.Run("opponent robbed you last turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(InformationExchange)},
-			P2: ct.Side{House: card.House.Mars, Amber: 3},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(InformationExchange),
+			},
+			P2: ct.Side{
+				House: card.House.Mars,
+				Amber: 3,
+			},
 		})
 		h.Game().State.TurnHistory[0][engine.AemberStolenFromLastTurn] = 2
 
@@ -31,8 +37,14 @@ func TestInformationExchange(t *testing.T) {
 
 	t.Run("opponent did not rob you", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(InformationExchange)},
-			P2: ct.Side{House: card.House.Mars, Amber: 3},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(InformationExchange),
+			},
+			P2: ct.Side{
+				House: card.House.Mars,
+				Amber: 3,
+			},
 		})
 
 		h.P1.Play(InformationExchange)

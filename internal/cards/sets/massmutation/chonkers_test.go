@@ -22,7 +22,10 @@ func TestChonkers(t *testing.T) {
 	t.Run("Play gives Chonkers a +1 power counter", func(t *testing.T) {
 		var chonkers ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(ct.Bind(&chonkers, Chonkers))},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(ct.Bind(&chonkers, Chonkers)),
+			},
 		})
 		h.P1.Play(chonkers)
 		h.Expect(chonkers).Power(2)

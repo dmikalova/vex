@@ -22,11 +22,22 @@ func TestHouseChoicePhrase(t *testing.T) {
 func TestConditionalEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 1), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	atLeast := Conditional{
-		Cond: PoolAember{Player: Opponent, Is: AtLeast, Amount: 7},
-		Then: LoseAember{Player: Opponent, Amount: 4},
+		Cond: PoolAember{
+			Player: Opponent,
+			Is:     AtLeast,
+			Amount: 7,
+		},
+		Then: LoseAember{
+			Player: Opponent,
+			Amount: 4,
+		},
 	}
 	if atLeast.Text() != "if your opponent has 7 Æmber or more, your opponent loses 4 Æmber" {
 		t.Errorf("at-least text = %q", atLeast.Text())
@@ -43,7 +54,11 @@ func TestConditionalEffect(t *testing.T) {
 	}
 
 	exact := Conditional{
-		Cond: PoolAember{Player: Opponent, Is: Exactly, Amount: 1},
+		Cond: PoolAember{
+			Player: Opponent,
+			Is:     Exactly,
+			Amount: 1,
+		},
 		Then: StealAember{Amount: 1},
 	}
 	if exact.Text() != "if your opponent has exactly 1 Æmber, steal 1 Æmber" {
@@ -72,20 +87,36 @@ func TestItIsStunned(t *testing.T) {
 	g.SetStunned(stunned, true)
 	ready := g.AddToBattleline(testCreature("ready", 3), 1)
 
-	if !c.Met(&EffectContext{Resolver: g, Controller: 0, It: stunned, HasIt: true}) {
+	if !c.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         stunned,
+		HasIt:      true,
+	}) {
 		t.Error("a stunned creature should meet the condition")
 	}
-	if c.Met(&EffectContext{Resolver: g, Controller: 0, It: ready, HasIt: true}) {
+	if c.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         ready,
+		HasIt:      true,
+	}) {
 		t.Error("an unstunned creature should not meet the condition")
 	}
-	if c.Met(&EffectContext{Resolver: g, Controller: 0}) {
+	if c.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}) {
 		t.Error("no creature in context should not meet the condition")
 	}
 }
 
 func TestControlsMoreCreatures(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	c := ControlsMoreCreatures{}
 	if c.CondText() != "if you control more creatures than your opponent" {
@@ -105,7 +136,10 @@ func TestControlsMoreCreatures(t *testing.T) {
 // which counts only creatures carrying the named trait on each side.
 func TestControlsMoreCreaturesTrait(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	c := ControlsMoreCreatures{Trait: Mutant}
 	if got := c.CondText(); got != "if you control more Mutant creatures than your opponent" {
@@ -132,7 +166,10 @@ func TestControlsMoreCreaturesTrait(t *testing.T) {
 
 func TestOpponentHasMoreKeys(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	c := HasMoreForgedKeys{Player: Opponent}
 	if c.CondText() != "if your opponent has more forged keys than you" {
@@ -170,7 +207,10 @@ func TestUsedCreatureToReap(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	if c.Met(ctx) {
 		t.Error("no reap yet, condition should not be met")
 	}
@@ -202,7 +242,10 @@ func TestUsedCreatureToFight(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	if c.Met(ctx) {
 		t.Error("no fight yet, condition should not be met")
 	}
@@ -233,7 +276,10 @@ func TestUsedNoCreatures(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	if !c.Met(ctx) {
 		t.Error("no creature used, condition should be met")
 	}
@@ -250,9 +296,15 @@ func TestHousesRepresented(t *testing.T) {
 	g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(4)), 0)
 	g.AddToBattleline(NewCard("l", Logos, Creature, Common, WithPower(4)), 0)
 	g.AddToBattleline(NewCard("s", Sanctum, Creature, Common, WithPower(4)), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
-	among := HousesAmong{Player: EachPlayer, Type: Creature}
+	among := HousesAmong{
+		Player: EachPlayer,
+		Type:   Creature,
+	}
 	cases := []struct {
 		is   Comparison
 		amt  int
@@ -267,7 +319,11 @@ func TestHousesRepresented(t *testing.T) {
 		{Exactly, 2, false, "if there are exactly 2 houses represented among creatures in play"},
 	}
 	for _, tc := range cases {
-		c := HousesRepresented{Among: among, Is: tc.is, Amount: tc.amt}
+		c := HousesRepresented{
+			Among:  among,
+			Is:     tc.is,
+			Amount: tc.amt,
+		}
 		if err := c.validate(); err != nil {
 			t.Errorf("validate(%v, %d) = %v", tc.is, tc.amt, err)
 		}
@@ -278,7 +334,10 @@ func TestHousesRepresented(t *testing.T) {
 			t.Errorf("CondText(%v, %d) = %q", tc.is, tc.amt, got)
 		}
 	}
-	if err := (HousesRepresented{Among: among, Is: comparisonUnset}).validate(); err == nil {
+	if err := (HousesRepresented{
+		Among: among,
+		Is:    comparisonUnset,
+	}).validate(); err == nil {
 		t.Error("unset comparison should fail validation")
 	}
 }
@@ -304,11 +363,17 @@ func TestSourceReadyCondition(t *testing.T) {
 	if c.CondText() != "if "+SelfName+" is ready" {
 		t.Errorf("CondText = %q", c.CondText())
 	}
-	if !c.Met(&EffectContext{Resolver: g, Source: src}) {
+	if !c.Met(&EffectContext{
+		Resolver: g,
+		Source:   src,
+	}) {
 		t.Error("a ready source should be met")
 	}
 	g.SetExhausted(src, true)
-	if c.Met(&EffectContext{Resolver: g, Source: src}) {
+	if c.Met(&EffectContext{
+		Resolver: g,
+		Source:   src,
+	}) {
 		t.Error("an exhausted source should not be met")
 	}
 }
@@ -327,16 +392,28 @@ func TestOnFlankSource(t *testing.T) {
 	if off.CondText() != "if "+SelfName+" is not on a flank" {
 		t.Errorf("off CondText = %q", off.CondText())
 	}
-	if !on.Met(&EffectContext{Resolver: g, Source: left}) {
+	if !on.Met(&EffectContext{
+		Resolver: g,
+		Source:   left,
+	}) {
 		t.Error("left flank source should satisfy OnFlank{}")
 	}
-	if on.Met(&EffectContext{Resolver: g, Source: mid}) {
+	if on.Met(&EffectContext{
+		Resolver: g,
+		Source:   mid,
+	}) {
 		t.Error("interior source should not satisfy OnFlank{}")
 	}
-	if !off.Met(&EffectContext{Resolver: g, Source: mid}) {
+	if !off.Met(&EffectContext{
+		Resolver: g,
+		Source:   mid,
+	}) {
 		t.Error("interior source should satisfy Not{OnFlank}")
 	}
-	if off.Met(&EffectContext{Resolver: g, Source: left}) {
+	if off.Met(&EffectContext{
+		Resolver: g,
+		Source:   left,
+	}) {
 		t.Error("flank source should not satisfy Not{OnFlank}")
 	}
 }
@@ -347,39 +424,72 @@ func TestOnFlankNamed(t *testing.T) {
 	g.AddToBattleline(testCreature("mid", 2), 1)
 	right := g.AddToBattleline(testCreature("right", 2), 1)
 
-	leftCond := OnFlank{OfIt: true, Where: LeftFlank}
-	rightCond := OnFlank{OfIt: true, Where: RightFlank}
+	leftCond := OnFlank{
+		OfIt:  true,
+		Where: LeftFlank,
+	}
+	rightCond := OnFlank{
+		OfIt:  true,
+		Where: RightFlank,
+	}
 	if leftCond.CondText() != "if it is on the left flank" {
 		t.Errorf("left CondText = %q", leftCond.CondText())
 	}
 	if rightCond.CondText() != "if it is on the right flank" {
 		t.Errorf("right CondText = %q", rightCond.CondText())
 	}
-	if !leftCond.Met(&EffectContext{Resolver: g, It: left, HasIt: true}) {
+	if !leftCond.Met(&EffectContext{
+		Resolver: g,
+		It:       left,
+		HasIt:    true,
+	}) {
 		t.Error("left flank creature should satisfy the left OnFlank")
 	}
-	if leftCond.Met(&EffectContext{Resolver: g, It: right, HasIt: true}) {
+	if leftCond.Met(&EffectContext{
+		Resolver: g,
+		It:       right,
+		HasIt:    true,
+	}) {
 		t.Error("right flank creature should not satisfy the left OnFlank")
 	}
-	if !rightCond.Met(&EffectContext{Resolver: g, It: right, HasIt: true}) {
+	if !rightCond.Met(&EffectContext{
+		Resolver: g,
+		It:       right,
+		HasIt:    true,
+	}) {
 		t.Error("right flank creature should satisfy the right OnFlank")
 	}
-	if rightCond.Met(&EffectContext{Resolver: g, It: left, HasIt: true}) {
+	if rightCond.Met(&EffectContext{
+		Resolver: g,
+		It:       left,
+		HasIt:    true,
+	}) {
 		t.Error("left flank creature should not satisfy the right OnFlank")
 	}
-	if leftCond.Met(&EffectContext{Resolver: g, HasIt: false}) {
+	if leftCond.Met(&EffectContext{
+		Resolver: g,
+		HasIt:    false,
+	}) {
 		t.Error("no context creature should not satisfy a named OnFlank")
 	}
 
 	// A creature whose controller has no battleline is on no flank.
 	g2 := NewGame("A", "B", 1)
 	loose := g2.AddToHand(testCreature("loose", 2), 0)
-	if leftCond.Met(&EffectContext{Resolver: g2, It: loose, HasIt: true}) {
+	if leftCond.Met(&EffectContext{
+		Resolver: g2,
+		It:       loose,
+		HasIt:    true,
+	}) {
 		t.Error("a creature off the battleline should be on no flank")
 	}
 	// A non-creature context card is on no flank either.
 	art := g2.AddArtifact(NewCard("art", Logos, Artifact, Common), 0)
-	if leftCond.Met(&EffectContext{Resolver: g2, It: art, HasIt: true}) {
+	if leftCond.Met(&EffectContext{
+		Resolver: g2,
+		It:       art,
+		HasIt:    true,
+	}) {
 		t.Error("an artifact should not satisfy a named OnFlank")
 	}
 }
@@ -390,11 +500,17 @@ func TestControlsNamedCondition(t *testing.T) {
 		t.Errorf("CondText = %q", c.CondText())
 	}
 	g := NewGame("A", "B", 1)
-	if c.Met(&EffectContext{Resolver: g, Controller: 0}) {
+	if c.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}) {
 		t.Error("no named card in play should not be met")
 	}
 	g.AddToBattleline(NewCard("Velum", Logos, Creature, Common, WithPower(2)), 0)
-	if !c.Met(&EffectContext{Resolver: g, Controller: 0}) {
+	if !c.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}) {
 		t.Error("controlling the named card should be met")
 	}
 }
@@ -408,13 +524,24 @@ func TestOnFlankIt(t *testing.T) {
 	left := g.AddToBattleline(testCreature("left", 2), 1)
 	mid := g.AddToBattleline(testCreature("mid", 2), 1)
 	g.AddToBattleline(testCreature("right", 2), 1)
-	if !c.Met(&EffectContext{Resolver: g, It: left, HasIt: true}) {
+	if !c.Met(&EffectContext{
+		Resolver: g,
+		It:       left,
+		HasIt:    true,
+	}) {
 		t.Error("flank creature should satisfy OnFlank{OfIt}")
 	}
-	if c.Met(&EffectContext{Resolver: g, It: mid, HasIt: true}) {
+	if c.Met(&EffectContext{
+		Resolver: g,
+		It:       mid,
+		HasIt:    true,
+	}) {
 		t.Error("interior creature should not satisfy OnFlank{OfIt}")
 	}
-	if c.Met(&EffectContext{Resolver: g, HasIt: false}) {
+	if c.Met(&EffectContext{
+		Resolver: g,
+		HasIt:    false,
+	}) {
 		t.Error("no context creature should not satisfy OnFlank{OfIt}")
 	}
 }
@@ -456,7 +583,10 @@ func TestSourceHasNoNeighborExcept(t *testing.T) {
 	if c.CondText() != "if "+SelfName+" has no non-Mars neighbor" {
 		t.Errorf("CondText = %q", c.CondText())
 	}
-	ctx := &EffectContext{Resolver: g, Source: src}
+	ctx := &EffectContext{
+		Resolver: g,
+		Source:   src,
+	}
 	if c.Met(ctx) {
 		t.Error("Mars creature with a Brobnar neighbor should not be met")
 	}
@@ -466,7 +596,10 @@ func TestSourceHasNoNeighborExcept(t *testing.T) {
 	g2.AddToBattleline(marsCreature("l"), 0)
 	src2 := g2.AddToBattleline(marsCreature("m"), 0)
 	g2.AddToBattleline(marsCreature("r"), 0)
-	if !c.Met(&EffectContext{Resolver: g2, Source: src2}) {
+	if !c.Met(&EffectContext{
+		Resolver: g2,
+		Source:   src2,
+	}) {
 		t.Error("Mars creature with only Mars neighbors should be met")
 	}
 }
@@ -485,7 +618,10 @@ func TestSourceHasNoNeighborNamed(t *testing.T) {
 	if c.CondText() != "if "+SelfName+" has no Mars neighbor" {
 		t.Errorf("CondText = %q", c.CondText())
 	}
-	if c.Met(&EffectContext{Resolver: g, Source: src}) {
+	if c.Met(&EffectContext{
+		Resolver: g,
+		Source:   src,
+	}) {
 		t.Error("creature with a Mars neighbor should not be met")
 	}
 
@@ -494,7 +630,10 @@ func TestSourceHasNoNeighborNamed(t *testing.T) {
 	g2.AddToBattleline(testCreature("l", 2), 0)
 	src2 := g2.AddToBattleline(testCreature("m", 2), 0)
 	g2.AddToBattleline(testCreature("r", 2), 0)
-	if !c.Met(&EffectContext{Resolver: g2, Source: src2}) {
+	if !c.Met(&EffectContext{
+		Resolver: g2,
+		Source:   src2,
+	}) {
 		t.Error("creature with no Mars neighbor should be met")
 	}
 }
@@ -503,10 +642,16 @@ func TestSourceHasNoNeighborNamed(t *testing.T) {
 // Unifier gates on, expressed as a CountIs over HousesAmong.
 func TestCountIsHousesAmong(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	c := CountIs{
-		Count:  HousesAmong{Player: Controller, Type: Creature},
+		Count: HousesAmong{
+			Player: Controller,
+			Type:   Creature,
+		},
 		Is:     AtLeast,
 		Amount: 3,
 	}
@@ -532,7 +677,11 @@ func TestCountIsHousesAmong(t *testing.T) {
 	if c.Met(ctx) != true {
 		t.Error("duplicate house should still leave 3 distinct houses")
 	}
-	four := CountIs{Count: c.Count, Is: AtLeast, Amount: 4}
+	four := CountIs{
+		Count:  c.Count,
+		Is:     AtLeast,
+		Amount: 4,
+	}
 	if four.Met(ctx) {
 		t.Error("only 3 distinct houses should not meet a Count of 4")
 	}
@@ -540,8 +689,15 @@ func TestCountIsHousesAmong(t *testing.T) {
 
 func TestCardsPlayed(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-	cond := CardsPlayed{Player: Controller, House: namedHouse(Sanctum), Amount: 7}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
+	cond := CardsPlayed{
+		Player: Controller,
+		House:  namedHouse(Sanctum),
+		Amount: 7,
+	}
 	if cond.CondText() != "if you have played 7 or more Sanctum cards this turn" {
 		t.Errorf("cond text = %q", cond.CondText())
 	}
@@ -565,15 +721,21 @@ func TestCardsPlayed(t *testing.T) {
 		t.Error("seven Sanctum cards should satisfy the condition")
 	}
 	// The default threshold is one played card.
-	if (CardsPlayed{Player: Controller, House: namedHouse(Mars)}).Met(ctx) {
+	if (CardsPlayed{
+		Player: Controller,
+		House:  namedHouse(Mars),
+	}).Met(ctx) {
 		t.Error("no Mars cards played should not meet the default threshold")
 	}
 }
 
 func TestRepeatMayWhile(t *testing.T) {
 	e := Repeat{
-		Do:   StealAember{Amount: 1},
-		Gate: MayWhile{Cond: PoolAember{Player: Opponent, Is: MoreThanYou}},
+		Do: StealAember{Amount: 1},
+		Gate: MayWhile{Cond: PoolAember{
+			Player: Opponent,
+			Is:     MoreThanYou,
+		}},
 	}
 	if got := e.Text(); got != "steal 1 Æmber -> if your opponent has more Æmber than you, you may repeat this effect" {
 		t.Errorf("text = %q", got)
@@ -583,7 +745,10 @@ func TestRepeatMayWhile(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Aember[0], g.State.Aember[1] = 0, 5 // opponent leads
 	g.SetChooser(0, optionPicker{idx: 0})       // always "Yes"
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	// 5/0 -> 4/1 -> 3/2 -> 2/3 (opponent no longer leads): Do once plus 2 repeats.
 	if g.Aember(0) != 3 || g.Aember(1) != 2 {
 		t.Errorf("accepted: you=%d opp=%d, want 3/2", g.Aember(0), g.Aember(1))
@@ -593,15 +758,21 @@ func TestRepeatMayWhile(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	g2.State.Aember[0], g2.State.Aember[1] = 0, 5
 	g2.SetChooser(0, optionPicker{idx: 1}) // "No"
-	e.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	})
 	if g2.Aember(0) != 1 || g2.Aember(1) != 4 {
 		t.Errorf("declined: you=%d opp=%d, want 1/4", g2.Aember(0), g2.Aember(1))
 	}
 
 	if err := validateEffect(
 		Repeat{
-			Do:   StealAember{Amount: 1},
-			Gate: MayWhile{Cond: CardsInPlay{Player: Controller, Type: Creature}},
+			Do: StealAember{Amount: 1},
+			Gate: MayWhile{Cond: CardsInPlay{
+				Player: Controller,
+				Type:   Creature,
+			}},
 		},
 	); err != nil {
 		t.Errorf("validate = %v", err)
@@ -612,7 +783,10 @@ func TestRepeatMayWhile(t *testing.T) {
 // player keep picking rather than answering Yes/No.
 func TestRepeatMayWhileDrivenByChoice(t *testing.T) {
 	e := Repeat{
-		Gate: MayWhile{Cond: CardsInPlay{Player: Controller, Type: Creature}},
+		Gate: MayWhile{Cond: CardsInPlay{
+			Player: Controller,
+			Type:   Creature,
+		}},
 		Do: Sequence{Effects: []Effect{
 			Destroy{Target: Target{Kind: TargetChosenEnemyCreature}},
 			Destroy{Target: Target{Kind: TargetChosenFriendlyCreature}},
@@ -626,7 +800,10 @@ func TestRepeatMayWhileDrivenByChoice(t *testing.T) {
 	foeB := accepted.AddToBattleline(testCreature("FoeB", 3), 1)
 	allyA := accepted.AddToBattleline(testCreature("AllyA", 3), 0)
 	allyB := accepted.AddToBattleline(testCreature("AllyB", 3), 0)
-	e.Resolve(&EffectContext{Resolver: accepted, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   accepted,
+		Controller: 0,
+	})
 	for _, id := range []LocalID{foeA, foeB, allyA, allyB} {
 		if onAnyLine(accepted, id) {
 			t.Errorf("creature %d should have been destroyed", id)
@@ -640,7 +817,10 @@ func TestRepeatMayWhileDrivenByChoice(t *testing.T) {
 	survivorFoe := declined.AddToBattleline(testCreature("FoeB", 3), 1)
 	declined.AddToBattleline(testCreature("AllyA", 3), 0)
 	survivorAlly := declined.AddToBattleline(testCreature("AllyB", 3), 0)
-	e.Resolve(&EffectContext{Resolver: declined, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   declined,
+		Controller: 0,
+	})
 	if !onAnyLine(declined, survivorFoe) || !onAnyLine(declined, survivorAlly) {
 		t.Error("declining the repeat should leave the second pair in play")
 	}
@@ -680,14 +860,20 @@ func TestItIs(t *testing.T) {
 
 	g := NewGame("Alice", "Bob", 1)
 	mars := g.AddToDeck(NewCard("Martian", Mars, Creature, Common, WithPower(1)), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// No card in context is never met.
 	if (ItIs{Type: Creature}).Met(ctx) {
 		t.Error("Met with no context card should be false")
 	}
 	ctx.It, ctx.HasIt = mars, true
-	if !(ItIs{House: namedHouse(Mars), Type: Creature}).Met(ctx) {
+	if !(ItIs{
+		House: namedHouse(Mars),
+		Type:  Creature,
+	}).Met(ctx) {
 		t.Error("a Mars creature should match a Mars-creature filter")
 	}
 	if (ItIs{House: namedHouse(Logos)}).Met(ctx) {
@@ -699,11 +885,17 @@ func TestItIs(t *testing.T) {
 
 	// Other bars the source card itself: a creature never counts its own play.
 	ctx.Source = mars + 1 // any card that is not the context card
-	if !(ItIs{Type: Creature, Other: true}).Met(ctx) {
+	if !(ItIs{
+		Type:  Creature,
+		Other: true,
+	}).Met(ctx) {
 		t.Error("another creature should meet an Other filter")
 	}
 	ctx.Source = mars
-	if (ItIs{Type: Creature, Other: true}).Met(ctx) {
+	if (ItIs{
+		Type:  Creature,
+		Other: true,
+	}).Met(ctx) {
 		t.Error("the source card should not meet an Other filter")
 	}
 	ctx.Source = 0
@@ -723,7 +915,10 @@ func TestChoseHouse(t *testing.T) {
 	}
 
 	g := started(t) // active house Brobnar
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	if (ChoseHouse{House: Sanctum}).Met(ctx) {
 		t.Error("Sanctum should not be met while Brobnar is active")
 	}
@@ -736,7 +931,10 @@ func TestAfterChooseHouseTrigger(t *testing.T) {
 	def := NewCard("Bureaucrat", Sanctum, Creature, Rare, WithPower(3),
 		WithAbility(TriggerAfterChooseHouse, Conditional{
 			Cond: ChoseHouse{House: Sanctum},
-			Then: GainAember{Player: Controller, Amount: 2},
+			Then: GainAember{
+				Player: Controller,
+				Amount: 2,
+			},
 		}))
 
 	t.Run("gains when the watched house is chosen", func(t *testing.T) {
@@ -767,7 +965,10 @@ func TestAfterChooseHouseTrigger(t *testing.T) {
 func TestAfterChooseHouseRendering(t *testing.T) {
 	a := Ability{Trigger: TriggerAfterChooseHouse, Effect: Conditional{
 		Cond: ChoseHouse{House: Sanctum},
-		Then: GainAember{Player: Controller, Amount: 2},
+		Then: GainAember{
+			Player: Controller,
+			Amount: 2,
+		},
 	}}
 	if got := RenderAbility(
 		a,
@@ -779,7 +980,10 @@ func TestAfterChooseHouseRendering(t *testing.T) {
 	if _, ok := afterChooseHouseText(
 		Ability{
 			Trigger: TriggerAfterChooseHouse,
-			Effect:  GainAember{Player: Controller, Amount: 1},
+			Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
 		},
 	); ok {
 		t.Error("a non-conditional effect should not fold")
@@ -787,7 +991,10 @@ func TestAfterChooseHouseRendering(t *testing.T) {
 	if _, ok := afterChooseHouseText(
 		Ability{Trigger: TriggerAfterChooseHouse, Effect: Conditional{
 			Cond: ControlsMoreCreatures{},
-			Then: GainAember{Player: Controller, Amount: 1},
+			Then: GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
 		}},
 	); ok {
 		t.Error("a conditional without ChoseHouse should not fold")
@@ -800,7 +1007,10 @@ func TestAfterChooseHouseRendering(t *testing.T) {
 func TestEachPlayerChooseHouseRendering(t *testing.T) {
 	a := Ability{Trigger: TriggerAfterChooseHouse, EachPlayer: true, Effect: Conditional{
 		Cond: ChoseHouse{House: Brobnar},
-		Then: GainAember{Player: Controller, Amount: 1},
+		Then: GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
 	}}
 	if got := RenderAbility(
 		a,
@@ -813,7 +1023,10 @@ func TestEachPlayerChooseHouseRendering(t *testing.T) {
 	if got := RenderAbility(Ability{
 		Trigger:    TriggerAfterChooseHouse,
 		EachPlayer: true,
-		Effect:     GainAember{Player: Controller, Amount: 1},
+		Effect: GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
 	}); got != "After a player chooses an active house, gain 1 Æmber." {
 		t.Errorf("conditionless each-player render = %q", got)
 	}
@@ -823,7 +1036,10 @@ func TestEachPlayerChooseHouseRendering(t *testing.T) {
 		Ability{
 			Trigger:    TriggerAfterChooseHouse,
 			EachPlayer: true,
-			Effect:     GainAember{Player: Controller, Amount: 1},
+			Effect: GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
 		},
 	); ok {
 		t.Error("a non-conditional effect should not fold")
@@ -831,7 +1047,10 @@ func TestEachPlayerChooseHouseRendering(t *testing.T) {
 	if _, ok := afterChooseHouseText(
 		Ability{Trigger: TriggerAfterChooseHouse, EachPlayer: true, Effect: Conditional{
 			Cond: ControlsMoreCreatures{},
-			Then: GainAember{Player: Controller, Amount: 1},
+			Then: GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
 		}},
 	); ok {
 		t.Error("a conditional without ChoseHouse should not fold")
@@ -849,55 +1068,108 @@ func TestPoolAember(t *testing.T) {
 	// The threshold comparisons validate for either side.
 	for _, p := range []Player{Opponent, Controller} {
 		for _, is := range []Comparison{AtLeast, AtMost, Exactly} {
-			if (PoolAember{Player: p, Is: is}).validate() != nil {
+			if (PoolAember{
+				Player: p,
+				Is:     is,
+			}).validate() != nil {
 				t.Errorf("player %d comparison %d should validate", p, is)
 			}
 		}
 	}
 	// Each relative comparison is tied to the side it reads from.
-	if (PoolAember{Player: Opponent, Is: MoreThanYou}).validate() != nil {
+	if (PoolAember{
+		Player: Opponent,
+		Is:     MoreThanYou,
+	}).validate() != nil {
 		t.Error("MoreThanYou with Opponent should validate")
 	}
-	if (PoolAember{Player: Controller, Is: MoreThanYou}).validate() == nil {
+	if (PoolAember{
+		Player: Controller,
+		Is:     MoreThanYou,
+	}).validate() == nil {
 		t.Error("MoreThanYou with Controller should be invalid")
 	}
-	if (PoolAember{Player: Controller, Is: MoreThanOpponent}).validate() != nil {
+	if (PoolAember{
+		Player: Controller,
+		Is:     MoreThanOpponent,
+	}).validate() != nil {
 		t.Error("MoreThanOpponent with Controller should validate")
 	}
-	if (PoolAember{Player: Opponent, Is: MoreThanOpponent}).validate() == nil {
+	if (PoolAember{
+		Player: Opponent,
+		Is:     MoreThanOpponent,
+	}).validate() == nil {
 		t.Error("MoreThanOpponent with Opponent should be invalid")
 	}
 
 	// Opponent-pool wording.
-	if got := (PoolAember{Player: Opponent, Is: AtLeast, Amount: 7}).CondText(); got != "if your opponent has 7 Æmber or more" {
+	if got := (PoolAember{
+		Player: Opponent,
+		Is:     AtLeast,
+		Amount: 7,
+	}).CondText(); got != "if your opponent has 7 Æmber or more" {
 		t.Errorf("opp at-least text = %q", got)
 	}
-	if got := (PoolAember{Player: Opponent, Is: AtMost, Amount: 3}).CondText(); got != "if your opponent has 3 Æmber or fewer" {
+	if got := (PoolAember{
+		Player: Opponent,
+		Is:     AtMost,
+		Amount: 3,
+	}).CondText(); got != "if your opponent has 3 Æmber or fewer" {
 		t.Errorf("opp at-most text = %q", got)
 	}
-	if got := (PoolAember{Player: Opponent, Is: Exactly, Amount: 1}).CondText(); got != "if your opponent has exactly 1 Æmber" {
+	if got := (PoolAember{
+		Player: Opponent,
+		Is:     Exactly,
+		Amount: 1,
+	}).CondText(); got != "if your opponent has exactly 1 Æmber" {
 		t.Errorf("opp exact text = %q", got)
 	}
-	if got := (PoolAember{Player: Opponent, Is: Exactly, Amount: 0}).CondText(); got != "if your opponent has no Æmber" {
+	if got := (PoolAember{
+		Player: Opponent,
+		Is:     Exactly,
+		Amount: 0,
+	}).CondText(); got != "if your opponent has no Æmber" {
 		t.Errorf("opp zero text = %q", got)
 	}
-	if got := (PoolAember{Player: Opponent, Is: MoreThanYou}).CondText(); got != "if your opponent has more Æmber than you" {
+	if got := (PoolAember{
+		Player: Opponent,
+		Is:     MoreThanYou,
+	}).CondText(); got != "if your opponent has more Æmber than you" {
 		t.Errorf("more-than-you text = %q", got)
 	}
 	// Controller-pool wording.
-	if got := (PoolAember{Player: Controller, Is: AtLeast, Amount: 3}).CondText(); got != "if you have 3 Æmber or more" {
+	if got := (PoolAember{
+		Player: Controller,
+		Is:     AtLeast,
+		Amount: 3,
+	}).CondText(); got != "if you have 3 Æmber or more" {
 		t.Errorf("you at-least text = %q", got)
 	}
-	if got := (PoolAember{Player: Controller, Is: AtMost, Amount: 2}).CondText(); got != "if you have 2 Æmber or fewer" {
+	if got := (PoolAember{
+		Player: Controller,
+		Is:     AtMost,
+		Amount: 2,
+	}).CondText(); got != "if you have 2 Æmber or fewer" {
 		t.Errorf("you at-most text = %q", got)
 	}
-	if got := (PoolAember{Player: Controller, Is: Exactly, Amount: 1}).CondText(); got != "if you have exactly 1 Æmber" {
+	if got := (PoolAember{
+		Player: Controller,
+		Is:     Exactly,
+		Amount: 1,
+	}).CondText(); got != "if you have exactly 1 Æmber" {
 		t.Errorf("you exact text = %q", got)
 	}
-	if got := (PoolAember{Player: Controller, Is: Exactly, Amount: 0}).CondText(); got != "if you have no Æmber" {
+	if got := (PoolAember{
+		Player: Controller,
+		Is:     Exactly,
+		Amount: 0,
+	}).CondText(); got != "if you have no Æmber" {
 		t.Errorf("you zero text = %q", got)
 	}
-	if got := (PoolAember{Player: Controller, Is: MoreThanOpponent}).CondText(); got != "if you have more Æmber than your opponent" {
+	if got := (PoolAember{
+		Player: Controller,
+		Is:     MoreThanOpponent,
+	}).CondText(); got != "if you have more Æmber than your opponent" {
 		t.Errorf("more-than-opponent text = %q", got)
 	}
 
@@ -905,68 +1177,151 @@ func TestPoolAember(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Aember[0] = 2 // controller
 	g.State.Aember[1] = 3 // opponent
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-	if !(PoolAember{Player: Opponent, Is: AtLeast, Amount: 3}).Met(ctx) ||
-		(PoolAember{Player: Opponent, Is: AtLeast, Amount: 4}).Met(ctx) {
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
+	if !(PoolAember{
+		Player: Opponent,
+		Is:     AtLeast,
+		Amount: 3,
+	}).Met(ctx) ||
+		(PoolAember{
+			Player: Opponent,
+			Is:     AtLeast,
+			Amount: 4,
+		}).Met(ctx) {
 		t.Error("opponent AtLeast wrong")
 	}
-	if !(PoolAember{Player: Opponent, Is: AtMost, Amount: 3}).Met(ctx) ||
-		(PoolAember{Player: Opponent, Is: AtMost, Amount: 2}).Met(ctx) {
+	if !(PoolAember{
+		Player: Opponent,
+		Is:     AtMost,
+		Amount: 3,
+	}).Met(ctx) ||
+		(PoolAember{
+			Player: Opponent,
+			Is:     AtMost,
+			Amount: 2,
+		}).Met(ctx) {
 		t.Error("opponent AtMost wrong")
 	}
-	if !(PoolAember{Player: Opponent, Is: Exactly, Amount: 3}).Met(ctx) ||
-		(PoolAember{Player: Opponent, Is: Exactly, Amount: 2}).Met(ctx) {
+	if !(PoolAember{
+		Player: Opponent,
+		Is:     Exactly,
+		Amount: 3,
+	}).Met(ctx) ||
+		(PoolAember{
+			Player: Opponent,
+			Is:     Exactly,
+			Amount: 2,
+		}).Met(ctx) {
 		t.Error("opponent Exactly wrong")
 	}
-	if !(PoolAember{Player: Controller, Is: AtLeast, Amount: 2}).Met(ctx) ||
-		(PoolAember{Player: Controller, Is: AtMost, Amount: 1}).Met(ctx) {
+	if !(PoolAember{
+		Player: Controller,
+		Is:     AtLeast,
+		Amount: 2,
+	}).Met(ctx) ||
+		(PoolAember{
+			Player: Controller,
+			Is:     AtMost,
+			Amount: 1,
+		}).Met(ctx) {
 		t.Error("controller threshold wrong")
 	}
-	if !(PoolAember{Player: Opponent, Is: MoreThanYou}).Met(ctx) {
+	if !(PoolAember{
+		Player: Opponent,
+		Is:     MoreThanYou,
+	}).Met(ctx) {
 		t.Error("MoreThanYou should hold when opp 3 > you 2")
 	}
-	if (PoolAember{Player: Controller, Is: MoreThanOpponent}).Met(ctx) {
+	if (PoolAember{
+		Player: Controller,
+		Is:     MoreThanOpponent,
+	}).Met(ctx) {
 		t.Error("MoreThanOpponent should not hold when you 2 < opp 3")
 	}
 	// Level the pools: neither relative comparison holds.
 	g.State.Aember[0] = 3
-	if (PoolAember{Player: Opponent, Is: MoreThanYou}).Met(ctx) {
+	if (PoolAember{
+		Player: Opponent,
+		Is:     MoreThanYou,
+	}).Met(ctx) {
 		t.Error("MoreThanYou should not hold when 3 == 3")
 	}
-	if (PoolAember{Player: Controller, Is: MoreThanOpponent}).Met(ctx) {
+	if (PoolAember{
+		Player: Controller,
+		Is:     MoreThanOpponent,
+	}).Met(ctx) {
 		t.Error("MoreThanOpponent should not hold when 3 == 3")
 	}
 
 	// Parity comparisons ignore Amount and apply to either player.
-	if (PoolAember{Player: Opponent, Is: Even}).validate() != nil ||
-		(PoolAember{Player: Controller, Is: Odd}).validate() != nil {
+	if (PoolAember{
+		Player: Opponent,
+		Is:     Even,
+	}).validate() != nil ||
+		(PoolAember{
+			Player: Controller,
+			Is:     Odd,
+		}).validate() != nil {
 		t.Error("Even/Odd should validate for either player")
 	}
-	if got := (PoolAember{Player: Opponent, Is: Even}).CondText(); got != "if your opponent has an even amount of Æmber" {
+	if got := (PoolAember{
+		Player: Opponent,
+		Is:     Even,
+	}).CondText(); got != "if your opponent has an even amount of Æmber" {
 		t.Errorf("opp even text = %q", got)
 	}
-	if got := (PoolAember{Player: Opponent, Is: Odd}).CondText(); got != "if your opponent has an odd amount of Æmber" {
+	if got := (PoolAember{
+		Player: Opponent,
+		Is:     Odd,
+	}).CondText(); got != "if your opponent has an odd amount of Æmber" {
 		t.Errorf("opp odd text = %q", got)
 	}
-	if got := (PoolAember{Player: Controller, Is: Even}).CondText(); got != "if you have an even amount of Æmber" {
+	if got := (PoolAember{
+		Player: Controller,
+		Is:     Even,
+	}).CondText(); got != "if you have an even amount of Æmber" {
 		t.Errorf("you even text = %q", got)
 	}
-	if got := (PoolAember{Player: Controller, Is: Odd}).CondText(); got != "if you have an odd amount of Æmber" {
+	if got := (PoolAember{
+		Player: Controller,
+		Is:     Odd,
+	}).CondText(); got != "if you have an odd amount of Æmber" {
 		t.Errorf("you odd text = %q", got)
 	}
 	// Both pools are 3 (odd) here.
-	if !(PoolAember{Player: Opponent, Is: Odd}).Met(ctx) ||
-		(PoolAember{Player: Opponent, Is: Even}).Met(ctx) {
+	if !(PoolAember{
+		Player: Opponent,
+		Is:     Odd,
+	}).Met(ctx) ||
+		(PoolAember{
+			Player: Opponent,
+			Is:     Even,
+		}).Met(ctx) {
 		t.Error("odd pool parity wrong")
 	}
 	g.State.Aember[1] = 2 // opponent even
-	if !(PoolAember{Player: Opponent, Is: Even}).Met(ctx) ||
-		(PoolAember{Player: Opponent, Is: Odd}).Met(ctx) {
+	if !(PoolAember{
+		Player: Opponent,
+		Is:     Even,
+	}).Met(ctx) ||
+		(PoolAember{
+			Player: Opponent,
+			Is:     Odd,
+		}).Met(ctx) {
 		t.Error("even pool parity wrong")
 	}
 
 	// Conditional surfaces an unset condition at validation time.
-	if (Conditional{Cond: PoolAember{}, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
+	if (Conditional{
+		Cond: PoolAember{},
+		Then: GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
+	}).validate() == nil {
 		t.Error("Conditional should surface an invalid condition")
 	}
 }
@@ -978,7 +1333,10 @@ func TestOrCondition(t *testing.T) {
 	rich := g.AddToBattleline(testCreature("rich", 3), 1)
 	plain := g.AddToBattleline(testCreature("plain", 3), 1)
 	g.State.Cards[rich].Amber = 1
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	trait := ItIsOfTrait{Trait: Dinosaur}
 	aember := HasAember{}
@@ -1027,8 +1385,14 @@ func TestOrCondition(t *testing.T) {
 // differ only in a single named house renders as one phrase (Ambassador Liu).
 func TestOrCombinesNamedHouses(t *testing.T) {
 	cards := Or{Conditions: []Condition{
-		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Dis}},
-		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Shadows}},
+		ItIs{House: HouseMatcher{
+			Kind:  MatchNamedHouse,
+			House: Dis,
+		}},
+		ItIs{House: HouseMatcher{
+			Kind:  MatchNamedHouse,
+			House: Shadows,
+		}},
 	}}
 	if got := cards.CondText(); got != "if it is a Dis or Shadows card" {
 		t.Errorf("combined house text = %q", got)
@@ -1036,8 +1400,20 @@ func TestOrCombinesNamedHouses(t *testing.T) {
 
 	// Sharing a type folds the type into the combined noun.
 	creatures := Or{Conditions: []Condition{
-		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Untamed}, Type: Creature},
-		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Logos}, Type: Creature},
+		ItIs{
+			House: HouseMatcher{
+				Kind:  MatchNamedHouse,
+				House: Untamed,
+			},
+			Type: Creature,
+		},
+		ItIs{
+			House: HouseMatcher{
+				Kind:  MatchNamedHouse,
+				House: Logos,
+			},
+			Type: Creature,
+		},
 	}}
 	if got := creatures.CondText(); got != "if it is an Untamed or Logos creature" {
 		t.Errorf("combined creature text = %q", got)
@@ -1045,8 +1421,20 @@ func TestOrCombinesNamedHouses(t *testing.T) {
 
 	// A differing type breaks the fold, so each clause renders on its own.
 	mixed := Or{Conditions: []Condition{
-		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Dis}, Type: Creature},
-		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Shadows}, Type: Artifact},
+		ItIs{
+			House: HouseMatcher{
+				Kind:  MatchNamedHouse,
+				House: Dis,
+			},
+			Type: Creature,
+		},
+		ItIs{
+			House: HouseMatcher{
+				Kind:  MatchNamedHouse,
+				House: Shadows,
+			},
+			Type: Artifact,
+		},
 	}}
 	if got := mixed.CondText(); got != "if it is a Dis creature or it is a Shadows artifact" {
 		t.Errorf("mixed text = %q", got)
@@ -1054,7 +1442,10 @@ func TestOrCombinesNamedHouses(t *testing.T) {
 
 	// A non-ItIs clause breaks the fold too.
 	nonHouse := Or{Conditions: []Condition{
-		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Dis}},
+		ItIs{House: HouseMatcher{
+			Kind:  MatchNamedHouse,
+			House: Dis,
+		}},
 		HasAember{},
 	}}
 	if got := nonHouse.CondText(); got != "if it is a Dis card or it has Æmber on it" {
@@ -1064,7 +1455,10 @@ func TestOrCombinesNamedHouses(t *testing.T) {
 	// An ItIs that filters by something other than a single named house
 	// (here the active house) breaks the fold, so each clause renders on its own.
 	notNamed := Or{Conditions: []Condition{
-		ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Dis}},
+		ItIs{House: HouseMatcher{
+			Kind:  MatchNamedHouse,
+			House: Dis,
+		}},
 		ItIs{House: activeHouse},
 	}}
 	if got := notNamed.CondText(); got != "if it is a Dis card or it is of the active house" {
@@ -1078,7 +1472,10 @@ func TestAndCondition(t *testing.T) {
 	theirs := g.AddToBattleline(
 		NewCard("theirs", Sanctum, Creature, Common, WithPower(3), WithTraits(Mutant)), 1)
 	plain := g.AddToBattleline(testCreature("plain", 3), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	friendly := ItIsFriendly{}
 	trait := ItIsOfTrait{Trait: Mutant}
@@ -1137,14 +1534,26 @@ func TestAndCollapsesItShapeClauses(t *testing.T) {
 		name: "a house joins the phrase",
 		conds: []Condition{
 			ItIsFriendly{},
-			ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Mars}, Type: Creature},
+			ItIs{
+				House: HouseMatcher{
+					Kind:  MatchNamedHouse,
+					House: Mars,
+				},
+				Type: Creature,
+			},
 		},
 		want: "if it is a friendly Mars creature",
 	}, {
 		name: "clauses that disagree on the noun do not collapse",
 		conds: []Condition{
 			ItIsFriendly{},
-			ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Mars}, Type: Artifact},
+			ItIs{
+				House: HouseMatcher{
+					Kind:  MatchNamedHouse,
+					House: Mars,
+				},
+				Type: Artifact,
+			},
 		},
 		want: "if it is a friendly creature and it is a Mars artifact",
 	}, {
@@ -1163,7 +1572,10 @@ func TestAndCollapsesItShapeClauses(t *testing.T) {
 		conds: []Condition{
 			ItIsFriendly{},
 			ItIs{
-				House: HouseMatcher{Kind: MatchNamedHouse, House: Mars},
+				House: HouseMatcher{
+					Kind:  MatchNamedHouse,
+					House: Mars,
+				},
 				Type:  Creature,
 				Other: true,
 			},
@@ -1174,9 +1586,12 @@ func TestAndCollapsesItShapeClauses(t *testing.T) {
 		conds: []Condition{
 			ItIsFriendly{},
 			ItIs{
-				House: HouseMatcher{Kind: MatchNamedHouse, House: Mars},
-				Type:  Creature,
-				Noun:  ThatCard,
+				House: HouseMatcher{
+					Kind:  MatchNamedHouse,
+					House: Mars,
+				},
+				Type: Creature,
+				Noun: ThatCard,
 			},
 		},
 		want: "if it is a friendly creature and that card is a Mars creature",
@@ -1201,7 +1616,10 @@ func TestItHasBonusIcon(t *testing.T) {
 	if got := cond.CondText(); got != "if it has a bonus icon" {
 		t.Errorf("text = %q", got)
 	}
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	if cond.Met(ctx) {
 		t.Error("with no card in context the condition should not be met")
 	}
@@ -1223,18 +1641,29 @@ func TestCountIs(t *testing.T) {
 	}{
 		{
 			name: "at least, plural",
-			cond: CountIs{Count: CreaturesUsed{Player: Controller}, Is: AtLeast, Amount: 3},
+			cond: CountIs{
+				Count:  CreaturesUsed{Player: Controller},
+				Is:     AtLeast,
+				Amount: 3,
+			},
 			want: "if you used 3 or more creatures this turn",
 		},
 		{
 			name: "exactly one, singular",
-			cond: CountIs{Count: CardsPlayed{Player: Controller}, Is: Exactly, Amount: 1},
+			cond: CountIs{
+				Count:  CardsPlayed{Player: Controller},
+				Is:     Exactly,
+				Amount: 1,
+			},
 			want: "if you played exactly 1 card this turn",
 		},
 		{
 			name: "house-filtered",
 			cond: CountIs{
-				Count:  CardsPlayed{Player: Controller, House: namedHouse(Mars)},
+				Count: CardsPlayed{
+					Player: Controller,
+					House:  namedHouse(Mars),
+				},
 				Is:     Exactly,
 				Amount: 2,
 			},
@@ -1242,7 +1671,11 @@ func TestCountIs(t *testing.T) {
 		},
 		{
 			name: "mass noun ignores plurality",
-			cond: CountIs{Count: DamageHealed{}, Is: Exactly, Amount: 3},
+			cond: CountIs{
+				Count:  DamageHealed{},
+				Is:     Exactly,
+				Amount: 3,
+			},
 			want: "if you healed exactly 3 damage",
 		},
 	}
@@ -1257,13 +1690,22 @@ func TestCountIs(t *testing.T) {
 		})
 	}
 
-	if err := (CountIs{Is: AtLeast, Amount: 1}).validate(); err == nil {
+	if err := (CountIs{
+		Is:     AtLeast,
+		Amount: 1,
+	}).validate(); err == nil {
 		t.Error("a missing Count should be rejected")
 	}
-	if err := (CountIs{Count: CreaturesDestroyed{}, Is: AtLeast}).validate(); err == nil {
+	if err := (CountIs{
+		Count: CreaturesDestroyed{},
+		Is:    AtLeast,
+	}).validate(); err == nil {
 		t.Error("a Count with no clause should be rejected")
 	}
-	if err := (CountIs{Count: DamageHealed{}, Is: MoreThanYou}).validate(); err == nil {
+	if err := (CountIs{
+		Count: DamageHealed{},
+		Is:    MoreThanYou,
+	}).validate(); err == nil {
 		t.Error("MoreThanYou should be rejected: it compares two Æmber pools")
 	}
 }
@@ -1273,9 +1715,17 @@ func TestCountIsMet(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	used := g.AddToBattleline(testCreature("used", 3), 0)
 	g.AddToBattleline(testCreature("idle", 3), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
-	atLeastOne := CountIs{Count: CreaturesUsed{Player: Controller}, Is: AtLeast, Amount: 1}
+	atLeastOne := CountIs{
+		Count:  CreaturesUsed{Player: Controller},
+		Is:     AtLeast,
+		Amount: 1,
+	}
 	if atLeastOne.Met(ctx) {
 		t.Error("no creature has been used yet")
 	}
@@ -1284,7 +1734,11 @@ func TestCountIsMet(t *testing.T) {
 		t.Error("the reaped creature should count as used")
 	}
 
-	exactlyOne := CountIs{Count: CreaturesUsed{Player: Controller}, Is: Exactly, Amount: 1}
+	exactlyOne := CountIs{
+		Count:  CreaturesUsed{Player: Controller},
+		Is:     Exactly,
+		Amount: 1,
+	}
 	if !exactlyOne.Met(ctx) {
 		t.Error("exactly one creature has been used")
 	}
@@ -1299,10 +1753,20 @@ func TestCountIsParity(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	used := g.AddToBattleline(testCreature("used", 3), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
-	even := CountIs{Count: CreaturesUsed{Player: Controller}, Is: Even}
-	odd := CountIs{Count: CreaturesUsed{Player: Controller}, Is: Odd}
+	even := CountIs{
+		Count: CreaturesUsed{Player: Controller},
+		Is:    Even,
+	}
+	odd := CountIs{
+		Count: CreaturesUsed{Player: Controller},
+		Is:    Odd,
+	}
 	for _, c := range []CountIs{even, odd} {
 		if err := c.validate(); err != nil {
 			t.Fatalf("parity comparison rejected: %v", err)
@@ -1327,7 +1791,11 @@ func TestCountIsParity(t *testing.T) {
 func TestCardsPlayedCountsEveryHouseWhenUnset(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 3), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 	g.State.PlayedThisTurn[0].add(g.AddToHand(testCreature("brobnar", 3), 0))
 	g.State.PlayedThisTurn[0].add(
 		g.AddToHand(NewCard("logos", Logos, Creature, Common, WithPower(3)), 0),
@@ -1336,7 +1804,10 @@ func TestCardsPlayedCountsEveryHouseWhenUnset(t *testing.T) {
 	if got := (CardsPlayed{Player: Controller}).Value(ctx); got != 2 {
 		t.Errorf("unfiltered value = %d, want 2 (every house counts)", got)
 	}
-	if got := (CardsPlayed{Player: Controller, House: namedHouse(Logos)}).Value(ctx); got != 1 {
+	if got := (CardsPlayed{
+		Player: Controller,
+		House:  namedHouse(Logos),
+	}).Value(ctx); got != 1 {
 		t.Errorf("house-filtered value = %d, want 1", got)
 	}
 }
@@ -1348,7 +1819,10 @@ func TestFirstCreaturePlayedThisTurn(t *testing.T) {
 	}
 
 	g := started(t)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	if cond.Met(ctx) {
 		t.Error("with no card in context the condition should not be met")
 	}
@@ -1360,17 +1834,32 @@ func TestFirstCreaturePlayedThisTurn(t *testing.T) {
 	if err := g.PlayTactic(0, handIdxByID(g, 0, tactic)); err != nil {
 		t.Fatalf("play tactic: %v", err)
 	}
-	if cond.Met(&EffectContext{Resolver: g, Controller: 0, It: first, HasIt: true}) {
+	if cond.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         first,
+		HasIt:      true,
+	}) {
 		t.Error("a creature that was not played should not meet the condition")
 	}
 
 	if _, err := g.PlayCreature(0, handIdxByID(g, 0, first), false); err != nil {
 		t.Fatalf("play first: %v", err)
 	}
-	if !cond.Met(&EffectContext{Resolver: g, Controller: 0, It: first, HasIt: true}) {
+	if !cond.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         first,
+		HasIt:      true,
+	}) {
 		t.Error("the first creature played should meet the condition")
 	}
-	if cond.Met(&EffectContext{Resolver: g, Controller: 0, It: second, HasIt: true}) {
+	if cond.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         second,
+		HasIt:      true,
+	}) {
 		t.Error("a later creature should not meet the condition")
 	}
 }
@@ -1382,7 +1871,10 @@ func TestNoCreaturesPlayedThisTurn(t *testing.T) {
 	}
 
 	g := started(t)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	if !cond.Met(ctx) {
 		t.Error("having played nothing, the condition should be met")
 	}
@@ -1412,23 +1904,37 @@ func TestItIsYourTurn(t *testing.T) {
 	if got := (ItIsYourTurn{}).CondText(); got != "if it is your turn" {
 		t.Errorf("text = %q, want %q", got, "if it is your turn")
 	}
-	if !(ItIsYourTurn{}).Met(&EffectContext{Resolver: g, Controller: 0}) {
+	if !(ItIsYourTurn{}).Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}) {
 		t.Error("should be met for the active player")
 	}
-	if (ItIsYourTurn{}).Met(&EffectContext{Resolver: g, Controller: 1}) {
+	if (ItIsYourTurn{}).Met(&EffectContext{
+		Resolver:   g,
+		Controller: 1,
+	}) {
 		t.Error("should not be met for the inactive player")
 	}
 }
 
 func TestAemberOnThisAtLeast(t *testing.T) {
-	c := CountIs{Count: AemberOnThis{}, Is: AtLeast, Amount: 4}
+	c := CountIs{
+		Count:  AemberOnThis{},
+		Is:     AtLeast,
+		Amount: 4,
+	}
 	if got := c.CondText(); got != "if there are 4 or more Æmber on it" {
 		t.Errorf("text = %q", got)
 	}
 	g := NewGame("A", "B", 1)
 	vault := NewCard("Safe Place", Shadows, Artifact, Rare)
 	id := g.AddArtifact(vault, 0)
-	ctx := &EffectContext{Resolver: g, Source: id, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     id,
+		Controller: 0,
+	}
 	if c.Met(ctx) {
 		t.Error("should not be met below the threshold")
 	}
@@ -1438,7 +1944,11 @@ func TestAemberOnThisAtLeast(t *testing.T) {
 	}
 
 	// Not flips the sense to "fewer than", met below the threshold and not above.
-	fewer := Not{Cond: CountIs{Count: AemberOnThis{}, Is: AtLeast, Amount: 10}}
+	fewer := Not{Cond: CountIs{
+		Count:  AemberOnThis{},
+		Is:     AtLeast,
+		Amount: 10,
+	}}
 	if got := fewer.CondText(); got != "if there are fewer than 10 Æmber on it" {
 		t.Errorf("negated text = %q", got)
 	}
@@ -1465,7 +1975,11 @@ func TestNamedCardPurged(t *testing.T) {
 
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("Igon the Terrible", 8), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	}
 
 	if present.Met(ctx) {
 		t.Error("nothing purged yet, present should not be met")
@@ -1500,12 +2014,20 @@ func TestFirstReapOfTurn(t *testing.T) {
 	second := g.AddToBattleline(NewCard("second", Brobnar, Creature, Common, WithPower(3)), 0)
 
 	g.reapWith(first)
-	if !(FirstReapOfTurn{}).Met(&EffectContext{Resolver: g, It: first, HasIt: true}) {
+	if !(FirstReapOfTurn{}).Met(&EffectContext{
+		Resolver: g,
+		It:       first,
+		HasIt:    true,
+	}) {
 		t.Error("the first reap of the turn should meet the condition")
 	}
 
 	g.reapWith(second)
-	if (FirstReapOfTurn{}).Met(&EffectContext{Resolver: g, It: second, HasIt: true}) {
+	if (FirstReapOfTurn{}).Met(&EffectContext{
+		Resolver: g,
+		It:       second,
+		HasIt:    true,
+	}) {
 		t.Error("a later reap should not meet the condition")
 	}
 }
@@ -1520,18 +2042,27 @@ func TestSourceFirstUseThisTurn(t *testing.T) {
 
 	g := started(t)
 	c := g.AddToBattleline(NewCard("glad", Saurian, Creature, Common, WithPower(5)), 0)
-	if (SourceFirstUseThisTurn{}).Met(&EffectContext{Resolver: g, Source: c}) {
+	if (SourceFirstUseThisTurn{}).Met(&EffectContext{
+		Resolver: g,
+		Source:   c,
+	}) {
 		t.Error("an unused creature should not meet the condition")
 	}
 
 	g.reapWith(c)
-	if !(SourceFirstUseThisTurn{}).Met(&EffectContext{Resolver: g, Source: c}) {
+	if !(SourceFirstUseThisTurn{}).Met(&EffectContext{
+		Resolver: g,
+		Source:   c,
+	}) {
 		t.Error("the first use of the turn should meet the condition")
 	}
 
 	g.SetExhausted(c, false)
 	g.reapWith(c)
-	if (SourceFirstUseThisTurn{}).Met(&EffectContext{Resolver: g, Source: c}) {
+	if (SourceFirstUseThisTurn{}).Met(&EffectContext{
+		Resolver: g,
+		Source:   c,
+	}) {
 		t.Error("a second use should not meet the condition")
 	}
 }
@@ -1539,13 +2070,23 @@ func TestSourceFirstUseThisTurn(t *testing.T) {
 // TestCardsInDeckAtMost covers the deck-size threshold Manchego reads before it
 // steals.
 func TestCardsInDeckAtMost(t *testing.T) {
-	e := CountIs{Count: CardsInZone{Zone: Deck, Player: Controller}, Is: AtMost, Amount: 5}
+	e := CountIs{
+		Count: CardsInZone{
+			Zone:   Deck,
+			Player: Controller,
+		},
+		Is:     AtMost,
+		Amount: 5,
+	}
 	if got := e.CondText(); got != "if you have 5 or fewer cards in your deck" {
 		t.Errorf("CondText = %q", got)
 	}
 
 	g := started(t)
-	if !e.Met(&EffectContext{Resolver: g, Controller: 0}) {
+	if !e.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}) {
 		t.Error("a small deck should meet the condition")
 	}
 
@@ -1554,7 +2095,10 @@ func TestCardsInDeckAtMost(t *testing.T) {
 			g.Register(NewCard("filler", Brobnar, Creature, Common, WithPower(3)), 0),
 		)
 	}
-	if e.Met(&EffectContext{Resolver: g, Controller: 0}) {
+	if e.Met(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}) {
 		t.Error("a large deck should not meet the condition")
 	}
 }
@@ -1570,7 +2114,12 @@ func TestItAttachedToThisOrNeighbor(t *testing.T) {
 
 	cond := ItAttachedToThisOrNeighbor{}
 	ctx := func(it LocalID, has bool) *EffectContext {
-		return &EffectContext{Resolver: g, Source: dhrx, It: it, HasIt: has}
+		return &EffectContext{
+			Resolver: g,
+			Source:   dhrx,
+			It:       it,
+			HasIt:    has,
+		}
 	}
 
 	// No card in context.
@@ -1608,8 +2157,16 @@ func TestMoveAemberRecordsMovedTally(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
 	g.AddAmberOn(foe, 2)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-	MoveAember{All: true, From: from, To: Opponent, Bind: true}.Resolve(ctx)
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
+	MoveAember{
+		All:  true,
+		From: from,
+		To:   Opponent,
+		Bind: true,
+	}.Resolve(ctx)
 	if ctx.Produced.AemberMoved != 2 {
 		t.Errorf("AemberMoved = %d, want 2", ctx.Produced.AemberMoved)
 	}
@@ -1617,8 +2174,16 @@ func TestMoveAemberRecordsMovedTally(t *testing.T) {
 	// A creature with no Æmber records zero moved.
 	g2 := NewGame("A", "B", 1)
 	g2.AddToBattleline(testCreature("bare", 3), 1)
-	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	MoveAember{All: true, From: from, To: Opponent, Bind: true}.Resolve(ctx2)
+	ctx2 := &EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	}
+	MoveAember{
+		All:  true,
+		From: from,
+		To:   Opponent,
+		Bind: true,
+	}.Resolve(ctx2)
 	if ctx2.Produced.AemberMoved != 0 {
 		t.Errorf("AemberMoved = %d with no Æmber, want 0", ctx2.Produced.AemberMoved)
 	}
@@ -1636,10 +2201,16 @@ func TestMovedAnyAember(t *testing.T) {
 		t.Errorf("named CondText = %q", got)
 	}
 	g := NewGame("A", "B", 1)
-	if (MovedAnyAember{}).Met(&EffectContext{Resolver: g, Produced: Produced{AemberMoved: 0}}) {
+	if (MovedAnyAember{}).Met(&EffectContext{
+		Resolver: g,
+		Produced: Produced{AemberMoved: 0},
+	}) {
 		t.Error("Met with no Æmber moved should be false")
 	}
-	if !(MovedAnyAember{}).Met(&EffectContext{Resolver: g, Produced: Produced{AemberMoved: 1}}) {
+	if !(MovedAnyAember{}).Met(&EffectContext{
+		Resolver: g,
+		Produced: Produced{AemberMoved: 1},
+	}) {
 		t.Error("Met with Æmber moved should be true")
 	}
 }
@@ -1652,7 +2223,10 @@ func TestOverwhelmed(t *testing.T) {
 	g.AddToBattleline(testCreature("o1", 2), 1)
 	g.AddToBattleline(testCreature("o2", 2), 1)
 	g.AddToBattleline(testCreature("m1", 2), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	if !(Overwhelmed{}).Met(ctx) {
 		t.Error("should be overwhelmed when the opponent controls more creatures")
 	}
@@ -1670,7 +2244,10 @@ func TestKeyCostChangeWhileCondition(t *testing.T) {
 		return NewCard("proc", Sanctum, Artifact, Rare,
 			WithKeyCost(NewKeyCostChange(Opponent, 2).While(
 				Not{Cond: CountIs{
-					Count:  HousesAmong{Player: Opponent, Type: Creature},
+					Count: HousesAmong{
+						Player: Opponent,
+						Type:   Creature,
+					},
 					Is:     AtLeast,
 					Amount: 3,
 				}})))
@@ -1720,7 +2297,14 @@ func TestKeyCostChangeWhileCondition(t *testing.T) {
 func TestOrAmountStealAember(t *testing.T) {
 	e := StealAember{
 		Amount: 1,
-		Or:     OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: AtLeast, Amount: 7}},
+		Or: OrAmount{
+			Amount: 2,
+			When: PoolAember{
+				Player: Opponent,
+				Is:     AtLeast,
+				Amount: 7,
+			},
+		},
 	}
 	if want := "steal 1 Æmber, or 2 if your opponent has 7 Æmber or more"; e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
@@ -1729,7 +2313,10 @@ func TestOrAmountStealAember(t *testing.T) {
 	// Guard unmet: the base amount is stolen.
 	g := NewGame("A", "B", 1)
 	g.State.Aember[1] = 6
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.State.Aember[0] != 1 || g.State.Aember[1] != 5 {
 		t.Errorf("unmet: you=%d opp=%d, want 1/5", g.State.Aember[0], g.State.Aember[1])
 	}
@@ -1737,7 +2324,10 @@ func TestOrAmountStealAember(t *testing.T) {
 	// Guard met: the alternate amount is stolen.
 	g = NewGame("A", "B", 1)
 	g.State.Aember[1] = 7
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if g.State.Aember[0] != 2 || g.State.Aember[1] != 5 {
 		t.Errorf("met: you=%d opp=%d, want 2/5", g.State.Aember[0], g.State.Aember[1])
 	}
@@ -1747,20 +2337,37 @@ func TestOrAmountStealAember(t *testing.T) {
 func TestOrAmountStealValidate(t *testing.T) {
 	good := StealAember{
 		Amount: 1,
-		Or:     OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: AtLeast, Amount: 7}},
+		Or: OrAmount{
+			Amount: 2,
+			When: PoolAember{
+				Player: Opponent,
+				Is:     AtLeast,
+				Amount: 7,
+			},
+		},
 	}
 	if err := good.validate(); err != nil {
 		t.Errorf("valid steal rejected: %v", err)
 	}
 	if err := (StealAember{
-		Or: OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: AtLeast, Amount: 7}},
+		Or: OrAmount{
+			Amount: 2,
+			When: PoolAember{
+				Player: Opponent,
+				Is:     AtLeast,
+				Amount: 7,
+			},
+		},
 		By: AllBut(6),
 	}).validate(); err == nil {
 		t.Error("Or and By together should not validate")
 	}
 	if err := (StealAember{
 		Amount: 1,
-		Or:     OrAmount{Amount: 2, When: PoolAember{Player: Opponent}},
+		Or: OrAmount{
+			Amount: 2,
+			When:   PoolAember{Player: Opponent},
+		},
 	}).validate(); err == nil {
 		t.Error("an Or with an invalid guard should not validate")
 	}
@@ -1771,7 +2378,14 @@ func TestOrAmountStealValidate(t *testing.T) {
 func TestOrAmountForgeKey(t *testing.T) {
 	e := ForgeKey{
 		Extra: 6,
-		Or:    OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: Exactly, Amount: 0}},
+		Or: OrAmount{
+			Amount: 2,
+			When: PoolAember{
+				Player: Opponent,
+				Is:     Exactly,
+				Amount: 0,
+			},
+		},
 	}
 	want := "forge a key at +6 Æmber current cost, or +2 if your opponent has no Æmber -> purge {self}"
 	if e.Text() != want {
@@ -1782,7 +2396,10 @@ func TestOrAmountForgeKey(t *testing.T) {
 	g := started(t)
 	g.State.Aember[0] = 100
 	g.State.Aember[1] = 1
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if got := g.State.Aember[0]; got != 100-(KeyCost+6) {
 		t.Errorf("Æmber = %d, want the +6 surcharge paid", got)
 	}
@@ -1791,7 +2408,10 @@ func TestOrAmountForgeKey(t *testing.T) {
 	g = started(t)
 	g.State.Aember[0] = 100
 	g.State.Aember[1] = 0
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if got := g.State.Aember[0]; got != 100-(KeyCost+2) {
 		t.Errorf("Æmber = %d, want the +2 surcharge paid", got)
 	}
@@ -1801,13 +2421,23 @@ func TestOrAmountForgeKey(t *testing.T) {
 func TestOrAmountForgeKeyValidate(t *testing.T) {
 	if err := (ForgeKey{
 		FreeOfCost: true,
-		Or:         OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: Exactly, Amount: 0}},
+		Or: OrAmount{
+			Amount: 2,
+			When: PoolAember{
+				Player: Opponent,
+				Is:     Exactly,
+				Amount: 0,
+			},
+		},
 	}).validate(); err == nil {
 		t.Error("a free forge with an Or surcharge should not validate")
 	}
 	if err := (ForgeKey{
 		Extra: 6,
-		Or:    OrAmount{Amount: 2, When: PoolAember{Player: Opponent}},
+		Or: OrAmount{
+			Amount: 2,
+			When:   PoolAember{Player: Opponent},
+		},
 	}).validate(); err == nil {
 		t.Error("an Or with an invalid guard should not validate")
 	}

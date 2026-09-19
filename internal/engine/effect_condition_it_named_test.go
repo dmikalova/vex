@@ -11,7 +11,10 @@ func TestItIsNamed(t *testing.T) {
 
 	g := NewGame("Alice", "Bob", 1)
 	chain := g.AddToDeck(NewCard("Subtle Chain", Dis, Tactic, Common), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// With no card in context the condition is never met.
 	if (ItIsNamed{Name: "Subtle Chain"}).Met(ctx) {

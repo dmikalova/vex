@@ -7,17 +7,42 @@ import "testing"
 // the side scope on the object instead ("friendly creatures"), because play
 // belongs to neither player and so takes no possessive.
 func TestShuffleIntoDeckFromZonesText(t *testing.T) {
-	if got := (ShuffleIntoDeck{Player: Controller, From: songOfSpringZones, Selection: Chosen{Type: Creature, Optional: true}, Quantity: AnyNumber{}}).Text(); got !=
+	if got := (ShuffleIntoDeck{
+		Player: Controller,
+		From:   songOfSpringZones,
+		Selection: Chosen{
+			Type:     Creature,
+			Optional: true,
+		},
+		Quantity: AnyNumber{},
+	}).Text(); got !=
 		"shuffle any number of friendly creatures from your hand, "+
 			"your discard pile, or play into your deck" {
 		t.Errorf("Text = %q", got)
 	}
-	if got := (ShuffleIntoDeck{Player: Controller, From: songOfSpringZones, Selection: Chosen{House: namedHouse(Untamed), Type: Creature, Optional: true}, Quantity: AnyNumber{}}).Text(); got !=
+	if got := (ShuffleIntoDeck{
+		Player: Controller,
+		From:   songOfSpringZones,
+		Selection: Chosen{
+			House:    namedHouse(Untamed),
+			Type:     Creature,
+			Optional: true,
+		},
+		Quantity: AnyNumber{},
+	}).Text(); got !=
 		"shuffle any number of friendly Untamed creatures from your hand, "+
 			"your discard pile, or play into your deck" {
 		t.Errorf("Text = %q", got)
 	}
-	if err := (ShuffleIntoDeck{Player: Controller, From: songOfSpringZones, Selection: Chosen{Type: Creature, Optional: true}, Quantity: AnyNumber{}}).validate(); err != nil {
+	if err := (ShuffleIntoDeck{
+		Player: Controller,
+		From:   songOfSpringZones,
+		Selection: Chosen{
+			Type:     Creature,
+			Optional: true,
+		},
+		Quantity: AnyNumber{},
+	}).validate(); err != nil {
 		t.Errorf("validate = %v, want nil", err)
 	}
 }
@@ -39,12 +64,19 @@ func TestShuffleIntoDeckFromZonesResolve(t *testing.T) {
 
 	g.SetChooser(0, &declineAfterChooser{ids: []LocalID{inHand, inDiscard, onBoard}})
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	ShuffleIntoDeck{
-		Player:    Controller,
-		From:      songOfSpringZones,
-		Selection: Chosen{House: namedHouse(Untamed), Type: Creature, Optional: true},
-		Quantity:  AnyNumber{},
+		Player: Controller,
+		From:   songOfSpringZones,
+		Selection: Chosen{
+			House:    namedHouse(Untamed),
+			Type:     Creature,
+			Optional: true,
+		},
+		Quantity: AnyNumber{},
 	}.Resolve(
 		ctx,
 	)
@@ -67,12 +99,18 @@ func TestShuffleIntoDeckFromZonesDeclineImmediately(t *testing.T) {
 	g.State.Hand[0].add(inHand)
 	g.SetChooser(0, &declineAfterChooser{})
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	ShuffleIntoDeck{
-		Player:    Controller,
-		From:      songOfSpringZones,
-		Selection: Chosen{Type: Creature, Optional: true},
-		Quantity:  AnyNumber{},
+		Player: Controller,
+		From:   songOfSpringZones,
+		Selection: Chosen{
+			Type:     Creature,
+			Optional: true,
+		},
+		Quantity: AnyNumber{},
 	}.Resolve(
 		ctx,
 	)
@@ -110,7 +148,10 @@ func TestShuffleIntoDeckTalliesByOwner(t *testing.T) {
 	theirs := g.Register(NewCard("theirs", Untamed, Creature, Common, WithPower(3)), 1)
 	g.State.Battleline[0].add(theirs)
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	ShuffleIntoDeck{
 		Player:    Controller,
 		From:      []Zone{InPlay},
@@ -130,7 +171,10 @@ func TestShuffleIntoDeckTalliesByOwner(t *testing.T) {
 
 // TestShuffleIntoDeckValidatePlayer checks an unset Player is rejected (ADR 0010).
 func TestShuffleIntoDeckValidatePlayer(t *testing.T) {
-	if (ShuffleIntoDeck{From: []Zone{Discard}, Selection: Chosen{}}).validate() == nil {
+	if (ShuffleIntoDeck{
+		From:      []Zone{Discard},
+		Selection: Chosen{},
+	}).validate() == nil {
 		t.Error("an unset Player should be rejected")
 	}
 }
@@ -147,8 +191,15 @@ func TestShuffleIntoDeckFromPlayFoldsTheWholeBoard(t *testing.T) {
 	artifact := g.AddArtifact(NewCard("relic", Brobnar, Artifact, Common), 0)
 	enemy := g.AddToBattleline(NewCard("enemy", Brobnar, Creature, Common, WithPower(4)), 1)
 
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-	e := ShuffleIntoDeck{Player: Controller, From: []Zone{InPlay}, Selection: Each{}}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
+	e := ShuffleIntoDeck{
+		Player:    Controller,
+		From:      []Zone{InPlay},
+		Selection: Each{},
+	}
 	if got := e.Text(); got != "shuffle each friendly card from play into your deck" {
 		t.Errorf("Text = %q", got)
 	}
@@ -179,7 +230,11 @@ func TestShuffleIntoDeckFromPlayFoldsTheWholeBoard(t *testing.T) {
 // TestShuffleIntoDeckFromPlayEnemySide pins that the side scope an in-play source
 // puts on the object follows Player: reaching the opponent's board reads "enemy".
 func TestShuffleIntoDeckFromPlayEnemySide(t *testing.T) {
-	e := ShuffleIntoDeck{Player: Opponent, From: []Zone{InPlay}, Selection: Each{Type: Creature}}
+	e := ShuffleIntoDeck{
+		Player:    Opponent,
+		From:      []Zone{InPlay},
+		Selection: Each{Type: Creature},
+	}
 	if got := e.Text(); got != "shuffle each enemy creature from play into your opponent's deck" {
 		t.Errorf("Text = %q", got)
 	}

@@ -74,7 +74,10 @@ func TestRuleOfSixBarsUse(t *testing.T) {
 func TestRuleOfSixBarsDestroyedResolution(t *testing.T) {
 	g := started(t)
 	dying := testCreature("Martyr", 3, WithAbility(
-		TriggerDestroyed, GainAember{Amount: 1, Player: Controller}))
+		TriggerDestroyed, GainAember{
+			Amount: 1,
+			Player: Controller,
+		}))
 	id := g.AddToBattleline(dying, 0)
 	for range RuleOfSix {
 		g.recordUsage(id)

@@ -23,7 +23,10 @@ func TestBigtwig(t *testing.T) {
 	t.Run("reap stuns and exhausts a chosen creature", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(Bigtwig)},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(Bigtwig),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(4))),
@@ -40,7 +43,10 @@ func TestBigtwig(t *testing.T) {
 	t.Run("can only fight stunned enemy creatures", func(t *testing.T) {
 		var big, foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(ct.Bind(&big, Bigtwig))},
+			P1: ct.Side{
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(ct.Bind(&big, Bigtwig)),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(4))),

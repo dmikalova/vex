@@ -29,7 +29,11 @@ func TestRemoveWard(t *testing.T) {
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{warded}})
 	entries := len(g.Log)
 	RemoveWard{Target: Target{Kind: TargetChosenCreature}}.
-		Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		})
 
 	if g.Warded(warded) {
 		t.Error("the chosen creature should lose its ward")
@@ -49,7 +53,11 @@ func TestRemoveWardUnwardedTarget(t *testing.T) {
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{plain}})
 	entries := len(g.Log)
 	RemoveWard{Target: Target{Kind: TargetChosenCreature}}.
-		Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Source:     src,
+			Controller: 0,
+		})
 
 	if g.Warded(plain) {
 		t.Error("an unwarded creature should stay unwarded")

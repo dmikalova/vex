@@ -384,7 +384,10 @@ func TestFlankKeys(t *testing.T) {
 			}
 			if board[at] != second {
 				t.Errorf("%q put the creature at %v, want the %s flank",
-					tt.key, board, map[bool]string{true: "left", false: "right"}[tt.left])
+					tt.key, board, map[bool]string{
+						true:  "left",
+						false: "right",
+					}[tt.left])
 			}
 		})
 	}

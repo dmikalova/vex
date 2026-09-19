@@ -18,7 +18,10 @@ import (
 func TestOverrun(t *testing.T) {
 	t.Run("opponent loses 2 Æmber at or above the threshold", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(Overrun)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(Overrun),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 		h.Game().State.TurnHistory[0][card.TurnStat.EnemyCreaturesDestroyed] = 3
@@ -30,7 +33,10 @@ func TestOverrun(t *testing.T) {
 
 	t.Run("nothing happens below the threshold", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(Overrun)},
+			P1: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(Overrun),
+			},
 			P2: ct.Side{Amber: 3},
 		})
 		h.Game().State.TurnHistory[0][card.TurnStat.EnemyCreaturesDestroyed] = 2

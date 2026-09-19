@@ -19,7 +19,10 @@ func TestDiametricCharge(t *testing.T) {
 	t.Run("deals 1 to a creature and 2 to each neighbor", func(t *testing.T) {
 		var left, mid, right ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(DiametricCharge)},
+			P1: ct.Side{
+				House: card.House.Logos,
+				Hand:  ct.Cards(DiametricCharge),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&left, ct.Creature(ct.Power(5))),
 				ct.Bind(&mid, ct.Creature(ct.Power(5))),

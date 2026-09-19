@@ -31,7 +31,11 @@ func TestConsiderFlankResolve(t *testing.T) {
 	if g.onFlankOf(mid) {
 		t.Fatal("mid creature should not start on a flank")
 	}
-	ctx := &EffectContext{Resolver: g, Source: mid, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     mid,
+		Controller: 0,
+	}
 	if onFlank(ctx, mid) {
 		t.Fatal("mid creature should not start on a flank (target filter)")
 	}

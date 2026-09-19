@@ -24,6 +24,9 @@ var Redlock = set.New(
 	card.WithAbility(
 		card.Trigger.EndOfTurn, card.Conditional{
 			Cond: card.NoCreaturesPlayedThisTurn{},
-			Then: card.GainAember{Player: card.Controller, Amount: 1},
+			Then: card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
 		}),
 )

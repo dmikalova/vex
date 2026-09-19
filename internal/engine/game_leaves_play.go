@@ -101,7 +101,11 @@ func (g *Game) absorbedByWard(id LocalID, prevented wardPrevented, amount int) b
 		return false
 	}
 	c.Warded = false
-	g.record(WardAbsorbed{Creature: id, Prevented: prevented, Amount: amount})
+	g.record(WardAbsorbed{
+		Creature:  id,
+		Prevented: prevented,
+		Amount:    amount,
+	})
 	return true
 }
 
@@ -154,10 +158,17 @@ func (g *Game) releaseAemberOnLeavePlay(id LocalID) {
 	if g.TypeOf(id) == Creature {
 		to := 1 - g.controller(id)
 		g.SetAember(to, g.Aember(to)+amt)
-		g.record(AemberOnCardReleased{Card: id, Amount: amt, To: to})
+		g.record(AemberOnCardReleased{
+			Card:   id,
+			Amount: amt,
+			To:     to,
+		})
 		return
 	}
-	g.record(AemberMovedToCommonSupply{Card: id, Amount: amt})
+	g.record(AemberMovedToCommonSupply{
+		Card:   id,
+		Amount: amt,
+	})
 }
 
 // removeFromPlay takes a card out of play for good: it fires the card's Leaves
@@ -236,7 +247,10 @@ func (g *Game) leavesPlayWindow(id LocalID) []triggeredAbility {
 func (g *Game) discardUpgrades(id LocalID) {
 	for _, up := range g.upgradesOf(id) {
 		g.State.Discard[g.leavePlayTeardown(up)].add(up)
-		g.record(UpgradeDiscarded{Upgrade: up, Host: id})
+		g.record(UpgradeDiscarded{
+			Upgrade: up,
+			Host:    id,
+		})
 	}
 }
 
@@ -246,7 +260,10 @@ func (g *Game) discardUpgrades(id LocalID) {
 func (g *Game) archiveUpgrade(up LocalID) {
 	o := g.leavePlayTeardown(up)
 	g.State.Archives[o].add(up)
-	g.record(CardPutIntoArchives{Card: up, Owner: o})
+	g.record(CardPutIntoArchives{
+		Card:  up,
+		Owner: o,
+	})
 }
 
 // discardUnder moves the cards placed under a host to their owners' discard
@@ -285,7 +302,10 @@ func (g *Game) applyDestructionReplacement(id LocalID) bool {
 	if !ok {
 		return false
 	}
-	g.record(DestructionReplaced{Card: id, By: src})
+	g.record(DestructionReplaced{
+		Card: id,
+		By:   src,
+	})
 	g.recordUsage(id)
 	r.With.Resolve(&EffectContext{
 		Resolver:   g,
@@ -442,7 +462,10 @@ func (g *Game) enrollDestroyed(ids []LocalID) {
 	source, hasSource := g.destroyingSource, g.hasDestroyingSource
 	g.hasDestroyingSource = false
 	if hasSource && len(ids) > 0 {
-		g.record(CardsDestroyedBy{Source: source, Cards: append([]LocalID(nil), ids...)})
+		g.record(CardsDestroyedBy{
+			Source: source,
+			Cards:  append([]LocalID(nil), ids...),
+		})
 	} else {
 		for _, id := range ids {
 			g.record(CardDestroyed{Card: id})
@@ -548,7 +571,10 @@ func (g *Game) destroyBatch(controller int, ids []LocalID) {
 func (g *Game) putOnTopOfDeck(id LocalID) {
 	g.leavePlayInto(id, func(half LocalID, o int) {
 		g.State.Deck[o].addFront(half)
-		g.record(CardPutOnTopOfDeck{Card: half, Owner: o})
+		g.record(CardPutOnTopOfDeck{
+			Card:  half,
+			Owner: o,
+		})
 	})
 }
 
@@ -558,7 +584,10 @@ func (g *Game) putOnTopOfDeck(id LocalID) {
 func (g *Game) putIntoHand(id LocalID) {
 	g.leavePlayInto(id, func(half LocalID, o int) {
 		g.State.Hand[o].add(half)
-		g.record(CardPutIntoHand{Card: half, Owner: o})
+		g.record(CardPutIntoHand{
+			Card:  half,
+			Owner: o,
+		})
 	})
 }
 
@@ -568,7 +597,10 @@ func (g *Game) putIntoHand(id LocalID) {
 func (g *Game) putIntoArchives(id LocalID) {
 	g.leavePlayInto(id, func(half LocalID, o int) {
 		g.State.Archives[o].add(half)
-		g.record(CardPutIntoArchives{Card: half, Owner: o})
+		g.record(CardPutIntoArchives{
+			Card:  half,
+			Owner: o,
+		})
 	})
 }
 
@@ -596,7 +628,10 @@ func (g *Game) putIntoDeckShuffled(id LocalID) {
 			g.shuffleBatch = append(g.shuffleBatch, half)
 			return
 		}
-		g.record(CardShuffledIntoDeck{Card: half, Owner: o})
+		g.record(CardShuffledIntoDeck{
+			Card:  half,
+			Owner: o,
+		})
 	})
 }
 
@@ -613,6 +648,10 @@ func (g *Game) putIntoDeckShuffled(id LocalID) {
 func (g *Game) PutIntoYourArchives(id LocalID, player int) {
 	g.leavePlayInto(id, func(half LocalID, o int) {
 		g.State.Archives[player].add(half)
-		g.record(CardAbducted{Player: player, Card: half, Owner: o})
+		g.record(CardAbducted{
+			Player: player,
+			Card:   half,
+			Owner:  o,
+		})
 	})
 }

@@ -28,7 +28,10 @@ func TestLiviaTheElder(t *testing.T) {
 		card.WithPower(3),
 		card.WithAbility(
 			card.Trigger.Fight,
-			card.GainAember{Player: card.Controller, Amount: 1},
+			card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
 		),
 	)
 

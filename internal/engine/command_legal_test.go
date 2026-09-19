@@ -92,7 +92,10 @@ func TestLegalActionsHouseChoiceIsNoHouseWhenNoneAllowed(t *testing.T) {
 	// only legal choice is No House.
 	g.SetPlayerHouses(0, []House{Brobnar})
 	g.StartTurn(0)
-	g.State.HouseConstraints[0][0] = HouseConstraint{Kind: constraintCannotHouse, House: Brobnar}
+	g.State.HouseConstraints[0][0] = HouseConstraint{
+		Kind:  constraintCannotHouse,
+		House: Brobnar,
+	}
 	g.State.HouseConstraintCount[0] = 1
 	cmds := g.LegalActions(0)
 	want := []Command{{Kind: CommandChooseHouse, House: HouseNone}}
@@ -177,14 +180,20 @@ func TestLegalActionsAreAllApplicable(t *testing.T) {
 	g.AddToBattleline(testCreature("Host", 5), 0)
 	g.AddToBattleline(testCreature("Reaper", 3), 0)
 	g.AddToBattleline(NewCard("Actor", Brobnar, Creature, Common,
-		WithPower(3), WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 2})), 0)
+		WithPower(3), WithAbility(TriggerAction, GainAember{
+			Player: Controller,
+			Amount: 2,
+		})), 0)
 	stunned := g.AddToBattleline(testCreature("Stunned", 3), 0)
 	g.State.Cards[stunned].Stunned = true
 	// An enemy creature gives the friendly creatures a legal fight target.
 	g.AddToBattleline(testCreature("Enemy", 4), 1)
 	// A friendly artifact with an Action.
 	g.AddArtifact(NewCard("Relic", Brobnar, Artifact, Common,
-		WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1})), 0)
+		WithAbility(TriggerAction, GainAember{
+			Player: Controller,
+			Amount: 1,
+		})), 0)
 
 	cmds := g.LegalActions(0)
 	if len(cmds) == 0 {

@@ -109,7 +109,10 @@ func TestLegacyDraws(t *testing.T) {
 	tuning.LegacyRate = 1 // every non-special slot draws from the legacy pool
 	entries := make([]LegacyEntry, 0)
 	for _, c := range legacyPool() {
-		entries = append(entries, LegacyEntry{Card: c, Set: "Other"})
+		entries = append(entries, LegacyEntry{
+			Card: c,
+			Set:  "Other",
+		})
 	}
 	set := NewSet("Test", synthCards(), tuning).WithLegacy(NewLegacy(entries))
 
@@ -139,7 +142,10 @@ func TestInterloperHousePod(t *testing.T) {
 	tuning.InterloperRate = 1 // force every pod to draw from the legacy pool
 	entries := make([]LegacyEntry, 0)
 	for _, c := range legacyPool() {
-		entries = append(entries, LegacyEntry{Card: c, Set: "Other"})
+		entries = append(entries, LegacyEntry{
+			Card: c,
+			Set:  "Other",
+		})
 	}
 	set := NewSet("Test", synthCards(), tuning).WithLegacy(NewLegacy(entries))
 
@@ -203,7 +209,10 @@ func TestErrantHousePod(t *testing.T) {
 	tuning.InterloperRate = 0 // isolate the errant overlay
 	entries := make([]LegacyEntry, 0)
 	for _, c := range foreignLegacyPool() {
-		entries = append(entries, LegacyEntry{Card: c, Set: "Other"})
+		entries = append(entries, LegacyEntry{
+			Card: c,
+			Set:  "Other",
+		})
 	}
 	set := NewSet("Test", synthCards(), tuning).WithLegacy(NewLegacy(entries))
 
@@ -237,7 +246,10 @@ func TestErrantNeedsForeignHouse(t *testing.T) {
 	tuning.InterloperRate = 0
 	entries := make([]LegacyEntry, 0)
 	for _, c := range legacyPool() { // same Houses as synthSet: no foreign House
-		entries = append(entries, LegacyEntry{Card: c, Set: "Other"})
+		entries = append(entries, LegacyEntry{
+			Card: c,
+			Set:  "Other",
+		})
 	}
 	set := NewSet("Test", synthCards(), tuning).WithLegacy(NewLegacy(entries))
 
@@ -305,7 +317,10 @@ func TestLegacyDrawOfSetMemberNotTaggedLegacy(t *testing.T) {
 	// from its native set.
 	entries := make([]LegacyEntry, 0)
 	for _, c := range synthCards() {
-		entries = append(entries, LegacyEntry{Card: c, Set: "Other"})
+		entries = append(entries, LegacyEntry{
+			Card: c,
+			Set:  "Other",
+		})
 	}
 	set := NewSet("Test", synthCards(), tuning).WithLegacy(NewLegacy(entries))
 

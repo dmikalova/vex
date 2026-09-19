@@ -37,7 +37,10 @@ func TestForgedKeyCondition(t *testing.T) {
 	}
 
 	mine := ForgedKey{Player: Controller}
-	theirs := ForgedKey{Player: Opponent, Previous: true}
+	theirs := ForgedKey{
+		Player:   Opponent,
+		Previous: true,
+	}
 	notMine := Not{Cond: ForgedKey{Player: Controller}}
 	if got := mine.CondText(); got != "if you forged a key this turn" {
 		t.Errorf("CondText = %q", got)
@@ -50,7 +53,10 @@ func TestForgedKeyCondition(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	if mine.Met(ctx) || theirs.Met(ctx) {
 		t.Error("nothing forged yet, both conditions should be unmet")
 	}
@@ -84,14 +90,20 @@ func TestAemberStolenFromYouCondition(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	victim := &EffectContext{Resolver: g, Controller: 1}
+	victim := &EffectContext{
+		Resolver:   g,
+		Controller: 1,
+	}
 	if c.Met(victim) {
 		t.Error("nothing stolen yet, condition should be unmet")
 	}
 
 	// Player 0 steals from player 1 during player 0's turn.
 	g.SetAember(1, 3)
-	StealAember{Amount: 2}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	StealAember{Amount: 2}.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if got := g.TurnHistory(1, AemberStolenFromThisTurn); got != 2 {
 		t.Fatalf("stolen-from this turn = %d, want 2", got)
 	}
@@ -135,7 +147,10 @@ func TestCreatureDestroyedThisTurnCondition(t *testing.T) {
 			}
 
 			g := NewGame("A", "B", 1)
-			ctx := &EffectContext{Resolver: g, Controller: 0}
+			ctx := &EffectContext{
+				Resolver:   g,
+				Controller: 0,
+			}
 			if tc.cond.Met(ctx) {
 				t.Error("no creature destroyed yet, condition should be unmet")
 			}
@@ -155,24 +170,36 @@ func TestCreatureDestroyedThisTurnCondition(t *testing.T) {
 // TestTurnCount covers the shared count over a turn-history tally, in both the
 // "for each" and the "if" rendering.
 func TestTurnCount(t *testing.T) {
-	c := TurnCount{Player: Controller, Of: EnemyCreaturesFightKilled}
+	c := TurnCount{
+		Player: Controller,
+		Of:     EnemyCreaturesFightKilled,
+	}
 	want := "enemy creature that was destroyed in a fight this turn"
 	if got := c.CountText(); got != want {
 		t.Errorf("CountText = %q, want %q", got, want)
 	}
 
-	played := TurnCount{Player: Opponent, Of: CreaturesPlayedLastTurn}
+	played := TurnCount{
+		Player: Opponent,
+		Of:     CreaturesPlayedLastTurn,
+	}
 	if got := played.CountClause("3 or more", true); got !=
 		"your opponent played 3 or more creatures on their previous turn" {
 		t.Errorf("CountClause = %q", got)
 	}
-	mine := TurnCount{Player: Controller, Of: CreaturesPlayedLastTurn}
+	mine := TurnCount{
+		Player: Controller,
+		Of:     CreaturesPlayedLastTurn,
+	}
 	if got := mine.CountClause("exactly 1", false); got !=
 		"you played exactly 1 creature on your previous turn" {
 		t.Errorf("CountClause = %q", got)
 	}
 
-	destroyed := TurnCount{Player: Controller, Of: EnemyCreaturesDestroyed}
+	destroyed := TurnCount{
+		Player: Controller,
+		Of:     EnemyCreaturesDestroyed,
+	}
 	if got := destroyed.CountClause("3 or more", true); got !=
 		"3 or more enemy creatures have been destroyed this turn" {
 		t.Errorf("CountClause(destroyed, plural) = %q", got)
@@ -184,7 +211,10 @@ func TestTurnCount(t *testing.T) {
 
 	g := NewGame("A", "B", 1)
 	g.State.TurnHistory[0][EnemyCreaturesFightKilled] = 2
-	if got := c.Value(&EffectContext{Resolver: g, Controller: 0}); got != 2 {
+	if got := c.Value(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}); got != 2 {
 		t.Errorf("Value = %d, want 2", got)
 	}
 }
@@ -206,7 +236,10 @@ func TestUnforgeKey(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	if (UnforgeKey{Player: Opponent}).resolveGate(ctx) {
 		t.Error("unforging with no keys should report false")
 	}

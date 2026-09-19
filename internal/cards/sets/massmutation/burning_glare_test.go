@@ -22,7 +22,10 @@ func TestBurningGlare(t *testing.T) {
 	t.Run("stuns one chosen enemy creature", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(BurningGlare)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(BurningGlare),
+			},
 			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(3))))},
 		})
 
@@ -35,7 +38,10 @@ func TestBurningGlare(t *testing.T) {
 	t.Run("stuns each enemy Mutant creature", func(t *testing.T) {
 		var mutant1, mutant2, plain ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Sanctum, Hand: ct.Cards(BurningGlare)},
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(BurningGlare),
+			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(&mutant1, ct.Creature(ct.Power(3), ct.Traits(card.Traits.Mutant))),
 				ct.Bind(&mutant2, ct.Creature(ct.Power(3), ct.Traits(card.Traits.Mutant))),

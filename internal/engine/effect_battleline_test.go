@@ -129,7 +129,11 @@ func TestSwap(t *testing.T) {
 	host := g.AddToBattleline(testCreature("host", 2), 0)
 	other := g.AddToBattleline(testCreature("other", 2), 0)
 	right := g.AddToBattleline(testCreature("right", 2), 0)
-	ctx := &EffectContext{Resolver: g, Source: host, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     host,
+		Controller: 0,
+	}
 	e := Swap{With: Target{Kind: TargetChosenOtherFriendlyCreature}}
 
 	if err := (Swap{}).validate(); err == nil {
@@ -161,7 +165,10 @@ func TestSwapChosen(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 
 	// No creatures: nothing to choose, no panic.
 	(SwapChosen{}).Resolve(ctx)
@@ -220,15 +227,24 @@ func TestRearrangeBattleline(t *testing.T) {
 
 	// An empty board is a no-op: the loop runs zero times.
 	empty := NewGame("A", "B", 1)
-	(RearrangeBattleline{}).Resolve(&EffectContext{Resolver: empty, Controller: 0})
+	(RearrangeBattleline{}).Resolve(&EffectContext{
+		Resolver:   empty,
+		Controller: 0,
+	})
 
 	// Swap two creatures, then stop.
 	g := NewGame("A", "B", 1)
 	a := g.AddToBattleline(testCreature("a", 2), 0)
 	b := g.AddToBattleline(testCreature("b", 2), 0)
 	c := g.AddToBattleline(testCreature("c", 2), 0)
-	g.SetChooser(0, &rearrangeChooser{firsts: []LocalID{a}, seconds: []LocalID{b}})
-	(RearrangeBattleline{}).Resolve(&EffectContext{Resolver: g, Controller: 0})
+	g.SetChooser(0, &rearrangeChooser{
+		firsts:  []LocalID{a},
+		seconds: []LocalID{b},
+	})
+	(RearrangeBattleline{}).Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if got, want := g.Battleline(0), []LocalID{b, a, c}; !slices.Equal(got, want) {
 		t.Fatalf("battleline after one swap = %v, want %v", got, want)
 	}
@@ -239,7 +255,10 @@ func TestRearrangeBattleline(t *testing.T) {
 	x := g2.AddToBattleline(testCreature("x", 2), 0)
 	g2.AddToBattleline(testCreature("y", 2), 1)
 	g2.SetChooser(0, &rearrangeChooser{firsts: []LocalID{x}})
-	(RearrangeBattleline{}).Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	(RearrangeBattleline{}).Resolve(&EffectContext{
+		Resolver:   g2,
+		Controller: 0,
+	})
 	if got, want := g2.Battleline(0), []LocalID{x}; !slices.Equal(got, want) {
 		t.Fatalf("lone-creature line changed: %v, want %v", got, want)
 	}
@@ -286,7 +305,12 @@ func TestMoveToFlank(t *testing.T) {
 	c := g.AddToBattleline(testCreature("c", 2), 1)
 
 	// Default chooser has no preference, so index 0 (the left flank) is taken.
-	ctx := &EffectContext{Resolver: g, Controller: 0, It: mover, HasIt: true}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		It:         mover,
+		HasIt:      true,
+	}
 	e.Resolve(ctx)
 	if got, want := g.Battleline(1), []LocalID{mover, a, c}; !slices.Equal(got, want) {
 		t.Fatalf("battleline after move to left = %v, want %v", got, want)
@@ -301,7 +325,10 @@ func TestMoveToFlank(t *testing.T) {
 
 	// A target that selects nothing leaves the battleline unchanged.
 	noTarget := MoveToFlank{Target: Target{Kind: TargetTriggeringCreature}}
-	noTarget.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	noTarget.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 	if got, want := g.Battleline(1), []LocalID{a, c, mover}; !slices.Equal(got, want) {
 		t.Fatalf("battleline after empty target = %v, want %v", got, want)
 	}
@@ -313,7 +340,12 @@ func TestMoveToFlank(t *testing.T) {
 	g.removeFromPlay(gone)
 	before := slices.Clone(g.Battleline(1))
 	MoveToFlank{Target: Target{Kind: TargetTriggeringCreature}}.
-		Resolve(&EffectContext{Resolver: g, Controller: 0, It: gone, HasIt: true})
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+			It:         gone,
+			HasIt:      true,
+		})
 	if got := g.Battleline(1); !slices.Equal(got, before) {
 		t.Fatalf("moving a creature that left play changed the battleline: %v", got)
 	}
@@ -340,7 +372,10 @@ func TestMoveWithinBattleline(t *testing.T) {
 	// Player 0 chooses to move an enemy (player 1) creature. The default option
 	// chooser takes position 0 (the left flank), and picks the last candidate
 	// creature by default, so mover slides to the front and is left in context.
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
 	if !e.resolveGate(ctx) {
 		t.Fatal("moving a creature should report a choice was made")
 	}
@@ -359,7 +394,10 @@ func TestMoveWithinBattleline(t *testing.T) {
 	// A target that selects nothing leaves the line unchanged and reports no choice.
 	before := slices.Clone(g.Battleline(1))
 	if (MoveWithinBattleline{Target: Target{Kind: TargetTriggeringCreature}}).
-		resolveGate(&EffectContext{Resolver: g, Controller: 0}) {
+		resolveGate(&EffectContext{
+			Resolver:   g,
+			Controller: 0,
+		}) {
 		t.Fatal("an empty target should report no choice")
 	}
 	if now := g.Battleline(1); !slices.Equal(now, before) {
@@ -367,7 +405,10 @@ func TestMoveWithinBattleline(t *testing.T) {
 	}
 
 	// The public Resolve is the one-line wrapper over resolveGate.
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	})
 }
 
 func testArtifact(name string, opts ...CardOption) CardDefinition {
@@ -395,7 +436,11 @@ func TestTurnIntoCreature(t *testing.T) {
 	g.AddPowerCounter(art, 1)
 
 	// Default chooser has no preference, so index 0 (the left flank) is taken.
-	ctx := &EffectContext{Resolver: g, Source: art, Controller: 0}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     art,
+		Controller: 0,
+	}
 	e.Resolve(ctx)
 	if g.TypeOf(art) != Creature {
 		t.Fatalf("converted card should read as a creature, got %v", g.TypeOf(art))
@@ -415,7 +460,11 @@ func TestTurnIntoCreature(t *testing.T) {
 	g.AddPowerCounter(art2, 1)
 	g.SetChooser(0, optionPicker{idx: 1})
 	TurnIntoCreature{Target: Target{Kind: TargetThisCreature}}.
-		Resolve(&EffectContext{Resolver: g, Source: art2, Controller: 0})
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Source:     art2,
+			Controller: 0,
+		})
 	if got, want := g.Battleline(0),
 		[]LocalID{art, existing, art2}; !slices.Equal(got, want) {
 		t.Fatalf("battleline after right conversion = %v, want %v", got, want)
@@ -426,7 +475,11 @@ func TestTurnIntoCreature(t *testing.T) {
 	// rather than duplicated.
 	g.SetChooser(0, optionPicker{idx: 1})
 	TurnIntoCreature{Target: Target{Kind: TargetThisCreature}}.
-		Resolve(&EffectContext{Resolver: g, Source: art, Controller: 0})
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Source:     art,
+			Controller: 0,
+		})
 	if got, want := g.Battleline(0),
 		[]LocalID{existing, art2, art}; !slices.Equal(got, want) {
 		t.Fatalf("battleline after repositioning = %v, want %v", got, want)
@@ -437,7 +490,11 @@ func TestTurnIntoCreature(t *testing.T) {
 	g.State.Artifacts[0].remove(gone)
 	before := slices.Clone(g.Battleline(0))
 	TurnIntoCreature{Target: Target{Kind: TargetThisCreature}}.
-		Resolve(&EffectContext{Resolver: g, Source: gone, Controller: 0})
+		Resolve(&EffectContext{
+			Resolver:   g,
+			Source:     gone,
+			Controller: 0,
+		})
 	if got := g.Battleline(0); !slices.Equal(got, before) {
 		t.Fatalf("converting a card not in play changed the battleline: %v", got)
 	}
@@ -495,7 +552,11 @@ func TestTurnIntoCreatureForRemainderOfTurn(t *testing.T) {
 	TurnIntoCreature{
 		Target:   Target{Kind: TargetThisCreature},
 		Duration: RemainderOfPlayerTurn,
-	}.Resolve(&EffectContext{Resolver: g, Source: art, Controller: 0})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     art,
+		Controller: 0,
+	})
 	if g.TypeOf(art) != Creature {
 		t.Fatalf("card should read as a creature, got %v", g.TypeOf(art))
 	}
@@ -538,7 +599,11 @@ func TestTurnIntoCreatureGrantsVersatile(t *testing.T) {
 		Target:    Target{Kind: TargetThisCreature},
 		Duration:  RemainderOfPlayerTurn,
 		Versatile: true,
-	}.Resolve(&EffectContext{Resolver: g, Source: art, Controller: 0})
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     art,
+		Controller: 0,
+	})
 	if !g.HasKeyword(art, Versatile) {
 		t.Fatal("an animated creature with versatile should have the keyword")
 	}

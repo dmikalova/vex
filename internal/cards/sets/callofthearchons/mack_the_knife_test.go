@@ -21,7 +21,10 @@ func TestMackTheKnife(t *testing.T) {
 	t.Run("gains 1 Æmber when its damage destroys the creature", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(MackTheKnife)},
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				InPlay: ct.Cards(MackTheKnife),
+			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1))),

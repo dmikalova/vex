@@ -47,7 +47,10 @@ func TestBonesaw(t *testing.T) {
 	t.Run("enters play exhausted with no friendly deaths", func(t *testing.T) {
 		var bonesaw ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(ct.Bind(&bonesaw, Bonesaw))},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(ct.Bind(&bonesaw, Bonesaw)),
+			},
 		})
 
 		h.P1.Play(Bonesaw)

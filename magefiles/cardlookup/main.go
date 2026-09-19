@@ -221,7 +221,10 @@ func sourceNameByRef() map[provenance.Ref]string {
 	out := map[provenance.Ref]string{}
 	for _, set := range provenance.Sets() {
 		for _, c := range set.Cards {
-			out[refKey(provenance.Ref{Set: set.SourceSet, Number: c.Number})] = c.Name
+			out[refKey(provenance.Ref{
+				Set:    set.SourceSet,
+				Number: c.Number,
+			})] = c.Name
 		}
 	}
 	return out

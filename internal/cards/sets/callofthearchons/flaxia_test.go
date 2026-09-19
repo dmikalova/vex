@@ -19,7 +19,10 @@ import (
 func TestFlaxia(t *testing.T) {
 	t.Run("gains 2 Æmber when you control more creatures", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(Flaxia)},
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(Flaxia),
+			},
 		})
 
 		h.P1.Play(Flaxia) // Flaxia itself makes it 1 vs 0

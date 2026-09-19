@@ -26,7 +26,10 @@ func TestScientificalHack(t *testing.T) {
 		engine.Common,
 		engine.WithAbility(
 			engine.TriggerAction,
-			engine.GainAember{Player: engine.Controller, Amount: 1},
+			engine.GainAember{
+				Player: engine.Controller,
+				Amount: 1,
+			},
 		),
 	)
 
