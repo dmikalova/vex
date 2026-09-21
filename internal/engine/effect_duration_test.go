@@ -122,6 +122,35 @@ func TestForDurationResolvesChildren(t *testing.T) {
 	}
 }
 
+func TestFoldDurationBodiesRejectsNonScopedChild(t *testing.T) {
+	if subject, joined, shared := foldDurationBodies(
+		[]Effect{Draw{Amount: 1}},
+	); subject != "" || joined != "" ||
+		shared {
+		t.Fatalf(
+			"non-scoped first child returned subject=%q joined=%q shared=%v",
+			subject,
+			joined,
+			shared,
+		)
+	}
+	if subject, joined, shared := foldDurationBodies([]Effect{
+		GainKeywords{
+			Target:   Target{Kind: TargetTriggeringCreature},
+			Keywords: []Keyword{Elusive},
+			Duration: StartOfPlayerNextTurn,
+		},
+		Draw{Amount: 1},
+	}); subject != "" || joined != "" || shared {
+		t.Fatalf(
+			"mixed scoped child returned subject=%q joined=%q shared=%v",
+			subject,
+			joined,
+			shared,
+		)
+	}
+}
+
 // TestGainUntilNextTurnText covers the folded clause: children sharing a subject
 // name it once and join their predicates under one "until the start of your next
 // turn" suffix.

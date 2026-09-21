@@ -343,7 +343,7 @@ func appendAPI(m dsl.Matcher) {
 func convReorder(m dsl.Matcher) {
 	// When we trim some string/bytes part, the result data is smaller
 	// than it was before (or it's the same if nothing was trimmed).
-	// This means that it's beneficial to apply a copying (allocationg)
+	// This means that it's beneficial to apply a copying (allocation)
 	// conversion over the trim result, so we allocate and copy less data.
 
 	m.Match(`strings.TrimSpace(string($b))`).

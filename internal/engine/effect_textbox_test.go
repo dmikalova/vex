@@ -156,6 +156,31 @@ func TestGainTextBoxTurnExpires(t *testing.T) {
 	}
 }
 
+func TestGainTextBoxResolveTurnWindow(t *testing.T) {
+	g := started(t)
+	source := g.AddToBattleline(testCreature("source", 3, WithTraits(Beast)), 0)
+	recipient := g.AddToBattleline(testCreature("recipient", 2), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0, Source: recipient}
+	g.SetChooser(0, idChooser{id: source})
+
+	GainTextBox{
+		Target:          Target{Kind: TargetThisCreature},
+		Source:          Target{Kind: TargetChosenCreature},
+		RemainderOfTurn: true,
+	}.Resolve(ctx)
+
+	if g.State.Cards[recipient].TextBoxTurnSourcePlus != uint8(source)+1 {
+		t.Fatalf(
+			"turn loan source = %d, want %d",
+			g.State.Cards[recipient].TextBoxTurnSourcePlus-1,
+			source,
+		)
+	}
+	if !g.HasTrait(recipient, Beast) {
+		t.Fatal("the recipient should gain the source's trait for the turn")
+	}
+}
+
 // TestLendTextBoxFromHandText renders the whole instruction.
 func TestLendTextBoxFromHandText(t *testing.T) {
 	want := "reveal a creature from your hand and choose a creature in play. " +

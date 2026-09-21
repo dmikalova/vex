@@ -54,6 +54,46 @@ func TestMayDeclinableDealDamage(t *testing.T) {
 	}
 }
 
+func TestDamageValidateAftermathRejectsInvalidShapes(t *testing.T) {
+	if err := (DealDamage{
+		Target: Target{Kind: TargetChosenCreature},
+		Then:   GainAember{Player: Controller, Amount: 1},
+	}).validateAftermath(); err == nil {
+		t.Fatal("DealDamage with Then but no After should reject")
+	}
+	if err := (DealDamage{
+		Target: Target{Kind: TargetChosenCreature},
+		After:  DamageAftermath(99),
+		Then:   GainAember{Player: Controller, Amount: 1},
+	}).validateAftermath(); err == nil {
+		t.Fatal("DealDamage with an unknown After should reject")
+	}
+	if err := (DealDamage{
+		Spread: CreatureAndNeighbors{Amount: 2},
+		After:  IfDestroyed,
+		Then:   GainAember{Player: Controller, Amount: 1},
+	}).validateAftermath(); err == nil {
+		t.Fatal("DealDamage with a spread and aftermath should reject")
+	}
+	if err := (DealDamage{
+		Target: Target{Kind: TargetChosenCreature},
+		After:  IfDestroyed,
+		Then:   GainAember{Player: Controller, Amount: 1},
+		Per:    CardsDestroyed{},
+	}).validateAftermath(); err == nil {
+		t.Fatal("DealDamage with a Per count and aftermath should reject")
+	}
+	if err := (DealDamage{
+		Target:     Target{Kind: TargetChosenCreature},
+		After:      IfDestroyed,
+		Then:       GainAember{Player: Controller, Amount: 1},
+		PerTarget:  AemberOnIt,
+		AmountFrom: DamageHealed{},
+	}).validateAftermath(); err == nil {
+		t.Fatal("DealDamage with PerTarget plus AmountFrom and aftermath should reject")
+	}
+}
+
 func TestDamageThenIfDestroyed(t *testing.T) {
 	t.Run("runs the follow-up only when the damage destroys the creature", func(t *testing.T) {
 		g := NewGame("A", "B", 1)

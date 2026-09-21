@@ -70,3 +70,17 @@ func TestForgeFourthKeyIsColorless(t *testing.T) {
 		t.Errorf("key colours after 4 forges = %v, want [Red Blue Yellow Colorless]", got)
 	}
 }
+
+func TestFirstKeyColorsIncludesColorlessFallback(t *testing.T) {
+	if got := firstKeyColors(4); !reflect.DeepEqual(got, []KeyColor{
+		KeyColorRed,
+		KeyColorBlue,
+		KeyColorYellow,
+		KeyColorColorless,
+	}) {
+		t.Fatalf("firstKeyColors(4) = %v, want [Red Blue Yellow Colorless]", got)
+	}
+	if got := firstKeyColors(20); len(got) != MaxKeys {
+		t.Fatalf("firstKeyColors(20) = %d keys, want %d", len(got), MaxKeys)
+	}
+}

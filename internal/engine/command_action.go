@@ -219,7 +219,13 @@ func (g *Game) legalCreatureUses(player int, id LocalID) []Command {
 // its own way, never calls this. The assertion is deliberate: a chooser that cannot
 // answer a RequestAction has no business driving the loop.
 func (g *Game) RunMatch(firstPlayer int) {
-	g.StartGame(firstPlayer)
+	if g.State.Turn == 0 && g.State.Phase == phaseUnset {
+		g.StartGame(firstPlayer)
+	}
+	if g.State.Phase == PhaseEndOfTurn {
+		g.StartTurn(1 - g.State.ActivePlayer)
+		return
+	}
 	for g.State.Winner < 0 {
 		if g.State.Phase == PhaseEndOfTurn {
 			g.StartTurn(1 - g.State.ActivePlayer)

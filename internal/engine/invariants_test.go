@@ -19,6 +19,7 @@ func TestInvariantErrorSound(t *testing.T) {
 	// The normal-build no-op runs at every turn boundary; call it directly so the
 	// empty body is exercised without an -tags assert build.
 	g.assertInvariants()
+	g.assertInvariants()
 }
 
 func TestInvariantErrorEconomy(t *testing.T) {

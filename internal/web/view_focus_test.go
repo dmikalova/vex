@@ -48,7 +48,8 @@ func TestTheLiftCentresOnItsCardAndStaysOnScreen(t *testing.T) {
 			focusViewH: 800,
 		}
 		x, y, gw, minH := g.focusBox()
-		if !sameFloat(x, tc.wantX) || !sameFloat(y, tc.wantY) || !sameFloat(gw, tc.wantW) || !sameFloat(minH, tc.wantMin) {
+		if !sameFloat(x, tc.wantX) || !sameFloat(y, tc.wantY) || !sameFloat(gw, tc.wantW) ||
+			!sameFloat(minH, tc.wantMin) {
 			t.Errorf("a card %s lifts to (%v,%v) %vx%v, want (%v,%v) %vx%v",
 				tc.what, x, y, gw, minH, tc.wantX, tc.wantY, tc.wantW, tc.wantMin)
 		}

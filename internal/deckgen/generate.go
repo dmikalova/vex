@@ -153,8 +153,9 @@ func (g *generator) expandPodClusters(pod HousePod) HousePod {
 				g.placeMemberCopies(&pod, ci, m, 1)
 			}
 		case RandomCount:
-			for i := range g.randomMembers(ci) {
-				m := g.randomMembers(ci)[i]
+			members := g.randomMembers(ci)
+			for i := range members {
+				m := members[i]
 				g.placeMemberCopies(&pod, ci, m, 1)
 			}
 		case SelfPull:

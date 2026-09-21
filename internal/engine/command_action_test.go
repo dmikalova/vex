@@ -245,3 +245,18 @@ func TestRunMatchDrivesToWinnerThroughEndedTurn(t *testing.T) {
 		t.Fatalf("winner = %d, want 1", g.Winner())
 	}
 }
+
+func TestRunMatchSkipsPhaseEndOfTurnHandOff(t *testing.T) {
+	g := NewGame("Alice", "Bob", 1)
+	g.StartGame(0)
+	g.State.Phase = PhaseEndOfTurn
+	g.State.ActivePlayer = 0
+	g.SetChooser(0, omegaDriver{})
+	g.SetChooser(1, omegaDriver{})
+
+	g.RunMatch(0)
+
+	if g.State.ActivePlayer != 1 {
+		t.Fatalf("active player after end-of-turn handoff = %d, want 1", g.State.ActivePlayer)
+	}
+}
