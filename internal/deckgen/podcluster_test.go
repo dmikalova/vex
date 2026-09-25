@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // firePod fills a Brobnar/Dis/Shadows pod and plants one member in slot 0 so a

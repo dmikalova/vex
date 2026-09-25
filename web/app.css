@@ -1,5 +1,5 @@
 /*
-  Vactrol web client stylesheet — plain CSS (no build step, no CDN).
+  Vex web client stylesheet — plain CSS (no build step, no CDN).
 
   Served as a static file from web/, so the running dev server picks up edits from
   disk: change this file and refresh the browser — no server restart. Every element

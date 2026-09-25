@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // These tests take turns the way a player does — select, play, reap, fight, end

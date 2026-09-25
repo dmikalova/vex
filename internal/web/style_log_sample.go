@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/dmikalova/vactrol/internal/engine"
-	"github.com/dmikalova/vactrol/internal/sim"
+	"github.com/dmikalova/vex/internal/engine"
+	"github.com/dmikalova/vex/internal/sim"
 )
 
 // This file samples real played games against the engine's log-entry catalog, so

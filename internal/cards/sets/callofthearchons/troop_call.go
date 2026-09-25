@@ -1,6 +1,6 @@
 package callofthearchons
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // troopCallCluster pulls Niffle creatures into Troop Call's pod — a Pull cluster
 // with a per-partner rate: a couple of Niffle Apes (averaging three) and, much

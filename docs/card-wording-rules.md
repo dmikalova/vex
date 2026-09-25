@@ -14,16 +14,16 @@ from. The pristine printed originals still live in
 JSON array of every Call of the Archons card, for reference.
 
 Some conventions are deliberate **divergences** from KeyForge — a renamed card
-type, retired verbs, restructured abilities. Where Vactrol diverges, Vactrol wins.
+type, retired verbs, restructured abilities. Where Vex diverges, Vex wins.
 Each divergence is called out inline below and cataloged in the
-[Vactrol⇄KeyForge divergence register](keyforge-divergences.md), which holds the
-precedence rule (fall back to the KeyForge Master Rulebook only for what Vactrol
+[Vex⇄KeyForge divergence register](keyforge-divergences.md), which holds the
+precedence rule (fall back to the KeyForge Master Rulebook only for what Vex
 has not decided).
 
 Matching the printed KeyForge text is never a goal in itself and never a blocker.
-Template consistency and simplicity across Vactrol outrank exact KeyForge wording:
+Template consistency and simplicity across Vex outrank exact KeyForge wording:
 a **meaning-preserving** reword that puts a card in the same voice and template as
-the rest of Vactrol — or that lets a mechanic decompose into shared nodes — is
+the rest of Vex — or that lets a mechanic decompose into shared nodes — is
 welcome, and needs no divergence-register entry (the register catalogs changes to
 a rule or a name, not house-voice alignment).
 
@@ -69,7 +69,7 @@ number axis: never write `noun + "s"` or a `card(s)` placeholder by hand.
 A phrase that names a card by its printed name renders the name bare — "archive
 Velum from your discard pile", "shuffle Subtle Chain from your discard pile into
 your deck" — never "a Velum" or "a Subtle Chain". KeyForge is split on this
-(Hyde prints the bare name, Chain Gang prints the article), so Vactrol picks the
+(Hyde prints the bare name, Chain Gang prints the article), so Vex picks the
 bare form for all of them: one template means a by-name pick is just a `Named`
 selection handed to an existing verb, rather than a verb that owns an article and
 therefore has to be its own node. This is phrasing only, so it is not a
@@ -355,7 +355,7 @@ Valdr deals +2 damage while attacking an enemy creature on the flank.
 ```
 
 Printed KeyForge cards capitalize the word where a damage **icon** appears, but
-an icon is a layout device, not a spelling: Vactrol renders card text as prose,
+an icon is a layout device, not a spelling: Vex renders card text as prose,
 so it takes the prose casing. This is a house-voice choice, not a rule change —
 it alters no card's behavior and is not a
 [divergence](keyforge-divergences.md).
@@ -608,7 +608,7 @@ on that card — Æmber, capture, draw, and damage alike — reading the removed
 context (`it`). This deliberately diverges from KeyForge, which only refunds the
 Æmber bonus: resolving the whole icon strip is a small power increase and lets the
 mechanic reuse the shared bonus-icon resolver instead of a one-off Æmber count (see
-the [Vactrol⇄KeyForge divergence register](keyforge-divergences.md)). The rendered
+the [Vex⇄KeyForge divergence register](keyforge-divergences.md)). The rendered
 form names what is being resolved, so behavior and text cannot drift.
 
 | Original                                                                              | Curated                                               |
@@ -621,7 +621,7 @@ form names what is being resolved, so behavior and text cannot drift.
 
 ## 28. A turn `step` is named a `phase`
 
-A named part of the turn is a **phase**, never a **step** — Vactrol has one word
+A named part of the turn is a **phase**, never a **step** — Vex has one word
 for a segment of the turn ([ADR 0012](adr/0012-first-class-turn-phases.md) makes
 the turn phases first-class). Card and rules text that refers to the `"forge a
 key"`or`"draw cards"`part of the turn writes`phase`, where KeyForge writes
@@ -642,9 +642,9 @@ new size directly through the hand-size template of § 33.)
 ## 29. Fight timing is named `in a fight with`
 
 The moment a fight exchanges power damage between two combatants is written as
-`in a fight with <creature>`, Vactrol's one phrase for that timing window.
+`in a fight with <creature>`, Vex's one phrase for that timing window.
 KeyForge names it several ways — `fighting`, `while fighting`, `during a fight` —
-and Vactrol collapses them to one, so a trigger that fires on the destruction of
+and Vex collapses them to one, so a trigger that fires on the destruction of
 the other combatant reads the same on every card.
 
 | Original                                          | Curated                                                  |
@@ -658,7 +658,7 @@ the other combatant reads the same on every card.
 ## 30. A count cap is dropped — no `(to a maximum of N)` clause
 
 A `for each` count that KeyForge caps prints the cap in parentheses — `gain 1
-Æmber (to a maximum of 6) for each house …`. Vactrol drops the cap entirely: the
+Æmber (to a maximum of 6) for each house …`. Vex drops the cap entirely: the
 count is uncapped and the clause is not rendered, so the "for each" sentence
 reads clean. This is a deliberate rules divergence, not just a wording change
 (see `keyforge-divergences.md`).
@@ -698,14 +698,14 @@ A timed effect that bars a player from acting is one `Restrict` node —
 `cannot use any cards` — and every form ends with the same duration phrase:
 `during <their/your> next turn` (OpponentNextTurn) or `for the remainder of the
 turn` (RemainderOfPlayerTurn). KeyForge writes the broad current-turn form as "You
-cannot use cards this turn"; Vactrol harmonizes it to "you cannot use **any** cards
+cannot use cards this turn"; Vex harmonizes it to "you cannot use **any** cards
 **for the remainder of the turn**" so the noun ("any cards") matches the
 next-turn form and the duration matches the reap and play bars.
 
 A house scope narrows the reaping noun the same way, so a house-limited reap bar
 reads in the shared voice rather than a subject-first sentence of its own. KeyForge
 writes Seismo-entangler as "During your opponent's next turn, creatures of the
-chosen house cannot be used to reap"; Vactrol harmonizes it to "your opponent
+chosen house cannot be used to reap"; Vex harmonizes it to "your opponent
 cannot use **creatures of the chosen house** to reap during their next turn".
 
 | Original                                                                                  | Curated                                                                                  |
@@ -835,4 +835,4 @@ by `TestBeforeFightTargetReadsInPresentTense`.
 
 A few cards diverge from KeyForge in ways that affect the rules, not just
 phrasing. Those changes, and the precedence rule that governs every divergence,
-live in the [Vactrol⇄KeyForge divergence register](keyforge-divergences.md).
+live in the [Vex⇄KeyForge divergence register](keyforge-divergences.md).

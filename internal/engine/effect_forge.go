@@ -9,7 +9,7 @@ import "fmt"
 // picks its colour; that forced forge spends nothing, so it never purges a source.
 // Both controller paths fire "after you forge a key" abilities and, on the final
 // key, win the game. A controller forge that lands purges the card that made it —
-// every forge outside the normal step spends its source (a Vactrol divergence;
+// every forge outside the normal step spends its source (a Vex divergence;
 // see docs/keyforge-divergences.md).
 type ForgeKey struct {
 	// Player is who forges. The zero value forges for the controller; Opponent

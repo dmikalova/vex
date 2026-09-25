@@ -6,7 +6,7 @@ import (
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // This file is the component's lifecycle and its page-level wiring: mounting and

@@ -1,6 +1,6 @@
 package card
 
-import "github.com/dmikalova/vactrol/internal/cards/provenance"
+import "github.com/dmikalova/vex/internal/cards/provenance"
 
 // ReprintRef claims that a card first implemented in another set is also printed
 // in Set at collector number Number. A reprint is a full member of Set's

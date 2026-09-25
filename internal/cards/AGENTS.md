@@ -19,12 +19,12 @@ already there under a name you had not met.
 
 ## Rules reference
 
-When a rules question isn't settled by the vactrol implementation itself or by
+When a rules question isn't settled by the vex implementation itself or by
 the engine's rulebook term registry (the `/rulebook` page), the converted KeyForge
 Master Rulebook
 at [docs/keyforge-master-rulebook.md](../../docs/keyforge-master-rulebook.md) is
 available for reference. Take it with a grain of salt: it is a converted PDF, and
-while much of it matches how vactrol behaves, some nuances have been intentionally
+while much of it matches how vex behaves, some nuances have been intentionally
 simplified — so the implementation and this repo's own docs win where they
 disagree.
 
@@ -45,7 +45,7 @@ disagree.
   genuinely one parameterized shape; a card with its own identity keeps its own
   file.
 - Author cards through the `card` facade only
-  (`github.com/dmikalova/vactrol/internal/card`). Use the grouped
+  (`github.com/dmikalova/vex/internal/card`). Use the grouped
   namespaces — `card.House.X`, `card.Type.X`, `card.Rarity.X`,
   `card.Keyword.X`, `card.Trigger.X`, `card.Target.X` (and the relative-player
   values `card.Controller` / `card.Opponent`) —
@@ -201,7 +201,7 @@ Orb of Wonder is the worked example: it previewed Mass Mutation (Sanctum • Rar
 `Omni:`), so once Mass Mutation was implemented it left Anomaly Expansion (where it
 had been Brobnar/Special) and became a normal Sanctum Rare Mass Mutation artifact.
 The Shards (Shard of Glory, Shard of Unity) are the exception — they are
-Vactrol-invented `Connected` cards with no future set to move to, so they stay in
+Vex-invented `Connected` cards with no future set to move to, so they stay in
 Anomaly Expansion permanently.
 
 ## Variant rarity → author as `card.Rarity.Rare` + a manual-handling TODO

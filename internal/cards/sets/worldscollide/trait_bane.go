@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/dmikalova/vactrol/internal/card"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/card"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // Trait Bane

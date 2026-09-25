@@ -1,6 +1,6 @@
 package callofthearchons
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // horsemenCluster binds the four Horsemen into one WholePool cluster led by the
 // Horseman of Pestilence: whenever Pestilence rolls into a pod, the other three

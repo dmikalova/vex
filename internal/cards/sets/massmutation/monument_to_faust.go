@@ -1,6 +1,6 @@
 package massmutation
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // monumentToFaustCluster pulls a Faust the Great into Monument to Faust's pod, so
 // the Monument's discard-pile bonus has its namesake to feed it (ADR 0036). Faust

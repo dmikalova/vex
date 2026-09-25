@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // FilteredCluster is a deck-wide pull keyed to a lead card that fills by a

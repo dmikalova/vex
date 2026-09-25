@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dmikalova/vactrol/internal/sim"
+	"github.com/dmikalova/vex/internal/sim"
 )
 
 // corpusDir is FuzzPlay's seed corpus from the repository root, where mage runs.

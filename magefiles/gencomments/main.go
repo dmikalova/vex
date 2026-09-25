@@ -33,9 +33,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dmikalova/vactrol/internal/card"
-	"github.com/dmikalova/vactrol/internal/cards"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/card"
+	"github.com/dmikalova/vex/internal/cards"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // setsRoot is the tree of card files whose comments are generated.

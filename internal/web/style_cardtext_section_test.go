@@ -3,7 +3,7 @@ package web
 import (
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // TestTriggerSpecimensCoverPrintedTriggers checks the trigger gallery ranges

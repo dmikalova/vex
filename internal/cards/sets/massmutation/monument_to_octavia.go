@@ -1,6 +1,6 @@
 package massmutation
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // monumentToOctaviaCluster pulls a Cornicen Octavia into Monument to Octavia's
 // pod, so the Monument's discard-pile bonus has its namesake to feed it (ADR

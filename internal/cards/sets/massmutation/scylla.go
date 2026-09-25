@@ -1,6 +1,6 @@
 package massmutation
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // scyllaCluster pulls one Charybdis per Scylla: the two are a PullExact pair, so a
 // Scylla always rides in with its evil twin (ADR 0036). Charybdis is

@@ -3,7 +3,7 @@ package web
 import (
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // These tests cover keeping a match alive across a page load: what is written to

@@ -1,6 +1,6 @@
 package worldscollide
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // grokesBrewCluster pulls a Mega Groke into Groke's Brew's pod — a Pull cluster
 // the brew leads, so the giant it is brewed for rides along.

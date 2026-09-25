@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
-	"github.com/dmikalova/vactrol/internal/match"
+	"github.com/dmikalova/vex/internal/engine"
+	"github.com/dmikalova/vex/internal/match"
 )
 
 // The benchmarks in this file profile the engine under a high-volume driver — the

@@ -3,7 +3,7 @@ package massmutation
 import (
 	"slices"
 
-	"github.com/dmikalova/vactrol/internal/card"
+	"github.com/dmikalova/vex/internal/card"
 )
 
 // isMutantCreature reports whether a definition is a Mutant creature, for Dark

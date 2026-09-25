@@ -4,7 +4,7 @@
 // which is invoked by `mage lint` and `mage check`. It is not part of the main build,
 // so it is excluded from the normal build tags. It is not a Go package, so it does
 // not have a package name.
-package vactrol
+package vex
 
 import (
 	"github.com/quasilyte/go-ruleguard/dsl"

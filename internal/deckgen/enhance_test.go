@@ -3,7 +3,7 @@ package deckgen
 import (
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // fillDeck lays cards across the deck's 36 slots in order, repeating the last card

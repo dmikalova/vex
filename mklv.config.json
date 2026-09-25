@@ -1,5 +1,5 @@
 {
-  "name": "vactrol",
+  "name": "vex",
   "entrypoint": "cmd/web/main.go",
   "runtime": {
     "port": 8080

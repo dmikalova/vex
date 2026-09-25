@@ -1,4 +1,4 @@
-# Vactrol
+# Vex
 
 A KeyForge-style card game engine and (procedural) deck generator. This glossary
 fixes the vocabulary shared across the engine, the card database, and deck
@@ -9,7 +9,7 @@ generation. It is a glossary only — no implementation detail.
 The engine implements a KeyForge-style game; the **rulebook page (`/rulebook`),
 rendered from the engine's typed rulebook term registry, is the authoritative,
 comprehensive source** for how each mechanic works. The entries here only fix the
-shared vocabulary — especially where Vactrol diverges from KeyForge.
+shared vocabulary — especially where Vex diverges from KeyForge.
 
 **Æmber**:
 The game's currency. A player gains Æmber into a pool and spends it to forge keys;
@@ -46,7 +46,7 @@ archives, play, ready, draw, end of turn. Each phase is entered and left
 explicitly, and abilities that resolve "at the start of your turn" or "at the end
 of your turn" belong to the phase of that name. An effect may end the current
 phase early, skipping whatever remained in it. KeyForge's rulebook calls these
-divisions "steps"; Vactrol calls them phases everywhere — engine, rulebook, card
+divisions "steps"; Vex calls them phases everywhere — engine, rulebook, card
 text, and game log.
 _Avoid_: step, turn step, main phase.
 
@@ -95,7 +95,7 @@ and the `type-tactic` asset.
 _Avoid_: calling the card type "Action".
 
 **Omni**:
-An ability usable on any turn, not only the active House's. Vactrol has no Omni
+An ability usable on any turn, not only the active House's. Vex has no Omni
 trigger — an Omni card is authored as the **Versatile** keyword plus an Action
 ability (ADR 0009).
 
@@ -464,7 +464,7 @@ and +2. Landed per Slot, like an Enhancement. Not yet in the engine.
 ## Scoring
 
 **Bot**:
-Vactrol's automated player: a procedural Monte Carlo Tree Search (MCTS) engine
+Vex's automated player: a procedural Monte Carlo Tree Search (MCTS) engine
 that clones game states and self-plays. It is heuristics-and-search based, not a
 generative or LLM model. It shares the scoring model with Deck Rating.
 _Avoid_: AI (ambiguous with generative LLMs).

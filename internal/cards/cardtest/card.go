@@ -1,6 +1,6 @@
 package cardtest
 
-import "github.com/dmikalova/vactrol/internal/engine"
+import "github.com/dmikalova/vex/internal/engine"
 
 // Zone names where a card can be, mirroring the game's zones plus Attached (an
 // upgrade on a creature), Under (a card placed under a host), and Nowhere (in no

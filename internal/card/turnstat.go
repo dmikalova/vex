@@ -1,6 +1,6 @@
 package card
 
-import "github.com/dmikalova/vactrol/internal/engine"
+import "github.com/dmikalova/vex/internal/engine"
 
 // TurnStat groups the tallies the engine keeps about what a player did during a
 // turn, e.g. card.TurnStat.EnemyCreaturesFightKilled (see card.TurnCount). It

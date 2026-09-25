@@ -1,6 +1,6 @@
 package worldscollide
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // gronsBrewCluster pulls a Mega Gron Nine-Toes into Gron's Brew's pod — a Pull
 // cluster the brew leads, so the giant it is brewed for rides along.

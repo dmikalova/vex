@@ -60,7 +60,7 @@ func docHeader(active string) app.UI {
 		nav = append(nav, app.A().Class("doc-nav-link").Href(l.href).Text(l.label))
 	}
 	return app.Header().Class("doc-header").Body(
-		app.Span().Class("doc-brand").Text("Vactrol"),
+		app.Span().Class("doc-brand").Text("Vex"),
 		app.Nav().Class("doc-nav").Body(nav...),
 	)
 }

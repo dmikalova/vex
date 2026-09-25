@@ -1,6 +1,6 @@
 package card
 
-import "github.com/dmikalova/vactrol/internal/engine"
+import "github.com/dmikalova/vex/internal/engine"
 
 // The card effect "AST" re-exported for authoring: the effect nodes you nest
 // inside an ability, plus the CreatureVerb, Condition, and Count helpers some of

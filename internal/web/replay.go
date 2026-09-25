@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/dmikalova/vactrol/internal/engine"
-	"github.com/dmikalova/vactrol/internal/match"
+	"github.com/dmikalova/vex/internal/engine"
+	"github.com/dmikalova/vex/internal/match"
 )
 
 // This file is the client's event-sourced core (ADR 0039, 0040). Every player

@@ -1,8 +1,8 @@
 package anomalyexpansion
 
 import (
-	"github.com/dmikalova/vactrol/internal/card"
-	"github.com/dmikalova/vactrol/internal/cards/clusters"
+	"github.com/dmikalova/vex/internal/card"
+	"github.com/dmikalova/vex/internal/cards/clusters"
 )
 
 // Shard of Unity

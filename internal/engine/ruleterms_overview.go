@@ -4,9 +4,9 @@ package engine
 // frame every section. It is registered here as typed data rather than a loose
 // Markdown file so the whole rulebook flows through the registry contract.
 func init() {
-	registerRuleOverview(`# Vactrol Rulebook
+	registerRuleOverview(`# Vex Rulebook
 
-Vactrol is a two-player card game — a clone of **KeyForge** — in which rival
+Vex is a two-player card game — a clone of **KeyForge** — in which rival
 players race to unlock a shared vault. On each of your turns you channel a single
 **house**, marshal its creatures and artifacts, and gather **Æmber**: the raw
 resource that forges keys. The first player to forge three keys wins.

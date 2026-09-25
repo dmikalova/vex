@@ -1,7 +1,7 @@
 package engine
 
 // Phase names one of the eight ordered parts of a turn (ADR 0012). KeyForge's
-// rulebook calls these divisions "steps"; Vactrol calls them phases everywhere —
+// rulebook calls these divisions "steps"; Vex calls them phases everywhere —
 // engine identifiers, generated rulebook, rendered card text, and the game log —
 // rather than carrying two words for one concept.
 //

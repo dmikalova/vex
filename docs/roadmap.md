@@ -1,6 +1,6 @@
-# Vactrol — Development Roadmap
+# Vex — Development Roadmap
 
-Vactrol is a digital card game written in **Go**, designed as a clone of **KeyForge**
+Vex is a digital card game written in **Go**, designed as a clone of **KeyForge**
 (complexity roughly between Magic and Pokémon). This document is the high-level path,
 each step a phase of work with the critical
 concepts and named techniques **bolded** so they can be researched further later.
@@ -16,7 +16,7 @@ concepts and named techniques **bolded** so they can be researched further later
 
 ## 1. Lock the game design & theme
 
-Vactrol keeps KeyForge's core loop but swaps humanoid creatures for
+Vex keeps KeyForge's core loop but swaps humanoid creatures for
 **abstract object constructs** so that art can be procedurally generated at
 scale. Each **House** is a distinct visual/mechanical architecture —
 **Alchemia** (volatile liquid chemists / vials),

@@ -1,4 +1,4 @@
-// Command web serves and runs the Vactrol browser client. The same binary is
+// Command web serves and runs the Vex browser client. The same binary is
 // built two ways: compiled to WebAssembly it runs the interactive UI in the
 // browser (app.RunWhenOnBrowser blocks there); built natively it serves that
 // wasm bundle and the required go-app resources over HTTP.
@@ -22,7 +22,7 @@ import (
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
-	"github.com/dmikalova/vactrol/internal/web"
+	"github.com/dmikalova/vex/internal/web"
 )
 
 func main() {
@@ -52,10 +52,10 @@ func main() {
 	http.Handle("/web/", staticAssets(version))
 
 	http.Handle("/", gzipHandler(&app.Handler{
-		Name:            "Vactrol",
-		ShortName:       "Vactrol",
-		Title:           "Vactrol",
-		Description:     "Vactrol — a KeyForge-style card game, playable in the browser.",
+		Name:            "Vex",
+		ShortName:       "Vex",
+		Title:           "Vex",
+		Description:     "Vex — a KeyForge-style card game, playable in the browser.",
 		BackgroundColor: "#1c1c1b",
 		ThemeColor:      "#1c1c1b",
 		Icon: app.Icon{
@@ -95,7 +95,7 @@ func main() {
 		// The short build id the client shows, so a page and the server that built
 		// it can be matched by eye.
 		Env: map[string]string{
-			"VACTROL_BUILD": buildID(version),
+			"VEX_BUILD": buildID(version),
 			// Passed down so the wasm client registers the same routes the server
 			// serves; without it the gallery's page would be served and render blank.
 			styleEnv: os.Getenv(styleEnv),
@@ -108,7 +108,7 @@ func main() {
 		port = "8000"
 	}
 	addr := ":" + port
-	log.Printf("Vactrol web client on http://localhost%s (build %s)", addr, buildID(version))
+	log.Printf("Vex web client on http://localhost%s (build %s)", addr, buildID(version))
 	if err := http.ListenAndServe(addr, http.DefaultServeMux); err != nil {
 		log.Fatal(err)
 	}
@@ -309,9 +309,9 @@ func serveManifest(w http.ResponseWriter, _ *http.Request) {
 // webManifest mirrors the Handler's name, colors, and icon but sets display to
 // fullscreen so an installed PWA takes the whole screen.
 const webManifest = `{
-  "short_name": "Vactrol",
-  "name": "Vactrol",
-  "description": "Vactrol — a KeyForge-style card game, playable in the browser.",
+  "short_name": "Vex",
+  "name": "Vex",
+  "description": "Vex — a KeyForge-style card game, playable in the browser.",
   "scope": "/",
   "start_url": "/",
   "background_color": "#1c1c1b",
@@ -572,7 +572,7 @@ const devReloadScript = `<script>
 // styleEnv is the variable that turns the Style gallery on. mage web sets it, so
 // the gallery is there whenever the client is being developed and absent from
 // every other deployment.
-const styleEnv = "VACTROL_STYLE"
+const styleEnv = "VEX_STYLE"
 
 // styleEnabled reports whether the Style gallery's route should exist. The check
 // has to run on both sides of the build and agree: the server must register the

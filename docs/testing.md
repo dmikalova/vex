@@ -1,6 +1,6 @@
 # Writing tests
 
-This guide explains the testing options in Vactrol, when to reach for each, and
+This guide explains the testing options in Vex, when to reach for each, and
 what to actually test at each layer. It is the human-facing companion to the
 per-directory rules: [`internal/cards/AGENTS.md`](../internal/cards/AGENTS.md) has
 the full card-harness API reference, and

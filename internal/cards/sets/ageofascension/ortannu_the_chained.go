@@ -1,6 +1,6 @@
 package ageofascension
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // ortannuCluster pulls a couple of Ortannu's Bindings into Ortannu the Chained's
 // pod — a Pull cluster, at least two averaging three (ADR 0036). The Binding is

@@ -2,7 +2,7 @@
 
 ## Context
 
-Vactrol writes rules text in several places — printed card text, the game log,
+Vex writes rules text in several places — printed card text, the game log,
 the generated rulebook, and the prose fragments that frame it — and each was
 written to its own taste. The result reads unevenly: some lines are methodical
 ("Deal 2 damage to a creature"), others are flourishy or vague, and the same idea
@@ -15,7 +15,7 @@ KeyForge set, and does not govern the log, the rulebook, or its own prose.
 
 The text also has an authority problem. KeyForge is the source game and its
 Master Rulebook (`docs/keyforge-master-rulebook.md`) is the canonical wording for
-anything Vactrol has not already decided — but Vactrol deliberately diverges in
+anything Vex has not already decided — but Vex deliberately diverges in
 places (it renames the action card type to Tactic, retires `pay` for `give`,
 re-expresses Omni as Versatile). Without a stated precedence rule, an author can't
 tell whether to follow KeyForge or the local divergence, and "match KeyForge"
@@ -23,7 +23,7 @@ silently overwrites a deliberate choice.
 
 ## Decision
 
-Vactrol adopts a single **Rules voice**: a controlled, methodical style that every
+Vex adopts a single **Rules voice**: a controlled, methodical style that every
 player-facing surface follows. The voice is a small curated stack, one register
 per surface, so each surface reads consistently and renders predictably.
 
@@ -58,16 +58,16 @@ per surface, so each surface reads consistently and renders predictably.
   (ADR 0020); this ADR governs player-facing and doc surfaces.
 
 **Authority and precedence.** The KeyForge Master Rulebook is the wording
-authority Vactrol consults **only when Vactrol has not already decided** a term or
-phrasing. Where Vactrol deliberately diverges from KeyForge, **Vactrol wins**, and
-the divergence is recorded in the Vactrol⇄KeyForge divergence register (the
+authority Vex consults **only when Vex has not already decided** a term or
+phrasing. Where Vex deliberately diverges from KeyForge, **Vex wins**, and
+the divergence is recorded in the Vex⇄KeyForge divergence register (the
 divergence half of the split `card-wording-rules.md`). "Match KeyForge" never
 silently overrides a recorded divergence.
 
 `docs/card-wording-rules.md` is split to serve this. The wording conventions
 (house style, surface-independent) stay in
 [card-wording-rules.md](../card-wording-rules.md); the divergence register (where
-and why Vactrol departs from KeyForge, plus the precedence rule) is
+and why Vex departs from KeyForge, plus the precedence rule) is
 [keyforge-divergences.md](../keyforge-divergences.md). The numbered rules keep
 their numbers so that the many `rule N` cross-references in code and docs stay
 valid; the register indexes the divergent rules rather than renumbering them.
@@ -80,8 +80,8 @@ valid; the register indexes the divergent rules rather than renumbering them.
   already do; the stray `Aember` in the wording rules and the rulebook prose
   fragments is corrected. One word per meaning applies to the game's own name for
   its resource.
-- An author has a precedence rule: decide in the Vactrol voice; fall back to the
-  KeyForge Master Rulebook only for what Vactrol has not settled; record any
+- An author has a precedence rule: decide in the Vex voice; fall back to the
+  KeyForge Master Rulebook only for what Vex has not settled; record any
   deliberate divergence rather than letting a later "match KeyForge" erase it.
 - A pre-pass conforms existing card text, log lines, and docs to the voice. It is
   a text pass with no behavior change; where a phrasing maps to a structural rule

@@ -1,6 +1,6 @@
 package card
 
-import "github.com/dmikalova/vactrol/internal/cards/provenance"
+import "github.com/dmikalova/vex/internal/cards/provenance"
 
 // Provenance tags a card as derived from an original source card (set + collector
 // number), for coverage tracking. Optional and repeatable — a card may draw from
@@ -39,7 +39,7 @@ var (
 	// WC is Worlds Collide.
 	WC = provenance.WorldsCollide
 	// AE is Anomaly Expansion, a reservoir set (never itself draftable): it holds
-	// the Vactrol-invented Shards that enter a deck only through a cross-set
+	// the Vex-invented Shards that enter a deck only through a cross-set
 	// cluster, plus the housed anomaly cards, which stay legacy-drawable by other
 	// sets.
 	AE = provenance.AnomalyExpansion

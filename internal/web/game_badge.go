@@ -6,7 +6,7 @@ import (
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // badgeFadeDur is how long the selection badges linger on the board, growing and

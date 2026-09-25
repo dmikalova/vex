@@ -3,7 +3,7 @@ package deckgen
 import (
 	"math/rand"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // GenerationProfile is the deck-building-only metadata a card carries, kept out

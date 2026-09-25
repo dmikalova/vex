@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // SeedScripts builds the fixed-seed batch of game scripts that TestSimulateSeeds

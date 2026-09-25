@@ -3,7 +3,7 @@ package web
 import (
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // This file is the /glossary page: every rule term as an alphabetical

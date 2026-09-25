@@ -7,9 +7,9 @@ import (
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
-	"github.com/dmikalova/vactrol/internal/card"
-	"github.com/dmikalova/vactrol/internal/deckgen"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/card"
+	"github.com/dmikalova/vex/internal/deckgen"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // This file is the /clusters page: an internal data view (like /style, gated
@@ -224,7 +224,7 @@ func (c *clusters) Render() app.UI {
 	return app.Div().Class("clusters-page").Body(
 		app.Raw(iconOutlineFilter),
 		app.Header().Class("clusters-header").Body(
-			app.Span().Class("clusters-brand").Text("Vactrol"),
+			app.Span().Class("clusters-brand").Text("Vex"),
 			app.Span().Class("clusters-title").Text("Clusters"),
 			app.Nav().Class("clusters-nav").Body(
 				app.A().Class("clusters-nav-link").Href("/cards").Text("Cards"),

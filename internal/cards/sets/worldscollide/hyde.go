@@ -1,6 +1,6 @@
 package worldscollide
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // HydeName is the card name "Hyde".
 const HydeName = "Hyde"

@@ -22,7 +22,7 @@ exact thing we want to stop needing to know.
 
 Master Rulebook §190 settles the rule: an ability checks that its source is in
 play at the instant it begins resolving, and once it has started it is locked in.
-Vactrol adopts this uniformly. It is **not** a divergence — the ordinary trigger
+Vex adopts this uniformly. It is **not** a divergence — the ordinary trigger
 windows were simply missing the guard the destruction window already had.
 
 The model, stated precisely: **a card that has left play can only ever be the

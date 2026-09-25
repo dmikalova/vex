@@ -6,8 +6,8 @@ import (
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
-	"github.com/dmikalova/vactrol/internal/engine"
-	"github.com/dmikalova/vactrol/internal/match"
+	"github.com/dmikalova/vex/internal/engine"
+	"github.com/dmikalova/vex/internal/match"
 )
 
 // This file is the action plumbing: every engine mutation runs through here, so

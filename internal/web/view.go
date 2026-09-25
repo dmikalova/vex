@@ -111,9 +111,9 @@ func (g *game) restrictionNotes() app.UI {
 // rewrites the rules should be visibly on and one click from off.
 func (g *game) brandBar() app.UI {
 	return app.Div().Class("brandbar").Body(
-		app.Span().Class("brand-title").Text("Vactrol"),
+		app.Span().Class("brand-title").Text("Vex"),
 		// The server publishes the short build id of the bundle it served.
-		app.Span().Class("brand-version").Text(app.Getenv("VACTROL_BUILD")),
+		app.Span().Class("brand-version").Text(app.Getenv("VEX_BUILD")),
 		app.If(g.busy && !g.choosing && !g.choosingOption && !g.choosingPosition, func() app.UI {
 			return app.Span().Class("badge-busy").Text("resolving…")
 		}),

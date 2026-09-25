@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/card"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/card"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // realHouses is every playable KeyForge house, in enum order.

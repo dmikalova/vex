@@ -3,9 +3,9 @@ package callofthearchons_test
 import (
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/card"
-	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
-	cota "github.com/dmikalova/vactrol/internal/cards/sets/callofthearchons"
+	"github.com/dmikalova/vex/internal/card"
+	ct "github.com/dmikalova/vex/internal/cards/cardtest"
+	cota "github.com/dmikalova/vex/internal/cards/sets/callofthearchons"
 )
 
 // Snudge

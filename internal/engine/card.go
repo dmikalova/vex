@@ -131,7 +131,7 @@ type CardDefinition struct {
 	Enhances []BonusIcon
 
 	// NoEnhanceIcons are the bonus-icon kinds deck generation must not land on this
-	// card via Enhance — a Vactrol divergence for a card a particular bonus would
+	// card via Enhance — a Vex divergence for a card a particular bonus would
 	// only weaken (Effervescent Principle bars Capture). Other kinds may still land.
 	NoEnhanceIcons []BonusIcon
 
@@ -1048,7 +1048,7 @@ func WithEnhance(icons ...BonusIcon) CardOption {
 }
 
 // WithoutEnhancement bars the given bonus-icon kinds from landing on this card via
-// Enhance (a Vactrol divergence; see CardDefinition.NoEnhanceIcons).
+// Enhance (a Vex divergence; see CardDefinition.NoEnhanceIcons).
 func WithoutEnhancement(icons ...BonusIcon) CardOption {
 	return func(c *CardDefinition) { c.NoEnhanceIcons = append(c.NoEnhanceIcons, icons...) }
 }

@@ -3,7 +3,7 @@ package web
 import (
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // These tests cover keyboard navigation: the rows the arrows walk, the nth card

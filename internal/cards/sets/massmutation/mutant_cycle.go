@@ -1,8 +1,8 @@
 package massmutation
 
 import (
-	"github.com/dmikalova/vactrol/internal/card"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/card"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // The mutant cycle. Mass Mutation's mutants are house hybrids: each creature

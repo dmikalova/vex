@@ -3,7 +3,7 @@ package web
 import (
 	"strings"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // House-specific CSS classes. The actual colours live in web/app.css; these

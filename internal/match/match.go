@@ -1,4 +1,4 @@
-// Package match sets up Vactrol games in the way every frontend needs — the
+// Package match sets up Vex games in the way every frontend needs — the
 // web client and the future lobby server all deal the same
 // kind of random two-player match. Keeping this here means the frontends share
 // one deck-building implementation instead of each copying it.
@@ -8,9 +8,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/dmikalova/vactrol/internal/cards"
-	"github.com/dmikalova/vactrol/internal/deckgen"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/cards"
+	"github.com/dmikalova/vex/internal/deckgen"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // DeckSize is the number of cards dealt to each player (opening hand plus draw

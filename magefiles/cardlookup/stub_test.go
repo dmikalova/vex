@@ -3,8 +3,8 @@ package main
 import (
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/cards"
-	"github.com/dmikalova/vactrol/internal/cards/provenance"
+	"github.com/dmikalova/vex/internal/cards"
+	"github.com/dmikalova/vex/internal/cards/provenance"
 )
 
 // Master of X is one implemented card standing in for three printings, which it

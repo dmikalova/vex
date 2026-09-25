@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/cards"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/cards"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // The UI is mostly markup, which a test can only assert by restating it. What a

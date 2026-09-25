@@ -1,6 +1,6 @@
 package worldscollide
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // xenosBloodshadowCluster pulls a Toad into Xenos Bloodshadow's pod, one for one —
 // a Pull cluster Xenos Bloodshadow leads.

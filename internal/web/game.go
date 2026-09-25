@@ -1,5 +1,5 @@
-// Package web is the browser client for the Vactrol card game. It renders an
-// interactive two-player hotseat match on the Vactrol engine,
+// Package web is the browser client for the Vex card game. It renders an
+// interactive two-player hotseat match on the Vex engine,
 // compiled to WebAssembly via the go-app framework: the playtester sees
 // the whole board and drives both sides.
 package web
@@ -7,9 +7,9 @@ package web
 import (
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
-	"github.com/dmikalova/vactrol/internal/cards"
-	"github.com/dmikalova/vactrol/internal/engine"
-	"github.com/dmikalova/vactrol/internal/match"
+	"github.com/dmikalova/vex/internal/cards"
+	"github.com/dmikalova/vex/internal/engine"
+	"github.com/dmikalova/vex/internal/match"
 )
 
 // phase is the interaction state of the client, distinct from the engine's own
@@ -524,7 +524,7 @@ type logMark struct {
 // persistKey names the local-storage slot holding the in-progress match, so a
 // hot-reload of the wasm — or leaving the page and coming back — resumes it
 // instead of dealing a new game.
-const persistKey = "vactrol.match"
+const persistKey = "vex.match"
 
 // snapshotVersion tags persisted state; bump it when an engine or command-log
 // change makes older snapshots invalid so a stale one is flushed instead of

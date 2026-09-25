@@ -1,6 +1,6 @@
 package card
 
-import "github.com/dmikalova/vactrol/internal/engine"
+import "github.com/dmikalova/vex/internal/engine"
 
 // Duration groups the spans a timed effect can last, e.g.
 // card.Duration.OpponentNextTurn (see card.Restrict). It mirrors the

@@ -7,8 +7,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/dmikalova/vactrol/internal/cards"
-	"github.com/dmikalova/vactrol/internal/cards/provenance"
+	"github.com/dmikalova/vex/internal/cards"
+	"github.com/dmikalova/vex/internal/cards/provenance"
 )
 
 // pickSet opens an interactive ↑/↓ list of the source sets that still have cards

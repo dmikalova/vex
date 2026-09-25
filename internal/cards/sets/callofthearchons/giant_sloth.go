@@ -1,7 +1,7 @@
 package callofthearchons
 
 import (
-	"github.com/dmikalova/vactrol/internal/card"
+	"github.com/dmikalova/vex/internal/card"
 )
 
 // Giant Sloth

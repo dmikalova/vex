@@ -1,6 +1,6 @@
 package deckgen
 
-import "github.com/dmikalova/vactrol/internal/engine"
+import "github.com/dmikalova/vex/internal/engine"
 
 // Tuning holds every knob generation reads. DefaultTuning is the calibrated
 // baseline; a Set starts from it and overrides only what it needs. Rates are

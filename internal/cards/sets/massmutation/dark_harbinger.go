@@ -1,6 +1,6 @@
 package massmutation
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // darkHarbingerCluster binds the three Mutation tactics into one RandomCount
 // cluster led by Dark Harbinger: whenever the Harbinger rolls into a pod, one to

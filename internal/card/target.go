@@ -1,6 +1,6 @@
 package card
 
-import "github.com/dmikalova/vactrol/internal/engine"
+import "github.com/dmikalova/vex/internal/engine"
 
 // Target groups ready-made targets, e.g. card.Target.EachEnemyCreature. Each is
 // an engine.Target value, so the filter methods (WithTrait, PowerAtMost, OnFlank,

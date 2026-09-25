@@ -166,7 +166,7 @@ Decisions:
   (ADR 0018), now widened to the Houses an errant pod introduces, not hardcoded to
   nine.
 - **The two missing Shards are real `Connected` cards in a reservoir set.** Shard of
-  Glory (Saurian) and Shard of Unity (Star Alliance) are Vactrol-invented cards in
+  Glory (Saurian) and Shard of Unity (Star Alliance) are Vex-invented cards in
   `internal/cards/sets/anomalyexpansion`, declaring their home set with
   `card.InSet(card.AE)` (no provenance — set membership is decoupled from provenance).
   Being `Connected`, they stay out of the draw pool and the legacy pool and enter a
@@ -177,7 +177,7 @@ Decisions:
   also holds the housed, non-`Connected` anomaly cards, and those remain eligible
   for the legacy pool, so other sets' legacy and legacy-maverick slots can draw an
   anomaly even though the Anomaly Expansion is never itself draftable. Their
-  abilities are provisional Vactrol inventions (see
+  abilities are provisional Vex inventions (see
   `docs/keyforge-divergences.md`).
 - **The Ambassador and Plant templates already cover errant Houses for free** — they
   materialize per partner House from `DeckHouses`, so an errant House gets its

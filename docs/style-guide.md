@@ -1,22 +1,22 @@
-# Vactrol style guide
+# Vex style guide
 
 This is the one place the whole repo's coding style lives. The `AGENTS.md` files
 defer here for _how to write the code_; they keep only the structural facts about
 where things go (build targets, file organization, engine constraints).
 
 The guide is adapted from [TigerBeetle's TigerStyle](https://github.com/tigerbeetle/tigerbeetle/blob/main/docs/TIGER_STYLE.md). TigerStyle is
-written for a Zig database; vactrol is a Go game engine, so the Zig-specific
+written for a Zig database; vex is a Go game engine, so the Zig-specific
 mechanics (manual allocation, `zig fmt`, `snake_case` files, 100-column Zig) are
-translated into their Go and vactrol equivalents, and a few rules are
+translated into their Go and vex equivalents, and a few rules are
 deliberately relaxed or dropped where they don't fit a card-game engine. Where
-vactrol departs from TigerStyle, the departure is called out.
+vex departs from TigerStyle, the departure is called out.
 
 ## Why have style
 
 > Another word for style is design. — TigerStyle
 
 Style is not decoration on top of working code; it is how the code comes to work
-well. Every rule below exists to advance one of vactrol's design goals, in this
+well. Every rule below exists to advance one of vex's design goals, in this
 priority order:
 
 1. **Correctness and safety.** The engine is the referee. A rules bug is worse
@@ -53,7 +53,7 @@ When two rules conflict, the higher goal wins.
 ## Safety and correctness
 
 These are [NASA's Power of Ten][powerbten] rules, translated to Go and to
-vactrol's flat-state engine. Go has no `assert`, no manual memory, and a garbage
+vex's flat-state engine. Go has no `assert`, no manual memory, and a garbage
 collector, so the letter of several rules changes even though the spirit does
 not.
 
@@ -95,7 +95,7 @@ not.
   never `err == ErrX`. `errors.Is` still works on a bare sentinel and keeps the
   call site correct if the error is ever wrapped with `%w`. The sentinel blocks
   live in `game_turn.go`, `session.go`, and `match.go`.
-- **Validate at the boundary; then trust within it.** vactrol's "assertions" are
+- **Validate at the boundary; then trust within it.** vex's "assertions" are
   its `validate()` pass and its invalid-zero sentinels. A card runs `validate()`
   at registration (`card.New` → `init`), so a malformed definition fails at
   program start, not mid-game. Sentinels like `playerUnset` / `targetUnset` /
@@ -151,7 +151,7 @@ raritySpecial`, so a mark's ordinal _is_ its diamond count).
 
 ## Composition and design
 
-vactrol's defining rule. Read every change through the lens of _idiomatic,
+vex's defining rule. Read every change through the lens of _idiomatic,
 maintainable, composable Go that will keep being extended_ as more of the game is
 implemented. When a request is ambiguous, choose the option a senior Go engineer
 would find easiest to build on — not the shortest path to a passing build.
@@ -255,7 +255,7 @@ _why_; that file is the _what goes where_.
 > The lack of back-of-the-envelope performance sketches is the root of all evil.
 
 - **Design for performance from the outset.** The biggest wins come in the design
-  phase, before anything can be profiled. vactrol's flat, pointerless,
+  phase, before anything can be profiled. vex's flat, pointerless,
   comparable `GameState` is exactly this: it makes cloning a position a plain
   value copy with no allocation, which is what makes AI search viable. Do not
   introduce a pointer, slice, or map into `GameState` (or into a value compared
@@ -268,7 +268,7 @@ _why_; that file is the _what goes where_.
   standalone functions with primitive arguments where it makes the redundant work
   visible to a human reader, not just the optimizer.
 
-Vactrol's departure from TigerStyle: Go is garbage-collected, so the "all memory
+Vex's departure from TigerStyle: Go is garbage-collected, so the "all memory
 statically allocated at startup, none allocated after init" rule does not apply
 literally. Its spirit survives as the flat fixed-size state and a preference for
 avoiding per-turn allocation on hot paths.
@@ -321,7 +321,7 @@ avoiding per-turn allocation on hot paths.
   one will do; don't write a doc-comment paragraph for a one-line point.
 - **Say how, for tests.** A short description at the top of a non-obvious test
   explaining its goal and method helps the reader get up to speed or skip past it.
-  In vactrol, the behavior description goes in the `t.Run("…")` subtest name
+  In vex, the behavior description goes in the `t.Run("…")` subtest name
   (describe/it shape), not in the generated doc comment.
 - **Comments are prose.** Full comments are sentences: a space after `//`, a
   capital letter, and a full stop (or a colon when they introduce what follows).
@@ -364,13 +364,13 @@ avoiding per-turn allocation on hot paths.
 
 ## Dependencies and tooling
 
-- **Keep dependencies minimal and deliberate.** This is vactrol's most explicit
+- **Keep dependencies minimal and deliberate.** This is vex's most explicit
   departure from TigerStyle's _zero-dependencies_ policy: the frontend does depend
   on libraries (a WebAssembly framework). But the core `engine`
   imports nothing upward and stays dependency-light on purpose, and a new
   dependency — especially anywhere near the engine — must earn its place against
   the supply-chain, safety, and maintenance cost it adds.
 - **Prefer the tools already in the box.** A small, standardized toolbox is
-  simpler to operate than an array of specialized instruments. vactrol's is Go
+  simpler to operate than an array of specialized instruments. vex's is Go
   plus `mage`; when you need a script or a task, add a mage target rather than a
   one-off shell script, so it stays cross-platform and typed.

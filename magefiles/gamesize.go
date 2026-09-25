@@ -17,8 +17,8 @@ import (
 	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/svg"
 
-	"github.com/dmikalova/vactrol/internal/cards"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/cards"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // GameSize reports web and state sizes. It prints the in-memory GameState size,

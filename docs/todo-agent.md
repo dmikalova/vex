@@ -66,7 +66,7 @@ That is a card's behavior welded into a shared mechanic. The evidence
 (`mage tool:lookup` against the provenance files):
 
 - **Key Charge** (CotA #325) prints "Play: Lose 1 Aember. If you do, you may forge
-  a key at current cost." — **no self-removal at all**. Vactrol currently renders
+  a key at current cost." — **no self-removal at all**. Vex currently renders
   `… -> purge Key Charge.`
 - **Imperial Forge** (WC #222) — no self-removal either.
 - **Epic Quest** (CotA #231) and **[REDACTED]** (AoA #139) say **sacrifice**,

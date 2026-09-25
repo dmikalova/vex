@@ -1,4 +1,4 @@
-module github.com/dmikalova/vactrol
+module github.com/dmikalova/vex
 
 go 1.27
 

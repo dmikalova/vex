@@ -1,6 +1,6 @@
 package worldscollide
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // chainGangCluster pulls a Subtle Chain or two into Chain Gang's pod — a Pull
 // cluster, at least one averaging two (ADR 0036).

@@ -1,6 +1,6 @@
 package card
 
-import "github.com/dmikalova/vactrol/internal/engine"
+import "github.com/dmikalova/vex/internal/engine"
 
 // The enum-like card categories, re-exported as grouped namespaces so related
 // values stay together and read unambiguously — card.House.Brobnar is plainly a

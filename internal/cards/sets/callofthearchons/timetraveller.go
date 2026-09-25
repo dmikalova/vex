@@ -1,6 +1,6 @@
 package callofthearchons
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // timetravellerCluster pulls one Help from Future Self per Timetraveller: the two
 // are a PullExact pair, so N Timetravellers ride in with N copies of Help (ADR

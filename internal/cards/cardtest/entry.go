@@ -3,7 +3,7 @@ package cardtest
 import (
 	"fmt"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // Entry is one card to place during setup: a definition, an optional handle to

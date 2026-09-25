@@ -14,10 +14,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/card"
-	"github.com/dmikalova/vactrol/internal/cards/provenance"
-	"github.com/dmikalova/vactrol/internal/deckgen"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/card"
+	"github.com/dmikalova/vex/internal/cards/provenance"
+	"github.com/dmikalova/vex/internal/deckgen"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // TestAllIsAValidDatabase checks the assembled card database: every set package
@@ -195,7 +195,7 @@ func TestNoDuplicateImplementations(t *testing.T) {
 // TestProvenanceHasNoOverlap checks that no two differently named cards claim the
 // same original source printing (set + collector number). Provenance is
 // repeatable on a single card (a reprint across sets shares one implementation,
-// e.g. Fogbank's four printings), but two different vactrol cards pointing at
+// e.g. Fogbank's four printings), but two different vex cards pointing at
 // the same original is an authoring mistake — most likely a Provenance tag
 // copied from another card's file and never updated.
 func TestProvenanceHasNoOverlap(t *testing.T) {

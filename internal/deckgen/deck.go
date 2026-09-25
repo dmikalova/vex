@@ -1,4 +1,4 @@
-// Package deckgen is Vactrol's procedural deck generator. It turns a Set (a pool
+// Package deckgen is Vex's procedural deck generator. It turns a Set (a pool
 // of cards plus tuning) and a seed into a Deck of three House pods of twelve
 // Slots each, deterministically. It is a pure function of its inputs and depends
 // only on the engine's data types — never the Game runtime, the card facade, or
@@ -18,7 +18,7 @@ package deckgen
 import (
 	"fmt"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // A Deck is three House pods of twelve Slots — 36 cards — generated from one Set

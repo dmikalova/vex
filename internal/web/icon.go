@@ -3,7 +3,7 @@ package web
 import (
 	"reflect"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // This file is the Iconography pass (ADR 0022): the Visitor that turns a card's

@@ -3,8 +3,8 @@ package ageofascension
 import (
 	"math/rand"
 
-	"github.com/dmikalova/vactrol/internal/card"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/card"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // House Ambassador

@@ -7,7 +7,7 @@ func init() {
 		SectionBonus,
 		`Bonus icons are printed in a card's upper-left corner. After a card is played,
 its icons resolve one at a time, top to bottom, before the card's "Play:" ability.
-Two Vactrol rules differ from KeyForge: the card carrying an icon is the source of
+Two Vex rules differ from KeyForge: the card carrying an icon is the source of
 that icon's effect, and if a creature leaves play before or while its icons
 resolve, its remaining icons do not resolve.`,
 	)
@@ -46,7 +46,7 @@ or foe. With no enemy creature in play the damage must land on a friendly one.`,
 			Body: `Enhance is a deck-generation rule, not an in-game one: when the deck is built,
 the listed bonus icons are added to random cards in it (up to five icons per card,
 counting printed icons), and the Enhance card itself gains nothing during play. A
-card may opt out of receiving Enhance icons, a Vactrol addition for cards a bonus
+card may opt out of receiving Enhance icons, a Vex addition for cards a bonus
 would only weaken.`,
 		},
 	})

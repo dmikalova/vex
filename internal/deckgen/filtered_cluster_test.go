@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // isUpgradeOrRobot mirrors Chief Engineer Walls's pull predicate for tests.

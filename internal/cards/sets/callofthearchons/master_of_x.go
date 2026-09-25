@@ -3,13 +3,13 @@ package callofthearchons
 import (
 	"fmt"
 
-	"github.com/dmikalova/vactrol/internal/card"
+	"github.com/dmikalova/vex/internal/card"
 )
 
 // master builds one Master of N: a power-4 Demon whose Reap may destroy a
 // creature of power n. Each variant registers as its own pool card at one-fifth
 // draft weight, so all five together draft about as often as one ordinary Rare
-// card. KeyForge prints Master of 1/2/3 (#89/#90/#91); Vactrol extends the family
+// card. KeyForge prints Master of 1/2/3 (#89/#90/#91); Vex extends the family
 // to 5. The name is built from n; mage generateComments resolves it through the
 // wrapper to document each variant. opts carries a variant's provenance; the home
 // set is stamped by set.New, so a variant with no provenance passes no opts.

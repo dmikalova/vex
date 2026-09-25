@@ -15,15 +15,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/dmikalova/vactrol/internal/card"
-	"github.com/dmikalova/vactrol/internal/cards/provenance"
+	"github.com/dmikalova/vex/internal/card"
+	"github.com/dmikalova/vex/internal/cards/provenance"
 	// Blank-imported so each set's cards self-register through its package init.
-	_ "github.com/dmikalova/vactrol/internal/cards/sets/ageofascension"
-	_ "github.com/dmikalova/vactrol/internal/cards/sets/anomalyexpansion"
-	_ "github.com/dmikalova/vactrol/internal/cards/sets/callofthearchons"
-	_ "github.com/dmikalova/vactrol/internal/cards/sets/massmutation"
-	_ "github.com/dmikalova/vactrol/internal/cards/sets/worldscollide"
-	"github.com/dmikalova/vactrol/internal/deckgen"
+	_ "github.com/dmikalova/vex/internal/cards/sets/ageofascension"
+	_ "github.com/dmikalova/vex/internal/cards/sets/anomalyexpansion"
+	_ "github.com/dmikalova/vex/internal/cards/sets/callofthearchons"
+	_ "github.com/dmikalova/vex/internal/cards/sets/massmutation"
+	_ "github.com/dmikalova/vex/internal/cards/sets/worldscollide"
+	"github.com/dmikalova/vex/internal/deckgen"
 )
 
 // All returns every registered card across every imported set.

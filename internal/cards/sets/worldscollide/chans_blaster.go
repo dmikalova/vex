@@ -1,6 +1,6 @@
 package worldscollide
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // chansBlasterCluster pulls a Commander Chan into Chan's Blaster's pod — a Pull
 // cluster, at least one averaging about one and a quarter (ADR 0036). The officer

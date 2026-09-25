@@ -9,8 +9,8 @@ import (
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
-	"github.com/dmikalova/vactrol/internal/cards"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/cards"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // This file is the Style gallery: one page showing every piece of the client's
@@ -21,7 +21,7 @@ import (
 // stylePersistKey is where the gallery's font choices are kept. It is separate
 // from the match's key so clearing a stuck game never costs the fonts, and
 // choosing fonts never touches a game in progress.
-const stylePersistKey = "vactrol.style"
+const stylePersistKey = "vex.style"
 
 // fontOrigins are the stylesheet hosts the gallery will load a font from. The
 // gallery injects whatever URL is pasted into it as a <link> in the page, so the
@@ -197,7 +197,7 @@ func (s *style) restoreScroll(ctx app.Context) {
 // styleScrollKey is where the gallery parks its scroll offset across a reload,
 // whether a hot-reload or a plain refresh. It is separate from stylePersistKey
 // so consuming the one-shot offset never rewrites the font selections.
-const styleScrollKey = "vactrol.style.scroll"
+const styleScrollKey = "vex.style.scroll"
 
 // save writes the font selections back to local storage. Nothing else on the
 // page is worth persisting: the specimens are derived from the catalog and the

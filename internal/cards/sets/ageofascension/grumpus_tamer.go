@@ -1,6 +1,6 @@
 package ageofascension
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // grumpusTamerCluster pulls a couple of War Grumpuses into Grumpus Tamer's pod — a
 // Pull cluster, at least two averaging three (ADR 0036). War Grumpus is Rare and

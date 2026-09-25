@@ -489,17 +489,17 @@ Three standing invariants:
   does, never what it no longer does (ADR 0006). Where the behavior is non-obvious,
   bind the claim to an example (a cited engine test/scenario) rather than trusting
   prose.
-- **Reference the KeyForge Master Rulebook, follow the Vactrol voice.** The
+- **Reference the KeyForge Master Rulebook, follow the Vex voice.** The
   KeyForge Master Rulebook ([docs/keyforge-master-rulebook.md](docs/keyforge-master-rulebook.md))
-  is the wording authority **only for what Vactrol has not already decided**. Where
-  Vactrol deliberately diverges from KeyForge, **Vactrol wins**, and the divergence
-  is recorded in the Vactrol⇄KeyForge divergence register
+  is the wording authority **only for what Vex has not already decided**. Where
+  Vex deliberately diverges from KeyForge, **Vex wins**, and the divergence
+  is recorded in the Vex⇄KeyForge divergence register
   ([docs/keyforge-divergences.md](docs/keyforge-divergences.md)) — never silently
   overwritten by a later "match KeyForge".
-- **Template consistency and simplicity across Vactrol outrank exact KeyForge
+- **Template consistency and simplicity across Vex outrank exact KeyForge
   wording.** Matching the printed KeyForge text is not a goal in itself and is
   never a blocker. A **meaning-preserving** reword that makes a card read in the
-  same voice and template as the rest of Vactrol — or that lets a mechanic
+  same voice and template as the rest of Vex — or that lets a mechanic
   decompose into shared nodes instead of a bespoke one — is **welcome**, not a
   reluctant exception: prefer it whenever it simplifies the templating or makes
   card text more consistent. Such a reword changes only phrasing, so it needs no

@@ -3,7 +3,7 @@ package web
 import (
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // TestPromptTotality proves the dock renders every engine prompt kind (ADR 0045).

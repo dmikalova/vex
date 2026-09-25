@@ -1,6 +1,6 @@
 package massmutation
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // zForceCluster binds the three Z- upgrades into one WholePool cluster led by
 // Z-Force Agent 14: whenever the agent rolls into a pod, all three upgrades ride

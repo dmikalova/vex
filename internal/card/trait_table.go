@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/dmikalova/vactrol/internal/cards/provenance"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/cards/provenance"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 var (
@@ -19,7 +19,7 @@ var (
 
 // MostCommonCreatureTrait returns the trait carried by the most creatures of the
 // given House across the whole KeyForge card pool (the provenance catalogs, not
-// just the cards vactrol has implemented), computed once and cached. Sourcing the
+// just the cards vex has implemented), computed once and cached. Sourcing the
 // full pool means every House has a well-defined answer even before its creatures
 // are implemented — Mars is Martian and Sanctum is Knight from the first card.
 // When several traits tie for the most creatures, the winner is chosen by a
@@ -65,7 +65,7 @@ func buildBaneTraits() {
 }
 
 // parseHouseSlug resolves a provenance house slug (lowercase, space-stripped, e.g.
-// "staralliance") to its House. Later-set houses vactrol does not model return
+// "staralliance") to its House. Later-set houses vex does not model return
 // false and are skipped.
 func parseHouseSlug(slug string) (engine.House, bool) {
 	for h := engine.HouseNone + 1; int(h) < engine.NumHouses; h++ {

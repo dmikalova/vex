@@ -2,7 +2,7 @@
 
 package ageofascension
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // set is Age of Ascension's registrar: every card in this package declares its
 // home set by registering through set.New, so deck generation groups the card

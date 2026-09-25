@@ -1,6 +1,6 @@
 package sim
 
-import "github.com/dmikalova/vactrol/internal/engine"
+import "github.com/dmikalova/vex/internal/engine"
 
 // decoder turns the fuzz/soak byte script into a stream of small decisions. When
 // the script runs out every read returns a zero value, which makes players stop

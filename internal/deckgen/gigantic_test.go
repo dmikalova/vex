@@ -3,7 +3,7 @@ package deckgen
 import (
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // giganticBaseCard builds a pool entry for a gigantic base half that carries a

@@ -1,6 +1,6 @@
-# Vactrol architecture
+# Vex architecture
 
-This document explains how the Vactrol codebase fits together — first at a
+This document explains how the Vex codebase fits together — first at a
 **high level** (the big pieces and why they are shaped the way they are), then
 at a **medium level** (per-area responsibilities, the key types, and how a turn
 and an ability actually flow through the code).
@@ -19,9 +19,9 @@ When this doc and an `AGENTS.md` overlap, the `AGENTS.md` is authoritative for
 "how to write the code"; this doc is authoritative for "how the system is laid
 out."
 
-## 1. What Vactrol is
+## 1. What Vex is
 
-Vactrol is a rules engine for a KeyForge-style two-player card game, plus the
+Vex is a rules engine for a KeyForge-style two-player card game, plus the
 frontends that let you play it. The design is organized around two invariants
 that almost every other decision follows from:
 
@@ -71,7 +71,7 @@ never import `engine` directly.
 | `internal/cards`            | Card-database **aggregator**: blank-imports every set so its cards self-register, and exposes `cards.All()`.                                            |
 | `internal/cards/sets/<set>` | One self-registering file per card (e.g. `callofthearchons/anger.go`).                                                                                  |
 | `internal/cards/cardtest`   | Declarative test harness (`ct.Play`, `ct.Side`, `h.Expect`) shared by the set packages.                                                                 |
-| `internal/cards/provenance` | Embedded catalogs of the original KeyForge cards; links each Vactrol card to its source.                                                                |
+| `internal/cards/provenance` | Embedded catalogs of the original KeyForge cards; links each Vex card to its source.                                                                |
 | `internal/match`            | Shared match setup (random three-house decks, opening hands) used by every frontend.                                                                    |
 | `internal/web`              | go-app WebAssembly client.                                                                                                                              |
 | `cmd/web`                   | Thin binary that wires up the web frontend.                                                                                                             |

@@ -1,6 +1,6 @@
 package massmutation
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // sinsCluster binds the seven deadly Sins into one RandomCount cluster triggered by
 // any member: whenever any Sin is drawn into a deck, three to seven distinct Sins

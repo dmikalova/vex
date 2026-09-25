@@ -1,6 +1,6 @@
 package worldscollide
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // IgonTheGreenName lets Igon the Terrible reference the Green by name without a
 // package var-init cycle (the Green already references IgonTheTerrible.Name).

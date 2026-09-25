@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // setup deals a bare game for the session tests — no decks, just the engine

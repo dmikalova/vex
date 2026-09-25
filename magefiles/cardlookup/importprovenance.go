@@ -22,7 +22,7 @@ import (
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 
-	"github.com/dmikalova/vactrol/internal/cards/provenance"
+	"github.com/dmikalova/vex/internal/cards/provenance"
 )
 
 // importSet pairs a source set with its Master Vault expansion id. There is no
@@ -383,7 +383,7 @@ func fetchDecksPage(
 			return nil, throttled, err
 		}
 		req.Header.Set("Accept", "application/json")
-		req.Header.Set("User-Agent", "vactrol-cardlookup/1.0")
+		req.Header.Set("User-Agent", "vex-cardlookup/1.0")
 		resp, err := client.Do(req)
 		if err != nil {
 			// A timeout or reset under load is transient — wait it out too.

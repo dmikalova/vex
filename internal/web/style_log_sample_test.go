@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/sim"
+	"github.com/dmikalova/vex/internal/sim"
 )
 
 // coverKinds is the union of catalogued kinds the set-cover's bubbles show, the

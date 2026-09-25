@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <title>Vactrol</title>
+  <title>Vex</title>
   <!-- Full-bleed background so the icon is maskable: Android crops it to a circle
        or squircle, and the amber diamond stays inside the 80% safe zone. -->
   <rect width="512" height="512" fill="#1c1c1b"/>

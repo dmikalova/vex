@@ -1,4 +1,4 @@
-// Package sim plays whole random, legal Vactrol games to shake out engine bugs
+// Package sim plays whole random, legal Vex games to shake out engine bugs
 // that per-card unit tests never reach — a card leaking Æmber, a move-between-
 // zones path that duplicates or drops a card, a turn that corrupts the flat state.
 // Every game is decoded from a byte script and checked against the engine's own
@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"runtime/debug"
 
-	"github.com/dmikalova/vactrol/internal/engine"
-	"github.com/dmikalova/vactrol/internal/match"
+	"github.com/dmikalova/vex/internal/engine"
+	"github.com/dmikalova/vex/internal/match"
 )
 
 // Caps bound a single simulated game so every run terminates — the "put a limit on

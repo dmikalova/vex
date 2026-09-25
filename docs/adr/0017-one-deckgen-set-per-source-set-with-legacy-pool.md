@@ -43,7 +43,7 @@ deckgen.NewSet(name, own, deckgen.DefaultTuning()).WithLegacy(shared)
 > `Ref` (`rc.Provenance[0]`). It is now keyed on an explicit home set — `card.InSet`,
 > defaulting to the first provenance tag when a card declares none — so deck
 > generation **never reads `Provenance`** (which is pure coverage bookkeeping) and a
-> Vactrol-invented card with no provenance (Master of 4/5, an Anomaly Expansion
+> Vex-invented card with no provenance (Master of 4/5, an Anomaly Expansion
 > Shard) still joins a pool. `setName` reads `rc.Set`; `nativeSet` resolves it.
 
 `NewLegacy` buckets every registered card by House **and rarity** (with a flat

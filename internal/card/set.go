@@ -1,8 +1,8 @@
 package card
 
 import (
-	"github.com/dmikalova/vactrol/internal/cards/provenance"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/cards/provenance"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // Set is a set package's card registrar. Each set's 0set.go declares one — with

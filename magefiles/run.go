@@ -9,7 +9,7 @@ import (
 
 	"github.com/magefile/mage/sh"
 
-	"github.com/dmikalova/vactrol/internal/hotreload"
+	"github.com/dmikalova/vex/internal/hotreload"
 )
 
 // pkgsiteVersion pins the doc server (the renderer behind pkg.go.dev). Unlike the
@@ -47,10 +47,10 @@ func WebWasm() error {
 // of file changes: the watcher waits for that quiet period before rebuilding.
 // Defaults to 5s when unset.
 func Web() error {
-	bin := filepath.Join(os.TempDir(), "vactrol-web-dev")
+	bin := filepath.Join(os.TempDir(), "vex-web-dev")
 	// The dev server is the one place the Style gallery (/style) is meant to
 	// exist, so this is where it is switched on; the served binary inherits it.
-	if err := os.Setenv("VACTROL_STYLE", "1"); err != nil {
+	if err := os.Setenv("VEX_STYLE", "1"); err != nil {
 		return err
 	}
 	return hotreload.Serve(hotreload.Config{

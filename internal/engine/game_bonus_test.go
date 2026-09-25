@@ -170,7 +170,7 @@ func TestBonusAemberInterceptedByCaptor(t *testing.T) {
 func TestBonusIconsStopWhenCreatureLeavesPlay(t *testing.T) {
 	g := started(t)
 	// A 1-power creature that damages itself with its first icon dies before its
-	// second (Æmber) icon can resolve — the Vactrol leaves-play divergence.
+	// second (Æmber) icon can resolve — the Vex leaves-play divergence.
 	src := g.AddToBattleline(NewCard("Fragile", Brobnar, Creature, Common,
 		WithPower(1), WithBonus(BonusDamage, BonusAember)), 0)
 	g.SetChooser(0, &idQueueChooser{ids: []LocalID{src}})

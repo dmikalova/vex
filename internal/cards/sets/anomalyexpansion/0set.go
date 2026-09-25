@@ -1,6 +1,6 @@
 package anomalyexpansion
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // set is Anomaly Expansion's registrar: a reservoir set (ADR 0036). Every card in
 // this package registers through set.New, so it is stamped as an Anomaly Expansion

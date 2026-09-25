@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/card"
-	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/card"
+	ct "github.com/dmikalova/vex/internal/cards/cardtest"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // Restringuntus

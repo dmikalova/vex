@@ -3,7 +3,7 @@ package deckgen
 import (
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // synthSet builds a deterministic test Set: houses × rarities, several cards

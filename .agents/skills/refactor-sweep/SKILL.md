@@ -194,7 +194,7 @@ this is exactly the discard fold's unified voice), the same **verb** for the sam
 mechanic (never a synonym the KeyForge vernacular already fixes — `exhaust` not
 "tap", `purge` not "exile", `return` not "bounce", `Æmber` not "mana"), and a log
 that narrates the **resolved outcome**, not the intent (ADR 0011 — "gains 2Æ," not
-"tries to gain 2Æ"). The wording authority order is Vactrol's own conventions
+"tries to gain 2Æ"). The wording authority order is Vex's own conventions
 ([card-wording-rules.md](../../../docs/card-wording-rules.md)) → the divergence
 register ([keyforge-divergences.md](../../../docs/keyforge-divergences.md)) → the
 KeyForge Master Rulebook; a deliberate departure not in the register is a finding,

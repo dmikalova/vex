@@ -1,6 +1,6 @@
 //go:build mage
 
-// Vactrol developer tasks. Run `mage <target>` to run one, `mage -l` to list them.
+// Vex developer tasks. Run `mage <target>` to run one, `mage -l` to list them.
 package main
 
 import (

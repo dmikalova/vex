@@ -3,7 +3,7 @@ package card
 import (
 	"math/rand"
 
-	"github.com/dmikalova/vactrol/internal/deckgen"
+	"github.com/dmikalova/vex/internal/deckgen"
 )
 
 // Deck-generation metadata re-exported for authoring. These attach to a card the

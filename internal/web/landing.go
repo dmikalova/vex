@@ -5,7 +5,7 @@ import (
 )
 
 // This file is the landing page served at "/". It is a static splash that
-// introduces Vactrol and links into the game (/play) and the reference pages.
+// introduces Vex and links into the game (/play) and the reference pages.
 // The interactive client now lives at /play; "/" is a lightweight entry point
 // that loads without spinning up a match.
 
@@ -26,7 +26,7 @@ func (l *landing) OnAppUpdate(ctx app.Context) { ctx.Reload() }
 func (l *landing) Render() app.UI {
 	return app.Div().Class("landing").Body(
 		app.Div().Class("landing-hero").Body(
-			app.H1().Class("landing-title").Text("Vactrol"),
+			app.H1().Class("landing-title").Text("Vex"),
 			app.P().Class("landing-tagline").
 				Text("A KeyForge-style card game, playable in your browser."),
 			app.A().Class("landing-play").Href("/play").Text("Play"),

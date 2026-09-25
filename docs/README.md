@@ -1,4 +1,4 @@
-# Vactrol documentation
+# Vex documentation
 
 Index of every doc in the repo. Start with **architecture** for how the code fits
 together and **CONTEXT** for what the words mean.
@@ -101,8 +101,8 @@ together and **CONTEXT** for what the words mean.
   KeyForge rulebook, kept as a faithful reference only.
 - [card-wording-rules.md](card-wording-rules.md) — the curated conventions every
   card's printed text must follow.
-- [keyforge-divergences.md](keyforge-divergences.md) — the Vactrol⇄KeyForge
-  divergence register: where and why Vactrol departs from KeyForge.
+- [keyforge-divergences.md](keyforge-divergences.md) — the Vex⇄KeyForge
+  divergence register: where and why Vex departs from KeyForge.
 
 ## Contributing
 

@@ -3,7 +3,7 @@ package worldscollide
 import (
 	"slices"
 
-	"github.com/dmikalova/vactrol/internal/card"
+	"github.com/dmikalova/vex/internal/card"
 )
 
 // upgradeOrRobot matches the cards Chief Engineer Walls retrieves — any Upgrade,

@@ -3,7 +3,7 @@ package deckgen
 import (
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // tutorCard builds a Houseless PerGigantic tutor pool entry, the way the tutors

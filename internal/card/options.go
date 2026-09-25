@@ -1,6 +1,6 @@
 package card
 
-import "github.com/dmikalova/vactrol/internal/engine"
+import "github.com/dmikalova/vex/internal/engine"
 
 // Option helpers — thin wrappers over the engine's card options, each returning
 // an authoring Option that appends its engine option to the builder. New (in
@@ -82,7 +82,7 @@ var (
 	// to the deck at generation time; they have no effect on the card itself.
 	WithEnhance = func(icons ...BonusIcon) Option { return gameplay(engine.WithEnhance(icons...)) }
 	// WithoutEnhancement bars the given bonus-icon kinds from landing on this card
-	// via Enhance (a Vactrol divergence, for a bonus that would only weaken it).
+	// via Enhance (a Vex divergence, for a bonus that would only weaken it).
 	WithoutEnhancement = func(icons ...BonusIcon) Option { return gameplay(engine.WithoutEnhancement(icons...)) }
 	// WithStatic adds a static modifier (an upgrade's granted stats and abilities).
 	WithStatic = func(m StaticModifier) Option { return gameplay(engine.WithStatic(m)) }

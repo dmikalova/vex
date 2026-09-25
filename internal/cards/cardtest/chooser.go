@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // actionTimeout is a backstop: normal misuse (a wrong click, or a prompt left

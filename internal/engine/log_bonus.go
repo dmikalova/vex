@@ -3,7 +3,7 @@ package engine
 import "fmt"
 
 // The records below narrate a played card's bonus icons resolving. The card
-// carrying the icon leads as the source (a Vactrol divergence: KeyForge treats the
+// carrying the icon leads as the source (a Vex divergence: KeyForge treats the
 // game itself as the source), and the word "bonus" marks every line — so the log
 // distinguishes a bonus icon from the same effect produced by an ability. Each
 // line is worded for the effect it narrates rather than forced into one template,

@@ -1,6 +1,6 @@
 package ageofascension
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // Killzord Mk. 9001
 //

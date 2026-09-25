@@ -3,7 +3,7 @@
 // drift between the members printed in different sets (ADR 0036).
 package clusters
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // Shard is the Shards' cluster: one Shard per House, pulled into every House of a
 // deck whenever any Shard is drawn. Age of Ascension prints seven (one per its

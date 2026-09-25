@@ -3,8 +3,8 @@ package web
 import (
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/card"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/card"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // iconFallbackAllowed once listed effect types the Iconography pass rendered as

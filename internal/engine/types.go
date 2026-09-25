@@ -1,4 +1,4 @@
-// Package engine is the core rules engine for Vactrol, a KeyForge-style
+// Package engine is the core rules engine for Vex, a KeyForge-style
 // card game. This file defines the fundamental enumerations shared across the
 // engine: houses, rarities, card types, traits, keywords, and ability triggers.
 package engine
@@ -89,7 +89,7 @@ const (
 	Connected Rarity = "Connected"
 )
 
-// CardType is one of the four Vactrol/KeyForge card types. It is a small enum
+// CardType is one of the four Vex/KeyForge card types. It is a small enum
 // rather than a string so a type-scoped bar stays a couple of bytes of flat state
 // instead of a string header (see GameState.CannotPlayTypeThis).
 type CardType uint8

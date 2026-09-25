@@ -34,7 +34,7 @@ cannot omit something that exists. Combinations no card covers are drawn as gaps
 because absence is information: it is how you see that a set has no Dis Upgrade.
 
 **It is gated by an environment switch, not a build tag.** `mage web` sets
-`VACTROL_STYLE=1`; nothing else does, so `/style` exists on a development server
+`VEX_STYLE=1`; nothing else does, so `/style` exists on a development server
 and 404s everywhere else. The switch has to be read on both sides of the build
 and agree — go-app 404s a path the _server_ has no route for, and renders nothing
 for a path the _client_ has no route for — which `app.Getenv` does, reading the

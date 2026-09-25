@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // These tests reach past the clicking vocabulary to the harness's own internals:

@@ -56,9 +56,9 @@ import (
 
 	"github.com/charmbracelet/x/term"
 
-	"github.com/dmikalova/vactrol/internal/card"
-	"github.com/dmikalova/vactrol/internal/cards"
-	"github.com/dmikalova/vactrol/internal/cards/provenance"
+	"github.com/dmikalova/vex/internal/card"
+	"github.com/dmikalova/vex/internal/cards"
+	"github.com/dmikalova/vex/internal/cards/provenance"
 )
 
 func main() {

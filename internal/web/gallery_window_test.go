@@ -7,7 +7,7 @@ import (
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
-	"github.com/dmikalova/vactrol/internal/card"
+	"github.com/dmikalova/vex/internal/card"
 )
 
 // TestGalleryWindowClamps checks the drawn-face window never points outside the

@@ -42,7 +42,7 @@ entered; choose a house, archives, and play wait for the frontend. Ending a phas
 early is a flag the phase loop reads, so an effect skips the remainder of the
 current phase without special-casing any one phase.
 
-KeyForge's rulebook calls these divisions "steps". Vactrol calls them **phases**
+KeyForge's rulebook calls these divisions "steps". Vex calls them **phases**
 everywhere — engine identifiers, generated rulebook, rendered card text, and the
 game log — rather than carrying two words for one concept.
 

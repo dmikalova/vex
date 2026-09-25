@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
-	"github.com/dmikalova/vactrol/internal/sim"
+	"github.com/dmikalova/vex/internal/engine"
+	"github.com/dmikalova/vex/internal/sim"
 )
 
 // sampledStyle builds a style component whose log gallery is filled from a small

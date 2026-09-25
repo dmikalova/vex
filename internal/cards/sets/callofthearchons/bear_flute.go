@@ -1,6 +1,6 @@
 package callofthearchons
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // bearFluteCluster pulls a couple of Ancient Bears into Bear Flute's pod — a Pull
 // cluster, at least two averaging about two and a half (ADR 0036).

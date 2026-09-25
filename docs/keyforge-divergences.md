@@ -1,6 +1,6 @@
-# Vactrol⇄KeyForge divergence register
+# Vex⇄KeyForge divergence register
 
-This is the single record of where Vactrol departs from KeyForge, and why. It is
+This is the single record of where Vex departs from KeyForge, and why. It is
 one half of the split of the old card-wording document
 ([ADR 0019](adr/0019-controlled-rules-voice.md)): the wording conventions —
 surface-independent house style — live in
@@ -9,15 +9,15 @@ here.
 
 ## Precedence
 
-The precedence rule is fixed. Vactrol wins where Vactrol has decided. The
+The precedence rule is fixed. Vex wins where Vex has decided. The
 [KeyForge Master Rulebook](keyforge-master-rulebook.md) is the wording authority
-only for what Vactrol has not decided. A later "match KeyForge" never silently
+only for what Vex has not decided. A later "match KeyForge" never silently
 overwrites a divergence recorded here.
 
 Matching the printed KeyForge text is not a goal in itself, and is never a
-blocker. **Template consistency and simplicity across Vactrol outrank exact
+blocker. **Template consistency and simplicity across Vex outrank exact
 KeyForge wording.** A meaning-preserving reword that puts a card in the same voice
-and template as the rest of Vactrol — or that lets a mechanic decompose into
+and template as the rest of Vex — or that lets a mechanic decompose into
 shared nodes rather than a bespoke one — is welcome, and does **not** earn a row
 below: this register catalogs departures that change a **rule or a name**, not
 pure house-voice alignment. Record a reword here only when it changes what a card
@@ -29,7 +29,7 @@ Each of these is a wording convention that changes a rule or a name, not just
 phrasing. The convention itself — with its examples and affected cards — lives in
 the numbered rule cited below in
 [card-wording-rules.md](card-wording-rules.md). This register is the index that
-answers "where does Vactrol diverge from KeyForge, and why".
+answers "where does Vex diverge from KeyForge, and why".
 
 | Divergence                                                    | Rule    | Reference                                             |
 | ------------------------------------------------------------- | ------- | ----------------------------------------------------- |
@@ -45,7 +45,7 @@ answers "where does Vactrol diverge from KeyForge, and why".
 | A gate takes an `otherwise` for a two-verb branch             | rule 5  | `A -> B. Otherwise, C.` (Novu Dynamo, Auto-Vac 5150)  |
 | A turn `step` is named a `phase`                              | rule 28 | [ADR 0012](adr/0012-first-class-turn-phases.md)       |
 | Fight timing is named `in a fight with`                       | rule 29 | one phrase for the fight timing window                |
-| A count cap is dropped — `(to a maximum of N)` is removed     | rule 30 | Vactrol has no count cap; the count is uncapped       |
+| A count cap is dropped — `(to a maximum of N)` is removed     | rule 30 | Vex has no count cap; the count is uncapped       |
 | Timed "cannot use" restrictions share one phrasing            | rule 32 | one `Restrict` node, one duration phrase              |
 | House-scoped reap bar reads in the shared "cannot use" voice  | rule 32 | Seismo-entangler folds into `Restrict`                |
 
@@ -82,21 +82,21 @@ interesting, or brings it in line with modern errata.
   target-dependent or whose-turn conditions) do not.
 - **Encounter Suit** is an upgrade that grants its host the reaction "After a
   Tactic is played but before it resolves, ward this creature." KeyForge phrases
-  the reaction as the upgrade's own text and says "action card"; Vactrol renames
+  the reaction as the upgrade's own text and says "action card"; Vex renames
   that type to `Tactic` (rule 19) and fires every granted upgrade ability through
   the host, so it renders with the standard `This creature gains, "…"` wrapper
   like every other granted-ability upgrade.
 - **Causal Loop** archives 2 cards, not 1. KeyForge reads `Play: Archive a card.
-Archive Causal Loop.`; Vactrol reads`Play: Archive 2 cards from your hand.
+Archive Causal Loop.`; Vex reads`Play: Archive 2 cards from your hand.
 Archive Causal Loop.` The card loops a card plus itself back into archives for
   no net gain, so a second card gives the loop something to carry.
-- **Keyforgery** drops the trailing `(no Æmber is spent)` clarifier. Vactrol
+- **Keyforgery** drops the trailing `(no Æmber is spent)` clarifier. Vex
   prevents the forge before any Æmber leaves the pool, so the clause states a
   consequence the mechanic already guarantees; the Rules voice omits such
   parenthetical asides.
 - **Tantadlin** reads `Your opponent discards a random card from their archives`,
   not KeyForge's imperative `Discard a random card from your opponent's archives`.
-  A random discard is the discarding player's own act, so Vactrol renders it in
+  A random discard is the discarding player's own act, so Vex renders it in
   the actor's voice — the same voice Mind Barb already uses for a random hand
   discard. The effect is identical; only the voice changes.
 - **Hunter or Hunted?** reads `Remove a ward from a creature, and ward a creature`
@@ -104,19 +104,19 @@ Archive Causal Loop.` The card loops a card plus itself back into archives for
 to another creature`. The two branches collapse into one linear sequence:
   removing a ward and then placing a fresh one reproduces the "move a ward" branch
   when the same source and destination are chosen, and the "ward only" branch when
-  the removal finds no ward. Vactrol keeps the two atomic effects — `RemoveWard`
+  the removal finds no ward. Vex keeps the two atomic effects — `RemoveWard`
   (any creature, warded or not) then `Ward` — instead of a bespoke `MoveWard` node,
   so there is one fewer one-off mechanic to carry.
 - **Bait and Switch** reads `Steal 1 Æmber -> if your opponent has more Æmber than
 you, repeat this effect`, not KeyForge's`If your opponent has more Æmber than
-you, steal 1 Æmber. Repeat this effect`. Vactrol uniformly writes a self-repeat as
+you, steal 1 Æmber. Repeat this effect`. Vex uniformly writes a self-repeat as
   `<do> -> if <cond>, repeat this effect` (the same shape Numquid the Fair and
   Neutron Shark use), so the steal leads and the condition gates the repeat. The
   first steal is therefore unconditional: with equal pools KeyForge steals nothing
-  while Vactrol steals 1, then stops. In every case where the opponent already
+  while Vex steals 1, then stops. In every case where the opponent already
   leads the two are identical.- **Gebuk** swaps the discarded creature into play immediately rather than waiting
   until it has left play. KeyForge reads "Destroyed: ... **after Gebuk leaves
-  play**, put that creature into play in Gebuk's position"; Vactrol reads
+  play**, put that creature into play in Gebuk's position"; Vex reads
   "Destroyed: Discard the top card of your deck. If it is a creature, swap it with
   Gebuk." The discarded creature and Gebuk exchange places in one step during
   Gebuk's Destroyed ability — Gebuk leaves to the discard pile (still counting as
@@ -131,7 +131,7 @@ you, steal 1 Æmber. Repeat this effect`. Vactrol uniformly writes a self-repeat
   resolves in that window).
 - **Harvest Time** reads `Choose a creature. Purge each creature that shares a
 trait with the chosen creature`, not KeyForge's`Choose a trait. Purge each card
-with that trait`. Vactrol reuses the shared choose-a-creature-then-fold-on-a-
+with that trait`. Vex reuses the shared choose-a-creature-then-fold-on-a-
   shared-trait mechanic (the same `ChooseCreatureThen` + `SharingTrait` pair
   Extinction uses) instead of a bespoke choose-a-trait purge, so the purge is
   anchored to a creature on the board and hits creatures only (artifacts are no
@@ -142,7 +142,7 @@ with that trait`. Vactrol reuses the shared choose-a-creature-then-fold-on-a-
 Brobnar card or choose to stop -> deal 2 damage to Old Boomy. Archive each card
 discarded this way`, not KeyForge's`Reveal cards from the top of your deck until
 you reveal a Brobnar card or choose to stop. Deal 2 damage to Old Boomy if a
-Brobnar card was revealed. Archive each card revealed this way`. Vactrol folds the
+Brobnar card was revealed. Archive each card revealed this way`. Vex folds the
   card into the shared deck-dig family (`DiscardUntil`, the same node Sound
   the Horns and Invasion Portal use) instead of a bespoke reveal-and-archive loop:
   each card is discarded as the dig walks the deck, then the whole run is archived as
@@ -175,14 +175,14 @@ a random card from their hand`, adding a self-discard before KeyForge's lone
   makes the card distinct from its cross-house counterpart **Subtle Chain**
   (Shadows), which keeps the original opponent-only discard.
 - **Speed Sigil** is limited to one copy per deck. KeyForge sets no such limit;
-  Vactrol caps it at one to bound its first-creature-of-the-turn ready loop.
+  Vex caps it at one to bound its first-creature-of-the-turn ready loop.
 - **Toad** is `Connected` rather than KeyForge's `Special`: it is kept out of the
   pool and instead pulled into **Xenos Bloodshadow**'s pod one for one, so a Toad
   only ever reaches a deck alongside the Bloodshadow it rides in with.
 - **Rustgnawer** reads `Fight: Destroy an artifact. Resolve the bonus icons on
 it`, not KeyForge's`Fight: Destroy an artifact. If that artifact had an Æmber
 bonus, you gain that much Æmber`. Instead of refunding only the Æmber bonus,
-  Vactrol resolves the whole bonus-icon strip on the destroyed artifact — capture,
+  Vex resolves the whole bonus-icon strip on the destroyed artifact — capture,
   draw, and damage icons resolve too (rule 27). This is a small power increase and
   lets the card reuse the shared `ResolveBonusIcons` mechanic instead of a one-off
   Æmber-bonus count node. On the common case (an artifact whose only bonus is
@@ -198,7 +198,7 @@ up to 2 non-Star Alliance creatures this turn` (and the matching Fight permissio
   into the shared `Use` mechanic (a `Verb`-restricted use, the same node Combat
   Pheromones uses) instead of a bespoke deferred grant.
 - **Bawretchadontius** carries the `Beast` trait, which its KeyForge printing
-  lacks (it is printed traitless). Vactrol requires every creature to hold at least
+  lacks (it is printed traitless). Vex requires every creature to hold at least
   one trait (`TestEveryCreatureAndArtifactHasTrait`), so a traitless gigantic
   creature is given `Beast` — the trait that names what it is.
 - **Boosted B4-RRY** rewords both halves of its `Choose one` to reuse shared
@@ -227,7 +227,7 @@ remainder of the turn.`KeyForge's`it belongs to the active house` clause is
 - **Cyber-Clone** copies the purged creature's **printed** power, armor, keywords,
   and traits, not its live stats at the moment of purge. KeyForge reads `it has
 power equal to the purged creature's power, and gains that creature's armor,
-keywords, and traits`; Vactrol reads`Cyber-Clone has power equal to the same
+keywords, and traits`; Vex reads`Cyber-Clone has power equal to the same
 creature's printed power and gains its printed armor, keywords, and traits`. The
   purged creature is out of play, so its counters, buffs, and other live
   modifications are gone; only the printed stats from the immutable card catalog
@@ -241,17 +241,17 @@ creature's printed power and gains its printed armor, keywords, and traits`. The
   not while it is in your archives. KeyForge reads `If you archive The Archivist,
 archive it faceup. While The Archivist is in your archives, instead of picking up
 all of your archives, you may choose to pick up any number of cards in your
-archives.` Vactrol drops the faceup-archive clause and the while-in-archives
+archives.` Vex drops the faceup-archive clause and the while-in-archives
   scope, and reads `Instead of picking up all of your archives, you may pick up any
 number of cards in your archives.` — a constant ability active while The Archivist
-  is a creature in play. Vactrol has no facedown/faceup distinction for archived
+  is a creature in play. Vex has no facedown/faceup distinction for archived
   cards and no while-in-archives trigger scope, so the rule is re-hung on the
   card's presence in play. Built on the shared `ConstantAbility.SelectiveArchivePickup`
   field, which the house-choice archive offer consults for the controller.
 
 ## Invented cards
 
-A few cards exist only in Vactrol — no KeyForge printing. They fill a structural
+A few cards exist only in Vex — no KeyForge printing. They fill a structural
 gap the real game left open and carry provisional abilities that may be retuned.
 
 - **Shard of Glory** (Saurian) and **Shard of Unity** (Star Alliance) complete the
@@ -262,7 +262,7 @@ gap the real game left open and carry provisional abilities that may be retuned.
   Both are `Connected` Artifacts in the **Anomaly Expansion** reservoir set,
   matching the AoA Shards' shape (Item • Shard, one copy per deck, `Action: For each
 friendly Shard, …`). Their effects — Shard of Glory exalts a friendly creature,
-  Shard of Unity readies a friendly creature — are Vactrol inventions in the spirit
+  Shard of Unity readies a friendly creature — are Vex inventions in the spirit
   of the existing Shards and are provisional; only their existence and cross-set
   cycle role are load-bearing.
 
@@ -298,7 +298,7 @@ current cost, reduced by 1 Æmber for each friendly Sin creature -> purge Desire
   carries no opt-out flag.
 - **A bonus icon's source is the card that carries it.** When a bonus icon
   resolves (Æmber, Capture, Damage, Draw), KeyForge treats the game itself as the
-  source of the effect; Vactrol treats the card the icon is printed on as the
+  source of the effect; Vex treats the card the icon is printed on as the
   source. This only matters for the rare card that reads the source of a bonus
   icon's damage, and it makes the log read naturally ("Splinter deals 1 bonus
   damage to …"). See [ADR 0041](adr/0041-bonus-icons-are-the-primitive.md).
@@ -306,14 +306,14 @@ current cost, reduced by 1 Æmber for each friendly Sin creature -> purge Desire
 - **A creature stops resolving its bonus icons when it leaves play.** KeyForge
   resolves every bonus icon on a played card even after the card has left play (a
   Damage icon that destroys its own creature still resolves the icons below it).
-  In Vactrol, once a creature leaves play — destroyed by a constant ability before
+  In Vex, once a creature leaves play — destroyed by a constant ability before
   its icons resolve, or by its own Damage icon aimed at itself mid-resolution — its
   remaining icons do not resolve. Only creatures are gated this way: an artifact
   deals its bonus damage to other creatures, an upgrade resolves after it attaches,
   and an action is never in play, so their icons always all resolve.
 
 - **A card may bar specific bonus-icon kinds from Enhance.** KeyForge has no such
-  rule. Vactrol lets a card carry `WithoutEnhancement(kinds…)` so deck generation
+  rule. Vex lets a card carry `WithoutEnhancement(kinds…)` so deck generation
   never lands those bonus-icon kinds on it, while other kinds may still land — for
   a bonus a card would only be weakened by (Effervescent Principle bars Capture).
   Rolled in per card as they are found.
@@ -323,7 +323,7 @@ current cost, reduced by 1 Æmber for each friendly Sin creature -> purge Desire
   and stops there: it explicitly does **not** apply to repeating an effect or to
   triggering or resolving abilities again (KeyForge Master Rulebook — "the Rule of
   Six only applies to playing or using cards, not triggering (or resolving) their
-  effect multiple times"; the Nirbor Flamewing ruling turns on this). Vactrol
+  effect multiple times"; the Nirbor Flamewing ruling turns on this). Vex
   extends the same six-usage-per-name-per-turn pool to **every** kind of usage:
   each loop of a self-repeating ability past its first, each `Destroyed:`
   resolution, each destruction replacement (Reassembling Automaton), and each

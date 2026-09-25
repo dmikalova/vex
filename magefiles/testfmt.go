@@ -14,7 +14,7 @@ import (
 // modulePath is stripped from every package path in the test report so a line is
 // the short package (internal/engine) rather than the full import path, which is
 // what makes the report fit an 80-column terminal without wrapping.
-const modulePath = "github.com/dmikalova/vactrol/"
+const modulePath = "github.com/dmikalova/vex/"
 
 // goTest runs `go test` with the given args and prints a tidied, column-aligned
 // report in place of go test's ragged, path-heavy output: the module prefix is

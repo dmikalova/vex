@@ -3,7 +3,7 @@ package cards
 import (
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/card"
+	"github.com/dmikalova/vex/internal/card"
 )
 
 // TestEveryCardDeclaresItsSet guards the rule that deck generation never infers a

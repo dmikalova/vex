@@ -17,7 +17,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/dmikalova/vactrol/internal/sim"
+	"github.com/dmikalova/vex/internal/sim"
 )
 
 // seedBatch matches the batch size TestSimulateSeeds plays, so a bare `mage debug`

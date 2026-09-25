@@ -1,6 +1,6 @@
 package card
 
-import "github.com/dmikalova/vactrol/internal/engine"
+import "github.com/dmikalova/vex/internal/engine"
 
 // To groups the destinations an effect can put a card, e.g. card.To.TopOfDeck. An
 // effect that moves a card takes one — see card.PutCard's Destination.

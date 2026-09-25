@@ -1,4 +1,4 @@
-// Package session drives one Vactrol match as an event-sourced replay (ADR 0039,
+// Package session drives one Vex match as an event-sourced replay (ADR 0039,
 // 0040). The authoritative record is not a game state but the ordered log of
 // commands the players entered, together with the seed and sets the match was
 // dealt from. State, the typed game log, and undo are all DERIVED by replaying
@@ -15,7 +15,7 @@ package session
 import (
 	"errors"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // Version tags the on-disk record. A record from a different version is refused

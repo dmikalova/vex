@@ -1,6 +1,6 @@
-# Vactrol
+# Vex
 
-Vactrol is a rules engine for a [KeyForge](https://keyforge.fandom.com/)-style
+Vex is a rules engine for a [KeyForge](https://keyforge.fandom.com/)-style
 card game, written in Go. It models a full two-player match — houses, Æmber,
 keys, combat, and card abilities — behind a small, pointerless state type that is
 cheap to copy (for AI search), and ships with a WebAssembly client for playing
@@ -69,8 +69,8 @@ commitlint), which also drives semantic-release versioning on deploy.
 
 ## Deployment
 
-Vactrol runs on Google Cloud Run at
-[vactrol.mklv.tech](https://vactrol.mklv.tech), served by the `cmd/web` binary
+Vex runs on Google Cloud Run at
+[vex.mklv.tech](https://vex.mklv.tech), served by the `cmd/web` binary
 (the native build serves the WebAssembly client). The container listens on
 `$PORT`, which Cloud Run injects.
 
@@ -81,10 +81,10 @@ reusable `go-cloudrun.yaml` workflow in
 `main` it runs `mage check`, then semantic-release cuts a version, buildah builds
 [`Dockerfile`](Dockerfile) into an image, pushes it to GHCR (mirrored to Artifact
 Registry), and `gcloud run deploy` rolls it out. Pull requests run `mage check`
-only. The infrastructure itself — the Cloud Run service, the `vactrol.mklv.tech`
+only. The infrastructure itself — the Cloud Run service, the `vex.mklv.tech`
 domain mapping, DNS, and CI deploy permissions — is defined as a Terramate stack
 in the [`infrastructure`](https://github.com/dmikalova/infrastructure) repo under
-`gcp/apps/vactrol`.
+`gcp/apps/vex`.
 
 ## License
 

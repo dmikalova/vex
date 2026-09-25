@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 func housesEqual(a, b []engine.House) bool {

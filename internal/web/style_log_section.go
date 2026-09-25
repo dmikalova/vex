@@ -8,8 +8,8 @@ import (
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
-	"github.com/dmikalova/vactrol/internal/engine"
-	"github.com/dmikalova/vactrol/internal/sim"
+	"github.com/dmikalova/vex/internal/engine"
+	"github.com/dmikalova/vex/internal/sim"
 )
 
 // This file is the Game log section of the Style gallery: it shows one real

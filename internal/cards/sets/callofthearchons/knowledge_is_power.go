@@ -1,6 +1,6 @@
 package callofthearchons
 
-import "github.com/dmikalova/vactrol/internal/card"
+import "github.com/dmikalova/vex/internal/card"
 
 // Knowledge is Power
 //

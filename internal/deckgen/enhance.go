@@ -1,6 +1,6 @@
 package deckgen
 
-import "github.com/dmikalova/vactrol/internal/engine"
+import "github.com/dmikalova/vex/internal/engine"
 
 // enhanceCap is the most bonus icons a card may carry, counting its printed icons
 // and any Enhance icons landed on it (docs/deck-generation.md).

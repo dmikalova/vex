@@ -12,9 +12,9 @@
 package card
 
 import (
-	"github.com/dmikalova/vactrol/internal/cards/provenance"
-	"github.com/dmikalova/vactrol/internal/deckgen"
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/cards/provenance"
+	"github.com/dmikalova/vex/internal/deckgen"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // The core card-structure types you name directly when authoring. The effect

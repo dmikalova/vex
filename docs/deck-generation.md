@@ -1,6 +1,6 @@
 # Deck generation
 
-This document explains **how Vactrol builds a deck** — the philosophy behind the
+This document explains **how Vex builds a deck** — the philosophy behind the
 procedural generator, the pipeline it runs, and the tunable knobs that shape the
 result. It is the narrative companion to the more formal records:
 

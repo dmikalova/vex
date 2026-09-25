@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vex/internal/engine"
 )
 
 // Setup declares a whole scenario up front: each player's board, hand, and pools.

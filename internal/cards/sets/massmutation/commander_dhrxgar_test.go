@@ -3,7 +3,7 @@ package massmutation
 import (
 	"testing"
 
-	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
+	ct "github.com/dmikalova/vex/internal/cards/cardtest"
 )
 
 // Commander Dhrxgar

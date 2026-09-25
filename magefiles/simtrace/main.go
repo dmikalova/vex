@@ -17,7 +17,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/dmikalova/vactrol/internal/sim"
+	"github.com/dmikalova/vex/internal/sim"
 )
 
 // defaultOut keeps traces in ./tmp, the repo's gitignored scratch directory, so a

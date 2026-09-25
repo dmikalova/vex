@@ -1,6 +1,6 @@
 package web
 
-import "github.com/dmikalova/vactrol/internal/cards/provenance"
+import "github.com/dmikalova/vex/internal/cards/provenance"
 
 // Set-specific CSS classes. Like palette.go for houses, this only maps a set to
 // the .set-<slug> class defined in web/app.css, which supplies that set's accent

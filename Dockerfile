@@ -16,13 +16,13 @@ RUN GOOS=js GOARCH=wasm go build -trimpath -ldflags="-s -w" -o web/app.wasm ./cm
 # streams prebuilt bodies instead of compressing every request.
 RUN go run github.com/magefile/mage webAssets
 # Native server binary.
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /vactrol-web ./cmd/web
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /vex-web ./cmd/web
 
 FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /app
 
-COPY --from=build /vactrol-web /vactrol-web
+COPY --from=build /vex-web /vex-web
 COPY --from=build /app/web ./web
 
 EXPOSE 8080
-ENTRYPOINT ["/vactrol-web"]
+ENTRYPOINT ["/vex-web"]
