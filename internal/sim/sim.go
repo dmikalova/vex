@@ -6,7 +6,7 @@
 //
 // One Simulate function backs all three entry points in sim_test.go: the
 // coverage-guided FuzzPlay fuzz target, a fixed-seed property test wired into
-// `mage test`, and the long-running `mage soak`. Because a game is a pure function
+// `mage ci:test`, and the long-running `mage soak`. Because a game is a pure function
 // of its script, any failure is a deterministic input that replays exactly and can
 // be promoted to a unit test.
 //

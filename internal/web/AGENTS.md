@@ -4,10 +4,10 @@ The browser client: a [go-app](https://go-app.dev) v11 WASM front end over
 `internal/engine`. Read the repo-root `AGENTS.md` first; this file covers only
 what is specific to the web client.
 
-Build it the same way as everything else: `mage build` compiles every package for
-the host **and** the client for js/wasm, so a change that only breaks in the
-browser fails the same gate as anything else. To compile just the client after an
-edit, run `mage webWasm`.
+Build it the same way as everything else: `mage ci:build` compiles every package
+for the host **and** the client for js/wasm (vex's `ci.ExtraBuilds`), so a change
+that only breaks in the browser fails the same gate as anything else. To compile
+just the client into `web/app.wasm` after an edit, run `mage webWasm`.
 
 ## File split
 
@@ -255,8 +255,8 @@ auto-scroll, the picker's focus, `ctx.JSSrc()`) no-op rather than assert. Every
 one of them is written to tolerate a render with no page behind it, which is what
 makes the rest of the client testable here at all — keep it that way.
 
-Coverage here is **deliberately ungated** (`magefiles/cover.go`), because the
-last stretch is the DOM-bound code above.
+Coverage here is **deliberately ungated** (absent from `ci.CoverGates` in
+`magefiles/build.go`), because the last stretch is the DOM-bound code above.
 
 ## CSS conventions (`web/app.css`)
 

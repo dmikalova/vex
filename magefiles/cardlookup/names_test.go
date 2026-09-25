@@ -15,7 +15,7 @@ var apostropheForms = []rune{'\u0027', '\u2019', '\u02bc'}
 // difference: a name carrying any apostrophe form yields the same identifier and
 // file name as the same name without it, and neither output keeps an apostrophe.
 // It compares two computed results rather than a golden literal, so a config that
-// rewrites a string literal (a typos autocorrect) cannot invalidate the test.
+// rewrites a string literal (a spelling autocorrect) cannot invalidate the test.
 func TestNamesStripApostrophes(t *testing.T) {
 	for _, ap := range apostropheForms {
 		bare := "Frane" + "s Blaster"

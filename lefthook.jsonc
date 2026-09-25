@@ -1,12 +1,10 @@
 {
-  // Extend the shared base config from project-standards (generic hooks plus the
-  // language-agnostic go-fmt/go-vet/go-test Go hooks).
   "remotes": [
     {
       "configs": ["lefthook.jsonc"],
       "git_url": "https://github.com/dmikalova/project-standards",
       "ref": "main",
-      "refetch": true,
-    },
-  ],
+      "refetch": true
+    }
+  ]
 }

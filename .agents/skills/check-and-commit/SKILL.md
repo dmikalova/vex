@@ -1,11 +1,11 @@
 ---
 name: check-and-commit
-description: Get `mage check` fully green, then stage, commit, and push the work in one go. Use when the user wants to finish up by verifying the gate and committing ("check and commit", "/check-and-commit", "get it green and push"). Assumes this is the only agent running in the repo.
+description: Get `mage ci:fix && mage ci:check` fully green, then stage, commit, and push the work in one go. Use when the user wants to finish up by verifying the gate and committing ("check and commit", "/check-and-commit", "get it green and push"). Assumes this is the only agent running in the repo.
 ---
 
 This skill takes the repo from "work in progress" to "pushed", in order:
 
-1. Get `mage check` to print `ALL GREEN`.
+1. Run `mage ci:fix`, then get `mage ci:check` to print `ALL GREEN`.
 2. Stage everything, commit, and push.
 
 **This skill is the one exception to the repo's "leave git alone" rule.** The
@@ -20,15 +20,19 @@ so do not wave a red gate off as someone else's work. Fix it. An unfamiliar file
 or an unexpected diff is part of the change set you are about to commit, so
 account for it rather than working around it.
 
-## 1. Get `mage check` green
+## 1. Get `mage ci:check` green
 
-Run the full gate:
+Apply every autofix, then run the full gate:
 
 ```sh
-mage check
+mage ci:fix && mage ci:check
 ```
 
-It formats in place, then builds, vets, lints, markdown-lints, tests, and
+`ci:fix` formats, runs `go fix`, golangci-lint `--fix`, the Markdown and
+spelling fixers, and regenerates the generated configs. `ci:check` writes
+nothing: it fails on anything `ci:fix` would still change, then builds (host and
+js/wasm), vets, lints, markdown-lints, spell-checks, scans for secrets, lints the
+branch's commit messages, checks the generated configs for drift, tests, and
 coverage-checks the whole tree (all four gated areas must stay at 100%). It must
 print `ALL GREEN`.
 
@@ -40,8 +44,14 @@ real problem to solve, not an obstacle to route around.
 
 Common fixes:
 
-- Formatting drift — `mage check` formats in place, so a second run often clears
-  a pure-format failure. Re-run before hand-editing.
+- Formatting, lint-autofix, Markdown or spelling drift — `ci:check` never writes,
+  so run `mage ci:fix` and re-run the gate before hand-editing.
+- Generated config drift (`ci:drift`) — a generated file (`.golangci.yaml`,
+  `.markdownlint-cli2.yaml`, `.ruleguard.go`, ...) was edited by hand. Move the
+  change into `mklv.config.json`, then `mage ci:fix`.
+- A spelling false positive (`ci:spell`) on a card name or KeyForge term — add a
+  narrow `tools.misspell.ignore` entry in `mklv.config.json`, never "correct"
+  the printed name.
 - Stale generated output — run `mage gen` if a card comment or the rulebook is
   out of date, then re-run the gate.
 - Coverage below 100% in a gated area — add the missing test for the new code.
@@ -49,24 +59,24 @@ Common fixes:
 
 ### Closing a coverage gap
 
-`mage cover` reports each gated area's total and, when one is below 100%, names
+`mage ci:cover` reports each gated area's total and, when one is below 100%, names
 every function still short with its percentage. To turn that into "the exact
 uncovered line", generate a profile and read the zero-count blocks — do **not**
 guess which branch is missing:
 
-1. **Get the per-function shortfall.** `mage cover` is authoritative and prints
-   the offenders. To iterate faster on one area, profile it directly. The engine
-   coverage gate runs under the `assert` build tag, so match it or the numbers
-   drift:
+1. **Get the per-function shortfall.** `mage ci:cover` is authoritative and prints
+   the offenders. To iterate faster on one area, profile it directly with the same
+   flags as its gate (`ci.CoverGates` in `magefiles/build.go`; the gates run
+   without the `assert` build tag, so do not add it or the numbers drift):
 
    ```sh
    cd internal/engine &&
-     go test -tags assert -coverprofile=tmp/eng.cov . &&
+     go test -coverprofile=tmp/eng.cov . &&
      go tool cover -func=tmp/eng.cov | grep -v '100.0%'
    ```
 
    (Use `tmp/` inside the repo, not the system `/tmp` — but delete the scratch
-   profile before the gate, since `mage check` walks the whole tree.)
+   profile before the gate, since `mage ci:check` walks the whole tree.)
 
 2. **Find the uncovered line, not the function.** The `-func` view gives a
    percentage; the profile itself gives the line. Each block line is
@@ -86,7 +96,7 @@ guess which branch is missing:
 
    ```sh
    go tool cover -func=tmp/eng.cov | grep '<funcName>' && rm -f tmp/eng.cov
-   cd - >/dev/null && mage cover   # authoritative: all four areas at 100.0%
+   cd - >/dev/null && mage ci:cover   # authoritative: all four areas at 100.0%
    ```
 
 ### Diagnosing a sim / `FuzzPlay` failure
@@ -143,8 +153,8 @@ single unit. Work it like this:
 
 ## 2. Stage, commit, and push
 
-Only once `mage check` prints `ALL GREEN`, run the commit and push exactly as
-the user asked:
+Only once `mage ci:check` prints `ALL GREEN`, run the commit and push exactly as
+the user asked (the lefthook pre-commit hook runs `mage ci:check` again):
 
 ```sh
 git add -A && git commit -a -m "feat: implement cards" && git push

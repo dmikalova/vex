@@ -24,7 +24,7 @@ Three gaps make the rulebook untrustworthy in a way per-card text is not:
   keywords the rulebook describes. A missing term is invisible.
 - **It is not fresh.** `mage gen` regenerates the file, but nothing fails if a
   human forgets to run it. The committed rulebook can lag the code that generates
-  it, and `mage check` stays green while it does.
+  it, and `mage ci:check` stays green while it does.
 - **It is not bound to behavior.** A directive body is free prose. It can say
   anything, including something the engine no longer does, and no test notices.
   `Text()` on an effect can't lie because it renders the very node that resolves;
@@ -58,7 +58,7 @@ with the enums they describe, and the registry is **complete by construction**,
   until ADR 0019's classification lands; see Consequences.
 
 - **Fresh by gate.** `mage gen` regenerates the rulebook from the registry and the
-  prose fragments, and `mage check` fails on any diff between the committed file
+  prose fragments, and `mage ci:check` fails on any diff between the committed file
   and a fresh regeneration. The rulebook cannot lag the registry through a
   forgotten `mage gen`.
 

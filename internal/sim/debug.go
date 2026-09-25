@@ -65,7 +65,7 @@ func Debug(script []byte) Failure {
 }
 
 // FirstSeedFailure plays the fixed-seed batch and replays the first script that
-// fails, so `mage debug` with no script reproduces whatever `mage test` is
+// fails, so `mage debug` with no script reproduces whatever `mage ci:test` is
 // currently catching.
 func FirstSeedFailure(count int) Failure {
 	for _, script := range SeedScripts(count) {

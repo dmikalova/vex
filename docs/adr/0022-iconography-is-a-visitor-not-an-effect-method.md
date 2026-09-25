@@ -71,7 +71,7 @@ not for MCTS snapshot performance.
   Visitor, not a new method on the node — the same shape as other whole-tree
   passes.
 - The totality test makes glyph coverage a build gate: adding an effect without a
-  glyph mapping breaks `mage check`, which is the intended "fail loud" behavior.
+  glyph mapping breaks `mage ci:check`, which is the intended "fail loud" behavior.
   The gate carries **no tolerance allowlist** — there is no map of node types
   permitted to fall back to the unknown glyph. Every effect must map to a real
   glyph (or, where a mechanic has no icon vocabulary at all, deliberately render

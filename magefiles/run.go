@@ -26,12 +26,17 @@ func Docs() error {
 		"golang.org/x/pkgsite/cmd/pkgsite@"+pkgsiteVersion, "-http", addr, ".")
 }
 
-// WebWasm builds the web client to WebAssembly (web/app.wasm). -trimpath makes
-// the build reproducible; -ldflags="-s -w" drops debug info to shrink the bundle.
+// WebWasm builds the web client to WebAssembly (web/app.wasm).
 func WebWasm() error {
+	return wasmBuild("web/app.wasm")
+}
+
+// wasmBuild compiles the web client to WebAssembly at out. -trimpath makes the
+// build reproducible; -ldflags="-s -w" drops debug info to shrink the bundle.
+func wasmBuild(out string) error {
 	return sh.RunWithV(
 		map[string]string{"GOARCH": "wasm", "GOOS": "js"},
-		"go", "build", "-trimpath", "-ldflags=-s -w", "-o", "web/app.wasm", "./cmd/web",
+		"go", "build", "-trimpath", "-ldflags=-s -w", "-o", out, "./cmd/web",
 	)
 }
 

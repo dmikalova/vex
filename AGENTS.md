@@ -69,18 +69,31 @@ call). State the order in one line and start.
 ## Build, test, and lint through `mage`
 
 Run all build/test/format/coverage tasks through `mage`, not raw `go`
-commands. The targets wrap the project's conventions (engine coverage gate,
-comment/rulebook generation, golines), so use them:
+commands. The generic gate comes from project-standards' shared `ci` targets
+(imported in `magefiles/build.go`); the rest are vex's own targets, which wrap
+the project's conventions (comment/rulebook generation, the simulator, the card
+tools):
 
-- `mage build` — build all packages, for the host and for js/wasm.
-- `mage test` — run all tests.
+- `mage ci:fix && mage ci:check` — **the local validator**; run it before
+  considering work done. `ci:fix` applies every autofix (go fix, golangci-lint
+  `--fix`, goimports, golines, gci, goldmark-lint `--fix`, misspell `-w`) and
+  regenerates the generated configs. `ci:check` only verifies — it writes no
+  file and fails on anything `ci:fix` would change — then runs format, tidy,
+  build, vet, lint, markdown, spell, secrets, commits and drift, then the tests
+  and the coverage gates. It must print `ALL GREEN`.
+- `mage ci:build` — build all packages for the host, then the web client for
+  js/wasm (into a temporary directory; `mage webWasm` writes `web/app.wasm`).
+- `mage ci:test` — run all tests.
 - `mage testRun <pattern>` — run only the tests matching a name pattern.
-- `mage vet` — run `go vet`.
-- `mage fmt` / `mage fmtCheck` — format, or check formatting without writing.
-- `mage cover` — report coverage for each gated area, which must stay at 100%.
+- `mage ci:vet` — run `go vet`.
+- `mage ci:lint` — run golangci-lint, fixing nothing.
+- `mage ci:format` — check formatting without writing (`mage ci:fix` formats).
+- `mage ci:markdown` / `mage ci:spell` — lint Markdown, check spelling.
+- `mage ci:cover` — report coverage for each gated area, which must stay at 100%.
   The areas are `internal/engine`, the card definitions under
   `internal/cards/sets`, `internal/cards/cardtest`, and `internal/deckgen`; they
-  are listed in `magefiles/cover.go`. `internal/web` is deliberately ungated.
+  are listed as `ci.CoverGates` in `magefiles/build.go`. `internal/web` is
+  deliberately ungated.
 - `mage generateComments` — rewrite each card's doc comment from its definition.
 - `mage gen` — regenerate card comments and the rulebook. It is deterministic and
   regenerates from the tree, so **just run it** — you never need to worry about
@@ -88,12 +101,9 @@ comment/rulebook generation, golines), so use them:
   match the generator. Run `mage gen` freely whenever a definition changes.
 - `mage docs` — serve this module's Go documentation at `http://localhost:6060`
   (pkgsite, the pkg.go.dev renderer); read-only, no gate depends on it.
-- `mage check` — the full green gate (fmt formats in place, then build, vet,
-  lint, markdown lint, test, coverage); run this before considering work done. It
-  must print `ALL GREEN`.
 - `mage debug` — replay a simulated game with the game log on and print the log
   tail next to the invariant violation that ended it. With no `-script` it finds
-  the first failing game in the fixed-seed property batch `mage test` plays; pass
+  the first failing game in the fixed-seed property batch `mage ci:test` plays; pass
   `-script` the hex a failure printed to replay that one, and `-tail` to widen
   the log (`mage debug -script=<hex> -tail=200`).
 
@@ -125,7 +135,7 @@ comment/rulebook generation, golines), so use them:
   the per-game counts next to a committed baseline so a regression shows as a delta.
   Default runs the 1000 seeded games; `-random` runs a fresh random outlier batch;
   `-save` re-blesses the baseline. It never blocks and never gates — the baseline is
-  advisory and lives outside `mage check` and CI. See `docs/testing.md`.
+  advisory and lives outside `mage ci:check` and CI. See `docs/testing.md`.
 - `mage profileServer` — open a profile from the last `mage profile` run in the
   interactive pprof web UI (flame graph, call graph, source view); blocks until
   stopped. `-mem` serves the allocation profile, `-random` the outlier run's.
@@ -135,8 +145,17 @@ comment/rulebook generation, golines), so use them:
   every script a soak ever saw; run this after fixing a soak or fuzz find.
 
 When you add or update a mage target that writes a binary, keep the output in an
-ignored location (for example `./bin`) or update `.gitignore` accordingly.
-Generated binaries should not be committed.
+ignored location (for example `./bin`) or add it under `ignore.git` in
+`mklv.config.json`. Generated binaries should not be committed.
+
+Tool configs are generated, never hand-edited: `.golangci.yaml`,
+`.markdownlint-cli2.yaml`, `.commitlint.yaml`, `.gitleaks.toml` and `.ruleguard.go`
+are project-standards' base configs merged with the overrides in
+`mklv.config.json`. Change an exclusion or a lint setting there, then run
+`mage ci:fix` to regenerate; `ci:check` fails on a hand edit (drift). The same
+goes for `.gitignore` and `.dockerignore`: add entries under `ignore.git` /
+`ignore.docker` in `mklv.config.json`, because the weekly conformance run
+rewrites both files from the universal templates plus those additions.
 
 `mage` lists each target with the **first sentence** of its doc comment, so keep
 that sentence short enough to fit one 80-column line (roughly 55 characters after
@@ -147,7 +166,7 @@ Scratch files — throwaway scripts, captured logs, profiles, diff dumps — go 
 workspace avoids permission prompts for paths outside it. Create it on demand
 with `mkdir -p tmp`.
 
-`./tmp` is gitignored but it is still inside the module, so `mage check` (which
+`./tmp` is gitignored but it is still inside the module, so `mage ci:check` (which
 walks `./...`) will build, vet, lint, and coverage-check any Go package left
 there. Delete a scratch Go package before running the gate.
 
@@ -213,8 +232,8 @@ can be written as, e.g.:
 
 ```sh
 mage gen &&
-  mage cover &&
-  mage check
+  mage ci:fix &&
+  mage ci:check
 ```
 
 Prefer this layout over one unreadable line when chaining several build/test
@@ -266,8 +285,8 @@ a symbol you never touched, an in-progress edit that doesn't yet compile — ass
 another agent is mid-change. Wait a little and try again rather than "fixing" or
 reverting their work. Only act on failures that stem from your own changes.
 
-Prefer **targeted `go test`** for your own work and save the full `mage check`
-for when you actually need the whole-tree gate. `mage check` is the single most
+Prefer **targeted `go test`** for your own work and save the full `mage ci:check`
+for when you actually need the whole-tree gate. `mage ci:check` is the single most
 contended command in a multi-agent run: it builds and lints everything, so it
 catches every sibling's mid-edit as a failure that is not yours. Before you run
 it, glance at `git status --short internal/engine internal/web` — if a shared
@@ -288,7 +307,7 @@ genuinely need it to answer a question.
 ## Never delete a failing test to get to green
 
 A test that fails after your change is evidence, not an obstacle. Do **not**
-delete, skip, or weaken it to make `mage check` pass. Assume the test is right
+delete, skip, or weaken it to make `mage ci:check` pass. Assume the test is right
 and your change is wrong until you can state, in the commit or your summary,
 exactly which rule or ADR makes the old expectation incorrect. Only then rewrite
 the test — and rewrite it to assert the new correct behavior, never to assert
@@ -484,7 +503,7 @@ Three standing invariants:
   type, or rule-bearing effect, register or update its rulebook term in the same
   change. The rulebook is a typed registry complete by construction (ADR 0018), so
   an undescribed keyword fails the build and a stale committed rulebook fails
-  `mage check`.
+  `mage ci:check`.
 - **Comment and implementation must agree.** A doc comment says what its code
   does, never what it no longer does (ADR 0006). Where the behavior is non-obvious,
   bind the claim to an example (a cited engine test/scenario) rather than trusting

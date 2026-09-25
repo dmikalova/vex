@@ -9,9 +9,9 @@ in the browser.
 ## Quick start
 
 ```sh
-mage web      # build the wasm client and serve it at http://localhost:8000
-mage test     # run the test suite
-mage cover    # engine test coverage (kept at 100%)
+mage web        # build the wasm client and serve it at http://localhost:8000
+mage ci:test    # run the test suite
+mage ci:cover   # coverage of the gated areas (kept at 100%)
 ```
 
 Requires Go 1.27+.
@@ -41,10 +41,21 @@ every doc is in [`docs/README.md`](docs/README.md).
 
 ## Development
 
-`mage -l` lists the available targets: `web`, `webWasm`, `build`, `test`,
-`cover`, `vet`, `fmt`, `lint`, `check`, `tidy`, `gen`. `mage check` is the full
-green gate (fmt-check, build, vet, lint, markdown lint, test, coverage) and is
-what CI runs.
+`mage -l` lists the available targets. The generic gate comes from
+[`dmikalova/project-standards`](https://github.com/dmikalova/project-standards)'
+shared `ci` targets (`ci:fix`, `ci:check`, `ci:build`, `ci:test`, `ci:cover`,
+`ci:lint` and the rest); vex adds its own (`web`, `webWasm`, `webAssets`, `gen`,
+`fuzz`, `soak`, `debug`, `trace`, `profile` and the `tool:` namespace). The
+local validator is `mage ci:fix && mage ci:check`: `ci:fix` applies every
+autofix, and `ci:check` verifies without writing (format, tidy, build including
+js/wasm, vet, lint, markdown, spelling, secrets, commit messages, generated
+config drift, tests and the 100% coverage gates). `ci:check` is what CI runs.
+
+Tool configs (`.golangci.yaml`, `.markdownlint-cli2.yaml`, `.commitlint.yaml`,
+`.gitleaks.toml`, `.ruleguard.go`, `.gitignore`, `.dockerignore`) are generated
+from project-standards' base configs and the overrides in
+[`mklv.config.json`](mklv.config.json). Edit the overrides there, never the
+generated files.
 
 The card-management commands live under the `tools` namespace, for researching
 and implementing cards:
@@ -61,11 +72,11 @@ Card-authoring conventions live in
 
 Commit hooks are managed by [lefthook](https://github.com/evilmartians/lefthook),
 extending the shared base config in
-[`dmikalova/project-standards`](https://github.com/dmikalova/project-standards). Install the
-tooling once (`lefthook`, `commitlint`, `gitleaks`, `typos`, `goldmark-lint`,
-`mage`), then run `lefthook install`. Commits follow
-[Conventional Commits](https://www.conventionalcommits.org/) (enforced by
-commitlint), which also drives semantic-release versioning on deploy.
+[`dmikalova/project-standards`](https://github.com/dmikalova/project-standards);
+pre-commit runs `mage ci:check`. Every checker runs through `go run`, so the
+only tools to install are `lefthook` and `mage`; then run `lefthook install`.
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/)
+(enforced by `ci:commits`), which also drive versioning on deploy.
 
 ## Deployment
 
@@ -76,12 +87,12 @@ Vex runs on Google Cloud Run at
 
 CI/CD is a thin caller in
 [`.github/workflows/cicd.yaml`](.github/workflows/cicd.yaml) that invokes the
-reusable `go-cloudrun.yaml` workflow in
+reusable `cicd.yaml` workflow in
 [`dmikalova/project-standards`](https://github.com/dmikalova/project-standards). On a push to
-`main` it runs `mage check`, then semantic-release cuts a version, buildah builds
-[`Dockerfile`](Dockerfile) into an image, pushes it to GHCR (mirrored to Artifact
-Registry), and `gcloud run deploy` rolls it out. Pull requests run `mage check`
-only. The infrastructure itself — the Cloud Run service, the `vex.mklv.tech`
+`main` it runs `mage ci:check`, then cuts a version from the Conventional
+Commits, builds [`Dockerfile`](Dockerfile) into an image, and deploys it to
+Cloud Run. Pull requests run `mage ci:check` only, and a weekly scheduled run
+checks the project without deploying. The infrastructure itself — the Cloud Run service, the `vex.mklv.tech`
 domain mapping, DNS, and CI deploy permissions — is defined as a Terramate stack
 in the [`infrastructure`](https://github.com/dmikalova/infrastructure) repo under
 `gcp/apps/vex`.

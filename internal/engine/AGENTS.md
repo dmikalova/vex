@@ -2,7 +2,7 @@
 
 `internal/engine` is the pure game engine. It imports nothing upward (see the
 dependency layering in the root `AGENTS.md`) and is the one package held to 100%
-test coverage (`mage cover`). This document is the **design ideal** for the
+test coverage (`mage ci:cover`). This document is the **design ideal** for the
 engine: the patterns it is built from, where each belongs, and the deliberate
 tradeoffs — including the ones that look like smells but are forced by a
 constraint, and how to handle them so the next mechanic still lands cleanly.
@@ -598,4 +598,5 @@ Then work the decision order below.
 6. Does it need to say what happened? A `LogEntry` variant in `log_<family>.go`,
    recorded at the site the outcome actually lands — never a formatted sentence.
 
-Keep everything green including 100% `internal/engine` coverage (`mage check`).
+Keep everything green including 100% `internal/engine` coverage
+(`mage ci:fix && mage ci:check`).

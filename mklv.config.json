@@ -1,7 +1,98 @@
 {
+  "$schema": "https://raw.githubusercontent.com/dmikalova/project-standards/main/schema/mklv.config.schema.json",
   "name": "vex",
   "entrypoint": "cmd/web/main.go",
   "runtime": {
     "port": 8080
+  },
+  "kind": "cloudrun",
+  "tools": {
+    "golangci": {
+      "linters": {
+        "exclusions": {
+          "rules": [
+            {
+              "linters": [
+                "unused"
+              ],
+              "text": "const \\w+Unset is unused"
+            },
+            {
+              "linters": [
+                "revive"
+              ],
+              "text": "should be of the form"
+            },
+            {
+              "linters": [
+                "revive"
+              ],
+              "path": "internal/cards/sets/",
+              "text": "should have a package comment"
+            },
+            {
+              "linters": [
+                "gocognit"
+              ],
+              "text": "effectGlyphs"
+            },
+            {
+              "linters": [
+                "revive"
+              ],
+              "path": "magefiles/cards\\.go",
+              "text": "redefinition of the built-in function (new|max)"
+            }
+          ]
+        }
+      }
+    },
+    "markdownlint": {
+      "config": {
+        "MD024": {
+          "siblings_only": true
+        },
+        "MD037": false,
+        "MD041": false,
+        "MD060": false
+      },
+      "overrides": [
+        {
+          "files": [
+            "docs/keyforge-master-rulebook.md"
+          ],
+          "config": {
+            "MD024": false,
+            "MD025": false
+          }
+        }
+      ],
+      "ignores": [
+        "docs/todo.md"
+      ]
+    },
+    "misspell": {
+      "exclude": [
+        "internal/cards/provenance/**"
+      ]
+    }
+  },
+  "ignore": {
+    "git": [
+      "/bin/",
+      "/cardcheck",
+      "/gencomments",
+      "/genprovenance",
+      "/cardlookup",
+      "coverage.*",
+      "web/app.wasm",
+      "/web/**/*.br",
+      "/web/**/*.gz",
+      ".vscode/"
+    ],
+    "docker": [
+      "docs",
+      "web/app.wasm"
+    ]
   }
 }

@@ -96,7 +96,8 @@ is 30, with every genuinely nested engine/deckgen/cardtest/web seam split (fight
 NewCard, hasKeyword, the text.go renderers, Target.Text, Target.filter,
 triggeredBy, RenderAbility, Harness.location, allowedHouses, `renderMarkdown`,
 `computeFlashes`, `installKeyShortcuts`, `installTips`) and 100% coverage held.
-One exclusion remains in the `.golangci.yaml` `exclusions` `text:` list:
+One exclusion remains in the `tools.golangci` `exclusions` `text:` list in
+`mklv.config.json`:
 
 - `effectGlyphs` (internal/web/icon.go, 90) — glyph dispatch; wants its own
   glyph-family grilling session (see docs/todo.md "Split out glyphs more in
@@ -306,7 +307,7 @@ acceptable; flat pointerless state (ADR 0005) is not negotiable.
   old incompatible save look identical and the reproduction is destroyed.
   Incompatible saves may still be tossed. **INVESTIGATE** the mechanism the human
   asked for: have the local dev server capture a failing client snapshot to disk
-  the way soak and fuzz findings are captured, so `mage check` (or a sibling
+  the way soak and fuzz findings are captured, so `mage ci:check` (or a sibling
   target) surfaces it for an agent to investigate, cover, fix, and clean up.
   Mirror the existing corpus workflow.
 

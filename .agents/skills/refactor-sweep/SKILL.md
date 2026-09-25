@@ -23,7 +23,7 @@ struct field that needs a comment"). An unbounded "clean things up" means the
 package the user was last working in.
 
 Other agents work this tree at the same time. Sweep only files you can see are
-settled — if `mage check` fails on a symbol you never touched, that is someone
+settled — if `mage ci:check` fails on a symbol you never touched, that is someone
 else mid-change, so leave it, say so, and sweep elsewhere.
 
 ## 2. Survey before deciding
@@ -32,8 +32,8 @@ Gather the candidate list first; picking findings by memory finds only the file
 you just read.
 
 ```sh
-mage check                                   # the baseline: know what was already red
-mage lint                                    # golangci-lint: unused code, shadowing, staticcheck
+mage ci:check                                # the baseline: know what was already red
+mage ci:lint                                 # golangci-lint: unused code, shadowing, staticcheck
 wc -l $(git ls-files '<area>/*.go' | grep -v _test) | sort -rn | head -20
 grep -rn 'fmt\.Print\|println(\|TODO\|FIXME\|XXX' <area> --include='*.go' | grep -v _test
 git status --porcelain                       # stray files another agent has not committed
@@ -279,14 +279,14 @@ so it is not re-proposed every round. "Do not merge X and Y" is as much a rule a
 ## 6. Close green and report
 
 ```sh
-mage gen && mage check      # gen = card comments; check must print ALL GREEN
+mage gen && mage ci:fix && mage ci:check  # gen = card comments; check must print ALL GREEN
 ```
 
 The `/rulebook` page is the reader-facing summary of the rules the sweep touched;
 an unexpected term appearing or vanishing there is a mechanic the sweep moved
 without meaning to.
 
-`mage check` includes the 100% `internal/engine` coverage gate: new engine code
+`mage ci:check` includes the 100% coverage gates, `internal/engine` among them: new engine code
 needs its test in the matching `internal/engine/effect_*_test.go` or
 `game_*_test.go`.
 

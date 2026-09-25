@@ -156,8 +156,9 @@ to seed it. `set.New(...)`:
   an enclosing condition scopes. Reach for two `WithAbility` calls only when the
   card genuinely prints two ability lines.
 
-Run `mage fmt` after editing (golines aligns the fields; it does not add the line
-breaks, so the one-field-per-line layout above is the author's responsibility).
+Run `mage ci:fix` after editing (its golines pass aligns the fields; it does not
+add the line breaks, so the one-field-per-line layout above is the author's
+responsibility).
 
 ## Anomalies preview a future set; they live in AE only until it is built
 

@@ -27,7 +27,7 @@ was green before you started), note it and keep going rather than stalling on
 someone else's edit.
 
 **Do not call `task_complete`, and do not end your turn, until the stop condition
-below is met.** A card that compiles, a green `mage check`, a reconnaissance
+below is met.** A card that compiles, a green `mage ci:check`, a reconnaissance
 conclusion that "the rest all need new mechanics", and a written status summary
 are ALL checkpoints, never the finish — reaching one means ask for the next card
 and build it, not stop and report. "Every remaining card needs a new mechanic" is
@@ -108,9 +108,9 @@ card:
    triage memo (and a quick scan of the remaining stubs' printed text) to find
    them. Only when the mechanic is fully cashed in do you go back to `nextCard`.
 
-**Verify with a targeted `go test`, not `mage check`, inside the loop.** A full
+**Verify with a targeted `go test`, not `mage ci:check`, inside the loop.** A full
 gate run is slow and its `ALL GREEN` is a false finish line that invites stopping,
-so `mage check` is an **end-of-run** step, not a per-card one. Verify each card as
+so `mage ci:check` is an **end-of-run** step, not a per-card one. Verify each card as
 it lands by running `go test` for **exactly the card or mechanic you changed**:
 
 ```sh
@@ -120,8 +120,8 @@ go test ./internal/engine/ -run Test<Mechanic>          # the mechanic it uses
 
 Name the specific `-run` pattern — the card's `Test<Name>` and, for a gated card,
 the engine `Test<Mechanic>` you added — so the run is a few seconds, not the whole
-suite. Add `mage build` when a change spans packages. Only the two targeted tests
-matter per card; save `mage check` for step 3.
+suite. Add `mage ci:build` when a change spans packages. Only the two targeted tests
+matter per card; save `mage ci:check` for step 3.
 
 ### Building a mechanic
 
@@ -177,7 +177,7 @@ Once the node is justified (or you are extending an existing one cleanly):
    effect; a new effect is cheaper than a new `Resolver` capability, which is
    cheaper than new state.
 2. **Add its engine test** in the matching `internal/engine/effect_*_test.go` as
-   you go; `mage cover` gates `internal/engine` at 100%, and a card test does not
+   you go; `mage ci:cover` gates `internal/engine` at 100%, and a card test does not
    count toward it.
 3. **File the mechanic in the rulebook.** A player-facing mechanic is only
    finished when a player can look it up, so register a `RuleTerm` for it in the
@@ -241,23 +241,23 @@ Watch the `create_file` dup-first-line bug: after creating `.go` files, check
 ## 3. Verify, then keep going
 
 The targeted `go test` runs in step 2 are what verify each card as it lands.
-`mage check` is the **final** validation, run at the end to confirm everything in
+`mage ci:check` is the **final** validation, run at the end to confirm everything in
 your changes is working together — not after every card:
 
 ```sh
-mage gen && mage check    # gen = comments + rulebook; check prints ALL GREEN
-mage tool:coverage        # confirm the set's count moved
+mage gen && mage ci:fix && mage ci:check  # gen = comments + rulebook; check prints ALL GREEN
+mage tool:coverage                        # confirm the set's count moved
 ```
 
 Run this once a mechanic and all the cards it unblocked have landed (and again
-before you hand back), so `mage check` validates the whole batch of your changes
-rather than a single card. Aim to leave the tree with `mage check` printing
+before you hand back), so `mage ci:check` validates the whole batch of your changes
+rather than a single card. Aim to leave the tree with `mage ci:check` printing
 `ALL GREEN` and the set's count higher than it started. Every mechanic you added should appear on the `/rulebook`
 page, and nothing you retired should still be listed.
 
 But a green gate is a checkpoint, not a finish line: the run's purpose is to keep
 converting stubs into implemented cards. Do not stall chasing a green gate you did
-not break. If `mage check` fails only on **another agent's** in-progress change —
+not break. If `mage ci:check` fails only on **another agent's** in-progress change —
 a file you never touched, a symbol you did not add, a check that was green before
 your edits — record it briefly and move on to the next card rather than reverting
 or "fixing" their work. Get _your_ changes passing; leave theirs alone. Report
@@ -306,12 +306,13 @@ contention rather than serializing:
   one card is one `<snake>.go` + `<snake>_test.go`). No two agents touch the same
   file. Hand them the card **names** and let them locate the stub; include the
   printed text or a one-line mechanic hint so they need no extra lookup.
-- **Forbid `mage generateComments` / `mage gen` / `mage check` inside subagents.**
-  `generateComments` rewrites **every** card's doc comment repo-wide — that is the
-  real cross-agent race. Card agents write code + a targeted `go test` only; the
+- **Forbid `mage generateComments` / `mage gen` / `mage ci:fix` / `mage ci:check`
+  inside subagents.** `generateComments` rewrites **every** card's doc comment
+  repo-wide, and `ci:fix` reformats and autofixes every file — those are the real
+  cross-agent races. Card agents write code + a targeted `go test` only; the
   **orchestrator runs `mage generateComments` once, centrally**, after a wave
-  finishes, then the full `mage gen && mage check`.
-- **Quiesce before the central gate.** `mage check` is the most contended command
+  finishes, then the full `mage gen && mage ci:fix && mage ci:check`.
+- **Quiesce before the central gate.** `mage ci:check` is the most contended command
   in the run — it catches every sibling's mid-edit as a failure. Run it only
   between waves, when your own agents have returned, and first glance at
   `git status --short internal/engine internal/web`: if a package you did not
@@ -328,9 +329,9 @@ contention rather than serializing:
 - **Waves, not one shot.** A wave is: a mechanics phase that lands a primitive
   cluster, then a fan-out of card agents over disjoint batches of the cards it
   unblocked (plus any still-easy cards). When they return, the orchestrator runs
-  the central `generateComments` + `mage check`, folds in the results, and plans
+  the central `generateComments` + `mage ci:fix && mage ci:check`, folds in the results, and plans
   the next wave's cluster. Keep the waves going until the stop condition is met.
-- **When the mechanics agent adds new `Effect` nodes, the central `mage check`
+- **When the mechanics agent adds new `Effect` nodes, the central `mage ci:check`
   will fail two ungated spots the subagents cannot see — fix them in the
   reconcile:** `internal/web` `TestIconTotality` fails until each new effect gets a
   glyph `case` in `internal/web/icon.go` `effectGlyphs` (the `iconFallbackAllowed`

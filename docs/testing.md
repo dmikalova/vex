@@ -19,14 +19,25 @@ pieces fit together.
   package test.
 - **Hunting bugs no one thought to test?** Let the **whole-game simulator**
   (`internal/sim`) play random legal games and check invariants — run continuously
-  in `mage test`, deeply with `mage fuzz`, and at volume with `mage soak`.
+  in `mage ci:test`, deeply with `mage fuzz`, and at volume with `mage soak`.
 - **Frontend glue (`web`)?** Largely untested by design (DOM-bound);
   push logic worth testing down into the engine or `match`.
 
 ## Coverage philosophy: what is gated and why
 
-`mage cover` measures **only `internal/engine`, and requires 100%**. That is
-deliberate:
+`mage ci:cover` holds **four areas at 100% statement coverage**, listed as
+`ci.CoverGates` in `magefiles/build.go`. Each gate names the packages whose tests
+run and the packages whose statements are counted:
+
+| Gate       | Tests run               | Statements counted            |
+| ---------- | ----------------------- | ----------------------------- |
+| `engine`   | `./internal/engine/`    | `./internal/engine/`          |
+| `cards`    | `./internal/cards/...`  | `./internal/cards/sets/...`   |
+| `cardtest` | `./internal/cards/...`  | `./internal/cards/cardtest/`  |
+| `deckgen`  | `./internal/deckgen/`   | `./internal/deckgen/`         |
+
+`internal/web` is deliberately ungated: it is a view layer the tests reach
+through only a few entry points. The choices are deliberate:
 
 - The engine is where the value and the risk concentrate — the rules — and it has
   no UI or I/O to dilute the measurement, so 100% is both meaningful and
@@ -35,13 +46,16 @@ deliberate:
   with an engine test, or the gate fails. This is a feature: it forces you to
   cover the branch where it lives rather than hoping a card test happens to reach
   it.
-- Card set packages are essentially data (`var X = card.New(...)`), so their own
-  statement coverage is not the useful signal; their tests exist to pin
-  _behavior_ and _rendered text_, not to hit lines.
+- Card set packages are essentially data (`var X = card.New(...)`); their tests
+  exist to pin _behavior_ and _rendered text_, not to hit lines. The `cards` gate
+  counts the sets against every test under `internal/cards`, so every statement
+  in a definition, its helpers and closures included, must be reached by some
+  card test. The `cardtest` harness is counted the same way, through the card
+  tests that drive it.
 
 Consequence to internalize: **if you delete or change an engine test, re-check
-coverage** — a card test exercising the same path does not count toward the engine
-gate (`mage cover` doesn't run card tests).
+coverage** — a card test exercising the same path does not count toward the
+`engine` gate, which runs only `internal/engine`'s own tests.
 
 ## Option 1 — Engine tests (`package engine`)
 
@@ -210,7 +224,7 @@ which is itself a finding.
   automatically **minimized and committed** to `internal/sim/testdata/fuzz/FuzzPlay`,
   where it then runs as an ordinary unit test forever after.
 - **`TestSimulateSeeds`** — a fixed-seed batch of 5,000 random games, fast enough
-  to run inside `mage test` on every suite run. This is the property test that
+  to run inside `mage ci:test` on every suite run. This is the property test that
   shakes the engine continuously; a regression prints the exact script to
   reproduce. The batch is **deterministic on purpose** — the gate never fails on a
   game no one can replay. Fresh non-deterministic games are the soak's job.
@@ -263,9 +277,10 @@ by `invariants_test.go` like any other engine code.
 ## Running tests
 
 ```sh
-mage test         # go test ./...  (whole suite, incl. the fixed-seed simulator)
-mage cover        # engine coverage, must print 100%
-mage check        # the full gate: fmt, build, vet, lint, test, cover
+mage ci:test                  # go test ./...  (whole suite, incl. the fixed-seed simulator)
+mage testRun TestHeal         # only the tests matching a name pattern
+mage ci:cover                 # the four coverage gates, each must print 100%
+mage ci:fix && mage ci:check  # the local validator: autofix, then the full gate
 
 mage fuzz         # coverage-guided whole-game fuzzing (-tags assert), 60s
 mage soak         # volume soak of random games (-tags assert), 30s
@@ -324,5 +339,5 @@ over time. Re-bless it with `mage profile -save` when a change legitimately move
 the numbers. The play counts carry a small per-run jitter (the engine randomizes
 map iteration per process, nudging a few script-indexed choices), so read a delta
 of a percent or two as noise and a sudden jump as a real regression; only the
-`FastCopy` allocs count is exact. Nothing here runs in `mage check` or CI —
+`FastCopy` allocs count is exact. Nothing here runs in `mage ci:check` or CI —
 profiling is a tool you reach for, not a gate.

@@ -21,7 +21,7 @@ import (
 )
 
 // seedBatch matches the batch size TestSimulateSeeds plays, so a bare `mage debug`
-// searches exactly the games `mage test` runs.
+// searches exactly the games `mage ci:test` runs.
 const seedBatch = 1000
 
 func main() {

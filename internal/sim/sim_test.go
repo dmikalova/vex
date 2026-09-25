@@ -29,7 +29,7 @@ func FuzzPlay(f *testing.F) {
 	})
 }
 
-// TestSimulateSeeds is the fixed-seed property test wired into `mage test`: it
+// TestSimulateSeeds is the fixed-seed property test wired into `mage ci:test`: it
 // plays a deterministic batch of random games so every run of the suite shakes the
 // engine. The batch is deterministic on purpose — a failure here is reproducible
 // from the printed script under `mage debug`, and the gate never fails on a game

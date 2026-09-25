@@ -344,12 +344,13 @@ avoiding per-turn allocation on hot paths.
 
 - **Run everything through `mage`, never raw `go`.** The mage targets wrap the
   project's conventions (coverage gate, comment/rulebook generation, golines). The
-  gate is `mage check` (fmt-check, build, vet, lint, test, coverage); it must
-  print `ALL GREEN` before work is considered done. `mage fmt` formats;
-  `mage cover` keeps `internal/engine` at 100%. See the root
+  local validator is `mage ci:fix && mage ci:check`; `ci:check` must print
+  `ALL GREEN` before work is considered done. `mage ci:fix` formats and applies
+  every autofix; `mage ci:cover` keeps the gated areas (engine, card sets,
+  `cardtest`, `deckgen`) at 100%. See the root
   [AGENTS.md](../AGENTS.md) for the full target list.
 - **Let `golines` own formatting.** Indentation, alignment, and wrapping are not
-  matters of taste here — `golines` (via `mage fmt`) decides them: it applies
+  matters of taste here — `golines` (via `mage ci:fix`) decides them: it applies
   `gofmt` and additionally shortens code lines over 100 columns. Do not fight it.
 - **Keep functions short enough to see at once.** There is a real
   discontinuity between a function that fits on screen and one you must scroll to

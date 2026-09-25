@@ -46,12 +46,12 @@ error — name the slug.
 ## Verify
 
 ```sh
-mage build        # the //go:build todo stubs are excluded, so this stays green
+mage ci:build      # the //go:build todo stubs are excluded, so this stays green
 mage tool:coverage # the set's total is unchanged; stubs do not count as covered
 ```
 
 Stubbing changes no coverage number and no registered card — it only lays down the
-files. If `mage build` fails after stubbing, it is from something other than the
+files. If `mage ci:build` fails after stubbing, it is from something other than the
 stubs (they do not compile into the build); investigate that separately.
 
 Hand back once the set is stubbed. Implementing the stubs is the separate

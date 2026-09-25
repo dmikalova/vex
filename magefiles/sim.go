@@ -60,7 +60,7 @@ func CorpusPrune() error {
 // violation that ended the game, turning a soak, fuzz, or property-test find into
 // a readable sequence of plays.
 //
-// With no -script it searches the fixed-seed property batch that `mage test` plays
+// With no -script it searches the fixed-seed property batch that `mage ci:test` plays
 // and replays the first failure; pass -script the hex a failure printed to replay
 // that one instead. -tail widens the log tail (default 60 lines):
 //
@@ -118,8 +118,8 @@ func Soak(duration *time.Duration) error {
 	if duration != nil {
 		d = *duration
 	}
-	os.Setenv("SOAK_DURATION", d.String())
-	return sh.RunV("go", "test", "-tags", "assert",
+	return sh.RunWithV(map[string]string{"SOAK_DURATION": d.String()},
+		"go", "test", "-tags", "assert",
 		"-timeout", soakTimeout(d),
 		"-run", "^TestSoak$", "-count", "1", "-v", "./internal/sim")
 }
@@ -279,8 +279,12 @@ func freeAddr() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer l.Close()
-	return l.Addr().String(), nil
+	addr := l.Addr().String()
+	// Release the port for pprof to bind.
+	if err := l.Close(); err != nil {
+		return "", err
+	}
+	return addr, nil
 }
 
 // profiledBench runs one play benchmark with CPU and allocation profiling on and

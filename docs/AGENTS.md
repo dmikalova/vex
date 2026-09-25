@@ -5,15 +5,18 @@ in the repo).
 
 ## Keep Markdown markdownlint-clean
 
-Run `mage markdownlint` after editing any Markdown and fix what it flags before
-considering the work done — it is part of `mage check`. It runs
-[goldmark-lint](https://github.com/mrueg/goldmark-lint) (a Go port of
-markdownlint, `go run`-pinned so it is always available) with `--fix`, so fixable
-issues are corrected in place and only what cannot be autofixed fails the gate.
-The config lives in `.markdownlint-cli2.yaml` (line-length, inline-HTML, both
-emphasis rules, fenced-code-language, first-line-heading, blanks-around-fences/
-lists, and table-column-style are deliberately off; do not rely on other rules
-being off). The human's [todo.md](todo.md) is the one file agents never touch, so
+Run `mage ci:fix && mage ci:markdown` after editing any Markdown and fix what
+it flags before considering the work done — `ci:markdown` is part of
+`mage ci:check`. Both run [goldmark-lint](https://github.com/mrueg/goldmark-lint)
+(a Go port of markdownlint, `go run`-pinned so it is always available):
+`ci:fix` applies its `--fix` corrections in place, and `ci:markdown` only
+reports, failing on whatever cannot be autofixed. The config is generated into
+`.markdownlint-cli2.yaml` from project-standards' base and vex's overrides under
+`tools.markdownlint` in `mklv.config.json` (line-length, inline-HTML, both
+emphasis rules, no-space-in-emphasis, fenced-code-language, first-line-heading,
+blanks-around-fences/lists, and table-column-style are deliberately off; do not
+rely on other rules being off). Change a rule there, never in the generated
+file. The human's [todo.md](todo.md) is the one file agents never touch, so
 its lint state is not your concern.
 
 ## Markdownlint pitfalls (running log)

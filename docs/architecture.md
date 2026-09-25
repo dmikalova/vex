@@ -196,11 +196,21 @@ the segregated `Resolver` are what make those feasible without touching the core
 
 ## 9. Quality gates
 
-- `mage check` is the full green gate: `fmt-check`, `build`, `vet`, `lint`
-  (golangci-lint, pinned), `test`, and `cover`.
-- **`internal/engine` is held at 100% statement coverage** — it is where the value
-  and the risk concentrate, and it has no UI/IO to dilute the measurement. A new
-  engine code path needs an engine test.
+- The gate is project-standards' shared `ci` targets, imported into vex's
+  magefiles. `mage ci:fix` applies every autofix; `mage ci:check` writes nothing
+  and runs `format` (golines, gci and `go fix` as diff checks), `tidy`, `build`
+  (the host build plus the js/wasm client), `vet`, `lint` (golangci-lint with the
+  shared ruleguard ruleset), `markdown`, `spell` (misspell), `secrets`
+  (gitleaks), `commits` (commitlint over the branch's commits) and `drift` (the
+  generated configs match `mklv.config.json`), then `test` and `cover`. CI and
+  the pre-commit hook run `ci:check`; locally run `mage ci:fix && mage ci:check`.
+- **Four areas are held at 100% statement coverage** (`ci.CoverGates` in
+  `magefiles/build.go`): `internal/engine`, the card definitions under
+  `internal/cards/sets` (counted against every test under `internal/cards`),
+  `internal/cards/cardtest`, and `internal/deckgen`. The engine is where the
+  value and the risk concentrate, and it has no UI/IO to dilute the
+  measurement; a new engine code path needs an engine test. `internal/web` is
+  deliberately ungated.
 - Card behavior is pinned by per-card tests on the `cardtest` harness; those also
   guard the generated card text, which makes composability refactors safe.
 

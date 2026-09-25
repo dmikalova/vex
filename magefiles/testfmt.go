@@ -16,13 +16,14 @@ import (
 // what makes the report fit an 80-column terminal without wrapping.
 const modulePath = "github.com/dmikalova/vex/"
 
-// goTest runs `go test` with the given args and prints a tidied, column-aligned
-// report in place of go test's ragged, path-heavy output: the module prefix is
-// stripped, the coverage suffix is shortened, and the status/package/detail
-// columns line up whatever the package names' lengths. Lines go test emits that
-// are not per-package summaries (failure details, panics, build errors) pass
-// through verbatim, so a tidy report never hides why a run went red. It returns
-// the run's error unchanged.
+// goTest runs `go test` with the given args for TestRun and prints the same
+// tidied, column-aligned report ci:test prints (the ci package keeps its copy
+// unexported, so TestRun carries its own). The module prefix is stripped, the
+// coverage suffix is shortened, and the status/package/detail columns line up
+// whatever the package names' lengths. Lines go test emits that are not
+// per-package summaries (failure details, panics, build errors) pass through
+// verbatim, so a tidy report never hides why a run went red. It returns the
+// run's error unchanged.
 func goTest(args ...string) error {
 	cmd := exec.Command("go", append([]string{"test"}, args...)...)
 	var buf bytes.Buffer
@@ -38,6 +39,8 @@ func goTest(args ...string) error {
 // `?`, or `FAIL` followed by a package; anything else (a failing test's own
 // output) is flushed through in place so its order and detail survive.
 func tidyTestOutput(raw string) string {
+	// Writes to the tabwriter land in a bytes.Buffer, which never fails, so
+	// their errors are discarded.
 	var out bytes.Buffer
 	tw := tabwriter.NewWriter(&out, 0, 0, 2, ' ', 0)
 	sc := bufio.NewScanner(strings.NewReader(raw))
@@ -55,23 +58,23 @@ func tidyTestOutput(raw string) string {
 			if len(fields) >= 4 {
 				cov = shortCoverage(fields[3])
 			}
-			fmt.Fprintf(tw, "ok\t%s\t%s\t%s\n", shortPkg(fields[1]), detail, cov)
+			_, _ = fmt.Fprintf(tw, "ok\t%s\t%s\t%s\n", shortPkg(fields[1]), detail, cov)
 		case strings.HasPrefix(line, "?") && len(fields) >= 2:
-			fmt.Fprintf(tw, "?\t%s\t%s\t\n", shortPkg(fields[1]), "no test files")
+			_, _ = fmt.Fprintf(tw, "?\t%s\t%s\t\n", shortPkg(fields[1]), "no test files")
 		case strings.HasPrefix(line, "FAIL\t") && len(fields) >= 2:
 			detail := ""
 			if len(fields) >= 3 {
 				detail = strings.TrimSpace(fields[2])
 			}
-			fmt.Fprintf(tw, "FAIL\t%s\t%s\t\n", shortPkg(fields[1]), detail)
+			_, _ = fmt.Fprintf(tw, "FAIL\t%s\t%s\t\n", shortPkg(fields[1]), detail)
 		default:
 			// A non-summary line breaks the aligned block, so the table so far is
 			// flushed before it prints, keeping output in the order go test emitted it.
-			tw.Flush()
+			_ = tw.Flush()
 			fmt.Fprintln(&out, line)
 		}
 	}
-	tw.Flush()
+	_ = tw.Flush()
 	// tabwriter pads the detail column to its width even when the coverage column
 	// after it is empty, so each padded line is right-trimmed to drop that tail.
 	var trimmed strings.Builder
