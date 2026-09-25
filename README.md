@@ -61,7 +61,7 @@ Card-authoring conventions live in
 
 Commit hooks are managed by [lefthook](https://github.com/evilmartians/lefthook),
 extending the shared base config in
-[`dmikalova/github-meta`](https://github.com/dmikalova/github-meta). Install the
+[`dmikalova/project-standards`](https://github.com/dmikalova/project-standards). Install the
 tooling once (`lefthook`, `commitlint`, `gitleaks`, `typos`, `goldmark-lint`,
 `mage`), then run `lefthook install`. Commits follow
 [Conventional Commits](https://www.conventionalcommits.org/) (enforced by
@@ -77,7 +77,7 @@ Vex runs on Google Cloud Run at
 CI/CD is a thin caller in
 [`.github/workflows/cicd.yaml`](.github/workflows/cicd.yaml) that invokes the
 reusable `go-cloudrun.yaml` workflow in
-[`dmikalova/github-meta`](https://github.com/dmikalova/github-meta). On a push to
+[`dmikalova/project-standards`](https://github.com/dmikalova/project-standards). On a push to
 `main` it runs `mage check`, then semantic-release cuts a version, buildah builds
 [`Dockerfile`](Dockerfile) into an image, pushes it to GHCR (mirrored to Artifact
 Registry), and `gcloud run deploy` rolls it out. Pull requests run `mage check`
