@@ -10,7 +10,7 @@ on:
 jobs:
   cicd:
     name: CI/CD
-    uses: dmikalova/project-standards/.github/workflows/go-cloudrun.yaml@main
+    uses: dmikalova/project-standards/.github/workflows/cicd.yaml@main
     permissions:
       contents: write
       id-token: write
