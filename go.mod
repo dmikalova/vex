@@ -7,7 +7,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/term v0.2.2
-	github.com/dmikalova/project-standards v1.26.0
+	github.com/dmikalova/project-standards v1.28.1
 	github.com/magefile/mage v1.17.2
 	github.com/maxence-charriere/go-app/v11 v11.0.5
 	github.com/tdewolff/minify/v2 v2.24.17
@@ -32,6 +32,8 @@ require (
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/quasilyte/go-ruleguard/dsl v0.3.23 // indirect
+	github.com/quasilyte/go-ruleguard/rules v0.0.0-20250925135901-53ee6ef0c75c // indirect
+	github.com/quasilyte/uber-rules v0.0.0-20211221122301-454b255c313b // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/tdewolff/parse/v2 v2.8.16 // indirect
 	github.com/xo/terminfo v1.2.0 // indirect

@@ -7,14 +7,25 @@
 // ruleguard check. The ignore build tag and the leading dot in its generated
 // name keep it out of every build.
 //
-// Loading it needs github.com/quasilyte/go-ruleguard/dsl in the project's module
-// graph. The ci package imports dsl for that reason, so a project that imports ci
-// keeps it through go mod tidy. The go-ruleguard/rules and uber-rules bundles
-// vex imported are deliberately not loaded: they would pull go-ruleguard itself
-// and golang.org/x/tools into every project's go.mod.
+// It loads two rule bundles, go-ruleguard/rules and uber-rules, and then
+// defines the go-perfguard and semgrep-go rules inline. Rule names are unique
+// across all of them, so every bundle imports without a prefix.
+//
+// Loading it needs dsl and both bundle packages in the project's module graph.
+// The ignore build tag hides these imports from go mod tidy, so the ci package
+// imports the same three packages; a project that imports ci keeps them.
 package gorules
 
-import "github.com/quasilyte/go-ruleguard/dsl"
+import (
+	"github.com/quasilyte/go-ruleguard/dsl"
+	rules "github.com/quasilyte/go-ruleguard/rules"
+	uberrules "github.com/quasilyte/uber-rules"
+)
+
+func init() {
+	dsl.ImportRules("", rules.Bundle)
+	dsl.ImportRules("", uberrules.Bundle)
+}
 
 // https://github.com/quasilyte/go-perfguard/blob/master/perfguard/_rules/universal_rules.go
 
