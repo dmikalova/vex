@@ -22,8 +22,8 @@ github.com/clipperhouse/uax29/v2 v2.7.0 h1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJ
 github.com/clipperhouse/uax29/v2 v2.7.0/go.mod h1:EFJ2TJMRUaplDxHKj1qAEhCtQPW2tJSwu5BF98AuoVM=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/dmikalova/project-standards v1.28.1 h1:VwepMEVuvsp+nyRqMSN3pkuV1vj4aEBSEG6Ml5cKCl8=
-github.com/dmikalova/project-standards v1.28.1/go.mod h1:vMyQZMZJDOLqw0CEPeE9aixdLzWmxB+GxGxPmtr/70s=
+github.com/dmikalova/project-standards v1.32.0 h1:zoyBpu4NgHLijQyoW1MSGLKNCVmiOTYWLcYtCWMKlkQ=
+github.com/dmikalova/project-standards v1.32.0/go.mod h1:vMyQZMZJDOLqw0CEPeE9aixdLzWmxB+GxGxPmtr/70s=
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f h1:Y/CXytFA4m6baUTXGLOoWe4PQhGxaX0KpnayAqC48p4=
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f/go.mod h1:vw97MGsxSvLiUE2X8qFplwetxpGLQrlU1Q9AUEIzCaM=
 github.com/go-toolsmith/astcopy v1.0.2 h1:YnWf5Rnh1hUudj11kei53kI57quN/VH6Hp1n+erozn0=

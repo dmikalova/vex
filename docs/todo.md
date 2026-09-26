@@ -42,6 +42,79 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - card gallery (and search). Gallery links to cards, and cards can pull in all the relevant rules onto that page
 - Be able to set up situation and then run it in the engine UI for playwright
 
+
+- Auto vac : choose one:
+- how am I supposed to pick from opponents hand? hidden stash
+- nexus should be able to target artifact with no action abilities
+- change house should be yellow outline instead of circle
+- sow salt doesn't show up as restriction
+- universal translator is not right - let's me select creature for grant, and then need to follow up with use
+- consulmprimis - should be able to choose empty creature
+- essence scale does printed house instead of academy training house
+- novu dynamo should be click on novu to destroy
+- alpha doesn't work with picking up archives??
+- rename artifact line to field/domain
+- card title eg sanctum's cards don't get dimmed
+- remove grey riders may
+- rockatiel should be play: 3 creatures
+- are taps and clicks distinguishable? Can zones be double tappable
+- deck list is opening both players again - add a test for regression?
+- chronus may - click on chronus or done, should be able to just click on cars in hand
+- is chronus resolving for any bonus icon?
+- one stood against many chooses 3 friendlies to fight - choose a creature
+- tap to show tooltip, tap again to open zone
+- tap/move does not highlight player bar
+- copy logs - plaintext and structural
+- random sets or pick sets
+- new game set selection cancel should be red
+- if I go new game, select a set, cancel, and then go again it gets stuck
+- zone modal x highlights on tap
+- fidgit prompt - text is not aligned, buttons should just say discard or archives
+- times gigantics glyph
+- WTF is going on with tomes gigantica text
+- is there a way to test over web behaviors without having rigid tests but also not being so loose that I only notice it IRL - eg a way to loosely define design principles that can be used for automated tests?
+- one of the best things KF does is present cards and situations with tradeoffs which you then have to navigate the value proposition - look to remove/edit cards that provide no trade-off (AAF), or boost cards that tend to just provide no value
+- The engine has a lot of duals - eg an ability that does this, vs an effect? Not sure of the verbiage. I understand the duals are necessary, but is it possible to unify their underlying engine? Even to the point that defining one also creates the dual automatically?
+- Allison did not change houses
+- the icon overlay for dealing damage should count how many are left
+- while in key selection can't tap outside on nothing to lower cards or remove hover
+- AST analysis for code complexity - https://share.gemini.google/hJBkse4DHYEi
+- graph out the mechanics split of each house
+- one page design docs for vactrol
+- sorting hand by houses not happening
+- tomes gigantica without a gigantic
+- pandemonium should let you choose and should not count 0
+- hidden stash - can't select from opponent's hand
+- duration markers for more than turn
+- how to deal with restrictions like kaupe?
+- How affected is MCTS if we do turn granularity instead of every command?
+- center line and zones need to be clearer
+- Austin and Cody discussion from sep 19
+- tapping again on a lifted card or preview hover should dismiss it
+- after forging third key still prompted for quiet anvil and forge compiler
+- Questions for change: what is present, what is past, and what are the important questions
+- rockatiel - selection happens and then cards move
+- radiant Truth and Commandeer - order by name, have long press preview or hover
+- Auto resolve if there are more than 2 options (random) - don't step prng, just use original seed?
+- eyegor the remaining choices are not vacuous - test for that
+- Lord Golgotha - splash attack 3
+- guji - 2 damage then 4
+- make set choice random
+- scout Pete should just be action bar dialogue instead of open zone modal
+- Scout - text until the end of turn for skirmish
+- dark harbinger and scout - no way to resolve scout first
+- scout select and fights at the same time
+- it's coming glyph
+- lost in the woods vacuous choice
+- it's coming search done, and select from zones
+- change the chosen creature to it
+- protect the weak does not give fresh armor on play
+- adding a critic pattern to the agent
+- dominator bauble a vinda gives no choice on who to damage
+- lights out doesn't need a may
+- warrant counters not showing on book of malefaction
+- remove openspec
+
 ### Automatic linters
 
 [https://lobehub.com/skills/saifoelloh-golang-best-practices-skill-design-patterns?activeTab=installation](lint skill)
