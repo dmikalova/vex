@@ -131,7 +131,9 @@ func TestRepeatWhile(t *testing.T) {
 		Do:   Destroy{Target: Target{Kind: TargetEachEnemyCreature}.Refine(LeastPowerful)},
 		Gate: While{Cond: Overwhelmed{}},
 	}
-	if e.Text() != "destroy the least powerful enemy creature -> if you are overwhelmed, repeat this effect" {
+	want := "destroy the least powerful enemy creature. " +
+		"If you are overwhelmed, repeat this effect"
+	if e.Text() != want {
 		t.Errorf("text = %q", e.Text())
 	}
 	if (Repeat{
@@ -160,7 +162,8 @@ func TestRepeatWhile(t *testing.T) {
 		t.Errorf("opponent creatures = %d, want 1 (destroyed down to parity)", len(g.Battleline(1)))
 	}
 
-	// No enemy creatures: the gate stops the loop immediately.
+	// No enemy creatures: the controller is not overwhelmed, so the condition ends
+	// the loop after the one free resolution.
 	g2 := NewGame("A", "B", 1)
 	g2.AddToBattleline(testCreature("m", 2), 0)
 	Repeat{
@@ -173,14 +176,18 @@ func TestRepeatWhile(t *testing.T) {
 		},
 	)
 
-	// A Do that cannot report progress always counts as progress, so only the
-	// condition and the Rule of Six end the loop (Neutron Shark).
+	// The condition is the only stop, so an effect that never happens repeats all
+	// the same: a steal against a protected pool moves nothing while the opponent
+	// keeps their Æmber, and the Rule of Six is what ends the loop.
 	g3 := NewGame("A", "B", 1)
+	g3.State.Aember[1] = 5
+	g3.AddToBattleline(
+		NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberCannotBeStolen()),
+		1,
+	)
+	source := g3.AddToHand(NewCard("Spin", Shadows, Tactic, Common), 0)
 	Repeat{
-		Do: GainAember{
-			Amount: 1,
-			Player: Controller,
-		},
+		Do: StealAember{Amount: 1},
 		Gate: While{Cond: PoolAember{
 			Player: Opponent,
 			Is:     AtLeast,
@@ -188,20 +195,28 @@ func TestRepeatWhile(t *testing.T) {
 		}},
 	}.Resolve(&EffectContext{
 		Resolver:   g3,
+		Source:     source,
 		Controller: 0,
 	})
-	if g3.Aember(0) != 1 {
-		t.Errorf("aember = %d, want 1 (the condition fails after one pass)", g3.Aember(0))
+	if g3.Aember(0) != 0 || g3.Aember(1) != 5 {
+		t.Errorf(
+			"protected pool: you=%d opp=%d, want 0/5 (nothing stolen)",
+			g3.Aember(0),
+			g3.Aember(1),
+		)
+	}
+	if !g3.AtRuleOfSix(source) {
+		t.Error("the loop should have spent the Rule-of-Six pool, the only bound left")
 	}
 }
 
-// TestRepeatWhileSteal covers Bait and Switch: steal 1 Æmber, then repeat
+// TestRepeatWhileYouDoSteal covers Bait and Switch: steal 1 Æmber, then repeat
 // while the opponent still leads. A gating Do (the steal) that makes no progress
 // ends the loop even while the condition holds.
-func TestRepeatWhileSteal(t *testing.T) {
+func TestRepeatWhileYouDoSteal(t *testing.T) {
 	e := Repeat{
 		Do: StealAember{Amount: 1},
-		Gate: While{Cond: PoolAember{
+		Gate: WhileYouDo{Cond: PoolAember{
 			Player: Opponent,
 			Is:     MoreThanYou,
 		}},
@@ -241,6 +256,87 @@ func TestRepeatWhileSteal(t *testing.T) {
 			g2.Aember(1),
 		)
 	}
+
+	// A Do that cannot report progress — a Sequence — always counts as having
+	// happened, so the condition and the Rule of Six are the only stops (Neutron
+	// Shark's shape).
+	g3 := NewGame("A", "B", 1)
+	Repeat{
+		Do: Sequence{Effects: []Effect{GainAember{Amount: 1, Player: Controller}}},
+		Gate: WhileYouDo{Cond: PoolAember{
+			Player: Opponent,
+			Is:     AtLeast,
+			Amount: 1,
+		}},
+	}.Resolve(&EffectContext{
+		Resolver:   g3,
+		Controller: 0,
+	})
+	if g3.Aember(0) != 1 {
+		t.Errorf("aember = %d, want 1 (the condition fails after one pass)", g3.Aember(0))
+	}
+}
+
+// TestRepeatMayWhileYouDoStopsWhenNothingHappens covers the result gate the
+// optional repeat now earns: a steal against a protected pool does nothing, so the
+// loop ends before the controller is offered a repeat at all.
+func TestRepeatMayWhileYouDoStopsWhenNothingHappens(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.State.Aember[1] = 5
+	g.AddToBattleline(
+		NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberCannotBeStolen()),
+		1,
+	)
+	source := g.AddToHand(NewCard("Spin", Shadows, Tactic, Common), 0)
+	g.SetChooser(0, panicOnOptionChooser{})
+
+	Repeat{
+		Do: StealAember{Amount: 1},
+		Gate: MayWhileYouDo{Cond: PoolAember{
+			Player: Opponent,
+			Is:     MoreThanYou,
+		}},
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     source,
+		Controller: 0,
+	})
+
+	if g.Aember(0) != 0 || g.Aember(1) != 5 {
+		t.Errorf(
+			"protected pool: you=%d opp=%d, want 0/5 (nothing stolen)",
+			g.Aember(0),
+			g.Aember(1),
+		)
+	}
+	if g.AtRuleOfSix(source) {
+		t.Error("the loop should have stopped at once, spending no Rule-of-Six usage")
+	}
+
+	// The same gate mid-loop: the controller accepts every offer, but the second
+	// steal finds an empty pool and ends the loop even though the condition — a
+	// friendly creature in play — still holds.
+	g2 := NewGame("A", "B", 1)
+	g2.State.Aember[1] = 1
+	g2.AddToBattleline(testCreature("ally", 3), 0)
+	source2 := g2.AddToHand(NewCard("Spin", Shadows, Tactic, Common), 0)
+	g2.SetChooser(0, optionPicker{idx: 0}) // always "Yes"
+
+	Repeat{
+		Do: StealAember{Amount: 1},
+		Gate: MayWhileYouDo{Cond: CardsInPlay{
+			Player: Controller,
+			Type:   Creature,
+		}},
+	}.Resolve(&EffectContext{
+		Resolver:   g2,
+		Source:     source2,
+		Controller: 0,
+	})
+
+	if g2.Aember(0) != 1 || g2.Aember(1) != 0 {
+		t.Errorf("emptied pool: you=%d opp=%d, want 1/0", g2.Aember(0), g2.Aember(1))
+	}
 }
 
 // TestRepeatValidate covers node-level validation the gates delegate to.
@@ -256,5 +352,11 @@ func TestRepeatValidate(t *testing.T) {
 		Gate: ByExalting{},
 	}).validate() == nil {
 		t.Error("gate with unset target should be invalid")
+	}
+	if err := (Repeat{
+		Do:   StealAember{Amount: 1},
+		Gate: WhileYouDo{Cond: Overwhelmed{}},
+	}).validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
 	}
 }

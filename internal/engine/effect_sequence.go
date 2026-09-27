@@ -272,7 +272,7 @@ func (e Sequence) Resolve(ctx *EffectContext) {
 }
 
 // declinable reports that the sequence leads with a single clickable choice, so a
-// May or a Repeat's MayWhile gate wrapping it can be driven by that choice (and a
+// May or a Repeat's MayWhileYouDo gate wrapping it can be driven by that choice (and a
 // Done to pass) rather than a separate Yes/No — the rest of the sequence then
 // follows.
 func (e Sequence) declinable() bool { return leadsWithACardChoice(e.Effects) }

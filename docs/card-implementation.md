@@ -806,7 +806,7 @@ card.WithAbility(
 | `ForEach`                            | once per running count, choosing afresh each time                 |
 | `ForEachHouse`                       | once per house, binding that house                                |
 | `ForEachDiscarded`                   | once per card a preceding discard removed                         |
-| `Repeat{Do, Gate}`                   | `While`, `MayWhile`, or `ByExalting`                              |
+| `Repeat{Do, Gate}`                   | `While`, `WhileYouDo`, `MayWhileYouDo`, or `ByExalting`           |
 | `ForDuration`                        | several timed effects sharing one duration clause                 |
 | `ByActivePlayer`                     | resolve as the active player, not the controller                  |
 | `OrAmount`                           | "N, or M if <cond>" without an `Otherwise` branch                 |

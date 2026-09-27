@@ -46,4 +46,34 @@ func TestBaitAndSwitch(t *testing.T) {
 		h.P1.ExpectAmber(6)
 		h.P2.ExpectAmber(14)
 	})
+
+	t.Run("a protected pool stops the loop without spending the Rule of 6", func(t *testing.T) {
+		// The arrow is a result gate: a steal that moves nothing ends the loop, so
+		// the play spends only the one usage it records for itself and a second copy
+		// of the name is still playable this turn.
+		var first, second ct.Card
+		h := ct.Play(t, ct.Setup{
+			P1: ct.Side{
+				House: card.House.Shadows,
+				Hand: ct.Cards(
+					ct.Bind(&first, BaitAndSwitch),
+					ct.Bind(&second, BaitAndSwitch),
+				),
+			},
+			P2: ct.Side{
+				Amber:  5,
+				InPlay: ct.Cards(TheVaultkeeper),
+			},
+		})
+
+		h.P1.Play(first)
+
+		h.P1.ExpectAmber(0)
+		h.P2.ExpectAmber(5)
+
+		h.P1.Play(second)
+
+		h.P1.ExpectAmber(0)
+		h.P2.ExpectAmber(5)
+	})
 }

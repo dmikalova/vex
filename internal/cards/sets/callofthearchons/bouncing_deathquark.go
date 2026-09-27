@@ -17,7 +17,7 @@ var BouncingDeathquark = set.New(
 	card.Provenance(card.CotA, "107"),
 	card.WithAbility(
 		card.Trigger.Play, card.Repeat{
-			Gate: card.MayWhile{Cond: card.CardsInPlay{
+			Gate: card.MayWhileYouDo{Cond: card.CardsInPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 			}},

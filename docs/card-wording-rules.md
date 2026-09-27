@@ -163,6 +163,16 @@ written with an arrow, not a follow-up sentence.
 `Gate{attempt: A, then: B}`. This is distinct from an unconditional sequence
 (`A. B.`) and from a state branch (`If <fact>, …`).
 
+A **self-repeat** takes the arrow only when its loop really is gated on the effect
+having happened. Bait and Switch's steal stops the moment it moves no Æmber, so it
+prints `Steal 1 Æmber -> if your opponent has more Æmber than you, repeat this
+effect`. Numquid the Fair repeats on a board fact alone — it comes back while you
+are overwhelmed even when a ward absorbs its destroy — so it is two plain
+sentences: `Destroy an enemy creature. If you are overwhelmed, repeat this
+effect`. The gates are named for the split (`WhileYouDo` and `MayWhileYouDo` print
+the arrow, `While` prints the sentence), so the printed text says which loop the
+card has.
+
 A gate takes an `otherwise` **only** for a genuine two-way branch — arms that are
 **different verbs**, the same carve-out rule 22 grants a state branch. When the
 attempt does nothing (the controller declined the optional attempt, or it had no

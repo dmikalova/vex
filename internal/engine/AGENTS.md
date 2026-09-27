@@ -120,7 +120,8 @@ it plugs into the AST without desync:
   `Count`, not a bespoke effect; a branch is a `Condition` fed to `Conditional`.
 - **`CreatureVerb`** is a per-creature verb strategy for `OnChooseCreature`.
 - **`RepeatGate` (`effect_repeat.go`)** is the strategy a `Repeat` varies along:
-  `While` (repeat automatically while a `Condition` holds), `MayWhile` (repeat at
+  `While` (repeat automatically while a `Condition` holds), `WhileYouDo` (the same,
+  but only while the effect keeps happening), `MayWhileYouDo` (repeat at
   the controller's choice while a `Condition` holds), and `ByExalting` (repeat once,
   paid by exalting a creature). Each gate carries both its loop and its trailing
   "repeat" clause, so a new repeat shape is a new gate, not a new node.

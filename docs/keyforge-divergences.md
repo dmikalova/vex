@@ -109,9 +109,11 @@ to another creature`. The two branches collapse into one linear sequence:
   so there is one fewer one-off mechanic to carry.
 - **Bait and Switch** reads `Steal 1 Æmber -> if your opponent has more Æmber than
 you, repeat this effect`, not KeyForge's`If your opponent has more Æmber than
-you, steal 1 Æmber. Repeat this effect`. Vex uniformly writes a self-repeat as
-  `<do> -> if <cond>, repeat this effect` (the same shape Numquid the Fair and
-  Neutron Shark use), so the steal leads and the condition gates the repeat. The
+you, steal 1 Æmber. Repeat this effect`. Vex writes a self-repeat whose loop stops
+  when the effect does nothing as `<do> -> if <cond>, repeat this effect`, so the
+  steal leads and the result gate carries the repeat. (A self-repeat that turns on
+  a board fact alone — Numquid the Fair, Neutron Shark — is two plain sentences
+  instead: `<do>. If <cond>, repeat this effect`.) The
   first steal is therefore unconditional: with equal pools KeyForge steals nothing
   while Vex steals 1, then stops. In every case where the opponent already
   leads the two are identical.- **Gebuk** swaps the discarded creature into play immediately rather than waiting

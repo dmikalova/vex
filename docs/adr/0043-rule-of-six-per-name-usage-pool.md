@@ -69,7 +69,7 @@ Each distinct usage records against the pool at the moment it happens:
 - **A `Destroyed:` resolution** — `recordUsage` in `game_leaves_play.go`, and the
   matching gathered-trigger site.
 - **A self-repeating ability** past its free first loop — `RecordUsage(ctx.Source)`
-  inside the `While`/`MayWhile` loop bodies (`effect_repeat.go`).
+  inside the `While`/`WhileYouDo`/`MayWhileYouDo` loop bodies (`effect_repeat.go`).
 - **A chained Replicator-style trigger** past the free first — `RecordUsage(root)`
   in `TriggerAbility.Resolve` (`effect_trigger.go`).
 

@@ -729,10 +729,10 @@ func TestCardsPlayed(t *testing.T) {
 	}
 }
 
-func TestRepeatMayWhile(t *testing.T) {
+func TestRepeatMayWhileYouDo(t *testing.T) {
 	e := Repeat{
 		Do: StealAember{Amount: 1},
-		Gate: MayWhile{Cond: PoolAember{
+		Gate: MayWhileYouDo{Cond: PoolAember{
 			Player: Opponent,
 			Is:     MoreThanYou,
 		}},
@@ -769,7 +769,7 @@ func TestRepeatMayWhile(t *testing.T) {
 	if err := validateEffect(
 		Repeat{
 			Do: StealAember{Amount: 1},
-			Gate: MayWhile{Cond: CardsInPlay{
+			Gate: MayWhileYouDo{Cond: CardsInPlay{
 				Player: Controller,
 				Type:   Creature,
 			}},
@@ -781,9 +781,9 @@ func TestRepeatMayWhile(t *testing.T) {
 
 // When Do is a single clickable choice, the repeat is offered by letting the
 // player keep picking rather than answering Yes/No.
-func TestRepeatMayWhileDrivenByChoice(t *testing.T) {
+func TestRepeatMayWhileYouDoDrivenByChoice(t *testing.T) {
 	e := Repeat{
-		Gate: MayWhile{Cond: CardsInPlay{
+		Gate: MayWhileYouDo{Cond: CardsInPlay{
 			Player: Controller,
 			Type:   Creature,
 		}},

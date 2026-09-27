@@ -18,7 +18,7 @@ var BaitAndSwitch = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Repeat{
 			Do: card.StealAember{Amount: 1},
-			Gate: card.While{Cond: card.PoolAember{
+			Gate: card.WhileYouDo{Cond: card.PoolAember{
 				Player: card.Opponent,
 				Is:     card.MoreThanYou,
 			}},
