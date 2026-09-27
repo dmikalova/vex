@@ -84,6 +84,26 @@ not just dispatch — it catches a kind that dispatches but renders wrong. It re
 the scenario harness rather than mocking prompts, and is deferred until that
 harness exists.
 
+## A prompt names its source by identity, not by name
+
+Every asking capability takes a leading `PromptSource` (`internal/engine/prompt.go`)
+that identifies the card whose ability raised the prompt by `LocalID`. A prompt
+never identifies its source by name. A name cannot distinguish two copies of one
+card, so a client that matches on it picks whichever copy it finds first and
+renders that copy's live state — the wrong house, the wrong Maverick mark, the
+wrong damage — for the copy that actually asked. `TestPromptSourceReadsTheAskingCopysHouse`
+(`internal/web/view_controls_test.go`) pins this with two copies in play.
+
+`LocalID` 0 is a real card, so presence rides on the paired `HasCard` boolean
+rather than a sentinel id (ADR 0010). A prompt with no card source — a
+turn-structure question — carries the zero `PromptSource`.
+
+The source deliberately does **not** carry the card's name alongside its id.
+`renderPrompt` substitutes `SelfName` inside the engine before the chooser is
+called, so the prompt text is already rendered: a client uses the source to point
+at the card, never to rebuild the sentence. New prompt context is a new field on
+`PromptSource`, not another parameter on every chooser implementation.
+
 ## Consequences
 
 - Step 1 hardens the silent-fallback risk immediately, at zero runtime cost, and
