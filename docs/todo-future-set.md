@@ -2,7 +2,8 @@
 
 Work that is real and decided, but that has **no consuming card in an implemented
 set yet** — so it waits for the set that first introduces a card that needs it.
-It is work parked against a set that has not been stood up.
+This file holds only that parked work: nothing here is ready to build today, and
+nothing here is a substitute for how live work is tracked.
 
 Rules:
 

@@ -115,3 +115,6 @@ together and **CONTEXT** for what the words mean.
 
 - [todo.md](todo.md) — the running list of things to build and open design
   questions.
+- Outstanding agent work is tracked outside the tree, by whatever is driving the
+  session — there is no in-tree agent backlog, and agents never write in
+  `todo.md`.
