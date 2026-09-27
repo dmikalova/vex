@@ -432,7 +432,7 @@ func (g *game) keyForgePanel() app.UI {
 			c := remaining[i]
 			return keyChoiceButton(c, c.String(), g.isButtonCursor(i), g.pickForgeColor(c))
 		}),
-		btn("Cancel", g.cancelForgeKey, "btn-secondary"),
+		btn("Cancel", actCancel, g.cancelForgeKey, "btn-secondary"),
 	)
 }
 

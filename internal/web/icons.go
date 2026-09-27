@@ -2,6 +2,7 @@ package web
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
@@ -190,6 +191,7 @@ func keyChoiceButton(
 ) app.UI {
 	return app.Button().
 		Class(cx("house-btn", "key-choice", keyColorClass(c), ifCls(cursor, "btn-cursor"))).
+		DataSet("act", "key-"+strings.ToLower(label)).
 		OnClick(onClick).
 		Body(
 			app.Span().Class("key-sparkle").Body(icon(keyColorIconName(c), "icon-inline")),

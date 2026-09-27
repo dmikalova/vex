@@ -120,7 +120,7 @@ func (g *game) cardFocus() app.UI {
 			face,
 			app.Div().Class("card-focus-acts").Body(
 				app.Range(acts).Slice(func(i int) app.UI {
-					return btn(acts[i].Label, acts[i].On, acts[i].Class)
+					return btn(acts[i].Label, acts[i].Act, acts[i].On, acts[i].Class)
 				}),
 				app.If(note != "", func() app.UI {
 					return app.Div().Class("hint").Text(note)
