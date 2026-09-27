@@ -115,6 +115,3 @@ together and **CONTEXT** for what the words mean.
 
 - [todo.md](todo.md) — the running list of things to build and open design
   questions.
-- [todo-agent.md](todo-agent.md) — the agent's scratchpad of concrete work items.
-  Agents write here, never in `todo.md`; a done item is deleted, not marked done,
-  so the file always shows only outstanding work.

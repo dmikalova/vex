@@ -112,4 +112,4 @@ them (ADR 0018 owns that surface).
 
 - **Staged.** Stage 1 is the engine catalog + totality test. Stage 2 is the
   sampling and set-cover collection. Stage 3 is the two web sections and their
-  coverage tests. Each stage is independently green; see `docs/todo-agent.md`.
+  coverage tests. Each stage is independently green.
