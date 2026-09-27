@@ -911,9 +911,15 @@ func (g *Game) GainChains(controller, amount int) {
 	})
 }
 
-// OrderByChoice is the Resolver entry point for orderByChoice.
-func (g *Game) OrderByChoice(controller int, prompt string, ids []LocalID) []LocalID {
-	return g.orderByChoice(controller, prompt, ids)
+// OrderByChoice is the Resolver entry point for orderByChoice, attributing the
+// prompt to the source card.
+func (g *Game) OrderByChoice(
+	controller int,
+	source LocalID,
+	prompt string,
+	ids []LocalID,
+) []LocalID {
+	return g.orderByChoice(controller, g.promptSource(source), prompt, ids)
 }
 
 // ChooseCreature asks a player to choose one creature from candidates, attributing

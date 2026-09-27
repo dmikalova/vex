@@ -621,29 +621,29 @@ func TestOrderByChoice(t *testing.T) {
 	}
 
 	// Nothing to order for 0 or 1 ids.
-	if got := g.OrderByChoice(0, "p", nil); len(got) != 0 {
+	if got := g.OrderByChoice(0, 0, "p", nil); len(got) != 0 {
 		t.Errorf("nil order = %v", got)
 	}
-	if got := g.OrderByChoice(0, "p", []LocalID{7}); !eq(got, []LocalID{7}) {
+	if got := g.OrderByChoice(0, 0, "p", []LocalID{7}); !eq(got, []LocalID{7}) {
 		t.Errorf("single order = %v", got)
 	}
 	// FirstChooser (default) keeps the original order.
-	if got := g.OrderByChoice(0, "p", ids); !eq(got, []LocalID{10, 20, 30}) {
+	if got := g.OrderByChoice(0, 0, "p", ids); !eq(got, []LocalID{10, 20, 30}) {
 		t.Errorf("first-chooser order = %v", got)
 	}
 	// Picking the last each time reverses the order.
 	g.SetChooser(0, orderLastChooser{})
-	if got := g.OrderByChoice(0, "p", ids); !eq(got, []LocalID{30, 20, 10}) {
+	if got := g.OrderByChoice(0, 0, "p", ids); !eq(got, []LocalID{30, 20, 10}) {
 		t.Errorf("last-chooser order = %v", got)
 	}
 	// A rejected pick falls back to the given order.
 	g.SetChooser(0, orderRejectChooser{})
-	if got := g.OrderByChoice(0, "p", ids); !eq(got, []LocalID{10, 20, 30}) {
+	if got := g.OrderByChoice(0, 0, "p", ids); !eq(got, []LocalID{10, 20, 30}) {
 		t.Errorf("reject order = %v", got)
 	}
 	// An Orderer chooser arranges the ids in a single call.
 	g.SetChooser(0, orderAllChooser{})
-	if got := g.OrderByChoice(0, "p", ids); !eq(got, []LocalID{30, 20, 10}) {
+	if got := g.OrderByChoice(0, 0, "p", ids); !eq(got, []LocalID{30, 20, 10}) {
 		t.Errorf("orderer order = %v", got)
 	}
 }
