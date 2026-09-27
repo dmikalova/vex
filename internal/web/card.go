@@ -246,7 +246,13 @@ func (c *cardView) Render() app.UI {
 		ifCls(c.Jiggle, "card--jiggle"),
 	)
 
-	div := app.Div().Class(cls)
+	// Every face carries its card's name as a data hook, the same one the log's
+	// card mentions and the picker's rows carry. It is what a browser scenario
+	// finds a named card by ("the Flaxia the preamble added"), paired with the
+	// element id prefix that says which zone the face is drawn in — an id the
+	// scenario cannot know, since a manually added card is given the next free
+	// LocalID.
+	div := app.Div().Class(cls).DataSet("card", c.Title)
 	if c.DOMID != "" {
 		div = div.ID(c.DOMID)
 	}

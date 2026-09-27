@@ -592,3 +592,28 @@ func TestManualAttachControlsNeedManualMode(t *testing.T) {
 		t.Error("To hand acted outside manual mode")
 	}
 }
+
+// Manual mode itself is a recorded command, so a match edited under it comes back
+// under it. Only the command log is persisted (ADR 0039): a mode left out of the
+// log is a mode the reload replays without, and every manual edit made under it
+// then replays against a game enforcing the rules again — here an off-house
+// creature that the rebuilt game would refuse, which drops the whole match. The
+// reload-resume browser scenario walks the same path through the real DOM.
+func TestManualModeSurvivesAReload(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	id := c.deal(offHouseCreature)
+	c.playFromHand(id)
+
+	next := c.reload()
+	if !next.g.g.Manual() {
+		t.Error("the resumed match came back with manual mode off")
+	}
+	if !containsID(next.g.g.Battleline(next.g.active()), id) {
+		t.Errorf("the off-house %s did not survive the reload", offHouseCreature)
+	}
+}
+
+// offHouseCreature is a creature of a house other than testHouse, so playing it
+// is legal only while manual mode is lifting the active-house restriction.
+const offHouseCreature = "Bumpsy"

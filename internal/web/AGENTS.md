@@ -314,7 +314,25 @@ Four rules the surface is built on:
 - **Select by hook, never by label.** Scenarios click `data-act` values
   (`actSel(actEndTurn)`, `houseActID`, `optionActID`) and card element ids
   (`boardCardID`, `handCardID`). A control a scenario needs to reach gets a hook
-  in `view_card.go`'s `act*` block, beside its neighbours.
+  in `view_card.go`'s `act*` block, beside its neighbours. A card is reached by
+  the `data-card` name every face carries plus the id prefix that says which zone
+  drew it (`handCardSel`, `boardCardSel`) — the id alone is no use, because a card
+  a scenario staged is given the next free `LocalID`, which the scenario cannot
+  know.
+- **A scenario stages the board it needs; it does not read the deal.** A
+  `deckgen.Set` is built from the implemented card list, so the deal for a fixed
+  seed changes every time a card is implemented. A journey that needs a named card
+  turns manual mode on through the real menu and adds that card through the real
+  picker (`manualPreamble`), then acts on the card it chose. Only the journeys
+  whose subject *is* the deal — `opening`, `mulligan` — skip that and read the
+  board with predicates. And **no step names a physical side**: every step is
+  written against the active player, so which player goes first stays the engine's
+  to decide.
+- **Closing and reopening the page is the host's, not a click's.** A real browser
+  reload would restart the run rather than the match, so `uiPage.dropClient` takes
+  the client out of the tree and `mountClient` stands a fresh one up over the same
+  storage slot. What that drives is the client's own mount and `resume`, which is
+  the path a reload takes.
 - **Each pass resets.** The run clears the ui-test storage namespace and re-deals
   from the scenario's seed before step 1, because a scenario that plays a creature
   cannot run again on the board it left behind.
