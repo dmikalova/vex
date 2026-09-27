@@ -182,6 +182,9 @@ func portInterfaces() []CataloguedInterface {
 		{Name: "ActionChooser", Role: notAFamily(
 			"port: the optional Chooser capability choosing the next root action " +
 				"(ADR 0039), installed only by an interactive driver")},
+		{Name: "FirstPlayerChooser", Role: notAFamily(
+			"port: the optional Chooser capability naming which player goes first, " +
+				"so a Chooser that omits it defaults to player 0")},
 		{Name: "Namer", Role: notAFamily(
 			"port: how a log entry resolves the ids it holds to the names its reader " +
 				"sees; a client implements it")},
