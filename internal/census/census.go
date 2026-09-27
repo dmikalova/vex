@@ -8,6 +8,10 @@
 // go/ast to read. Two consumers share this scanner: the engine's catalog
 // totality tests, which fail the build when a node has no census row, and
 // `mage tool:census`, which reports the gaps while the census is half-filled.
+//
+// The scan reads the source at three heights, one per shape a catalogued thing
+// takes: Implementations and Builders find a family's members, Constants finds an
+// enum's, and Interfaces finds the families themselves.
 package census
 
 import (
@@ -79,6 +83,36 @@ func Builders(dir, recv, result string) (map[string]string, error) {
 func returnsOnly(results *ast.FieldList, typeName string) bool {
 	rendered := paramTypes(results)
 	return len(rendered) == 1 && rendered[0] == typeName
+}
+
+// Interfaces returns every interface type declared in dir's non-test Go source,
+// mapped to the file declaring it. Only a named declaration is reported: an
+// anonymous interface written inline in a signature declares nothing a catalog
+// could name.
+//
+// It closes the census one level above the families. A node family is an
+// interface, so enumerating the package's interfaces is what lets a
+// classification insist that each one is either a catalogued family or a
+// recorded non-family — otherwise a new strategy axis and its implementations
+// would sit outside every catalog with the build green.
+func Interfaces(dir string) (map[string]string, error) {
+	return scan(dir, func(file string, f *ast.File, found map[string]string) {
+		for _, decl := range f.Decls {
+			gen, ok := decl.(*ast.GenDecl)
+			if !ok || gen.Tok != token.TYPE {
+				continue
+			}
+			for _, spec := range gen.Specs {
+				ts, ok := spec.(*ast.TypeSpec)
+				if !ok {
+					continue
+				}
+				if _, ok := ts.Type.(*ast.InterfaceType); ok {
+					found[ts.Name.Name] = file
+				}
+			}
+		}
+	})
 }
 
 // Constants returns every constant declared with the named type in dir's

@@ -22,6 +22,7 @@ var censusSections = []engine.Section{engine.SectionEffect}
 // Census reports the node census's catalog and term gaps. Per family it prints
 // the node types the source scan finds that no census row covers, grouped by the
 // file that declares them, and the rows that match no type. It then prints the
+// interfaces the package declares that the classification does not place, the
 // rulebook terms the rows name that no term carries — the prose still to write —
 // and the terms in the census's own sections that no row claims. It only
 // reports: the census is meant to be read while it is half-filled, so a gap is
@@ -35,9 +36,47 @@ func (Tool) Census() error {
 			return err
 		}
 	}
+	if err := reportInterfaceGaps(); err != nil {
+		return err
+	}
 	fmt.Println()
 	fmt.Println("TERM GAPS")
 	reportTermGaps(families, engine.Enums())
+	return nil
+}
+
+// reportInterfaceGaps prints how the package's interfaces are classified — how
+// many are catalogued families and how many are recorded as something else — and
+// names any the classification does not place at all.
+func reportInterfaceGaps() error {
+	declared, err := engine.DeclaredInterfaces(engineDir)
+	if err != nil {
+		return err
+	}
+	classified, catalogued := map[string]bool{}, 0
+	for _, row := range engine.Interfaces() {
+		classified[row.Name] = true
+		if row.Role.Catalog != "" {
+			catalogued++
+		}
+	}
+	var unclassified []string
+	for name := range declared {
+		if !classified[name] {
+			unclassified = append(unclassified, name)
+		}
+	}
+	state := "— complete, gated"
+	if len(unclassified) > 0 {
+		state = fmt.Sprintf("— %d to classify", len(unclassified))
+	}
+	fmt.Printf("\n  %-31s %3d declared, %3d catalogued  %s\n",
+		"interfaces", len(declared), catalogued, state,
+	)
+	if len(unclassified) > 0 {
+		sort.Strings(unclassified)
+		fmt.Printf("    %-34s %s\n", "unclassified:", strings.Join(unclassified, ", "))
+	}
 	return nil
 }
 
