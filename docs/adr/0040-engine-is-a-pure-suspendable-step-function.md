@@ -1,10 +1,11 @@
 # 40. The engine is a pure suspendable step function
 
-This decision records the target shape of the engine's resolution loop. It guides
-a staged refactor. The engine seam that realizes it now exists — the suspendable
-`Stepper` and `Command`/`Request` step function (suspend.go), driven by
-`internal/session`; the web client's migration onto it is the remaining step. It
-is the counterpart to ADR 0039, which makes commands the source of truth.
+This decision records the shape of the engine's resolution loop, and the
+switchover is complete. The engine seam is the suspendable `Stepper` and
+`Command`/`Request` step function (suspend.go), driven by `internal/session`, and
+the web client drives that session: it holds no `Chooser` of its own, there is no
+second replay implementation, and a saved match is a `session.Record`. It is the
+counterpart to ADR 0039, which makes commands the source of truth.
 
 ## Context
 

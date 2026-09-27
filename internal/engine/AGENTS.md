@@ -119,6 +119,34 @@ Rule of thumb: when behavior varies along an axis, model the axis as a small
 strategy interface that also renders its own text — not a new `Effect`/`Target`
 field or a `bool`.
 
+## The `Stepper` suspends an action, and contains what it breaks on
+
+`Stepper` (`suspend.go`) is the interactive path of ADR 0040: it runs one action
+on a goroutine with `suspendChooser` installed for both players, `Start` yields
+the first `Request`, and `Advance(cmd)` answers the current one and yields the
+next. `internal/session` drives it; the web client drives the session and holds
+no `Chooser` of its own (ADR 0047).
+
+Two rules about how an action ends, and neither is optional:
+
+- **A panic inside the action does not escape.** The goroutine recovers **before**
+  closing `requests`, never after: a panic that unwound past the close would leave
+  every later `Start`/`Advance` blocked forever on a channel nobody will send to
+  or close, and under wasm it would take the whole program down
+  (`TestStepperContainsAPanickingAction`). The recovered value and the stack taken
+  **at recover time** become a `*PanicError` — the stack has to be captured inside
+  the deferred recover or the panicking frames are already gone.
+- **`Err()` says why the action stopped.** `Start` and `Advance` report only that
+  the action is **done**; the caller then asks `Err()` whether it finished or
+  broke. That is the iterator convention Go already uses for a loop that can fail
+  (`bufio.Scanner`'s `Scan`/`Err`, `sql.Rows`' `Next`/`Err`) — do not widen
+  `Start`/`Advance` to return an error instead.
+
+`Close()` releases an action still parked at a decision, so a `Stepper` abandoned
+mid-action — an undo or a replay that deals a fresh game — leaks neither the
+goroutine nor the `Game` it captured. It is idempotent
+(`TestStepperCloseReleasesGoroutine`).
+
 ## Reused effect shapes get one shared helper, not a copy per effect
 
 Effects recur in **shapes** — the same little field cluster and the same logic to
