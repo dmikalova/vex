@@ -40,9 +40,9 @@ the storage mechanism:
 - **`Resolver` exposes Under, unlike Upgrades.** No card ability ever reads or
   moves an attached Upgrade directly — only the internal play/attach path
   touches that chain. Under-cards, by contrast, are themselves the target of
-  later card text ("play the card under {self}"), so `ZoneReader`/
-  `ZoneResolver` (ADR 0008) gained `Under`, `PlayFromUnder`, and `PutCardUnder`
-  for effects to call through `EffectContext`.
+  later card text ("play the card under {self}"), so the roles of ADR 0008
+  gained `Under` (`ZoneReader`), `PutCardUnder` (`ZoneResolver`), and
+  `PlayFromUnder` (`PlayResolver`) for effects to call through `EffectContext`.
 
 Visibility is a single query, `Peekable(viewer, host) bool`, defined as "the
 viewer controls the host" — the master rulebook's FACEDOWN CARDS rule applied

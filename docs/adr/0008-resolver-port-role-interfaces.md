@@ -16,10 +16,10 @@ effect AST is the domain, `Resolver` is the port, `*Game` is the adapter. Every
 change a card can make is one `Resolver` method, so the interface is the complete,
 auditable catalogue of card-facing capability. `Resolver` is intentionally wide,
 so it is **composed from focused role interfaces** rather than being one flat list:
-`StateReader`, `EconomyResolver`, `CreatureResolver`, `CombatResolver`,
-`ZoneResolver`, `TurnResolver`, `ChoiceResolver`, `Logger`. A new capability is a
-method on the role it belongs to; a genuinely new cluster becomes a new role
-embedded in `Resolver`.
+`StateReader`, `EconomyResolver`, `CreatureResolver`, `BoardResolver`,
+`CombatResolver`, `PlayResolver`, `ZoneResolver`, `TurnResolver`,
+`ChoiceResolver`, `Logger`. A new capability is a method on the role it belongs
+to; a genuinely new cluster becomes a new role embedded in `Resolver`.
 
 ## Consequences
 
