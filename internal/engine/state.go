@@ -47,21 +47,21 @@ type CardCore struct {
 	// Enraged is whether the creature is enraged: while set, its controller must use
 	// it to fight on their turn if it is able to. Enrage is removed once the creature
 	// is used to fight (even against an Elusive defender — the fight still happened);
-	// otherwise it persists across turns until an effect removes it, so nothing in
-	// the ready phase clears it.
+	// otherwise it persists across turns until an effect removes it, so the end of
+	// the turn does not clear it.
 	Enraged bool
 	// Warded is whether the creature has a ward: a one-shot shield that absorbs the
 	// next instance of damage or the next time it would leave play, then is spent.
-	// Ward persists until it is spent or an effect removes it; the ready phase does
-	// not clear it.
+	// Ward persists until it is spent or an effect removes it; the end of the turn
+	// does not clear it.
 	Warded bool
 	// GrantedKeywords is the set of keywords this creature has gained for the
 	// remainder of the turn, as a bitmask of Keyword.bit() values (Scout grants
-	// Skirmish). The ready phase clears it for every creature.
+	// Skirmish). The end of the turn clears it for every creature.
 	GrantedKeywords uint16
 	// LostKeywords is the set of keywords this creature has lost for the remainder
 	// of the turn, as a bitmask of Keyword.bit() values (Niffle Grounds strips one
-	// creature of taunt and elusive). The ready phase clears it for every creature.
+	// creature of taunt and elusive). The end of the turn clears it for every creature.
 	LostKeywords uint16
 	// KeywordsUntilNextTurn is the set of keywords this creature has gained until
 	// the start of its controller's next turn, as a bitmask of Keyword.bit() values
@@ -85,7 +85,7 @@ type CardCore struct {
 	TraitUntilNextTurn Trait
 	// ConsideredFlank, while set, makes this creature count as a flank creature no
 	// matter where it sits in its battleline (Spectral Tunneler). It lasts until the
-	// remainder of the turn; the ready phase clears it for every creature.
+	// remainder of the turn; the end of the turn clears it for every creature.
 	ConsideredFlank bool
 	// ElusiveUsedThisTurn records that this creature has already been chosen to be
 	// fought this turn, so its Elusive keyword no longer stops pending fight damage.
@@ -98,13 +98,13 @@ type CardCore struct {
 	// Damage is the damage marked on the creature; it is destroyed once this reaches
 	// its power.
 	Damage int16
-	// ArmorRemaining is the armor left to absorb damage; it refreshes to full when
-	// the creature's controller readies.
+	// ArmorRemaining is the armor left to absorb damage; it refreshes to full in the
+	// cleanup at the end of its controller's turn.
 	ArmorRemaining int16
 	// ArmorStripped is how much armor an effect took off this creature, as opposed
 	// to how much it spent absorbing damage — the "for each point of armor it lost
-	// this way" tally (Red-Hot Armor). The controller's ready phase clears it along
-	// with refreshing ArmorRemaining.
+	// this way" tally (Red-Hot Armor). The end of the controller's turn clears it
+	// along with refreshing ArmorRemaining.
 	ArmorStripped int16
 	// Amber is Æmber sitting on the card (e.g. placed by exalt or capture). It
 	// belongs to no player's pool while it stays here.
@@ -113,17 +113,17 @@ type CardCore struct {
 	// it adds to the creature's power for as long as it stays in play.
 	PowerCounters int16
 	// TempPowerBonus is power a creature gained for the remainder of the turn
-	// (Abond the Armorsmith's Action grants armor the same way). The ready phase
+	// (Abond the Armorsmith's Action grants armor the same way). The end of the turn
 	// clears it for every creature.
 	TempPowerBonus int16
 	// TempArmorBonus is armor a creature gained for the remainder of the turn —
 	// Abond the Armorsmith gives other friendly creatures +1 armor until end of
 	// turn. Adding it also tops up ArmorRemaining so the extra armor can absorb
-	// damage this turn; the ready phase clears it for every creature.
+	// damage this turn; the end of the turn clears it for every creature.
 	TempArmorBonus int16
 	// TempAssaultBonus is Assault a creature gained for the remainder of the turn —
 	// Creed of Nature grants a chosen creature assault equal to its power. It adds to
-	// the creature's Assault value; the ready phase clears it for every creature.
+	// the creature's Assault value; the end of the turn clears it for every creature.
 	TempAssaultBonus int16
 	// AssaultUntilNextTurn is Assault a creature gained until the start of its
 	// controller's next turn — the Mutation cycle grants a chosen creature assault 3.
@@ -148,9 +148,10 @@ type CardCore struct {
 	LastingType CardType
 	// CreatureUntilTurnEnd marks a card whose LastingType conversion to a creature
 	// lasts only the current turn (Animator), as opposed to the permanent conversion
-	// Auto-Legionary makes. The ready phase reverts every card carrying it to an
-	// artifact in its controller's row, so a turn-scoped conversion lifts at end of
-	// turn like every other RemainderOfPlayerTurn effect. resetCore clears it when the
+	// Auto-Legionary makes. The end-of-turn phase's cleanup tail reverts every card
+	// carrying it to an artifact in its controller's row, so a turn-scoped conversion
+	// lifts at end of turn like every other RemainderOfPlayerTurn effect, after the
+	// end-of-turn abilities have resolved (ADR 0047). resetCore clears it when the
 	// card leaves play.
 	CreatureUntilTurnEnd bool
 	// TextBoxSourcePlus records that this creature has gained the printed text box
@@ -164,7 +165,7 @@ type CardCore struct {
 	// TextBoxTurnSourcePlus records that this creature has gained the printed text
 	// box of another card for the remainder of the turn — Creed of Nurture lends a
 	// hand creature's text box to a creature in play. It stores that source's
-	// LocalID+1 like TextBoxSourcePlus; the ready phase clears it for every creature.
+	// LocalID+1 like TextBoxSourcePlus; the end of the turn clears it for every creature.
 	TextBoxTurnSourcePlus uint8
 	// CopiedStatsSourcePlus records that this creature copies another card's printed
 	// stats until it leaves play: its power becomes that card's printed power, and it
@@ -415,7 +416,7 @@ type GameState struct {
 	// Fight bars. CannotFight[p] blocks player p from using creatures to fight on
 	// the current turn; CannotFightNext[p] arms that block for p's next turn. An
 	// effect (Fogbank) arms the bar, StartTurn promotes it to active for the
-	// affected player, and the ready phase lifts it — so it always lands on that
+	// affected player, and the end of the turn lifts it — so it always lands on that
 	// player's own next turn, whoever plays in between.
 	CannotFight     [2]Bar[bool]
 	CannotFightNext [2]Bar[bool]
@@ -431,13 +432,13 @@ type GameState struct {
 	// Use bars. CannotUse[p] blocks player p from using any card this turn — reaping,
 	// fighting, or an "Action:" ability (Skippy Timehog); playing and discarding are
 	// untouched. CannotUseNext[p] arms that block for p's next turn, and like the
-	// fight bar StartTurn promotes it and the ready phase lifts it.
+	// fight bar StartTurn promotes it and the end of the turn lifts it.
 	CannotUse     [2]Bar[bool]
 	CannotUseNext [2]Bar[bool]
 
 	// Reap bars. CannotReap[p] stops player p reaping with any creature this turn
 	// (Inky Gloom); CannotReapNext[p] arms that block for p's next turn. Like the
-	// use bar, StartTurn promotes it and the ready phase lifts it. This is narrower
+	// use bar, StartTurn promotes it and the end of the turn lifts it. This is narrower
 	// than CannotUse — fighting and "Action:" abilities stay open.
 	CannotReap     [2]Bar[bool]
 	CannotReapNext [2]Bar[bool]
@@ -468,9 +469,9 @@ type GameState struct {
 	// Scheduled holds the effects armed to resolve in the active player's end-of-turn
 	// window (Ragnarok's board wipe), fired alongside the in-play "at the end of your
 	// turn" abilities (ADR 0013); ScheduledCount is how many of the fixed array are in
-	// use. Each is a one-shot armed during the play phase; unlike the turn bars it must
-	// survive the ready phase (which runs before end of turn), so it is cleared only as
-	// the window fires.
+	// use. Each is a one-shot armed during the play phase and cleared as that window
+	// fires, rather than in the cleanup tail that lifts the turn's other
+	// expiries (ADR 0047).
 	Scheduled      [maxScheduled]ScheduledEffect
 	ScheduledCount uint8
 
@@ -478,7 +479,7 @@ type GameState struct {
 	// KeyCostBumpNext[p] arms that raise for p's next turn (Lash of Broken Dreams
 	// makes keys cost +3 during the opponent's next turn). Unlike a card's
 	// KeyCostChange, which lives as long as the card is in play, this is a one-turn
-	// surcharge, promoted by StartTurn and lifted by the ready phase like the other
+	// surcharge, promoted by StartTurn and lifted at the end of the turn like the other
 	// bars.
 	KeyCostBump     [2]Bar[int]
 	KeyCostBumpNext [2]Bar[int]
@@ -488,43 +489,43 @@ type GameState struct {
 	// arms it for p's next turn (Waking Nightmare taxes +1 per Dis creature during
 	// the opponent's next turn). Unlike KeyCostBump, the surcharge is not a frozen
 	// amount — a creature of that house entering or leaving during the taxed turn
-	// changes what a key costs. Promoted by StartTurn and lifted by the ready phase.
+	// changes what a key costs. Promoted by StartTurn and lifted at the end of the turn.
 	KeyCostPerHouse     [2]Bar[perHouseKeySurcharge]
 	KeyCostPerHouseNext [2]Bar[perHouseKeySurcharge]
 
 	// MayFightHouse[p] is a house whose creatures player p may use to fight this
 	// turn even when it is not the active house — Brothers in Battle's "each
 	// friendly creature of that house may fight." HouseNone (the zero value) grants
-	// nothing. The ready phase clears it, so the grant lasts only the turn it was
+	// nothing. The end of the turn clears it, so the grant lasts only the turn it was
 	// made.
 	MayFightHouse [2]House
 
 	// MayFightAny[p] lets every creature player p controls fight this turn whatever
 	// its house — Follow the Leader, Horseman of War, the unrestricted form of the
-	// MayFightHouse grant. The ready phase clears it.
+	// MayFightHouse grant. The end of the turn clears it.
 	MayFightAny [2]bool
 
 	// MayUseHouse[p] is a house whose creatures player p may fully use this turn
 	// (fight, reap, or Action:) even when it is not the active house — Sigil of
-	// Brotherhood, Ritual of the Hunt. HouseNone grants nothing; the ready phase
+	// Brotherhood, Ritual of the Hunt. HouseNone grants nothing; the end of the turn
 	// clears it.
 	MayUseHouse [2]House
 
 	// MayPlayHouse[p] is a house whose cards player p may play from hand this turn
 	// even when it is not the active house — the Ambassador cycle's "you may play
-	// or use a <House> card this turn". HouseNone grants nothing; the ready phase
+	// or use a <House> card this turn". HouseNone grants nothing; the end of the turn
 	// clears it.
 	MayPlayHouse [2]House
 
 	// MayUseArtifactsAnyHouse[p] lets player p use any friendly artifact as if it
 	// belonged to the active house for the remainder of the turn — Scientifical
-	// Hack. The ready phase clears it.
+	// Hack. The end of the turn clears it.
 	MayUseArtifactsAnyHouse [2]bool
 
 	// MayUseTrait[p] is a trait whose creatures player p may fully use this turn
 	// (fight, reap, or Action:) even when they are not in the active house —
 	// Mutagenic Serum's "you may use friendly Mutant creatures". traitUnset grants
-	// nothing; the ready phase clears it.
+	// nothing; the end of the turn clears it.
 	MayUseTrait [2]Trait
 
 	// TurnHistory holds the small tallies of what each player did during a turn —
@@ -532,7 +533,7 @@ type GameState struct {
 	// forged a key on their previous turn", "for each enemy creature destroyed in a
 	// fight this turn"). Keeping them as one array indexed by TurnStat leaves the
 	// state flat and comparable, and makes a new tally one more enum value rather
-	// than another pair of fields. The ready phase rolls each "this turn" tally
+	// than another pair of fields. The end of the turn rolls each "this turn" tally
 	// into its "last turn" twin, so "their previous turn" always means that
 	// player's own last completed turn.
 	TurnHistory [2][turnStatCount]int8
@@ -540,7 +541,7 @@ type GameState struct {
 	// Lasting holds the "for the remainder of the turn" effects active now (Full
 	// Moon, Charge!, Crystal Hive reactions; Dimension Door's replacement), fired or
 	// queried by game_lasting.go when their event occurs; LastingCount is how many of
-	// the fixed array are in use. The ready phase drops a player's entries.
+	// the fixed array are in use. The end of the turn drops a player's entries.
 	Lasting      [maxLasting]LastingEffect
 	LastingCount uint8
 
@@ -557,7 +558,7 @@ type GameState struct {
 	// AlsoTriggers holds the "for the remainder of the turn" also-triggers-on rules
 	// active now (Livia the Elder's fight/reap fuse), queried by game_abilities.go
 	// when a creature's abilities are gathered; AlsoTriggersCount is how many of the
-	// fixed array are in use. The ready phase drops a player's entries.
+	// fixed array are in use. The end of the turn drops a player's entries.
 	AlsoTriggers      [maxAlsoTriggers]LastingAlsoTriggersOn
 	AlsoTriggersCount uint8
 
@@ -576,7 +577,7 @@ type GameState struct {
 	// OffHousePermits[p] are the this-turn grants letting player p play or use a
 	// bounded number of cards outside their active house (Com. Officer Kirby, CXO
 	// Taber, United Action); OffHousePermitCount is how many of the fixed array are
-	// in use. The ready phase clears them.
+	// in use. The end of the turn clears them.
 	OffHousePermits     [2][maxOffHousePermits]OffHousePermit
 	OffHousePermitCount [2]uint8
 

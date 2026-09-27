@@ -98,8 +98,8 @@ func TestGainKeywordsResolveNextTurn(t *testing.T) {
 		t.Error("re-granting a held keyword should log nothing new")
 	}
 
-	// Neither ready phase lifts it, nor the opponent's start-of-turn.
-	g.readyPhase(0)
+	// Neither the end of the turn lifts it, nor the opponent's start-of-turn.
+	g.expireTurnScoped(0)
 	g.startOfTurnPhase(1)
 	if !g.hasKeyword(one, Elusive) {
 		t.Error("the grant should survive the opponent's turn")
@@ -113,7 +113,7 @@ func TestGainKeywordsResolveNextTurn(t *testing.T) {
 }
 
 // TestGainKeywordsResolveForTurn grants the keyword for the remainder of the turn;
-// the ready phase clears it (unlike the next-turn duration, which survives the
+// the end of the turn clears it (unlike the next-turn duration, which survives the
 // opponent's turn).
 func TestGainKeywordsResolveForTurn(t *testing.T) {
 	g := started(t)
@@ -141,6 +141,6 @@ func TestGainKeywordsResolveForTurn(t *testing.T) {
 	g.StartTurn(0)
 	g.EndPlayPhase(0)
 	if g.hasKeyword(one, Skirmish) {
-		t.Error("the ready phase should clear the keyword gained for the turn")
+		t.Error("the end of the turn should clear the keyword gained for the turn")
 	}
 }

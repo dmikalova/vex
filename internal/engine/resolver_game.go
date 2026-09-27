@@ -457,8 +457,8 @@ func (g *Game) SetLastingHouse(id LocalID, house House) {
 // and its LastingType makes it read as a creature. Its ArmorRemaining is topped up
 // to its full armor so it can absorb hits as a creature this turn. With d set to
 // RemainderOfPlayerTurn the conversion lasts only the current turn (Animator):
-// CreatureUntilTurnEnd marks it so the ready phase reverts it to an artifact at end
-// of turn; otherwise it stays a creature until it leaves play (Auto-Legionary).
+// CreatureUntilTurnEnd marks it so the end-of-turn cleanup reverts it to an
+// artifact; otherwise it stays a creature until it leaves play (Auto-Legionary).
 // A repeated use finds the card already a creature in the battleline; removing it
 // from there first makes the second use reposition it to the chosen flank rather
 // than insert a duplicate.
@@ -484,11 +484,13 @@ func (g *Game) PutIntoBattlelineAsCreature(id LocalID, right bool, d Duration) {
 
 // revertTemporaryCreatures returns every card that turned into a creature only for
 // the current turn (Animator) back to an artifact in its controller's row. It runs
-// in the ready phase over both players' cards, since a card can be animated on the
-// opponent's turn, so a turn-scoped conversion lifts at end of turn like every other
-// RemainderOfPlayerTurn effect. The scan is row-only: CreatureUntilTurnEnd is
-// per-card row state, and only a card sitting in a row can have been animated
-// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
+// in the end-of-turn phase's cleanup tail over both players' cards, since a card can
+// be animated on the opponent's turn, so a turn-scoped conversion lifts at end of
+// turn like every other RemainderOfPlayerTurn effect — after the end-of-turn
+// abilities have resolved, so they still see a creature
+// (TestAnimatorRevertsAfterEndOfTurnAbilities, ADR 0047). The scan is row-only:
+// CreatureUntilTurnEnd is per-card row state, and only a card sitting in a row can
+// have been animated (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) revertTemporaryCreatures() {
 	var revert []LocalID
 	for owner := range 2 {

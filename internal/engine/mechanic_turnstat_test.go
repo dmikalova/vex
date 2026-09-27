@@ -12,7 +12,7 @@ func TestTurnHistoryRollover(t *testing.T) {
 	}
 
 	g.SetAember(0, 6)
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if got := g.TurnHistory(0, KeysForgedThisTurn); got != 1 {
 		t.Errorf("keys forged this turn = %d, want 1", got)
 	}
@@ -65,7 +65,7 @@ func TestForgedKeyCondition(t *testing.T) {
 	}
 
 	g.SetAember(0, 6)
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if !mine.Met(ctx) {
 		t.Error("a key forged this turn should meet the condition")
 	}
@@ -74,7 +74,7 @@ func TestForgedKeyCondition(t *testing.T) {
 	}
 
 	g.SetAember(1, 6)
-	g.forgeKey(1)
+	g.ForgeKeyAtExtraCost(1, 0)
 	g.EndPlayPhase(1)
 	if !theirs.Met(ctx) {
 		t.Error("the opponent's key from their last turn should meet the condition")
@@ -248,7 +248,7 @@ func TestUnforgeKey(t *testing.T) {
 	}
 
 	g.SetAember(1, 6)
-	g.forgeKey(1)
+	g.ForgeKeyAtExtraCost(1, 0)
 	if !(UnforgeKey{Player: Opponent}).resolveGate(ctx) {
 		t.Error("unforging a forged key should report true")
 	}
@@ -257,7 +257,7 @@ func TestUnforgeKey(t *testing.T) {
 	}
 
 	g.SetAember(1, 6)
-	g.forgeKey(1)
+	g.ForgeKeyAtExtraCost(1, 0)
 	UnforgeKey{Player: Opponent}.Resolve(ctx)
 	if g.Keys(1) != 0 {
 		t.Errorf("keys after Resolve = %d, want 0", g.Keys(1))

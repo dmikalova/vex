@@ -514,7 +514,7 @@ func TestMoveAemberFromPoolAndVault(t *testing.T) {
 	}
 
 	// 5 in the pool plus the 1 banked covers the key; the pool empties first.
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if g.Keys(0) != 1 {
 		t.Errorf("keys = %d, want 1", g.Keys(0))
 	}
@@ -524,14 +524,14 @@ func TestMoveAemberFromPoolAndVault(t *testing.T) {
 
 	// Banked Æmber alone is still short of a key, so nothing is spent.
 	g.AddAmberOn(id, 3)
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if g.Keys(0) != 1 || g.AmberOn(id) != 3 {
 		t.Errorf("keys = %d, banked = %d; want 1 and 3", g.Keys(0), g.AmberOn(id))
 	}
 
 	// A pool that covers the cost on its own leaves the bank alone.
 	g.SetAember(0, KeyCost)
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if g.Keys(0) != 2 || g.AmberOn(id) != 3 {
 		t.Errorf("keys = %d, banked = %d; want 2 and 3", g.Keys(0), g.AmberOn(id))
 	}

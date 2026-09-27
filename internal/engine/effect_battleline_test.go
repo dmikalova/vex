@@ -510,8 +510,8 @@ func TestTurnIntoCreature(t *testing.T) {
 
 // TestTurnIntoCreatureForRemainderOfTurn covers the turn-scoped conversion
 // (Animator): a chosen card becomes a creature only until end of turn, then the
-// ready phase reverts it to an artifact in its controller's row while its power
-// counters persist and its creature-only combat state is dropped.
+// end-of-turn cleanup reverts it to an artifact in its controller's row while
+// its power counters persist and its creature-only combat state is dropped.
 func TestTurnIntoCreatureForRemainderOfTurn(t *testing.T) {
 	// A duration other than RemainderOfPlayerTurn is rejected.
 	if err := (TurnIntoCreature{
@@ -577,7 +577,7 @@ func TestTurnIntoCreatureForRemainderOfTurn(t *testing.T) {
 	g.State.Cards[art].Enraged = true
 	g.State.Cards[art].Warded = true
 
-	g.readyPhase(0)
+	g.expireTurnScoped(0)
 
 	if g.TypeOf(art) != Artifact {
 		t.Fatalf("card should revert to an artifact at end of turn, got %v", g.TypeOf(art))
@@ -615,7 +615,7 @@ func TestTurnIntoCreatureGrantsVersatile(t *testing.T) {
 	if !g.HasKeyword(art, Versatile) {
 		t.Fatal("an animated creature with versatile should have the keyword")
 	}
-	g.readyPhase(0)
+	g.expireTurnScoped(0)
 	if g.HasKeyword(art, Versatile) {
 		t.Fatal("versatile should lift when the turn-scoped conversion reverts")
 	}

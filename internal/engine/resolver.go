@@ -327,8 +327,8 @@ type CreatureResolver interface {
 	// counters, and reads as a creature for the window d names: UntilCardLeavesPlay
 	// keeps it a creature until it leaves play (Auto-Legionary), while
 	// RemainderOfPlayerTurn lasts only the current turn (Animator), after which the
-	// ready phase reverts it to an artifact. Any other duration is treated as the
-	// former, since a type change has no other boundary to expire on.
+	// end-of-turn cleanup reverts it to an artifact. Any other duration is treated
+	// as the former, since a type change has no other boundary to expire on.
 	PutIntoBattlelineAsCreature(id LocalID, right bool, d Duration)
 	// SetNamedHouse records the house a card named as it entered play, which its
 	// HouseLock then constrains for as long as the card stays in play.

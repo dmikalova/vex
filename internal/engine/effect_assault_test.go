@@ -58,7 +58,7 @@ func TestGainAssaultValidate(t *testing.T) {
 }
 
 // TestGainAssaultResolve grants Assault equal to the chosen creature's power for
-// the turn, folds into the creature's Assault value, and lifts at the ready phase.
+// the turn, folds into the creature's Assault value, and lifts at the end of the turn.
 func TestGainAssaultResolve(t *testing.T) {
 	g := started(t)
 	g.SetRecording(true)
@@ -83,7 +83,7 @@ func TestGainAssaultResolve(t *testing.T) {
 		t.Error("the grant should be logged")
 	}
 
-	// The ready phase clears the bonus for every creature.
+	// The end of the turn clears the bonus for every creature.
 	g.StartTurn(0)
 	g.EndPlayPhase(0)
 	if g.State.Cards[beast].TempAssaultBonus != 0 {
@@ -248,9 +248,9 @@ func TestGainAssaultUntilNextTurnResolve(t *testing.T) {
 		t.Error("the grant should be logged")
 	}
 
-	// It survives both ready phases and the opponent's start-of-turn, and lifts at
-	// the start of the controller's own next turn.
-	g.readyPhase(0)
+	// It survives the end of the granting turn and the opponent's start-of-turn, and
+	// lifts at the start of the controller's own next turn.
+	g.expireTurnScoped(0)
 	g.startOfTurnPhase(1)
 	if g.assault(beast) != 3 {
 		t.Error("the grant should survive the opponent's turn")

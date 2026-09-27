@@ -36,7 +36,7 @@ func TestSpendAsPoolForgesFromCreatureConstant(t *testing.T) {
 	if got := g.spendableAember(0); got != KeyCost {
 		t.Fatalf("spendableAember = %d, want %d", got, KeyCost)
 	}
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if g.Keys(0) != 1 {
 		t.Errorf("keys = %d, want 1", g.Keys(0))
 	}
@@ -59,7 +59,7 @@ func TestSpendAsPoolForgesFromHostUpgrade(t *testing.T) {
 	g.AddAmberOn(host, 3)
 
 	g.State.Aember[0] = KeyCost - 3
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if g.Keys(0) != 1 {
 		t.Errorf("keys = %d, want 1", g.Keys(0))
 	}
@@ -79,7 +79,7 @@ func TestSpendAsPoolNeededToForge(t *testing.T) {
 	if got := g.spendableAember(0); got != KeyCost-2 {
 		t.Fatalf("spendableAember = %d, want %d", got, KeyCost-2)
 	}
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if g.Keys(0) != 0 {
 		t.Errorf("keys = %d, want 0 (no enabler, creature Æmber is not pool)", g.Keys(0))
 	}
@@ -256,7 +256,7 @@ func TestSpendAsPoolOpponentScope(t *testing.T) {
 
 	// The opponent forges using the enemy creature's Æmber.
 	g.State.Aember[1] = KeyCost - 3
-	g.forgeKey(1)
+	g.ForgeKeyAtExtraCost(1, 0)
 	if g.Keys(1) != 1 {
 		t.Errorf("keys = %d, want 1", g.Keys(1))
 	}

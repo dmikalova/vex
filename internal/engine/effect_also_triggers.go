@@ -111,7 +111,7 @@ func (g *Game) additionalTriggers(src LocalID, firing Trigger) []Trigger {
 // FuseTriggersForTurn makes each friendly creature's A abilities also fire on B and
 // its B abilities also fire on A, for the remainder of the controller's turn — the
 // rule Livia the Elder installs to fuse fight and reap effects. It records the two
-// directions as lasting rules; the ready phase drops them.
+// directions as lasting rules; the end of the turn drops them.
 type FuseTriggersForTurn struct {
 	A Trigger
 	B Trigger

@@ -223,7 +223,7 @@ remainder of the turn.`KeyForge's`it belongs to the active house` clause is
   of turn), so re-animating the same artifact on a later turn stacks another three
   and it enters larger each time. Built on `AddPowerCounter` (which leaves the
   chosen artifact in context) + a `RemainderOfPlayerTurn` `TurnIntoCreature` with
-  `Versatile`, whose end-of-turn revert the ready phase performs.
+  `Versatile`, whose revert the end-of-turn cleanup performs.
 - **Cyber-Clone** copies the purged creature's **printed** power, armor, keywords,
   and traits, not its live stats at the moment of purge. KeyForge reads `it has
 power equal to the purged creature's power, and gains that creature's armor,

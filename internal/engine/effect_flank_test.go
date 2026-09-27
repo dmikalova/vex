@@ -67,8 +67,8 @@ func TestConsiderFlankDedup(t *testing.T) {
 	}
 }
 
-// The ready phase lifts the flank override so it lasts only the turn.
-func TestConsiderFlankClearedInReadyPhase(t *testing.T) {
+// The end-of-turn cleanup lifts the flank override so it lasts only the turn.
+func TestConsiderFlankClearedAtEndOfTurn(t *testing.T) {
 	g := started(t)
 	id := g.AddToBattleline(testCreature("c", 3), 0)
 	g.ConsiderFlank(id)
@@ -76,9 +76,9 @@ func TestConsiderFlankClearedInReadyPhase(t *testing.T) {
 		t.Fatal("setup: creature should be considered a flank")
 	}
 
-	g.readyPhase(0)
+	g.expireTurnScoped(0)
 
 	if g.ConsideredFlank(id) {
-		t.Error("ready phase should clear the flank override")
+		t.Error("the end of the turn should clear the flank override")
 	}
 }

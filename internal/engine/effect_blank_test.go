@@ -117,7 +117,8 @@ func TestBlankEnemyTextLiftsAfterOpponentTurn(t *testing.T) {
 	if !g.textBlanked(foe) {
 		t.Error("blank should persist into the opponent's turn")
 	}
-	// Blank lifts once the opponent's own turn ends (their ready phase clears it).
+	// Blank lifts once the opponent's own turn ends (their end-of-turn cleanup
+	// clears it).
 	g.StartTurn(1)
 	if err := g.ChooseHouse(1, Brobnar); err != nil {
 		t.Fatalf("ChooseHouse: %v", err)

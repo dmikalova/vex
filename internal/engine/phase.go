@@ -26,13 +26,15 @@ const (
 	// PhasePlay is the open phase, shown to players as the "main" phase: the
 	// active player plays, discards, and uses cards until they end their turn.
 	PhasePlay
-	// PhaseReady readies the active player's cards and refreshes creature armor.
+	// PhaseReady readies the active player's cards, and does nothing else: what
+	// expires with the turn expires in the end-of-turn phase (ADR 0047).
 	PhaseReady
 	// PhaseDraw refills the active player's hand and sheds a chain if one blocked a
 	// draw.
 	PhaseDraw
 	// PhaseEndOfTurn resolves "at the end of your turn" abilities, last of all, so
-	// they see the board and hand the turn actually ends with (ADR 0013).
+	// they see the board and hand the turn actually ends with (ADR 0013), then
+	// expires everything that lasted for the turn (ADR 0047).
 	PhaseEndOfTurn
 )
 
@@ -97,7 +99,7 @@ var phases = map[Phase]phaseInfo{
 	PhaseDraw: {
 		name:         "draw",
 		rulebookStep: "7. Draw",
-		run:          (*Game).drawStep,
+		run:          (*Game).drawPhase,
 	},
 	PhaseEndOfTurn: {
 		name:         "end of turn",

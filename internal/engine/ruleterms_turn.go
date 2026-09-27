@@ -107,9 +107,9 @@ using a creature. You stay in the main phase until you end your turn.`,
 			Title:    "Turn structure",
 			Subtitle: PhaseReady.rulebookStep(),
 			Body: `Ending your turn readies every card you control — turning your exhausted cards
-upright — and refreshes each creature's armor to full for the turns to come. Cards
-that entered play exhausted this turn ready here too, and the turn's own temporary
-effects expire as it ends.`,
+upright. Cards that entered play exhausted this turn ready here too. Readying is
+all this phase does: the turn's own temporary effects are still in force, and
+expire at the end of turn.`,
 		},
 		{
 			Section:  SectionTurn,
@@ -125,8 +125,11 @@ shed a single chain only on a turn the reduction actually kept you from a card.`
 			Subtitle: PhaseEndOfTurn.rulebookStep(),
 			Body: `The turn closes here. Abilities that trigger "at the end of your turn" resolve
 now, last of all, so they see the board and hand the turn actually ends with. You
-order your own end-of-turn abilities when more than one triggers. Play then passes
-to your opponent.`,
+order your own end-of-turn abilities when more than one triggers.
+
+An effect that lasts "for the remainder of the turn" expires after those abilities
+have resolved, so an end-of-turn ability still sees it in force. Each creature's
+armor refreshes to full at the same point. Play then passes to your opponent.`,
 		},
 	})
 }

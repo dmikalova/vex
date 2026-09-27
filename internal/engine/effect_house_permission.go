@@ -38,7 +38,7 @@ type HouseSelector struct {
 // (Mutagenic Serum's "use friendly Mutant creatures"), Grant selects the verbs it
 // frees (play, use, or fight), Types narrows the card types (the zero value frees
 // all), and Cards bounds how many cards the grant frees (zero is unlimited). The
-// grant lasts only the current turn (the ready phase clears it).
+// grant lasts only the current turn (the end of the turn clears it).
 type MayPlayOrUse struct {
 	Houses HouseSelector
 	Trait  Trait

@@ -54,13 +54,14 @@ func TestLoseArmorStripsAndTallies(t *testing.T) {
 		t.Errorf("armor stripped = %d, want 3 after a second strip", got)
 	}
 
-	// The strip is turn-scoped: readying refreshes the armor and clears the tally.
-	g.readyPhase(1)
+	// The strip is turn-scoped: the end-of-turn cleanup refreshes the armor and
+	// clears the tally (ADR 0047).
+	g.expireTurnScoped(1)
 	if got := g.State.Cards[plated].ArmorRemaining; got != 2 {
-		t.Errorf("armor remaining = %d, want the full 2 back after readying", got)
+		t.Errorf("armor remaining = %d, want the full 2 back after the turn ends", got)
 	}
 	if got := g.ArmorStripped(plated); got != 0 {
-		t.Errorf("armor stripped = %d, want 0 after readying", got)
+		t.Errorf("armor stripped = %d, want 0 after the turn ends", got)
 	}
 }
 

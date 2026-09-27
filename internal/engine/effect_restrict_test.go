@@ -187,7 +187,7 @@ func TestRestrictFighting(t *testing.T) {
 	// It lifts when player 1 ends the turn.
 	g.EndPlayPhase(1)
 	if g.State.CannotFight[1].Value {
-		t.Error("the ready phase should lift the active bar")
+		t.Error("the end of the turn should lift the active bar")
 	}
 }
 
@@ -293,10 +293,10 @@ func TestForOpponentNextTurnStunsFighters(t *testing.T) {
 		t.Error("each fighting creature should be stunned")
 	}
 
-	// The reaction clears at the opponent's ready phase.
+	// The reaction clears at the end of the opponent's turn.
 	g.EndPlayPhase(1)
 	if g.State.LastingCount != 0 {
-		t.Error("the reaction should clear at the opponent's ready phase")
+		t.Error("the reaction should clear at the end of the opponent's turn")
 	}
 }
 

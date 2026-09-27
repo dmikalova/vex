@@ -79,7 +79,7 @@ const (
 	EventAemberStolen
 	// EventForgeKey fires after a player forges a key (a reaction point). A reaction
 	// owned by that player fires during their turn; because the registry clears a
-	// player's own entries at their ready phase, a reaction armed on an opponent
+	// player's own entries at the end of their turn, a reaction armed on an opponent
 	// (owned by the forger) survives the arming turn and fires during the forger's
 	// next turn — the "during your opponent's next turn" window (Interdimensional
 	// Graft).
