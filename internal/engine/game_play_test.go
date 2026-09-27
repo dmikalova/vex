@@ -672,7 +672,7 @@ func TestPutIntoPlayRefusesTypesWithNoPlace(t *testing.T) {
 // same as one an artifact imposes. A toll is a standing rule a card in play lays
 // on what the opponent may do, so it applies from where the upgrade sits and
 // needs no host to speak for it
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). No implemented
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md). No implemented
 // upgrade carries a toll today, so the rule is pinned with a blueprint.
 func TestTollOwedCountsUpgrades(t *testing.T) {
 	g := started(t)

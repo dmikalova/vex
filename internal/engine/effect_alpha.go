@@ -14,7 +14,7 @@ var ErrAlphaNotFirst = errors.New("an Alpha card must be the first card played t
 // card this turn — the "anything else this step" an Alpha card must come before.
 // The scan is row-only: TimesUsedThisTurn is per-card row state, and an upgrade
 // is never used, so a widened scan would have nothing to ask it
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) actedThisTurn(player int) bool {
 	if g.State.PlayedThisTurn[player].Count > 0 ||
 		g.State.DiscardedThisTurn[player].Count > 0 {

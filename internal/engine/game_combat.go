@@ -269,7 +269,7 @@ func (g *Game) resolvePostFight(
 // reaches a fight through its host: abilityWindow.add folds in
 // upgradeGrantedTriggers, so walking upgrades as well would gather the same
 // printed text twice by two routes
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) fightReactions(
 	attacker, defender LocalID,
 	attackerSide, defenderSide int,
@@ -656,7 +656,7 @@ func (g *Game) dealDamage(controller int, targets ...DamageTarget) {
 // Prevents Damage With Its Armor ability, so dealDamage can skip its bookkeeping
 // entirely when none are present. It scans every card in play, upgrades included,
 // because an armor watcher is a standing rule a card in play imposes on how damage
-// lands (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). The text an
+// lands (docs/adr/0048-upgrade-in-play-not-an-ability-source.md). The text an
 // upgrade grants its host still reaches the window through the host, since
 // triggeredBy folds in upgradeGrantedTriggers; the direct walk adds only an
 // upgrade printing the ability in its own right, and such a card spends no armor
@@ -715,7 +715,7 @@ func (g *Game) emitArmorPrevented(watchers []LocalID, armorBefore map[LocalID]in
 //
 // It scans every card in play, upgrades included: a redirect is a standing rule a
 // card in play imposes on how damage lands, so it applies from where the upgrade
-// sits (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). Being a
+// sits (docs/adr/0048-upgrade-in-play-not-an-ability-source.md). Being a
 // first-match scan, widening only inserts upgrades and leaves the relative order
 // of row cards alone, so today's answer is unchanged unless an upgrade genuinely
 // carries a TakesDamageFor (TestDamageRedirectCountsUpgradesWithoutReordering).
@@ -746,7 +746,7 @@ func (g *Game) damageRedirect(id LocalID) LocalID {
 // the creatures the splash lands on, not scanning for a card that imposes the
 // splash, so it names its type: only a creature has battleline neighbors and takes
 // damage. Widening it could only add cards this scan must then drop
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) neighborFightSplash(targets []DamageTarget) []DamageTarget {
 	if g.State.FightersPlus == ([2]LocalID{}) {
 		return targets

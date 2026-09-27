@@ -833,7 +833,7 @@ func (g *Game) finishForgeKey(player int, color KeyColor) {
 // All three scans are row-only: this is a reaction gather, and abilityWindow.add
 // already reaches an upgrade's text through its host, so walking upgrades as well
 // would gather the same printed text twice
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) forgeKeyReactions(forger int) []triggeredAbility {
 	w := g.window()
 	for _, id := range g.creaturesAndArtifacts(forger) {

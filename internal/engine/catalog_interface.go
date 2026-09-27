@@ -144,9 +144,15 @@ func portInterfaces() []CataloguedInterface {
 			"port: the Resolver role changing Æmber, keys and chains")},
 		{Name: "CreatureResolver", Role: notAFamily(
 			"port: the Resolver role changing the state carried on one card in play")},
+		{Name: "BoardResolver", Role: notAFamily(
+			"port: the Resolver role installing duration-scoped rules that apply to " +
+				"creatures collectively rather than to one card")},
 		{Name: "CombatResolver", Role: notAFamily(
 			"port: the Resolver role resolving damage, destruction, and the uses an " +
 				"ability makes")},
+		{Name: "PlayResolver", Role: notAFamily(
+			"port: the Resolver role putting a card into play or running the play " +
+				"sequence for it")},
 		{Name: "ZoneResolver", Role: notAFamily(
 			"port: the Resolver role moving cards between zones")},
 		{Name: "TurnResolver", Role: notAFamily(

@@ -91,7 +91,7 @@ together and **CONTEXT** for what the words mean.
   - [0035](adr/0035-house-choice-is-a-delayed-constraint-table.md) — house choice
     is a delayed constraint table; must and cannot stack, cannot overrides must,
     and wagers are reactions to the choice
-  - [0047](adr/0047-upgrade-in-play-not-an-ability-source.md) — an upgrade is a
+  - [0048](adr/0048-upgrade-in-play-not-an-ability-source.md) — an upgrade is a
     card in play, but not a source of triggered abilities
 
 ## Rules

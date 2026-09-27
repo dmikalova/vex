@@ -488,7 +488,7 @@ func (g *Game) PutIntoBattlelineAsCreature(id LocalID, right bool, d Duration) {
 // opponent's turn, so a turn-scoped conversion lifts at end of turn like every other
 // RemainderOfPlayerTurn effect. The scan is row-only: CreatureUntilTurnEnd is
 // per-card row state, and only a card sitting in a row can have been animated
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) revertTemporaryCreatures() {
 	var revert []LocalID
 	for owner := range 2 {
