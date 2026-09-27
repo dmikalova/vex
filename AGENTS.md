@@ -33,28 +33,13 @@ Where the mechanic contradicts what the code does, the human's explanation is th
 authority — but say so plainly, and fix the code rather than quietly reshaping
 the explanation to match what is already there.
 
-## Agent todos go in `docs/todo-agent.md`, not `docs/todo.md`
+## Don't write into `docs/todo.md`
 
-`docs/todo.md` is the **human's** personal list — do not write into it. When a
-request implies work you want to queue, plan, or show progress on, write it in
-[docs/todo-agent.md](docs/todo-agent.md): a scratchpad where you translate a
-request into concrete, grouped work items. When an item is **done, delete it**
-(do not mark it done) — the file only ever shows what is still outstanding, so it
-reads as a live surface for coordinating with the human on what you mean to do
-next. Group items by area or mechanic so related work is built together.
-
-A `todo-agent.md` item is a **handoff to a future agent who was not in the
-conversation that wrote it**, so it must carry the decision, not just the task.
-When you record an item, write down _what was decided and why_ — the chosen
-behavior, the cards affected, the expected text — so the next agent does not have
-to reconstruct it from code that may already be stale. When you pick an item up,
-the recorded decision **wins over a contradicting code comment**: a comment that
-disagrees with the item is out of date (it describes the behavior the item exists
-to change), so fix the comment to match the decision — do not treat the comment as
-evidence the item is wrong and re-litigate it.
+`docs/todo.md` is the **human's** personal list — do not write into it, and don't
+keep a todo file of your own: outstanding work is tracked outside the repo.
 
 Work that is decided but has **no consuming card in an implemented set yet** goes
-in [docs/todo-future-set.md](docs/todo-future-set.md) instead, keyed to the set
+in [docs/todo-future-set.md](docs/todo-future-set.md), keyed to the set
 that first needs it. When you implement or stub a set, scan that file for items
 naming it and build the primitive alongside its first real consumer (the
 `implement-cards` and `stub-cards` skills both point there).

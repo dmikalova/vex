@@ -8,11 +8,9 @@ Ask the tool for the next unimplemented card, build it, drop its build tag, and
 ask again. Each card leaves the engine slightly richer and the set measurably
 more covered. The loop repeats until the stop condition is met.
 
-When several stubbed cards share a mechanic, you may jot them grouped in
-[docs/todo-agent.md](../../../docs/todo-agent.md) and build the shared primitive
-once, then knock out the group — a planning overlay on the collector-number
-`nextCard` order, not a replacement for it. Delete each entry as its card lands (a
-done item is removed, never marked done).
+When several stubbed cards share a mechanic, you may group them and build the
+shared primitive once, then knock out the group — a planning overlay on the
+collector-number `nextCard` order, not a replacement for it.
 
 The goal is **cards implemented**. Keep moving through the backlog: prefer
 implementing the next card to polishing the last one. This is **one continuous
@@ -137,9 +135,9 @@ behaviour composes from a small vocabulary of self-rendering nodes (ADR 0006); a
 new node widens that vocabulary permanently, so it must be argued for, not slipped
 in. Reaching a genuine new-node need is one of the **authorized reasons to pause
 the run** — unlike a status check-in, which is never allowed — so present the
-grill and stop. Put the questions in the reply as end-of-turn plain text (the
-`❓`/`➡️` convention in [docs/todo-agent.md](../../../docs/todo-agent.md)), not
-through an interactive tool. The grill must put on the table:
+grill and stop. Put the questions in the reply as end-of-turn plain text (a
+numbered list of `❓ **Q1** - **title**: <question>`, each with a `➡️`
+recommended answer), not through an interactive tool. The grill must put on the table:
 
 - **Why it is necessary** — the mechanic the existing nodes genuinely cannot
   express, not merely a shape that would be more convenient as its own node.

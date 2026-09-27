@@ -2,8 +2,7 @@
 
 Work that is real and decided, but that has **no consuming card in an implemented
 set yet** — so it waits for the set that first introduces a card that needs it.
-This is the sibling of [todo-agent.md](todo-agent.md): that file is work to do
-now; this file is work parked against a set that has not been stood up.
+It is work parked against a set that has not been stood up.
 
 Rules:
 
@@ -15,8 +14,8 @@ Rules:
 - Each item carries the **decision, not just the task** — the chosen behavior, the
   cards affected, and the design already settled — so a future agent who was not in
   the conversation can build it without re-deriving it.
-- **When the work lands, delete the item** (do not mark it done), same as
-  [todo-agent.md](todo-agent.md). This file only ever shows parked work.
+- **When the work lands, delete the item** (do not mark it done). This file only
+  ever shows parked work.
 
 ## Result-set reference — "choose one of the cards this effect just moved"
 
