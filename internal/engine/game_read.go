@@ -126,7 +126,7 @@ func (g *Game) Power(id LocalID) int {
 	// of the card's text, so it contributes only while the text is not blanked.
 	if px := g.cat.def(id).PowerX; px != nil && !g.textBlanked(id) {
 		p += px.Value(&EffectContext{
-			Resolver:   g,
+			Resolver:   g.resolver,
 			Source:     id,
 			Controller: g.controller(id),
 		})
@@ -256,7 +256,7 @@ func (g *Game) constantBonus(id LocalID, pick func(ConstantAbility) int) int {
 // own source card, seen by that card's controller.
 func (g *Game) constantContext(src LocalID) *EffectContext {
 	return &EffectContext{
-		Resolver:   g,
+		Resolver:   g.resolver,
 		Source:     src,
 		Controller: g.controller(src),
 	}
@@ -454,7 +454,7 @@ func (g *Game) keywordFromUpgrades(id LocalID, k Keyword) bool {
 // keyword to this creature — Cloaking Dongle gives Elusive to its host and both of
 // the host's neighbors.
 func (g *Game) keywordFromNeighborUpgrades(id LocalID, k Keyword) bool {
-	for _, nb := range neighbors(&EffectContext{Resolver: g}, id) {
+	for _, nb := range neighbors(&EffectContext{Resolver: g.resolver}, id) {
 		for up, ok := g.firstUpgrade(nb); ok; up, ok = g.nextUpgrade(up) {
 			for _, grant := range g.staticOn(nb, up).KeywordGrants {
 				if grant.Neighbors && slices.Contains(grant.Keywords, k) {
@@ -756,7 +756,7 @@ func (g *Game) creaturesGloballyBarred(id LocalID, kind UseKind) bool {
 	if bar.Action != kind {
 		return false
 	}
-	return bar.Houses.matches(&EffectContext{Resolver: g}, id)
+	return bar.Houses.matches(&EffectContext{Resolver: g.resolver}, id)
 }
 
 // cannotReap reports whether a player is barred from reaping — either by the
@@ -848,7 +848,7 @@ func (g *Game) barredByConditionalPlayBar(player int, t CardType) bool {
 				continue
 			}
 			ctx := &EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     id,
 				Controller: player,
 			}
@@ -929,7 +929,7 @@ func (g *Game) cannotPlayCard(player int) bool {
 func (g *Game) aemberProtected(player int) bool {
 	for _, id := range g.cardsInPlay(player) {
 		ctx := &EffectContext{
-			Resolver:   g,
+			Resolver:   g.resolver,
 			Source:     id,
 			Controller: player,
 		}
@@ -1144,7 +1144,7 @@ func (g *Game) keyCost(target int) int {
 // either battleline — the tally a counted key surcharge (Waking Nightmare) reads
 // live at each forge.
 func (g *Game) creaturesMatchingInPlay(m HouseMatcher) int {
-	ctx := &EffectContext{Resolver: g}
+	ctx := &EffectContext{Resolver: g.resolver}
 	n := 0
 	for player := range 2 {
 		for _, id := range g.State.Battleline[player].slice() {

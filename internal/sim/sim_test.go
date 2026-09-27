@@ -8,6 +8,9 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/dmikalova/vex/internal/engine"
+	"github.com/dmikalova/vex/internal/engine/narrationaudit"
 )
 
 // FuzzPlay drives a whole random legal game decoded from the fuzz input and fails
@@ -39,6 +42,27 @@ func TestSimulateSeeds(t *testing.T) {
 	for i, script := range SeedScripts(5000) {
 		if err := Simulate(script); err != nil {
 			t.Fatalf("fixed batch %d, script %x failed: %v", i, script, err)
+		}
+	}
+}
+
+// TestNarrationIsCompleteOverSeededGames replays part of the fixed-seed batch
+// with the narration audit installed, so the engine's ordering-dependent paths —
+// a whole turn structure, not one scenario's worth of cards — are driven through
+// the audited Resolver port. A mutating method classified as narrating directly
+// that changes the game without appending a log entry fails here.
+//
+// It plays a slice of the batch rather than all of it: the audit takes a value
+// copy of GameState (12.5 kB) around every narrating call, which is a cost worth
+// paying for coverage of the turn machinery but not worth multiplying by 5000
+// games in the gate. The card suites drive the same audit over the whole
+// implemented card pool (internal/cards/cardtest).
+func TestNarrationIsCompleteOverSeededGames(t *testing.T) {
+	decorate = func(g *engine.Game) { narrationaudit.Install(g, t) }
+	t.Cleanup(func() { decorate = nil })
+	for i, script := range SeedScripts(200) {
+		if err := Simulate(script); err != nil {
+			t.Fatalf("audited batch %d, script %x failed: %v", i, script, err)
 		}
 	}
 }

@@ -5,15 +5,21 @@ package engine
 // card leaves play. A fixed size keeps the state flat.
 const maxScheduled = 4
 
-// scheduledAction is the flat, enum-tagged identity of an effect scheduled to
+// ScheduledAction is the flat, enum-tagged identity of an effect scheduled to
 // resolve later — in the active player's end-of-turn window, or when its source
 // leaves play. State holds no effect closures (ADR 0005), so a scheduled effect is
 // stored as this tag and rebuilt into its Effect by scheduledEffectOf when its
 // window fires.
-type scheduledAction uint8
+//
+// It is exported because it appears in TurnResolver's signatures and in
+// ScheduledEffect.Do, both exported: an unexported parameter type would make
+// Resolver implementable only from inside this package, which the narration
+// audit's decorator (internal/engine/narrationaudit) is not. Its values stay
+// unexported — a caller outside the engine names the type, never a tag.
+type ScheduledAction uint8
 
 const (
-	schedUnset scheduledAction = iota
+	schedUnset ScheduledAction = iota
 	// schedDestroyEachCreature is Ragnarok's board wipe: destroy each creature.
 	schedDestroyEachCreature
 	// schedOpponentForgesKeyFree is Turnkey's delayed consequence: the source
@@ -29,13 +35,13 @@ const (
 // match the card whose exit fires it.
 type ScheduledEffect struct {
 	Source   LocalID
-	Do       scheduledAction
+	Do       ScheduledAction
 	Duration Duration
 }
 
 // scheduledEffectOf rebuilds a scheduled action into the Effect its window
 // resolves.
-func scheduledEffectOf(a scheduledAction) Effect {
+func scheduledEffectOf(a ScheduledAction) Effect {
 	switch a {
 	case schedDestroyEachCreature:
 		return Destroy{Target: Target{Kind: TargetEachCreature}}
@@ -52,7 +58,7 @@ func scheduledEffectOf(a scheduledAction) Effect {
 // stores for it, reporting whether the schedule can carry it. It is the inverse of
 // scheduledEffectOf, used by the arming effects (ScheduleOnLeave) to reduce a
 // carried Effect to its enum tag.
-func scheduledActionOf(e Effect) (scheduledAction, bool) {
+func scheduledActionOf(e Effect) (ScheduledAction, bool) {
 	if f, ok := e.(ForgeKey); ok && f.Player == Opponent && f.FreeOfCost {
 		return schedOpponentForgesKeyFree, true
 	}
@@ -62,7 +68,7 @@ func scheduledActionOf(e Effect) (scheduledAction, bool) {
 // ScheduleAtEndOfTurn arms an effect to resolve in the active player's end-of-turn
 // window, dropping it silently when the schedule is full. The schedule is cleared
 // as the window fires.
-func (g *Game) ScheduleAtEndOfTurn(source LocalID, do scheduledAction) {
+func (g *Game) ScheduleAtEndOfTurn(source LocalID, do ScheduledAction) {
 	g.schedule(source, do, RemainderOfPlayerTurn)
 }
 
@@ -70,13 +76,13 @@ func (g *Game) ScheduleAtEndOfTurn(source LocalID, do scheduledAction) {
 // whatever later point that is (Turnkey's forced forge). Unlike an end-of-turn
 // schedule it survives across turns — it is swept only when its source leaves play
 // (fireScheduledOnLeave), never by the end-of-turn window.
-func (g *Game) ScheduleOnLeave(source LocalID, do scheduledAction) {
+func (g *Game) ScheduleOnLeave(source LocalID, do ScheduledAction) {
 	g.schedule(source, do, UntilThisLeavesPlay)
 }
 
 // schedule appends one scheduled effect, dropping it silently when the schedule is
 // full.
-func (g *Game) schedule(source LocalID, do scheduledAction, dur Duration) {
+func (g *Game) schedule(source LocalID, do ScheduledAction, dur Duration) {
 	if int(g.State.ScheduledCount) >= maxScheduled {
 		return
 	}
@@ -144,7 +150,7 @@ func (g *Game) fireScheduledOnLeave(id LocalID) {
 		g.removeScheduledAt(i)
 		if eff := scheduledEffectOf(s.Do); eff != nil {
 			eff.Resolve(&EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     id,
 				Controller: g.controller(id),
 			})

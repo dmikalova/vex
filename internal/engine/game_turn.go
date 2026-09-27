@@ -588,7 +588,7 @@ func (g *Game) resolveHouseWagers(player int, house House) {
 			continue
 		}
 		ctx := &EffectContext{
-			Resolver:   g,
+			Resolver:   g.resolver,
 			Controller: c.Predictor,
 			Source:     c.Source,
 		}
@@ -636,7 +636,7 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 				continue
 			}
 			ctx := &EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     id,
 				Controller: player,
 			}

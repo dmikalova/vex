@@ -52,6 +52,13 @@ func Play(script []byte) (*engine.Game, error) {
 	return simulate(script, false)
 }
 
+// decorate, when set, is given each freshly built game before it is played. It is
+// the seam the narration audit installs its Resolver decorator through
+// (TestNarrationIsCompleteOverSeededGames), so a whole game's ordering-dependent
+// paths are audited without a second game-playing driver. It is nil outside that
+// test, so a simulated game pays one nil check per game.
+var decorate func(*engine.Game)
+
 // simulate is Simulate with the played-out game handed back, so a debug replay can
 // read the game log that led to a failure. With verbose set the game records that
 // log, which a soak or fuzz run does not want to pay for.
@@ -59,6 +66,9 @@ func simulate(script []byte, verbose bool) (g *engine.Game, err error) {
 	d := &decoder{script: script}
 	seed := int64(d.uint64())
 	g, houses := match.New("P0", "P1", seed)
+	if decorate != nil {
+		decorate(g)
+	}
 	g.Verbose = verbose
 	ch := &scriptChooser{d: d}
 	g.SetChooser(0, ch)

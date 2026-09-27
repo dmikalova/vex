@@ -28,7 +28,7 @@ func (g *Game) EmitAemberStolenFrom(victim, amount int) {
 				HasGrantor: t.grantor != id,
 			})
 			ctx := &EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     id,
 				Controller: victim,
 			}

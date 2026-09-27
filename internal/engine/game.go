@@ -179,6 +179,19 @@ type Game struct {
 	// exploring cloned positions turns it off so the log costs nothing.
 	recording bool
 
+	// resolver is the port value every EffectContext this game builds carries, so
+	// production code never writes EffectContext{Resolver: g} again — it reads
+	// g.resolver. NewGame sets it to g, which is the only value that ever ships:
+	// the indirection exists so a test can install a decorator that delegates to
+	// this same game (SetResolver). ctx.Resolver is an interface call either way,
+	// so which value sits here costs nothing.
+	//
+	// It is the one field a Game copied by value cannot inherit: the copy's
+	// resolver still points at the original, so a probe over a cloned state must
+	// call SetResolver(nil) or its effects would read and write the original
+	// (TestLegalActionsAreAllApplicable).
+	resolver Resolver
+
 	// Engine services around the state: player names, per-player choosers, and the
 	// read-only card catalog. The match RNG is not here — it lives flat in
 	// GameState.PRNG so a snapshot captures it and replay is bit-exact (ADR 0039).
@@ -260,6 +273,7 @@ func NewGame(p0Name, p1Name string, seed int64) *Game {
 		cat:       &catalog{},
 		recording: true,
 	}
+	g.resolver = g
 	g.State.PRNG = PRNG{State: uint64(seed)}
 	g.State.Winner = -1
 	return g
@@ -267,6 +281,18 @@ func NewGame(p0Name, p1Name string, seed int64) *Game {
 
 // SetChooser installs a custom chooser for a player (nil resets to the default).
 func (g *Game) SetChooser(player int, c Chooser) { g.choosers[player] = c }
+
+// SetResolver installs the Resolver every EffectContext this game builds will
+// carry. It is a test hook, not a game rule: the only value that makes sense is
+// one that delegates every method to this same game (a narration-auditing
+// decorator), because the engine's own reads and writes go through the receiver
+// regardless. Passing nil restores the game itself.
+func (g *Game) SetResolver(r Resolver) {
+	if r == nil {
+		r = g
+	}
+	g.resolver = r
+}
 
 // SetPlayerHouses records the houses in a player's deck — the houses they may
 // choose from. A frontend sets it so a forced active house the player does not

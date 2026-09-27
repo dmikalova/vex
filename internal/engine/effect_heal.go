@@ -66,6 +66,12 @@ func (e Heal) heal(ctx *EffectContext, ids []LocalID) bool {
 			removed = e.Amount
 		}
 		ctx.Resolver.SetDamage(id, before-removed)
+		// SetDamage is the shared write behind damage dealt and damage healed, so
+		// the entry is recorded here, where the direction is known.
+		ctx.Resolver.Record(CreatureHealed{
+			Creature: id,
+			Amount:   removed,
+		})
 		damageHealed += removed
 	}
 	ctx.Produced.Healed = healed

@@ -717,11 +717,11 @@ type TurnResolver interface {
 	// ScheduleAtEndOfTurn arms an effect to resolve in the active player's end-of-turn
 	// window, alongside the in-play "at the end of your turn" abilities (Ragnarok's
 	// board wipe). source is the card that armed it, recorded for attribution.
-	ScheduleAtEndOfTurn(source LocalID, do scheduledAction)
+	ScheduleAtEndOfTurn(source LocalID, do ScheduledAction)
 	// ScheduleOnLeave arms an effect to resolve when the source card leaves play,
 	// however many turns later (Turnkey's forced forge). source is the card whose
 	// exit fires it.
-	ScheduleOnLeave(source LocalID, do scheduledAction)
+	ScheduleOnLeave(source LocalID, do ScheduledAction)
 	// GrantMayPlayOrUse records a this-turn grant letting a player act with cards
 	// outside their active house: houses selects whose cards it frees (a named or
 	// chosen house, any house, every house but one, or every house you control),

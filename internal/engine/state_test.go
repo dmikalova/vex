@@ -2,6 +2,7 @@ package engine
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -96,21 +97,140 @@ const (
 	// narratedDirectly: a change to the field has a log entry of its own, so a
 	// player watching the log sees the change itself.
 	narratedDirectly narration = iota
-	// narratedByCause: the field is bookkeeping for a lasting effect or a turn
-	// bar. The log names the card that armed it and narrates the outcome when it
-	// bites; the flag flipping is not itself an outcome (ADR 0011).
+	// narratedByCause: the field is bookkeeping for a lasting effect, a turn bar,
+	// or a step whose outcome is narrated elsewhere. The log names the card that
+	// armed it and narrates the outcome when it bites; the field changing is not
+	// itself an outcome (ADR 0011).
 	narratedByCause
 	// narratedNever: deliberately silent.
 	narratedNever
 )
 
-// fieldNarration classifies every GameState field. It exists to force a decision
-// rather than to describe one: TestEveryStateFieldDeclaresItsNarration fails when
-// a field is added without an entry here, so "does this change need a log entry?"
-// is answered when the field is written instead of being discovered as a missing
-// line in a game (Exhaust and ReadyIfFirstUse were both found that way).
+// narrationLeafTypes are the struct types fieldNarration does not look inside.
+// Each names one reason its fields share a single narration, so the escape hatch
+// from per-field classification stays visible in review: the alternative is
+// hundreds of rows restating the same answer. CardCore is deliberately absent —
+// its 40 fields are the state a player watches, and classifying them one by one
+// is the point of the recursion.
+var narrationLeafTypes = map[string]string{
+	"deckList": "a zone's storage: IDs and Count move together, and the zone " +
+		"they belong to is what a move entry names.",
+	"wideList": "a zone's storage, as deckList.",
+	"turnLog": "a play/discard log's storage, as the zone lists: the play or " +
+		"discard that appended to it is what the log narrates.",
+	"Destination": "one opaque value — a zone plus whose it is — written and " +
+		"read as a unit, with no field a card can change on its own.",
+	"Bar": "a turn bar: Value is the restriction and Source the card that " +
+		"imposed it, armed and lifted as one (ADR 0011).",
+	"ScheduledEffect": "a registry entry: the whole row is one armed effect, " +
+		"narrated by the card that armed it and again when it fires.",
+	"LastingEffect":         "a registry entry, as ScheduledEffect.",
+	"ContinuousEffect":      "a registry entry, as ScheduledEffect.",
+	"LastingAlsoTriggersOn": "a registry entry, as ScheduledEffect.",
+}
+
+// fieldNarration classifies every GameState field, keyed by dotted path through
+// the struct-valued fields (Cards.Damage, Controls.Controller). It exists to
+// force a decision rather than to describe one: TestEveryStateFieldDeclaresItsNarration
+// fails when a field is added without an entry here, so "does this change need a
+// log entry?" is answered when the field is written instead of being discovered
+// as a missing line in a game (Exhaust and ReadyIfFirstUse were both found that
+// way — both CardCore fields, which is why the table recurses rather than
+// classifying Cards as one row).
 var fieldNarration = map[string]narration{
-	"Cards":          narratedDirectly,
+	// CardCore, the per-card state a player watches. The comment on each group
+	// names the entry that narrates it.
+
+	// Use and status: CreatureExhausted and CreatureReadied; CreatureStunned,
+	// CreaturesUnstunned and StunRecovered; CreatureEnraged and
+	// CreatureEnrageRemoved; CreatureWarded, WardRemoved and WardAbsorbed.
+	"Cards.Exhausted": narratedDirectly,
+	"Cards.Stunned":   narratedDirectly,
+	"Cards.Enraged":   narratedDirectly,
+	"Cards.Warded":    narratedDirectly,
+
+	// Granted and lost text: CreatureGainedKeyword, CreatureLostKeyword,
+	// KeywordLostByAll, CreatureGainedTrait, CreatureConsideredFlank,
+	// CreatureGainedTextBox, CreatureCopiedStats.
+	"Cards.GrantedKeywords":           narratedDirectly,
+	"Cards.LostKeywords":              narratedDirectly,
+	"Cards.KeywordsUntilNextTurn":     narratedDirectly,
+	"Cards.LostKeywordsUntilNextTurn": narratedDirectly,
+	"Cards.TraitUntilNextTurn":        narratedDirectly,
+	"Cards.ConsideredFlank":           narratedDirectly,
+	"Cards.TextBoxSourcePlus":         narratedDirectly,
+	"Cards.TextBoxTurnSourcePlus":     narratedDirectly,
+	"Cards.CopiedStatsSourcePlus":     narratedDirectly,
+
+	// Damage and armor: DamageTaken, AbilityDamageDealt, AssaultDealt,
+	// HazardousDealt and ArmorAbsorbed for damage marked and armor spent;
+	// CreatureHealed for damage taken off; ArmorLost for armor an effect strips,
+	// which also tallies what it took.
+	"Cards.Damage":         narratedDirectly,
+	"Cards.ArmorRemaining": narratedDirectly,
+	"Cards.ArmorStripped":  narratedDirectly,
+
+	// Power counters, which change what a creature's power reads as for as long
+	// as it stays in play: PowerCountersPlaced.
+	"Cards.PowerCounters": narratedDirectly,
+
+	// The house an in-play card belongs to, which decides whether its controller
+	// may use it this turn: CardChangedHouse.
+	"Cards.TempHouse":    narratedDirectly,
+	"Cards.LastingHouse": narratedDirectly,
+
+	// Stat bonuses: CreatureGainedStats for power and armor,
+	// CreatureGainedAssault for assault.
+	"Cards.TempPowerBonus":       narratedDirectly,
+	"Cards.TempArmorBonus":       narratedDirectly,
+	"Cards.TempAssaultBonus":     narratedDirectly,
+	"Cards.AssaultUntilNextTurn": narratedDirectly,
+
+	// Æmber on the card: AemberMovedToCard, AemberExalted, AemberCaptured and
+	// AemberOnCardReleased.
+	"Cards.Amber": narratedDirectly,
+
+	// Runtime type conversion: TurnedIntoCreature and RevertedToArtifact
+	// (ADR 0033).
+	"Cards.LastingType": narratedDirectly,
+
+	// Attachment and control: UpgradeAttached and UpgradeDiscarded for the
+	// upgrade chain, CardPutUnder and CardGrafted for the under chain (whose
+	// entry carries FaceDown), ControlTaken and ControlReturned for the cached
+	// controller.
+	"Cards.FirstUpgradePlus": narratedDirectly,
+	"Cards.NextUpgradePlus":  narratedDirectly,
+	"Cards.HostPlus":         narratedDirectly,
+	"Cards.FirstUnderPlus":   narratedDirectly,
+	"Cards.NextUnderPlus":    narratedDirectly,
+	"Cards.UnderHostPlus":    narratedDirectly,
+	"Cards.UnderFaceDown":    narratedDirectly,
+	"Cards.ControlPlus":      narratedDirectly,
+
+	// A card mid-play redirecting itself is silent; the arrival it redirects to
+	// is narrated when the play completes (CardPutIntoArchives, CardPurged).
+	"Cards.ResolvingDest": narratedByCause,
+
+	// Use bookkeeping, narrated by the use itself: Reaped, Fought and
+	// ActionAbilityUsed for TimesUsedThisTurn, Fought for the elusive that the
+	// fight spent.
+	"Cards.TimesUsedThisTurn":   narratedByCause,
+	"Cards.ElusiveUsedThisTurn": narratedByCause,
+
+	// The duration marker on an Animator conversion, not a second conversion:
+	// TurnedIntoCreature names the window and RevertedToArtifact its expiry.
+	"Cards.CreatureUntilTurnEnd": narratedByCause,
+
+	// The pairing of a gigantic's two halves follows the half entering play and
+	// is narrated by that play entry (ADR 0042).
+	"Cards.GiganticPartnerPlus": narratedByCause,
+
+	// The house or card a permanent names as it enters play is the reader half of
+	// a lock (Restringuntus, Etan's Jar). Naming is silent; the lock narrates when
+	// it bites, as a house the opponent cannot choose or a card they cannot play.
+	"Cards.NamedHouse":    narratedByCause,
+	"Cards.NamedCardPlus": narratedByCause,
+
 	"UsagesThisTurn": narratedDirectly,
 	"Battleline":     narratedDirectly,
 	"Hand":           narratedDirectly,
@@ -128,10 +248,20 @@ var fieldNarration = map[string]narration{
 	"Turn":           narratedDirectly,
 	"Winner":         narratedDirectly,
 	"Phase":          narratedDirectly,
-	"Counters":       narratedDirectly,
-	"CounterCount":   narratedDirectly,
-	"Controls":       narratedDirectly,
-	"ControlCount":   narratedDirectly,
+
+	// The control stack: ControlTaken and ControlReturned narrate every push and
+	// pop, naming the card, the new controller, and the effect that holds it.
+	"Controls.Card":       narratedDirectly,
+	"Controls.Controller": narratedDirectly,
+	"Controls.Source":     narratedDirectly,
+	"ControlCount":        narratedDirectly,
+
+	// The generic-counter side-table (ADR 0024): CountersPlaced and
+	// CountersRemoved narrate every marker that lands on or leaves a card.
+	"Counters.Card": narratedDirectly,
+	"Counters.Kind": narratedDirectly,
+	"Counters.N":    narratedDirectly,
+	"CounterCount":  narratedDirectly,
 
 	"ForgePrevented":              narratedByCause,
 	"PhaseEnded":                  narratedByCause,
@@ -171,41 +301,111 @@ var fieldNarration = map[string]narration{
 	"PlayedThisTurn":              narratedByCause,
 	"DiscardedThisTurn":           narratedByCause,
 	"PlayPermissionsUsedThisTurn": narratedByCause,
-	"OffHousePermits":             narratedByCause,
 	"OffHousePermitCount":         narratedByCause,
 	"NonActivePlaysUsedThisTurn":  narratedByCause,
 	"FirstTurnPlayLimit":          narratedByCause,
-	"HouseConstraints":            narratedByCause,
 	"HouseConstraintCount":        narratedByCause,
-	"HouseConstraintsNext":        narratedByCause,
 	"HouseConstraintCountNext":    narratedByCause,
 	"FightDamageRedirect":         narratedByCause,
 	"FightCancelled":              narratedByCause,
 	"FightersPlus":                narratedByCause,
 
+	// The delayed constraint table binding a house choice (ADR 0035).
+	// HouseForcedNextTurn, HouseForbiddenNextTurn and HouseWagerArmed narrate an
+	// entry being armed; the choice it binds is narrated by HouseChosen when it
+	// resolves.
+	"HouseConstraints.Kind":          narratedByCause,
+	"HouseConstraints.House":         narratedByCause,
+	"HouseConstraints.Creature":      narratedByCause,
+	"HouseConstraints.Amount":        narratedByCause,
+	"HouseConstraints.Predictor":     narratedByCause,
+	"HouseConstraints.Source":        narratedByCause,
+	"HouseConstraintsNext.Kind":      narratedByCause,
+	"HouseConstraintsNext.House":     narratedByCause,
+	"HouseConstraintsNext.Creature":  narratedByCause,
+	"HouseConstraintsNext.Amount":    narratedByCause,
+	"HouseConstraintsNext.Predictor": narratedByCause,
+	"HouseConstraintsNext.Source":    narratedByCause,
+
+	// An off-house permit's terms (ADR 0037): MayPlayOrUseGranted narrates the
+	// grant, and the play or use that spends it is narrated in its own right.
+	"OffHousePermits.Except":     narratedByCause,
+	"OffHousePermits.Controlled": narratedByCause,
+	"OffHousePermits.Types":      narratedByCause,
+	"OffHousePermits.Grant":      narratedByCause,
+	"OffHousePermits.Remaining":  narratedByCause,
+
 	// The match RNG is state so a snapshot replays bit-exact (ADR 0039); its
 	// advancing is not an outcome anyone can observe.
-	"PRNG": narratedNever,
+	"PRNG.State": narratedNever,
+}
+
+// narrationTypeName is a struct type's name with any type arguments dropped, so
+// Bar[bool] and Bar[House] are the one type Bar that narrationLeafTypes names.
+func narrationTypeName(typ reflect.Type) string {
+	name := typ.Name()
+	if i := strings.IndexByte(name, '['); i >= 0 {
+		name = name[:i]
+	}
+	return name
+}
+
+// narrationPaths returns every leaf path of a state struct, descending through
+// struct-valued fields (and through arrays of them, since an array narrates the
+// same way whatever slot changed) and stopping at a narrationLeafTypes type.
+func narrationPaths(typ reflect.Type, prefix string, leavesUsed map[string]bool) []string {
+	var paths []string
+	for field := range typ.Fields() {
+		path := field.Name
+		if prefix != "" {
+			path = prefix + "." + field.Name
+		}
+		elem := field.Type
+		for elem.Kind() == reflect.Array {
+			elem = elem.Elem()
+		}
+		if elem.Kind() == reflect.Struct {
+			name := narrationTypeName(elem)
+			if _, leaf := narrationLeafTypes[name]; !leaf {
+				paths = append(paths, narrationPaths(elem, path, leavesUsed)...)
+				continue
+			}
+			leavesUsed[name] = true
+		}
+		paths = append(paths, path)
+	}
+	return paths
 }
 
 // TestEveryStateFieldDeclaresItsNarration is the ratchet behind "every state
 // change is logged". It cannot prove the log is complete, but it can stop the
-// gap from being introduced silently: a new GameState field fails the build until
+// gap from being introduced silently: a new GameState field — or a new CardCore
+// field, which is where the gaps have actually been — fails the build until
 // fieldNarration says how the log covers it.
 func TestEveryStateFieldDeclaresItsNarration(t *testing.T) {
-	typ := reflect.TypeFor[GameState]()
-	for field := range typ.Fields() {
-		name := field.Name
-		if _, ok := fieldNarration[name]; !ok {
+	leavesUsed := map[string]bool{}
+	paths := narrationPaths(reflect.TypeFor[GameState](), "", leavesUsed)
+	live := make(map[string]bool, len(paths))
+	for _, path := range paths {
+		live[path] = true
+		if _, ok := fieldNarration[path]; !ok {
 			t.Errorf(
 				"GameState.%s has no fieldNarration entry; decide whether a change "+
-					"to it needs its own log entry", name,
+					"to it needs its own log entry", path,
 			)
 		}
 	}
-	for name := range fieldNarration {
-		if _, ok := typ.FieldByName(name); !ok {
-			t.Errorf("fieldNarration names %q, which GameState no longer has", name)
+	for path := range fieldNarration {
+		if !live[path] {
+			t.Errorf("fieldNarration names %q, which GameState no longer has", path)
+		}
+	}
+	for name := range narrationLeafTypes {
+		if !leavesUsed[name] {
+			t.Errorf(
+				"narrationLeafTypes declares %q a leaf, but no GameState field "+
+					"holds one", name,
+			)
 		}
 	}
 }

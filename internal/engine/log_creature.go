@@ -434,3 +434,87 @@ type CardCannotBeUsed struct{ Card LocalID }
 func (e CardCannotBeUsed) Text(n Namer) string {
 	return fmt.Sprintf("%s is exhausted and cannot be used", n.Name(e.Card))
 }
+
+// The entries below close narration gaps the port audit found
+// (internal/engine/narrationaudit): each is a change a player can see on the
+// board that the log used to pass over in silence.
+
+// CreatureHealed narrates damage coming off a creature. Healing is the mirror of
+// DamageTaken and had no line of its own, so a creature that survived a fight
+// because an effect healed it read as surviving for no reason.
+type CreatureHealed struct {
+	Creature LocalID
+	Amount   int
+}
+
+// Text renders the creature and how much damage was healed.
+func (e CreatureHealed) Text(n Namer) string {
+	return fmt.Sprintf("%s heals %d damage", n.Name(e.Creature), e.Amount)
+}
+
+// ArmorLost narrates an effect taking armor off a creature (Red-Hot Armor),
+// as opposed to armor spent absorbing damage, which ArmorAbsorbed narrates.
+type ArmorLost struct {
+	Creature LocalID
+	Amount   int
+}
+
+// Text renders the creature and the armor an effect took off it.
+func (e ArmorLost) Text(n Namer) string {
+	return fmt.Sprintf("%s loses %d armor", n.Name(e.Creature), e.Amount)
+}
+
+// PowerCountersPlaced narrates +1/-1 power counters going onto a creature. N is
+// the net change, so a negative N is -1 counters.
+type PowerCountersPlaced struct {
+	Creature LocalID
+	N        int
+}
+
+// Text renders the counters placed, e.g. "Card2 gets 2 +1 power counters".
+func (e PowerCountersPlaced) Text(n Namer) string {
+	sign, count := "+1", e.N
+	if count < 0 {
+		sign, count = "-1", -count
+	}
+	return fmt.Sprintf("%s gets %s", n.Name(e.Creature),
+		countNoun(count, sign+" power counter"))
+}
+
+// CountersPlaced narrates generic counters — the card-placed markers a card
+// reads back (ADR 0024) — going onto a card.
+type CountersPlaced struct {
+	Card LocalID
+	Kind CounterKind
+	N    int
+}
+
+// Text renders the counters placed, e.g. "Card2 gets 2 doom counters".
+func (e CountersPlaced) Text(n Namer) string {
+	return fmt.Sprintf("%s gets %s", n.Name(e.Card), countNoun(e.N, e.Kind.noun()))
+}
+
+// CountersRemoved narrates generic counters coming off a card (The Colosseum
+// spends six glory counters to forge a key).
+type CountersRemoved struct {
+	Card LocalID
+	Kind CounterKind
+	N    int
+}
+
+// Text renders the counters removed, e.g. "Card2 loses 2 doom counters".
+func (e CountersRemoved) Text(n Namer) string {
+	return fmt.Sprintf("%s loses %s", n.Name(e.Card), countNoun(e.N, e.Kind.noun()))
+}
+
+// CardChangedHouse narrates an in-play card changing which house it belongs to,
+// which decides whether its controller may use it on a given turn.
+type CardChangedHouse struct {
+	Card  LocalID
+	House House
+}
+
+// Text renders the card and the house it now belongs to.
+func (e CardChangedHouse) Text(n Namer) string {
+	return fmt.Sprintf("%s belongs to house %s", n.Name(e.Card), e.House.String())
+}

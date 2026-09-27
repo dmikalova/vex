@@ -803,6 +803,39 @@ func LogEntrySamples() []LogEntry {
 			Needed: 3,
 		},
 
+		// Board changes that used to pass unnarrated, found by the Resolver port
+		// audit (internal/engine/narrationaudit).
+		CreatureHealed{
+			Creature: 2,
+			Amount:   3,
+		},
+		ArmorLost{
+			Creature: 2,
+			Amount:   2,
+		},
+		PowerCountersPlaced{
+			Creature: 2,
+			N:        2,
+		},
+		PowerCountersPlaced{
+			Creature: 2,
+			N:        -1,
+		},
+		CountersPlaced{
+			Card: 2,
+			Kind: CounterDoom,
+			N:    2,
+		},
+		CountersRemoved{
+			Card: 2,
+			Kind: CounterDoom,
+			N:    1,
+		},
+		CardChangedHouse{
+			Card:  2,
+			House: Untamed,
+		},
+
 		// A restored entry reads back exactly as it was narrated.
 		RestoredEntry{Line: "P0 gains 1 Æmber"},
 	}

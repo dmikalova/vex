@@ -360,8 +360,15 @@ func (g *Game) StripArmor(id LocalID) {
 	if c == nil {
 		return
 	}
+	taken := int(c.ArmorRemaining)
 	c.ArmorStripped += c.ArmorRemaining
 	c.ArmorRemaining = 0
+	if taken > 0 {
+		g.record(ArmorLost{
+			Creature: id,
+			Amount:   taken,
+		})
+	}
 }
 
 // SetStunned sets a creature's stun status.
@@ -438,16 +445,28 @@ func (g *Game) SetExhausted(id LocalID, exhausted bool) {
 // BelongToHouseForRemainderOfTurn makes a card belong to house until its
 // controller's turn ends.
 func (g *Game) BelongToHouseForRemainderOfTurn(id LocalID, house House) {
-	if c := g.stateOf(id); c != nil {
-		c.TempHouse = house
+	c := g.stateOf(id)
+	if c == nil || c.TempHouse == house {
+		return
 	}
+	c.TempHouse = house
+	g.record(CardChangedHouse{
+		Card:  id,
+		House: house,
+	})
 }
 
 // SetLastingHouse makes a card belong to house until it leaves play.
 func (g *Game) SetLastingHouse(id LocalID, house House) {
-	if c := g.stateOf(id); c != nil {
-		c.LastingHouse = house
+	c := g.stateOf(id)
+	if c == nil || c.LastingHouse == house {
+		return
 	}
+	c.LastingHouse = house
+	g.record(CardChangedHouse{
+		Card:  id,
+		House: house,
+	})
 }
 
 // PutIntoBattlelineAsCreature turns an in-play card into a creature and moves it to
@@ -766,9 +785,15 @@ func (g *Game) RedirectResolvingCard(id LocalID, dest Destination) {
 // lower power to the damage already marked; the resolution boundary settles that,
 // not this write (ADR 0029).
 func (g *Game) AddPowerCounter(id LocalID, delta int) {
-	if c := g.stateOf(id); c != nil {
-		c.PowerCounters += int16(delta)
+	c := g.stateOf(id)
+	if c == nil || delta == 0 {
+		return
 	}
+	c.PowerCounters += int16(delta)
+	g.record(PowerCountersPlaced{
+		Creature: id,
+		N:        delta,
+	})
 }
 
 // PutFromDiscardIntoHand moves a card from its owner's discard pile to their hand.

@@ -212,6 +212,9 @@ func TestLegalActionsAreAllApplicable(t *testing.T) {
 	for _, cmd := range cmds {
 		probe := *g
 		probe.State = g.State.FastCopy()
+		// The copy carries g's resolver, which still points at g: re-point it so
+		// the probe's effects read and write the cloned state, not the original.
+		probe.SetResolver(nil)
 		if err := probe.ApplyAction(cmd); err != nil {
 			t.Errorf("LegalActions offered %+v but ApplyAction rejected it: %v", cmd, err)
 		}

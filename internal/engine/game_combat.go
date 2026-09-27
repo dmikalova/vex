@@ -57,7 +57,7 @@ func (g *Game) fight(attacker, defender LocalID) {
 	// neighbor is used to fight" reaction (Little Niff) fires for the creatures
 	// beside the attacker even if the fight destroys the attacker and shifts the
 	// battleline.
-	neighborsAtFight := neighbors(&EffectContext{Resolver: g}, attacker)
+	neighborsAtFight := neighbors(&EffectContext{Resolver: g.resolver}, attacker)
 
 	// Assault and Hazardous deal their damage before fight damage: either can
 	// destroy a fighter before combat.
@@ -186,7 +186,7 @@ func (g *Game) exchangeFightDamage(
 			retaliation > 0 {
 			// Shoulder Id: its retaliation is replaced by its controller stealing.
 			StealAember{Amount: n}.Resolve(&EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Controller: defenderSide,
 				Source:     defender,
 			})
@@ -202,7 +202,7 @@ func (g *Game) exchangeFightDamage(
 	// Splash-attack deals its damage to each neighbor of the creature the
 	// attacker fights, at the same time as fight damage.
 	if s := g.splashAttack(attacker); s > 0 {
-		for _, n := range neighbors(&EffectContext{Resolver: g}, defender) {
+		for _, n := range neighbors(&EffectContext{Resolver: g.resolver}, defender) {
 			targets = append(targets, DamageTarget{
 				ID:     n,
 				Amount: s,
@@ -439,7 +439,7 @@ func (g *Game) TauntShielded(id LocalID) bool {
 // shields target. The caller has already ruled out target having taunt itself,
 // which would make it a valid target regardless.
 func (g *Game) shieldedByTaunt(target LocalID) bool {
-	ctx := &EffectContext{Resolver: g}
+	ctx := &EffectContext{Resolver: g.resolver}
 	for _, neighbor := range neighbors(ctx, target) {
 		if g.hasKeyword(neighbor, Taunt) {
 			return true
@@ -696,7 +696,7 @@ func (g *Game) emitArmorPrevented(watchers []LocalID, armorBefore map[LocalID]in
 				HasGrantor: t.grantor != id,
 			})
 			ctx := &EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     id,
 				Controller: actor,
 			}
@@ -771,7 +771,7 @@ func (g *Game) neighborFightSplash(targets []DamageTarget) []DamageTarget {
 			if sharer == t.ID {
 				continue
 			}
-			if slices.Contains(neighbors(&EffectContext{Resolver: g}, sharer), t.ID) {
+			if slices.Contains(neighbors(&EffectContext{Resolver: g.resolver}, sharer), t.ID) {
 				extra = append(extra, DamageTarget{
 					ID:     sharer,
 					Amount: t.Amount,
@@ -795,7 +795,7 @@ func (g *Game) shouldDestroy(id LocalID) bool {
 	}
 	if dw := def.DestroyedWhen; dw != nil {
 		ctx := &EffectContext{
-			Resolver:   g,
+			Resolver:   g.resolver,
 			Source:     id,
 			Controller: g.controller(id),
 		}
@@ -821,7 +821,7 @@ func (g *Game) artifactShouldSelfDestroy(id LocalID) bool {
 		return false
 	}
 	ctx := &EffectContext{
-		Resolver:   g,
+		Resolver:   g.resolver,
 		Source:     id,
 		Controller: g.controller(id),
 	}

@@ -109,7 +109,7 @@ func (g *Game) resolveBonusIcon(player int, id LocalID, ic BonusIcon) {
 		}
 		if rm.Instead != nil {
 			rm.Instead.Resolve(&EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     src,
 				Controller: player,
 			})

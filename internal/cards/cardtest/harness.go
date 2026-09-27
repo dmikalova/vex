@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/dmikalova/vex/internal/engine"
+	"github.com/dmikalova/vex/internal/engine/narrationaudit"
 )
 
 // Setup declares a whole scenario up front: each player's board, hand, and pools.
@@ -82,6 +83,10 @@ func Play(t testing.TB, s Setup) *Harness {
 		seed = 1
 	}
 	g := engine.NewGame("P1", "P2", seed)
+	// Every scenario drives the narration audit: a card that changes the game
+	// through the Resolver port without the log saying so fails the card's own
+	// test, over the whole implemented card pool.
+	narrationaudit.Install(g, t)
 	h := &Harness{
 		t:      t,
 		g:      g,

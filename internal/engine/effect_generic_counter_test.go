@@ -532,3 +532,23 @@ func TestRemoveCountersGate(t *testing.T) {
 		t.Errorf("counters after removing one = %d, want 1", got)
 	}
 }
+
+// TestRemoveCountersFromACardCarryingNoneIsSilent covers the early return: a card
+// with no counter of the kind is left as it is, and nothing is narrated, so an
+// effect that removes counters from a whole board does not fill the log with
+// lines about creatures that carried none.
+func TestRemoveCountersFromACardCarryingNoneIsSilent(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	id := g.AddToBattleline(testCreature("bare", 3), 0)
+	before := len(g.Log)
+
+	g.RemoveCounters(id, CounterDoom)
+
+	if got := g.CountersOn(id, CounterDoom); got != 0 {
+		t.Errorf("counters on the card = %d, want 0", got)
+	}
+	if len(g.Log) != before {
+		t.Errorf("removing nothing appended %d log entries, want none",
+			len(g.Log)-before)
+	}
+}
