@@ -24,7 +24,24 @@ func drive(g *engine.Game) {
 	g.State.Aember[0] += int16(i * 10)
 }
 
-func newSession() *Session { return New(7, [2]string{}, setup, drive) }
+// goblin is the one card the test pool holds — a Brobnar creature, so playing it is
+// legal exactly when Brobnar is the active house.
+var goblin = engine.CardDefinition{
+	Name:  "Test Goblin",
+	House: engine.Brobnar,
+	Type:  engine.Creature,
+	Power: 3,
+}
+
+// resolveCard is the card pool a session's manual add-card edit looks names up in.
+func resolveCard(name string) (engine.CardDefinition, bool) {
+	if name == goblin.Name {
+		return goblin, true
+	}
+	return engine.CardDefinition{}, false
+}
+
+func newSession() *Session { return New(7, [2]string{}, setup, drive, resolveCard) }
 
 // mustApply applies cmd and fails the test if it is rejected.
 func mustApply(t *testing.T, s *Session, cmd engine.Command) {
@@ -177,7 +194,7 @@ func TestSessionRecordRoundTrip(t *testing.T) {
 		t.Fatalf("record = %+v, want version %d seed 7 with 2 commands", rec, Version)
 	}
 
-	loaded, err := Load(rec, setup, drive)
+	loaded, err := Load(rec, setup, drive, resolveCard)
 	if err != nil {
 		t.Fatalf("load: %v", err)
 	}
@@ -186,7 +203,7 @@ func TestSessionRecordRoundTrip(t *testing.T) {
 	}
 
 	rec.Version = Version + 1
-	if _, err := Load(rec, setup, drive); !errors.Is(err, ErrVersion) {
+	if _, err := Load(rec, setup, drive, resolveCard); !errors.Is(err, ErrVersion) {
 		t.Fatalf("load with wrong version: got %v, want ErrVersion", err)
 	}
 }
@@ -202,5 +219,199 @@ func TestSessionView(t *testing.T) {
 	v := s.View(1)
 	if v.Viewer != 1 || v.State != s.Game().State {
 		t.Fatalf("View(1) = %+v, want the identity projection for viewer 1", v)
+	}
+}
+
+// match drives a bare game through the engine's canonical turn loop, so the session
+// tests that care about root actions see the same RequestAction a real match yields.
+// The game has no decks, which is the point: an empty hand makes the legal set small
+// and predictable, so a manual edit that widens it is unmistakable.
+func match(g *engine.Game) { g.RunMatch() }
+
+func newMatchSession() *Session { return New(7, [2]string{}, setup, match, resolveCard) }
+
+// startTurn answers the match's setup decisions — who goes first, then each
+// player's mulligan prompt — and names Brobnar as the active house, leaving the
+// session in the play phase with a pending action request.
+func startTurn(t *testing.T, s *Session) {
+	t.Helper()
+	mustApply(t, s, engine.Command{
+		Kind:   engine.CommandSetFirstPlayer,
+		Player: 0,
+		Index:  engine.RolledFirstPlayer,
+	})
+	for {
+		req, done := s.Pending()
+		if done {
+			t.Fatal("the match finished before reaching the first action request")
+		}
+		if req.Kind == engine.RequestAction {
+			break
+		}
+		// Every setup prompt before the first action is a mulligan; keep the hand.
+		mustApply(t, s, engine.Command{Kind: engine.CommandOption})
+	}
+	mustApply(t, s, engine.Command{
+		Kind:  engine.CommandChooseHouse,
+		House: engine.Brobnar,
+	})
+}
+
+// addGoblin is the manual force-edit the tests below record: it drops a Brobnar
+// creature into player 0's hand, which no rule would have put there.
+var addGoblin = engine.Command{
+	Kind:   engine.CommandManualAddCard,
+	Player: 0,
+	Name:   goblin.Name,
+}
+
+// playGoblin plays the manually added creature from hand. The battleline is empty,
+// so the two flanks coincide and the play names neither.
+var playGoblin = engine.Command{
+	Kind: engine.CommandPlayCreature,
+	Hand: 0,
+}
+
+// A manual force-edit is applied to the live game without consuming the pending
+// request, is recorded in the log, and is replayed by Load — so a match holding a
+// force-edit still rebuilds from its command log alone.
+func TestSessionApplyManualIsRecordedAndReplayed(t *testing.T) {
+	s := newMatchSession()
+	startTurn(t, s)
+	setupSteps := s.Len()
+
+	before, _ := s.Pending()
+	if err := s.ApplyManual(addGoblin); err != nil {
+		t.Fatalf("apply manual add: %v", err)
+	}
+	if after, done := s.Pending(); done || after.Kind != before.Kind {
+		t.Fatalf("manual edit changed the pending request to %+v done=%v", after, done)
+	}
+	if got := len(s.Game().Hand(0)); got != 1 {
+		t.Fatalf("hand holds %d cards after the manual add, want 1", got)
+	}
+	if s.Len() != setupSteps+1 {
+		t.Fatalf("recorded %d commands, want %d (the manual edit is recorded)",
+			s.Len(), setupSteps+1)
+	}
+	if s.CrossesBarrier(setupSteps) {
+		t.Error("a manual edit crosses no information barrier")
+	}
+
+	loaded, err := Load(s.Record(), setup, match, resolveCard)
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if loaded.Game().State != s.Game().State {
+		t.Fatal("a session loaded from a record holding a manual edit replayed to a " +
+			"different state")
+	}
+
+	// A record naming a card the pool does not know fails to load, so a diverged
+	// replay stops where it diverged instead of silently dropping the edit.
+	rec := s.Record()
+	rec.Commands[setupSteps].Name = "Not In The Pool"
+	if _, err := Load(rec, setup, match, resolveCard); err == nil {
+		t.Fatal("loading a record naming an unknown card should fail")
+	}
+}
+
+// Undo rewinds across a manual edit by replaying the kept prefix, so a prefix
+// holding a force-edit rebuilds the edited board and a prefix stopping short of one
+// rebuilds the board without it.
+func TestSessionUndoAcrossAManualEdit(t *testing.T) {
+	s := newMatchSession()
+	startTurn(t, s)
+	setupSteps := s.Len()
+	if err := s.ApplyManual(addGoblin); err != nil {
+		t.Fatalf("apply manual add: %v", err)
+	}
+	mustApply(t, s, playGoblin)
+
+	// Keeping the edit but dropping the play leaves the goblin in hand.
+	if err := s.Undo(setupSteps + 1); err != nil {
+		t.Fatalf("undo to just after the edit: %v", err)
+	}
+	if got := len(s.Game().Hand(0)); got != 1 {
+		t.Fatalf("hand holds %d cards after undoing to just after the edit, want 1", got)
+	}
+
+	// Rewinding past the edit undoes it too: nothing ever put that card in the deck.
+	if err := s.Undo(setupSteps); err != nil {
+		t.Fatalf("undo past the edit: %v", err)
+	}
+	if got := len(s.Game().Hand(0)); got != 0 {
+		t.Fatalf("hand holds %d cards after undoing past the edit, want 0", got)
+	}
+}
+
+// Apply validates a root action against the LIVE legal set, not the one the request
+// carried: playing the manually added creature is legal now even though it was not
+// when the engine gathered the actions for the pending request.
+func TestSessionApplyChecksRootActionsLive(t *testing.T) {
+	s := newMatchSession()
+	startTurn(t, s)
+
+	req, _ := s.Pending()
+	if req.IsLegal(playGoblin) {
+		t.Fatal("playing from an empty hand should not be in the cached action set")
+	}
+	if err := s.Apply(playGoblin); !errors.Is(err, ErrIllegal) {
+		t.Fatalf("play before the manual add: got %v, want ErrIllegal", err)
+	}
+
+	if err := s.ApplyManual(addGoblin); err != nil {
+		t.Fatalf("apply manual add: %v", err)
+	}
+	// The cached request is now stale — it still offers only the actions an empty
+	// hand allowed — so only a live check can accept the play.
+	if stale, _ := s.Pending(); stale.IsLegal(playGoblin) {
+		t.Fatal("the cached request should still be stale after the manual add")
+	}
+	mustApply(t, s, playGoblin)
+	if got := len(s.Game().Battleline(0)); got != 1 {
+		t.Fatalf("battleline holds %d creatures, want 1", got)
+	}
+}
+
+// boom answers one option request and then panics, standing in for a card whose
+// resolution breaks mid-action.
+func boom(g *engine.Game) {
+	g.ChooseOption(0, 0, "boom", []string{"x", "y"})
+	panic("boom")
+}
+
+// A panicking action is reported to the caller as an error rather than hanging the
+// session, and the command that triggered it stays recorded so the caller can roll
+// the broken step back with Undo.
+func TestSessionApplyReportsAPanickingAction(t *testing.T) {
+	s := New(7, [2]string{}, setup, boom, resolveCard)
+
+	err := s.Apply(engine.Command{Kind: engine.CommandOption})
+	if err == nil {
+		t.Fatal("applying the command that panics should return an error")
+	}
+	var panicErr *engine.PanicError
+	if !errors.As(err, &panicErr) {
+		t.Fatalf("apply = %v, want an engine.PanicError", err)
+	}
+	if len(panicErr.Stack) == 0 {
+		t.Error("the panic error should carry the stack captured at recover time")
+	}
+	if _, done := s.Pending(); !done {
+		t.Error("a panicking action leaves the session done, not awaiting a request")
+	}
+	if s.Len() != 1 {
+		t.Fatalf("recorded %d commands, want the broken step recorded for Undo", s.Len())
+	}
+	if !errors.As(s.Err(), &panicErr) {
+		t.Fatalf("Err = %v, want the same panic error", s.Err())
+	}
+
+	if err := s.Undo(0); err != nil {
+		t.Fatalf("undo past the broken step: %v", err)
+	}
+	if _, done := s.Pending(); done {
+		t.Error("after undoing the broken step the session should await the request again")
 	}
 }
