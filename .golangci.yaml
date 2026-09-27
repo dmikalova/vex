@@ -33,7 +33,7 @@ linters:
         text: should have a package comment
       - linters:
           - gocognit
-        text: effectGlyphs
+        text: residualEffectGlyphs
       - linters:
           - revive
         path: magefiles/cards\.go
