@@ -60,8 +60,9 @@ func TestAnsweringACardPrompt(t *testing.T) {
 	if c.g.chooserPrompt() != "Choose a creature" {
 		t.Errorf("the prompt reads %q, want %q", c.g.chooserPrompt(), "Choose a creature")
 	}
-	if c.g.promptSourceName() != testCreature {
-		t.Errorf("the prompt is attributed to %q, want %q", c.g.promptSourceName(), testCreature)
+	wantSource := engine.PromptSource{Card: cands[0], HasCard: true}
+	if c.g.promptSource() != wantSource {
+		t.Errorf("the prompt is attributed to %+v, want %+v", c.g.promptSource(), wantSource)
 	}
 	if c.g.chooserDeclinable() {
 		t.Error("a mandatory prompt offered a way out")
@@ -190,13 +191,18 @@ func TestAPromptWithNoCandidatesAnswersItself(t *testing.T) {
 	}
 }
 
+// noSource is a LocalID no card in these tests is ever dealt, so Game.promptSource
+// resolves it to PromptSource{} — an unattributed prompt — the same as the archive
+// discard's own call to orderByChoice, which names no source card.
+const noSource = engine.LocalID(255)
+
 // order raises an ordering window from a scripted action, as the engine's
 // orderByChoice does, and hands back the arranged order.
 func (c *client) order(prompt string, ids []engine.LocalID) *[]engine.LocalID {
 	c.t.Helper()
 	got := new([]engine.LocalID)
 	player := c.g.active()
-	c.script(func(eg *engine.Game) { *got = eg.OrderByChoice(player, prompt, ids) })
+	c.script(func(eg *engine.Game) { *got = eg.OrderByChoice(player, noSource, prompt, ids) })
 	return got
 }
 
