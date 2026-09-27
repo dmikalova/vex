@@ -68,6 +68,113 @@ func TestNoOrphanedTestFiles(t *testing.T) {
 	}
 }
 
+// TestEveryCardTestAsserts is the floor under TestEveryCardHasATest: a matching
+// test file satisfies that check even when it asserts nothing, because
+// `func TestFoo(t *testing.T) {}` compiles, runs, and passes. Every test
+// function in a card test file must therefore make at least one assertion — an
+// Expect* call on the cardtest harness (h.Expect, h.P1.ExpectAmber,
+// h.P1.ExpectPrompt, …) or a raw t.Error/t.Errorf/t.Fatal/t.Fatalf.
+//
+// This is deliberately a shape check, not a coverage check: it proves a test
+// looks at the game, not that it looks at the right part of it. See the note on
+// branch coverage in internal/cards/AGENTS.md for why no stronger automated
+// rule is imposed here.
+func TestEveryCardTestAsserts(t *testing.T) {
+	fset := token.NewFileSet()
+	for _, pkg := range setPackages(t) {
+		var files []string
+		for _, file := range pkg.testFiles {
+			files = append(files, file)
+		}
+		sort.Strings(files)
+
+		parsed := make(map[string]*ast.File, len(files))
+		for _, file := range files {
+			parsed[file] = parseFile(t, fset, filepath.Join(setsDir, pkg.name, file))
+		}
+		helpers := packageFuncs(parsed)
+
+		for _, file := range files {
+			for _, fn := range testFuncs(parsed[file]) {
+				if !asserts(fn, helpers, make(map[string]bool)) {
+					t.Errorf(
+						"%s: %s: %s asserts nothing; a test for %s.go must call an Expect* or t.Error/t.Fatal",
+						pkg.name,
+						file,
+						fn.Name.Name,
+						stem(file),
+					)
+				}
+			}
+		}
+	}
+}
+
+// packageFuncs indexes every plain (non-method) function declared across a set
+// package's test files by name, so a Test function that delegates its body to a
+// shared helper can be followed into it.
+func packageFuncs(files map[string]*ast.File) map[string]*ast.FuncDecl {
+	funcs := make(map[string]*ast.FuncDecl)
+	for _, f := range files {
+		for _, decl := range f.Decls {
+			fn, ok := decl.(*ast.FuncDecl)
+			if ok && fn.Recv == nil && fn.Body != nil {
+				funcs[fn.Name.Name] = fn
+			}
+		}
+	}
+	return funcs
+}
+
+// testFuncs returns f's top-level `func TestX(t *testing.T)` declarations.
+func testFuncs(f *ast.File) []*ast.FuncDecl {
+	var fns []*ast.FuncDecl
+	for _, decl := range f.Decls {
+		fn, ok := decl.(*ast.FuncDecl)
+		if !ok || fn.Recv != nil || fn.Body == nil {
+			continue
+		}
+		if strings.HasPrefix(fn.Name.Name, "Test") {
+			fns = append(fns, fn)
+		}
+	}
+	return fns
+}
+
+// asserts reports whether fn's body reaches an assertion: a call to a method
+// named Expect* (the cardtest harness's fluent assertions) or to testing.T's
+// Error/Errorf/Fatal/Fatalf. It looks inside t.Run subtests, and follows a call
+// to a package-local helper (the Master of N cycle's tests are one line each,
+// delegating to a shared testMaster helper). visited breaks recursion.
+func asserts(fn *ast.FuncDecl, helpers map[string]*ast.FuncDecl, visited map[string]bool) bool {
+	if visited[fn.Name.Name] {
+		return false
+	}
+	visited[fn.Name.Name] = true
+
+	found := false
+	ast.Inspect(fn.Body, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return !found
+		}
+		switch fun := call.Fun.(type) {
+		case *ast.SelectorExpr:
+			switch name := fun.Sel.Name; {
+			case strings.HasPrefix(name, "Expect"),
+				name == "Error", name == "Errorf", name == "Fatal", name == "Fatalf":
+				found = true
+			}
+		case *ast.Ident:
+			if helper, ok := helpers[fun.Name]; ok && asserts(helper, helpers, visited) {
+				found = true
+			}
+		}
+		return !found
+	})
+	return found
+}
+
 // stem returns a filename's shared base name, dropping its ".go" or "_test.go"
 // suffix so a card file and its test file map to the same key.
 func stem(file string) string {
