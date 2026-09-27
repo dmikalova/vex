@@ -42,8 +42,8 @@ func wasmBuild(out string) error {
 
 // Web serves the wasm client with live rebuilds. It listens on
 // http://localhost:8000 and rebuilds and restarts on any Go or CSS change so edits
-// show up live. It also serves the Style gallery at /style, which no other
-// deployment does. Each restart
+// show up live. It also serves the Style gallery at /style and the browser
+// scenarios at /ui-test, which no other deployment does. Each restart
 // bumps go-app's version; the browser polls for it (see cmd/web devReload),
 // reloads, and OnMount resumes the in-progress match. No external watcher needed;
 // press Ctrl-C to stop.
@@ -56,6 +56,11 @@ func Web() error {
 	// The dev server is the one place the Style gallery (/style) is meant to
 	// exist, so this is where it is switched on; the served binary inherits it.
 	if err := os.Setenv("VEX_STYLE", "1"); err != nil {
+		return err
+	}
+	// The browser scenarios (/ui-test) are switched on here for the same reason:
+	// the dev server is where they are driven, and no other deployment offers them.
+	if err := os.Setenv("VEX_UITEST", "1"); err != nil {
 		return err
 	}
 	return hotreload.Serve(hotreload.Config{

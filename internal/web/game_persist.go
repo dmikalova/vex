@@ -55,7 +55,7 @@ const storageFullNotice = "This match is no longer being saved — browser stora
 // usually enough room for the new one. Only a second failure raises the notice.
 func (g *game) writeSnapshot(ctx app.Context, snap snapshot) {
 	store := ctx.LocalStorage()
-	if err := store.Set(persistKey, snap); err == nil {
+	if err := store.Set(g.matchKey(), snap); err == nil {
 		g.clearStorageNotice()
 		return
 	}
@@ -63,8 +63,8 @@ func (g *game) writeSnapshot(ctx app.Context, snap snapshot) {
 	// the slot is the one this write replaces, so neither is worth keeping over the
 	// match itself.
 	store.Del(styleScrollKey)
-	store.Del(persistKey)
-	if err := store.Set(persistKey, snap); err != nil {
+	store.Del(g.matchKey())
+	if err := store.Set(g.matchKey(), snap); err != nil {
 		g.setNotice(storageFullNotice)
 		return
 	}
@@ -116,20 +116,20 @@ func (g *game) restoreUI(ui savedUI) {
 // older card pool, a since-changed action) is caught and started over.
 func (g *game) resume(ctx app.Context) (ok bool) {
 	store := ctx.LocalStorage()
-	if !store.Contains(persistKey) {
+	if !store.Contains(g.matchKey()) {
 		return false
 	}
 	var snap snapshot
-	if err := store.Get(persistKey, &snap); err != nil ||
+	if err := store.Get(g.matchKey(), &snap); err != nil ||
 		snap.Version != snapshotVersion || snap.Seed == 0 {
-		store.Del(persistKey)
+		store.Del(g.matchKey())
 		return false
 	}
 	// Replaying a log against a different engine/card pool can panic on an
 	// out-of-range id; recover and fall back to a fresh deal.
 	defer func() {
 		if recover() != nil {
-			store.Del(persistKey)
+			store.Del(g.matchKey())
 			ok = false
 		}
 	}()
@@ -139,7 +139,7 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 	g.inputs = snap.Inputs
 	g.recomputeRootMarks()
 	if !g.rebuildFromLog() {
-		store.Del(persistKey)
+		store.Del(g.matchKey())
 		return false
 	}
 	g.redoLog = nil
@@ -157,8 +157,16 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 }
 
 // newMatch seeds a new game, wires the shared human chooser to both players, and
-// deals random decks. Both sides are driven by the same person (hotseat).
-func (g *game) newMatch() { g.dealMatch(time.Now().UnixNano()) }
+// deals random decks. Both sides are driven by the same person (hotseat). An
+// injected fixedSeed replaces the clock, so a ui-test scenario deals the same
+// cards on every pass.
+func (g *game) newMatch() {
+	if g.fixedSeed != 0 {
+		g.dealMatch(g.fixedSeed)
+		return
+	}
+	g.dealMatch(time.Now().UnixNano())
+}
 
 // dealMatch deals a match from a given seed, which fixes the decks and every card
 // id in them.

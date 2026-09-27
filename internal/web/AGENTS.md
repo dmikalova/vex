@@ -43,6 +43,10 @@ grouped by area, `view_*.go` holds rendering grouped by screen region.
 - `icons.go` — SVG asset lookup (`icon`, `houseIconName`, `typeIconName`, …) and
   the injected `#icon-outline` filter.
 - `palette.go` — house → CSS class mapping only. Colours live in `web/app.css`.
+- `uitest.go` — the `/ui-test` scenario host: the run loop, the step probe over the
+  real DOM, and the route switch.
+- `uitest_scenarios.go` — the scenarios themselves, as data. A new journey is an
+  entry here, not a new page.
 
 Styles live in `web/app.css`; assets are `web/assets/<stem>.svg`, referenced by
 stem through `icon(name, extra…)` and served from `/web/assets/`. The dev server
@@ -257,6 +261,48 @@ makes the rest of the client testable here at all — keep it that way.
 
 Coverage here is **deliberately ungated** (absent from `ci.CoverGates` in
 `magefiles/build.go`), because the last stretch is the DOM-bound code above.
+
+## Browser scenarios are journeys, not widget assertions
+
+`/ui-test` (`uitest.go`, `uitest_scenarios.go`) runs the client in a real browser
+against the real DOM: a scenario is data — a name, a slug, a fixed seed, and
+ordered steps, each a description plus a do/check — and one definition serves both
+the page a human watches and the driver that reads its status element.
+
+A scenario is a **journey**: several steps ending in a state change a player would
+describe. "Deal, mulligan, choose a house, play a creature, answer its prompt,
+undo it" is a scenario. **"The reap button is disabled when the creature is
+exhausted" is not** — a single-widget assertion stays a host test in
+`client_test.go`. The host tests are the fast fine-grained gate and stay the place
+a behaviour is pinned; the browser suite is the coarse proof that the whole thing
+is wired up in a browser, and every scenario added there costs seconds of wall
+clock, so keep them few and keep them whole journeys.
+
+Four rules the surface is built on:
+
+- **A step that cannot find its target fails saying so.** `uiPage.find`/`click`
+  name the thing they were looking for ("no playable creature in hand"), because
+  off-browser — and on a board that never rendered — every selector comes back
+  empty, and a scenario that treats "not there" as "nothing to do" passes without
+  testing anything.
+- **Select by hook, never by label.** Scenarios click `data-act` values
+  (`actSel(actEndTurn)`, `houseActID`, `optionActID`) and card element ids
+  (`boardCardID`, `handCardID`). A control a scenario needs to reach gets a hook
+  in `view_card.go`'s `act*` block, beside its neighbours.
+- **Each pass resets.** The run clears the ui-test storage namespace and re-deals
+  from the scenario's seed before step 1, because a scenario that plays a creature
+  cannot run again on the board it left behind.
+- **The run is isolated from a real match.** The client the scenario drives gets an
+  injected `storeKey` (`uiTestStoreKey`) and `fixedSeed`; everything persistence
+  touches goes through `matchKey()`, so a run in a browser cannot overwrite a
+  playtester's open game. Both fields are empty/zero in normal play — do not reach
+  around them with a second fixed key.
+
+The routes are gated on `VEX_UITEST` (`UITestEnabled`, `UITestRoutes`) and
+registered on both sides of the build, exactly as `/style` is gated on
+`VEX_STYLE`, and for the same reason: go-app routes on the client, so a build tag
+would drop the scenarios from the bundle and they would rot uncompiled
+(ADR 0014). `mage web` sets both.
 
 ## CSS conventions (`web/app.css`)
 

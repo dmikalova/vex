@@ -4590,3 +4590,88 @@ body:has(.sel-cursor--on) .card-tab {
   border-color: var(--p0);
   color: var(--p0);
 }
+
+/* ---- browser scenarios (/ui-test) ----
+   The scenario panel beside the live client. Both halves are the height of the
+   viewport because the client is (.app is 100dvh), so the panel scrolls its own
+   steps rather than pushing the board off the page. */
+.ui-test {
+  display: flex;
+  height: 100vh; /* fallback for browsers without dvh */
+  height: 100dvh;
+  background: var(--bg);
+  color: var(--ink);
+}
+.ui-test-panel {
+  flex: 0 0 20rem;
+  overflow-y: auto;
+  padding: var(--shell-pad);
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 0.875rem;
+}
+.ui-test--index .ui-test-panel {
+  flex: 1 1 auto;
+  border-right: 0;
+}
+.ui-test-client {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+.ui-test-title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+.ui-test-back,
+.ui-test-list a {
+  color: var(--p0);
+}
+.ui-test-list {
+  padding-left: 1rem;
+  line-height: 1.8;
+}
+.ui-test-status {
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+  background: var(--surface-raised);
+  color: var(--ink-soft);
+}
+.ui-test-status--passed {
+  border-color: var(--p0);
+  color: var(--p0);
+}
+.ui-test-status--failed {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.ui-test-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ui-test-step {
+  display: grid;
+  grid-template-columns: 1rem 1fr;
+  gap: 0.35rem;
+  padding: 0.3rem 0;
+  border-top: 1px solid var(--line);
+  color: var(--ink-faint);
+}
+.ui-test-step--running,
+.ui-test-step--passed {
+  color: var(--ink-soft);
+}
+.ui-test-step--passed .ui-test-mark {
+  color: var(--p0);
+}
+.ui-test-step--failed {
+  color: var(--danger);
+}
+.ui-test-why {
+  grid-column: 2;
+  color: var(--ink-quiet);
+  font-size: 0.8rem;
+}

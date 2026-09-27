@@ -35,6 +35,10 @@ func main() {
 		app.Route("/style", web.NewStyle)
 		app.Route("/clusters", web.NewClusters)
 	}
+	// The browser-scenario page, switched on the same way and for the same reason
+	// as the style gallery. It registers its own two routes (the index and the
+	// per-scenario path) on whichever side of the build is running.
+	web.UITestRoutes()
 	app.RunWhenOnBrowser()
 
 	version := resourceVersion()
@@ -99,6 +103,8 @@ func main() {
 			// Passed down so the wasm client registers the same routes the server
 			// serves; without it the gallery's page would be served and render blank.
 			styleEnv: os.Getenv(styleEnv),
+			// The same bridge for the browser-scenario page's switch.
+			web.UITestEnv: os.Getenv(web.UITestEnv),
 		},
 	}))
 
