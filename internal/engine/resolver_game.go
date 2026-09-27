@@ -997,15 +997,6 @@ func (g *Game) chooseOption(player int, src PromptSource, prompt string, options
 	return 0
 }
 
-// sourceName returns the name of a source card for prompt attribution, or "" when
-// the id is not a registered card (e.g. an unset source in a unit test).
-func (g *Game) sourceName(source LocalID) string {
-	if int(source) < len(g.cat.defs) {
-		return g.cat.defs[source].Name
-	}
-	return ""
-}
-
 // promptSource flattens a source LocalID into the identity a Chooser is handed.
 // It is the single place a bare id becomes a PromptSource, and it treats an
 // unregistered id (an unset source in a unit test) as no source at all — the same

@@ -90,7 +90,8 @@ func (g *game) chooserPrompt() string {
 
 // promptSource identifies the card driving the prompt on screen, or the zero
 // value for a prompt no card is attributable to (an ordering step, a trigger
-// window).
+// window). It is the engine's prompt identity rather than a name, so the source
+// is the card itself and not a string that happens to match one.
 func (g *game) promptSource() engine.PromptSource {
 	req, _ := g.prompt()
 	return req.Source

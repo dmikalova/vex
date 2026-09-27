@@ -296,7 +296,7 @@ func (g *Game) renderPrompt(src PromptSource, prompt string) string {
 	if !src.HasCard {
 		return prompt
 	}
-	return strings.ReplaceAll(prompt, SelfName, g.sourceName(src.Card))
+	return strings.ReplaceAll(prompt, SelfName, g.Name(src.Card))
 }
 
 // pickCreature resolves a "choose one creature" prompt. When only one candidate
