@@ -347,3 +347,18 @@ Ready/Stunned/At(zone)`(chainable) and`h.P1.ExpectAmber/ExpectKeys`. Reach
     count or the comparison is caught. Test the cases that exist for the card: a
     threshold of `n` wants both sides of the boundary (n-1, n, n+1), while a plain
     "deal N per X" wants the empty (0) and one (1) cases.
+- **What the gate enforces automatically.** Three checks in `testfiles_test.go`
+  hold the floor under the prose rules above: `TestEveryCardHasATest` (a card
+  file has a sibling test file), `TestNoOrphanedTestFiles` (the converse), and
+  `TestEveryCardTestAsserts` (every `func Test…` reaches an assertion — an
+  `Expect*` call on the harness or a raw `t.Error`/`t.Errorf`/`t.Fatal`/
+  `t.Fatalf`, following `t.Run` subtests and package-local helpers such as the
+  Master of N cycle's `testMaster`). There is no allowlist for any of them.
+- **Branch coverage is not automated on purpose — do not propose a check for
+  it.** The "test a conditional on both sides" rule above is enforced by review,
+  not by the gate. Every automatable proxy was considered and rejected: subtest
+  count and effect-node shape are fuzzy, and both fail roughly 108 existing
+  tests that do cover both branches inside a single test function. A rule that
+  is wrong a tenth of the time earns an allowlist, and an allowlist is not a
+  ratchet. The real answer is the planned holistic state-exploration harness,
+  which explores the branches itself rather than guessing at them from the AST.
