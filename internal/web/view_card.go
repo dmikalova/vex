@@ -36,6 +36,7 @@ func playerNameCls(player int) string { return "player-name--p" + strconv.Itoa(p
 // literal beside its own definition, so every act value still has exactly one
 // place it is spelled.
 const (
+	actMenu             = "menu"
 	actEndTurn          = "end-turn"
 	actUndo             = "undo"
 	actRedo             = "redo"

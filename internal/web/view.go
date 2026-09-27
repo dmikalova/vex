@@ -132,7 +132,7 @@ func (g *game) brandBar() app.UI {
 func (g *game) brandMenu() app.UI {
 	return app.Div().Class("menu").Body(
 		app.Button().Class(cx("btn-nav", "btn-icon", ifCls(g.menuOpen, "btn-nav-on"))).
-			Title("Menu").Text("☰").OnClick(g.toggleMenu),
+			Title("Menu").Text("☰").DataSet("act", actMenu).OnClick(g.toggleMenu),
 		app.If(g.menuOpen, func() app.UI {
 			items := []app.UI{
 				menuItem("undo", actUndo, "Undo", g.undoMenu, !g.canUndo(), false),

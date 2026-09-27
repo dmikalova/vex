@@ -253,6 +253,58 @@ func TestScenarioSelectorsAreWrittenFromTheActHooks(t *testing.T) {
 	}
 }
 
+// A staged scenario finds its card by the name every face carries and the zone
+// its element id names, so this pins both halves against the markup the client
+// actually draws: a card added to hand is matched by handCardSel and not by
+// boardCardSel, and once it is played the two swap over. Neither half is
+// load-bearing anywhere else — a face would draw just as well with no data-card —
+// so without this the only thing holding them would be the browser suite, which
+// runs outside the gate.
+func TestAStagedCardIsFoundByItsNameAndItsZone(t *testing.T) {
+	c := newClient(t)
+	c.g.g.SetManual(true)
+	id := c.deal(stagedCreature)
+	c.startTurn()
+	c.settle()
+
+	inHand, onBoard := handCardSel(stagedCreature), boardCardSel(stagedCreature)
+	hand := regexp.MustCompile(`<div [^>]*id="` + handCardID(id) + `"[^>]*>`)
+	board := regexp.MustCompile(`<div [^>]*id="` + boardCardID(id) + `"[^>]*>`)
+	named := `data-card="` + stagedCreature + `"`
+
+	markup := app.HTMLString(c.g.Render())
+	face := hand.FindString(markup)
+	if face == "" {
+		t.Fatalf("%s was not drawn in the hand row (%s)", stagedCreature, inHand)
+	}
+	if !strings.Contains(face, named) {
+		t.Errorf("the hand face carries no name hook for %s to be found by: %s", inHand, face)
+	}
+	if board.MatchString(markup) {
+		t.Errorf("%s is drawn on the board before it was played (%s)", stagedCreature, onBoard)
+	}
+
+	c.playFromHand(id)
+	c.settle()
+	markup = app.HTMLString(c.g.Render())
+	face = board.FindString(markup)
+	if face == "" {
+		t.Fatalf("%s was not drawn on the board after being played (%s)", stagedCreature, onBoard)
+	}
+	if !strings.Contains(face, named) {
+		t.Errorf("the board face carries no name hook for %s to be found by: %s", onBoard, face)
+	}
+	if hand.MatchString(markup) {
+		t.Errorf("%s is still drawn in the hand row after being played (%s)",
+			stagedCreature, inHand)
+	}
+	// The manual preamble reaches manual mode through the menu, which is the one
+	// control a scenario clicks that is not in the action bar.
+	if !strings.Contains(markup, `data-act="`+actMenu+`"`) {
+		t.Errorf("the brand bar does not carry the %q hook the preamble opens the menu by", actMenu)
+	}
+}
+
 // Off-browser every DOM read comes back empty, and the probe reports that as "not
 // there" rather than panicking on a page that does not exist — which is what lets
 // the host tests above drive the host at all.
@@ -269,5 +321,65 @@ func TestThePageProbeReadsAnAbsentPageAsEmpty(t *testing.T) {
 	}
 	if err := p.absent("a Keep button", keepSel); err != nil {
 		t.Errorf("absent on an empty page = %v, want nil", err)
+	}
+	if err := p.fill("the picker's search box", pickerInputSel, "Flaxia"); err == nil {
+		t.Error("fill reported typing into a box on a page that does not exist")
+	}
+	// The two page-lifetime steps act on the host behind the page, so a probe with
+	// none says so rather than panicking on a nil one.
+	if err := p.dropClient(); err == nil {
+		t.Error("dropClient reported closing a match with no host to close it in")
+	}
+	if err := p.mountClient(); err == nil {
+		t.Error("mountClient reported reopening a match with no host to reopen it in")
+	}
+}
+
+// Closing the page and opening it again is what the reload journey is written
+// from, so the two halves have to do what they say: the client leaves the tree
+// entirely (a replaced *game would be patched in place by go-app and keep the old
+// one's state), and reopening builds a new one over the same storage slot rather
+// than handing back the one that was closed.
+func TestClosingThePageDropsTheClientAndReopeningBuildsANewOne(t *testing.T) {
+	u, _ := newUITestHost(t, uiTestPath+"/"+uiScenarios[0].Slug+"?once=1")
+	before := u.client
+	if before == nil {
+		t.Fatal("the host mounted no client to close")
+	}
+	p := &uiPage{host: u}
+	if err := p.dropClient(); err != nil {
+		t.Fatalf("dropClient: %v", err)
+	}
+	if u.client != nil {
+		t.Error("the client is still in the tree after the page was closed")
+	}
+	// The step is retried until its check holds, so closing twice must be harmless.
+	if err := p.dropClient(); err != nil {
+		t.Fatalf("dropClient a second time: %v", err)
+	}
+	if err := p.mountClient(); err != nil {
+		t.Fatalf("mountClient: %v", err)
+	}
+	switch u.client {
+	case nil:
+		t.Fatal("reopening the page left no client")
+	case before:
+		t.Error("reopening the page handed back the closed client, so nothing resumed")
+	}
+	if u.client.storeKey != uiTestStoreKey {
+		t.Errorf("the reopened client saves into %q, want the scenario slot %q",
+			u.client.storeKey, uiTestStoreKey)
+	}
+	if u.client.fixedSeed != u.scenario.Seed {
+		t.Errorf("the reopened client's seed is %d, want the scenario's %d",
+			u.client.fixedSeed, u.scenario.Seed)
+	}
+	// Reopening is retried too, and must not build a second client over the first.
+	reopened := u.client
+	if err := p.mountClient(); err != nil {
+		t.Fatalf("mountClient a second time: %v", err)
+	}
+	if u.client != reopened {
+		t.Error("reopening twice replaced the client that had already resumed")
 	}
 }

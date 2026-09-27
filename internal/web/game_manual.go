@@ -22,7 +22,19 @@ func (g *game) toggleManual(ctx app.Context, _ app.Event) {
 	if g.busy && !g.choosing && !g.choosingOption {
 		return
 	}
-	g.g.SetManual(!g.g.Manual())
+	on := !g.g.Manual()
+	// The toggle is a recorded root like every other manual edit. Only the command
+	// log is persisted (ADR 0039), so a mode left out of it is a mode a reload does
+	// not come back in — and every manual edit made under it then replays against a
+	// game that is enforcing the rules again, which fails the replay and drops the
+	// match. Pinned by the reload-resume browser scenario, which stages an
+	// off-house card and plays it before reloading.
+	g.beginAction()
+	g.record(input{
+		Kind: inSetManual,
+		OK:   on,
+	})
+	g.g.SetManual(on)
 	g.save(ctx)
 }
 

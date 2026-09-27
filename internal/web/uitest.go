@@ -188,14 +188,20 @@ func (u *uiTest) start(ctx app.Context, pageURL *url.URL) {
 		u.failure = fmt.Sprintf("no scenario has the slug %q", u.slug)
 		return
 	}
-	// The client deals itself from the scenario's seed on its own mount (it has an
-	// injected seed, so it skips the set picker), into the scratch storage slot so
-	// the run cannot touch a real match.
+	u.client = u.newClient()
+	u.beginPass(ctx)
+}
+
+// newClient builds the client a scenario drives. It deals itself from the
+// scenario's seed on its own mount (it has an injected seed, so it skips the set
+// picker), into the scratch storage slot so the run cannot touch a real match —
+// and, on a second one built mid-run, resumes the match the first one saved
+// there, which is how the reload journey gets its page load.
+func (u *uiTest) newClient() *game {
 	client := newGame()
 	client.storeKey = uiTestStoreKey
 	client.fixedSeed = u.scenario.Seed
-	u.client = client
-	u.beginPass(ctx)
+	return client
 }
 
 // beginPass resets the board and starts the scenario at its first step. The reset
@@ -209,7 +215,13 @@ func (u *uiTest) beginPass(ctx app.Context) {
 	u.state = uiTestRunning
 	u.failure = ""
 	ctx.LocalStorage().Del(uiTestStoreKey)
-	if u.client != nil && u.client.dispatch != nil {
+	// A scenario that closed the match (the reload journey) may have left the pass
+	// with no client at all, so the next pass builds one. It mounts into a cleared
+	// storage slot, so it deals the scenario's seed rather than resuming.
+	if u.client == nil {
+		u.client = u.newClient()
+	}
+	if u.client.dispatch != nil {
 		u.client.dealMatch(u.scenario.Seed)
 	}
 	// On the first pass the client has not mounted yet — it mounts on the render
@@ -239,7 +251,7 @@ func (u *uiTest) attempt(ctx app.Context, gen int) {
 		return
 	}
 	st := u.scenario.Steps[u.step]
-	err := st.Run(&uiPage{})
+	err := st.Run(&uiPage{host: u})
 	switch {
 	case err == nil:
 		u.results = append(u.results, uiStepResult{Desc: st.Desc})
@@ -285,7 +297,12 @@ func (u *uiTest) Render() app.UI {
 	}
 	return app.Div().Class("ui-test").Body(
 		app.Div().Class("ui-test-panel").Body(u.panelView()),
-		app.Div().Class("ui-test-client").Body(u.client),
+		// The client is drawn conditionally so dropping it really takes it out of
+		// the tree: go-app patches a component of the same type in place, so a
+		// replaced *game would keep the old one's mounted state.
+		app.Div().Class("ui-test-client").Body(
+			app.If(u.client != nil, func() app.UI { return u.client }),
+		),
 	)
 }
 
@@ -387,7 +404,13 @@ func (u *uiTest) statusText() string {
 // Off-browser every read comes back empty, which is what a host test sees: a step
 // then fails naming the target it could not find, which is the right answer for
 // "there is no page here" and the reason a scenario can never silently pass.
-type uiPage struct{}
+//
+// host is the scenario host behind the page, which the two page-lifetime steps
+// (dropClient/mountClient) act on: tearing the client down and standing a fresh
+// one up is the one thing no click can do, because a real browser reload would
+// restart the run rather than the match. It is nil in a probe built by hand,
+// which those two steps report rather than panic on.
+type uiPage struct{ host *uiTest }
 
 // actSel matches the control carrying a data-act hook, which is how a scenario
 // says what it is clicking rather than which words are on it.
@@ -424,6 +447,45 @@ func (p *uiPage) click(what, sel string) error {
 		return fmt.Errorf("%s is disabled (%s)", what, sel)
 	}
 	el.Call("click")
+	return nil
+}
+
+// fill types text into a text box: it sets the value and fires the input event
+// the client listens for, which is what a real keystroke does. It is how a
+// scenario searches the manual card picker for the card it means to add.
+func (p *uiPage) fill(what, sel, text string) error {
+	el, err := p.find(what, sel)
+	if err != nil {
+		return err
+	}
+	el.Set("value", text)
+	el.Call("dispatchEvent", app.Window().Get("Event").New("input"))
+	return nil
+}
+
+// dropClient tears the match down the way closing the page does: the client
+// component leaves the tree, so its state goes with it and only what it wrote to
+// local storage is left. It is idempotent, because a step is retried until its
+// check holds.
+func (p *uiPage) dropClient() error {
+	if p.host == nil {
+		return fmt.Errorf("there is no scenario host to close the match in")
+	}
+	p.host.client = nil
+	return nil
+}
+
+// mountClient stands a fresh client up over the same storage slot, the way
+// loading the page again does: a new component resumes the saved match from the
+// command log rather than being handed the old one's state. It is idempotent, so
+// the step that checks the match came back does not build a second client.
+func (p *uiPage) mountClient() error {
+	if p.host == nil {
+		return fmt.Errorf("there is no scenario host to reopen the match in")
+	}
+	if p.host.client == nil {
+		p.host.client = p.host.newClient()
+	}
 	return nil
 }
 
