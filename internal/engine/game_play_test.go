@@ -667,3 +667,37 @@ func TestPutIntoPlayRefusesTypesWithNoPlace(t *testing.T) {
 		})
 	}
 }
+
+// TestTollOwedCountsUpgrades pins that a toll an upgrade imposes is charged, the
+// same as one an artifact imposes. A toll is a standing rule a card in play lays
+// on what the opponent may do, so it applies from where the upgrade sits and
+// needs no host to speak for it
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). No implemented
+// upgrade carries a toll today, so the rule is pinned with a blueprint.
+func TestTollOwedCountsUpgrades(t *testing.T) {
+	g := started(t)
+	host := g.AddToBattleline(testCreature("Gatekeeper", 3), 1)
+	toll := g.Register(
+		NewCard("Tollbooth", Untamed, Upgrade, Common,
+			WithRestrictions(Restrictions{Toll: Toll{
+				Action: TollPlayArtifact,
+				Amount: 1,
+			}})),
+		1,
+	)
+	g.AttachUpgrade(host, toll)
+	g.SetAember(0, 3)
+
+	if owed := g.tollOwed(0, TollPlayArtifact); owed != 1 {
+		t.Errorf("tollOwed = %d, want 1 from the upgrade", owed)
+	}
+	if err := g.chargeToll(0, TollPlayArtifact); err != nil {
+		t.Fatalf("chargeToll: %v", err)
+	}
+	if got := g.Aember(0); got != 2 {
+		t.Errorf("payer holds %d Æmber, want 2 after paying the upgrade's toll", got)
+	}
+	if got := g.Aember(1); got != 1 {
+		t.Errorf("payee holds %d Æmber, want 1 after collecting the upgrade's toll", got)
+	}
+}

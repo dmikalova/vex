@@ -368,3 +368,22 @@ func TestForgeKeyOrdersMultipleReactions(t *testing.T) {
 		)
 	}
 }
+
+// TestVaultsCountsUpgrades pins that an upgrade carrying SpendableAember offers
+// its Æmber toward a key. A spend-as-pool grant is a standing rule a card in play
+// imposes, so it applies from where the upgrade sits
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). No implemented
+// upgrade carries the grant today, so the rule is pinned with a blueprint.
+func TestVaultsCountsUpgrades(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	host := g.AddToBattleline(testCreature("Host", 3), 0)
+
+	if got := g.vaults(0); len(got) != 0 {
+		t.Fatalf("vaults(0) = %v, want none before the upgrade attaches", got)
+	}
+	up := attachUpgrade(g, host, NewCard("Coffer", Untamed, Upgrade, Common, WithSpendableAember()))
+
+	if got := g.vaults(0); len(got) != 1 || got[0] != up {
+		t.Errorf("vaults(0) = %v, want just the upgrade %v", got, up)
+	}
+}

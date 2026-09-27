@@ -264,6 +264,12 @@ func (g *Game) resolvePostFight(
 // the "after a neighbor fights" reactions on the attacker's flankmates. Every entry
 // carries its own actor and "it" so the whole set orders as one window while each
 // bystander reaction resolves for its owner.
+//
+// Every board scan here is row-only. This is a reaction gather, and upgrade text
+// reaches a fight through its host: abilityWindow.add folds in
+// upgradeGrantedTriggers, so walking upgrades as well would gather the same
+// printed text twice by two routes
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) fightReactions(
 	attacker, defender LocalID,
 	attackerSide, defenderSide int,
@@ -646,13 +652,19 @@ func (g *Game) dealDamage(controller int, targets ...DamageTarget) {
 	}
 }
 
-// armorPreventWatchers lists the in-play creatures carrying an After This Creature
+// armorPreventWatchers lists the cards in play carrying an After This Creature
 // Prevents Damage With Its Armor ability, so dealDamage can skip its bookkeeping
-// entirely when none are present.
+// entirely when none are present. It scans every card in play, upgrades included,
+// because an armor watcher is a standing rule a card in play imposes on how damage
+// lands (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). The text an
+// upgrade grants its host still reaches the window through the host, since
+// triggeredBy folds in upgradeGrantedTriggers; the direct walk adds only an
+// upgrade printing the ability in its own right, and such a card spends no armor
+// of its own, so emitArmorPrevented scales it to nothing.
 func (g *Game) armorPreventWatchers() []LocalID {
 	var watchers []LocalID
 	for player := range 2 {
-		for _, id := range g.creaturesAndArtifacts(player) {
+		for _, id := range g.cardsInPlay(player) {
 			if len(g.triggeredBy(id, TriggerAfterArmorPrevents)) > 0 {
 				watchers = append(watchers, id)
 			}
@@ -700,9 +712,16 @@ func (g *Game) emitArmorPrevented(watchers []LocalID, armorBefore map[LocalID]in
 // instead (Shadow Self shields its non-Specter neighbors). A redirect never
 // chains — the shield's own damage is never redirected again — so two shields
 // cannot bounce damage between them.
+//
+// It scans every card in play, upgrades included: a redirect is a standing rule a
+// card in play imposes on how damage lands, so it applies from where the upgrade
+// sits (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). Being a
+// first-match scan, widening only inserts upgrades and leaves the relative order
+// of row cards alone, so today's answer is unchanged unless an upgrade genuinely
+// carries a TakesDamageFor (TestDamageRedirectCountsUpgradesWithoutReordering).
 func (g *Game) damageRedirect(id LocalID) LocalID {
 	for player := range 2 {
-		for _, shield := range g.creaturesAndArtifacts(player) {
+		for _, shield := range g.cardsInPlay(player) {
 			t := g.cat.def(shield).TakesDamageFor
 			if shield == id || !t.valid() {
 				continue
@@ -722,13 +741,19 @@ func (g *Game) damageRedirect(id LocalID) LocalID {
 // nothing in the common case. The extra instances are computed from the original
 // batch only, so two such creatures standing side by side do not cascade splash
 // between one another.
+//
+// The sharer scan reads the battlelines, not every card in play. It is selecting
+// the creatures the splash lands on, not scanning for a card that imposes the
+// splash, so it names its type: only a creature has battleline neighbors and takes
+// damage. Widening it could only add cards this scan must then drop
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) neighborFightSplash(targets []DamageTarget) []DamageTarget {
 	if g.State.FightersPlus == ([2]LocalID{}) {
 		return targets
 	}
 	var sharers []LocalID
 	for player := range 2 {
-		for _, id := range g.creaturesAndArtifacts(player) {
+		for _, id := range g.State.Battleline[player].slice() {
 			if g.cat.def(id).AlsoTakesNeighborFightDamage {
 				sharers = append(sharers, id)
 			}

@@ -351,3 +351,22 @@ func TestCannotUseThisTurnBar(t *testing.T) {
 		t.Error("the this-turn use bar should lift at the ready phase")
 	}
 }
+
+// TestControlsHouseInPlayCountsUpgrades pins that an upgrade's house counts
+// toward a Controlled off-house permit's "you control a card of that house"
+// requirement. An upgrade is a card in play, so it answers a presence read from
+// where it sits (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+func TestControlsHouseInPlayCountsUpgrades(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	host := g.AddToBattleline(testCreature("Host", 3), 0)
+
+	if g.controlsHouseInPlay(0, Untamed) {
+		t.Fatal("no Untamed card is in play yet")
+	}
+	up := g.Register(NewCard("Boon", Untamed, Upgrade, Common), 0)
+	g.AttachUpgrade(host, up)
+
+	if !g.controlsHouseInPlay(0, Untamed) {
+		t.Error("an Untamed upgrade in play should satisfy the house presence read")
+	}
+}

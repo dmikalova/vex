@@ -67,7 +67,7 @@ func (g *Game) ResolveBonusIconsOn(player int, id LocalID) {
 // resolving the bonus icons on cards they play (Master of the Grey).
 func (g *Game) cannotResolveBonusIcons(player int) bool {
 	for owner := range 2 {
-		for _, id := range g.creaturesAndArtifacts(owner) {
+		for _, id := range g.cardsInPlay(owner) {
 			switch g.cat.def(id).Restricts.BonusIcons {
 			case Controller:
 				if player == owner {
@@ -130,7 +130,7 @@ func (g *Game) bonusInsteadFor(
 	ic BonusIcon,
 	offered []LocalID,
 ) (BonusInstead, LocalID, bool) {
-	for _, id := range g.creaturesAndArtifacts(player) {
+	for _, id := range g.cardsInPlay(player) {
 		if slices.Contains(offered, id) {
 			continue
 		}
@@ -195,7 +195,10 @@ func (g *Game) resolveBonusIconEffect(player int, id LocalID, ic BonusIcon) {
 
 // afterBonusReaction fires a reaction window over the resolving player's own
 // in-play cards after one of their bonus icons resolves — Chronus (Draw) and
-// Maleficorn (Damage, with the creature it hit bound as "it").
+// Maleficorn (Damage, with the creature it hit bound as "it"). The scan is
+// row-only: it is a reaction window, and abilityWindow.add already reaches an
+// upgrade's text through its host
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) afterBonusReaction(player int, tr Trigger, it LocalID, hasIt bool) {
 	w := g.window()
 	for _, src := range g.creaturesAndArtifacts(player) {
@@ -252,7 +255,10 @@ func (g *Game) resolveBonusCapture(player int, id LocalID) {
 	})
 }
 
-// creaturesInPlay lists a player's in-play creatures.
+// creaturesInPlay lists a player's in-play creatures. It scans the rows only
+// because it names its type: an upgrade is never a creature, so widening the scan
+// could only add cards this filter drops
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) creaturesInPlay(player int) []LocalID {
 	var out []LocalID
 	for _, c := range g.creaturesAndArtifacts(player) {

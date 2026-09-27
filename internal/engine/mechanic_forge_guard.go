@@ -6,6 +6,12 @@ package engine
 // forge. The window runs before any Æmber leaves the pool, so a cancelled forge
 // costs the forger nothing. The veto is a transient flag CancelForge sets and this
 // reads and clears, mirroring FightCancelled.
+//
+// The scan is row-only. It gathers a trigger window rather than reading a
+// standing rule, and abilityWindow.add already reaches an upgrade's text through
+// its host (upgradeGrantedTriggers), so walking upgrades here as well would fire
+// the same printed text twice by two routes
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) beforeForgePrevented(forger int) bool {
 	guard := 1 - forger
 	w := g.window()
