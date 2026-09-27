@@ -27,6 +27,16 @@ const (
 // Chooser makes target decisions for a player. The engine calls it whenever an
 // effect must pick a creature. Implementations must be deterministic so games can
 // be reproduced from a seed.
+//
+// Every asking capability leads with a PromptSource, which names the asking card
+// by LocalID. A prompt identifies its source by identity, never by name: a name
+// cannot tell two copies of one card apart, so a client that matches on it
+// renders the wrong copy's live state — the other copy's house, Maverick mark, or
+// damage. Do not "simplify" the source back to a string;
+// TestPromptSourceReadsTheAskingCopysHouse (internal/web/view_controls_test.go)
+// pins it with two copies in play. The name is deliberately not carried
+// alongside the id, because renderPrompt substitutes SelfName inside the engine
+// before a chooser is called (ADR 0045).
 type Chooser interface {
 	// ChooseCreature returns one id from candidates and true, or false if none.
 	// src identifies the card whose ability is asking (for prompt attribution), and
