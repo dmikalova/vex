@@ -6,15 +6,23 @@ import (
 	"github.com/dmikalova/vex/internal/engine"
 )
 
+// preview mirrors a selection badge onto the client the way a pending Request
+// carrying one does: the engine stamps the badge an effect previewed onto every
+// request its choose loop yields, and syncBadge is what reads it off.
+func (c *client) preview(badge engine.SelectionBadge) {
+	c.t.Helper()
+	c.g.syncBadge(engine.Request{Badge: badge}, true)
+	c.settle()
+}
+
 // A damage badge preview arms the badge, and picks accumulate the running damage
 // on each creature — a creature chosen twice sums its hits.
 func TestBadgePreviewAccumulatesDamage(t *testing.T) {
 	c := newClient(t)
-	c.g.chooser.PreviewBadge(engine.SelectionBadge{
+	c.preview(engine.SelectionBadge{
 		Icon:   engine.DamageIcon,
 		Amount: 3,
 	})
-	c.settle()
 	if c.g.selBadge != (engine.SelectionBadge{
 		Icon:   engine.DamageIcon,
 		Amount: 3,
@@ -40,8 +48,7 @@ func TestBadgePreviewAccumulatesDamage(t *testing.T) {
 // total — a numberless icon — rather than a running amount.
 func TestBadgePreviewWardIsNumberless(t *testing.T) {
 	c := newClient(t)
-	c.g.chooser.PreviewBadge(engine.SelectionBadge{Icon: engine.WardIcon})
-	c.settle()
+	c.preview(engine.SelectionBadge{Icon: engine.WardIcon})
 
 	c.g.recordBadge(3)
 	if total, ok := c.g.badgeTotals[3]; !ok || total != 0 {
@@ -56,20 +63,20 @@ func TestBadgePreviewWardIsNumberless(t *testing.T) {
 // preview once the animation has run.
 func TestBadgePreviewClears(t *testing.T) {
 	c := newClient(t)
-	c.g.chooser.PreviewBadge(engine.SelectionBadge{
+	c.preview(engine.SelectionBadge{
 		Icon:   engine.DamageIcon,
 		Amount: 2,
 	})
-	c.settle()
 	c.g.recordBadge(4)
 
-	c.g.chooser.PreviewBadge(engine.SelectionBadge{})
-	c.settle()
+	c.preview(engine.SelectionBadge{})
 	if !c.g.badgeClearing {
 		t.Fatal("ending a preview with badges should start the fade")
 	}
 
-	c.await("the badges to clear", func() bool {
+	// The fade is the one thing in the client that is still on a clock, so this is
+	// the one place a test waits rather than asserts.
+	c.awaitTimer("the badges to clear", 2*badgeFadeDur, func() bool {
 		return c.g.badgeTotals == nil && !c.g.badgeClearing
 	})
 	if c.g.selBadge.Icon != engine.NoStatusIcon {

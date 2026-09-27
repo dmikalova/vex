@@ -46,9 +46,9 @@ Validate prompt rendering by **totality, not fallback**, in three staged steps.
 
 **Step 1 — compile-time capability assertions (done).** Each chooser binds, with
 `var _ engine.Capability = (*chooser)(nil)`, to the capability interfaces it is
-intended to satisfy: `webChooser` to all seven, `replayChooser` to all but
-`BadgeChooser` (display-only, no recorded answer), `bridgeChooser` to the ones
-card tests reach, `FirstChooser` to only the base `Chooser`. This catches
+intended to satisfy: `suspendChooser` — the one the web client's session answers
+through — to all seven, `bridgeChooser` to the ones card tests reach,
+`FirstChooser` to only the base `Chooser`. This catches
 signature drift and accidental capability loss at compile time. It does **not**
 catch a brand-new capability interface, because nothing forces a new assertion to
 be written — that is step 2's job.

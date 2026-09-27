@@ -2,7 +2,6 @@ package web
 
 import (
 	"math/rand"
-	"slices"
 	"strconv"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
@@ -10,249 +9,210 @@ import (
 	"github.com/dmikalova/vex/internal/engine"
 )
 
-// This file bridges the engine's synchronous Chooser to the browser: a prompt
-// raised while an effect resolves parks that goroutine, the UI renders the
-// question, and the player's click sends the answer back.
+// This file is the prompt seam. A decision the engine needs is a Request the
+// session is SUSPENDED on (ADR 0040), so "is a prompt up, and what does it ask?"
+// is a read of session.Pending rather than state a background chooser pushed at
+// the client; and answering one is applying the Command that request accepts.
+// The readers come first, then the handlers a click answers through.
 
-// chooseReply carries the player's answer to an engine chooser request: the
-// chosen id, or ok=false when the player cancels. auto is set when the player
-// answered an ordering prompt with Auto-resolve, asking for a random order.
-type chooseReply struct {
-	id   engine.LocalID
-	ok   bool
-	auto bool
+// pending returns the decision the session is waiting on, and whether it is
+// waiting on one at all — false before the first deal and once the match has
+// finished.
+func (g *game) pending() (engine.Request, bool) {
+	if g.s == nil {
+		return engine.Request{}, false
+	}
+	req, done := g.s.Pending()
+	return req, !done
 }
 
-// webChooser adapts the engine's synchronous Chooser to go-app's single UI
-// goroutine. The engine calls ChooseCreature from a background action goroutine
-// (see game.runAction); it shows the chooser overlay on the UI goroutine, then
-// blocks until a candidate is clicked (or the request is cancelled).
-type webChooser struct {
-	g           *game
-	reply       chan chooseReply
-	optionReply chan int
-	// positionReply carries the battleline position a Deploy placement resolves to.
-	positionReply chan int
-	// cancel is closed by a manual-mode Cancel to drain the rest of the action: once
-	// closed every prompt this effect raises answers itself immediately, so a single
-	// click backs the whole action out. runAction remakes it before the next action.
-	cancel chan struct{}
-	// cancelled guards cancel against a double close, so drain is safe to call from
-	// both a manual Cancel and a new deal abandoning a prompt mid-flight.
-	cancelled bool
-	// inChoice is set while an engine-facing choice is being answered, so a method
-	// that delegates to another (ChooseReaction to ChooseOption) records the answer
-	// once, under the outer method's kind, rather than twice.
-	inChoice bool
+// prompt returns the pending request when it is a PROMPT — a decision raised
+// while a root action resolves — and false when the session is at rest between
+// actions (a RequestAction), finished, or not yet dealt. It is the one place "a
+// prompt is up" is decided.
+func (g *game) prompt() (engine.Request, bool) {
+	req, ok := g.pending()
+	if !ok || req.Kind == engine.RequestAction {
+		return engine.Request{}, false
+	}
+	return req, true
 }
 
-// webChooser is the human-facing renderer, so it must satisfy every optional
-// Chooser capability the engine can call; a missing or drifted one would make that
-// prompt silently fall back instead of rendering. These assertions catch that at
-// compile time (ADR 0045, step 1).
-var (
-	_ engine.Chooser           = (*webChooser)(nil)
-	_ engine.OptionChooser     = (*webChooser)(nil)
-	_ engine.PositionChooser   = (*webChooser)(nil)
-	_ engine.DeclinableChooser = (*webChooser)(nil)
-	_ engine.Orderer           = (*webChooser)(nil)
-	_ engine.ReactionChooser   = (*webChooser)(nil)
-	_ engine.BadgeChooser      = (*webChooser)(nil)
-)
+// atPrompt reports whether a prompt is waiting for an answer. It is what the old
+// pair of guards — "an action goroutine is in flight" and "a chooser is up" —
+// collapsed into: with the turn loop suspended inside the session there is no
+// in-flight action any more, only a pending request that is not a RequestAction.
+func (g *game) atPrompt() bool {
+	_, ok := g.prompt()
+	return ok
+}
 
-// enter marks the start of an engine-facing choice and reports whether it is the
-// outermost one; a delegated inner call sees the flag already set and does not
-// record.
-func (c *webChooser) enter() bool {
-	if c.inChoice {
+// choosing reports whether the prompt on screen is answered by clicking a card:
+// the candidates highlight on the board and a click says which one. A trigger
+// window is one too, whenever the board can express it (reactionByCard).
+func (g *game) choosing() bool {
+	req, ok := g.prompt()
+	if !ok {
 		return false
 	}
-	c.inChoice = true
-	return true
-}
-
-// record appends the answer this outermost choice returned to the command log,
-// unless the chooser has been abandoned by a newer deal (whose fresh log it must
-// not pollute).
-func (c *webChooser) record(outer bool, in input) {
-	if !outer {
-		return
+	switch req.Kind {
+	case engine.RequestPickCard, engine.RequestPickCardOrDecline:
+		return true
+	case engine.RequestReaction:
+		return g.reactionByCard(req)
 	}
-	c.inChoice = false
-	if c.stale() {
-		return
+	return false
+}
+
+// chooserCandidates is the cards a card prompt may be answered with, or nil when
+// the prompt on screen is not answered by clicking a card.
+func (g *game) chooserCandidates() []engine.LocalID {
+	req, ok := g.prompt()
+	if !ok {
+		return nil
 	}
-	c.g.record(in)
-}
-
-// stale reports whether a newer deal has replaced this chooser. An abandoned
-// setup or action goroutine keeps running against the game it was dealt for, so
-// its UI dispatches must no-op rather than drive the game that replaced it.
-func (c *webChooser) stale() bool { return c.g.chooser != c }
-
-// drain releases a prompt blocked on this chooser by closing its cancel channel,
-// so the goroutine parked in it returns instead of leaking. It is idempotent.
-func (c *webChooser) drain() {
-	if c.cancelled {
-		return
-	}
-	c.cancelled = true
-	close(c.cancel)
-}
-
-// ChooseCreature posts a chooser request to the UI and waits for the player's
-// pick. It returns false when there are no candidates or the player cancels.
-func (c *webChooser) ChooseCreature(
-	source, prompt string,
-	candidates []engine.LocalID,
-) (engine.LocalID, bool) {
-	outer := c.enter()
-	id, ok := c.ask(source, prompt, candidates, false)
-	c.record(outer, input{
-		Kind: inPick,
-		ID:   id,
-		OK:   ok,
-	})
-	return id, ok
-}
-
-// ChooseCardOrDecline implements the engine's DeclinableChooser: an optional card
-// choice ("you may destroy another friendly creature", "exhaust up to 3
-// creatures") is shown as the same highlighted-card prompt, plus a Done button.
-// Without it the engine falls back to a list of card names, which made the player
-// read a menu instead of clicking the card in front of them.
-func (c *webChooser) ChooseCardOrDecline(
-	source, prompt string,
-	candidates []engine.LocalID,
-) (engine.LocalID, bool) {
-	outer := c.enter()
-	id, ok := c.ask(source, prompt, candidates, true)
-	c.record(outer, input{
-		Kind: inPick,
-		ID:   id,
-		OK:   ok,
-	})
-	return id, ok
-}
-
-// ask is the shared card-prompt path: it shows the prompt on the UI goroutine and
-// blocks the action goroutine until a candidate is clicked, the prompt is
-// declined, or it is cancelled.
-func (c *webChooser) ask(
-	source, prompt string,
-	candidates []engine.LocalID,
-	declinable bool,
-) (engine.LocalID, bool) {
-	r := c.raise(source, prompt, candidates, declinable, false)
-	return r.id, r.ok
-}
-
-// OrderCreatures implements the engine's Orderer: instead of being asked to pick
-// the next id repeatedly, the whole window is ordered here so an Auto-resolve
-// button can offer a single random order. It otherwise reproduces the engine's
-// default repeated-pick loop — each pick is a card prompt, the last id is forced —
-// so ordering a batch by clicking cards is unchanged; Auto-resolve shuffles
-// whatever remains and returns it, ending the window in one click.
-func (c *webChooser) OrderCreatures(
-	source, prompt string,
-	ids []engine.LocalID,
-) []engine.LocalID {
-	outer := c.enter()
-	remaining := make([]engine.LocalID, len(ids))
-	copy(remaining, ids)
-	ordered := make([]engine.LocalID, 0, len(ids))
-	for len(remaining) > 1 {
-		r := c.raise(source, prompt, remaining, false, true)
-		if r.auto {
-			rand.Shuffle(len(remaining), func(i, j int) {
-				remaining[i], remaining[j] = remaining[j], remaining[i]
-			})
-			result := slices.Concat(ordered, remaining)
-			c.record(outer, input{
-				Kind:  inOrder,
-				Order: result,
-			})
-			return result
-		}
-		if !r.ok {
-			break
-		}
-		ordered = append(ordered, r.id)
-		for i, id := range remaining {
-			if id == r.id {
-				remaining = append(remaining[:i], remaining[i+1:]...)
-				break
-			}
+	switch req.Kind {
+	case engine.RequestPickCard, engine.RequestPickCardOrDecline:
+		return req.Cards
+	case engine.RequestReaction:
+		if g.reactionByCard(req) {
+			return reactionCards(req.Reactions)
 		}
 	}
-	result := slices.Concat(ordered, remaining)
-	c.record(outer, input{
-		Kind:  inOrder,
-		Order: result,
-	})
-	return result
+	return nil
 }
 
-// ChooseReaction implements the engine's ReactionChooser: a trigger window that
-// needs ordering — several card abilities, duration reactions, or a mix — is
-// answered by clicking the card whose ability resolves next, the same way every
-// other prompt is answered on the board. A window the board cannot express falls
-// back to a flat labeled list of the rendered ability text (see reactionCards).
-func (c *webChooser) ChooseReaction(
-	prompt string,
-	reactions []engine.OrderableReaction,
-) int {
-	outer := c.enter()
-	idx := c.pickReaction(prompt, reactions)
-	c.record(outer, input{
-		Kind:  inReaction,
-		Index: idx,
-	})
-	return idx
+// chooserPrompt is the question the card prompt on screen asks.
+func (g *game) chooserPrompt() string {
+	req, _ := g.prompt()
+	return req.Prompt
 }
 
-// pickReaction answers one ordering step. With two or more distinct source cards
-// on the board it is a card prompt; clicking a card that carries two pending
-// abilities then asks which of them resolves first, rather than silently taking
-// the top one. Anything the board cannot point at is answered by label.
-func (c *webChooser) pickReaction(prompt string, reactions []engine.OrderableReaction) int {
-	cards := c.reactionCards(reactions)
-	if len(cards) < 2 {
-		return c.chooseReactionByLabel(prompt, reactions)
+// promptSource names the card driving the prompt on screen, or "" for a prompt no
+// card is attributable to (an ordering step, a trigger window).
+func (g *game) promptSource() string {
+	req, _ := g.prompt()
+	return req.Source
+}
+
+// chooserDeclinable marks a prompt the player may pass on — a "you may" or an "up
+// to N". It adds the Done button and lets Escape answer the prompt instead of
+// being swallowed.
+func (g *game) chooserDeclinable() bool {
+	req, ok := g.prompt()
+	return ok && req.Kind == engine.RequestPickCardOrDecline
+}
+
+// chooserOrdering reports whether the card prompt on screen is one step of an
+// ORDERING window — arranging several cards into a resolution order — which is
+// what puts the Auto-resolve button on it.
+//
+// The engine has no single "here is the order" request: orderByChoice asks for the
+// next card repeatedly, with no source card to attribute the prompt to. That makes
+// an unattributed mandatory card pick exactly an ordering step, since every other
+// mandatory pick is raised through an ability and carries its source card's name.
+// With one candidate the order is already settled and there is nothing to resolve.
+func (g *game) chooserOrdering() bool {
+	req, ok := g.prompt()
+	return ok && req.Kind == engine.RequestPickCard &&
+		req.Source == "" && len(req.Cards) >= 2
+}
+
+// choosingOption reports whether the prompt on screen is a labeled multiple choice
+// answered with buttons: an engine option prompt, a trigger window the board
+// cannot express, or the which-ability follow-up to a clicked reaction card.
+func (g *game) choosingOption() bool {
+	req, ok := g.prompt()
+	if !ok {
+		return false
 	}
-	r := c.raise("", prompt, cards, false, false)
-	if !r.ok {
-		return 0
+	switch req.Kind {
+	case engine.RequestOption:
+		return true
+	case engine.RequestReaction:
+		return !g.reactionByCard(req)
 	}
-	var onCard []int
-	for i, x := range reactions {
-		if x.HasCard && x.Card == r.id {
-			onCard = append(onCard, i)
+	return false
+}
+
+// optionPrompt is the question the labeled prompt asks.
+func (g *game) optionPrompt() string {
+	req, ok := g.prompt()
+	if !ok {
+		return ""
+	}
+	if req.Kind == engine.RequestReaction && g.hasAbilityPick {
+		return whichAbilityPrompt
+	}
+	return req.Prompt
+}
+
+// optionLabels is the buttons a labeled prompt offers, in the order they are
+// shown. An option request offers its own Options; a trigger window offers the
+// rendered ability text of whichever of its entries the buttons are choosing
+// between (reactionChoices).
+func (g *game) optionLabels() []string {
+	req, ok := g.prompt()
+	if !ok {
+		return nil
+	}
+	switch req.Kind {
+	case engine.RequestOption:
+		return req.Options
+	case engine.RequestReaction:
+		choices := g.reactionChoices(req)
+		labels := make([]string, len(choices))
+		for i, at := range choices {
+			labels[i] = req.Reactions[at].Label
 		}
+		return labels
 	}
-	switch len(onCard) {
-	case 0:
-		return 0
-	case 1:
-		return onCard[0]
-	}
-	sub := make([]engine.OrderableReaction, len(onCard))
-	for i, at := range onCard {
-		sub[i] = reactions[at]
-	}
-	return onCard[c.chooseReactionByLabel(whichAbilityPrompt, sub)]
+	return nil
 }
+
+// choosingPosition reports whether a battleline placement is being picked: the
+// engine's Deploy prompt, or manual mode's put-into-play, which borrows the same
+// picker over a line of its own.
+func (g *game) choosingPosition() bool {
+	if g.manualPlacing {
+		return true
+	}
+	req, ok := g.prompt()
+	return ok && req.Kind == engine.RequestPosition
+}
+
+// positionLine is the battleline a placement is being picked in.
+func (g *game) positionLine() []engine.LocalID {
+	if g.manualPlacing {
+		return g.manualLine
+	}
+	req, ok := g.prompt()
+	if !ok || req.Kind != engine.RequestPosition {
+		return nil
+	}
+	return req.Cards
+}
+
+// ---- trigger windows ----
 
 // whichAbilityPrompt is the follow-up when the clicked card carries more than one
 // pending ability: the click said which card, this says which of its abilities.
 const whichAbilityPrompt = "Choose which of its abilities resolves next"
+
+// reactionByCard reports whether a trigger window is answered on the board, by
+// clicking the card whose ability resolves next. It is, so long as two or more
+// distinct source cards can be pointed at and the player is not already being
+// asked which of one card's several abilities goes first.
+func (g *game) reactionByCard(req engine.Request) bool {
+	return !g.hasAbilityPick && len(reactionCards(req.Reactions)) >= 2
+}
 
 // reactionCards lists the distinct source cards a window can be answered by
 // clicking. It reports none when any entry belongs to no card at all — a duration
 // reaction — so such a window stays on the labeled list and no reaction is hidden.
 // A source sitting in a pile (WithTriggersFromDiscard) is kept: presentPrompt opens
 // that pile's viewer, which is closable while board candidates remain.
-func (c *webChooser) reactionCards(reactions []engine.OrderableReaction) []engine.LocalID {
+func reactionCards(reactions []engine.OrderableReaction) []engine.LocalID {
 	var cards []engine.LocalID
 	for _, r := range reactions {
 		if !r.HasCard {
@@ -265,86 +225,46 @@ func (c *webChooser) reactionCards(reactions []engine.OrderableReaction) []engin
 	return cards
 }
 
-// chooseReactionByLabel offers the reactions as a menu of their rendered ability
-// text, for the windows a board click cannot express.
-func (c *webChooser) chooseReactionByLabel(
-	prompt string,
-	reactions []engine.OrderableReaction,
-) int {
-	options := make([]string, len(reactions))
-	for i, r := range reactions {
-		options[i] = r.Label
+// reactionChoices lists the entries of a trigger window the labeled buttons stand
+// for, as indexes into the request's Reactions: every entry when the whole window
+// is being answered by label, and just the clicked card's entries once the board
+// has answered "which card" and the buttons are answering "which of its abilities".
+func (g *game) reactionChoices(req engine.Request) []int {
+	out := make([]int, 0, len(req.Reactions))
+	for i, r := range req.Reactions {
+		if g.hasAbilityPick && (!r.HasCard || r.Card != g.abilityPick) {
+			continue
+		}
+		out = append(out, i)
 	}
-	return c.ChooseOption("", prompt, options)
+	return out
 }
 
-// raise shows a card prompt on the UI goroutine and blocks the action goroutine
-// until a candidate is clicked, the prompt is declined or Auto-resolved, or it is
-// cancelled. ordering marks an Orderer prompt so the controls offer Auto-resolve.
-func (c *webChooser) raise(
-	source, prompt string,
-	candidates []engine.LocalID,
-	declinable, ordering bool,
-) chooseReply {
-	if len(candidates) == 0 {
-		return chooseReply{}
-	}
-	// A manual-mode Cancel already in flight drains without showing the prompt: this
-	// and every later prompt of the same action answer themselves so one click backs
-	// the action out.
-	select {
-	case <-c.cancel:
-		return chooseReply{}
-	default:
-	}
-	// Discard any stale reply left in the buffer (e.g. from a double click on the
-	// previous prompt) so it cannot silently answer this one.
-	select {
-	case <-c.reply:
-	default:
-	}
-	c.g.dispatch(func(app.Context) {
-		if c.stale() {
-			return
+// pickReactionCard resolves a click on a trigger window's card. One pending
+// ability on it answers the window outright; two or more ask which of them goes
+// first, by buttons — never silently top-down.
+func (g *game) pickReactionCard(ctx app.Context, req engine.Request, id engine.LocalID) {
+	var on []int
+	for i, r := range req.Reactions {
+		if r.HasCard && r.Card == id {
+			on = append(on, i)
 		}
-		c.g.choosing = true
-		// A prompt taking over the board owns the highlight: drop any card the player
-		// had selected before it opened so a stale selection ring does not linger on a
-		// non-candidate card (e.g. behind Fangtooth Cavern's end-of-turn destroy
-		// prompt), reading as still-active while the board dims around the candidates.
-		c.g.clearSelection()
-		c.g.chooserDeclinable = declinable
-		c.g.chooserOrdering = ordering
-		c.g.chooserPrompt = prompt
-		c.g.chooserCandidates = candidates
-		c.g.promptSource = source
-		c.g.promptCursor, c.g.hasCursor = 0, false
-		c.g.btnCursor, c.g.hasBtnCursor = 0, false
-		c.g.presentPrompt(candidates, declinable)
-	})
-	var r chooseReply
-	select {
-	case r = <-c.reply:
-	case <-c.cancel:
-		r = chooseReply{ok: false}
 	}
-	c.g.dispatch(func(app.Context) {
-		if c.stale() {
-			return
-		}
-		c.g.choosing = false
-		c.g.chooserDeclinable = false
-		c.g.chooserOrdering = false
-		c.g.chooserPrompt = ""
-		c.g.chooserCandidates = nil
-		c.g.promptAsButtons = false
-		c.g.promptSource = ""
-		c.g.promptCursor, c.g.hasCursor = 0, false
-		c.g.btnCursor, c.g.hasBtnCursor = 0, false
-		c.g.closeZoneForPrompt()
-	})
-	return r
+	switch len(on) {
+	case 0:
+		return
+	case 1:
+		g.answer(ctx, engine.Command{
+			Kind:  engine.CommandReaction,
+			Index: on[0],
+		})
+	default:
+		g.abilityPick, g.hasAbilityPick = id, true
+		g.btnCursor, g.hasBtnCursor = 0, false
+	}
 }
+
+// ---- how a card prompt's candidates are offered ----
 
 // maxPromptButtons bounds how many out-of-play candidates a prompt lists as
 // action-bar buttons before it falls back to the zone viewer. A "look at the top
@@ -394,7 +314,7 @@ func (g *game) firstPileCandidate(
 // engine owns where a card is (ZoneOf); this only maps the piles that have a
 // viewer row to their label, so a card in hand or in play opens nothing.
 func (g *game) zoneOfCard(id engine.LocalID) (player int, label string, ok bool) {
-	p, zone, in := g.g.ZoneOf(id)
+	p, zone, in := g.eng().ZoneOf(id)
 	if !in {
 		return 0, "", false
 	}
@@ -420,168 +340,29 @@ func (g *game) closeZoneForPrompt() {
 	g.zonesPlayer, g.promptZone = -1, ""
 }
 
-// ChooseOption implements the engine's OptionChooser: it posts a labeled
-// multiple-choice prompt (e.g. whether to take archived cards into hand) to the
-// UI and blocks until the player clicks one of the option buttons. Without this,
-// the engine falls back to the first option — which silently auto-took archives.
-func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
-	outer := c.enter()
-	// A manual-mode Cancel already in flight drains without showing the prompt.
-	select {
-	case <-c.cancel:
-		c.record(outer, input{
-			Kind:  inOption,
-			Index: 0,
-		})
-		return 0
-	default:
-	}
-	// The Play creature / Play upgrade buttons already made the creature-as-upgrade
-	// choice, so answer the engine's play-as-which prompt from the armed choice
-	// rather than raising it a second time in the sidebar.
-	if i, ok := c.armedUpgradeChoice(options); ok {
-		c.record(outer, input{
-			Kind:  inOption,
-			Index: i,
-		})
-		return i
-	}
-	// Drop any stale reply so a leftover click cannot answer this prompt.
-	select {
-	case <-c.optionReply:
-	default:
-	}
-	c.g.dispatch(func(app.Context) {
-		if c.stale() {
-			return
-		}
-		c.g.choosingOption = true
-		c.g.optionPrompt = prompt
-		c.g.optionLabels = options
-		c.g.promptSource = source
-		// A prompt whose options are the whole card database (Etan's Jar) is answered
-		// through the card-name typeahead, not a list of a thousand buttons.
-		if c.g.cardNameOptions() {
-			c.g.pickerOpen, c.g.pickerNaming = true, true
-			c.g.pickerQuery, c.g.pickerFocused, c.g.pickerCursor = "", false, 0
-		}
-	})
-	var i int
-	select {
-	case i = <-c.optionReply:
-	case <-c.cancel:
-		i = 0
-	}
-	c.g.dispatch(func(app.Context) {
-		if c.stale() {
-			return
-		}
-		c.g.choosingOption = false
-		c.g.optionPrompt = ""
-		c.g.optionLabels = nil
-		c.g.promptSource = ""
-		c.g.pickerNaming = false
-		c.g.pickerOpen = false
-	})
-	c.record(outer, input{
-		Kind:  inOption,
-		Index: i,
-	})
-	return i
-}
-
 // armedUpgradeChoice answers the engine's "play as a creature or an upgrade?"
 // prompt from the choice the Play creature / Play upgrade buttons armed. It fires
 // only for that exact prompt — the ["Creature", "Upgrade"] option pair — and only
 // while a choice is armed, so every other option prompt still asks the player.
-// The armed choice is set on the UI goroutine before the play's goroutine starts,
-// so reading it here (off that goroutine) sees the value set before the play ran.
-func (c *webChooser) armedUpgradeChoice(options []string) (int, bool) {
-	if c.g.upgradeChoice == choiceNone {
+func (g *game) armedUpgradeChoice(options []string) (int, bool) {
+	if g.upgradeChoice == choiceNone {
 		return 0, false
 	}
 	if len(options) != 2 || options[0] != "Creature" || options[1] != "Upgrade" {
 		return 0, false
 	}
-	if c.g.upgradeChoice == choiceUpgrade {
+	if g.upgradeChoice == choiceUpgrade {
 		return 1, true
 	}
 	return 0, true
 }
 
-// ChoosePosition implements the engine's PositionChooser: instead of a labeled
-// option per battleline gap, it lights the line's creatures and lifts the
-// creature being placed with its placement verbs on it (deployActions) — click a
-// creature to land beside it, to its left or right per the armed direction
-// toggle, or take a flank. It returns the position the new creature enters before
-// (0 the left flank, len(line) the right flank). The engine renders the prompt
-// text; the client speaks the choice through the lifted card and the lit line, so
-// the prompt string is unused here.
-func (c *webChooser) ChoosePosition(source, _ string, line []engine.LocalID) int {
-	outer := c.enter()
-	// With no other friendly creatures in play there is only one placement (the
-	// lone spot), so place it without asking. The engine already skips the prompt
-	// for an empty line; this guards the web side against ever raising a choice
-	// that has no alternatives.
-	if len(line) == 0 {
-		c.record(outer, input{
-			Kind:  inPosition,
-			Index: 0,
-		})
-		return 0
-	}
-	// A manual-mode Cancel already in flight drains without showing the prompt.
-	select {
-	case <-c.cancel:
-		c.record(outer, input{
-			Kind:  inPosition,
-			Index: 0,
-		})
-		return 0
-	default:
-	}
-	// Drop any stale reply so a leftover click cannot answer this prompt.
-	select {
-	case <-c.positionReply:
-	default:
-	}
-	c.g.dispatch(func(app.Context) {
-		if c.stale() {
-			return
-		}
-		c.g.choosingPosition = true
-		c.g.positionLine = line
-		c.g.positionRight = false
-		c.g.positionSideChosen = false
-		c.g.promptSource = source
-	})
-	var pos int
-	select {
-	case pos = <-c.positionReply:
-	case <-c.cancel:
-		pos = 0
-	}
-	c.g.dispatch(func(app.Context) {
-		if c.stale() {
-			return
-		}
-		c.g.choosingPosition = false
-		c.g.positionLine = nil
-		c.g.positionRight = false
-		c.g.positionSideChosen = false
-		c.g.promptSource = ""
-	})
-	c.record(outer, input{
-		Kind:  inPosition,
-		Index: pos,
-	})
-	return pos
-}
-
 // ---- the click handlers a prompt is answered with ----
 
-func (g *game) chooseCandidate(_ app.Context, id engine.LocalID) {
-	if !g.choosing {
+// chooseCandidate answers the card prompt with the clicked card.
+func (g *game) chooseCandidate(ctx app.Context, id engine.LocalID) {
+	req, ok := g.prompt()
+	if !ok || !g.choosing() || !containsID(g.chooserCandidates(), id) {
 		return
 	}
 	g.inspecting = false
@@ -590,13 +371,14 @@ func (g *game) chooseCandidate(_ app.Context, id engine.LocalID) {
 	// put its use buttons on it rather than in the sidebar.
 	g.useTarget, g.hasUseTarget = id, true
 	g.recordBadge(id)
-	select {
-	case g.chooser.reply <- chooseReply{
-		id: id,
-		ok: true,
-	}:
-	default:
+	if req.Kind == engine.RequestReaction {
+		g.pickReactionCard(ctx, req, id)
+		return
 	}
+	g.answer(ctx, engine.Command{
+		Kind: engine.CommandPickCard,
+		Card: id,
+	})
 }
 
 // onPromptButtonPick answers a bounded card prompt with the candidate its
@@ -613,42 +395,84 @@ func (g *game) onPromptButtonPick(ctx app.Context, _ app.Event) {
 
 // declineChooser answers a declinable card prompt with a pass — the Done button,
 // and what Escape means while such a prompt is up.
-func (g *game) declineChooser(_ app.Context, _ app.Event) {
-	if !g.choosing || !g.chooserDeclinable {
+func (g *game) declineChooser(ctx app.Context, _ app.Event) {
+	if !g.chooserDeclinable() {
 		return
 	}
-	select {
-	case g.chooser.reply <- chooseReply{}:
-	default:
-	}
+	g.answer(ctx, engine.Command{Kind: engine.CommandDecline})
 }
 
-// autoResolveOrder answers an ordering prompt with a request for a random order —
-// the Auto-resolve button — so the player need not arrange abilities whose order
-// they do not care about.
-func (g *game) autoResolveOrder(_ app.Context, _ app.Event) {
-	if !g.choosing || !g.chooserOrdering {
+// autoResolveOrder answers an ordering window without arranging it — the
+// Auto-resolve button — so the player need not order cards whose order they do not
+// care about. It applies a uniformly random legal pick for as long as the session
+// keeps asking the same question: the same kind, Source and Prompt as the step the
+// button was pressed on.
+//
+// It is a deliberate heuristic rather than one "here is the order" command. An
+// ordering window reaches the client as a RUN of RequestPickCards (the engine's
+// orderByChoice asks for the next card repeatedly), and a Command must stay
+// comparable for Request.IsLegal, so none can carry a slice of ids. The cost of
+// guessing wrong is bounded and harmless: an unrelated, identically-prompted pick
+// arriving straight after the window has one extra pick auto-answered, and every
+// answer is recorded as the ordinary CommandPickCard it is, so the game log and a
+// replay stay faithful.
+func (g *game) autoResolveOrder(ctx app.Context, _ app.Event) {
+	req, ok := g.prompt()
+	if !ok || !g.chooserOrdering() {
 		return
 	}
-	select {
-	case g.chooser.reply <- chooseReply{auto: true}:
-	default:
+	for {
+		next, live := g.prompt()
+		if !live || next.Kind != req.Kind ||
+			next.Source != req.Source || next.Prompt != req.Prompt ||
+			len(next.Cards) == 0 {
+			break
+		}
+		pick := engine.Command{
+			Kind: engine.CommandPickCard,
+			Card: next.Cards[rand.Intn(len(next.Cards))],
+		}
+		if err := g.s.Apply(pick); err != nil {
+			break
+		}
 	}
+	g.settleAfterApply(ctx)
 }
 
-// chooseOptionIdx answers the current option prompt with option i. The index is
-// stable per button position, so a captured value is safe here (unlike per-card
-// closures).
+// chooseOptionIdx answers the current labeled prompt with its i-th button. The
+// index is stable per button position, so a captured value is safe here (unlike
+// per-card closures).
 func (g *game) chooseOptionIdx(i int) app.EventHandler {
-	return func(_ app.Context, _ app.Event) {
-		if !g.choosingOption {
+	return func(ctx app.Context, _ app.Event) {
+		g.answerOption(ctx, i)
+	}
+}
+
+// answerOption applies the command the i-th button of the labeled prompt stands
+// for: an option index, or the reaction entry a trigger window's label names.
+func (g *game) answerOption(ctx app.Context, i int) {
+	req, ok := g.prompt()
+	if !ok || !g.choosingOption() {
+		return
+	}
+	if req.Kind == engine.RequestReaction {
+		choices := g.reactionChoices(req)
+		if i < 0 || i >= len(choices) {
 			return
 		}
-		select {
-		case g.chooser.optionReply <- i:
-		default:
-		}
+		g.answer(ctx, engine.Command{
+			Kind:  engine.CommandReaction,
+			Index: choices[i],
+		})
+		return
 	}
+	if i < 0 || i >= len(req.Options) {
+		return
+	}
+	g.answer(ctx, engine.Command{
+		Kind:  engine.CommandOption,
+		Index: i,
+	})
 }
 
 // choosePositionCandidate answers a Deploy placement prompt with the position the
@@ -657,16 +481,10 @@ func (g *game) chooseOptionIdx(i int) app.EventHandler {
 // has been chosen, so the line is only answerable once the player has said which
 // way the new creature lands.
 func (g *game) choosePositionCandidate(ctx app.Context, id engine.LocalID) {
-	if !g.choosingPosition || !g.positionSideChosen {
+	if !g.choosingPosition() || !g.positionSideChosen {
 		return
 	}
-	pos := -1
-	for i, c := range g.positionLine {
-		if c == id {
-			pos = i
-			break
-		}
-	}
+	pos := indexOfID(g.positionLine(), id)
 	if pos < 0 {
 		return
 	}
@@ -677,7 +495,7 @@ func (g *game) choosePositionCandidate(ctx app.Context, id engine.LocalID) {
 		g.manualPlaceInPlay(ctx, pos)
 		return
 	}
-	g.answerPosition(pos)
+	g.answerPosition(ctx, pos)
 }
 
 // chooseDeploySide arms which side of a clicked creature the Deploy creature
@@ -687,7 +505,7 @@ func (g *game) choosePositionCandidate(ctx app.Context, id engine.LocalID) {
 // stay reachable without their own buttons.
 func (g *game) chooseDeploySide(right bool) app.EventHandler {
 	return func(_ app.Context, _ app.Event) {
-		if !g.choosingPosition {
+		if !g.choosingPosition() {
 			return
 		}
 		g.positionRight = right
@@ -698,20 +516,19 @@ func (g *game) chooseDeploySide(right bool) app.EventHandler {
 // deploySideBack undoes the side choice, returning the placement to its first
 // step so the player can pick the other side.
 func (g *game) deploySideBack(_ app.Context, _ app.Event) {
-	if !g.choosingPosition {
+	if !g.choosingPosition() {
 		return
 	}
 	g.positionSideChosen = false
 }
 
-// answerPosition sends a resolved battleline position back to the parked action
-// goroutine.
-func (g *game) answerPosition(pos int) {
+// answerPosition answers a pending placement prompt with a battleline position.
+func (g *game) answerPosition(ctx app.Context, pos int) {
 	g.inspecting = false
-	select {
-	case g.chooser.positionReply <- pos:
-	default:
-	}
+	g.answer(ctx, engine.Command{
+		Kind:  engine.CommandPosition,
+		Index: pos,
+	})
 }
 
 // onScorePillClick opens the out-of-play zone viewer for the clicked player. The
@@ -740,20 +557,4 @@ func (g *game) closeZones(_ app.Context, _ app.Event) {
 // backdrop's close handler, so only clicks outside the panel dismiss the viewer.
 func (g *game) stopClick(_ app.Context, e app.Event) {
 	e.Call("stopPropagation")
-}
-
-// cancelChooser backs the whole action out of a prompt in manual mode: it closes
-// the chooser's cancel channel so this prompt and any that follow it answer
-// themselves, draining the effect to completion. runAction then rolls the action
-// back to the snapshot beginAction recorded. It is the only way out of a prompt
-// with no clickable candidate (a mandatory card prompt or an option prompt).
-func (g *game) cancelChooser(_ app.Context, _ app.Event) {
-	if !g.choosing && !g.choosingOption && !g.choosingPosition {
-		return
-	}
-	if g.cancelling {
-		return
-	}
-	g.cancelling = true
-	g.chooser.drain()
 }

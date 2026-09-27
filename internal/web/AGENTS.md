@@ -23,12 +23,13 @@ grouped by area, `view_*.go` holds rendering grouped by screen region.
   shortcuts, and the hot-reload hand-off.
 - `game_persist.go` — saving a match to local storage, resuming it, and dealing a
   new one when there is nothing to resume.
-- `game_action.go` — the action plumbing: undo snapshots, running an engine
-  mutation off the UI goroutine, and the flash/flight bookkeeping after it.
+- `game_action.go` — the action plumbing: applying a Command to the session,
+  settling what it yields, undo/redo over the command log, and the flash/flight
+  bookkeeping after each action.
 - `game_play.go` — taking a turn: selection, house choice, play (click and drag),
   reap, use, fight, end turn.
-- `game_chooser.go` — the `webChooser` bridge and the handlers that answer a
-  prompt.
+- `game_chooser.go` — the prompt seam: the readers over the session's pending
+  `Request` and the handlers that answer one.
 - `game_manual.go` — manual mode: manual moves, stat adjustments, card picker.
 - `game_ui.go` — client-only state no rule touches: hover preview, restart
   confirmation, sidebar toggle.
@@ -108,7 +109,7 @@ using a parity bit that flips on each flash. `cardFlash.odd` (per card),
 `poolParity`, `keyParity`, and `discardParity` are those bits.
 
 Flashes are **derived, not emitted**: `computeFlashes` diffs the pre-action
-snapshot (the top of the undo stack) against the resolved state. Add a new
+snapshot `beginAction` took against the resolved state. Add a new
 animation by diffing the state there, not by sprinkling calls at action sites.
 The exception is information the state does not carry — a fight's two
 combatants, which card reaped, which card used an action ability — which the
@@ -119,29 +120,43 @@ A card that has left play cannot pulse, so it **flies** instead: `computeFlights
 finds the zone it landed in and `flightsInto` renders a ghost face parented to
 that zone's pill, which arcs in and shrinks onto the count (`.card-flight`).
 
-## Actions run off the UI goroutine; the chooser bridges back
+## Every click is a Command; the session owns the turn loop
 
-An engine action can block on a player decision, so `runAction` resolves it on a
-background goroutine and `webChooser` bridges the two: it posts prompt state via
-`g.dispatch` (which runs on the UI goroutine) and blocks on a reply channel until
-a card is clicked. Therefore:
+The client drives one `*session.Session` (ADR 0039, 0040) whose action is the
+engine's own `RunMatch`. So the client takes no turn of its own and starts no
+goroutine: a click builds an `engine.Command` and applies it, which resolves the
+engine as far as the next decision **before the handler returns**. Everything is
+synchronous, and there is no in-flight action to guard against.
 
-- **Only touch `game` fields from the UI goroutine.** Inside `webChooser`, every
-  mutation goes in a `g.dispatch(func(app.Context) { … })` closure — including any
-  read of engine state used to set up the prompt.
-- Reply channels are buffered and drained of stale values before each prompt, so
-  a double click on the previous prompt cannot silently answer the next one.
-- `g.busy` gates input while an action is in flight; most handlers begin with a
-  `if g.busy || g.choosing … { return }` guard.
+- A root action goes through `applyRoot`, a prompt answer through `answer`, a
+  manual force-edit through `applyManual`. Nothing else may call the engine to
+  change state — a mutation that skips the session is a mutation the command log
+  does not hold, so it does not survive a reload or an undo.
+- **The root boundary is "`Pending()` is a `RequestAction`."** Between two of them
+  lies exactly one root action and every prompt it raised. That one signal drives
+  the undo marks, the flash baseline, and the log groups: `beginAction` opens an
+  action and `settleAfterApply` closes it when the next `RequestAction` arrives.
+- `rootMarks` and `logGroups` are appended together and only by `beginAction`, so
+  the i-th entry of each describes the same action and one undo peels one entry
+  off each.
+- `atPrompt()` is the single input guard: a pending request that is not a
+  `RequestAction`. Most handlers begin with `if g.atPrompt() … { return }`.
+- **Cancelling a prompt and undoing at one are the same call**, `undoAction`,
+  which rewinds to the mark the raising action began at. The Cancel button is a
+  manual-mode-only second trigger for it.
+- What a prompt asks is **read** from `session.Pending()`, never pushed at the
+  client: `choosing()`, `optionLabels()`, `positionLine()` and friends in
+  `game_chooser.go` derive from the live `Request`, and the badge preview from
+  `Request.Badge`.
 
 ## Prompts: cards are clicked, options are buttons
 
 - A card decision is a **card prompt**: the candidates highlight on the board and
   the controls become the prompt text. Mandatory ones (`ChooseCreature`) have no
-  way out; optional ones (`ChooseCardOrDecline`, set by `chooserDeclinable`)
-  get a **Done** button, and Escape declines them.
+  way out; optional ones (a `RequestPickCardOrDecline`, which is what
+  `chooserDeclinable()` reads) get a **Done** button, and Escape declines them.
 - A genuine yes/no or "choose one" stays an **option prompt** with buttons.
-- **A trigger window is ordered by clicking too** (`ChooseReaction`): the sources
+- **A trigger window is ordered by clicking too** (a `RequestReaction`): the sources
   of the pending abilities become the candidates, and the click says whose ability
   resolves next. A clicked card carrying **two** pending abilities then asks which
   of them, by buttons — never silently top-down. A source sitting in a pile
@@ -163,8 +178,9 @@ a card is clicked. Therefore:
   prompt stays up, `promptZone` stays recorded, and reopening the viewer returns to
   the same row. Passing on a declinable prompt is the **Done** affordance's job (in
   the viewer's header and in the dock), never a side effect of closing the modal.
-- Picking a fight target is not a card prompt (it runs on the UI goroutine, not
-  behind a chooser), but it shares the same Tab cursor: `tabCandidates` hands
+- Picking a fight target is not a card prompt (the client asks it before it emits
+  the `CommandFight`, so the engine never sees a decision), but it shares the same
+  Tab cursor: `tabCandidates` hands
   both a chooser's candidates and `FightTargets` to `tabCandidate`/`isSelected`/
   `confirmPrompt` through one seam, so a fix to how the cursor lands or draws
   covers both instead of needing a matching fix in a second, fight-shaped copy.
@@ -192,7 +208,7 @@ prompt → mid-action targeting → end-turn confirmation → the selection. Add
 overlay to that chain rather than giving it its own Escape handling.
 
 Keyboard shortcuts live in `onKey`. They are all single keys and all no-ops while
-`busy`/`choosing`, except Escape, `r`, and `n`, which are handled first so they
+a prompt is up (`atPrompt()`), except Escape, `r`, and `n`, which are handled first so they
 work while a prompt blocks every other key: Escape backs a prompt out, `n`
 answers a declinable one "no", and `r` reaps with the selected creature (or
 takes the right flank while placing, or forges a Red key when that prompt is
@@ -202,14 +218,19 @@ selected hand card, uses an artifact's action, or answers a yes/no prompt.
 ## Persistence
 
 The in-progress match is stored in local storage under `persistKey`, tagged with
-`snapshotVersion`. **Bump `snapshotVersion` whenever an engine change makes an
-older persisted state unloadable** — a stale snapshot is dropped rather than
-restored into a mismatched engine.
+`snapshotVersion`. What is written is the session's `Record` — version, seed,
+sets, and the ordered command log — and nothing else: state, the typed log and
+the log bubbles are all replayed from it (`replayRecord`). **Bump
+`snapshotVersion` whenever an engine change makes an older record unreplayable**
+— a stale snapshot is dropped rather than restored into a mismatched engine.
 
-That includes rewording a log entry. The log persists as the prose each entry was
-narrated with (a typed entry does not survive JSON), so an old snapshot keeps
-restoring the old wording long after the engine stopped producing it, and the
-change looks like it did not take.
+That includes any change to how a recorded command resolves, because a resume
+replays the log rather than deserializing state: the same commands would rebuild
+a different match. `session.Version` guards the command format itself, and
+`replayRecord` refuses a mismatch the same way `session.Load` does.
+
+Manual force-edits are in the record **on purpose**: a force-edited board that
+hits a bug is the reproduction worth keeping.
 
 A failed write is not swallowed. `writeSnapshot` frees the storage the client can
 spare — the style gallery's scroll memo and the snapshot the write is replacing —
@@ -242,12 +263,21 @@ Two go-app facts make it work, and neither is guessable:
   it is not in a host test, but it fires `OnPreRender` when `app.IsServer` is
   true, which it is. So `ctxProbe` implements `OnPreRender` purely to be handed a
   live context, complete with working in-memory local storage and dispatch queue.
-  `e.ConsumeAll()` then drains dispatches, asyncs, and deferred work, so an action
-  that resolves on a background goroutine has finished when it returns.
+  `e.ConsumeAll()` then drains dispatches, asyncs, and deferred work, so the
+  renders and timers a handler queued have run when it returns. The game itself is
+  never waited for: applying a Command resolves the engine to its next decision
+  before the handler returns, so `c.settle`/`c.await` assert rather than wait.
 - A zero `app.Event{}` nil-derefs on `PreventDefault()`. Use `nullEvent()`.
 
 `app.HTMLString(g.Render())` draws the whole screen, nested components included,
 without mounting anything — which is how `view_test.go` asserts on markup.
+
+A test that needs one exact prompt raises it with `c.script`, which stands the
+client on a session whose driving action is that single question instead of the
+whole turn loop. The client then sees a genuine pending `Request` and answers it
+with a genuine `Command`, so what is under test is the handoff rather than a
+rehearsal of it. A test whose subject is backing OUT of a prompt uses a real play
+instead (`c.stagePromptArtifact`), because there has to be a root action to rewind.
 
 **Never assert a fixed attribute order on the drawn markup.** go-app writes an
 element's attributes by ranging its `attrs()` **map**, so their order is

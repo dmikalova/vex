@@ -32,7 +32,7 @@ func (g *Game) deployPosition(
 		return 0, false
 	}
 	if canDeploy && g.cat.def(id).hasKeyword(Deploy) {
-		choice := g.choosePosition(player, id, "Choose where to deploy "+g.Name(id), line)
+		choice := g.ChoosePosition(player, id, "Choose where to deploy "+g.Name(id), line)
 		n := int(g.State.Battleline[player].Count)
 		choice = min(choice, n)
 		return choice, choice > 0 && choice < n
@@ -66,12 +66,16 @@ func (g *Game) chooseFlank(id LocalID) flank {
 	return flankRightmost
 }
 
-// choosePosition asks a player where a Deploy creature enters the battleline.
+// ChoosePosition asks a player where a card entering the battleline lands. It is
+// the entry point for the PositionChooser port, the way ChooseCreature and
+// ChooseOption are for theirs, so every route out of the engine that asks a player
+// something is reachable from one place.
+//
 // A chooser that speaks the battleline directly (PositionChooser) is pointed at
 // the line; one that does not is offered the same positions as labeled gaps
 // through the OptionChooser channel — "Left flank", "Right flank", or "Between X
 // and Y". Both return the same position index: before line[i], 0..len(line).
-func (g *Game) choosePosition(player int, source LocalID, prompt string, line []LocalID) int {
+func (g *Game) ChoosePosition(player int, source LocalID, prompt string, line []LocalID) int {
 	if pc, ok := g.chooserFor(player).(PositionChooser); ok {
 		name := g.sourceName(source)
 		return pc.ChoosePosition(name, renderPrompt(name, prompt), line)

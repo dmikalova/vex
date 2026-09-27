@@ -28,11 +28,11 @@ func (g *game) selectBoardID(ctx app.Context, id engine.LocalID) {
 	// While an option prompt is up, a tap inspects the card (a read-only lift)
 	// rather than selecting it: the prompt is answered on its own buttons, never
 	// by a tap on a card, so the player can enlarge and read any card mid-prompt.
-	if g.choosingOption {
+	if g.choosingOption() {
 		g.liftCard(ctx, id)
 		return
 	}
-	if g.busy || g.choosing || g.phase == phaseFightTarget {
+	if g.atPrompt() || g.phase == phaseFightTarget {
 		return
 	}
 	g.abandonFlank(id)
@@ -48,11 +48,11 @@ func (g *game) selectBoardID(ctx app.Context, id engine.LocalID) {
 func (g *game) selectHandID(ctx app.Context, id engine.LocalID) {
 	// During an option prompt a tap inspects rather than selects, for the same
 	// reason as selectBoardID: the tap reads the card, it never answers the prompt.
-	if g.choosingOption {
+	if g.choosingOption() {
 		g.liftCard(ctx, id)
 		return
 	}
-	if g.busy || g.choosing || g.phase == phaseFightTarget {
+	if g.atPrompt() || g.phase == phaseFightTarget {
 		return
 	}
 	g.abandonFlank(id)
@@ -71,7 +71,7 @@ func (g *game) abandonFlank(id engine.LocalID) {
 // selectHand makes a card in hand the selection, recovering its hand index from
 // the id. It is the selection itself, without the guards a click has to pass.
 func (g *game) selectHand(id engine.LocalID) {
-	idx := indexOfID(g.g.Hand(g.active()), id)
+	idx := indexOfID(g.eng().Hand(g.active()), id)
 	if idx < 0 {
 		return
 	}
@@ -103,7 +103,7 @@ func (g *game) selHandSlot() int {
 // parking on a card the turn cannot touch. Anything else — a reap, a fight, a new
 // turn — simply clears.
 func (g *game) advanceSelection() {
-	slot, gone := g.handSlot, !g.hasSel || !containsID(g.g.Hand(g.active()), g.sel)
+	slot, gone := g.handSlot, !g.hasSel || !containsID(g.eng().Hand(g.active()), g.sel)
 	g.handSlot = -1
 	viaKeyboard := g.keyboardAction
 	g.keyboardAction = false
@@ -143,7 +143,7 @@ func (g *game) clickAway(ctx app.Context, e app.Event) {
 		g.save(ctx)
 		return
 	}
-	if !g.hasSel || g.busy || g.choosing ||
+	if !g.hasSel || g.atPrompt() ||
 		g.phase == phaseFightTarget || g.phase == phaseFlank {
 		return
 	}
@@ -182,9 +182,9 @@ func (g *game) sidebarTooWide(target app.Value) bool {
 func (g *game) boardKindOf(id engine.LocalID) selKind {
 	active := g.active()
 	switch {
-	case containsID(g.g.Battleline(active), id):
+	case containsID(g.eng().Battleline(active), id):
 		return selYourCreature
-	case containsID(g.g.Artifacts(active), id):
+	case containsID(g.eng().Artifacts(active), id):
 		return selYourArtifact
 	default:
 		return selOther
@@ -195,20 +195,15 @@ func (g *game) boardKindOf(id engine.LocalID) selKind {
 
 func (g *game) pickHouse(h engine.House) app.EventHandler {
 	return func(ctx app.Context, _ app.Event) {
-		if g.busy || g.choosing {
-			return
-		}
-		p := g.active()
-		g.record(input{
-			Kind:  inHouse,
+		g.applyRoot(ctx, engine.Command{
+			Kind:  engine.CommandChooseHouse,
 			House: h,
 		})
-		g.runAction(ctx, func() error { return g.g.ChooseHouse(p, h) })
 	}
 }
 
 func (g *game) endTurn(ctx app.Context, _ app.Event) {
-	if g.busy || g.choosing || g.choosingOption {
+	if g.atPrompt() {
 		return
 	}
 	// Only end from the resting main phase; mid-action phases have their own flow.
@@ -230,30 +225,7 @@ func (g *game) endTurn(ctx app.Context, _ app.Event) {
 		return
 	}
 	g.confirmEndTurn = false
-	g.status = ""
-	p := g.active()
-	g.record(input{Kind: inEndTurn})
-	g.runAction(ctx, func() error {
-		opp := 1 - p
-		g.g.EndPlayPhase(p) // the end-of-turn phase narrates where both players stand
-		g.g.StartTurn(opp)  // forge + start-of-turn triggers for the next player
-		return nil
-	})
-}
-
-// handOffEndedTurn starts the opponent's turn when an action ran the current
-// turn out without going through the end-turn button. An Omega card ends the
-// play phase the moment it resolves (endStepIfOmega calls EndPlayPhase), which
-// readies, draws, and resolves end-of-turn abilities but stops there, at
-// PhaseEndOfTurn, with the same player still active. The end-turn button always
-// pairs EndPlayPhase with StartTurn; this completes that pairing for the Omega
-// path, so playing an Omega card hands the turn to the opponent instead of
-// leaving the ended turn's player waiting to choose a house again. Every other
-// action leaves the engine mid-play-phase, so this is a no-op for them.
-func (g *game) handOffEndedTurn() {
-	if g.g.State.Phase == engine.PhaseEndOfTurn && g.g.Winner() < 0 {
-		g.g.StartTurn(1 - g.g.State.ActivePlayer)
-	}
+	g.applyRoot(ctx, engine.Command{Kind: engine.CommandEndTurn})
 }
 
 // hasMoves reports whether the active player could still act this turn: a playable
@@ -264,17 +236,17 @@ func (g *game) handOffEndedTurn() {
 // remains.
 func (g *game) hasMoves() bool {
 	p := g.active()
-	for _, id := range g.g.Hand(p) {
-		if g.g.CanPlay(p, id) == nil || g.g.CanDiscard(p, id) == nil {
+	for _, id := range g.eng().Hand(p) {
+		if g.eng().CanPlay(p, id) == nil || g.eng().CanDiscard(p, id) == nil {
 			return true
 		}
 	}
-	for _, id := range g.g.Battleline(p) {
+	for _, id := range g.eng().Battleline(p) {
 		if g.actionable(id, selYourCreature) {
 			return true
 		}
 	}
-	for _, id := range g.g.Artifacts(p) {
+	for _, id := range g.eng().Artifacts(p) {
 		if g.actionable(id, selYourArtifact) {
 			return true
 		}
@@ -285,43 +257,32 @@ func (g *game) hasMoves() bool {
 // play resolves the selected hand card. Creatures ask for a flank first (unless
 // the battleline is empty); everything else plays immediately.
 func (g *game) play(ctx app.Context, _ app.Event) {
-	if g.busy || g.choosing || g.phase != phaseMain || g.selKind != selHand {
+	if g.atPrompt() || g.phase != phaseMain || g.selKind != selHand {
 		return
 	}
 	// An ordinary play makes no creature-as-upgrade choice, so clear any armed by a
 	// previous Play creature / Play upgrade press.
 	g.upgradeChoice = choiceNone
-	p := g.active()
 	idx := g.selHand
-	def := g.g.Def(g.sel)
 	g.markTakeoff(g.sel)
-	switch def.Type {
+	switch g.eng().Def(g.sel).Type {
 	case engine.Creature:
 		g.playCreature(ctx)
 	case engine.Artifact:
-		g.record(input{
-			Kind: inPlayArtifact,
+		g.applyRoot(ctx, engine.Command{
+			Kind: engine.CommandPlayArtifact,
 			Hand: idx,
 		})
-		g.runAction(
-			ctx,
-			func() error { _, err := g.g.PlayArtifact(p, idx); return playTypeError(err, def.Type) },
-		)
 	case engine.Tactic:
-		g.record(input{
-			Kind: inPlayTactic,
+		g.applyRoot(ctx, engine.Command{
+			Kind: engine.CommandPlayTactic,
 			Hand: idx,
 		})
-		g.runAction(ctx, func() error { return playTypeError(g.g.PlayTactic(p, idx), def.Type) })
 	case engine.Upgrade:
-		g.record(input{
-			Kind: inPlayUpgrade,
+		g.applyRoot(ctx, engine.Command{
+			Kind: engine.CommandPlayUpgrade,
 			Hand: idx,
 		})
-		g.runAction(
-			ctx,
-			func() error { _, err := g.g.PlayUpgrade(p, idx); return playTypeError(err, def.Type) },
-		)
 	}
 }
 
@@ -333,17 +294,11 @@ func (g *game) play(ctx app.Context, _ app.Event) {
 // its answer already set.
 func (g *game) playCreature(ctx app.Context) {
 	p, idx := g.active(), g.selHand
-	def := g.g.Def(g.sel)
-	if len(g.g.Battleline(p)) == 0 || g.g.HasKeyword(g.sel, engine.Deploy) {
-		g.record(input{
-			Kind: inPlayCreature,
+	if len(g.eng().Battleline(p)) == 0 || g.eng().HasKeyword(g.sel, engine.Deploy) {
+		g.applyRoot(ctx, engine.Command{
+			Kind: engine.CommandPlayCreature,
 			Hand: idx,
-			Left: false,
 		})
-		g.runAction(
-			ctx,
-			func() error { _, err := g.g.PlayCreature(p, idx, false); return playTypeError(err, def.Type) },
-		)
 		return
 	}
 	g.phase = phaseFlank
@@ -358,11 +313,11 @@ func (g *game) canPlayAsUpgrade() bool {
 	if g.selKind != selHand || g.phase != phaseMain {
 		return false
 	}
-	def := g.g.Def(g.sel)
+	def := g.eng().Def(g.sel)
 	if def.Type != engine.Creature || !def.PlayableAsUpgrade {
 		return false
 	}
-	return g.g.HasUpgradeHost()
+	return g.eng().HasUpgradeHost()
 }
 
 // playAsCreature plays the creature-that-could-be-an-upgrade as a creature: it
@@ -370,7 +325,7 @@ func (g *game) canPlayAsUpgrade() bool {
 // then follows the normal creature flow (a flank question unless the line is
 // empty or the creature Deploys).
 func (g *game) playAsCreature(ctx app.Context, _ app.Event) {
-	if g.busy || g.choosing || !g.canPlayAsUpgrade() {
+	if g.atPrompt() || !g.canPlayAsUpgrade() {
 		return
 	}
 	g.upgradeChoice = choiceCreature
@@ -383,21 +338,16 @@ func (g *game) playAsCreature(ctx app.Context, _ app.Event) {
 // engine routes the card onto a host. Upgrades take no flank, so it skips the
 // flank step and plays straight away.
 func (g *game) playAsUpgrade(ctx app.Context, _ app.Event) {
-	if g.busy || g.choosing || !g.canPlayAsUpgrade() {
+	if g.atPrompt() || !g.canPlayAsUpgrade() {
 		return
 	}
-	p, idx := g.active(), g.selHand
+	idx := g.selHand
 	g.upgradeChoice = choiceUpgrade
 	g.markTakeoff(g.sel)
-	g.record(input{
-		Kind: inPlayCreature,
+	g.applyRoot(ctx, engine.Command{
+		Kind: engine.CommandPlayCreature,
 		Hand: idx,
-		Left: false,
 	})
-	g.runAction(
-		ctx,
-		func() error { _, err := g.g.PlayCreature(p, idx, false); return playTypeError(err, engine.Creature) },
-	)
 }
 
 // playTypeError makes the generic "cannot play this type" restriction explicit
@@ -411,33 +361,27 @@ func playTypeError(err error, t engine.CardType) error {
 
 func (g *game) playFlank(left bool) app.EventHandler {
 	return func(ctx app.Context, _ app.Event) {
-		if g.busy || g.choosing || g.phase != phaseFlank || g.selKind != selHand {
+		if g.atPrompt() || g.phase != phaseFlank || g.selKind != selHand {
 			return
 		}
-		p, idx := g.active(), g.selHand
+		idx := g.selHand
 		g.markTakeoff(g.sel)
-		g.record(input{
-			Kind: inPlayCreature,
+		g.applyRoot(ctx, engine.Command{
+			Kind: engine.CommandPlayCreature,
 			Hand: idx,
 			Left: left,
 		})
-		g.runAction(
-			ctx,
-			func() error { _, err := g.g.PlayCreature(p, idx, left); return playTypeError(err, engine.Creature) },
-		)
 	}
 }
 
 func (g *game) discard(ctx app.Context, _ app.Event) {
-	if g.busy || g.choosing || g.phase != phaseMain || g.selKind != selHand {
+	if g.atPrompt() || g.phase != phaseMain || g.selKind != selHand {
 		return
 	}
-	p, idx := g.active(), g.selHand
-	g.record(input{
-		Kind: inDiscard,
-		Hand: idx,
+	g.applyRoot(ctx, engine.Command{
+		Kind: engine.CommandDiscardFromHand,
+		Hand: g.selHand,
 	})
-	g.runAction(ctx, func() error { return g.g.DiscardFromHand(p, idx) })
 }
 
 // ---- drag and drop (hand → board) ----
@@ -446,7 +390,7 @@ func (g *game) discard(ctx app.Context, _ app.Event) {
 // drop shares the same target, marks a drag in progress so the board shows as a
 // drop zone, and hides the hover preview (mouseleave does not fire during drag).
 func (g *game) startHandDrag(ctx app.Context, id engine.LocalID) {
-	if g.busy || g.choosing || g.choosingOption || g.phase != phaseMain {
+	if g.atPrompt() || g.phase != phaseMain {
 		return
 	}
 	g.hasHover, g.hoverDef = false, nil
@@ -470,7 +414,7 @@ func (g *game) dropOnBoard(ctx app.Context, e app.Event) {
 		return
 	}
 	g.dragging = false
-	if g.busy || g.choosing || g.choosingOption || g.phase != phaseMain || g.selKind != selHand {
+	if g.atPrompt() || g.phase != phaseMain || g.selKind != selHand {
 		return
 	}
 	if !g.playableFromHand(g.sel) {
@@ -482,57 +426,54 @@ func (g *game) dropOnBoard(ctx app.Context, e app.Event) {
 // ---- creature actions ----
 
 func (g *game) reap(ctx app.Context, _ app.Event) {
-	if g.busy || g.choosing || g.phase != phaseMain || g.selKind != selYourCreature {
+	if g.atPrompt() || g.phase != phaseMain || g.selKind != selYourCreature {
 		return
 	}
-	p, id := g.active(), g.sel
+	id := g.sel
 	g.reapID, g.reaping = id, true
-	g.record(input{
-		Kind: inReap,
+	g.applyRoot(ctx, engine.Command{
+		Kind: engine.CommandReap,
 		Card: id,
 	})
-	g.runAction(ctx, func() error { return g.g.Reap(p, id) })
 }
 
 // unstun sheds the stun on the selected creature: the one thing an otherwise
 // usable stunned creature can do instead of reaping, fighting, or acting.
 func (g *game) unstun(ctx app.Context, _ app.Event) {
-	if g.busy || g.choosing || g.phase != phaseMain || g.selKind != selYourCreature {
+	if g.atPrompt() || g.phase != phaseMain || g.selKind != selYourCreature {
 		return
 	}
-	p, id := g.active(), g.sel
+	id := g.sel
 	g.reapID, g.reaping = id, true
-	g.record(input{
-		Kind: inUnstun,
+	g.applyRoot(ctx, engine.Command{
+		Kind: engine.CommandUnstun,
 		Card: id,
 	})
-	g.runAction(ctx, func() error { return g.g.Unstun(p, id) })
 }
 
 func (g *game) useAction(ctx app.Context, _ app.Event) {
-	if g.busy || g.choosing || g.phase != phaseMain {
+	if g.atPrompt() || g.phase != phaseMain {
 		return
 	}
 	if g.selKind != selYourCreature && g.selKind != selYourArtifact {
 		return
 	}
-	p, id := g.active(), g.sel
+	id := g.sel
 	g.actID, g.acting = id, true
-	g.record(input{
-		Kind: inUseAction,
+	g.applyRoot(ctx, engine.Command{
+		Kind: engine.CommandUseAction,
 		Card: id,
 	})
-	g.runAction(ctx, func() error { return g.g.UseAction(p, id) })
 }
 
 // startFight enters fight-target selection for the selected creature, after
 // checking it can actually be used (so the player is not left picking a target
 // for an exhausted or out-of-house attacker).
 func (g *game) startFight(ctx app.Context, _ app.Event) {
-	if g.busy || g.choosing || g.phase != phaseMain || g.selKind != selYourCreature {
+	if g.atPrompt() || g.phase != phaseMain || g.selKind != selYourCreature {
 		return
 	}
-	if err := g.g.CanUseTo(g.active(), g.sel, engine.FightUse); err != nil {
+	if err := g.eng().CanUseTo(g.active(), g.sel, engine.FightUse); err != nil {
 		g.setStatus(err.Error())
 		return
 	}
@@ -540,7 +481,7 @@ func (g *game) startFight(ctx app.Context, _ app.Event) {
 	g.status = ""
 	// With a single legal target there is nothing to choose, so the fight resolves
 	// straight away instead of asking for the only possible answer.
-	if targets := g.g.FightTargets(g.active(), g.attacker); len(targets) == 1 {
+	if targets := g.eng().FightTargets(g.active(), g.attacker); len(targets) == 1 {
 		g.fightTargetID(ctx, targets[0])
 		return
 	}
@@ -549,19 +490,18 @@ func (g *game) startFight(ctx app.Context, _ app.Event) {
 }
 
 func (g *game) fightTargetID(ctx app.Context, defender engine.LocalID) {
-	if g.busy || g.choosing {
+	if g.atPrompt() {
 		return
 	}
-	p, att := g.active(), g.attacker
+	att := g.attacker
 	g.phase = phaseMain
 	g.fighters = [2]engine.LocalID{att, defender}
 	g.fighting = true
-	g.record(input{
-		Kind:  inFight,
+	g.applyRoot(ctx, engine.Command{
+		Kind:  engine.CommandFight,
 		Card:  att,
 		Card2: defender,
 	})
-	g.runAction(ctx, func() error { return g.g.Fight(p, att, defender) })
 }
 
 func (g *game) cancelTargeting(_ app.Context, _ app.Event) {

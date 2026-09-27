@@ -116,7 +116,7 @@ func (g *Game) MoveWithinBattleline(chooser int, id LocalID) {
 		others := make([]LocalID, 0, len(full)-1)
 		others = append(others, full[:idx]...)
 		others = append(others, full[idx+1:]...)
-		pos := g.choosePosition(chooser, id, "Choose where to move "+g.Name(id), others)
+		pos := g.ChoosePosition(chooser, id, "Choose where to move "+g.Name(id), others)
 		line.remove(id)
 		line.insertAt(pos, id)
 		g.record(MovedWithinBattleline{Creature: id})

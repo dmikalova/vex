@@ -93,8 +93,9 @@ is a strategy that carries **both** its behavior and its printed-text fragment, 
 it plugs into the AST without desync:
 
 - **`Chooser` (`game.go`) is the decision strategy**, swapped per frontend:
-  `FirstChooser` (bot/tests, deterministic), `webChooser`
-  (web), `bridgeChooser` (test harness). The engine never knows _how_ a decision
+  `FirstChooser` (bot/tests, deterministic), `suspendChooser` (interactive play:
+  it yields a `Request` instead of computing an answer, which is what the web
+  client answers through), `bridgeChooser` (test harness). The engine never knows _how_ a decision
   is made. Extend a chooser's capability with an **optional capability
   interface** discovered by type assertion — `OptionChooser`, `Orderer` — with a
   graceful fallback when unimplemented. That is the idiomatic-Go form of Strategy

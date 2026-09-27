@@ -84,8 +84,8 @@ frontend.
   abilities in collection order, then the duration reactions in registry order — so
   folding never reorders the card abilities that already resolved there. The cardtest
   harness (`bridgeChooser.ChooseReaction`, scripted by `Player.Order(cards…)`) and the
-  web client (`webChooser.ChooseReaction`, rendering the reactions as a labeled list)
-  both implement the port. An event with no card ability of its own (an enemy
+  suspendable driver the web client answers through (`suspendChooser.ChooseReaction`,
+  which yields a `RequestReaction` the client renders) both implement the port. An event with no card ability of its own (an enemy
   creature destroyed) still gets a window: `afterDestroyedReactions` folds its
   `lastingReactions` into the same ordered list.
 - **A destruction _replacement_ is not a Destroyed-window entry.** A replacement

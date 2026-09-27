@@ -14,10 +14,10 @@ import (
 // overPanel is the end-of-game result, shown in the controls area where every
 // other action lives.
 func (g *game) overPanel() app.UI {
-	winner := g.g.Winner()
+	winner := g.eng().Winner()
 	return app.Div().Class("btn-col over-panel").Body(
 		app.Div().Class("section-title").Body(
-			app.Span().Class(playerNameCls(winner)).Text(g.g.PlayerName(winner)),
+			app.Span().Class(playerNameCls(winner)).Text(g.eng().PlayerName(winner)),
 			app.Text(" wins!"),
 		),
 		btn("New game", actNewGame, g.openSetup, "btn-primary"),
@@ -39,22 +39,22 @@ func (g *game) zonesOverlay() app.UI {
 			app.Div().Class("zones-header").Body(
 				app.Button().Class("zones-close").Text("✕").OnClick(g.closeZones),
 				app.Div().Class("over-title").Body(
-					app.Span().Class(playerNameCls(p)).Text(g.g.PlayerName(p)),
+					app.Span().Class(playerNameCls(p)).Text(g.eng().PlayerName(p)),
 					app.Text("'s Zones"),
 				),
 				// A declinable prompt drawn over the viewer (Not Finished with You —
 				// shuffle any number, including zero) is finished here: Done submits the
 				// current selection with no further pick. Closing the viewer answers
 				// nothing, so Done is the only way to pass from inside it.
-				app.If(g.promptZone != "" && g.chooserDeclinable, func() app.UI {
+				app.If(g.promptZone != "" && g.chooserDeclinable(), func() app.UI {
 					return btn("Done", actDone, g.declineChooser, "btn-primary zones-done")
 				}),
 			),
 			app.Div().Class("zones-body").Body(
-				g.zoneRow("Deck", g.sortByHouseTypeName(g.g.Deck(p))),
-				g.zoneRow("Discard", g.g.Discard(p)),
-				g.zoneRow("Archives", g.g.Archives(p)),
-				g.zoneRow("Purge", g.g.Purge(p)),
+				g.zoneRow("Deck", g.sortByHouseTypeName(g.eng().Deck(p))),
+				g.zoneRow("Discard", g.eng().Discard(p)),
+				g.zoneRow("Archives", g.eng().Archives(p)),
+				g.zoneRow("Purge", g.eng().Purge(p)),
 			),
 		),
 	)
@@ -110,17 +110,17 @@ func (g *game) renderZoneCard(id engine.LocalID) app.UI {
 	var activate func(app.Context, engine.LocalID)
 	targetable, dimmed := false, false
 	switch {
-	case g.choosing:
+	case g.choosing():
 		// During a prompt the pile is the board: only the candidates are clickable,
 		// and everything else dims the same way an unchoosable creature does.
-		targetable = containsID(g.chooserCandidates, id)
+		targetable = containsID(g.chooserCandidates(), id)
 		dimmed = !targetable
 		if targetable {
 			activate = g.chooseCandidate
 		}
 	case g.boardInert():
 		dimmed = true
-	case g.g.Manual():
+	case g.eng().Manual():
 		activate = g.selectZoneCard
 	}
 	c := g.printedCard(id)
@@ -134,7 +134,7 @@ func (g *game) renderZoneCard(id engine.LocalID) app.UI {
 // printedCard is a read-only face built from a card's printed definition, for a
 // card that is not on the board — one in a pile, or one in flight out of play.
 func (g *game) printedCard(id engine.LocalID) *cardView {
-	c := printedFace(g.g.Def(id))
+	c := printedFace(g.eng().Def(id))
 	c.ID = id
 	c.Maverick = g.isMaverick(id)
 	c.Legacy = g.isLegacy(id)

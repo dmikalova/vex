@@ -214,27 +214,25 @@ func TestDrawingAPrompt(t *testing.T) {
 	c.manualTurn(testHouse)
 	c.playFromHand(c.deal(testCreature))
 
-	answer := c.ask("Choose a creature to destroy", true, c.board())
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
+	board := c.board()
+	c.ask(board[0], "Choose a creature to destroy", true, board)
+	c.await("the prompt to go up", c.g.choosing)
 	c.wants("a prompt", "Choose a creature to destroy", "Done", "prompt")
 	c.lacks("a prompt", "End turn")
 
 	c.do(c.g.declineChooser)
-	<-answer
-	c.await("the prompt to come down", func() bool { return !c.g.choosing })
+	c.await("the prompt to come down", func() bool { return !c.g.choosing() })
 	c.lacks("the answered prompt", "Choose a creature to destroy")
 }
 
 func TestDrawingAnOptionPrompt(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
-	out := make(chan int, 1)
-	go func() { out <- c.g.chooser.ChooseOption("A Card", "Take them?", []string{"Yes", "No"}) }()
-	c.await("the prompt to go up", func() bool { return c.g.choosingOption })
+	c.option(c.hand()[0], "Take them?", []string{"Yes", "No"})
+	c.await("the prompt to go up", c.g.choosingOption)
 
 	c.wants("an option prompt", "Take them?", ">Yes<", ">No<")
 	c.do(c.g.chooseOptionIdx(1))
-	<-out
 }
 
 // A "move it to a flank" prompt (Reassembling Automaton) draws the standard flank
@@ -242,10 +240,9 @@ func TestDrawingAnOptionPrompt(t *testing.T) {
 func TestAFlankOptionPromptDrawsTheFlankButtons(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
-	out := make(chan int, 1)
 	labels := []string{engine.FlankLeftLabel, engine.FlankRightLabel}
-	go func() { out <- c.g.chooser.ChooseOption("Reassembling Automaton", "Choose a flank", labels) }()
-	c.await("the prompt to go up", func() bool { return c.g.choosingOption })
+	c.option(c.hand()[0], "Choose a flank", labels)
+	c.await("the prompt to go up", c.g.choosingOption)
 
 	c.wants(
 		"a flank prompt",
@@ -256,7 +253,6 @@ func TestAFlankOptionPromptDrawsTheFlankButtons(t *testing.T) {
 	)
 	c.lacks("a lowercase flank prompt", ">left flank<", ">right flank<")
 	c.do(c.g.chooseOptionIdx(0))
-	<-out
 }
 
 // A reap/fight/action prompt another card raised (Inspiration's "use a friendly
@@ -265,15 +261,13 @@ func TestAFlankOptionPromptDrawsTheFlankButtons(t *testing.T) {
 func TestAUseVerbPromptDrawsTheStandardButtons(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
-	out := make(chan int, 1)
 	labels := []string{"reap", "fight", "use its action"}
-	go func() { out <- c.g.chooser.ChooseOption("A Card", "Choose how to use it", labels) }()
-	c.await("the prompt to go up", func() bool { return c.g.choosingOption })
+	c.option(c.hand()[0], "Choose how to use it", labels)
+	c.await("the prompt to go up", c.g.choosingOption)
 
 	c.wants("a use-verb prompt", ">Reap<", ">Fight<", ">Action<", "btn-warning", "btn-danger")
 	c.lacks("a use-verb prompt", ">reap<", ">fight<")
 	c.do(c.g.chooseOptionIdx(0))
-	<-out
 }
 
 // Universal Translator uses a friendly creature and then asks how to use it. That
@@ -286,18 +280,15 @@ func TestAUseVerbPromptLiftsTheChosenCreature(t *testing.T) {
 	id := c.deal(testCreature)
 	c.playFromHand(id)
 
+	labels := []string{"reap", "fight", "use its action"}
+	c.option(id, "Choose how to use it", labels)
+	c.await("the prompt to go up", c.g.choosingOption)
+
 	// Stand in for the client mid "use a friendly creature": the creature was chosen
 	// (so it is the use target) and the used card stays selected while the engine
 	// asks how to use it.
 	c.g.hasSel, c.g.sel = true, id
 	c.g.useTarget, c.g.hasUseTarget = id, true
-
-	out := make(chan int, 1)
-	labels := []string{"reap", "fight", "use its action"}
-	go func() {
-		out <- c.g.chooser.ChooseOption("Universal Translator", "Choose how to use it", labels)
-	}()
-	c.await("the prompt to go up", func() bool { return c.g.choosingOption })
 
 	// The chosen creature is lifted, with its use buttons on the lifted copy.
 	if got, ok := c.g.focusCardID(); !ok || got != id {
@@ -309,7 +300,6 @@ func TestAUseVerbPromptLiftsTheChosenCreature(t *testing.T) {
 	// buttons.
 	c.wants("a disabled dock", "end-turn-bar")
 	c.do(c.g.chooseOptionIdx(1))
-	<-out
 }
 
 // A "choose how to use X" verb prompt omits a verb the chosen creature cannot be
@@ -321,27 +311,23 @@ func TestAUseVerbPromptOmitsABarredVerb(t *testing.T) {
 	c.manualTurn(testHouse)
 	def := engine.NewCard("Barred Reaper", testHouse, engine.Creature, engine.Common,
 		engine.WithPower(3), engine.WithCannotBeUsedTo(engine.ReapUse))
-	id, ok := c.g.g.ManualAddCard(def, c.g.active())
+	id, ok := c.g.eng().ManualAddCard(def, c.g.active())
 	if !ok {
 		t.Fatal("the barred creature was not added to hand")
 	}
 	c.playFromHand(id)
 
+	labels := []string{"reap", "fight", "use its action"}
+	c.option(id, "Choose how to use it", labels)
+	c.await("the prompt to go up", c.g.choosingOption)
+
 	c.g.hasSel, c.g.sel = true, id
 	c.g.useTarget, c.g.hasUseTarget = id, true
-
-	out := make(chan int, 1)
-	labels := []string{"reap", "fight", "use its action"}
-	go func() {
-		out <- c.g.chooser.ChooseOption("Universal Translator", "Choose how to use it", labels)
-	}()
-	c.await("the prompt to go up", func() bool { return c.g.choosingOption })
 
 	// Fight and Action stand; Reap is dropped because the creature cannot reap.
 	c.wants("the still-legal use buttons", ">Fight<", ">Action<")
 	c.lacks("the barred Reap button", ">Reap<")
 	c.do(c.g.chooseOptionIdx(1))
-	<-out
 }
 
 // An Upgrade attached to a creature draws as a peeking tab on the board rather
@@ -352,9 +338,9 @@ func TestDrawingAnUpgradeTab(t *testing.T) {
 	host := c.deal(testCreature)
 	c.playFromHand(host)
 
-	up := c.g.g.Register(
+	up := c.g.eng().Register(
 		engine.NewCard("Test Upgrade", testHouse, engine.Upgrade, engine.Common), c.g.active())
-	c.g.g.AttachUpgrade(host, up)
+	c.g.eng().AttachUpgrade(host, up)
 
 	c.wants("a creature with an attached upgrade", "card-host", "card-tabs--right", "card-tab")
 	c.lacks("a creature with an attached upgrade", "card-tab--back")
@@ -372,12 +358,14 @@ func TestChoosingAnAttachedUpgrade(t *testing.T) {
 	host := c.deal(testCreature)
 	c.playFromHand(host)
 
-	up := c.g.g.Register(
+	up := c.g.eng().Register(
 		engine.NewCard("Test Upgrade", testHouse, engine.Upgrade, engine.Common), c.g.active())
-	c.g.g.AttachUpgrade(host, up)
+	c.g.eng().AttachUpgrade(host, up)
 
-	c.g.choosing = true
-	c.g.chooserCandidates = []engine.LocalID{up}
+	other := c.deal(testCreature)
+	c.playFromHand(other)
+	c.ask(up, "Choose a card", false, []engine.LocalID{up, other})
+	c.await("the prompt to go up", c.g.choosing)
 
 	c.wants("an upgrade candidate", "card-tab--target")
 	c.lacks("a candidate upgrade's own strip", "card-tabs--dim")
@@ -395,13 +383,15 @@ func TestAttachedTabsDimForANonCandidateHostDuringAChooser(t *testing.T) {
 	other := c.deal(testCreature)
 	c.playFromHand(other)
 
-	up := c.g.g.Register(
+	up := c.g.eng().Register(
 		engine.NewCard("Test Upgrade", testHouse, engine.Upgrade, engine.Common), c.g.active())
-	c.g.g.AttachUpgrade(host, up)
+	c.g.eng().AttachUpgrade(host, up)
 
 	// The prompt is choosing among creatures; the upgrade's host is not a candidate.
-	c.g.choosing = true
-	c.g.chooserCandidates = []engine.LocalID{other}
+	third := c.deal(testCreature)
+	c.playFromHand(third)
+	c.ask(other, "Choose a creature", false, []engine.LocalID{other, third})
+	c.await("the prompt to go up", c.g.choosing)
 
 	c.wants("a non-candidate host's upgrade strip during a chooser", "card-tabs--dim")
 }
@@ -417,11 +407,11 @@ func TestDrawingAPowerCounterToken(t *testing.T) {
 
 	c.lacks("a creature with no counters", "power-counter-plus.svg", "power-counter-minus.svg")
 
-	c.g.g.AddPowerCounter(host, 3)
+	c.g.eng().AddPowerCounter(host, 3)
 	c.wants("a creature with three +1 counters", "power-counter-plus.svg", ">3<")
 	c.lacks("a creature with +1 counters", "power-counter-minus.svg")
 
-	c.g.g.AddPowerCounter(host, -5) // net -2
+	c.g.eng().AddPowerCounter(host, -5) // net -2
 	c.wants("a creature at net -2", "power-counter-minus.svg", ">2<")
 	c.lacks("a creature at net -2", "power-counter-plus.svg")
 }
@@ -436,10 +426,10 @@ func TestDrawingWardAndEnrageTokens(t *testing.T) {
 
 	c.lacks("an unwarded, unenraged creature", "ward.svg", "enrage.svg")
 
-	c.g.g.State.Cards[id].Warded = true
+	c.g.eng().State.Cards[id].Warded = true
 	c.wants("a warded creature", "ward.svg")
 
-	c.g.g.State.Cards[id].Enraged = true
+	c.g.eng().State.Cards[id].Enraged = true
 	c.wants("an enraged creature", "enrage.svg")
 }
 
@@ -466,12 +456,12 @@ func TestArmorShowsWhatIsLeftToAbsorb(t *testing.T) {
 		return ""
 	}
 
-	c.g.g.State.Cards[id].ArmorRemaining = 5
+	c.g.eng().State.Cards[id].ArmorRemaining = 5
 	if got := armorShown(norm(c.html())); got != "5" {
 		t.Errorf("a creature with armor intact showed %q armor remaining, want 5", got)
 	}
 
-	c.g.g.State.Cards[id].ArmorRemaining = 2
+	c.g.eng().State.Cards[id].ArmorRemaining = 2
 	if got := armorShown(norm(c.html())); got != "2" {
 		t.Errorf("a creature after absorbing showed %q armor remaining, want 2", got)
 	}
@@ -485,9 +475,9 @@ func TestAttachedTabsDimWithAnExhaustedHost(t *testing.T) {
 	host := c.deal(testCreature)
 	c.playFromHand(host) // a creature enters play exhausted
 
-	up := c.g.g.Register(
+	up := c.g.eng().Register(
 		engine.NewCard("Test Upgrade", testHouse, engine.Upgrade, engine.Common), c.g.active())
-	c.g.g.AttachUpgrade(host, up)
+	c.g.eng().AttachUpgrade(host, up)
 
 	c.wants("an exhausted host's tabs", "card-tabs--dim")
 
@@ -504,9 +494,9 @@ func TestDrawingARevealedUnderTab(t *testing.T) {
 	host := c.deal(testCreature)
 	c.playFromHand(host)
 
-	buried := c.g.g.Register(
+	buried := c.g.eng().Register(
 		engine.NewCard("Buried", testHouse, engine.Creature, engine.Common), c.g.active())
-	c.g.g.AttachUnder(host, buried, false)
+	c.g.eng().AttachUnder(host, buried, false)
 
 	c.wants("a creature with a faceup under-card", "card-tabs--left", "card-tab")
 	c.lacks("a creature with a faceup under-card", "card-tab--back")
@@ -520,9 +510,9 @@ func TestDrawingAHiddenUnderTab(t *testing.T) {
 	host := c.deal(testCreature)
 	c.playFromHand(host)
 
-	buried := c.g.g.Register(
+	buried := c.g.eng().Register(
 		engine.NewCard("Buried", testHouse, engine.Creature, engine.Common), c.g.active())
-	c.g.g.AttachUnder(host, buried, true)
+	c.g.eng().AttachUnder(host, buried, true)
 
 	c.pass()
 	c.manualTurn(testHouse)
@@ -605,7 +595,7 @@ func TestZoneTipNamesTheCardsInAFaceUpPile(t *testing.T) {
 	names := c.g.zoneNames(zoneView{
 		c.g.active(),
 		zoneDiscardLabel,
-		[]engine.LocalID{c.g.g.AddToDiscard(*def, c.g.active())},
+		[]engine.LocalID{c.g.eng().AddToDiscard(*def, c.g.active())},
 	})
 	if len(names) != 1 || names[0] != testCreature {
 		t.Fatalf("discard tip listed %v, want [%s]", names, testCreature)
@@ -614,7 +604,7 @@ func TestZoneTipNamesTheCardsInAFaceUpPile(t *testing.T) {
 	own := c.g.zoneNames(zoneView{
 		c.g.active(),
 		zoneDeckLabel,
-		[]engine.LocalID{c.g.g.AddToDeck(*def, c.g.active())},
+		[]engine.LocalID{c.g.eng().AddToDeck(*def, c.g.active())},
 	})
 	if len(own) != 1 || own[0] != testCreature {
 		t.Errorf("own deck roster listed %v, want [%s]", own, testCreature)
@@ -643,7 +633,7 @@ func TestArchivesPillReadableToItsOwnerOnly(t *testing.T) {
 		t.Fatalf("no card named %q", testCreature)
 	}
 	p := c.g.active()
-	id := c.g.g.AddToArchives(*def, p)
+	id := c.g.eng().AddToArchives(*def, p)
 
 	// The owner sees a roster naming their archived card.
 	if roster := c.g.zoneRoster(
@@ -694,7 +684,7 @@ func TestKeyCostPillNamesItsModifier(t *testing.T) {
 	// A continuous modifier against p: the pill names the card, restrictions do not.
 	def := engine.NewCard("Test Jammer", engine.Logos, engine.Artifact, engine.Common,
 		engine.WithKeyCost(engine.NewKeyCostChange(engine.Opponent, 1)))
-	c.g.g.AddArtifact(def, 1-p)
+	c.g.eng().AddArtifact(def, 1-p)
 	seg := app.HTMLString(c.g.keyCostSeg(p))
 	if !strings.Contains(seg, "zone-roster") || !strings.Contains(seg, "Test Jammer") {
 		t.Errorf("the key-cost pill did not name its modifier: %s", seg)
@@ -723,9 +713,9 @@ func TestDeckReadingOrderMatchesDeckList(t *testing.T) {
 	)
 	art := engine.NewCard("Ccc Relic", engine.Logos, engine.Artifact, engine.Common)
 	ids := []engine.LocalID{
-		c.g.g.AddToDeck(tac, me),
-		c.g.g.AddToDeck(art, me),
-		c.g.g.AddToDeck(cre, me),
+		c.g.eng().AddToDeck(tac, me),
+		c.g.eng().AddToDeck(art, me),
+		c.g.eng().AddToDeck(cre, me),
 	}
 	want := []string{"Bbb Beast", "Ccc Relic", "Aaa Tactic"}
 
@@ -735,7 +725,7 @@ func TestDeckReadingOrderMatchesDeckList(t *testing.T) {
 	}
 	modal := make([]string, 0, len(ids))
 	for _, id := range c.g.sortByHouseTypeName(ids) {
-		modal = append(modal, c.g.g.Def(id).Name)
+		modal = append(modal, c.g.eng().Def(id).Name)
 	}
 	if !equalStrings(modal, want) {
 		t.Errorf("deck modal order = %v, want %v (Tactic last)", modal, want)
@@ -778,7 +768,7 @@ func TestDrawingTheSetPicker(t *testing.T) {
 func TestNewGameFromTheEndOfGamePanel(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
-	c.g.g.State.Winner = 0
+	c.g.eng().State.Winner = 0
 	c.g.phase = phaseOver
 	c.wants("the end-of-game panel", "wins!", "New game")
 
@@ -876,11 +866,11 @@ func TestDrawingWithTheSidebarAway(t *testing.T) {
 func TestWinBannerNamesTheWinnerInTheirColour(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
-	c.g.g.State.Winner = 0
+	c.g.eng().State.Winner = 0
 	c.g.phase = phaseOver
 	c.wants("the win banner in player 0's colour", "player-name--p0", "wins!")
 
-	c.g.g.State.Winner = 1
+	c.g.eng().State.Winner = 1
 	c.wants("the win banner in player 1's colour", "player-name--p1", "wins!")
 }
 
@@ -895,15 +885,13 @@ func TestDeployPromptLiftsPlacementButtons(t *testing.T) {
 	c.playFromHand(c.deal(testCreature))
 	line := c.board()
 
-	// Stage the placement prompt on a lifted hand creature the way ChoosePosition
-	// posts it while the play action is parked, so the render is exercised without a
-	// background goroutine.
-	deployed := c.deal(testCreature)
+	// Raise the placement prompt on a lifted hand creature the way playing a Deploy
+	// creature onto a non-empty line does.
+	deployed := c.deal(deployCreature)
 	c.g.selectHandID(c.ctx, deployed)
-	c.g.choosingPosition = true
-	c.g.positionLine = line
-	c.g.positionRight = false
-	c.g.positionSideChosen = false
+	c.do(c.g.play)
+	c.await("the deploy placement prompt", c.g.choosingPosition)
+	_ = line
 
 	// First step: the side pair on the lifted card, laid out left-to-right.
 	c.wants("the deploy side choice", "card-focus", "Deploy left", "Deploy right")
@@ -926,7 +914,7 @@ func TestDeployPromptLiftsPlacementButtons(t *testing.T) {
 func TestDrawingAFinishedGame(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
-	c.g.g.State.Winner = 0
+	c.g.eng().State.Winner = 0
 	c.g.settlePhase()
 	c.wants("a finished game", "over-panel", "wins!", "New game")
 	c.lacks("a finished game", "End turn")
@@ -996,7 +984,7 @@ func TestPlayerStandingDrawsThreeKeySlots(t *testing.T) {
 // so the log echoes the board's "Check!" glow.
 func TestPlayerStandingHighlightsAemberAtCheck(t *testing.T) {
 	c := newClient(t)
-	cost := c.g.g.CurrentKeyCost(0)
+	cost := c.g.eng().CurrentKeyCost(0)
 
 	atCheck := engine.PlayerStanding{
 		Player: 0,
@@ -1056,7 +1044,7 @@ func TestDrawingDamage(t *testing.T) {
 		t.Error("an undamaged creature still shows a damage stat")
 	}
 
-	c.g.g.State.Cards[id].Damage = 1
+	c.g.eng().State.Cards[id].Damage = 1
 	if !strings.Contains(statHTML(), "damage.svg") {
 		t.Error("a damaged creature does not show a damage stat")
 	}
@@ -1077,7 +1065,7 @@ func TestArtifactHidesPowerUntilItBecomesACreature(t *testing.T) {
 		t.Error("an artifact should not show a power stat")
 	}
 
-	c.g.g.PutIntoBattlelineAsCreature(id, true, engine.UntilCardLeavesPlay)
+	c.g.eng().PutIntoBattlelineAsCreature(id, true, engine.UntilCardLeavesPlay)
 	if !strings.Contains(statHTML(), "power.svg") {
 		t.Error("a card turned into a creature should show its power")
 	}

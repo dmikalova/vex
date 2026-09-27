@@ -1,92 +1,245 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
 	"github.com/dmikalova/vex/internal/engine"
-	"github.com/dmikalova/vex/internal/match"
+	"github.com/dmikalova/vex/internal/session"
 )
 
-// This file is the action plumbing: every engine mutation runs through here, so
-// each one is snapshotted for undo, resolved off the UI goroutine, and followed
-// by the flash bookkeeping that animates what changed.
+// This file is the action plumbing: every player input reaches the engine as a
+// Command applied to the session (ADR 0040), so each one is recorded in the
+// command log undo rewinds over, and each is followed by the settling step that
+// animates what changed and presents whatever the engine asks next.
+//
+// THE ROOT BOUNDARY IS "Pending() is a RequestAction". Between two RequestActions
+// lies exactly one root action and every prompt it raised — which is the single
+// signal beginAction and afterAction bracket the client's per-action bookkeeping
+// with: the undo mark, the flash baseline, and the log group.
 
-// runAction resolves an engine mutation on a background goroutine so the UI stays
-// responsive while an effect blocks on the chooser. When it finishes it advances
-// the phase and clears any transient selection on the UI goroutine.
-func (g *game) runAction(ctx app.Context, fn func() error) {
-	if g.busy {
+// applyRoot takes one root action. It opens the action, hands the Command to the
+// session, and settles whatever comes back — a prompt the action raised, or the
+// next RequestAction if it resolved outright. A command the session refuses never
+// began an action, so its bookkeeping is dropped again and the engine's own reason
+// for refusing is shown.
+func (g *game) applyRoot(ctx app.Context, cmd engine.Command) {
+	if g.s == nil || g.atPrompt() {
 		return
 	}
-	g.beginAction()
-	g.busy = true
 	g.status = ""
-	// Complete via g.dispatch, which is bound in OnMount to the always-mounted
-	// root component. Do NOT use ctx.Dispatch here: ctx is tied to the clicked
-	// element (often a button this action removes from the DOM), and go-app drops
-	// any Dispatch whose source element is no longer mounted — which would leave
-	// the UI stuck on "resolving…" after a chooser.
-	ctx.Async(func() {
-		crashed, err := runSafely(func() error {
-			if e := fn(); e != nil {
-				return e
-			}
-			g.handOffEndedTurn()
-			return nil
-		})
-		g.dispatch(func(ctx app.Context) { g.finishAction(ctx, crashed, err) })
-	})
+	g.redoLog = nil
+	g.beginAction()
+	err := g.s.Apply(cmd)
+	switch {
+	case errors.Is(err, session.ErrIllegal), errors.Is(err, session.ErrFinished):
+		g.abandonAction()
+		g.setStatus(g.refusalOf(cmd).Error())
+	case err != nil:
+		g.brokeAction(ctx, err)
+	default:
+		g.settleAfterApply(ctx)
+	}
 }
 
-// finishAction settles a resolved root action on the UI goroutine: it clears the
-// busy flag and remakes the chooser cancel channel, then either rolls the action
-// back (a crash or a manual-mode Cancel), surfaces an illegal-move rejection, or
-// commits it with afterAction. Either way the match is saved.
-func (g *game) finishAction(ctx app.Context, crashed bool, err error) {
-	g.busy = false
-	// A manual-mode Cancel drained this action; roll it back to the snapshot
-	// beginAction recorded and remake the cancel channel for the next action.
-	cancelled := g.cancelling
-	g.cancelling = false
-	g.chooser.cancel = make(chan struct{})
-	g.chooser.cancelled = false
-	if crashed {
-		// A corrupt engine state can panic mid-action (e.g. an
-		// out-of-range card id). Peel the partial action back off the
-		// command log and replay so the board stays consistent, then
-		// surface the failure instead of freezing on "resolving…".
-		g.rollbackLastRoot()
-		g.setStatus(err.Error())
-		g.save(ctx)
+// answer applies one answer to the pending prompt and settles. Answering is not
+// the start of an action — the action that raised the prompt is still the one
+// running — so it opens no log group and marks no new undo boundary.
+func (g *game) answer(ctx app.Context, cmd engine.Command) {
+	if g.s == nil {
 		return
 	}
-	if cancelled {
-		g.rollbackLastRoot()
-		g.save(ctx)
+	g.redoLog = nil
+	if err := g.s.Apply(cmd); err != nil {
+		g.brokeAction(ctx, err)
 		return
 	}
-	if err != nil {
-		g.setStatus(err.Error())
+	g.settleAfterApply(ctx)
+}
+
+// applyManual records and performs one manual force-edit. A force-edit is not an
+// answer to the pending request — it deliberately bypasses the rules and the turn
+// loop — so it goes to the session's own manual path and leaves whatever the
+// engine is waiting on untouched. It is still a root action for the client's
+// purposes: it gets its own log group and its own undo boundary.
+func (g *game) applyManual(ctx app.Context, cmd engine.Command) {
+	if g.s == nil {
+		return
 	}
-	g.afterAction()
+	g.redoLog = nil
+	g.beginAction()
+	if err := g.s.ApplyManual(cmd); err != nil {
+		g.abandonAction()
+		g.setStatus(err.Error())
+		return
+	}
 	g.save(ctx)
 }
 
-// runSafely runs a root action, converting a panic from a corrupt engine state
-// into an error (crashed == true) instead of letting it kill the WASM goroutine
-// and freeze the UI. A returned error with crashed == false is an ordinary
-// illegal-move rejection.
-func runSafely(fn func() error) (crashed bool, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("the game hit an unexpected error and rolled back: %v", r)
-			crashed = true
+// brokeAction handles an action the engine could not finish: the command is in the
+// log but the state it left is half-resolved, so the whole root action is rewound
+// and the failure surfaced rather than the client sitting on a broken board.
+func (g *game) brokeAction(ctx app.Context, err error) {
+	g.rewindLastRoot()
+	g.setStatus(fmt.Sprintf("the game hit an unexpected error and rolled back: %v", err))
+	g.save(ctx)
+}
+
+// settleAfterApply brings the client up to date with whatever the session yielded.
+// It first answers anything the player has already decided (autoAnswer), then
+// mirrors the badge preview, presents a prompt it has not presented before, and —
+// at a root boundary, where the pending request is a RequestAction or the match is
+// over — settles the action that has just finished.
+func (g *game) settleAfterApply(ctx app.Context) {
+	req, live := g.settlePending()
+	if !live || req.Kind == engine.RequestAction {
+		g.afterAction()
+	}
+	g.save(ctx)
+}
+
+// settlePending brings the client's presentation up to date with whatever the
+// session is now waiting on, and reports it: it answers anything the player has
+// already decided, mirrors the badge preview, and presents a request it has not
+// presented before. It is the half of settling that a rebuild shares with an
+// apply, which is why it is not folded into settleAfterApply.
+func (g *game) settlePending() (engine.Request, bool) {
+	for g.autoAnswer() { //nolint:revive // the loop body is the call's side effect
+	}
+	req, live := g.pending()
+	g.syncBadge(req, live)
+	g.presentIfNew(req, live)
+	return req, live
+}
+
+// autoAnswer answers a request the player has already decided, so the prompt is
+// never shown: the play-as-which question a Play creature / Play upgrade button
+// pre-answered, and a placement with nowhere else to put the creature. It reports
+// whether it answered, so the caller loops until the session asks something real.
+func (g *game) autoAnswer() bool {
+	req, ok := g.prompt()
+	if !ok {
+		return false
+	}
+	switch req.Kind {
+	case engine.RequestOption:
+		if i, armed := g.armedUpgradeChoice(req.Options); armed {
+			return g.s.Apply(engine.Command{
+				Kind:  engine.CommandOption,
+				Index: i,
+			}) == nil
 		}
-	}()
-	return false, fn()
+	case engine.RequestPosition:
+		// With no other friendly creatures in play there is only one placement, so
+		// place without asking. The engine already skips the prompt for an empty line;
+		// this guards the web side against ever showing a choice with no alternatives.
+		if len(req.Cards) == 0 {
+			return g.s.Apply(engine.Command{Kind: engine.CommandPosition}) == nil
+		}
+	}
+	return false
+}
+
+// presentIfNew sets the client up for a request it has not presented yet: it tears
+// the previous prompt's presentation down and decides how the new one is offered.
+// promptAt identifies a request by the number of commands applied before it — each
+// request consumes exactly one — so a second settle over the same prompt leaves a
+// zone viewer the player closed closed.
+func (g *game) presentIfNew(req engine.Request, live bool) {
+	if g.s.Len() == g.promptAt {
+		return
+	}
+	g.promptAt = g.s.Len()
+	g.clearPrompts()
+	g.hasAbilityPick = false
+	if !live {
+		return
+	}
+	switch req.Kind {
+	case engine.RequestPickCard, engine.RequestPickCardOrDecline:
+		// A prompt taking over the board owns the highlight: drop any card the player
+		// had selected before it opened so a stale selection ring does not linger on a
+		// non-candidate card, reading as still-active while the board dims around the
+		// candidates.
+		g.clearSelection()
+		g.presentPrompt(req.Cards, req.Kind == engine.RequestPickCardOrDecline)
+	case engine.RequestReaction:
+		g.clearSelection()
+		if cards := reactionCards(req.Reactions); len(cards) >= 2 {
+			g.presentPrompt(cards, false)
+		}
+	case engine.RequestOption:
+		// A prompt whose options are the whole card database (Etan's Jar) is answered
+		// through the card-name typeahead, not a list of a thousand buttons.
+		if g.cardNameOptions() {
+			g.pickerOpen, g.pickerNaming = true, true
+			g.pickerQuery, g.pickerFocused, g.pickerCursor = "", false, 0
+		}
+	}
+}
+
+// rejection explains, in the engine's own words, why a root action the legal set
+// did not offer was refused. The session rejects such a command without performing
+// it, so there is no engine error to surface; this asks the same Can* readers the
+// action bar offers the verb through, which is the client asking the engine rather
+// than deciding a rule of its own.
+func (g *game) rejection(cmd engine.Command) error {
+	eg, p := g.eng(), g.active()
+	switch cmd.Kind {
+	case engine.CommandPlayCreature, engine.CommandPlayArtifact,
+		engine.CommandPlayTactic, engine.CommandPlayUpgrade:
+		id, ok := handCardAt(eg, p, cmd.Hand)
+		if !ok {
+			return errNotNow
+		}
+		return playTypeError(eg.CanPlay(p, id), eg.Def(id).Type)
+	case engine.CommandDiscardFromHand:
+		id, ok := handCardAt(eg, p, cmd.Hand)
+		if !ok {
+			return errNotNow
+		}
+		return eg.CanDiscard(p, id)
+	case engine.CommandReap:
+		return eg.CanUseTo(p, cmd.Card, engine.ReapUse)
+	case engine.CommandFight:
+		return eg.CanUseTo(p, cmd.Card, engine.FightUse)
+	case engine.CommandUseAction:
+		if eg.TypeOf(cmd.Card) == engine.Artifact {
+			return eg.CanUseArtifact(p, cmd.Card)
+		}
+		return eg.CanUseTo(p, cmd.Card, engine.ActionUse)
+	case engine.CommandUnstun:
+		return eg.CanUse(p, cmd.Card)
+	}
+	return errNotNow
+}
+
+// refusalOf is rejection with a fallback: a Can* reader can answer nil for a
+// command the legal set still did not offer (a play the phase does not allow at
+// all), and a refusal always has to say something.
+func (g *game) refusalOf(cmd engine.Command) error {
+	if err := g.rejection(cmd); err != nil {
+		return err
+	}
+	return errNotNow
+}
+
+// errNotNow is the fallback reason for a refused action with no Can* reader of its
+// own to ask — a house choice or an end of turn taken in a phase that does not
+// offer it, which the handlers already guard against.
+var errNotNow = errors.New("that cannot be done right now")
+
+// handCardAt is the card a hand index names, reporting false when the index is
+// out of range — a command built against a hand that has since changed.
+func handCardAt(eg *engine.Game, player, i int) (engine.LocalID, bool) {
+	hand := eg.Hand(player)
+	if i < 0 || i >= len(hand) {
+		return 0, false
+	}
+	return hand[i], true
 }
 
 // setStatus shows a transient message in the controls area and arms a 5s
@@ -180,25 +333,37 @@ func (g *game) flyIntoPlay() {
 		})
 }
 
-// beginAction starts a new log group for the root action about to run and marks
-// the animation baseline. Every root action (an engine mutation via runAction or
-// a manual edit) calls it, so log bubbles align with player intent and a new
-// action drops any pending redo. Undo/redo themselves work off the command log
-// (g.inputs), not a separate snapshot stack, so nothing is captured here for them
-// beyond prevState, which computeFlashes diffs the resolved state against.
+// beginAction opens a root action, at the root boundary the action starts from:
+// it marks where the action's command segment begins in the session log (the undo
+// cursor) and where its log lines begin (the bubble), and snapshots the state
+// computeFlashes will diff the result against. rootMarks and logGroups are
+// appended together and only here, so the i-th entry of each describes the same
+// action and one undo peels one entry off each.
 func (g *game) beginAction() {
 	g.confirmEndTurn = false
 	g.btnCursor, g.hasBtnCursor = 0, false
 	g.hasUseTarget = false
 	g.handSlot = g.selHandSlot()
 	g.clearFlashes()
-	g.prevState = g.g.State.FastCopy()
+	g.prevState = g.eng().State.FastCopy()
 	g.prevValid = true
-	g.redoLog = nil
+	g.rootMarks = append(g.rootMarks, g.s.Len())
 	g.logGroups = append(g.logGroups, logMark{
-		Start:  len(g.g.Log),
-		Player: g.g.State.ActivePlayer,
+		Start:  len(g.eng().Log),
+		Player: g.eng().State.ActivePlayer,
 	})
+}
+
+// abandonAction takes back what beginAction opened, for a command the session
+// refused: nothing was applied, so the action never began.
+func (g *game) abandonAction() {
+	g.rootMarks = g.rootMarks[:len(g.rootMarks)-1]
+	g.logGroups = g.logGroups[:len(g.logGroups)-1]
+	g.prevValid = false
+	// The verb animations a handler armed before applying (which card reaped, which
+	// two fought, which used its action) describe something that did not happen, so
+	// they are disarmed rather than left to fire on whatever action comes next.
+	g.fighting, g.reaping, g.acting = false, false, false
 }
 
 // clearFlashes drops every queued one-shot animation, so a state change the
@@ -209,42 +374,6 @@ func (g *game) clearFlashes() {
 	g.keyFlash = [2]bool{}
 	g.discardFlash = [2]bool{}
 	g.flights = nil
-}
-
-// rebuildFromLog re-deals the match from the seed and replays the current command
-// log to regenerate the exact state, typed log, and log groups (ADR 0039). It
-// reports whether the replay reproduced the log cleanly; a divergence leaves the
-// old game untouched. Manual mode is not part of the log, so it is carried across.
-func (g *game) rebuildFromLog() bool {
-	if g.defByName == nil {
-		g.defByName = cardsByName()
-	}
-	wasManual := g.g != nil && g.g.Manual()
-	if g.chooser != nil {
-		g.chooser.drain()
-	}
-	eg, houses, mavericks, legacies, rosters, err := match.NewWithSets(
-		"Player 1",
-		"Player 2",
-		g.seed,
-		g.setNames,
-	)
-	if err != nil {
-		return false
-	}
-	rc := &replayChooser{inputs: g.inputs}
-	eg.SetChooser(0, rc)
-	eg.SetChooser(1, rc)
-	groups, err := driveReplay(eg, rc, g.defByName)
-	if err != nil {
-		return false
-	}
-	g.install(eg, houses, mavericks, legacies, rosters)
-	g.logGroups = groups
-	if wasManual {
-		g.g.SetManual(true)
-	}
-	return true
 }
 
 // afterRebuild resets the transient UI a rebuild throws away and sets the
@@ -260,91 +389,103 @@ func (g *game) afterRebuild() {
 	g.settlePhase()
 }
 
-// recomputeRootMarks rebuilds rootMarks from inputs, so a truncation or splice of
-// the command log leaves the root-boundary index consistent with it.
-func (g *game) recomputeRootMarks() {
-	g.rootMarks = g.rootMarks[:0]
-	for i, in := range g.inputs {
-		if in.Kind.isRoot() {
-			g.rootMarks = append(g.rootMarks, i)
-		}
-	}
-}
+// canUndo reports whether there is a step back to take. During a prompt there is:
+// the prompt is part of the action that raised it, so undo rewinds to before that
+// action rather than to a half-resolved state the player never saw.
+func (g *game) canUndo() bool { return len(g.rootMarks) > 0 }
 
-// rollbackLastRoot drops the last recorded root action and everything after it
-// from the command log, then rebuilds. A crashed or cancelled action has already
-// recorded its root (and maybe some choices) before failing, so undoing it is
-// peeling that partial segment back off the log.
-func (g *game) rollbackLastRoot() {
-	if len(g.rootMarks) == 0 {
-		return
-	}
-	g.inputs = g.inputs[:g.rootMarks[len(g.rootMarks)-1]]
-	g.recomputeRootMarks()
-	g.rebuildFromLog()
-	g.afterRebuild()
-}
+// canRedo reports whether an undone action can be put back. Not mid-prompt: the
+// prompt belongs to a NEW action, which has already dropped the redo history.
+func (g *game) canRedo() bool { return !g.atPrompt() && len(g.redoLog) > 0 }
 
-// atPrompt reports whether a prompt is waiting for an answer, with the action
-// that raised it still in flight.
-func (g *game) atPrompt() bool {
-	return g.choosing || g.choosingOption || g.choosingPosition
-}
-
-// canUndo reports whether there is a step back to take. During a prompt there
-// is: the prompt is part of the action that raised it, so undo rewinds to before
-// that action rather than to a half-resolved state the player never saw. Outside
-// a prompt, an action still resolving has no settled state to rewind to.
-func (g *game) canUndo() bool {
-	if len(g.rootMarks) == 0 {
-		return false
-	}
-	if g.atPrompt() {
-		return !g.cancelling
-	}
-	return !g.busy
-}
-
-func (g *game) canRedo() bool {
-	return !g.busy && !g.choosing && !g.choosingOption && len(g.redoLog) > 0
-}
-
-// undoAction steps back to the state before the last root action by peeling its
-// input segment off the command log and replaying what remains. During a prompt
-// it instead drains the prompt so the in-flight action backs itself out, which
-// rolls the log back to the same place — the prompt's own answers were never
-// recorded, so there is nothing to redo forward into.
+// undoAction steps back to the state before the last root action, by replaying the
+// match from a fresh deal up to that action's start (session.Undo). CANCELLING A
+// PROMPT IS THE SAME OPERATION and the same call: a prompt belongs to the action
+// that raised it, so backing out of one is rewinding past that action — and unlike
+// draining the prompt, rewinding never resolves the rest of the effect first, so
+// nothing it would have done flickers on the way out.
+//
+// Undo never reaches command 0. That command is the first-player roll, and undoing
+// it would re-roll and re-deal — which is a new match, not a step back — so the
+// floor is the first root action's own mark, which is always at least 1.
 func (g *game) undoAction(ctx app.Context, _ app.Event) {
 	if !g.canUndo() {
 		return
 	}
-	if g.atPrompt() {
-		g.cancelChooser(ctx, app.Event{})
+	mark := g.rootMarks[len(g.rootMarks)-1]
+	seg := g.commandsFrom(mark)
+	if !g.rewindTo(mark) {
 		return
 	}
-	start := g.rootMarks[len(g.rootMarks)-1]
-	seg := append([]input(nil), g.inputs[start:]...)
 	g.redoLog = append(g.redoLog, seg)
-	g.inputs = g.inputs[:start]
-	g.recomputeRootMarks()
-	g.rebuildFromLog()
-	g.afterRebuild()
 	g.save(ctx)
 }
 
-// redoAction re-applies the last undone action by splicing its segment back onto
-// the command log and replaying.
+// rewindLastRoot backs the last root action out with no redo entry, for an action
+// that broke rather than one the player took back.
+func (g *game) rewindLastRoot() {
+	if !g.canUndo() {
+		return
+	}
+	g.rewindTo(g.rootMarks[len(g.rootMarks)-1])
+}
+
+// rewindTo rewinds the session to command n and drops the client's own bookkeeping
+// for the root action that began there. It reports whether the rewind took; a
+// session that cannot replay its own prefix leaves the board as it was.
+func (g *game) rewindTo(n int) bool {
+	if err := g.s.Undo(n); err != nil {
+		return false
+	}
+	g.rootMarks = g.rootMarks[:len(g.rootMarks)-1]
+	g.logGroups = g.logGroups[:len(g.logGroups)-1]
+	g.promptAt = g.s.Len()
+	g.clearPrompts()
+	g.hasAbilityPick = false
+	g.resetBadgePreview()
+	g.afterRebuild()
+	return true
+}
+
+// commandsFrom copies the tail of the session's command log from index n, so undo
+// can hand it to redo before session.Undo truncates it away.
+func (g *game) commandsFrom(n int) []engine.Command {
+	cmds := g.s.Record().Commands
+	if n < 0 || n > len(cmds) {
+		return nil
+	}
+	return cmds[n:]
+}
+
+// redoAction puts the last undone action back by applying its commands again. The
+// session has no Redo of its own — Undo truncates the log — so what was truncated
+// is the client's to remember and feed back through the ordinary apply path.
 func (g *game) redoAction(ctx app.Context, _ app.Event) {
 	if !g.canRedo() {
 		return
 	}
 	seg := g.redoLog[len(g.redoLog)-1]
 	g.redoLog = g.redoLog[:len(g.redoLog)-1]
-	g.inputs = append(g.inputs, seg...)
-	g.recomputeRootMarks()
-	g.rebuildFromLog()
+	g.beginAction()
+	for _, cmd := range seg {
+		if err := g.applyRecorded(cmd); err != nil {
+			break
+		}
+	}
+	g.promptAt = g.s.Len()
 	g.afterRebuild()
 	g.save(ctx)
+}
+
+// applyRecorded feeds one recorded command back in by KIND — a manual force-edit
+// straight to the live game, everything else as an answer the session advances on
+// — which is the same routing a session replay uses, so a rebuild here and a
+// rebuild there cannot disagree about what a recorded command means.
+func (g *game) applyRecorded(cmd engine.Command) error {
+	if cmd.Kind.IsManual() {
+		return g.s.ApplyManual(cmd)
+	}
+	return g.s.Apply(cmd)
 }
 
 // afterAction settles the phase after an engine mutation: the game may be won,
@@ -369,11 +510,11 @@ func (g *game) boardFlashes(
 ) map[engine.LocalID]bool {
 	inPlayNow := map[engine.LocalID]bool{}
 	for p := range 2 {
-		for _, id := range g.g.Battleline(p) {
+		for _, id := range g.eng().Battleline(p) {
 			inPlayNow[id] = true
 			g.cardFlags(id, prev, flashes)
 		}
-		for _, id := range g.g.Artifacts(p) {
+		for _, id := range g.eng().Artifacts(p) {
 			inPlayNow[id] = true
 			g.cardFlags(id, prev, flashes)
 		}
@@ -386,15 +527,15 @@ func (g *game) boardFlashes(
 // pulse — they are gone from the board — so the destination pulses instead, which
 // is also the feedback for a discard.
 func (g *game) playerFlashes(p int, prev *engine.GameState) {
-	if g.g.State.Aember[p] > prev.Aember[p] {
+	if g.eng().State.Aember[p] > prev.Aember[p] {
 		g.poolParity[p] = !g.poolParity[p]
 		g.poolFlash[p] = true
 	}
-	if g.g.State.KeyCount(p) > prev.KeyCount(p) {
+	if g.eng().State.KeyCount(p) > prev.KeyCount(p) {
 		g.keyParity[p] = !g.keyParity[p]
 		g.keyFlash[p] = true
 	}
-	if g.g.State.Discard[p].Count > prev.Discard[p].Count {
+	if g.eng().State.Discard[p].Count > prev.Discard[p].Count {
 		g.discardParity[p] = !g.discardParity[p]
 		g.discardFlash[p] = true
 	}
@@ -503,11 +644,11 @@ func (g *game) landing(id engine.LocalID) (int, string, bool) {
 			name string
 			ids  []engine.LocalID
 		}{
-			{"zone-discard", g.g.Discard(p)},
-			{"zone-purge", g.g.Purge(p)},
-			{"zone-archives", g.g.Archives(p)},
-			{"zone-hand", g.g.Hand(p)},
-			{"zone-deck", g.g.Deck(p)},
+			{"zone-discard", g.eng().Discard(p)},
+			{"zone-purge", g.eng().Purge(p)},
+			{"zone-archives", g.eng().Archives(p)},
+			{"zone-hand", g.eng().Hand(p)},
+			{"zone-deck", g.eng().Deck(p)},
 		}
 		for _, z := range zones {
 			if containsID(z.ids, id) {
@@ -525,7 +666,7 @@ func (g *game) cardFlags(
 	prev *engine.GameState,
 	out map[engine.LocalID]cardFlash,
 ) {
-	now, was := g.g.State.Cards[id], prev.Cards[id]
+	now, was := g.eng().State.Cards[id], prev.Cards[id]
 	f := out[id]
 	f.damage = f.damage || now.Damage > was.Damage
 	f.amber = f.amber || now.Amber > was.Amber
@@ -542,10 +683,10 @@ func (g *game) cardFlags(
 func (g *game) inPlaySet() map[engine.LocalID]bool {
 	set := map[engine.LocalID]bool{}
 	for p := range 2 {
-		for _, id := range g.g.Battleline(p) {
+		for _, id := range g.eng().Battleline(p) {
 			set[id] = true
 		}
-		for _, id := range g.g.Artifacts(p) {
+		for _, id := range g.eng().Artifacts(p) {
 			set[id] = true
 		}
 	}
@@ -563,10 +704,10 @@ func (g *game) inPlaySet() map[engine.LocalID]bool {
 // ActiveHouse, or a No-House turn would loop back to the picker with no way to end.
 func (g *game) settlePhase() {
 	switch {
-	case g.g.Winner() >= 0:
+	case g.eng().Winner() >= 0:
 		g.phase = phaseOver
-	case g.g.State.ActiveHouse == engine.HouseNone &&
-		g.g.Phase() == engine.PhaseChooseHouse:
+	case g.eng().State.ActiveHouse == engine.HouseNone &&
+		g.eng().Phase() == engine.PhaseChooseHouse:
 		g.phase = phaseHouse
 	default:
 		g.phase = phaseMain

@@ -85,7 +85,7 @@ func TestHoverOfAGoneCardIsNotLive(t *testing.T) {
 	c.g.hoverCard(c.ctx, id)
 
 	c.manual()
-	c.g.g.ManualMove(id, engine.ManualPurge)
+	c.g.eng().ManualMove(id, engine.ManualPurge)
 
 	if c.g.hoverLive() {
 		t.Error("a purged card still reads as a live hover")
@@ -101,9 +101,9 @@ func TestHoverLiveForAnAttachedUpgrade(t *testing.T) {
 	host := c.deal(testCreature)
 	c.playFromHand(host)
 
-	up := c.g.g.Register(
+	up := c.g.eng().Register(
 		engine.NewCard("Test Upgrade", testHouse, engine.Upgrade, engine.Common), c.g.active())
-	c.g.g.AttachUpgrade(host, up)
+	c.g.eng().AttachUpgrade(host, up)
 
 	c.g.hoverCard(c.ctx, up)
 	if !c.g.hoverLive() {
@@ -119,9 +119,9 @@ func TestHoverLiveForAFaceupUnderCard(t *testing.T) {
 	host := c.deal(testCreature)
 	c.playFromHand(host)
 
-	buried := c.g.g.Register(
+	buried := c.g.eng().Register(
 		engine.NewCard("Buried", testHouse, engine.Creature, engine.Common), c.g.active())
-	c.g.g.AttachUnder(host, buried, false)
+	c.g.eng().AttachUnder(host, buried, false)
 
 	c.g.hoverCard(c.ctx, buried)
 	if !c.g.hoverLive() {
@@ -139,9 +139,9 @@ func TestHoverLiveForAFacedownUnderCardDependsOnPeek(t *testing.T) {
 	c.playFromHand(host)
 	controller := c.g.active()
 
-	buried := c.g.g.Register(
+	buried := c.g.eng().Register(
 		engine.NewCard("Buried", testHouse, engine.Creature, engine.Common), controller)
-	c.g.g.AttachUnder(host, buried, true)
+	c.g.eng().AttachUnder(host, buried, true)
 
 	c.g.hoverCard(c.ctx, buried)
 	if !c.g.hoverLive() {
@@ -185,7 +185,7 @@ func TestRemainingKeyColors(t *testing.T) {
 	}
 
 	c.manual()
-	c.g.g.ManualForgeKeyColor(0, engine.KeyColorBlue)
+	c.g.eng().ManualForgeKeyColor(0, engine.KeyColorBlue)
 	got := c.g.remainingKeyColors(0)
 	if len(got) != 2 {
 		t.Fatalf("after forging blue, %v remain, want two", got)
@@ -259,13 +259,13 @@ func TestNewGameSameSets(t *testing.T) {
 }
 
 // Starting a new game while a prompt is still up — here the opening mulligan —
-// re-deals cleanly: the abandoned match's blocked chooser goroutine is drained
-// and its completion no-ops, so the new match settles at its own house choice
-// rather than hanging or being clobbered by the old game finishing behind it.
+// re-deals cleanly: the abandoned match's session is dropped whole, so the new
+// match settles at its own house choice rather than being clobbered by the old
+// one finishing behind it.
 func TestNewGameDuringMulliganPrompt(t *testing.T) {
 	c := newBlankClient(t)
 	c.g.dealMatch(testSeed)
-	c.await("the first mulligan prompt", func() bool { return c.g.choosingOption })
+	c.await("the first mulligan prompt", c.g.choosingOption)
 
 	c.do(c.g.openSetup)
 	if !c.g.awaitingSetup {
@@ -285,30 +285,34 @@ func TestNewGameDuringMulliganPrompt(t *testing.T) {
 	}
 }
 
-// Opening the set picker is allowed from any state — including behind a prompt or
-// a resolving action — because it only offers a new game and discards nothing
-// until sets are confirmed; confirming then re-deals, which safely abandons any
-// prompt the match left in flight (drained chooser, identity-guarded completion).
-// (Previously openSetup was refused while busy/choosing to protect the blocked
-// chooser goroutine; that protection now lives in dealMatch, so the guard is gone.)
-// Manual mode stays the exception it always was: it may be toggled mid-prompt so
-// the player can reach the Cancel that backs out of an answerless prompt.
+// Opening the set picker is allowed from any state — including behind a prompt —
+// because it only offers a new game and discards nothing until sets are confirmed;
+// confirming then re-deals, which abandons the session the prompt belonged to.
+// Manual mode stays toggleable mid-prompt too, so the player can reach the Cancel
+// that backs out of an answerless prompt.
 func TestOpenSetupIsAlwaysAllowed(t *testing.T) {
 	tests := []struct {
-		name          string
-		arm           func(g *game)
-		manualToggles bool // manual mode may still be toggled in this state
+		name string
+		arm  func(c *client)
 	}{
-		{"busy", func(g *game) { g.busy = true }, false},
-		{"choosing", func(g *game) { g.choosing = true }, true},
-		{"choosingOption", func(g *game) { g.choosingOption = true }, true},
+		{"a card prompt is up", func(c *client) {
+			board := c.board()
+			c.ask(board[0], "Choose a creature", false, board)
+			c.await("the card prompt", c.g.choosing)
+		}},
+		{"an option prompt is up", func(c *client) {
+			c.option(c.hand()[0], "Take them?", []string{"Yes", "No"})
+			c.await("the option prompt", c.g.choosingOption)
+		}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := newClient(t)
-			c.startTurn()
+			c.manualTurn(testHouse)
+			c.playFromHand(c.deal(testCreature))
+			c.playFromHand(c.deal(testCreature))
 			seed := c.g.seed
-			tt.arm(c.g)
+			tt.arm(c)
 
 			c.do(c.g.openSetup)
 			if !c.g.awaitingSetup {
@@ -317,10 +321,10 @@ func TestOpenSetupIsAlwaysAllowed(t *testing.T) {
 			if c.g.seed != seed {
 				t.Error("opening the picker dealt a new match before sets were confirmed")
 			}
-			wasManual := c.g.g.Manual()
+			wasManual := c.g.eng().Manual()
 			c.do(c.g.toggleManual)
-			if toggled := c.g.g.Manual() != wasManual; toggled != tt.manualToggles {
-				t.Errorf("toggleManual changed=%v, want %v", toggled, tt.manualToggles)
+			if c.g.eng().Manual() == wasManual {
+				t.Error("manual mode could not be toggled while a prompt was up")
 			}
 		})
 	}
@@ -333,16 +337,16 @@ func TestOpenSetupIsAlwaysAllowed(t *testing.T) {
 func TestTapDuringOptionPromptInspects(t *testing.T) {
 	c := newBlankClient(t)
 	c.g.dealMatch(testSeed)
-	c.await("the first mulligan prompt", func() bool { return c.g.choosingOption })
+	c.await("the first mulligan prompt", func() bool { return c.g.choosingOption() })
 
-	hand := c.g.g.Hand(c.g.active())
+	hand := c.g.eng().Hand(c.g.active())
 	if len(hand) == 0 {
 		t.Fatal("no cards in hand during the mulligan prompt")
 	}
 	id := hand[0]
 	c.do(func(ctx app.Context, _ app.Event) { c.g.selectHandID(ctx, id) })
 
-	if !c.g.choosingOption {
+	if !c.g.choosingOption() {
 		t.Error("the tap answered the mulligan prompt; it should only inspect")
 	}
 	if !c.g.inspecting || !c.g.hasSel || c.g.sel != id {
@@ -357,16 +361,16 @@ func TestTapDuringOptionPromptInspects(t *testing.T) {
 func TestDenyKeyAnswersTheMulligan(t *testing.T) {
 	c := newBlankClient(t)
 	c.g.dealMatch(testSeed)
-	c.await("the first mulligan prompt", func() bool { return c.g.choosingOption })
+	c.await("the first mulligan prompt", func() bool { return c.g.choosingOption() })
 
 	player := c.g.active()
-	before := len(c.g.g.Hand(player))
+	before := len(c.g.eng().Hand(player))
 	c.press("n")
 	c.await("the mulligan to be taken up", func() bool {
-		return len(c.g.g.Hand(player)) != before
+		return len(c.g.eng().Hand(player)) != before
 	})
 
-	if got := len(c.g.g.Hand(player)); got != before-1 {
+	if got := len(c.g.eng().Hand(player)); got != before-1 {
 		t.Errorf("hand after n = %d, want %d (a mulligan draws one fewer)", got, before-1)
 	}
 }

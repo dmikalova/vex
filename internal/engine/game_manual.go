@@ -224,6 +224,15 @@ func (g *Game) ManualSetActiveHouse(h House) {
 		Player: g.State.ActivePlayer,
 		House:  h,
 	})
+	// Taken at the house-choice step, the edit also advances the turn into the play
+	// phase, the way choosing a house normally does. Without it the turn is left
+	// with an active house but still waiting to be asked for one, so no play is
+	// legal (LegalActions follows the phase) and the force-edit sets a house the
+	// playtester then cannot use. It deliberately skips the archives offer and the
+	// "after you choose a house" window, because no house was chosen.
+	if g.State.Phase == PhaseChooseHouse {
+		g.enterPhase(PhasePlay)
+	}
 }
 
 // ManualForgeKey forges one more key for player using the next unused colour.

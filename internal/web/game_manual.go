@@ -16,58 +16,45 @@ import (
 // toggleManual turns the engine's manual mode on or off, lifting house
 // restrictions and revealing the manual controls.
 func (g *game) toggleManual(ctx app.Context, _ app.Event) {
-	// Manual mode may be toggled mid-prompt (g.busy with a chooser waiting): turning
-	// it on reveals the Cancel button that escapes a stuck prompt. Only a non-prompt
-	// busy state (an effect still animating) blocks the toggle.
-	if g.busy && !g.choosing && !g.choosingOption {
-		return
-	}
-	on := !g.g.Manual()
+	// Manual mode may be toggled mid-prompt: turning it on reveals the Cancel button
+	// that escapes a stuck prompt.
+	//
 	// The toggle is a recorded root like every other manual edit. Only the command
 	// log is persisted (ADR 0039), so a mode left out of it is a mode a reload does
 	// not come back in — and every manual edit made under it then replays against a
 	// game that is enforcing the rules again, which fails the replay and drops the
 	// match. Pinned by the reload-resume browser scenario, which stages an
 	// off-house card and plays it before reloading.
-	g.beginAction()
-	g.record(input{
-		Kind: inSetManual,
-		OK:   on,
+	g.applyManual(ctx, engine.Command{
+		Kind: engine.CommandSetManual,
+		Left: !g.eng().Manual(),
 	})
-	g.g.SetManual(on)
-	g.save(ctx)
 }
 
 // manualMove moves the selected card to a resting zone, ignoring the normal rules.
 func (g *game) manualMove(dest engine.ManualZone) app.EventHandler {
 	return func(ctx app.Context, _ app.Event) {
-		if !g.hasSel || !g.g.Manual() {
+		if !g.hasSel || !g.eng().Manual() {
 			return
 		}
-		g.beginAction()
-		g.record(input{
-			Kind:  inManualMove,
-			ID:    g.sel,
+		g.applyManual(ctx, engine.Command{
+			Kind:  engine.CommandManualMove,
+			Card:  g.sel,
 			Index: int(dest),
 		})
-		g.g.ManualMove(g.sel, dest)
 		g.clearSelection()
-		g.save(ctx)
 	}
 }
 
 // manualReady clears the selected card's exhausted flag.
 func (g *game) manualReady(ctx app.Context, _ app.Event) {
-	if !g.hasSel || !g.g.Manual() {
+	if !g.hasSel || !g.eng().Manual() {
 		return
 	}
-	g.beginAction()
-	g.record(input{
-		Kind: inManualReady,
-		ID:   g.sel,
+	g.applyManual(ctx, engine.Command{
+		Kind: engine.CommandManualReady,
+		Card: g.sel,
 	})
-	g.g.ManualSetExhausted(g.sel, false)
-	g.save(ctx)
 }
 
 // manualGraft begins host targeting to thread the selected card face up under an
@@ -75,7 +62,7 @@ func (g *game) manualReady(ctx app.Context, _ app.Event) {
 // only arm the targeting; the actual attach happens when a host is clicked
 // (attachToHost).
 func (g *game) manualGraft(_ app.Context, _ app.Event) {
-	if !g.hasSel || !g.g.Manual() {
+	if !g.hasSel || !g.eng().Manual() {
 		return
 	}
 	g.hostTargeting, g.hostFaceDown = true, false
@@ -84,7 +71,7 @@ func (g *game) manualGraft(_ app.Context, _ app.Event) {
 // manualPlaceUnder begins host targeting to place the selected card face down
 // under an in-play host.
 func (g *game) manualPlaceUnder(_ app.Context, _ app.Event) {
-	if !g.hasSel || !g.g.Manual() {
+	if !g.hasSel || !g.eng().Manual() {
 		return
 	}
 	g.hostTargeting, g.hostFaceDown = true, true
@@ -93,20 +80,17 @@ func (g *game) manualPlaceUnder(_ app.Context, _ app.Event) {
 // attachToHost threads the selected card under the clicked host — face up for a
 // graft, face down for a place-under — then clears the targeting and selection.
 func (g *game) attachToHost(ctx app.Context, host engine.LocalID) {
-	if !g.hostTargeting || !g.hasSel || !g.g.Manual() || host == g.sel {
+	if !g.hostTargeting || !g.hasSel || !g.eng().Manual() || host == g.sel {
 		return
 	}
-	g.beginAction()
-	g.record(input{
-		Kind: inManualAttach,
-		Card: host,
-		ID:   g.sel,
-		Left: g.hostFaceDown,
+	g.applyManual(ctx, engine.Command{
+		Kind:  engine.CommandManualAttach,
+		Card:  host,
+		Card2: g.sel,
+		Left:  g.hostFaceDown,
 	})
-	g.g.ManualAttachUnder(host, g.sel, g.hostFaceDown)
 	g.hostTargeting = false
 	g.clearSelection()
-	g.save(ctx)
 }
 
 // cancelHostTargeting backs out of a Graft / Place under host pick without
@@ -120,13 +104,12 @@ func (g *game) cancelHostTargeting(_ app.Context, _ app.Event) {
 // (reusing the Deploy line) so it can land anywhere in the battleline; with no
 // other creatures to place it beside, and for a non-creature, it goes in at once.
 func (g *game) manualPlay(ctx app.Context, _ app.Event) {
-	if !g.hasSel || !g.g.Manual() || g.selKind != selHand {
+	if !g.hasSel || !g.eng().Manual() || g.selKind != selHand {
 		return
 	}
-	if g.g.IsCreature(g.sel) && len(g.g.Battleline(g.g.Owner(g.sel))) > 0 {
+	if g.eng().IsCreature(g.sel) && len(g.eng().Battleline(g.eng().Owner(g.sel))) > 0 {
 		g.manualPlacing = true
-		g.choosingPosition = true
-		g.positionLine = g.g.Battleline(g.g.Owner(g.sel))
+		g.manualLine = g.eng().Battleline(g.eng().Owner(g.sel))
 		g.positionRight = false
 		g.positionSideChosen = false
 		return
@@ -138,30 +121,25 @@ func (g *game) manualPlay(ctx app.Context, _ app.Event) {
 // clears the placement picker. It is the manual counterpart to answerPosition: a
 // clicked position lands the creature here instead of replying to a prompt.
 func (g *game) manualPlaceInPlay(ctx app.Context, pos int) {
-	if !g.hasSel || !g.g.Manual() {
+	if !g.hasSel || !g.eng().Manual() {
 		return
 	}
-	g.beginAction()
-	g.record(input{
-		Kind:  inManualPlace,
-		ID:    g.sel,
+	g.applyManual(ctx, engine.Command{
+		Kind:  engine.CommandManualPlace,
+		Card:  g.sel,
 		Index: pos,
 	})
-	g.g.ManualPlaceInPlay(g.sel, pos)
 	g.manualPlacing = false
-	g.choosingPosition = false
-	g.positionLine = nil
+	g.manualLine = nil
 	g.positionSideChosen = false
 	g.clearSelection()
-	g.save(ctx)
 }
 
 // cancelManualPlace backs out of a manual put-into-play placement without placing,
 // leaving the card selected in hand.
 func (g *game) cancelManualPlace(_ app.Context, _ app.Event) {
 	g.manualPlacing = false
-	g.choosingPosition = false
-	g.positionLine = nil
+	g.manualLine = nil
 	g.positionSideChosen = false
 }
 
@@ -169,17 +147,14 @@ func (g *game) cancelManualPlace(_ app.Context, _ app.Event) {
 // detaching it from its host first. It is offered only when the selection is
 // actually attached (isAttached).
 func (g *game) manualToHand(ctx app.Context, _ app.Event) {
-	if !g.hasSel || !g.g.Manual() {
+	if !g.hasSel || !g.eng().Manual() {
 		return
 	}
-	g.beginAction()
-	g.record(input{
-		Kind: inManualDetach,
-		ID:   g.sel,
+	g.applyManual(ctx, engine.Command{
+		Kind: engine.CommandManualDetach,
+		Card: g.sel,
 	})
-	g.g.ManualDetachToHand(g.sel)
 	g.clearSelection()
-	g.save(ctx)
 }
 
 // isAttached reports whether a card in play is an upgrade of, or placed under, a
@@ -187,17 +162,17 @@ func (g *game) manualToHand(ctx app.Context, _ app.Event) {
 // found directly (HostOf); under-cards have no back-link reader, so the hosts'
 // Under chains are scanned.
 func (g *game) isAttached(id engine.LocalID) bool {
-	if _, ok := g.g.HostOf(id); ok {
+	if _, ok := g.eng().HostOf(id); ok {
 		return true
 	}
 	for p := range 2 {
-		for _, host := range g.g.Battleline(p) {
-			if containsID(g.g.Under(host), id) {
+		for _, host := range g.eng().Battleline(p) {
+			if containsID(g.eng().Under(host), id) {
 				return true
 			}
 		}
-		for _, host := range g.g.Artifacts(p) {
-			if containsID(g.g.Under(host), id) {
+		for _, host := range g.eng().Artifacts(p) {
+			if containsID(g.eng().Under(host), id) {
 				return true
 			}
 		}
@@ -207,16 +182,13 @@ func (g *game) isAttached(id engine.LocalID) bool {
 
 // manualExhaust sets the selected card's exhausted flag.
 func (g *game) manualExhaust(ctx app.Context, _ app.Event) {
-	if !g.hasSel || !g.g.Manual() {
+	if !g.hasSel || !g.eng().Manual() {
 		return
 	}
-	g.beginAction()
-	g.record(input{
-		Kind: inManualExhaust,
-		ID:   g.sel,
+	g.applyManual(ctx, engine.Command{
+		Kind: engine.CommandManualExhaust,
+		Card: g.sel,
 	})
-	g.g.ManualSetExhausted(g.sel, true)
-	g.save(ctx)
 }
 
 // A manual per-player control reads its target player (and a stepper its signed
@@ -231,7 +203,7 @@ func (g *game) manualExhaust(ctx app.Context, _ app.Event) {
 // (whose click opens the zone viewer) and reports whether manual mode is on.
 func (g *game) stopManualClick(e app.Event) bool {
 	e.Call("stopPropagation")
-	return g.g.Manual()
+	return g.eng().Manual()
 }
 
 // datasetPlayer reads a manual control's target player from its data-player
@@ -267,14 +239,11 @@ func (g *game) adjustManualAmber(ctx app.Context, player, delta int) {
 	if player < 0 || delta == 0 {
 		return
 	}
-	g.beginAction()
-	g.record(input{
-		Kind:   inManualAmber,
+	g.applyManual(ctx, engine.Command{
+		Kind:   engine.CommandManualAmber,
 		Player: player,
 		Delta:  delta,
 	})
-	g.g.ManualAddAmber(player, delta)
-	g.save(ctx)
 }
 
 // onManualForgeKey opens the key-forge colour picker for the clicked bar's player.
@@ -305,13 +274,10 @@ func (g *game) removeManualKey(ctx app.Context, player int) {
 	if player < 0 {
 		return
 	}
-	g.beginAction()
-	g.record(input{
-		Kind:   inManualUnforge,
+	g.applyManual(ctx, engine.Command{
+		Kind:   engine.CommandManualUnforge,
 		Player: player,
 	})
-	g.g.ManualUnforgeKey(player)
-	g.save(ctx)
 }
 
 // onManualChainsStep adjusts the clicked bar's player's chains in manual mode.
@@ -327,33 +293,27 @@ func (g *game) adjustManualChains(ctx app.Context, player, delta int) {
 	if player < 0 || delta == 0 {
 		return
 	}
-	g.beginAction()
-	g.record(input{
-		Kind:   inManualChains,
+	g.applyManual(ctx, engine.Command{
+		Kind:   engine.CommandManualChains,
 		Player: player,
 		Delta:  delta,
 	})
-	g.g.ManualAddChains(player, delta)
-	g.save(ctx)
 }
 
 // manualSetHouse switches the active player's active house in manual mode; from
 // the house-choice step it also advances play, like picking a house normally.
 func (g *game) manualSetHouse(h engine.House) app.EventHandler {
 	return func(ctx app.Context, _ app.Event) {
-		if !g.g.Manual() {
+		if !g.eng().Manual() {
 			return
 		}
-		g.beginAction()
-		g.record(input{
-			Kind:  inManualHouse,
+		g.applyManual(ctx, engine.Command{
+			Kind:  engine.CommandManualHouse,
 			House: h,
 		})
-		g.g.ManualSetActiveHouse(h)
 		if g.phase == phaseHouse {
 			g.phase = phaseMain
 		}
-		g.save(ctx)
 	}
 }
 
@@ -363,15 +323,12 @@ func (g *game) pickForgeColor(c engine.KeyColor) app.EventHandler {
 		if g.forgingKey < 0 {
 			return
 		}
-		g.beginAction()
-		g.record(input{
-			Kind:   inManualForgeColor,
+		g.applyManual(ctx, engine.Command{
+			Kind:   engine.CommandManualForgeColor,
 			Player: g.forgingKey,
 			Index:  int(c),
 		})
-		g.g.ManualForgeKeyColor(g.forgingKey, c)
 		g.forgingKey = -1
-		g.save(ctx)
 	}
 }
 
@@ -393,8 +350,8 @@ func (g *game) chooseKeyColorKey(ctx app.Context, color engine.KeyColor) bool {
 		}
 		return false
 	}
-	if g.choosingOption && g.keyColorOptions() {
-		for i, label := range g.optionLabels {
+	if g.choosingOption() && g.keyColorOptions() {
+		for i, label := range g.optionLabels() {
 			if keyColorByName(label) == color {
 				g.chooseOptionIdx(i)(ctx, app.Event{})
 				return true
@@ -465,8 +422,8 @@ func (g *game) pickerOfferedNames() map[string]bool {
 	if !g.pickerNaming {
 		return nil
 	}
-	offered := make(map[string]bool, len(g.optionLabels))
-	for _, label := range g.optionLabels {
+	offered := make(map[string]bool, len(g.optionLabels()))
+	for _, label := range g.optionLabels() {
 		offered[label] = true
 	}
 	return offered
@@ -544,7 +501,7 @@ func (g *game) commitPickedCard(ctx app.Context, def engine.CardDefinition) {
 // nameCard answers the open name-a-card prompt with the picked name and closes
 // the picker, so the blocked effect resumes.
 func (g *game) nameCard(ctx app.Context, name string) {
-	for i, label := range g.optionLabels {
+	for i, label := range g.optionLabels() {
 		if label != name {
 			continue
 		}
@@ -557,25 +514,21 @@ func (g *game) nameCard(ctx app.Context, name string) {
 // addCardDef puts a card definition into the active player's hand and records the
 // add so a reload can replay it, then closes the picker.
 func (g *game) addCardDef(ctx app.Context, def engine.CardDefinition) {
-	g.beginAction()
-	player := g.active()
-	if _, added := g.g.ManualAddCard(def, player); added {
-		// Record the add so a reload replays the registration and the rebuilt
-		// catalog hands out the same id the rest of the log refers to.
-		g.record(input{
-			Kind:   inManualAddCard,
-			Name:   def.Name,
-			Player: player,
-		})
-	}
+	// The add is recorded like every other manual edit, so a reload replays the
+	// registration and the rebuilt catalog hands out the same id the rest of the log
+	// refers to.
+	g.applyManual(ctx, engine.Command{
+		Kind:   engine.CommandManualAddCard,
+		Name:   def.Name,
+		Player: g.active(),
+	})
 	g.pickerOpen = false
-	g.save(ctx)
 }
 
 // isInPlay reports whether a card is on either player's battleline or artifact row.
 func (g *game) isInPlay(id engine.LocalID) bool {
 	for p := range 2 {
-		if containsID(g.g.Battleline(p), id) || containsID(g.g.Artifacts(p), id) {
+		if containsID(g.eng().Battleline(p), id) || containsID(g.eng().Artifacts(p), id) {
 			return true
 		}
 	}

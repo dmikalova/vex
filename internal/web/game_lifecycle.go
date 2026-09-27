@@ -40,7 +40,7 @@ func (g *game) OnMount(ctx app.Context) {
 		// host's client, which must reach a board without a human answering anything.
 		g.newMatch()
 	default:
-		// Nothing to resume: open the set picker with no game dealt (g.g stays nil).
+		// Nothing to resume: open the set picker with no game dealt (g.eng() stays nil).
 		// The player picks two sets and only then is the first match dealt, so a
 		// fresh visit never assumes the base set.
 		g.sidebarCollapsed = mobileViewport()
@@ -76,8 +76,8 @@ const logScrollSlack = 48
 // is not yanked forward every time a line is appended.
 func (g *game) OnUpdate(app.Context) {
 	// Before the first deal (the set picker on a fresh load) there is no game to
-	// read: every helper below reaches into g.g, so bail until a match exists.
-	if g.g == nil {
+	// read: every helper below reaches into g.eng(), so bail until a match exists.
+	if g.s == nil {
 		return
 	}
 	g.flyIntoPlay()
@@ -145,9 +145,9 @@ func (g *game) scrollUsableRowsIntoView() {
 		kind selKind
 		hand bool
 	}{
-		{g.g.Battleline(p), selYourCreature, false},
-		{g.g.Artifacts(p), selYourArtifact, false},
-		{g.g.Hand(p), selHand, true},
+		{g.eng().Battleline(p), selYourCreature, false},
+		{g.eng().Artifacts(p), selYourArtifact, false},
+		{g.eng().Hand(p), selHand, true},
 	}
 	for _, row := range rows {
 		for _, id := range row.ids {
@@ -218,7 +218,7 @@ func (g *game) cursorCardID() (string, bool) {
 // cardDOMID is the DOM id a card renders under, in whichever zone currently
 // holds it.
 func (g *game) cardDOMID(id engine.LocalID) string {
-	if containsID(g.g.Hand(g.active()), id) {
+	if containsID(g.eng().Hand(g.active()), id) {
 		return handCardID(id)
 	}
 	return boardCardID(id)
@@ -239,7 +239,7 @@ func (g *game) measureFocus() bool {
 		// A selection dropped while the card is still at rest (not mid-play/use)
 		// plays the copy out; an action-driven drop leaves the flight animation to
 		// carry the card instead.
-		if was && !g.busy && g.focusShown.id != 0 {
+		if was && !g.atPrompt() && g.focusShown.id != 0 {
 			g.startFocusExit()
 		}
 		return was
@@ -341,12 +341,12 @@ const toastLeave = 500 * time.Millisecond
 // bare scene break is not news — but they still close the open bubble.
 func (g *game) refreshToast() {
 	if !g.sidebarCollapsed {
-		g.toastSeen = len(g.g.Log)
+		g.toastSeen = len(g.eng().Log)
 		g.toastBubbles = nil
 		g.toastOpen = false
 		return
 	}
-	if len(g.g.Log) <= g.toastSeen {
+	if len(g.eng().Log) <= g.toastSeen {
 		return
 	}
 	starts := make(map[int]int, len(g.logGroups))
@@ -354,8 +354,8 @@ func (g *game) refreshToast() {
 		starts[m.Start] = m.Player
 	}
 	changed := false
-	for i := g.toastSeen; i < len(g.g.Log); i++ {
-		rec := g.g.Log[i]
+	for i := g.toastSeen; i < len(g.eng().Log); i++ {
+		rec := g.eng().Log[i]
 		if rule, _ := ruleOf(rec); rule != ruleNone {
 			g.toastOpen = false
 			continue
@@ -370,7 +370,7 @@ func (g *game) refreshToast() {
 		g.armToastExpiry(b)
 		changed = true
 	}
-	g.toastSeen = len(g.g.Log)
+	g.toastSeen = len(g.eng().Log)
 	if changed {
 		g.dispatch(nil)
 	}
@@ -485,7 +485,7 @@ func (g *game) clearToast() {
 	g.toastBubbles = nil
 	g.toastOpen = false
 	g.toastPinned = false
-	g.toastSeen = len(g.g.Log)
+	g.toastSeen = len(g.eng().Log)
 }
 
 // installKeyShortcuts wires a document-level keydown listener so common actions
@@ -544,7 +544,7 @@ func (g *game) setupKey(e app.Value) {
 		// but only when there is a game behind it to return to (not on first load).
 		if g.keysOpen {
 			g.dispatch(func(ctx app.Context) { g.closeKeys(ctx, app.Event{}) })
-		} else if g.g != nil {
+		} else if g.s != nil {
 			g.dispatch(func(ctx app.Context) { g.dismiss(ctx) })
 		}
 	case "?":
@@ -1001,7 +1001,7 @@ func isTextInput(target app.Value) bool {
 // handled first because backing out, answering, and moving between candidates
 // must all work while a prompt blocks every other key.
 func (g *game) onKey(ctx app.Context, key string, shift bool) {
-	if g.g == nil {
+	if g.s == nil {
 		return
 	}
 	switch key {
@@ -1057,7 +1057,7 @@ func (g *game) onKey(ctx app.Context, key string, shift bool) {
 		g.toggleSidebar(ctx, app.Event{})
 		return
 	}
-	if g.busy || g.choosing || g.choosingOption {
+	if g.atPrompt() {
 		return
 	}
 	// 1-9 pick the nth card of the row the selection is in.
@@ -1113,15 +1113,15 @@ func (g *game) onKey(ctx app.Context, key string, shift bool) {
 // artifact's action, otherwise reap). Each handler self-guards, so a press
 // with nothing to affirm is a no-op.
 func (g *game) affirm(ctx app.Context) {
-	if g.choosingOption {
+	if g.choosingOption() {
 		// Only a yes/no prompt has an affirmative answer; a list of alternatives has
 		// no option that "yes" could mean.
-		if len(g.optionLabels) > 0 && g.optionLabels[0] == "Yes" {
+		if len(g.optionLabels()) > 0 && g.optionLabels()[0] == "Yes" {
 			g.chooseOptionIdx(0)(ctx, app.Event{})
 		}
 		return
 	}
-	if g.busy || g.choosing || g.phase == phaseFlank {
+	if g.atPrompt() || g.phase == phaseFlank {
 		return
 	}
 	switch g.selKind {
@@ -1142,8 +1142,8 @@ func (g *game) affirm(ctx app.Context) {
 // decline. Anything else is Escape's job, so a press with nothing to refuse is a
 // no-op.
 func (g *game) deny(ctx app.Context) {
-	if g.choosingOption {
-		for i, label := range g.optionLabels {
+	if g.choosingOption() {
+		for i, label := range g.optionLabels() {
 			if isDecliningOption(label) {
 				g.chooseOptionIdx(i)(ctx, app.Event{})
 				return
@@ -1151,7 +1151,7 @@ func (g *game) deny(ctx app.Context) {
 		}
 		return
 	}
-	if g.choosing && g.chooserDeclinable {
+	if g.choosing() && g.chooserDeclinable() {
 		g.declineChooser(ctx, app.Event{})
 	}
 }
@@ -1181,19 +1181,20 @@ func (g *game) dismiss(ctx app.Context) {
 		// A peek lift is dropped ahead of the prompt it was raised over, so the first
 		// Escape puts the card down and the next backs out of the prompt itself.
 		g.clearSelection()
-	case g.choosing:
-		// In manual mode Escape cancels any prompt, backing the whole action out;
+	case g.choosing():
+		// In manual mode Escape backs the whole action out — undoing to before the
+		// action that raised the prompt, which is what cancelling a prompt IS now;
 		// otherwise only an optional prompt is escapable, by declining it, since a
-		// real chooser is mandatory.
-		if g.g.Manual() {
-			g.cancelChooser(ctx, app.Event{})
-		} else if g.chooserDeclinable {
+		// mandatory prompt has no pass.
+		if g.eng().Manual() {
+			g.undoAction(ctx, app.Event{})
+		} else if g.chooserDeclinable() {
 			g.declineChooser(ctx, app.Event{})
 		}
-	case g.choosingOption:
+	case g.choosingOption():
 		// An option prompt has no decline; only manual mode can back out of it.
-		if g.g.Manual() {
-			g.cancelChooser(ctx, app.Event{})
+		if g.eng().Manual() {
+			g.undoAction(ctx, app.Event{})
 		}
 	case g.phase == phaseFlank || g.phase == phaseFightTarget:
 		g.cancelTargeting(ctx, app.Event{})

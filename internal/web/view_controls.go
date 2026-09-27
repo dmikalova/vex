@@ -23,8 +23,8 @@ import (
 // desktop and is dropped for room on mobile, where the token is the only source
 // affordance.
 func (g *game) promptSourceHeader() app.UI {
-	return app.If(g.promptSource != "", func() app.UI {
-		def := g.defByName[g.promptSource]
+	return app.If(g.promptSource() != "", func() app.UI {
+		def := g.defByName[g.promptSource()]
 		if def == nil {
 			return app.Div()
 		}
@@ -61,7 +61,7 @@ func (g *game) promptLine(text string) app.UI {
 // card, wrapping every mention in a log-card token and leaving the rest plain.
 // With no source card, or none named in the text, the whole line is plain text.
 func (g *game) promptTextSegments(text string) []app.UI {
-	name := g.promptSource
+	name := g.promptSource()
 	if name == "" || !strings.Contains(text, name) {
 		return []app.UI{app.Text(text)}
 	}
@@ -96,15 +96,15 @@ func (g *game) promptTextSegments(text string) []app.UI {
 // that the first card picked ends up on the bottom, since each pick is placed on
 // top of the one before it and the card left over rides on top.
 func (g *game) promptCardButtons() app.UI {
-	body := make([]app.UI, 0, len(g.chooserCandidates)+1)
+	body := make([]app.UI, 0, len(g.chooserCandidates())+1)
 	// The reorder prompt places each pick on top of the previous, so the first pick
 	// finishes deepest; the note keys off that prompt's wording rather than the card.
-	if strings.Contains(g.chooserPrompt, "on top") {
+	if strings.Contains(g.chooserPrompt(), "on top") {
 		body = append(body,
 			app.Div().Class("hint").Text("The first card you pick ends up on the bottom."))
 	}
-	for _, id := range g.chooserCandidates {
-		def := g.g.Def(id)
+	for _, id := range g.chooserCandidates() {
+		def := g.eng().Def(id)
 		cursor := ifCls(g.hasCursor && g.promptCursor == id, "btn-cursor")
 		body = append(body, app.Button().
 			Class(cx("btn-secondary", "prompt-pick", cursor)).
@@ -114,7 +114,7 @@ func (g *game) promptCardButtons() app.UI {
 			OnMouseLeave(g.onCardHoverOut).
 			OnClick(g.onPromptButtonPick).
 			Body(
-				houseIcon(g.g.House(id), "icon-inline"),
+				houseIcon(g.eng().House(id), "icon-inline"),
 				app.Span().Class("prompt-pick-name").Text(def.Name),
 			))
 	}
@@ -129,12 +129,12 @@ func (g *game) promptCardButtons() app.UI {
 // hand, discard, or another zone) falls back to the printed house.
 func (g *game) promptSourceHouse(def *engine.CardDefinition) (house engine.House, changed bool) {
 	for p := range 2 {
-		for _, ids := range [][]engine.LocalID{g.g.Battleline(p), g.g.Artifacts(p)} {
+		for _, ids := range [][]engine.LocalID{g.eng().Battleline(p), g.eng().Artifacts(p)} {
 			for _, id := range ids {
-				if g.g.Def(id).Name != def.Name {
+				if g.eng().Def(id).Name != def.Name {
 					continue
 				}
-				h := g.g.House(id)
+				h := g.eng().House(id)
 				return h, h != def.House
 			}
 		}
@@ -202,7 +202,7 @@ func (g *game) headerRow(left app.UI, extra []app.UI) app.UI {
 // on is one click from off without opening the menu.
 func (g *game) endTurnBar() app.UI {
 	var extra []app.UI
-	if g.g.Manual() {
+	if g.eng().Manual() {
 		extra = append(extra, app.Button().
 			Class(cx("btn-nav", "btn-icon", "btn-nav-on")).
 			Title("Manual mode is on — click to turn it off").
@@ -250,11 +250,11 @@ func (g *game) controls() app.UI {
 	// (ADR 0045). The option and position kinds are dispatched here, before the
 	// manual Graft / Place-under target below; the card kinds after it, so their
 	// prior dock priority is unchanged.
-	if g.choosingOption {
+	if g.choosingOption() {
 		ui, _ := g.promptControls(engine.PromptOption)
 		return ui
 	}
-	if g.choosingPosition {
+	if g.choosingPosition() {
 		ui, _ := g.promptControls(engine.PromptPosition)
 		return ui
 	}
@@ -266,12 +266,12 @@ func (g *game) controls() app.UI {
 	}
 	// While an engine chooser waits, the controls become the prompt itself: a
 	// green call to action to click one of the highlighted cards.
-	if g.choosing {
+	if g.choosing() {
 		ui, _ := g.promptControls(g.cardPromptKind())
 		return ui
 	}
 	if g.phase == phaseHouse {
-		if g.g.Manual() {
+		if g.eng().Manual() {
 			return app.Div().Class("controls").Body(g.manualPanel(), g.housePicker())
 		}
 		return app.Div().Class("controls").Body(g.housePicker())
@@ -295,7 +295,7 @@ func (g *game) hostTargetingControls() app.UI {
 	return app.Div().Class("controls").Body(
 		app.Div().Class("btn-col").Body(
 			app.Div().Class("prompt").Text(
-				"Click a card to "+verb+" "+g.g.Def(g.sel).Name+" under it"),
+				"Click a card to "+verb+" "+g.eng().Def(g.sel).Name+" under it"),
 			btn("Cancel", actCancel, g.cancelHostTargeting, "btn-secondary"),
 		),
 	)
@@ -306,7 +306,7 @@ func (g *game) hostTargetingControls() app.UI {
 // drawn on the card itself, so nothing here competes with End turn for the dock.
 func (g *game) restingControls() app.UI {
 	body := []app.UI{g.endTurnBar()}
-	if g.g.Manual() {
+	if g.eng().Manual() {
 		body = append([]app.UI{g.manualPanel()}, body...)
 	}
 	return app.Div().Class("controls").Body(body...)
@@ -344,9 +344,9 @@ func (g *game) promptControls(kind engine.PromptKind) (app.UI, bool) {
 // for routing and honest naming, not a rendering fork.
 func (g *game) cardPromptKind() engine.PromptKind {
 	switch {
-	case g.chooserOrdering:
+	case g.chooserOrdering():
 		return engine.PromptOrder
-	case g.chooserDeclinable:
+	case g.chooserDeclinable():
 		return engine.PromptCardOrDecline
 	default:
 		return engine.PromptCreature
@@ -363,14 +363,14 @@ func (g *game) optionPromptControls() app.UI {
 		return app.Div().Class("controls").Body(g.disabledEndTurnBar())
 	}
 	body := []app.UI{
-		g.promptHeader(g.optionPrompt),
+		g.promptHeader(g.optionPrompt()),
 		g.promptSourceHeader(),
 		g.optionChooser(),
 	}
 	// Manual mode adds a Cancel that backs the whole action out — an option prompt
 	// has no decline of its own, so this is the only way out of a stuck one.
-	if g.g.Manual() {
-		body = append(body, btn("Cancel", actCancel, g.cancelChooser, "btn-secondary"))
+	if g.eng().Manual() {
+		body = append(body, btn("Cancel", actCancel, g.undoAction, "btn-secondary"))
 	}
 	return app.Div().Class("controls").Body(body...)
 }
@@ -388,7 +388,7 @@ func (g *game) positionPromptControls() app.UI {
 // buttons the modifier flags add.
 func (g *game) cardPromptControls() app.UI {
 	body := []app.UI{
-		g.promptHeader(g.chooserPrompt),
+		g.promptHeader(g.chooserPrompt()),
 		g.promptSourceHeader(),
 	}
 	// A bounded out-of-play pick (look at the top N cards) lists its candidates as
@@ -400,20 +400,20 @@ func (g *game) cardPromptControls() app.UI {
 	// An optional prompt ("you may", "up to N") is passed on with Done. Manual mode
 	// adds a Cancel on every prompt — optional or mandatory — that backs the whole
 	// action out, the way out of a prompt with no clickable candidate.
-	if g.chooserDeclinable {
+	if g.chooserDeclinable() {
 		body = append(body, btn("Done", actDone, g.declineChooser,
 			cx("btn-primary", ifCls(g.isDoneCursor(), "btn-cursor"))))
 	}
 	// An ordering prompt offers Auto-resolve, which answers with a random order
 	// so the player need not arrange abilities whose order does not matter to them.
-	if g.chooserOrdering {
+	if g.chooserOrdering() {
 		body = append(
 			body,
 			btn("Auto-resolve", actAutoResolve, g.autoResolveOrder, "btn-secondary"),
 		)
 	}
-	if g.g.Manual() {
-		body = append(body, btn("Cancel", actCancel, g.cancelChooser, "btn-secondary"))
+	if g.eng().Manual() {
+		body = append(body, btn("Cancel", actCancel, g.undoAction, "btn-secondary"))
 	}
 	return app.Div().Class("controls").Body(body...)
 }
@@ -448,7 +448,7 @@ func (g *game) setChooser() app.UI {
 	// Cancel only makes sense when there is a running game to fall back to. On a
 	// first-time load the picker is the whole screen with nothing behind it, so
 	// there is nothing to cancel to.
-	if g.g != nil {
+	if g.s != nil {
 		body = append(body, btn("Cancel", actCancel, g.cancelSetup, "btn-secondary"))
 	}
 	return app.Div().Class("btn-col", "set-pick").Body(body...)
@@ -475,9 +475,9 @@ func (g *game) manualPanel() app.UI {
 		btn("Add card…", actManualAddCard, g.openPicker, "btn-secondary"),
 	}
 	if g.hasSel {
-		name := g.g.Def(g.sel).Name
+		name := g.eng().Def(g.sel).Name
 		if g.isInPlay(g.sel) {
-			if g.g.Exhausted(g.sel) {
+			if g.eng().Exhausted(g.sel) {
 				items = append(
 					items,
 					btn("Ready "+name, actManualReady, g.manualReady, "btn-secondary"),
@@ -542,7 +542,7 @@ func (g *game) cardPicker() app.UI {
 	// has no close: the blocked effect is waiting on a name.
 	title := "Add a card to hand"
 	if g.pickerNaming {
-		title = g.optionPrompt
+		title = g.optionPrompt()
 	}
 	return app.Div().Class("over-backdrop").OnClick(g.closePicker).Body(
 		app.Div().Class("picker-panel").OnClick(g.stopClick).Body(
@@ -582,8 +582,8 @@ func (g *game) cardPicker() app.UI {
 func (g *game) pickableHouses() []engine.House {
 	p := g.active()
 	houses := g.deckHouses[p]
-	if !g.g.Manual() {
-		houses = g.g.AllowedHouses(p)
+	if !g.eng().Manual() {
+		houses = g.eng().AllowedHouses(p)
 	}
 	sorted := make([]engine.House, len(houses))
 	copy(sorted, houses)
@@ -602,7 +602,7 @@ func (g *game) pickableHouses() []engine.House {
 // would only be rejected, and the operator can still force a house from the score
 // pill (ManualSetActiveHouse) if they mean to override the rules (ADR 0035).
 func (g *game) houseButtons() []engine.House {
-	if len(g.g.AllowedHouses(g.active())) == 0 {
+	if len(g.eng().AllowedHouses(g.active())) == 0 {
 		return []engine.House{engine.HouseNone}
 	}
 	houses := g.pickableHouses()
@@ -718,11 +718,11 @@ func (g *game) optionControls(kind optionKind) (app.UI, bool) {
 	case optionKeyColor:
 		// When every option is a key colour it shows themed key buttons.
 		return app.Div().Class("btn-col").Body(
-			app.Range(g.optionLabels).Slice(func(i int) app.UI {
-				c := keyColorByName(g.optionLabels[i])
+			app.Range(g.optionLabels()).Slice(func(i int) app.UI {
+				c := keyColorByName(g.optionLabels()[i])
 				return keyChoiceButton(
 					c,
-					g.optionLabels[i],
+					g.optionLabels()[i],
 					g.isButtonCursor(i),
 					g.chooseOptionIdx(i),
 				)
@@ -733,7 +733,7 @@ func (g *game) optionControls(kind optionKind) (app.UI, bool) {
 		// another card raised) it shows the standard use buttons, so a triggered use
 		// reads like a chosen one.
 		var body []app.UI
-		for i, label := range g.optionLabels {
+		for i, label := range g.optionLabels() {
 			// A verb the chosen creature cannot be used for (Narp bars its neighbors
 			// from reaping) is omitted, so an illegal use is never offered.
 			if g.useVerbBarred(label) {
@@ -762,12 +762,12 @@ func (g *game) optionControls(kind optionKind) (app.UI, bool) {
 		// controls off the screen where a grid does not.
 		return app.Div().Class("btn-col").Body(
 			app.Div().Class("house-grid").Body(
-				app.Range(g.optionLabels).Slice(func(i int) app.UI {
-					h, _ := engine.ParseHouse(g.optionLabels[i])
+				app.Range(g.optionLabels()).Slice(func(i int) app.UI {
+					h, _ := engine.ParseHouse(g.optionLabels()[i])
 					return app.Button().
 						Class(cx("house-btn", "house-btn--icon", houseAccent(h),
 							ifCls(g.isButtonCursor(i), "btn-cursor"))).
-						Title(g.optionLabels[i]).
+						Title(g.optionLabels()[i]).
 						DataSet("act", houseActID(h)).
 						OnClick(g.chooseOptionIdx(i)).
 						Body(houseIcon(h, "icon-house"))
@@ -777,14 +777,15 @@ func (g *game) optionControls(kind optionKind) (app.UI, bool) {
 	case optionGeneric:
 		// Anything else falls back to plain primary buttons.
 		return app.Div().Class("btn-col").Body(
-			app.Range(g.optionLabels).Slice(func(i int) app.UI {
+			app.Range(g.optionLabels()).Slice(func(i int) app.UI {
 				// A declining "No" or a hand-shedding "Mulligan" is the
 				// destructive-looking choice, so it reads red.
 				kind := "btn-primary"
-				if isDecliningOption(g.optionLabels[i]) {
+				if isDecliningOption(g.optionLabels()[i]) {
 					kind = "btn-danger"
 				}
-				return btn(g.optionLabels[i], optionActID(g.optionLabels[i]), g.chooseOptionIdx(i),
+				label := g.optionLabels()[i]
+				return btn(label, optionActID(label), g.chooseOptionIdx(i),
 					cx(kind, ifCls(g.isButtonCursor(i), "btn-cursor")))
 			}),
 		), true
@@ -803,18 +804,18 @@ func isDecliningOption(label string) bool {
 // battleline flanks, so a "move it to a flank" prompt (Reassembling Automaton,
 // Harland Mindlock) is drawn with the same flank buttons as placing a creature.
 func (g *game) flankOptions() bool {
-	return len(g.optionLabels) == 2 &&
-		g.optionLabels[0] == engine.FlankLeftLabel &&
-		g.optionLabels[1] == engine.FlankRightLabel
+	return len(g.optionLabels()) == 2 &&
+		g.optionLabels()[0] == engine.FlankLeftLabel &&
+		g.optionLabels()[1] == engine.FlankRightLabel
 }
 
 // houseOptions reports whether every current option label names a house, so the
 // prompt can be shown as the colored house picker.
 func (g *game) houseOptions() bool {
-	if len(g.optionLabels) == 0 {
+	if len(g.optionLabels()) == 0 {
 		return false
 	}
-	for _, label := range g.optionLabels {
+	for _, label := range g.optionLabels() {
 		if _, ok := engine.ParseHouse(label); !ok {
 			return false
 		}
@@ -829,10 +830,10 @@ func (g *game) houseOptions() bool {
 // even when both happen to be card names, so an ordinary Yes/No-shaped choice
 // between two cards keeps its buttons.
 func (g *game) cardNameOptions() bool {
-	if len(g.optionLabels) <= 2 {
+	if len(g.optionLabels()) <= 2 {
 		return false
 	}
-	for _, label := range g.optionLabels {
+	for _, label := range g.optionLabels() {
 		if g.defByName[label] == nil {
 			return false
 		}
@@ -843,10 +844,10 @@ func (g *game) cardNameOptions() bool {
 // keyColorOptions reports whether every current option label names a key colour,
 // so the forge prompt can be shown as coloured key buttons.
 func (g *game) keyColorOptions() bool {
-	if len(g.optionLabels) == 0 {
+	if len(g.optionLabels()) == 0 {
 		return false
 	}
-	for _, label := range g.optionLabels {
+	for _, label := range g.optionLabels() {
 		if keyColorByName(label) == engine.KeyColorNone {
 			return false
 		}
@@ -858,10 +859,10 @@ func (g *game) keyColorOptions() bool {
 // creature (reap, fight, use its action), so a reap/fight/action prompt another
 // card raised is drawn as the standard use buttons rather than a plain option list.
 func (g *game) useVerbOptions() bool {
-	if len(g.optionLabels) == 0 {
+	if len(g.optionLabels()) == 0 {
 		return false
 	}
-	for _, label := range g.optionLabels {
+	for _, label := range g.optionLabels() {
 		if _, ok := useVerbKindOfLabel(label); !ok {
 			return false
 		}
@@ -875,11 +876,11 @@ func (g *game) useVerbOptions() bool {
 // in the sidebar; when it is not (the target was auto-picked with no prompt) the
 // sidebar option list stands in.
 func (g *game) liftUseTarget() (engine.LocalID, bool) {
-	if !g.choosingOption || !g.hasUseTarget || !g.useVerbOptions() {
+	if !g.choosingOption() || !g.hasUseTarget || !g.useVerbOptions() {
 		return 0, false
 	}
-	if !containsID(g.g.Battleline(0), g.useTarget) &&
-		!containsID(g.g.Battleline(1), g.useTarget) {
+	if !containsID(g.eng().Battleline(0), g.useTarget) &&
+		!containsID(g.eng().Battleline(1), g.useTarget) {
 		return 0, false
 	}
 	return g.useTarget, true
@@ -891,8 +892,8 @@ func (g *game) liftUseTarget() (engine.LocalID, bool) {
 // drive the same choice the sidebar list would have. Manual mode adds a Cancel
 // that backs the whole action out, the option prompt's only way out.
 func (g *game) useVerbCardActions() []cardAction {
-	acts := make([]cardAction, 0, len(g.optionLabels)+1)
-	for i, label := range g.optionLabels {
+	acts := make([]cardAction, 0, len(g.optionLabels())+1)
+	for i, label := range g.optionLabels() {
 		// A verb the chosen creature cannot be used for (Narp bars its neighbors from
 		// reaping) is omitted, so Universal Translator never offers an illegal use.
 		if g.useVerbBarred(label) {
@@ -907,14 +908,14 @@ func (g *game) useVerbCardActions() []cardAction {
 			On:    g.chooseOptionIdx(i),
 		})
 	}
-	if g.g.Manual() {
+	if g.eng().Manual() {
 		acts = append(
 			acts,
 			cardAction{
 				Label: "Cancel",
 				Class: "btn-secondary",
 				Act:   actCancel,
-				On:    g.cancelChooser,
+				On:    g.undoAction,
 			},
 		)
 	}
@@ -970,7 +971,7 @@ func (g *game) selActions() ([]cardAction, string) {
 	// A Deploy creature is lifted while its position prompt is up: its placement
 	// verbs sit on the card being placed, like the flank question but extended with
 	// the interior deploy options.
-	if g.choosingPosition {
+	if g.choosingPosition() {
 		return g.deployActions()
 	}
 	if g.phase == phaseFlank {
@@ -1044,8 +1045,8 @@ func (g *game) deployActions() ([]cardAction, string) {
 			},
 		)
 	}
-	if g.g.Manual() {
-		cancel := g.cancelChooser
+	if g.eng().Manual() {
+		cancel := g.undoAction
 		if g.manualPlacing {
 			cancel = g.cancelManualPlace
 		}
@@ -1060,7 +1061,7 @@ func (g *game) deployActions() ([]cardAction, string) {
 func (g *game) handCardActions() ([]cardAction, string) {
 	var acts []cardAction
 	var note string
-	if err := g.g.CanPlay(g.active(), g.sel); err != nil {
+	if err := g.eng().CanPlay(g.active(), g.sel); err != nil {
 		note = "Cannot play: " + err.Error() + "."
 	} else if g.canPlayAsUpgrade() {
 		// A creature that may go down as a creature or an upgrade offers the choice
@@ -1099,7 +1100,7 @@ func (g *game) handCardActions() ([]cardAction, string) {
 	// Manual mode adds a "Put into play" that stages the card straight onto the
 	// board — no play effects, no bonus Æmber — deploying a creature anywhere in
 	// the line.
-	if g.g.Manual() {
+	if g.eng().Manual() {
 		acts = append(
 			acts,
 			cardAction{
@@ -1117,13 +1118,13 @@ func (g *game) creatureCardActions() ([]cardAction, string) {
 	// A fight grant (Brothers in Battle) makes a creature usable to fight even when
 	// CanUse rejects its house, so bail with the error only when no fight is open
 	// either; the per-use gates below then offer Fight alone.
-	if err := g.g.CanUse(g.active(), g.sel); err != nil &&
-		g.g.CanUseTo(g.active(), g.sel, engine.FightUse) != nil {
+	if err := g.eng().CanUse(g.active(), g.sel); err != nil &&
+		g.eng().CanUseTo(g.active(), g.sel, engine.FightUse) != nil {
 		return nil, "Cannot act: " + err.Error() + "."
 	}
 	// A stunned creature recovers from stun instead of acting, so any use just
 	// removes the stun: offer a single Unstun rather than Reap/Fight/Action.
-	if g.g.Stunned(g.sel) {
+	if g.eng().Stunned(g.sel) {
 		return []cardAction{
 			{Label: "Unstun", Class: "btn-unstun", Act: actUnstun, On: g.unstun},
 		}, "Stunned"
@@ -1131,22 +1132,22 @@ func (g *game) creatureCardActions() ([]cardAction, string) {
 	// Each way of using a creature is offered only when the card allows it —
 	// Tireless Crocag fights and uses its Action: ability but cannot reap.
 	var acts []cardAction
-	if g.g.CanUseTo(g.active(), g.sel, engine.ReapUse) == nil {
+	if g.eng().CanUseTo(g.active(), g.sel, engine.ReapUse) == nil {
 		s := useVerbSpec(engine.ReapUse)
 		acts = append(acts, cardAction{Label: s.text, Class: s.class, Act: actReap, On: g.reap})
 	}
 	// Fight also needs a legal target (e.g. with no enemy creatures, a ready Valdr
 	// can still reap but has nothing to fight).
-	if g.g.CanUseTo(g.active(), g.sel, engine.FightUse) == nil &&
-		len(g.g.FightTargets(g.active(), g.sel)) > 0 {
+	if g.eng().CanUseTo(g.active(), g.sel, engine.FightUse) == nil &&
+		len(g.eng().FightTargets(g.active(), g.sel)) > 0 {
 		s := useVerbSpec(engine.FightUse)
 		acts = append(
 			acts,
 			cardAction{Label: s.text, Class: s.class, Act: actFight, On: g.startFight},
 		)
 	}
-	if g.g.HasTrigger(g.sel, engine.TriggerAction) &&
-		g.g.CanUseTo(g.active(), g.sel, engine.ActionUse) == nil {
+	if g.eng().HasTrigger(g.sel, engine.TriggerAction) &&
+		g.eng().CanUseTo(g.active(), g.sel, engine.ActionUse) == nil {
 		s := useVerbSpec(engine.ActionUse)
 		acts = append(
 			acts,
@@ -1221,18 +1222,18 @@ func (g *game) useVerbBarred(label string) bool {
 	if !ok {
 		return false
 	}
-	return g.g.CannotBeUsedTo(g.useTarget, k)
+	return g.eng().CannotBeUsedTo(g.useTarget, k)
 }
 
 func (g *game) artifactCardActions() ([]cardAction, string) {
 	// An out-of-house artifact offers no Action at all, the way an out-of-house
 	// creature offers no reap or fight: CanUseArtifact carries the same house check
 	// creatures use, so the button is withheld rather than offered and then rejected.
-	if err := g.g.CanUseArtifact(g.active(), g.sel); err != nil {
+	if err := g.eng().CanUseArtifact(g.active(), g.sel); err != nil {
 		switch {
-		case !g.g.HasTrigger(g.sel, engine.TriggerAction):
+		case !g.eng().HasTrigger(g.sel, engine.TriggerAction):
 			return nil, "No action ability."
-		case g.g.Exhausted(g.sel):
+		case g.eng().Exhausted(g.sel):
 			return nil, "Exhausted."
 		}
 		return nil, "Cannot act: " + err.Error() + "."

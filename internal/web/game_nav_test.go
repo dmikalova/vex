@@ -50,7 +50,7 @@ func TestNavPosFindsTheSelection(t *testing.T) {
 func TestNavPosOfACardInNoRow(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
-	c.g.selectZoneCard(c.ctx, c.g.g.Deck(c.g.active())[0])
+	c.g.selectZoneCard(c.ctx, c.g.eng().Deck(c.g.active())[0])
 	if row, _ := c.g.navPos(c.g.navRows()); row != -1 {
 		t.Errorf("a card in no row is at row %d, want -1", row)
 	}
@@ -274,7 +274,7 @@ func TestTabAndEnterAnswerAFightTarget(t *testing.T) {
 	if c.g.phase != phaseMain {
 		t.Errorf("Enter left the phase at %v, want phaseMain", c.g.phase)
 	}
-	if containsID(c.g.g.Battleline(1-c.g.active()), target) {
+	if containsID(c.g.eng().Battleline(1-c.g.active()), target) {
 		t.Error("the candidate Enter committed to survived the fight")
 	}
 }
@@ -285,19 +285,19 @@ func TestEnterPressesDoneOnADeclinablePrompt(t *testing.T) {
 	c := newClient(t)
 	c.manual()
 	id := c.deal(testCreature)
-	c.g.g.ManualMove(id, engine.ManualDiscard)
+	c.g.eng().ManualMove(id, engine.ManualDiscard)
 
-	answer := c.ask("Choose up to 2 creatures", true, []engine.LocalID{id})
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
-	if !c.g.chooserDeclinable {
+	answer := c.ask(id, "Choose up to 2 creatures", true, []engine.LocalID{id})
+	c.await("the prompt to go up", c.g.choosing)
+	if !c.g.chooserDeclinable() {
 		t.Fatal("the staged prompt is not declinable")
 	}
 
 	c.press("Enter")
-	if got := <-answer; got.ok {
+	if answer.ok {
 		t.Error("Enter should press Done and decline, not pick a candidate")
 	}
-	c.await("the prompt to come down", func() bool { return !c.g.choosing })
+	c.await("the prompt to come down", func() bool { return !c.g.choosing() })
 }
 
 // Tab over the house prompt walks its buttons, and Enter presses the one it
@@ -315,8 +315,8 @@ func TestTabAndEnterAnswerTheHousePrompt(t *testing.T) {
 		t.Fatal("Tab did not stop on the first house button")
 	}
 	c.press("Enter")
-	if c.g.g.State.ActiveHouse != want {
-		t.Errorf("Enter chose %v, want %v", c.g.g.State.ActiveHouse, want)
+	if c.g.eng().State.ActiveHouse != want {
+		t.Errorf("Enter chose %v, want %v", c.g.eng().State.ActiveHouse, want)
 	}
 	if c.g.hasBtnCursor {
 		t.Error("the answered prompt left its button cursor up")
@@ -433,7 +433,8 @@ func TestZoneViewerCycles(t *testing.T) {
 func TestViewKeysWorkUnderAPrompt(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
-	c.g.choosing = true
+	c.option(c.hand()[0], "Take them?", []string{"Yes", "No"})
+	c.await("the prompt to go up", c.g.choosingOption)
 
 	c.press("?")
 	if !c.g.keysOpen {

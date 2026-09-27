@@ -93,15 +93,15 @@ func btn(label, act string, h app.EventHandler, class string) app.UI {
 // (renderCard) add selection, targeting, and handlers on top; the readers that
 // only show a card — the hover preview and the lifted copy — use it as it stands.
 func (g *game) cardFace(id engine.LocalID) *cardView {
-	def := g.g.Def(id)
-	house := g.g.House(id)
+	def := g.eng().Def(id)
+	house := g.eng().House(id)
 	// The keybar is a fact about a card on the table — its granted keywords
 	// included — so a card being read in hand does not draw one.
 	var bar []string
 	var taunted bool
 	if g.inPlay(id) {
 		bar = g.barKeywords(id)
-		taunted = def.Type == engine.Creature && g.g.TauntShielded(id)
+		taunted = def.Type == engine.Creature && g.eng().TauntShielded(id)
 	}
 	return &cardView{
 		Title:         def.Name,
@@ -118,10 +118,10 @@ func (g *game) cardFace(id engine.LocalID) *cardView {
 		Rarity:        rarityMarkOf(def.Rarity),
 		Maverick:      g.isMaverick(id),
 		Legacy:        g.isLegacy(id),
-		Stunned:       g.g.Stunned(id),
-		Warded:        g.g.Warded(id),
-		Enraged:       g.g.Enraged(id),
-		Exhausted:     g.g.Exhausted(id),
+		Stunned:       g.eng().Stunned(id),
+		Warded:        g.eng().Warded(id),
+		Enraged:       g.eng().Enraged(id),
+		Exhausted:     g.eng().Exhausted(id),
 		InPlay:        g.inPlay(id),
 		Bar:           bar,
 		TauntShielded: taunted,
@@ -132,7 +132,7 @@ func (g *game) cardFace(id engine.LocalID) *cardView {
 // artifact row — as opposed to in a hand or an out-of-play pile.
 func (g *game) inPlay(id engine.LocalID) bool {
 	for p := range 2 {
-		if containsID(g.g.Battleline(p), id) || containsID(g.g.Artifacts(p), id) {
+		if containsID(g.eng().Battleline(p), id) || containsID(g.eng().Artifacts(p), id) {
 			return true
 		}
 	}
@@ -159,19 +159,19 @@ func traitLabel(def *engine.CardDefinition) string {
 func (g *game) statLine(id engine.LocalID) []app.UI {
 	f := g.flashes[id]
 	var segs []app.UI
-	if g.g.TypeOf(id) == engine.Creature {
-		segs = append(segs, statSeg(g.g.Power(id), "power", pulseClass(f.power, f.odd, "pow")))
-		if d := g.g.Damage(id); d > 0 {
+	if g.eng().TypeOf(id) == engine.Creature {
+		segs = append(segs, statSeg(g.eng().Power(id), "power", pulseClass(f.power, f.odd, "pow")))
+		if d := g.eng().Damage(id); d > 0 {
 			segs = append(segs, statSeg(d, "damage", pulseClass(f.damage, f.odd, "dmg")))
 		}
 		// The armor a creature has left to absorb damage this turn (its full armor
 		// minus what it has already spent), so the shield count falls as hits land
 		// and refreshes when the creature readies — not the printed maximum.
-		if a := int(g.g.State.Cards[id].ArmorRemaining); a > 0 {
+		if a := int(g.eng().State.Cards[id].ArmorRemaining); a > 0 {
 			segs = append(segs, statSeg(a, "shield"))
 		}
 	}
-	if a := g.g.AmberOn(id); a > 0 {
+	if a := g.eng().AmberOn(id); a > 0 {
 		segs = append(segs, statSeg(a, "aember", pulseClass(f.amber, f.odd, "gain")))
 	}
 	// Stun and exhaustion show as tokens on the face (see cardView), so they need
@@ -210,13 +210,13 @@ func handStat(def *engine.CardDefinition) []app.UI {
 // text is rendered as it reads on its host, so it says `Reap: …` rather than
 // repeating "This creature gains" on the creature it is already sitting on.
 func (g *game) faceRules(id engine.LocalID) string {
-	def := g.g.Def(id)
+	def := g.eng().Def(id)
 	var lines []string
 	if s := faceText(def, engine.RenderCardRules(def)); s != "" {
 		lines = append(lines, displayRules(s))
 	}
-	for _, up := range g.g.Upgrades(id) {
-		def := g.g.Def(up)
+	for _, up := range g.eng().Upgrades(id) {
+		def := g.eng().Def(up)
 		line := "↳ " + def.Name
 		if s := engine.RenderUpgradeOnCreature(def); s != "" {
 			line += ": " + displayRules(s)
@@ -258,7 +258,7 @@ func faceText(def *engine.CardDefinition, rules string) string {
 // playableFromHand reports whether the active player can play the given hand card
 // right now, so unplayable cards are not draggable.
 func (g *game) playableFromHand(id engine.LocalID) bool {
-	return g.g.CanPlay(g.active(), id) == nil
+	return g.eng().CanPlay(g.active(), id) == nil
 }
 
 // discardableFromHand reports whether the active player may discard the given
@@ -266,7 +266,7 @@ func (g *game) playableFromHand(id engine.LocalID) bool {
 // rule, so the first-turn one-card restriction bars discarding exactly as it bars
 // playing — after the opening volition no hand card reads as live.
 func (g *game) discardableFromHand(id engine.LocalID) bool {
-	return g.g.CanDiscard(g.active(), id) == nil
+	return g.eng().CanDiscard(g.active(), id) == nil
 }
 
 // usableFromHand reports whether a hand card can be acted on at all this turn —
