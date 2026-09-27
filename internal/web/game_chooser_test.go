@@ -10,33 +10,39 @@ import (
 	"github.com/dmikalova/vex/internal/engine"
 )
 
-// These tests cover the bridge between the engine's synchronous chooser and the
-// browser's single UI goroutine: an effect that needs an answer parks its
-// goroutine, the client renders the question, and a click sends the answer back.
+// These tests cover the prompt seam: an effect that needs an answer suspends the
+// session on a Request, the client renders the question off that Request, and a
+// click applies the Command that answers it.
 //
-// A prompt is raised the way the engine raises one — from a goroutine other than
-// the one answering it — so what is being tested is the handoff, not a rehearsal
-// of it.
+// A prompt is raised the way the engine raises one — from a driving action
+// suspended mid-resolution (c.script) — so what is being tested is the handoff,
+// not a rehearsal of it.
 
-// ask raises a card prompt from a background goroutine, as an effect mid-
-// resolution does, and hands back the channel its answer arrives on.
-func (c *client) ask(prompt string, declinable bool, cands []engine.LocalID) chan chooseReply {
+// pick is the answer a card prompt came back with.
+type pick struct {
+	id engine.LocalID
+	ok bool
+}
+
+// ask raises a card prompt from a scripted action, as an effect mid-resolution
+// does, and hands back the answer it eventually returns.
+func (c *client) ask(
+	source engine.LocalID,
+	prompt string,
+	declinable bool,
+	cands []engine.LocalID,
+) *pick {
 	c.t.Helper()
-	out := make(chan chooseReply, 1)
-	go func() {
-		var id engine.LocalID
-		var ok bool
+	got := &pick{}
+	player := c.g.active()
+	c.script(func(eg *engine.Game) {
 		if declinable {
-			id, ok = c.g.chooser.ChooseCardOrDecline("A Card", prompt, cands)
-		} else {
-			id, ok = c.g.chooser.ChooseCreature("A Card", prompt, cands)
+			got.id, got.ok = eg.ChooseCardOptional(player, source, prompt, cands)
+			return
 		}
-		out <- chooseReply{
-			id: id,
-			ok: ok,
-		}
-	}()
-	return out
+		got.id, got.ok = eg.ChooseCreature(player, source, prompt, cands)
+	})
+	return got
 }
 
 func TestAnsweringACardPrompt(t *testing.T) {
@@ -48,26 +54,26 @@ func TestAnsweringACardPrompt(t *testing.T) {
 	c.playFromHand(second)
 	cands := c.board()
 
-	answer := c.ask("Choose a creature", false, cands)
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
+	answer := c.ask(cands[0], "Choose a creature", false, cands)
+	c.await("the prompt to go up", c.g.choosing)
 
-	if c.g.chooserPrompt != "Choose a creature" {
-		t.Errorf("the prompt reads %q, want %q", c.g.chooserPrompt, "Choose a creature")
+	if c.g.chooserPrompt() != "Choose a creature" {
+		t.Errorf("the prompt reads %q, want %q", c.g.chooserPrompt(), "Choose a creature")
 	}
-	if c.g.promptSource != "A Card" {
-		t.Errorf("the prompt is attributed to %q, want %q", c.g.promptSource, "A Card")
+	if c.g.promptSource() != testCreature {
+		t.Errorf("the prompt is attributed to %q, want %q", c.g.promptSource(), testCreature)
 	}
-	if c.g.chooserDeclinable {
+	if c.g.chooserDeclinable() {
 		t.Error("a mandatory prompt offered a way out")
 	}
 
 	c.g.chooseCandidate(c.ctx, cands[1])
-	got := <-answer
-	if !got.ok || got.id != cands[1] {
-		t.Errorf("the effect was answered %v, want card %d", got, cands[1])
+	c.settle()
+	if !answer.ok || answer.id != cands[1] {
+		t.Errorf("the effect was answered %v, want card %d", answer, cands[1])
 	}
-	c.await("the prompt to come down", func() bool { return !c.g.choosing })
-	if c.g.chooserPrompt != "" || c.g.chooserCandidates != nil || c.g.promptSource != "" {
+	c.await("the prompt to come down", func() bool { return !c.g.choosing() })
+	if c.g.chooserPrompt() != "" || c.g.chooserCandidates() != nil || c.g.promptSource() != "" {
 		t.Error("the answered prompt left its question on screen")
 	}
 }
@@ -85,18 +91,17 @@ func TestOpeningAPromptClearsTheSelection(t *testing.T) {
 	c.playFromHand(second)
 	cands := c.board()
 
-	c.g.hasSel, c.g.sel = true, first
+	c.g.hasSel, c.g.sel = true, cands[0]
 
-	answer := c.ask("Choose a creature", false, cands)
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
+	c.ask(cands[0], "Choose a creature", false, cands)
+	c.await("the prompt to go up", c.g.choosing)
 
 	if c.g.hasSel {
 		t.Error("opening a prompt left a stale selection on the board")
 	}
 
 	c.g.chooseCandidate(c.ctx, cands[1])
-	<-answer
-	c.await("the prompt to come down", func() bool { return !c.g.choosing })
+	c.await("the prompt to come down", func() bool { return !c.g.choosing() })
 }
 
 // An optional prompt can be passed on, which is what its Done button and Escape
@@ -105,17 +110,17 @@ func TestDecliningACardPrompt(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	c.playFromHand(c.deal(testCreature))
+	board := c.board()
 
-	answer := c.ask("You may destroy a creature", true, c.board())
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
-	if !c.g.chooserDeclinable {
+	answer := c.ask(board[0], "You may destroy a creature", true, board)
+	c.await("the prompt to go up", c.g.choosing)
+	if !c.g.chooserDeclinable() {
 		t.Error("an optional prompt did not offer a way out")
 	}
 
 	c.press("n")
-	got := <-answer
-	if got.ok {
-		t.Errorf("the declined prompt answered %v, want a pass", got)
+	if answer.ok {
+		t.Errorf("the declined prompt answered %v, want a pass", answer)
 	}
 }
 
@@ -125,61 +130,73 @@ func TestAMandatoryPromptCannotBeWalkedAwayFrom(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	c.playFromHand(c.deal(testCreature))
+	c.playFromHand(c.deal(testCreature))
 	cands := c.board()
 	// Out of manual mode: a real match's prompts are the engine's to insist on.
 	c.do(c.g.toggleManual)
 
-	answer := c.ask("Choose a creature", false, cands)
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
+	answer := c.ask(cands[0], "Choose a creature", false, cands)
+	c.await("the prompt to go up", c.g.choosing)
 
 	c.press("n")
 	c.press("Escape")
-	if !c.g.choosing {
+	if !c.g.choosing() {
 		t.Fatal("a mandatory prompt was dismissed")
 	}
 
 	c.g.chooseCandidate(c.ctx, cands[0])
-	if got := <-answer; !got.ok {
+	c.settle()
+	if !answer.ok {
 		t.Error("the prompt was not answered by the click that followed")
 	}
 }
 
 // Manual mode is the exception: a playtester who has arranged a board a prompt
-// cannot be answered on needs a way out of it.
-func TestManualModeCanCancelAMandatoryPrompt(t *testing.T) {
+// cannot be answered on needs a way out of it. Cancelling is undo — the whole
+// root action that raised the prompt is rewound — so it is driven here through a
+// real use of a card, which is the action there is to back out of.
+func TestEscapeCancelsAPromptInManualMode(t *testing.T) {
 	c := newClient(t)
-	c.manualTurn(testHouse)
+	c.manualTurn(promptHouse)
 	c.playFromHand(c.deal(testCreature))
+	c.playFromHand(c.deal(testCreature))
+	cannon := c.stagePromptArtifact()
 
-	answer := c.ask("Choose a creature", false, c.board())
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
+	c.g.selectBoardID(c.ctx, cannon)
+	c.do(c.g.useAction)
+	c.await("the damage prompt", c.g.choosing)
+
 	c.press("Escape")
-	if got := <-answer; got.ok {
-		t.Errorf("the cancelled prompt answered %v, want no choice", got)
+	if c.g.choosing() {
+		t.Fatal("Escape did not back out of the prompt")
+	}
+	if c.g.eng().State.Cards[cannon].Exhausted {
+		t.Error("the cancelled action left the artifact spent")
 	}
 }
 
 // A prompt with no candidates has nothing to ask, so it answers itself rather
-// than parking the effect on a question with no buttons.
+// than suspending the action on a question with no buttons.
 func TestAPromptWithNoCandidatesAnswersItself(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
-	if _, ok := c.g.chooser.ChooseCreature("A Card", "Choose a creature", nil); ok {
+	answer := c.ask(c.hand()[0], "Choose a creature", false, nil)
+	if answer.ok {
 		t.Error("a prompt with no candidates reported a choice")
 	}
-	if c.g.choosing {
+	if c.g.choosing() {
 		t.Error("a prompt with no candidates went up on screen")
 	}
 }
 
-// order raises an ordering prompt from a background goroutine, as the engine's
-// orderByChoice does through the Orderer, and hands back the channel the arranged
-// order arrives on.
-func (c *client) order(prompt string, ids []engine.LocalID) chan []engine.LocalID {
+// order raises an ordering window from a scripted action, as the engine's
+// orderByChoice does, and hands back the arranged order.
+func (c *client) order(prompt string, ids []engine.LocalID) *[]engine.LocalID {
 	c.t.Helper()
-	out := make(chan []engine.LocalID, 1)
-	go func() { out <- c.g.chooser.OrderCreatures("A Card", prompt, ids) }()
-	return out
+	got := new([]engine.LocalID)
+	player := c.g.active()
+	c.script(func(eg *engine.Game) { *got = eg.OrderByChoice(player, prompt, ids) })
+	return got
 }
 
 // samePermutation reports whether got is a rearrangement of want.
@@ -203,99 +220,109 @@ func samePermutation(got, want []engine.LocalID) bool {
 }
 
 // TestAutoResolveOrder checks that the Auto-resolve button answers an ordering
-// prompt with a full random order in one click, ending the window without picking
-// each ability in turn.
+// window with a full random order in one click, ending the window without picking
+// each card in turn.
 func TestAutoResolveOrder(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
-	first := c.deal(testCreature)
-	second := c.deal(testCreature)
-	c.playFromHand(first)
-	c.playFromHand(second)
+	c.playFromHand(c.deal(testCreature))
+	c.playFromHand(c.deal(testCreature))
+	c.playFromHand(c.deal(testCreature))
 	cands := c.board()
 
-	out := c.order("Order them", cands)
+	got := c.order("Order them", cands)
 	c.await(
 		"the ordering prompt to go up",
-		func() bool { return c.g.choosing && c.g.chooserOrdering },
+		func() bool { return c.g.choosing() && c.g.chooserOrdering() },
 	)
 
 	c.g.autoResolveOrder(c.ctx, nullEvent())
-	got := <-out
-	c.await("the prompt to come down", func() bool { return !c.g.choosing })
+	c.await("the prompt to come down", func() bool { return !c.g.choosing() })
 
-	if !samePermutation(got, cands) {
-		t.Errorf("auto-resolve returned %v, want a permutation of %v", got, cands)
+	if !samePermutation(*got, cands) {
+		t.Errorf("auto-resolve returned %v, want a permutation of %v", *got, cands)
 	}
 }
 
 // TestOrderByPickingEach checks that ordering a window by clicking cards still
-// works through the Orderer: each pick resolves next and the last is forced.
+// works: each pick resolves next and the last is forced.
 func TestOrderByPickingEach(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
-	first := c.deal(testCreature)
-	second := c.deal(testCreature)
-	c.playFromHand(first)
-	c.playFromHand(second)
+	c.playFromHand(c.deal(testCreature))
+	c.playFromHand(c.deal(testCreature))
 	cands := c.board()
 
-	out := c.order("Order them", cands)
-	c.await("the ordering prompt to go up", func() bool { return c.g.chooserOrdering })
+	got := c.order("Order them", cands)
+	c.await("the ordering prompt to go up", c.g.chooserOrdering)
 
 	c.g.chooseCandidate(c.ctx, cands[1])
-	got := <-out
-	c.await("the prompt to come down", func() bool { return !c.g.choosing })
+	c.await("the prompt to come down", func() bool { return !c.g.choosing() })
 
-	if want := []engine.LocalID{cands[1], cands[0]}; !slices.Equal(got, want) {
-		t.Errorf("ordering picked %v, want %v", got, want)
+	if want := []engine.LocalID{cands[1], cands[0]}; !slices.Equal(*got, want) {
+		t.Errorf("ordering picked %v, want %v", *got, want)
 	}
 }
 
 // TestAutoResolveOnlyForOrdering checks that Auto-resolve is inert unless an
-// ordering prompt is up, so a stray click cannot answer another kind of prompt.
+// ordering window is up, so a stray click cannot answer another kind of prompt.
+// An ordering step is the one mandatory card pick with no source card behind it,
+// which is what tells the two apart.
 func TestAutoResolveOnlyForOrdering(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
-	only := c.deal(testCreature)
-	next := c.deal(testCreature)
-	c.playFromHand(only)
-	c.playFromHand(next)
+	c.playFromHand(c.deal(testCreature))
+	c.playFromHand(c.deal(testCreature))
 	cands := c.board()
 
-	answer := c.ask("Choose a creature", false, cands)
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
+	answer := c.ask(cands[0], "Choose a creature", false, cands)
+	c.await("the prompt to go up", c.g.choosing)
 
-	c.g.autoResolveOrder(c.ctx, nullEvent()) // no ordering prompt: ignored
-	if c.g.chooserOrdering {
+	c.g.autoResolveOrder(c.ctx, nullEvent()) // no ordering window: ignored
+	if c.g.chooserOrdering() {
 		t.Error("a plain card prompt was marked as ordering")
 	}
+	if c.scriptDone() {
+		t.Fatal("Auto-resolve answered a plain card prompt")
+	}
 	c.g.chooseCandidate(c.ctx, cands[0])
-	if got := <-answer; !got.ok {
+	c.settle()
+	if !answer.ok {
 		t.Error("the plain prompt should still answer with a normal pick")
 	}
+}
+
+// option raises a labeled option prompt from a scripted action and hands back the
+// index it is answered with.
+func (c *client) option(source engine.LocalID, prompt string, labels []string) *int {
+	c.t.Helper()
+	got := new(int)
+	*got = -1
+	player := c.g.active()
+	c.script(func(eg *engine.Game) { *got = eg.ChooseOption(player, source, prompt, labels) })
+	return got
 }
 
 func TestAnsweringAnOptionPrompt(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
-	out := make(chan int, 1)
-	go func() { out <- c.g.chooser.ChooseOption("A Card", "Take them?", []string{"Yes", "No"}) }()
-	c.await("the prompt to go up", func() bool { return c.g.choosingOption })
+	src := c.hand()[0]
+	got := c.option(src, "Take them?", []string{"Yes", "No"})
+	c.await("the prompt to go up", c.g.choosingOption)
 
-	if c.g.optionPrompt != "Take them?" {
-		t.Errorf("the prompt reads %q, want %q", c.g.optionPrompt, "Take them?")
+	if c.g.optionPrompt() != "Take them?" {
+		t.Errorf("the prompt reads %q, want %q", c.g.optionPrompt(), "Take them?")
 	}
 	if c.g.promptButtons() != 2 {
 		t.Errorf("the prompt offers %d buttons, want 2", c.g.promptButtons())
 	}
 
 	c.press("n")
-	if got := <-out; got != 1 {
-		t.Errorf("n answered with option %d, want No at 1", got)
+	if *got != 1 {
+		t.Errorf("n answered with option %d, want No at 1", *got)
 	}
-	c.await("the prompt to come down", func() bool { return !c.g.choosingOption })
-	if c.g.optionLabels != nil || c.g.optionPrompt != "" {
+	c.await("the prompt to come down", func() bool { return !c.g.choosingOption() })
+	if c.g.optionLabels() != nil || c.g.optionPrompt() != "" {
 		t.Error("the answered prompt left its question on screen")
 	}
 }
@@ -305,13 +332,12 @@ func TestAnsweringAnOptionPrompt(t *testing.T) {
 func TestSpaceAnswersYes(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
-	out := make(chan int, 1)
-	go func() { out <- c.g.chooser.ChooseOption("A Card", "Take them?", []string{"Yes", "No"}) }()
-	c.await("the prompt to go up", func() bool { return c.g.choosingOption })
+	got := c.option(c.hand()[0], "Take them?", []string{"Yes", "No"})
+	c.await("the prompt to go up", c.g.choosingOption)
 
 	c.press(" ")
-	if got := <-out; got != 0 {
-		t.Errorf("Space answered with option %d, want Yes at 0", got)
+	if *got != 0 {
+		t.Errorf("Space answered with option %d, want Yes at 0", *got)
 	}
 }
 
@@ -320,20 +346,18 @@ func TestSpaceAnswersYes(t *testing.T) {
 func TestSpaceLeavesAListOfAlternativesAlone(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
-	out := make(chan int, 1)
-	labels := []string{"Red", "Blue", "Yellow"}
-	go func() { out <- c.g.chooser.ChooseOption("A Card", "Forge which key?", labels) }()
-	c.await("the prompt to go up", func() bool { return c.g.choosingOption })
+	got := c.option(c.hand()[0], "Forge which key?", []string{"Red", "Blue", "Yellow"})
+	c.await("the prompt to go up", c.g.choosingOption)
 
 	c.press(" ")
 	c.press("n")
-	if !c.g.choosingOption {
+	if !c.g.choosingOption() {
 		t.Fatal("a list of alternatives was answered by a key that means neither")
 	}
 
 	c.press("b")
-	if got := <-out; got != 1 {
-		t.Errorf("b answered with option %d, want Blue at 1", got)
+	if *got != 1 {
+		t.Errorf("b answered with option %d, want Blue at 1", *got)
 	}
 }
 
@@ -345,10 +369,13 @@ func TestAPromptOverAPileOpensTheViewer(t *testing.T) {
 	c.manual()
 	me := c.g.active()
 	id := c.deal(testCreature)
-	c.g.g.ManualMove(id, engine.ManualDiscard)
+	other := c.deal(testCreature)
+	c.g.eng().ManualMove(id, engine.ManualDiscard)
+	c.g.eng().ManualMove(other, engine.ManualDiscard)
 
-	answer := c.ask("Choose a card in your discard pile", false, []engine.LocalID{id})
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
+	answer := c.ask(id, "Choose a card in your discard pile", false,
+		[]engine.LocalID{id, other})
+	c.await("the prompt to go up", c.g.choosing)
 
 	if c.g.zonesPlayer != me || c.g.promptZone != "Discard" {
 		t.Fatalf("the viewer opened at player %d zone %q, want player %d Discard",
@@ -356,7 +383,10 @@ func TestAPromptOverAPileOpensTheViewer(t *testing.T) {
 	}
 
 	c.g.chooseCandidate(c.ctx, id)
-	<-answer
+	c.settle()
+	if !answer.ok {
+		t.Error("the pile prompt was not answered")
+	}
 	c.await("the viewer to close", func() bool { return c.g.zonesPlayer == -1 })
 	if c.g.promptZone != "" {
 		t.Errorf("the prompt's zone is still %q", c.g.promptZone)
@@ -371,11 +401,13 @@ func TestABoundedDeckPromptOffersButtons(t *testing.T) {
 	c := newClient(t)
 	c.manual()
 	id := c.deal(testCreature)
-	c.g.g.ManualMove(id, engine.ManualDeckTop)
+	other := c.deal(testCreature)
+	c.g.eng().ManualMove(id, engine.ManualDeckTop)
+	c.g.eng().ManualMove(other, engine.ManualDeckTop)
 
-	answer := c.ask("Choose the next card to place on top of your deck",
-		false, []engine.LocalID{id})
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
+	answer := c.ask(id, "Choose the next card to place on top of your deck",
+		false, []engine.LocalID{id, other})
+	c.await("the prompt to go up", c.g.choosing)
 
 	if !c.g.promptAsButtons {
 		t.Fatal("a bounded deck prompt did not switch to action-bar buttons")
@@ -392,8 +424,9 @@ func TestABoundedDeckPromptOffersButtons(t *testing.T) {
 		t.Error("the reorder prompt is missing the first-is-on-the-bottom note")
 	}
 	c.g.chooseCandidate(c.ctx, id)
-	if got := <-answer; !got.ok || got.id != id {
-		t.Errorf("the button answered with %+v, want id %d ok", got, id)
+	c.settle()
+	if !answer.ok || answer.id != id {
+		t.Errorf("the button answered with %+v, want id %d ok", answer, id)
 	}
 }
 
@@ -405,16 +438,16 @@ func TestADeclinablePilePromptIsFinishedFromTheViewer(t *testing.T) {
 	c.manual()
 	me := c.g.active()
 	id := c.deal(testCreature)
-	c.g.g.ManualMove(id, engine.ManualDiscard)
+	c.g.eng().ManualMove(id, engine.ManualDiscard)
 
-	answer := c.ask("Choose a creature to shuffle into your deck",
+	answer := c.ask(id, "Choose a creature to shuffle into your deck",
 		true, []engine.LocalID{id})
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
+	c.await("the prompt to go up", c.g.choosing)
 
 	if c.g.zonesPlayer != me || c.g.promptZone != "Discard" {
 		t.Fatalf("a declinable pile prompt did not open the discard viewer")
 	}
-	if !c.g.chooserDeclinable {
+	if !c.g.chooserDeclinable() {
 		t.Fatal("Not Finished with You's prompt is not marked declinable")
 	}
 	html := app.HTMLString(c.g.Render())
@@ -423,12 +456,12 @@ func TestADeclinablePilePromptIsFinishedFromTheViewer(t *testing.T) {
 	}
 	// Closing the viewer is not an answer — the prompt is still waiting.
 	c.do(c.g.closeZones)
-	if !c.g.choosing {
+	if !c.g.choosing() {
 		t.Error("closing the viewer answered the prompt; it should only get out of the way")
 	}
 	c.do(c.g.declineChooser)
-	if got := <-answer; got.ok {
-		t.Errorf("Done answered %+v, want a decline", got)
+	if answer.ok {
+		t.Errorf("Done answered %+v, want a decline", answer)
 	}
 	c.await("the viewer to close", func() bool { return c.g.zonesPlayer == -1 })
 }
@@ -441,25 +474,29 @@ func TestAMandatoryPileViewerCanBeClosedWithoutAnswering(t *testing.T) {
 	c.manual()
 	me := c.g.active()
 	id := c.deal(testCreature)
-	c.g.g.ManualMove(id, engine.ManualDiscard)
+	other := c.deal(testCreature)
+	c.g.eng().ManualMove(id, engine.ManualDiscard)
+	c.g.eng().ManualMove(other, engine.ManualDiscard)
 	// Out of manual mode: a real match's prompts are the engine's to insist on.
 	c.do(c.g.toggleManual)
 
-	answer := c.ask("Choose a creature to put into play", false, []engine.LocalID{id})
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
+	answer := c.ask(id, "Choose a creature to put into play", false,
+		[]engine.LocalID{id, other})
+	c.await("the prompt to go up", c.g.choosing)
 
 	c.do(c.g.closeZones)
 	if c.g.zonesPlayer != -1 {
 		t.Error("a mandatory pile viewer refused to close")
 	}
-	if !c.g.choosing || c.g.promptZone != "Discard" {
+	if !c.g.choosing() || c.g.promptZone != "Discard" {
 		t.Error("closing the viewer dropped the prompt; it should still be waiting")
 	}
 
 	c.g.zonesPlayer = me
 	c.g.chooseCandidate(c.ctx, id)
-	if got := <-answer; !got.ok || got.id != id {
-		t.Errorf("the reopened viewer answered %+v, want card %d", got, id)
+	c.settle()
+	if !answer.ok || answer.id != id {
+		t.Errorf("the reopened viewer answered %+v, want card %d", answer, id)
 	}
 }
 
@@ -469,14 +506,14 @@ func TestAPromptOverTheBoardDoesNotOpenTheViewer(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	c.playFromHand(c.deal(testCreature))
+	c.playFromHand(c.deal(testCreature))
 
-	answer := c.ask("Choose a creature", false, c.board())
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
+	c.ask(c.board()[0], "Choose a creature", false, c.board())
+	c.await("the prompt to go up", c.g.choosing)
 	if c.g.zonesPlayer != -1 {
 		t.Errorf("the viewer opened at %d for a prompt over the board", c.g.zonesPlayer)
 	}
 	c.g.chooseCandidate(c.ctx, c.board()[0])
-	<-answer
 }
 
 // A viewer the player opened themselves is theirs to close.
@@ -497,34 +534,34 @@ func TestAnsweringWhenNoPromptIsUp(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	c.playFromHand(c.deal(testCreature))
+	c.playFromHand(c.deal(testCreature))
+	cands := c.board()
 
-	c.g.chooseCandidate(c.ctx, c.board()[0])
+	c.g.chooseCandidate(c.ctx, cands[0])
 	c.do(c.g.declineChooser)
-	c.do(c.g.cancelChooser)
 	c.do(c.g.chooseOptionIdx(0))
 
-	answer := c.ask("Choose a creature", false, c.board())
-	c.await("the prompt to go up", func() bool { return c.g.choosing })
-	select {
-	case got := <-answer:
-		t.Fatalf("the prompt was answered %v by a click that came before it", got)
-	default:
+	answer := c.ask(cands[0], "Choose a creature", false, cands)
+	c.await("the prompt to go up", c.g.choosing)
+	if c.scriptDone() {
+		t.Fatal("the prompt was answered by a click that came before it")
 	}
-	c.g.chooseCandidate(c.ctx, c.board()[0])
-	<-answer
+	c.g.chooseCandidate(c.ctx, cands[0])
+	c.settle()
+	if !answer.ok {
+		t.Error("the prompt was not answered by the click that followed")
+	}
 }
 
-// askReaction raises a reaction-ordering window from a background goroutine, the
-// way the engine's trigger window does, and hands back the channel its answer
-// arrives on.
-func (c *client) askReaction(
-	prompt string,
-	reactions []engine.OrderableReaction,
-) chan int {
+// askReaction raises a trigger window from a scripted action, the way the
+// engine's reaction ordering does, and hands back the index it is answered with.
+func (c *client) askReaction(prompt string, reactions []engine.OrderableReaction) *int {
 	c.t.Helper()
-	out := make(chan int, 1)
-	go func() { out <- c.g.chooser.ChooseReaction(prompt, reactions) }()
-	return out
+	got := new(int)
+	*got = -1
+	player := c.g.active()
+	c.script(func(eg *engine.Game) { *got = eg.ChooseReaction(player, prompt, reactions) })
+	return got
 }
 
 // A trigger window over cards on the board is answered by clicking the card whose
@@ -536,18 +573,19 @@ func TestOrderingReactionsByClickingTheSourceCard(t *testing.T) {
 	c.playFromHand(c.deal(testCreature))
 	board := c.board()
 
-	answer := c.askReaction("Resolve destroyed abilities", []engine.OrderableReaction{
+	got := c.askReaction("Resolve destroyed abilities", []engine.OrderableReaction{
 		{Card: board[0], HasCard: true, Label: "First: gain 1 Æmber"},
 		{Card: board[1], HasCard: true, Label: "Second: draw a card"},
 	})
-	c.await("the reaction window to go up", func() bool { return c.g.choosing })
+	c.await("the reaction window to go up", c.g.choosing)
 
-	if c.g.choosingOption {
+	if c.g.choosingOption() {
 		t.Error("the window fell back to a button list; it should be clickable")
 	}
 	c.g.chooseCandidate(c.ctx, board[1])
-	if got := <-answer; got != 1 {
-		t.Errorf("clicking the second source answered %d, want 1", got)
+	c.settle()
+	if *got != 1 {
+		t.Errorf("clicking the second source answered %d, want 1", *got)
 	}
 }
 
@@ -561,22 +599,22 @@ func TestOneCardWithTwoReactionsAsksWhichAbility(t *testing.T) {
 	c.playFromHand(c.deal(testCreature))
 	board := c.board()
 
-	answer := c.askReaction("Resolve destroyed abilities", []engine.OrderableReaction{
+	got := c.askReaction("Resolve destroyed abilities", []engine.OrderableReaction{
 		{Card: board[0], HasCard: true, Label: "First: gain 1 Æmber"},
 		{Card: board[1], HasCard: true, Label: "Second: draw a card"},
 		{Card: board[1], HasCard: true, Label: "Second: deal 1 damage"},
 	})
-	c.await("the reaction window to go up", func() bool { return c.g.choosing })
+	c.await("the reaction window to go up", c.g.choosing)
 
 	c.g.chooseCandidate(c.ctx, board[1])
-	c.await("the follow-up ability prompt", func() bool { return c.g.choosingOption })
-	if c.g.optionPrompt != whichAbilityPrompt {
-		t.Errorf("follow-up prompt = %q, want %q", c.g.optionPrompt, whichAbilityPrompt)
+	c.await("the follow-up ability prompt", c.g.choosingOption)
+	if c.g.optionPrompt() != whichAbilityPrompt {
+		t.Errorf("follow-up prompt = %q, want %q", c.g.optionPrompt(), whichAbilityPrompt)
 	}
 
 	c.do(c.g.chooseOptionIdx(1))
-	if got := <-answer; got != 2 {
-		t.Errorf("the second ability of the clicked card answered %d, want 2", got)
+	if *got != 2 {
+		t.Errorf("the second ability of the clicked card answered %d, want 2", *got)
 	}
 }
 
@@ -589,15 +627,15 @@ func TestAReactionWithoutACardStaysOnTheLabeledList(t *testing.T) {
 	c.playFromHand(c.deal(testCreature))
 	board := c.board()
 
-	answer := c.askReaction("Choose which card's ability resolves next",
+	got := c.askReaction("Choose which card's ability resolves next",
 		[]engine.OrderableReaction{
 			{Card: board[0], HasCard: true, Label: "First: gain 1 Æmber"},
 			{Label: "gain 1 Æmber"},
 		})
-	c.await("the labeled list to go up", func() bool { return c.g.choosingOption })
+	c.await("the labeled list to go up", c.g.choosingOption)
 
 	c.do(c.g.chooseOptionIdx(1))
-	if got := <-answer; got != 1 {
-		t.Errorf("the labeled list answered %d, want 1", got)
+	if *got != 1 {
+		t.Errorf("the labeled list answered %d, want 1", *got)
 	}
 }

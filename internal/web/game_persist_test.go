@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/dmikalova/vex/internal/engine"
+	"github.com/dmikalova/vex/internal/session"
 )
 
 // These tests cover keeping a match alive across a page load: what is written to
@@ -22,7 +23,7 @@ func TestMountOpensSetPickerWhenThereIsNothingToResume(t *testing.T) {
 	if !c.g.awaitingSetup {
 		t.Error("mounting did not open the set picker")
 	}
-	if c.g.g != nil {
+	if c.g.s != nil {
 		t.Error("mounting dealt a match instead of waiting for a set choice")
 	}
 	if c.g.dispatch == nil {
@@ -41,20 +42,20 @@ func TestAMatchSurvivesAReload(t *testing.T) {
 	c.g.zonesPlayer = c.g.active()
 	c.do(c.g.toggleSidebar)
 
-	before := c.g.g.State
-	logLines := len(c.g.g.Log)
+	before := c.g.eng().State
+	logLines := len(c.g.eng().Log)
 
 	next := c.reload()
 	if next.g.seed != c.g.seed {
 		t.Errorf("the resumed match has seed %d, want %d", next.g.seed, c.g.seed)
 	}
-	if next.g.g.State != before {
+	if next.g.eng().State != before {
 		t.Error("the resumed match is not the state that was saved")
 	}
-	if !containsID(next.g.g.Battleline(next.g.active()), id) {
+	if !containsID(next.g.eng().Battleline(next.g.active()), id) {
 		t.Error("the creature in play did not survive the reload")
 	}
-	if got := len(next.g.g.Log); got != logLines {
+	if got := len(next.g.eng().Log); got != logLines {
 		t.Errorf("the resumed log has %d lines, want %d", got, logLines)
 	}
 	if next.g.sidebarCollapsed != c.g.sidebarCollapsed {
@@ -82,7 +83,7 @@ func TestAStandingsKeyTallySurvivesAReload(t *testing.T) {
 	next := c.reload()
 	var got engine.PlayerStanding
 	var found bool
-	for _, rec := range next.g.g.Log {
+	for _, rec := range next.g.eng().Log {
 		if ps, ok := rec.Entry.(engine.PlayerStanding); ok && ps.Player == me {
 			got, found = ps, true
 		}
@@ -144,11 +145,11 @@ func TestManualAddsAreReplayed(t *testing.T) {
 	c.g.save(c.ctx)
 
 	next := c.reload()
-	if !containsID(next.g.g.Hand(next.g.active()), id) {
+	if !containsID(next.g.eng().Hand(next.g.active()), id) {
 		t.Error("the manually added card did not come back in hand")
 	}
-	if next.g.g.Def(id).Name != testCreature {
-		t.Errorf("id %d rebuilt as %q, want %q", id, next.g.g.Def(id).Name, testCreature)
+	if next.g.eng().Def(id).Name != testCreature {
+		t.Errorf("id %d rebuilt as %q, want %q", id, next.g.eng().Def(id).Name, testCreature)
 	}
 }
 
@@ -158,13 +159,29 @@ func TestManualAddsAreReplayed(t *testing.T) {
 func TestASnapshotNamingAnUnknownCardIsDropped(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
-	c.g.record(input{
-		Kind:   inManualAddCard,
+	c.saveWithExtraCommand(engine.Command{
+		Kind:   engine.CommandManualAddCard,
 		Name:   "A Card That Was Never Printed",
 		Player: 0,
 	})
-	c.g.save(c.ctx)
 	c.expectDropped()
+}
+
+// saveWithExtraCommand saves the match and then splices cmd onto the end of the
+// saved command log, which is how a test stages a record this build cannot
+// replay: the live session would refuse the command outright, so it is added to
+// the persisted record rather than applied.
+func (c *client) saveWithExtraCommand(cmd engine.Command) {
+	c.t.Helper()
+	c.g.save(c.ctx)
+	var snap snapshot
+	if err := c.ctx.LocalStorage().Get(c.g.matchKey(), &snap); err != nil {
+		c.t.Fatalf("read back the snapshot: %v", err)
+	}
+	snap.Record.Commands = append(snap.Record.Commands, cmd)
+	if err := c.ctx.LocalStorage().Set(c.g.matchKey(), snap); err != nil {
+		c.t.Fatalf("write the spliced snapshot: %v", err)
+	}
 }
 
 // Every reason a snapshot is unusable ends the same way: it is deleted and a
@@ -180,7 +197,11 @@ func TestUnusableSnapshotsAreDropped(t *testing.T) {
 			return snap
 		}},
 		{"no seed to rebuild the catalog from", func(snap snapshot) any {
-			snap.Seed = 0
+			snap.Record.Seed = 0
+			return snap
+		}},
+		{"a command log from another session version", func(snap snapshot) any {
+			snap.Record.Version = session.Version + 1
 			return snap
 		}},
 		{"not a snapshot at all", func(_ snapshot) any {
@@ -213,29 +234,26 @@ func TestResumeWithNothingSaved(t *testing.T) {
 	}
 }
 
-// A half-resolved action cannot be persisted: the rest of it lives on a
-// goroutine a reload kills, so only the committed prefix of the command log is
-// saved and the player lands where they can take the action again.
-func TestAnActionInFlightSavesTheCommittedPrefix(t *testing.T) {
+// An action stopped at a prompt is saved in full, prompt and all. Nothing is held
+// back any more: a prompt's answers so far are ordinary recorded commands, so the
+// reload replays them and lands the player back on the same question.
+func TestAMatchStoppedAtAPromptResumesAtThatPrompt(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	c.playFromHand(c.deal(testCreature))
-	committed := len(c.g.inputs)
+	id := c.deal(deployCreature)
+	c.g.selectHandID(c.ctx, id)
+	c.do(c.g.play)
+	c.await("the deploy placement prompt", c.g.choosingPosition)
 
-	// An in-flight action has recorded its root and gone busy; a save now must drop
-	// that partial action a reload could not finish and keep only what came before.
-	c.g.record(input{Kind: inEndTurn})
-	c.g.busy = true
-	c.g.save(c.ctx)
-	c.g.busy = false
-
-	var snap snapshot
-	if err := c.ctx.LocalStorage().Get(persistKey, &snap); err != nil {
-		t.Fatalf("read back the snapshot: %v", err)
+	saved := len(c.g.s.Record().Commands)
+	next := c.reload()
+	if got := len(next.g.s.Record().Commands); got != saved {
+		t.Errorf("the resumed log holds %d commands, want the %d that were saved",
+			got, saved)
 	}
-	if len(snap.Inputs) != committed {
-		t.Errorf("saved %d inputs, want the %d committed before the in-flight action",
-			len(snap.Inputs), committed)
+	if !next.g.choosingPosition() {
+		t.Error("the reload did not come back on the placement prompt")
 	}
 }
 
@@ -256,12 +274,11 @@ func TestSavingBeforeTheDeal(t *testing.T) {
 func TestACommandLogThatPanicsOnReplayIsDropped(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
-	c.g.record(input{
-		Kind:  inManualMove,
-		ID:    engine.LocalID(250),
+	c.saveWithExtraCommand(engine.Command{
+		Kind:  engine.CommandManualMove,
+		Card:  engine.LocalID(250),
 		Index: int(engine.ManualDiscard),
 	})
-	c.g.save(c.ctx)
 	c.expectDropped()
 }
 
@@ -278,9 +295,9 @@ func TestReloadingDoesNotToastTheWholeLog(t *testing.T) {
 	if !next.g.sidebarCollapsed {
 		t.Fatal("the reload did not come back with the sidebar collapsed")
 	}
-	if next.g.toastSeen != len(next.g.g.Log) {
+	if next.g.toastSeen != len(next.g.eng().Log) {
 		t.Errorf("toastSeen = %d, want %d (caught up on reload)",
-			next.g.toastSeen, len(next.g.g.Log))
+			next.g.toastSeen, len(next.g.eng().Log))
 	}
 	next.g.refreshToast()
 	if len(next.g.toastBubbles) != 0 {
@@ -305,9 +322,9 @@ func TestDismissingTheToastClearsIt(t *testing.T) {
 	if len(c.g.toastBubbles) != 0 {
 		t.Errorf("dismiss left %d bubbles, want 0", len(c.g.toastBubbles))
 	}
-	if c.g.toastSeen != len(c.g.g.Log) {
+	if c.g.toastSeen != len(c.g.eng().Log) {
 		t.Errorf("toastSeen = %d, want %d (caught up on dismiss)",
-			c.g.toastSeen, len(c.g.g.Log))
+			c.g.toastSeen, len(c.g.eng().Log))
 	}
 	c.g.refreshToast()
 	if len(c.g.toastBubbles) != 0 {

@@ -138,7 +138,7 @@ func (s *style) OnMount(ctx app.Context) {
 	}
 	s.harness = styleHarness()
 	s.attachHost = attachHarness()
-	s.attachments = buildAttachments(s.attachHost.g)
+	s.attachments = buildAttachments(s.attachHost.eng())
 	var saved struct {
 		Fonts  []string
 		UIFont string
@@ -216,15 +216,7 @@ func (s *style) save(ctx app.Context) {
 // every branch of a Player bar at once, and a gallery that has to be played to
 // is a gallery nobody looks at.
 func styleHarness() *game {
-	g := &game{
-		selHand:     -1,
-		zonesPlayer: -1,
-		forgingKey:  -1,
-		handSlot:    -1,
-	}
-	g.g = engine.NewGame("Player One", "Player Two", 1)
-	g.mavericks = map[engine.LocalID]bool{}
-	g.legacy = map[engine.LocalID]bool{}
+	g := viewOnly(engine.NewGame("Player One", "Player Two", 1))
 	g.deckHouses = [2][]engine.House{
 		{engine.Brobnar, engine.Dis, engine.Logos},
 		{engine.Mars, engine.Sanctum, engine.Untamed},
@@ -237,10 +229,10 @@ func styleHarness() *game {
 		n   int
 		add func(engine.CardDefinition, int) engine.LocalID
 	}{
-		{6, g.g.AddToHand},
-		{22, g.g.AddToDeck},
-		{9, g.g.AddToDiscard},
-		{2, g.g.AddToArchives},
+		{6, g.eng().AddToHand},
+		{22, g.eng().AddToDeck},
+		{9, g.eng().AddToDiscard},
+		{2, g.eng().AddToArchives},
 	}
 	next := 0
 	for player := range 2 {
@@ -253,10 +245,10 @@ func styleHarness() *game {
 	}
 
 	// Display values, set outright rather than played to.
-	g.g.State.ActivePlayer = 0
-	g.g.State.ActiveHouse = engine.Brobnar
-	g.g.State.Aember = [2]int16{7, 3}
-	g.g.State.Chains = [2]int{0, 3}
+	g.eng().State.ActivePlayer = 0
+	g.eng().State.ActiveHouse = engine.Brobnar
+	g.eng().State.Aember = [2]int16{7, 3}
+	g.eng().State.Chains = [2]int{0, 3}
 	return g
 }
 
@@ -267,16 +259,8 @@ func styleHarness() *game {
 // sits on the opponent's host (owner 1) or the active player's own (a card is
 // facedown for everyone; the controller peeks its face by hovering).
 func attachHarness() *game {
-	g := &game{
-		selHand:     -1,
-		zonesPlayer: -1,
-		forgingKey:  -1,
-		handSlot:    -1,
-	}
-	g.g = engine.NewGame("Player One", "Player Two", 1)
-	g.mavericks = map[engine.LocalID]bool{}
-	g.legacy = map[engine.LocalID]bool{}
-	g.g.State.ActivePlayer = 0
+	g := viewOnly(engine.NewGame("Player One", "Player Two", 1))
+	g.eng().State.ActivePlayer = 0
 	return g
 }
 

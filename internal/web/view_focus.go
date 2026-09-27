@@ -48,19 +48,18 @@ func (g *game) focusCardID() (engine.LocalID, bool) {
 	}
 	// Placing a Deploy creature lifts it while its position prompt is up, so its
 	// placement verbs sit on the card being placed exactly like the flank question
-	// — even though the play action is still in flight (g.busy), which the general
-	// guard below would otherwise drop the lift for.
-	if g.choosingPosition {
+	// — even though a prompt is up, which the general guard below would otherwise
+	// drop the lift for.
+	if g.choosingPosition() {
 		return g.sel, true
 	}
 	// A "choose how to use X" verb prompt lifts the creature the action just chose
-	// to use, so its use buttons sit on it — even though the action is still in
-	// flight (g.busy) and an option prompt is up (g.choosingOption), which the
-	// general guard below would otherwise drop the lift for.
+	// to use, so its use buttons sit on it — even though an option prompt is up,
+	// which the general guard below would otherwise drop the lift for.
 	if id, ok := g.liftUseTarget(); ok {
 		return id, true
 	}
-	if g.busy || g.choosing || g.choosingOption || g.forgingKey >= 0 {
+	if g.atPrompt() || g.forgingKey >= 0 {
 		return 0, false
 	}
 	// The action lift is up while choosing a house or taking the turn — placing a
@@ -94,7 +93,7 @@ func (g *game) cardFocus() app.UI {
 	// The copy is the card, so a drag has to start from it: it lies over its own
 	// neighbours, and a pointer that fell through would grab whichever card the
 	// enlarged face happens to cover.
-	if g.phase == phaseMain && g.selKind == selHand && !g.choosingPosition &&
+	if g.phase == phaseMain && g.selKind == selHand && !g.choosingPosition() &&
 		g.playableFromHand(id) {
 		face.ID = id
 		face.Draggable = true

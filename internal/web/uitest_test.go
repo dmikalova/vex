@@ -246,7 +246,7 @@ func TestScenarioSelectorsAreWrittenFromTheActHooks(t *testing.T) {
 	}
 	c := newBlankClient(t)
 	c.g.dealMatch(testSeed)
-	c.await("the first mulligan prompt", func() bool { return c.g.choosingOption })
+	c.await("the first mulligan prompt", func() bool { return c.g.choosingOption() })
 	markup := app.HTMLString(c.g.Render())
 	if !strings.Contains(markup, `data-act="option-keep"`) {
 		t.Error("the mulligan prompt does not carry the act hook the scenario clicks")
@@ -262,7 +262,7 @@ func TestScenarioSelectorsAreWrittenFromTheActHooks(t *testing.T) {
 // runs outside the gate.
 func TestAStagedCardIsFoundByItsNameAndItsZone(t *testing.T) {
 	c := newClient(t)
-	c.g.g.SetManual(true)
+	c.g.eng().SetManual(true)
 	id := c.deal(stagedCreature)
 	c.startTurn()
 	c.settle()

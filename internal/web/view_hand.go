@@ -32,7 +32,7 @@ func (g *game) renderHand() app.UI {
 // order (which play/discard index into) is untouched, so selection still maps to
 // the right card.
 func (g *game) sortedHand(p int) []engine.LocalID {
-	return g.sortByHouseTypeName(g.g.Hand(p))
+	return g.sortByHouseTypeName(g.eng().Hand(p))
 }
 
 // sortedArtifacts returns the player's artifact-row ids ordered by house, then
@@ -40,7 +40,7 @@ func (g *game) sortedHand(p int) []engine.LocalID {
 // sorts a copy — the engine's own order is untouched, so selection still maps to
 // the right card.
 func (g *game) sortedArtifacts(p int) []engine.LocalID {
-	return g.sortByHouseTypeName(g.g.Artifacts(p))
+	return g.sortByHouseTypeName(g.eng().Artifacts(p))
 }
 
 // sortByHouseTypeName returns a copy of ids ordered by house, then card type in
@@ -52,7 +52,7 @@ func (g *game) sortByHouseTypeName(ids []engine.LocalID) []engine.LocalID {
 	out := make([]engine.LocalID, len(ids))
 	copy(out, ids)
 	sort.SliceStable(out, func(i, j int) bool {
-		a, b := g.g.Def(ids[i]), g.g.Def(ids[j])
+		a, b := g.eng().Def(ids[i]), g.eng().Def(ids[j])
 		if a.House != b.House {
 			return a.House < b.House
 		}
@@ -65,9 +65,9 @@ func (g *game) sortByHouseTypeName(ids []engine.LocalID) []engine.LocalID {
 }
 
 func (g *game) renderHandCard(id engine.LocalID) app.UI {
-	def := g.g.Def(id)
+	def := g.eng().Def(id)
 	activate, targetable, dimmed := g.cardVisual(id, selHand)
-	draggable := !g.busy && !g.choosing && !g.choosingOption &&
+	draggable := !g.atPrompt() &&
 		g.phase == phaseMain && g.playableFromHand(id)
 	// A hand card is a printed face plus the hand's interaction wiring.
 	face := printedFace(def)

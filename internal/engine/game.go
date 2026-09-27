@@ -295,6 +295,13 @@ func (g *Game) pickCreature(
 	source, prompt string,
 	candidates []LocalID,
 ) (LocalID, bool) {
+	// A choice with no candidates has no answer to give, so it is never put to a
+	// player: a suspendable chooser would yield a Request whose legal-answer set is
+	// empty and the match would stop there (ADR 0040). pickOptional guards the same
+	// way, so every "choose one card" route agrees on it.
+	if len(candidates) == 0 {
+		return 0, false
+	}
 	if len(candidates) == 1 {
 		return candidates[0], true
 	}
@@ -308,6 +315,9 @@ func (g *Game) pickCreature(
 // as creature choices because a prompt is still one visible card chosen from a set;
 // callers are responsible for passing the legal card candidates.
 func (g *Game) pickCard(player int, source, prompt string, candidates []LocalID) (LocalID, bool) {
+	if len(candidates) == 0 {
+		return 0, false
+	}
 	if len(candidates) == 1 {
 		return candidates[0], true
 	}

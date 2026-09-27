@@ -14,7 +14,7 @@ import (
 // game is dealt; otherwise a lightweight placeholder is shown until the match
 // arrives.
 func (g *game) Render() app.UI {
-	if g.g == nil {
+	if g.s == nil {
 		if g.awaitingSetup {
 			return g.setupScreen()
 		}
@@ -88,13 +88,13 @@ func (g *game) controlDock() app.UI {
 // lets the player read the restriction off the card itself, and sitting above the
 // HUD it is read before the step it constrains rather than after.
 func (g *game) restrictionNotes() app.UI {
-	sources := g.g.RestrictionSources(g.active())
+	sources := g.eng().RestrictionSources(g.active())
 	if len(sources) == 0 {
 		return app.Div()
 	}
 	return app.Div().Class("restrictions").Body(
 		app.Range(sources).Slice(func(i int) app.UI {
-			name := g.g.Def(sources[i]).Name
+			name := g.eng().Def(sources[i]).Name
 			return app.Span().Class("restriction log-card").
 				DataSet("card", name).
 				OnMouseEnter(g.onLogCardHover).
@@ -105,7 +105,7 @@ func (g *game) restrictionNotes() app.UI {
 	)
 }
 
-// brandBar is the slim top of the sidebar: the title, a busy badge, the menu the
+// brandBar is the slim top of the sidebar: the title, the menu the
 // game's own controls live behind, and the sidebar toggle. Manual mode is the one
 // control that also sits outside the menu, but only while it is on: a mode that
 // rewrites the rules should be visibly on and one click from off.
@@ -114,9 +114,6 @@ func (g *game) brandBar() app.UI {
 		app.Span().Class("brand-title").Text("Vex"),
 		// The server publishes the short build id of the bundle it served.
 		app.Span().Class("brand-version").Text(app.Getenv("VEX_BUILD")),
-		app.If(g.busy && !g.choosing && !g.choosingOption && !g.choosingPosition, func() app.UI {
-			return app.Span().Class("badge-busy").Text("resolving…")
-		}),
 		app.Div().Class("spacer"),
 		g.brandMenu(),
 		app.Button().Class("btn-nav btn-icon").Title("Hide sidebar").
@@ -142,19 +139,17 @@ func (g *game) brandMenu() app.UI {
 					actManual,
 					"Manual mode",
 					g.manualMenu,
-					g.busy && !g.choosing && !g.choosingOption &&
-						!g.choosingPosition,
-					g.g.Manual(),
+					false,
+					g.eng().Manual(),
 				),
 				menuItem("restart", actNewGame, "New game", g.restartMenu,
-					g.busy || g.choosing || g.choosingOption || g.choosingPosition, false),
+					g.atPrompt(), false),
 				menuItem(
 					"glyph-ban",
 					actConcede,
 					"Concede",
 					g.concedeMenu,
-					g.busy || g.choosing || g.choosingOption || g.choosingPosition ||
-						g.g.Winner() >= 0,
+					g.atPrompt() || g.eng().Winner() >= 0,
 					false,
 				),
 				menuItem("", actKeys, "Keyboard shortcuts", g.keysMenu, false, false),

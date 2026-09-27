@@ -19,6 +19,10 @@ const testCreature = "Flaxia"
 // is laid out under the house that can use it.
 const testHouse = engine.Untamed
 
+// deployCreature is a Deploy creature with no ability of its own, so playing it
+// onto a non-empty battleline raises the placement prompt and nothing else.
+const deployCreature = "Challe the Safeguard"
+
 func TestChooseHouseStartsTheTurn(t *testing.T) {
 	c := newClient(t)
 	if c.g.phase != phaseHouse {
@@ -29,8 +33,8 @@ func TestChooseHouseStartsTheTurn(t *testing.T) {
 		t.Fatalf("the deal offers %d houses, want 3", len(houses))
 	}
 	c.do(c.g.pickHouse(houses[1]))
-	if c.g.g.State.ActiveHouse != houses[1] {
-		t.Errorf("the active house is %v, want %v", c.g.g.State.ActiveHouse, houses[1])
+	if c.g.eng().State.ActiveHouse != houses[1] {
+		t.Errorf("the active house is %v, want %v", c.g.eng().State.ActiveHouse, houses[1])
 	}
 	if c.g.phase != phaseMain {
 		t.Errorf("the phase is %v, want phaseMain", c.g.phase)
@@ -43,12 +47,12 @@ func TestChooseHouseStartsTheTurn(t *testing.T) {
 func lockOutHouses(c *client) {
 	p := c.g.active()
 	for _, h := range c.g.deckHouses[p] {
-		c.g.g.CannotChooseHouseNextTurn(p, h, 0)
+		c.g.eng().CannotChooseHouseNextTurn(p, h, 0)
 	}
 	// CannotChooseHouseNextTurn arms the next turn; promote the armed table onto the
 	// current one so the lockout binds the choice the picker is about to offer.
-	c.g.g.State.HouseConstraints[p] = c.g.g.State.HouseConstraintsNext[p]
-	c.g.g.State.HouseConstraintCount[p] = c.g.g.State.HouseConstraintCountNext[p]
+	c.g.eng().State.HouseConstraints[p] = c.g.eng().State.HouseConstraintsNext[p]
+	c.g.eng().State.HouseConstraintCount[p] = c.g.eng().State.HouseConstraintCountNext[p]
 }
 
 // A player locked out of every house is offered a single "No House" button, in
@@ -72,8 +76,8 @@ func TestLockedOutOfEveryHouseOffersNoHouse(t *testing.T) {
 				t.Fatalf("the picker offers %v, want [No House]", buttons)
 			}
 			c.do(c.g.pickHouse(engine.HouseNone))
-			if c.g.g.State.ActiveHouse != engine.HouseNone {
-				t.Errorf("the active house is %v, want No House", c.g.g.State.ActiveHouse)
+			if c.g.eng().State.ActiveHouse != engine.HouseNone {
+				t.Errorf("the active house is %v, want No House", c.g.eng().State.ActiveHouse)
 			}
 			if c.g.phase != phaseMain {
 				t.Errorf("after choosing No House the phase is %v, want phaseMain", c.g.phase)
@@ -100,7 +104,7 @@ func TestHousePickerUndo(t *testing.T) {
 	c.do(c.g.pickHouse(c.g.pickableHouses()[0]))
 	c.pass()
 	c.await("the opponent's house choice", func() bool {
-		return !c.g.busy && c.g.phase == phaseHouse
+		return c.g.phase == phaseHouse
 	})
 	if !c.g.canUndo() {
 		t.Fatal("the opponent's house pick has a turn to step back to")
@@ -135,7 +139,7 @@ func TestSelectingACardInHand(t *testing.T) {
 func TestSelectingACardNotInHandDoesNothing(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
-	c.g.selectHandID(c.ctx, c.g.g.Deck(c.g.active())[0])
+	c.g.selectHandID(c.ctx, c.g.eng().Deck(c.g.active())[0])
 	if c.g.hasSel {
 		t.Error("a card outside the hand was selected as a hand card")
 	}
@@ -172,7 +176,7 @@ func TestBoardKindOfEachRow(t *testing.T) {
 	if got := c.g.boardKindOf(mine); got != selYourCreature {
 		t.Errorf("boardKindOf(own creature) = %v, want selYourCreature", got)
 	}
-	other := c.g.g.Deck(1 - c.g.active())[0]
+	other := c.g.eng().Deck(1 - c.g.active())[0]
 	if got := c.g.boardKindOf(other); got != selOther {
 		t.Errorf("boardKindOf(a card not in the active player's rows) = %v, want selOther", got)
 	}
@@ -183,18 +187,21 @@ func TestBoardKindOfEachRow(t *testing.T) {
 func TestSelectingIsGuarded(t *testing.T) {
 	tests := []struct {
 		name string
-		arm  func(g *game)
+		arm  func(c *client)
 	}{
-		{"busy", func(g *game) { g.busy = true }},
-		{"choosing", func(g *game) { g.choosing = true }},
-		{"picking a fight target", func(g *game) { g.phase = phaseFightTarget }},
+		{"a card prompt is up", func(c *client) {
+			hand := c.hand()
+			c.ask(hand[0], "Choose a card", false, hand)
+			c.await("the card prompt", c.g.choosing)
+		}},
+		{"picking a fight target", func(c *client) { c.g.phase = phaseFightTarget }},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := newClient(t)
 			c.startTurn()
 			id := c.hand()[0]
-			tt.arm(c.g)
+			tt.arm(c)
 
 			c.g.selectHandID(c.ctx, id)
 			c.g.selectBoardID(c.ctx, id)
@@ -257,74 +264,74 @@ func TestCancellingTheFlankPrompt(t *testing.T) {
 // A Deploy creature skips the flank prompt and instead raises the click-to-place
 // position prompt: the player first chooses a side (Deploy left / Deploy right),
 // then clicks a battleline creature to land beside it on that side. The ends of
-// the line are the flanks. These drive the answer handlers directly against a
-// staged prompt (the state ChoosePosition posts), so no background goroutine is
-// needed to test the click-to-position map.
+// the line are the flanks. Each case stages the prompt as the engine raises one —
+// a scripted ChoosePosition over the staged battleline — and reads back the
+// position the click answered with.
 func TestDeployPlacementByClick(t *testing.T) {
-	stage := func(t *testing.T) (*client, []engine.LocalID) {
+	stage := func(t *testing.T) (*client, []engine.LocalID, *int) {
 		t.Helper()
 		c := newClient(t)
 		c.manualTurn(testHouse)
 		c.playFromHand(c.deal(testCreature))
 		c.playFromHand(c.deal(testCreature))
 		line := c.board()
-		c.g.choosingPosition = true
-		c.g.positionLine = line
-		c.g.positionRight = false
-		c.g.positionSideChosen = false
-		return c, line
+		got := new(int)
+		*got = -1
+		player := c.g.active()
+		c.script(func(eg *engine.Game) {
+			*got = eg.ChoosePosition(player, line[0], "Choose where to deploy", line)
+		})
+		c.await("the placement prompt", c.g.choosingPosition)
+		return c, line, got
 	}
-	answered := func(t *testing.T, c *client) int {
+	answered := func(t *testing.T, c *client, got *int) int {
 		t.Helper()
-		select {
-		case pos := <-c.g.chooser.positionReply:
-			return pos
-		default:
-			t.Fatal("the placement handler sent no position")
-			return -1
+		c.settle()
+		if !c.scriptDone() {
+			t.Fatal("the placement handler answered no position")
 		}
+		return *got
 	}
 
 	t.Run("choosing left then clicking a creature deploys to its left", func(t *testing.T) {
-		c, line := stage(t)
+		c, line, got := stage(t)
 		c.do(c.g.chooseDeploySide(false))
 		c.g.choosePositionCandidate(c.ctx, line[1]) // before the second creature
-		if got := answered(t, c); got != 1 {
+		if got := answered(t, c, got); got != 1 {
 			t.Errorf("deploy-left of index 1 = position %d, want 1", got)
 		}
 	})
 
 	t.Run("choosing right places after the clicked creature", func(t *testing.T) {
-		c, line := stage(t)
+		c, line, got := stage(t)
 		c.do(c.g.chooseDeploySide(true))
 		c.g.choosePositionCandidate(c.ctx, line[0]) // after the first creature
-		if got := answered(t, c); got != 1 {
+		if got := answered(t, c, got); got != 1 {
 			t.Errorf("deploy-right of index 0 = position %d, want 1", got)
 		}
 	})
 
 	t.Run("deploy right of the last creature is the right flank", func(t *testing.T) {
-		c, line := stage(t)
+		c, line, got := stage(t)
 		c.do(c.g.chooseDeploySide(true))
 		c.g.choosePositionCandidate(c.ctx, line[len(line)-1])
-		if got := answered(t, c); got != len(line) {
+		if got := answered(t, c, got); got != len(line) {
 			t.Errorf("deploy-right of the last creature = position %d, want %d",
 				got, len(line))
 		}
 	})
 
 	t.Run("clicking a creature before a side is chosen is ignored", func(t *testing.T) {
-		c, line := stage(t)
+		c, line, _ := stage(t)
 		c.g.choosePositionCandidate(c.ctx, line[0])
-		select {
-		case <-c.g.chooser.positionReply:
+		c.settle()
+		if c.scriptDone() {
 			t.Fatal("a click before choosing a side answered the prompt")
-		default:
 		}
 	})
 
 	t.Run("Back returns to the side choice", func(t *testing.T) {
-		c, _ := stage(t)
+		c, _, _ := stage(t)
 		c.do(c.g.chooseDeploySide(true))
 		if !c.g.positionSideChosen {
 			t.Fatal("choosing a side did not mark it chosen")
@@ -336,28 +343,33 @@ func TestDeployPlacementByClick(t *testing.T) {
 	})
 
 	t.Run("clicking a creature not on the line is ignored", func(t *testing.T) {
-		c, _ := stage(t)
+		c, _, _ := stage(t)
 		c.do(c.g.chooseDeploySide(false))
-		offLine := c.deal(testCreature) // in hand, not on the battleline
+		offLine := c.hand()[0] // in hand, not on the battleline
 		c.g.choosePositionCandidate(c.ctx, offLine)
-		select {
-		case <-c.g.chooser.positionReply:
+		c.settle()
+		if c.scriptDone() {
 			t.Fatal("an off-line click answered the prompt")
-		default:
 		}
 	})
 }
 
 // With no other friendly creatures in play a Deploy creature has only one
-// placement, so it is placed without asking: ChoosePosition answers itself with
-// position 0 and never raises the prompt.
+// placement, so it is placed without asking: the request answers itself with
+// position 0 and the prompt is never shown.
 func TestDeploySkipsPromptWithNoOtherCreatures(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
-	if pos := c.g.chooser.ChoosePosition("Ranger", "deploy Ranger", nil); pos != 0 {
-		t.Errorf("empty-line deploy = position %d, want 0", pos)
+	got := new(int)
+	*got = -1
+	player := c.g.active()
+	c.script(func(eg *engine.Game) {
+		*got = eg.ChoosePosition(player, c.hand()[0], "deploy it", nil)
+	})
+	if *got != 0 {
+		t.Errorf("empty-line deploy = position %d, want 0", *got)
 	}
-	if c.g.choosingPosition {
+	if c.g.choosingPosition() {
 		t.Error("an empty line raised the deploy placement prompt")
 	}
 }
@@ -396,7 +408,7 @@ func TestFlankKeys(t *testing.T) {
 func TestDiscardingFromHand(t *testing.T) {
 	c := newClient(t)
 	id := c.hand()[0]
-	h := c.g.g.House(id)
+	h := c.g.eng().House(id)
 	c.do(c.g.pickHouse(h))
 	if c.g.phase != phaseMain {
 		t.Fatalf("after choosing %v the phase is %v, want phaseMain", h, c.g.phase)
@@ -406,7 +418,7 @@ func TestDiscardingFromHand(t *testing.T) {
 	if containsID(c.hand(), id) {
 		t.Error("the discarded card is still in hand")
 	}
-	if !containsID(c.g.g.Discard(c.g.active()), id) {
+	if !containsID(c.g.eng().Discard(c.g.active()), id) {
 		t.Error("the discarded card is not in the discard pile")
 	}
 }
@@ -426,7 +438,7 @@ func TestFirstTurnDiscardRestrictionMatchesPlay(t *testing.T) {
 	for _, h := range c.g.pickableHouses() {
 		var inHouse []engine.LocalID
 		for _, id := range c.hand() {
-			if c.g.g.Def(id).House == h {
+			if c.g.eng().Def(id).House == h {
 				inHouse = append(inHouse, id)
 			}
 		}
@@ -564,10 +576,10 @@ func TestArmingTheEndTurnConfirmClearsTheSelection(t *testing.T) {
 // house. Without the grant an off-house creature is inert.
 func TestFightGrantOffersFightOnAnOffHouseCreature(t *testing.T) {
 	c := newClient(t)
-	c.g.g.State.ActiveHouse = engine.Brobnar
+	c.g.eng().State.ActiveHouse = engine.Brobnar
 	c.g.phase = phaseMain
 	p := c.g.active()
-	att := c.g.g.AddToBattleline(
+	att := c.g.eng().AddToBattleline(
 		engine.NewCard(
 			"Off Fighter",
 			engine.Untamed,
@@ -577,7 +589,7 @@ func TestFightGrantOffersFightOnAnOffHouseCreature(t *testing.T) {
 		),
 		p,
 	)
-	c.g.g.AddToBattleline(
+	c.g.eng().AddToBattleline(
 		engine.NewCard("Foe", engine.Dis, engine.Creature, engine.Common, engine.WithPower(2)),
 		1-p)
 
@@ -585,7 +597,7 @@ func TestFightGrantOffersFightOnAnOffHouseCreature(t *testing.T) {
 		t.Fatal("an off-house creature is actionable without a grant")
 	}
 
-	c.g.g.State.MayFightHouse[p] = engine.Untamed
+	c.g.eng().State.MayFightHouse[p] = engine.Untamed
 	if !c.g.actionable(att, selYourCreature) {
 		t.Fatal("a fight-granted off-house creature is not actionable")
 	}
@@ -627,17 +639,17 @@ func TestReaping(t *testing.T) {
 	c.pass() // back to the creature's controller
 	c.manualTurn(testHouse)
 
-	before := c.g.g.State.Aember[c.g.active()]
+	before := c.g.eng().State.Aember[c.g.active()]
 	c.g.selectBoardID(c.ctx, id)
 	c.do(c.g.reap)
 	if c.g.status != "" {
 		t.Fatalf("reaping reported %q", c.g.status)
 	}
-	if c.g.g.State.Aember[c.g.active()] <= before {
+	if c.g.eng().State.Aember[c.g.active()] <= before {
 		t.Errorf("reaping did not gain Æmber: %d then %d",
-			before, c.g.g.State.Aember[c.g.active()])
+			before, c.g.eng().State.Aember[c.g.active()])
 	}
-	if !c.g.g.State.Cards[id].Exhausted {
+	if !c.g.eng().State.Cards[id].Exhausted {
 		t.Error("reaping did not exhaust the creature")
 	}
 }
@@ -684,10 +696,10 @@ func TestFightTargeting(t *testing.T) {
 	// Two creatures of equal power trade, so the target the player picked is the
 	// one that died and the one they left alone is still there.
 	opp := 1 - c.g.active()
-	if containsID(c.g.g.Battleline(opp), def2) {
+	if containsID(c.g.eng().Battleline(opp), def2) {
 		t.Error("the creature the fight was aimed at survived")
 	}
-	if !containsID(c.g.g.Battleline(opp), def1) {
+	if !containsID(c.g.eng().Battleline(opp), def1) {
 		t.Error("the creature the fight was not aimed at died")
 	}
 }
@@ -714,7 +726,7 @@ func TestFightWithASingleTargetSkipsSelection(t *testing.T) {
 		t.Errorf("phase is %v, want phaseMain — the only target should not be asked for",
 			c.g.phase)
 	}
-	if containsID(c.g.g.Battleline(1-c.g.active()), defender) {
+	if containsID(c.g.eng().Battleline(1-c.g.active()), defender) {
 		t.Error("the fight did not resolve against the only target there was")
 	}
 }
@@ -804,7 +816,7 @@ func TestPlayingAnArtifact(t *testing.T) {
 	id := c.deal(testArtifact)
 	c.playFromHand(id)
 
-	if !containsID(c.g.g.Artifacts(c.g.active()), id) {
+	if !containsID(c.g.eng().Artifacts(c.g.active()), id) {
 		t.Fatal("the artifact did not reach the artifact row")
 	}
 	if c.g.phase != phaseMain {
@@ -822,17 +834,17 @@ func TestUsingAnArtifactsAction(t *testing.T) {
 	c.ownNextTurn(testHouse)
 
 	me := c.g.active()
-	c.g.g.State.Aember[me] = 2
+	c.g.eng().State.Aember[me] = 2
 	c.g.selectBoardID(c.ctx, id)
 	c.do(c.g.useAction)
 
 	if c.g.status != "" {
 		t.Fatalf("using the artifact reported %q", c.g.status)
 	}
-	if got := c.g.g.AmberOn(id); got != 1 {
+	if got := c.g.eng().AmberOn(id); got != 1 {
 		t.Errorf("the artifact holds %d Æmber, want 1", got)
 	}
-	if !c.g.g.Exhausted(id) {
+	if !c.g.eng().Exhausted(id) {
 		t.Error("using the artifact did not exhaust it")
 	}
 }
@@ -848,7 +860,7 @@ func TestOutOfHouseArtifactOffersNoAction(t *testing.T) {
 	c.playFromHand(id) // Safe Place is Shadows, played out of house in manual mode
 	c.ownNextTurn(testHouse)
 	c.do(c.g.toggleManual) // leave manual mode, so the house rules apply again
-	if c.g.g.Manual() {
+	if c.g.eng().Manual() {
 		t.Fatal("manual mode did not turn off")
 	}
 
@@ -949,19 +961,19 @@ func TestArmedUpgradeChoiceAnswersOnlyItsPrompt(t *testing.T) {
 	pair := []string{"Creature", "Upgrade"}
 
 	c.g.upgradeChoice = choiceUpgrade
-	if i, ok := c.g.chooser.armedUpgradeChoice(pair); !ok || i != 1 {
+	if i, ok := c.g.armedUpgradeChoice(pair); !ok || i != 1 {
 		t.Errorf("upgrade answered (%d,%v), want (1,true)", i, ok)
 	}
 	c.g.upgradeChoice = choiceCreature
-	if i, ok := c.g.chooser.armedUpgradeChoice(pair); !ok || i != 0 {
+	if i, ok := c.g.armedUpgradeChoice(pair); !ok || i != 0 {
 		t.Errorf("creature answered (%d,%v), want (0,true)", i, ok)
 	}
 	c.g.upgradeChoice = choiceNone
-	if _, ok := c.g.chooser.armedUpgradeChoice(pair); ok {
+	if _, ok := c.g.armedUpgradeChoice(pair); ok {
 		t.Error("an unarmed choice answered the prompt")
 	}
 	c.g.upgradeChoice = choiceUpgrade
-	if _, ok := c.g.chooser.armedUpgradeChoice([]string{"Yes", "No"}); ok {
+	if _, ok := c.g.armedUpgradeChoice([]string{"Yes", "No"}); ok {
 		t.Error("an armed choice answered an unrelated prompt")
 	}
 }

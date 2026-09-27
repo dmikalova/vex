@@ -130,7 +130,7 @@ func TestGalleryRenders(t *testing.T) {
 		harness:    styleHarness(),
 		attachHost: attachHarness(),
 	}
-	s.attachments = buildAttachments(s.attachHost.g)
+	s.attachments = buildAttachments(s.attachHost.eng())
 	if s.Render() == nil {
 		t.Fatal("the gallery rendered nothing")
 	}
@@ -150,7 +150,7 @@ func TestGalleryRenders(t *testing.T) {
 // would be an unshown state.
 func TestGalleryShowsEveryAttachmentCombination(t *testing.T) {
 	h := attachHarness()
-	specs := buildAttachments(h.g)
+	specs := buildAttachments(h.eng())
 	captions := map[string]bool{}
 	for _, s := range specs {
 		captions[s.caption] = true
@@ -184,8 +184,8 @@ func TestTheAttachmentSectionReshufflesOnReload(t *testing.T) {
 	firstHost := func(seed int64) string {
 		styleSeed = seed
 		h := attachHarness()
-		specs := buildAttachments(h.g)
-		return h.g.Def(specs[0].host).Name
+		specs := buildAttachments(h.eng())
+		return h.eng().Def(specs[0].host).Name
 	}
 	seen := map[string]bool{}
 	for seed := int64(1); seed <= 8; seed++ {
@@ -206,7 +206,7 @@ func TestTheAttachmentSectionReshufflesOnReload(t *testing.T) {
 // opponent's carries none and previews only a card back.
 func TestGalleryDrawsAFacedownUnderAsACardBack(t *testing.T) {
 	h := attachHarness()
-	specs := buildAttachments(h.g)
+	specs := buildAttachments(h.eng())
 	var hidden, peeked string
 	for _, s := range specs {
 		html := app.HTMLString(h.hostWithTabs(s.host, h.printedCard(s.host), false))
@@ -238,10 +238,10 @@ func TestGalleryHarnessFillsEveryZone(t *testing.T) {
 	g := styleHarness()
 	for player := range 2 {
 		counts := map[string]int{
-			"hand":     len(g.g.Hand(player)),
-			"deck":     len(g.g.Deck(player)),
-			"discard":  len(g.g.Discard(player)),
-			"archives": len(g.g.Archives(player)),
+			"hand":     len(g.eng().Hand(player)),
+			"deck":     len(g.eng().Deck(player)),
+			"discard":  len(g.eng().Discard(player)),
+			"archives": len(g.eng().Archives(player)),
 		}
 		seen := map[int]string{}
 		for zone, n := range counts {

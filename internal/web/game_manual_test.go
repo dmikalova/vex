@@ -3,8 +3,6 @@ package web
 import (
 	"testing"
 
-	"github.com/maxence-charriere/go-app/v11/pkg/app"
-
 	"github.com/dmikalova/vex/internal/engine"
 )
 
@@ -17,7 +15,7 @@ func TestManualModeTogglesOff(t *testing.T) {
 	c.startTurn()
 	c.manual()
 	c.do(c.g.toggleManual)
-	if c.g.g.Manual() {
+	if c.g.eng().Manual() {
 		t.Error("manual mode did not turn back off")
 	}
 }
@@ -31,9 +29,9 @@ func TestManualControlsNeedManualMode(t *testing.T) {
 	id := c.hand()[0]
 	c.g.selectHandID(c.ctx, id)
 
-	amber, chains := c.g.g.State.Aember[me], c.g.g.State.Chains[me]
-	keys := c.g.g.Keys(me)
-	house := c.g.g.State.ActiveHouse
+	amber, chains := c.g.eng().State.Aember[me], c.g.eng().State.Chains[me]
+	keys := c.g.eng().Keys(me)
+	house := c.g.eng().State.ActiveHouse
 
 	c.do(c.g.manualMove(engine.ManualPurge))
 	c.do(c.g.manualReady)
@@ -47,19 +45,19 @@ func TestManualControlsNeedManualMode(t *testing.T) {
 	if !containsID(c.hand(), id) {
 		t.Error("a card was moved out of hand outside manual mode")
 	}
-	if c.g.g.State.Aember[me] != amber {
+	if c.g.eng().State.Aember[me] != amber {
 		t.Error("Æmber was adjusted outside manual mode")
 	}
-	if c.g.g.State.Chains[me] != chains {
+	if c.g.eng().State.Chains[me] != chains {
 		t.Error("chains were adjusted outside manual mode")
 	}
-	if c.g.g.Keys(me) != keys {
+	if c.g.eng().Keys(me) != keys {
 		t.Error("keys were adjusted outside manual mode")
 	}
 	if c.g.forgingKey != -1 {
 		t.Error("the forge picker opened outside manual mode")
 	}
-	if c.g.g.State.ActiveHouse != house {
+	if c.g.eng().State.ActiveHouse != house {
 		t.Error("the active house was changed outside manual mode")
 	}
 }
@@ -85,7 +83,7 @@ func TestManualMovesACard(t *testing.T) {
 	c.g.selectHandID(c.ctx, id)
 	c.do(c.g.manualMove(engine.ManualArchives))
 
-	if !containsID(c.g.g.Archives(c.g.active()), id) {
+	if !containsID(c.g.eng().Archives(c.g.active()), id) {
 		t.Error("the card was not moved to archives")
 	}
 	if c.g.hasSel {
@@ -101,11 +99,11 @@ func TestManualReadyAndExhaust(t *testing.T) {
 	c.g.selectBoardID(c.ctx, id)
 
 	c.do(c.g.manualExhaust)
-	if !c.g.g.State.Cards[id].Exhausted {
+	if !c.g.eng().State.Cards[id].Exhausted {
 		t.Error("the creature was not exhausted")
 	}
 	c.do(c.g.manualReady)
-	if c.g.g.State.Cards[id].Exhausted {
+	if c.g.eng().State.Cards[id].Exhausted {
 		t.Error("the creature was not readied")
 	}
 }
@@ -115,17 +113,17 @@ func TestManualCounters(t *testing.T) {
 	c.manualTurn(testHouse)
 	me := c.g.active()
 
-	before := c.g.g.State.Aember[me]
+	before := c.g.eng().State.Aember[me]
 	c.g.adjustManualAmber(c.ctx, me, 4)
 	c.settle()
-	if got := c.g.g.State.Aember[me]; got != before+4 {
+	if got := c.g.eng().State.Aember[me]; got != before+4 {
 		t.Errorf("Æmber is %d, want %d", got, before+4)
 	}
 
-	chains := c.g.g.State.Chains[me]
+	chains := c.g.eng().State.Chains[me]
 	c.g.adjustManualChains(c.ctx, me, 2)
 	c.settle()
-	if got := c.g.g.State.Chains[me]; got != chains+2 {
+	if got := c.g.eng().State.Chains[me]; got != chains+2 {
 		t.Errorf("chains are %d, want %d", got, chains+2)
 	}
 }
@@ -141,23 +139,23 @@ func TestManualCountersTargetTheOpponentBar(t *testing.T) {
 	me := c.g.active()
 	opp := 1 - me
 
-	myAmber, oppAmber := c.g.g.State.Aember[me], c.g.g.State.Aember[opp]
+	myAmber, oppAmber := c.g.eng().State.Aember[me], c.g.eng().State.Aember[opp]
 	c.g.adjustManualAmber(c.ctx, opp, 3)
 	c.settle()
-	if got := c.g.g.State.Aember[opp]; got != oppAmber+3 {
+	if got := c.g.eng().State.Aember[opp]; got != oppAmber+3 {
 		t.Errorf("the opponent's Æmber is %d, want %d", got, oppAmber+3)
 	}
-	if got := c.g.g.State.Aember[me]; got != myAmber {
+	if got := c.g.eng().State.Aember[me]; got != myAmber {
 		t.Errorf("the active player's Æmber changed to %d, want %d", got, myAmber)
 	}
 
-	myChains, oppChains := c.g.g.State.Chains[me], c.g.g.State.Chains[opp]
+	myChains, oppChains := c.g.eng().State.Chains[me], c.g.eng().State.Chains[opp]
 	c.g.adjustManualChains(c.ctx, opp, 2)
 	c.settle()
-	if got := c.g.g.State.Chains[opp]; got != oppChains+2 {
+	if got := c.g.eng().State.Chains[opp]; got != oppChains+2 {
 		t.Errorf("the opponent's chains are %d, want %d", got, oppChains+2)
 	}
-	if got := c.g.g.State.Chains[me]; got != myChains {
+	if got := c.g.eng().State.Chains[me]; got != myChains {
 		t.Errorf("the active player's chains changed to %d, want %d", got, myChains)
 	}
 
@@ -182,14 +180,14 @@ func TestManualForgeAndUnforge(t *testing.T) {
 	if c.g.forgingKey != -1 {
 		t.Error("the forge picker stayed open after a colour was picked")
 	}
-	if c.g.g.Keys(me) != 1 {
-		t.Errorf("the player has %d keys, want 1", c.g.g.Keys(me))
+	if c.g.eng().Keys(me) != 1 {
+		t.Errorf("the player has %d keys, want 1", c.g.eng().Keys(me))
 	}
 
 	c.g.removeManualKey(c.ctx, me)
 	c.settle()
-	if c.g.g.Keys(me) != 0 {
-		t.Errorf("the player has %d keys after unforging, want 0", c.g.g.Keys(me))
+	if c.g.eng().Keys(me) != 0 {
+		t.Errorf("the player has %d keys after unforging, want 0", c.g.eng().Keys(me))
 	}
 }
 
@@ -213,7 +211,7 @@ func TestKeyColorKeys(t *testing.T) {
 			if c.g.forgingKey != -1 {
 				t.Fatalf("%q did not answer the forge picker", tt.key)
 			}
-			if got := c.g.g.KeyColors(me); len(got) != 1 || got[0] != tt.want {
+			if got := c.g.eng().KeyColors(me); len(got) != 1 || got[0] != tt.want {
 				t.Errorf("%q forged %v, want %v", tt.key, got, tt.want)
 			}
 		})
@@ -245,7 +243,7 @@ func TestPickForgeColorWithNoPickerOpen(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	c.do(c.g.pickForgeColor(engine.KeyColorRed))
-	if c.g.g.Keys(c.g.active()) != 0 {
+	if c.g.eng().Keys(c.g.active()) != 0 {
 		t.Error("a colour was forged with no picker open")
 	}
 }
@@ -256,8 +254,8 @@ func TestManualSetHouseStartsTheTurn(t *testing.T) {
 	c := newClient(t)
 	c.manual()
 	c.do(c.g.manualSetHouse(engine.Brobnar))
-	if c.g.g.State.ActiveHouse != engine.Brobnar {
-		t.Errorf("the active house is %v, want Brobnar", c.g.g.State.ActiveHouse)
+	if c.g.eng().State.ActiveHouse != engine.Brobnar {
+		t.Errorf("the active house is %v, want Brobnar", c.g.eng().State.ActiveHouse)
 	}
 	if c.g.phase != phaseMain {
 		t.Errorf("the phase is %v, want phaseMain", c.g.phase)
@@ -270,7 +268,7 @@ func TestSelectingFromTheZoneViewer(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	c.g.zonesPlayer = c.g.active()
-	id := c.g.g.Deck(c.g.active())[0]
+	id := c.g.eng().Deck(c.g.active())[0]
 
 	c.g.selectZoneCard(c.ctx, id)
 	if !c.g.hasSel || c.g.sel != id || c.g.selKind != selOther {
@@ -299,7 +297,7 @@ func TestManualPutIntoPlayByClick(t *testing.T) {
 	hid := c.deal(testCreature)
 	c.g.selectHandID(c.ctx, hid)
 	c.do(c.g.manualPlay)
-	if !c.g.manualPlacing || !c.g.choosingPosition {
+	if !c.g.manualPlacing || !c.g.choosingPosition() {
 		t.Fatal("Put into play did not arm the placement picker")
 	}
 
@@ -310,7 +308,7 @@ func TestManualPutIntoPlayByClick(t *testing.T) {
 	if len(nb) != 3 || nb[1] != hid {
 		t.Errorf("board = %v, want the hand card at index 1", nb)
 	}
-	if c.g.manualPlacing || c.g.choosingPosition {
+	if c.g.manualPlacing || c.g.choosingPosition() {
 		t.Error("placement state was not cleared after placing")
 	}
 	if containsID(c.hand(), hid) {
@@ -328,7 +326,7 @@ func TestManualPutIntoPlaySkipsPickerOnEmptyLine(t *testing.T) {
 	c.g.selectHandID(c.ctx, hid)
 	c.do(c.g.manualPlay)
 
-	if c.g.manualPlacing || c.g.choosingPosition {
+	if c.g.manualPlacing || c.g.choosingPosition() {
 		t.Error("an empty line raised the placement picker")
 	}
 	if !containsID(c.board(), hid) {
@@ -350,7 +348,7 @@ func TestManualPutIntoPlayCancel(t *testing.T) {
 	}
 
 	c.do(c.g.cancelManualPlace)
-	if c.g.manualPlacing || c.g.choosingPosition {
+	if c.g.manualPlacing || c.g.choosingPosition() {
 		t.Error("Cancel did not clear the placement state")
 	}
 	if !containsID(c.hand(), hid) {
@@ -387,9 +385,9 @@ func TestThePickerOpensAndCloses(t *testing.T) {
 func TestThePickerAnswersANameACardPrompt(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
+	c.option(c.hand()[0], "Name a card", []string{"Dark Æmber Vault", "Troll"})
+	c.await("the name-a-card prompt", c.g.choosingOption)
 	c.g.pickerOpen, c.g.pickerNaming = true, true
-	c.g.choosingOption = true
-	c.g.optionLabels = []string{"Dark Æmber Vault", "Troll"}
 
 	c.g.pickerQuery = "aember"
 	matches := c.g.pickerMatches()
@@ -400,7 +398,7 @@ func TestThePickerAnswersANameACardPrompt(t *testing.T) {
 	// The prompt is waiting on a name, so neither the close button nor Escape lets
 	// the player out of it.
 	c.do(c.g.closePicker)
-	c.g.dismiss(app.Context{})
+	c.g.dismiss(c.ctx)
 	if !c.g.pickerOpen {
 		t.Error("a name-a-card picker was dismissible")
 	}
@@ -464,10 +462,10 @@ func TestManualGraftsACardUnderAHost(t *testing.T) {
 	c.g.attachToHost(c.ctx, host)
 	c.settle()
 
-	if !containsID(c.g.g.Under(host), sub) {
+	if !containsID(c.g.eng().Under(host), sub) {
 		t.Error("the grafted card was not placed under the host")
 	}
-	if c.g.g.UnderFaceDown(sub) {
+	if c.g.eng().UnderFaceDown(sub) {
 		t.Error("a graft placed the card face down, want face up")
 	}
 	if containsID(c.hand(), sub) {
@@ -496,10 +494,10 @@ func TestManualPlacesACardUnderAHostFaceDown(t *testing.T) {
 	c.g.attachToHost(c.ctx, host)
 	c.settle()
 
-	if !containsID(c.g.g.Under(host), sub) {
+	if !containsID(c.g.eng().Under(host), sub) {
 		t.Error("the card was not placed under the host")
 	}
-	if !c.g.g.UnderFaceDown(sub) {
+	if !c.g.eng().UnderFaceDown(sub) {
 		t.Error("Place under left the card face up, want face down")
 	}
 }
@@ -517,7 +515,7 @@ func TestManualGraftIgnoresSelfAsHost(t *testing.T) {
 	c.g.attachToHost(c.ctx, sub)
 	c.settle()
 
-	if containsID(c.g.g.Under(sub), sub) {
+	if containsID(c.g.eng().Under(sub), sub) {
 		t.Error("a card was grafted under itself")
 	}
 }
@@ -528,9 +526,9 @@ func TestManualSendsAnUpgradeToHand(t *testing.T) {
 	c.manualTurn(testHouse)
 	host := c.deal(testCreature)
 	c.playFromHand(host)
-	up := c.g.g.Register(
+	up := c.g.eng().Register(
 		engine.NewCard("Test Upgrade", testHouse, engine.Upgrade, engine.Common), c.g.active())
-	c.g.g.AttachUpgrade(host, up)
+	c.g.eng().AttachUpgrade(host, up)
 
 	c.g.selectTab(up)
 	if !c.g.isAttached(up) {
@@ -541,7 +539,7 @@ func TestManualSendsAnUpgradeToHand(t *testing.T) {
 	if !containsID(c.hand(), up) {
 		t.Error("the upgrade was not sent to hand")
 	}
-	if containsID(c.g.g.Upgrades(host), up) {
+	if containsID(c.g.eng().Upgrades(host), up) {
 		t.Error("the upgrade is still attached to its host")
 	}
 }
@@ -568,7 +566,7 @@ func TestManualSendsAnUnderCardToHand(t *testing.T) {
 	if !containsID(c.hand(), sub) {
 		t.Error("the under-card was not sent to hand")
 	}
-	if containsID(c.g.g.Under(host), sub) {
+	if containsID(c.g.eng().Under(host), sub) {
 		t.Error("the card is still under its host")
 	}
 }
@@ -606,10 +604,10 @@ func TestManualModeSurvivesAReload(t *testing.T) {
 	c.playFromHand(id)
 
 	next := c.reload()
-	if !next.g.g.Manual() {
+	if !next.g.eng().Manual() {
 		t.Error("the resumed match came back with manual mode off")
 	}
-	if !containsID(next.g.g.Battleline(next.g.active()), id) {
+	if !containsID(next.g.eng().Battleline(next.g.active()), id) {
 		t.Errorf("the off-house %s did not survive the reload", offHouseCreature)
 	}
 }

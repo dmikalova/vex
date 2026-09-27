@@ -181,7 +181,7 @@ func (g *game) deckListPopover(player int) app.UI {
 	}
 	return app.Div().Class("deck-list").Body(
 		app.Div().Class("deck-list-head").Body(
-			app.Span().Class(playerNameCls(player)).Text(g.g.PlayerName(player)),
+			app.Span().Class(playerNameCls(player)).Text(g.eng().PlayerName(player)),
 			app.Text(suffix),
 		),
 		app.Div().Class("deck-list-cols").Body(cols...),

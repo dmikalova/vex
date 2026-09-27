@@ -1325,16 +1325,25 @@ func (g *Game) pickNextReaction(actor int, prompt string, pending []triggeredAbi
 	if len(pending) <= 1 || g.allIdentical(pending) {
 		return 0
 	}
-	rc, ok := g.chooserFor(actor).(ReactionChooser)
-	if !ok {
-		return 0
-	}
 	reactions := make([]OrderableReaction, len(pending))
 	for i, t := range pending {
 		reactions[i] = g.orderableFor(t)
 	}
+	return g.ChooseReaction(actor, prompt, reactions)
+}
+
+// ChooseReaction asks a player which of a trigger window's pending reactions
+// resolves next, returning an index into reactions. It is the entry point for the
+// ReactionChooser port, the way ChooseCreature and ChoosePosition are for theirs.
+// A chooser that lacks the port, or answers out of range, keeps the gathered
+// order by taking the front entry.
+func (g *Game) ChooseReaction(player int, prompt string, reactions []OrderableReaction) int {
+	rc, ok := g.chooserFor(player).(ReactionChooser)
+	if !ok {
+		return 0
+	}
 	i := rc.ChooseReaction(prompt, reactions)
-	if i < 0 || i >= len(pending) {
+	if i < 0 || i >= len(reactions) {
 		return 0
 	}
 	return i

@@ -106,13 +106,7 @@ func sampleLog(scripts [][]byte) logCoverage {
 		if err != nil || g == nil {
 			continue
 		}
-		gw := &game{
-			selHand:     -1,
-			zonesPlayer: -1,
-			forgingKey:  -1,
-			handSlot:    -1,
-		}
-		gw.g = g
+		gw := viewOnly(g)
 		gw.defByName = names
 		if !foldsNewKind(gw, want, observed) {
 			continue

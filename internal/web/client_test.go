@@ -7,6 +7,7 @@ import (
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
 	"github.com/dmikalova/vex/internal/engine"
+	"github.com/dmikalova/vex/internal/session"
 )
 
 // This file is the harness the client tests are written against. It drives the
@@ -22,6 +23,12 @@ import (
 // true there), and the context it is handed is an ordinary live one, complete
 // with a working in-memory local storage and dispatch queue. The harness loads
 // the probe, keeps its context, and drives the game component with it.
+//
+// Everything the client does is SYNCHRONOUS: a click applies a Command to the
+// session, which resolves the engine up to the next decision before it returns.
+// So settle and await do not wait for anything — they drain go-app's dispatch
+// queue and assert what is already true, which is what keeps them worth calling:
+// a test that says "await the prompt" fails on the spot if the prompt is not up.
 //
 // What is out of reach is the DOM: app.Window() reads back empty off-browser, so
 // the pieces that measure or scroll elements (the fly-into-play animation, the
@@ -66,21 +73,18 @@ func newClient(t *testing.T) *client {
 }
 
 // keepOpeningHands answers both players' setup mulligan prompts with Keep and
-// waits for setup to settle at the house choice — the state a freshly dealt match
-// rests in. Each answer is keyed to the deciding player (setup makes them the
-// active one) so it cannot fire twice against the same prompt. A test that wants
-// to exercise the mulligan itself drives dealMatch and the prompts directly
-// instead of going through newClient.
+// leaves the match at the house choice — the state a freshly dealt match rests in.
+// The prompts arrive one after the other in the turn loop, first player first; a
+// test that wants to exercise the mulligan itself drives dealMatch and the prompts
+// directly instead of going through newClient.
 func (c *client) keepOpeningHands() {
 	c.t.Helper()
-	for p := range 2 {
-		c.await("a mulligan prompt", func() bool {
-			return c.g.choosingOption && c.g.active() == p
-		})
+	for range 2 {
+		c.await("a mulligan prompt", c.g.choosingOption)
 		c.do(c.g.chooseOptionIdx(0))
 	}
 	c.await("setup to reach the house choice", func() bool {
-		return !c.g.busy && c.g.phase == phaseHouse
+		return c.g.phase == phaseHouse
 	})
 }
 
@@ -108,26 +112,87 @@ func newBlankClient(t *testing.T) *client {
 	return c
 }
 
-// settle runs every pending dispatch, async, and deferred operation, so an action
-// that resolves on a background goroutine has finished by the time it returns.
+// script stands the client on a session whose driving action is one scripted
+// sequence over the board the test has already built, so a test can raise an
+// exact prompt and answer it through the real handlers. It is what the old
+// background-goroutine chooser rehearsals became: where a match's action is the
+// whole turn loop, a test's is a single question — and the client still sees a
+// genuine pending Request and answers it with a genuine Command, so what is under
+// test is the handoff rather than a rehearsal of it.
+//
+// The setup closure hands the SAME game back with the board restored to how it
+// stood when the script was armed — GameState is a flat value, so putting it back
+// is an assignment — which is what lets a rewind replay the script from the same
+// starting position the way a rewind of a match replays from the deal.
+func (c *client) script(fn func(*engine.Game)) {
+	c.t.Helper()
+	eg := c.g.eng()
+	state := eg.State.FastCopy()
+	log := append([]engine.Record(nil), eg.Log...)
+	c.g.s = session.New(
+		0,
+		[2]string{},
+		func(int64, [2]string) *engine.Game {
+			eg.State = state
+			eg.Log = append(eg.Log[:0:0], log...)
+			return eg
+		},
+		fn,
+		c.g.lookupCard,
+	)
+	c.g.rootMarks, c.g.logGroups, c.g.redoLog = nil, nil, nil
+	c.g.promptAt = -1
+	// The script stands in for the one root action whose resolution raised the
+	// prompt, so it is opened like one and can be rewound like one.
+	c.g.beginAction()
+	c.g.settlePending()
+	c.settle()
+}
+
+// scriptDone reports whether the scripted action has run to completion, which is
+// how a test knows its question was answered and its captured result is final.
+func (c *client) scriptDone() bool {
+	_, done := c.g.s.Pending()
+	return done
+}
+
+// settle runs every pending dispatch and deferred operation, so the renders and
+// timers a handler queued have run by the time it returns. Nothing about the game
+// itself is waited for: applying a Command resolves the engine to its next
+// decision before the handler returns.
 func (c *client) settle() {
 	c.t.Helper()
 	c.e.ConsumeAll()
 }
 
-// await settles until cond holds, which is how a test waits for something a
-// background goroutine posted — a prompt raised mid-effect, or the answer to one
-// being taken up. It fails rather than spin forever.
+// await settles and then asserts cond, which is how a test says what state the
+// client should have reached — a prompt raised mid-effect, or the answer to one
+// being taken up. It is an assertion, not a wait: the work is already done.
 func (c *client) await(what string, cond func() bool) {
 	c.t.Helper()
-	for range 500 {
+	c.settle()
+	if !cond() {
+		c.t.Fatalf("the client never reached %s", what)
+	}
+}
+
+// awaitTimer is await for the handful of things still on a clock: a lift's exit
+// animation clearing itself, the selection badges' grow-and-fade. Nothing about
+// the game is timed any more — a command resolves before its handler returns —
+// so this is only ever about presentation.
+func (c *client) awaitTimer(what string, wait time.Duration, cond func() bool) {
+	c.t.Helper()
+	deadline := time.Now().Add(wait)
+	for {
 		c.settle()
 		if cond() {
 			return
 		}
+		if time.Now().After(deadline) {
+			c.t.Fatalf("the client never reached %s", what)
+		}
 		time.Sleep(time.Millisecond)
 	}
-	c.t.Fatalf("timed out waiting for %s", what)
 }
 
 // do calls a handler the way a click on its element would, then settles.
@@ -188,10 +253,10 @@ func (c *client) startTurn() engine.House {
 }
 
 // board returns the active player's battleline.
-func (c *client) board() []engine.LocalID { return c.g.g.Battleline(c.g.active()) }
+func (c *client) board() []engine.LocalID { return c.g.eng().Battleline(c.g.active()) }
 
 // hand returns the active player's hand.
-func (c *client) hand() []engine.LocalID { return c.g.g.Hand(c.g.active()) }
+func (c *client) hand() []engine.LocalID { return c.g.eng().Hand(c.g.active()) }
 
 // manual turns manual mode on, which lifts the house restrictions so a test can
 // lay out the board it needs card by card rather than waiting for the deal to
@@ -199,7 +264,7 @@ func (c *client) hand() []engine.LocalID { return c.g.g.Hand(c.g.active()) }
 func (c *client) manual() {
 	c.t.Helper()
 	c.do(c.g.toggleManual)
-	if !c.g.g.Manual() {
+	if !c.g.eng().Manual() {
 		c.t.Fatal("manual mode did not turn on")
 	}
 }
@@ -209,7 +274,7 @@ func (c *client) manual() {
 // rather than whatever the deal happened to offer.
 func (c *client) manualTurn(h engine.House) {
 	c.t.Helper()
-	if !c.g.g.Manual() {
+	if !c.g.eng().Manual() {
 		c.manual()
 	}
 	c.do(c.g.manualSetHouse(h))
@@ -239,8 +304,8 @@ func (c *client) ownNextTurn(h engine.House) {
 }
 
 // deal puts a named card into the active player's hand and returns its id. It
-// needs manual mode, and records the add the way the card picker does so a
-// reload can replay it into the rebuilt catalog.
+// goes through the client's own manual add, so the command is recorded and a
+// reload replays it into the rebuilt catalog.
 func (c *client) deal(name string) engine.LocalID {
 	c.t.Helper()
 	def, ok := c.g.defByName[name]
@@ -248,16 +313,17 @@ func (c *client) deal(name string) engine.LocalID {
 		c.t.Fatalf("no card named %q", name)
 	}
 	player := c.g.active()
-	id, added := c.g.g.ManualAddCard(*def, player)
-	if !added {
-		c.t.Fatalf("%s was not added to hand", name)
-	}
-	c.g.record(input{
-		Kind:   inManualAddCard,
+	before := len(c.g.eng().Hand(player))
+	c.g.applyManual(c.ctx, engine.Command{
+		Kind:   engine.CommandManualAddCard,
 		Name:   def.Name,
 		Player: player,
 	})
-	return id
+	hand := c.g.eng().Hand(player)
+	if len(hand) != before+1 {
+		c.t.Fatalf("%s was not added to hand", name)
+	}
+	return hand[len(hand)-1]
 }
 
 // playFromHand selects a card in hand and plays it, taking the right flank when
@@ -275,4 +341,28 @@ func (c *client) playFromHand(id engine.LocalID) {
 	if c.g.status != "" {
 		c.t.Fatalf("playing card %d reported %q", id, c.g.status)
 	}
+}
+
+// promptArtifact is an artifact whose Action ability asks the player to choose a
+// creature, so using it raises a mandatory card prompt inside a real root action
+// — which is what a test about backing out of a prompt needs to back out of.
+const promptArtifact = "Cannon"
+
+// promptHouse is promptArtifact's house, so a manual turn under it can use the
+// artifact.
+const promptHouse = engine.Brobnar
+
+// stagePromptArtifact puts promptArtifact into play ready to use, and returns its
+// id.
+func (c *client) stagePromptArtifact() engine.LocalID {
+	c.t.Helper()
+	id := c.deal(promptArtifact)
+	c.g.selectHandID(c.ctx, id)
+	c.do(c.g.manualPlay)
+	c.g.applyManual(c.ctx, engine.Command{
+		Kind: engine.CommandManualReady,
+		Card: id,
+	})
+	c.settle()
+	return id
 }

@@ -17,8 +17,8 @@ func (g *game) navRows() [][]engine.LocalID {
 	p, opp := g.active(), 1-g.active()
 	return [][]engine.LocalID{
 		g.sortedArtifacts(opp),
-		g.g.Battleline(opp),
-		g.g.Battleline(p),
+		g.eng().Battleline(opp),
+		g.eng().Battleline(p),
 		g.sortedArtifacts(p),
 		g.sortedHand(p),
 	}
@@ -138,10 +138,10 @@ func (g *game) tabSel(ctx app.Context, step int) {
 // here means a fix to how the cursor lands or draws applies to both at once.
 func (g *game) tabCandidates() ([]engine.LocalID, bool) {
 	switch {
-	case g.choosing:
-		return g.chooserCandidates, true
+	case g.choosing():
+		return g.chooserCandidates(), true
 	case g.phase == phaseFightTarget:
-		return g.g.FightTargets(g.active(), g.attacker), true
+		return g.eng().FightTargets(g.active(), g.attacker), true
 	}
 	return nil, false
 }
@@ -154,7 +154,7 @@ func (g *game) tabCandidates() ([]engine.LocalID, bool) {
 // it just cycles.
 func (g *game) tabCandidate(step int) {
 	cands, _ := g.tabCandidates()
-	if !g.choosing || !g.chooserDeclinable {
+	if !g.choosing() || !g.chooserDeclinable() {
 		g.promptCursor, g.hasCursor = cycleID(cands, g.promptCursor, step), true
 		return
 	}
@@ -196,7 +196,7 @@ func (g *game) tabPos(cards []engine.LocalID) int {
 // with right now — a hand card they can play or discard, or a creature or
 // artifact they can use. The opponent's cards are read-only, so Tab passes them.
 func (g *game) tabbable(id engine.LocalID) bool {
-	if containsID(g.g.Hand(g.active()), id) {
+	if containsID(g.eng().Hand(g.active()), id) {
 		return g.usableFromHand(id)
 	}
 	kind := g.boardKindOf(id)
@@ -211,8 +211,8 @@ func (g *game) tabbable(id engine.LocalID) bool {
 // there is none) and Tab goes back to walking cards.
 func (g *game) promptButtons() int {
 	switch {
-	case g.choosingOption:
-		return len(g.optionLabels)
+	case g.choosingOption():
+		return len(g.optionLabels())
 	case g.forgingKey >= 0:
 		return len(g.remainingKeyColors(g.forgingKey))
 	case g.phase == phaseHouse:
@@ -249,7 +249,7 @@ func (g *game) pressButton(ctx app.Context) bool {
 		return false
 	}
 	switch {
-	case g.choosingOption:
+	case g.choosingOption():
 		g.chooseOptionIdx(i)(ctx, app.Event{})
 	case g.forgingKey >= 0:
 		g.pickForgeColor(g.remainingKeyColors(g.forgingKey)[i])(ctx, app.Event{})
@@ -272,13 +272,13 @@ func (g *game) isButtonCursor(i int) bool {
 // and parked on End turn. A card prompt is up in front of it, so it does not
 // count while one is being answered.
 func (g *game) isEndTurnCursor() bool {
-	return g.hasBtnCursor && !g.choosing && g.promptButtons() == 0
+	return g.hasBtnCursor && !g.choosing() && g.promptButtons() == 0
 }
 
 // isDoneCursor reports whether Tab has walked past the last candidate of an
 // optional card prompt and parked on its Done button.
 func (g *game) isDoneCursor() bool {
-	return g.hasBtnCursor && g.choosing && g.chooserDeclinable
+	return g.hasBtnCursor && g.choosing() && g.chooserDeclinable()
 }
 
 // confirmPrompt answers whatever prompt is up with the candidate Tab stopped on
@@ -301,7 +301,7 @@ func (g *game) confirmPrompt(ctx app.Context) bool {
 	// With no card picked out, Enter/Space on a declinable prompt means Done, so an
 	// "up to N" selection (Festering Touch) is finished by the same key that
 	// confirms everything else rather than by tabbing over to its Done button.
-	if g.choosing && g.chooserDeclinable {
+	if g.choosing() && g.chooserDeclinable() {
 		g.declineChooser(ctx, app.Event{})
 		return true
 	}

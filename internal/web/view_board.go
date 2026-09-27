@@ -26,9 +26,9 @@ func (g *game) boardArea() []app.UI {
 		OnDrop(g.dropOnBoard).
 		Body(
 			g.renderRow("artifacts", g.sortedArtifacts(opp), selOther, true),
-			g.renderRow("battleline", g.g.Battleline(opp), selOther, true),
+			g.renderRow("battleline", g.eng().Battleline(opp), selOther, true),
 			app.Div().Class("midline"),
-			g.renderRow("battleline", g.g.Battleline(p), selYourCreature, false),
+			g.renderRow("battleline", g.eng().Battleline(p), selYourCreature, false),
 			g.renderRow("artifacts", g.sortedArtifacts(p), selYourArtifact, false),
 		)
 	// The lower player bar sits below the hand row so a lifted/enlarged card
@@ -55,12 +55,12 @@ func (g *game) turnHud() app.UI {
 	}
 	// Whose turn it is leads, since it is the thing a player re-reads most often.
 	items := []app.UI{
-		app.Span().Class(cx("hud-player", playerNameCls(p))).Text(g.g.PlayerName(p)),
-		app.Span().Class("hud-turn").Text(fmt.Sprintf("Turn %d", g.g.State.Turn)),
+		app.Span().Class(cx("hud-player", playerNameCls(p))).Text(g.eng().PlayerName(p)),
+		app.Span().Class("hud-turn").Text(fmt.Sprintf("Turn %d", g.eng().State.Turn)),
 		app.Span().Class("hud-step").Text(steps[g.phase]),
 	}
 	hud := "hud"
-	if h := g.g.State.ActiveHouse; h != engine.HouseNone {
+	if h := g.eng().State.ActiveHouse; h != engine.HouseNone {
 		// The emblem alone names the house, and the line takes its colour, so the
 		// active house reads without spending the width its name would cost.
 		hud = cx("hud", "hud--house", houseAccent(h))
@@ -87,7 +87,7 @@ func (g *game) scorePill(player int) app.UI {
 	if houses := g.deckHouses[player]; len(houses) > 0 {
 		detail = append(detail, app.Text(" • "), g.houseStrip(player, houses))
 	}
-	if g.g.State.Chains[player] > 0 || g.g.Manual() {
+	if g.eng().State.Chains[player] > 0 || g.eng().Manual() {
 		detail = append(detail, app.Text(" • "), g.chainsSeg(player))
 	}
 	cls := cx("score-pill",
@@ -100,7 +100,7 @@ func (g *game) scorePill(player int) app.UI {
 			app.Span().Class("score-main").Body(
 				app.Span().
 					Class(cx("score-name", playerNameCls(player))).
-					Text(g.g.PlayerName(player)),
+					Text(g.eng().PlayerName(player)),
 				app.Span().Class("score-detail").Body(detail...),
 			),
 			// Only the zone counts open the viewer, so misclicking a key or stepper
@@ -138,11 +138,11 @@ func (g *game) zoneCounts(player int) []app.UI {
 		icon string
 		view zoneView
 	}{
-		{"zone-hand", zoneView{player, zoneHandLabel, g.g.Hand(player)}},
-		{"zone-deck", zoneView{player, zoneDeckLabel, g.g.Deck(player)}},
-		{"zone-discard", zoneView{player, zoneDiscardLabel, g.g.Discard(player)}},
-		{"zone-archives", zoneView{player, zoneArchivesLabel, g.g.Archives(player)}},
-		{"zone-purge", zoneView{player, zonePurgeLabel, g.g.Purge(player)}},
+		{"zone-hand", zoneView{player, zoneHandLabel, g.eng().Hand(player)}},
+		{"zone-deck", zoneView{player, zoneDeckLabel, g.eng().Deck(player)}},
+		{"zone-discard", zoneView{player, zoneDiscardLabel, g.eng().Discard(player)}},
+		{"zone-archives", zoneView{player, zoneArchivesLabel, g.eng().Archives(player)}},
+		{"zone-purge", zoneView{player, zonePurgeLabel, g.eng().Purge(player)}},
 	}
 	out := make([]app.UI, 0, len(zones))
 	for _, z := range zones {
@@ -190,7 +190,7 @@ func (g *game) zoneRoster(z zoneView) app.UI {
 	rows := make([]app.UI, 0, len(shown)+1)
 	rows = append(rows, app.Div().Class("zone-roster-label").Text(z.label))
 	for _, id := range shown {
-		def := g.g.Def(id)
+		def := g.eng().Def(id)
 		rows = append(rows,
 			app.Div().Class(cx("zone-roster-item", houseClasses(def.House))).
 				Body(app.Span().Class("zone-roster-name").Text(def.Name)),
@@ -216,7 +216,7 @@ func (g *game) zoneNames(z zoneView) []string {
 	}
 	names := make([]string, len(readable))
 	for i, id := range readable {
-		names[i] = g.g.Def(id).Name
+		names[i] = g.eng().Def(id).Name
 	}
 	return names
 }
@@ -242,7 +242,7 @@ func (g *game) readableZoneIDs(z zoneView) []engine.LocalID {
 	sorted := make([]engine.LocalID, len(z.ids))
 	copy(sorted, z.ids)
 	sort.SliceStable(sorted, func(i, j int) bool {
-		a, b := g.g.Def(sorted[i]), g.g.Def(sorted[j])
+		a, b := g.eng().Def(sorted[i]), g.eng().Def(sorted[j])
 		if a.House != b.House {
 			return a.House < b.House
 		}
@@ -283,17 +283,17 @@ func (g *game) flightsInto(player int, zone string) []app.UI {
 // restriction list.
 func (g *game) keyCostSeg(player int) app.UI {
 	body := []app.UI{
-		app.Text(strconv.Itoa(g.g.CurrentKeyCost(player))),
+		app.Text(strconv.Itoa(g.eng().CurrentKeyCost(player))),
 		icon("forge", "icon-stat"),
 	}
-	sources := g.g.KeyCostSources(player)
+	sources := g.eng().KeyCostSources(player)
 	if len(sources) == 0 {
 		return app.Span().Class("stat-seg tip").DataSet("tip", "Key cost").Body(body...)
 	}
 	rows := make([]app.UI, 0, len(sources)+1)
 	rows = append(rows, app.Div().Class("zone-roster-label").Text("Key cost"))
 	for _, id := range sources {
-		def := g.g.Def(id)
+		def := g.eng().Def(id)
 		rows = append(rows,
 			app.Div().Class(cx("zone-roster-item", houseClasses(def.House))).
 				Body(app.Span().Class("zone-roster-name").Text(def.Name)),
@@ -337,10 +337,10 @@ func (g *game) hoverPreview() app.UI {
 func (g *game) houseStrip(player int, houses []engine.House) app.UI {
 	active := engine.HouseNone
 	if player == g.active() {
-		active = g.g.State.ActiveHouse
+		active = g.eng().State.ActiveHouse
 	}
 	// In manual mode the active player can switch their active house by clicking.
-	clickable := g.g.Manual() && player == g.active()
+	clickable := g.eng().Manual() && player == g.active()
 	items := make([]app.UI, 0, len(houses))
 	for _, h := range houses {
 		dim := active != engine.HouseNone && h != active
@@ -365,15 +365,15 @@ func (g *game) houseStrip(player int, houses []engine.House) app.UI {
 // player at check — holding enough to afford a key — gets a soft glow, the
 // client's stand-in for the tabletop's "Check!" callout.
 func (g *game) aemberSeg(player int) app.UI {
-	count := app.Text(strconv.Itoa(g.g.Aember(player)))
+	count := app.Text(strconv.Itoa(g.eng().Aember(player)))
 	ic := icon("aember", "icon-stat")
 	// A pool gain pulses the segment; the -a/-b pair alternates so it replays.
 	gain := cx(
 		ifCls(g.poolFlash[player] && !g.poolParity[player], "stat-seg--gain-a"),
 		ifCls(g.poolFlash[player] && g.poolParity[player], "stat-seg--gain-b"),
-		ifCls(g.g.AtCheck(player, g.g.Aember(player)), "stat-seg--check"),
+		ifCls(g.eng().AtCheck(player, g.eng().Aember(player)), "stat-seg--check"),
 	)
-	if !g.g.Manual() {
+	if !g.eng().Manual() {
 		return app.Span().Class(cx("stat-seg", "tip", gain)).DataSet("tip", "Æmber").Body(count, ic)
 	}
 	return app.Span().Class(cx("stat-seg", "amber-manual", "tip", gain)).
@@ -388,9 +388,9 @@ func (g *game) aemberSeg(player int) app.UI {
 // chainsSeg shows a player's chains; in manual mode it always shows (even at 0)
 // with minus/plus steppers.
 func (g *game) chainsSeg(player int) app.UI {
-	count := app.Text(strconv.Itoa(g.g.State.Chains[player]))
+	count := app.Text(strconv.Itoa(g.eng().State.Chains[player]))
 	ic := icon("chains", "icon-stat", "icon-outline")
-	if !g.g.Manual() {
+	if !g.eng().Manual() {
 		return app.Span().Class("stat-seg tip").DataSet("tip", "Chains").Body(count, ic)
 	}
 	return app.Span().Class("stat-seg amber-manual tip").DataSet("tip", "Chains").Body(
@@ -426,7 +426,7 @@ func (g *game) keyForgePanel() app.UI {
 	return app.Div().Class("btn-col").Body(
 		app.Div().Class("section-title").Body(
 			app.Text("Forge a key for "),
-			app.Span().Class(playerNameCls(player)).Text(g.g.PlayerName(player)),
+			app.Span().Class(playerNameCls(player)).Text(g.eng().PlayerName(player)),
 		),
 		app.Range(remaining).Slice(func(i int) app.UI {
 			c := remaining[i]
@@ -440,8 +440,8 @@ func (g *game) keyForgePanel() app.UI {
 // forged (in forge order), and a dimmed key for each still to forge. In manual
 // mode each slot is a button that forges or unforges that key.
 func (g *game) keysDisplay(player int) app.UI {
-	colors := g.g.KeyColors(player)
-	manual := g.g.Manual()
+	colors := g.eng().KeyColors(player)
+	manual := g.eng().Manual()
 	slots := make([]app.UI, 0, engine.KeysToWin)
 	for _, c := range colors {
 		// A forged key with no recorded colour (e.g. a legacy snapshot) still counts,
@@ -550,7 +550,7 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind, opposing bool) a
 	face := g.cardFace(id)
 	face.ID = id
 	face.DOMID = boardCardID(id)
-	face.PowerCounters = int(g.g.State.Cards[id].PowerCounters)
+	face.PowerCounters = int(g.eng().State.Cards[id].PowerCounters)
 	face.BarBottom = opposing
 	face.Enter = flash.enter
 	face.Fight = flash.fight
@@ -601,11 +601,11 @@ func (g *game) hostWithTabs(id engine.LocalID, face app.UI, dimmed bool) app.UI 
 	// only when it holds a candidate (an upgrade Destroy Them All may destroy), so
 	// that tab keeps its targetable ring; a strip on a non-candidate host still dims
 	// with it rather than lighting every attachment on the board.
-	hostDim := dimmed || (g.inPlay(id) && g.g.Exhausted(id))
+	hostDim := dimmed || (g.inPlay(id) && g.eng().Exhausted(id))
 	underDim := ifCls(
-		len(left) > 0 && hostDim && !g.stripHasCandidate(g.g.Under(id)), "card-tabs--dim")
+		len(left) > 0 && hostDim && !g.stripHasCandidate(g.eng().Under(id)), "card-tabs--dim")
 	upDim := ifCls(
-		len(right) > 0 && hostDim && !g.stripHasCandidate(g.g.Upgrades(id)), "card-tabs--dim")
+		len(right) > 0 && hostDim && !g.stripHasCandidate(g.eng().Upgrades(id)), "card-tabs--dim")
 	return app.Div().Class("card-host").
 		Style("--under-tabs", strconv.Itoa(len(left))).
 		Style("--up-tabs", strconv.Itoa(len(right))).
@@ -620,11 +620,11 @@ func (g *game) hostWithTabs(id engine.LocalID, face app.UI, dimmed bool) app.UI 
 // candidate, so the strip stays lit through a prompt instead of dimming with a
 // non-candidate host and greying the candidate's targetable tab.
 func (g *game) stripHasCandidate(ids []engine.LocalID) bool {
-	if !g.choosing {
+	if !g.choosing() {
 		return false
 	}
 	for _, id := range ids {
-		if containsID(g.chooserCandidates, id) {
+		if containsID(g.chooserCandidates(), id) {
 			return true
 		}
 	}
@@ -635,7 +635,7 @@ func (g *game) stripHasCandidate(ids []engine.LocalID) bool {
 // right edge, in attach order. An upgrade is never facedown, so every tab shows
 // its own house colour and hovers into the full preview.
 func (g *game) upgradeTabs(id engine.LocalID) []app.UI {
-	ups := g.g.Upgrades(id)
+	ups := g.eng().Upgrades(id)
 	tabs := make([]app.UI, 0, len(ups))
 	for _, up := range ups {
 		tabs = append(tabs, g.cardTab(up))
@@ -650,13 +650,13 @@ func (g *game) upgradeTabs(id engine.LocalID) []app.UI {
 // controller, who may Peek, sees the real face, while anyone else sees only a
 // card back.
 func (g *game) underTabs(id engine.LocalID) []app.UI {
-	buried := g.g.Under(id)
+	buried := g.eng().Under(id)
 	tabs := make([]app.UI, 0, len(buried))
 	for _, u := range buried {
 		switch {
-		case !g.g.UnderFaceDown(u):
+		case !g.eng().UnderFaceDown(u):
 			tabs = append(tabs, g.cardTab(u))
-		case g.g.Peekable(g.active(), id):
+		case g.eng().Peekable(g.active(), id):
 			tabs = append(tabs, g.peekBackTab(u))
 		default:
 			tabs = append(tabs, g.hiddenBackTab())
@@ -697,21 +697,21 @@ func (g *game) hiddenBackTab() app.UI {
 // since a tab is a plain element rather than a component that could carry it as a
 // field.
 func (g *game) cardTab(id engine.LocalID) app.UI {
-	def := g.g.Def(id)
+	def := g.eng().Def(id)
 	// During a chooser prompt an attached card can itself be a candidate (Destroy
 	// Them All targeting an upgrade). Its tab is the only thing to click, since it
 	// shares its host's slot, so a candidate tab gets the targetable ring and its
 	// own tap handler; the rest of the board dims around it as usual.
-	target := g.choosing && containsID(g.chooserCandidates, id)
+	target := g.choosing() && containsID(g.chooserCandidates(), id)
 	tab := app.Div().
-		Class(cx("card-tab", houseClasses(g.g.House(id)), ifCls(target, "card-tab--target"))).
+		Class(cx("card-tab", houseClasses(g.eng().House(id)), ifCls(target, "card-tab--target"))).
 		DataSet("id", strconv.Itoa(int(id))).
 		OnMouseEnter(g.onCardTabHover).
 		OnMouseLeave(g.onCardTabHoverOut)
 	switch {
 	case target:
 		tab = tab.OnClick(g.onCardTabTap)
-	case g.g.Manual() && !g.choosing && !g.hostTargeting:
+	case g.eng().Manual() && !g.choosing() && !g.hostTargeting:
 		// In manual mode an attached card has no face to click, so its tab is how it
 		// is selected (to send it to hand, say). Off manual mode a tab only previews.
 		tab = tab.OnClick(g.onCardTabSelect)
@@ -739,14 +739,14 @@ func (g *game) barKeywords(id engine.LocalID) []string {
 	for _, k := range barKeywordOrder {
 		// A creature that has spent its Elusive this turn is no longer elusive for
 		// the rest of the turn, so its stripe drops the Elusive colour.
-		if k == engine.Elusive && g.g.ElusiveSpent(id) {
+		if k == engine.Elusive && g.eng().ElusiveSpent(id) {
 			continue
 		}
-		if g.g.HasKeyword(id, k) {
+		if g.eng().HasKeyword(id, k) {
 			out = append(out, k.String())
 		}
 	}
-	if g.g.Hazardous(id) > 0 {
+	if g.eng().Hazardous(id) > 0 {
 		out = append(out, "Hazardous")
 	}
 	return out
@@ -773,10 +773,9 @@ func barKeywordsOf(def *engine.CardDefinition) []string {
 // open. It is shared by every place a card is drawn (cardVisual, renderZoneCard)
 // so the board reads as inert consistently rather than each place deciding it on
 // its own — an option prompt in particular blocks the whole board exactly like
-// these already did, but until now fell through to g.busy's plain "leave it as
-// it was" instead, which left cards lit as if still actionable.
+// these already do, since it is answered on its own buttons and never by a card.
 func (g *game) boardInert() bool {
-	return g.choosingOption ||
+	return g.choosingOption() ||
 		g.phase == phaseHouse ||
 		g.phase == phaseOver ||
 		g.forgingKey >= 0
@@ -796,18 +795,16 @@ func (g *game) cardVisual(
 	kind selKind,
 ) (activate func(app.Context, engine.LocalID), targetable, dimmed bool) {
 	switch {
-	case g.choosingPosition:
+	case g.choosingPosition():
 		// Placing a Deploy creature: once a side is chosen its battleline creatures
 		// are the click targets (click one to land beside it); before that, and for
 		// everything else, the board dims.
-		if g.positionSideChosen && containsID(g.positionLine, id) {
+		if g.positionSideChosen && containsID(g.positionLine(), id) {
 			return g.choosePositionCandidate, true, false
 		}
 		return nil, false, true
-	case g.choosing:
-		// A chooser runs on a background goroutine, so g.busy is also set; the
-		// choosing case must come first or the candidates would not be clickable.
-		if containsID(g.chooserCandidates, id) {
+	case g.choosing():
+		if containsID(g.chooserCandidates(), id) {
 			return g.chooseCandidate, true, false
 		}
 		return nil, false, true
@@ -827,10 +824,8 @@ func (g *game) cardVisual(
 			return g.selectHandID, false, true
 		}
 		return g.selectBoardID, false, true
-	case g.busy:
-		return nil, false, false
 	case g.phase == phaseFightTarget:
-		if containsID(g.g.FightTargets(g.active(), g.attacker), id) {
+		if containsID(g.eng().FightTargets(g.active(), g.attacker), id) {
 			return g.fightTargetID, true, false
 		}
 		return nil, false, true
@@ -855,10 +850,10 @@ func (g *game) actionable(id engine.LocalID, kind selKind) bool {
 	case selYourCreature:
 		// A fight grant (Brothers in Battle) lets a creature fight out of the active
 		// house, so it is actionable even when CanUse rejects its house.
-		return g.g.CanUse(g.active(), id) == nil ||
-			g.g.CanUseTo(g.active(), id, engine.FightUse) == nil
+		return g.eng().CanUse(g.active(), id) == nil ||
+			g.eng().CanUseTo(g.active(), id, engine.FightUse) == nil
 	case selYourArtifact:
-		return g.g.CanUseArtifact(g.active(), id) == nil
+		return g.eng().CanUseArtifact(g.active(), id) == nil
 	default:
 		return true
 	}

@@ -19,6 +19,7 @@ import (
 	"github.com/dmikalova/vex/internal/cards"
 	"github.com/dmikalova/vex/internal/engine"
 	"github.com/dmikalova/vex/internal/match"
+	"github.com/dmikalova/vex/internal/session"
 )
 
 // phase is the interaction state of the client, distinct from the engine's own
@@ -74,12 +75,35 @@ func newGame() *game {
 	}
 }
 
-// game is the root component: it owns the live engine.Game and all UI state.
+// viewOnly wraps an already-built engine game in a client component that only
+// DRAWS it. The style gallery and the log sampler stand their boards up by hand
+// or replay them out of the simulator rather than playing a match here, so there
+// is no turn loop to drive: the session is given an empty action, which finishes
+// before it yields anything, leaving Pending permanently at rest and Game the
+// board that was handed in.
+func viewOnly(eg *engine.Game) *game {
+	g := newGame()
+	g.s = session.New(
+		0,
+		[2]string{},
+		func(int64, [2]string) *engine.Game { return eg },
+		func(*engine.Game) {},
+		nil,
+	)
+	g.mavericks = map[engine.LocalID]bool{}
+	g.legacy = map[engine.LocalID]bool{}
+	return g
+}
+
+// game is the root component: it owns the match session and all UI state.
 type game struct {
 	app.Compo
 
-	g          *engine.Game
-	chooser    *webChooser
+	// s drives the match (ADR 0040): the client hands it a Command per click and
+	// reads the decision it is waiting on back out of Pending. It owns the command
+	// log, so undo, redo, and persistence are all expressed over it rather than over
+	// a snapshot of the board.
+	s          *session.Session
 	seed       int64             // deal seed; persisted so a hot-reload can rebuild the match
 	deckHouses [2][]engine.House // each player's three deck houses (house choices)
 	// storeKey overrides the local-storage slot this component saves its match in.
@@ -108,7 +132,8 @@ type game struct {
 	deckOpen [2]bool
 
 	// dispatch schedules a mutation on the UI goroutine (captured from a Context).
-	// It lets the background chooser update fields safely.
+	// It is what a timer callback — a status message's auto-clear, a lift's exit —
+	// comes back through, and what a handler dispatches a re-render with.
 	dispatch func(func(app.Context))
 
 	// keyFunc is the document-level keydown listener backing the keyboard
@@ -155,7 +180,6 @@ type game struct {
 	selCursorFunc app.Func
 
 	phase phase
-	busy  bool // an action goroutine is resolving; input is ignored
 
 	// awaitingSetup shows the new-game set picker in the action bar over the
 	// current board. It is on from a New game until both players have chosen a set
@@ -179,40 +203,41 @@ type game struct {
 	// upgradeChoice pre-answers the engine's "as a creature or an upgrade?" prompt
 	// for a creature the player is playing that may go down either way. It is armed
 	// on the UI goroutine by the Play creature / Play upgrade buttons before the
-	// play runs, then read by the webChooser off that goroutine; g.play resets it so
-	// an ordinary play never inherits a stale choice.
+	// play runs, then read by autoAnswer when the engine raises that prompt; g.play
+	// resets it so an ordinary play never inherits a stale choice.
 	upgradeChoice upgradePlayChoice
 
-	// engine chooser overlay
-	choosing          bool
-	chooserPrompt     string
-	chooserCandidates []engine.LocalID
+	// engine prompt overlay. What the prompt ASKS is read back out of the session's
+	// pending Request (see game_chooser.go's readers); the fields here are the
+	// client's own presentation state for it — how the candidates are offered, where
+	// the keyboard cursor sits, and which prompt that setup was done for.
+	//
+	// promptAt is session.Len() as of the request the presentation was set up for.
+	// A request is uniquely identified by the number of commands applied before it,
+	// so comparing it is how settleAfterApply tells a new prompt (tear down, present
+	// afresh) from the one already on screen (leave the player's closed zone viewer
+	// closed).
+	promptAt int
 	// promptAsButtons offers a bounded card prompt's candidates as a short list of
 	// action-bar buttons rather than opening the zone viewer — a "look at the top N
 	// cards" pick (Navigator Ali, Lay of the Land) reads as a few named buttons
 	// instead of a modal over the deck. Set for a small, mandatory out-of-play pick;
 	// an unbounded pick (declinable — shuffle any number) keeps the viewer.
 	promptAsButtons bool
-	// chooserDeclinable marks a prompt the player may pass on — a "you may" or an
-	// "up to N". It adds the Done button and lets Escape answer the prompt instead
-	// of being swallowed.
-	chooserDeclinable bool
-	// chooserOrdering marks an ordering prompt (arranging several abilities' or
-	// cards' resolution order). It adds the Auto-resolve button, which answers with
-	// a random order instead of picking each in turn.
-	chooserOrdering bool
-	promptSource    string // card driving the current chooser/option prompt, if any
 	// promptCursor is the candidate Tab has stepped to while a card prompt is up.
 	// It draws as selected and is what Enter answers the prompt with, but only once
 	// hasCursor says Tab has moved: LocalID 0 is a real card, so a zero cursor
 	// cannot stand for "no cursor".
 	promptCursor engine.LocalID
 	hasCursor    bool
+	// abilityPick is the trigger-window card the player clicked that turned out to
+	// carry more than one pending ability, so the labeled buttons now ask which of
+	// ITS abilities resolves next rather than which card does. hasAbilityPick guards
+	// it, since LocalID 0 is a real card. It is the client's own second step: the
+	// window is still one RequestReaction, answered once the ability is named.
+	abilityPick    engine.LocalID
+	hasAbilityPick bool
 
-	// engine option chooser: a labeled multiple choice (e.g. take archives?)
-	choosingOption bool
-	optionPrompt   string
-	optionLabels   []string
 	// useTarget is the creature the current action last chose to use, so a "choose
 	// how to use X" verb prompt (Universal Translator) can lift that creature and
 	// put the reap/fight/action buttons on it — like an ordinary use — rather than
@@ -221,10 +246,11 @@ type game struct {
 	useTarget    engine.LocalID
 	hasUseTarget bool
 
-	// selection badge preview (engine BadgeChooser): while an effect's choose loop
+	// selection badge preview (engine.Request.Badge): while an effect's choose loop
 	// runs it previews the status each pick lands — the damage a Festering Touch
-	// pick deals, the ward an Imperium "ward N" places. selBadge is the active badge
-	// (its zero clears the preview); badgeTotals accumulates the amount landed on
+	// pick deals, the ward an Imperium "ward N" places. The badge rides along on
+	// every Request the loop yields, and syncBadge mirrors it here. selBadge is the
+	// active badge (its zero clears the preview); badgeTotals accumulates the amount landed on
 	// each creature as it is picked, so a creature chosen twice shows the sum (a
 	// zero-amount badge like a ward still records the key, drawing a numberless
 	// icon); badgeClearing keeps the last badges on screen for the grow-and-fade
@@ -235,23 +261,17 @@ type game struct {
 	badgeClearing bool
 	badgeGen      int
 
-	// engine position chooser: placing a Deploy creature. The creature is lifted
+	// placing a Deploy creature (a pending RequestPosition). The creature is lifted
 	// while the prompt is up and its placement verbs sit on it (deployActions). The
 	// placement is a two-step: first choose a side with the Deploy left / Deploy
 	// right pair (which arms positionRight and sets positionSideChosen), then the
 	// battleline lights up and a click on one of its creatures lands the new
-	// creature on the chosen side of it. positionLine is the battleline being placed
-	// into; positionRight is the armed side (false = left, true = right);
-	// positionSideChosen gates the creature-picking step until a side is picked.
-	choosingPosition   bool
-	positionLine       []engine.LocalID
+	// creature on the chosen side of it. positionRight is the armed side (false =
+	// left, true = right); positionSideChosen gates the creature-picking step until a
+	// side is picked. The line being placed into is the request's own Cards, except
+	// under manualPlacing, which borrows the same picker over manualLine.
 	positionRight      bool
 	positionSideChosen bool
-
-	// cancelling marks a manual-mode Cancel in flight: the current prompt (and any
-	// that follow it as the effect drains) answers itself, and when the action
-	// goroutine returns runAction rolls the whole action back to its start snapshot.
-	cancelling bool
 
 	// hostTargeting is set in manual mode after the player picks Graft or Place
 	// under for the selected card: the board's in-play cards light up as hosts and
@@ -260,12 +280,13 @@ type game struct {
 	hostTargeting bool
 	hostFaceDown  bool
 
-	// manualPlacing is set in manual mode after the player picks Put into play for
-	// a selected hand creature: it reuses the Deploy placement picker (choosingPosition
-	// with positionLine set to the owner's battleline) to drop the creature anywhere
-	// in the line, but a clicked position calls ManualPlaceInPlay instead of answering
-	// a real prompt goroutine.
+	// manualPlacing is set in manual mode after the player picks Put into play for a
+	// selected hand creature: it reuses the Deploy placement picker over manualLine
+	// (the owner's battleline) to drop the creature anywhere in the line, but a
+	// clicked position records a manual CommandManualPlace instead of answering a
+	// pending RequestPosition.
 	manualPlacing bool
+	manualLine    []engine.LocalID
 
 	// zonesPlayer, when >= 0, opens the out-of-play zone viewer (discard, archives,
 	// and purge piles) for that player. -1 keeps the viewer closed.
@@ -284,7 +305,7 @@ type game struct {
 	// player. -1 keeps it closed.
 	forgingKey int
 
-	// manual mode lives on the engine (g.g.Manual()); these back its UI:
+	// manual mode lives on the engine (g.eng().Manual()); these back its UI:
 	// the fuzzy card picker's open state and query, and the cached card pool it
 	// searches. pickerFocused records that the search box has already been focused
 	// for this opening, so typing is not interrupted on every later render.
@@ -377,27 +398,23 @@ type game struct {
 	// being lost, or a set name the deck generator does not know.
 	notice string
 
-	// redoLog holds the input segments undo has peeled off the command log, newest
-	// last, so redo can splice one back on. Each segment is a root action plus the
-	// chooser answers it raised. A new live action clears it.
-	redoLog [][]input
+	// redoLog holds the command segments undo has peeled off the session's log,
+	// newest last, so redo can apply one back on. Each segment is a root action plus
+	// the prompt answers it raised. Session.Undo truncates, so redo stays the
+	// client's own memory of what was truncated; a new live command clears it.
+	redoLog [][]engine.Command
 
-	// inputs is the event-sourced command log (ADR 0039): every player input, in
-	// order — each root action and each chooser answer. State and the typed log are
-	// projections of it, so replaying inputs from a fresh deal reproduces the exact
-	// match. record appends to it during live play; a replay drives the engine from
-	// it instead of recording. rootMarks[i] is the index in inputs where the i-th
-	// root action begins, so an undo truncates the log at a root boundary.
-	inputs    []input
+	// rootMarks[i] is the session command index where the i-th root action of the
+	// match begins — the undo cursor Session.Undo rewinds to. The session owns the
+	// command log itself (ADR 0039); where one player action stops and the next
+	// starts is the client's own knowledge, recorded by beginAction, which is the
+	// only thing that appends here.
 	rootMarks []int
-	// replaying suppresses recording while the engine is driven from the log, so a
-	// replay does not append the very inputs it is feeding back.
-	replaying bool
 
 	// logGroups marks where each root action's log lines begin (and whose turn), so
-	// the log renders one bubble per action, tinted by player. The engine narrates
-	// the turn's shape but frames only abilities, so where one player action stops
-	// and the next starts is the client's own knowledge.
+	// the log renders one bubble per action, tinted by player. beginAction appends
+	// to logGroups and rootMarks together, so the two stay the same length and the
+	// i-th entry of each describes the same root action.
 	logGroups []logMark
 
 	// logScrollHeight is the log's scrollHeight as of the previous render, so the
@@ -566,22 +583,18 @@ func (g *game) matchKey() string {
 // replayed. Because a resume replays the command log rather than deserializing
 // state, a change to how any recorded action resolves also dates every snapshot
 // and counts as such a change.
-const snapshotVersion = 21
+const snapshotVersion = 22
 
-// snapshot is the persisted match (ADR 0039): the seed and sets deterministically
-// re-deal the same cards, and the ordered command log replays to the exact state
-// and typed log. Everything else (state, choosers, deck houses, card index, UI
-// phase) is a projection reconstructed from these, so nothing mutable is stored.
+// snapshot is the persisted match (ADR 0039): the session's own Record — version,
+// seed, sets, and the ordered command log — plus the view state a reload should
+// put back. Everything else (state, deck houses, card index, UI phase) is a
+// projection reconstructed from the record, so nothing mutable is stored.
 type snapshot struct {
 	Version int
-	Seed    int64
-	// SetNames records each player's chosen deck-generation set, so a resume
-	// re-deals the same decks the seed alone would not pin down once sets can
-	// differ between players.
-	SetNames [2]string
-	// Inputs is the ordered command log: every root action and chooser answer,
-	// which replaying from a fresh deal turns back into the exact match.
-	Inputs []input
+	// Record is what session.Load rebuilds the whole match from. Its own Version
+	// guards the command log against a session-format change, where the Version
+	// above guards everything the client layers on top.
+	Record session.Record
 	// UI carries the view across the reload with the match.
 	UI savedUI
 }
@@ -621,9 +634,15 @@ func cardsByName() map[string]*engine.CardDefinition {
 	return m
 }
 
+// eng is the live engine game the session is driving. The client still reads the
+// rules straight off the engine — it does not yet render purely from engine.View
+// — so this is the single seam that read crosses, and the one place that move has
+// to change.
+func (g *game) eng() *engine.Game { return g.s.Game() }
+
 // active returns the player whose turn it is; the client always renders from
 // this player's perspective (their board and hand at the bottom).
-func (g *game) active() int { return g.g.State.ActivePlayer }
+func (g *game) active() int { return g.eng().State.ActivePlayer }
 
 func (g *game) clearSelection() {
 	g.sel = 0
@@ -634,27 +653,17 @@ func (g *game) clearSelection() {
 	g.attacker = 0
 }
 
-// clearPrompts tears down the display state of any chooser prompt — creature,
-// option, or position — that is currently up. A goroutine abandoned by a new deal
-// cannot clear its own prompt (its dispatched teardown is stale-guarded so it
-// cannot clobber the game that replaced it), so the deal that abandons it clears
-// the stale prompt here. Left set, a stale choosingOption makes the next deal's
-// await match the old flag instead of the fresh prompt.
+// clearPrompts tears down the client's presentation of whatever prompt is on
+// screen — the cursors, the button list, the placement toggle, the picker and the
+// viewer a prompt opened. What is being ASKED lives in the session's pending
+// Request, so it is not cleared here; this only drops the setup done for it, which
+// is what a new deal or a newly arrived request has to start over from.
 func (g *game) clearPrompts() {
-	g.choosing = false
-	g.chooserDeclinable = false
-	g.chooserOrdering = false
-	g.chooserPrompt = ""
-	g.chooserCandidates = nil
 	g.promptAsButtons = false
 	g.promptCursor, g.hasCursor = 0, false
 	g.btnCursor, g.hasBtnCursor = 0, false
-	g.choosingOption = false
-	g.optionPrompt = ""
-	g.optionLabels = nil
-	g.choosingPosition = false
-	g.positionLine = nil
 	g.positionRight = false
 	g.positionSideChosen = false
-	g.promptSource = ""
+	g.pickerNaming = false
+	g.closeZoneForPrompt()
 }

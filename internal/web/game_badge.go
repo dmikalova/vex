@@ -14,24 +14,38 @@ import (
 // app.css.
 const badgeFadeDur = 450 * time.Millisecond
 
-// PreviewBadge implements the engine's BadgeChooser: an effect's choose loop
-// previews the status each pick lands, so the board can badge each chosen
-// creature and the cursor marker can show what a click does. A non-zero badge
-// opens the preview (resetting the running totals); the zero badge closes it,
-// leaving the badges on screen to grow and fade.
-func (c *webChooser) PreviewBadge(badge engine.SelectionBadge) {
-	c.g.dispatch(func(app.Context) {
-		if c.stale() {
-			return
+// syncBadge mirrors the selection badge the session's pending request carries: an
+// effect's choose loop previews the status each pick lands, so the board can badge
+// each chosen creature and the cursor marker can show what a click does. The badge
+// is context the engine stamps on every Request the loop yields (Request.Badge),
+// so the preview opens when a badge first appears — resetting the running totals —
+// and closes when the requests stop carrying one, leaving the badges on screen to
+// grow and fade.
+func (g *game) syncBadge(req engine.Request, live bool) {
+	badge := req.Badge
+	if !live {
+		badge = engine.SelectionBadge{}
+	}
+	switch {
+	case badge.Icon == engine.NoStatusIcon:
+		if g.selBadge.Icon != engine.NoStatusIcon {
+			g.endBadgePreview()
 		}
-		if badge.Icon == engine.NoStatusIcon {
-			c.g.endBadgePreview()
-			return
-		}
-		c.g.selBadge = badge
-		c.g.badgeTotals = map[engine.LocalID]int{}
-		c.g.badgeClearing = false
-	})
+	case badge != g.selBadge:
+		g.selBadge = badge
+		g.badgeTotals = map[engine.LocalID]int{}
+		g.badgeClearing = false
+	}
+}
+
+// resetBadgePreview drops the preview outright, with no grow-and-fade: a rewind
+// puts the board back to before the effect that raised it, so there is nothing for
+// the badges to fade out of. It retires any fade timer already armed.
+func (g *game) resetBadgePreview() {
+	g.badgeGen++
+	g.selBadge = engine.SelectionBadge{}
+	g.badgeTotals = nil
+	g.badgeClearing = false
 }
 
 // recordBadge accumulates the badge amount a pick lands on a creature, so a

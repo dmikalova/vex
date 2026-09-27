@@ -4,6 +4,7 @@ import (
 	"math"
 	"strings"
 	"testing"
+	"time"
 )
 
 // The copy is centred on the card it was lifted from and then pushed back inside
@@ -235,7 +236,7 @@ func TestDeselectingACardPlaysTheLiftOut(t *testing.T) {
 	}
 	c.wants("the lift shrinking back to its slot", "card-focus--out")
 
-	c.await("the exit to clear itself", func() bool { return !c.g.focusExit })
+	c.awaitTimer("the exit to clear itself", time.Second, func() bool { return !c.g.focusExit })
 	c.lacks("the lift gone after its exit", "card-focus--out")
 }
 
@@ -326,31 +327,26 @@ func TestFormattingAMeasuredLength(t *testing.T) {
 // raised by a long press or right-click — is, so a card can be read to help answer
 // the prompt. It carries no verbs, since there is no turn action to take yet.
 func TestTheInspectLiftReadsACardMidPrompt(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.playFromHand(c.deal(testCreature))
+	c.playFromHand(c.deal(testCreature))
+	board := c.board()
+	c.ask(board[0], "Choose a creature", false, board)
+	c.await("the prompt to go up", c.g.choosing)
+
 	// An ordinary selection lifts while choosing a house or taking the turn, but a
-	// live chooser suppresses it.
-	choosing := &game{
-		hasSel:     true,
-		choosing:   true,
-		phase:      phaseMain,
-		sel:        1,
-		forgingKey: -1,
-	}
-	if _, ok := choosing.focusCardID(); ok {
-		t.Error("an ordinary selection lifted while a chooser was up")
+	// live prompt suppresses it.
+	c.g.hasSel, c.g.sel, c.g.selKind = true, board[0], selYourCreature
+	if _, ok := c.g.focusCardID(); ok {
+		t.Error("an ordinary selection lifted while a prompt was up")
 	}
 	// The same card marked inspecting lifts regardless, and offers no verbs.
-	peek := &game{
-		hasSel:     true,
-		choosing:   true,
-		inspecting: true,
-		sel:        1,
-		selKind:    selYourCreature,
-		forgingKey: -1,
+	c.g.inspecting = true
+	if _, ok := c.g.focusCardID(); !ok {
+		t.Error("an inspect lift did not read a card while a prompt was up")
 	}
-	if _, ok := peek.focusCardID(); !ok {
-		t.Error("an inspect lift did not read a card while a chooser was up")
-	}
-	if acts, _ := peek.selActions(); acts != nil {
+	if acts, _ := c.g.selActions(); acts != nil {
 		t.Errorf("the inspect lift offered verbs %v, want none", acts)
 	}
 }

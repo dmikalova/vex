@@ -78,7 +78,7 @@ func (g *game) logBlocks() []logBlock {
 		}
 		cur = logBlock{player: player}
 	}
-	for i, rec := range g.g.Log {
+	for i, rec := range g.eng().Log {
 		if rule, player := ruleOf(rec); rule != ruleNone {
 			flush(player)
 			out = append(
@@ -205,7 +205,7 @@ func (g *game) logSegments(rec engine.Record) []app.UI {
 		return g.playerStandingSegments(ps)
 	}
 	var out []app.UI
-	for _, seg := range engine.RenderRecord(rec, g.g) {
+	for _, seg := range engine.RenderRecord(rec, g.eng()) {
 		switch {
 		case seg.HasCard:
 			out = append(out, app.Span().
@@ -235,7 +235,7 @@ func (g *game) logSegments(rec engine.Record) []app.UI {
 // lit with the check highlight, the log's echo of the score pill's "Check!" glow.
 func (g *game) playerStandingSegments(e engine.PlayerStanding) []app.UI {
 	amount := app.Text(fmt.Sprintf(" has %d ", e.Aember))
-	if g.g.AtCheck(e.Player, e.Aember) {
+	if g.eng().AtCheck(e.Player, e.Aember) {
 		amount = app.Span().Body(
 			app.Text(" has "),
 			app.Span().Class("log-aember").Text(strconv.Itoa(e.Aember)),
@@ -245,7 +245,7 @@ func (g *game) playerStandingSegments(e engine.PlayerStanding) []app.UI {
 	return []app.UI{
 		app.Span().
 			Class("log-player log-player--p" + strconv.Itoa(e.Player)).
-			Text(g.g.PlayerName(e.Player)),
+			Text(g.eng().PlayerName(e.Player)),
 		amount,
 		logIcon("aember"),
 		app.Text(

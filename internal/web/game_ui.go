@@ -80,7 +80,7 @@ func (g *game) selectTab(id engine.LocalID) {
 // from the DOM without firing a leave, so the preview has to drop it itself.
 func (g *game) hoverLive() bool {
 	return g.hasHover &&
-		(g.isInPlay(g.hoverID) || containsID(g.g.Hand(g.active()), g.hoverID) ||
+		(g.isInPlay(g.hoverID) || containsID(g.eng().Hand(g.active()), g.hoverID) ||
 			g.attachedRevealed(g.hoverID))
 }
 
@@ -90,12 +90,12 @@ func (g *game) hoverLive() bool {
 // legitimate hover preview (its peeking tab, in view_board.go).
 func (g *game) attachedRevealed(id engine.LocalID) bool {
 	for p := range 2 {
-		for _, host := range append(g.g.Battleline(p), g.g.Artifacts(p)...) {
-			if containsID(g.g.Upgrades(host), id) {
+		for _, host := range append(g.eng().Battleline(p), g.eng().Artifacts(p)...) {
+			if containsID(g.eng().Upgrades(host), id) {
 				return true
 			}
-			if containsID(g.g.Under(host), id) {
-				return !g.g.UnderFaceDown(id) || g.g.Peekable(g.active(), host)
+			if containsID(g.eng().Under(host), id) {
+				return !g.eng().UnderFaceDown(id) || g.eng().Peekable(g.active(), host)
 			}
 		}
 	}
@@ -185,7 +185,7 @@ func (g *game) liftCard(_ app.Context, id engine.LocalID) {
 	if g.pickerOpen {
 		return
 	}
-	if idx := indexOfID(g.g.Hand(g.active()), id); idx >= 0 {
+	if idx := indexOfID(g.eng().Hand(g.active()), id); idx >= 0 {
 		g.sel, g.selKind, g.selHand = id, selHand, idx
 	} else {
 		g.sel, g.selKind, g.selHand = id, g.boardKindOf(id), -1
@@ -206,7 +206,7 @@ func (g *game) dropInspect(_ app.Context, _ app.Event) {
 // canonical order.
 func (g *game) remainingKeyColors(player int) []engine.KeyColor {
 	used := map[engine.KeyColor]bool{}
-	for _, c := range g.g.KeyColors(player) {
+	for _, c := range g.eng().KeyColors(player) {
 		used[c] = true
 	}
 	var out []engine.KeyColor
@@ -234,7 +234,7 @@ func (g *game) toggleSidebar(ctx app.Context, _ app.Event) {
 	g.sidebarCollapsed = !g.sidebarCollapsed
 	// Catch the toast up to the log at the moment it hides, so collapsing does not
 	// dump the whole backlog into a toast — only lines emitted afterward toast.
-	g.toastSeen = len(g.g.Log)
+	g.toastSeen = len(g.eng().Log)
 	g.toastBubbles = nil
 	g.toastOpen = false
 	g.save(ctx)
@@ -274,14 +274,17 @@ func (g *game) restartMenu(ctx app.Context, e app.Event) {
 }
 
 // concedeMenu forfeits the game for the active player, handing the win to their
-// opponent. It is recorded as a root action, so it can be undone.
+// opponent. It is the one play with no Command of its own — conceding is a
+// decision about the match rather than a move inside it — so it edits the live
+// game and only opens an undo boundary, which is what makes it reversible: undo
+// replays the log, which never held the concession.
 func (g *game) concedeMenu(ctx app.Context, _ app.Event) {
 	g.menuOpen = false
-	if g.busy || g.choosing || g.choosingOption || g.g.Winner() >= 0 {
+	if g.atPrompt() || g.eng().Winner() >= 0 {
 		return
 	}
 	g.beginAction()
-	g.g.Concede(g.active())
+	g.eng().Concede(g.active())
 	g.clearSelection()
 	g.settlePhase()
 	g.save(ctx)

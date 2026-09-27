@@ -68,6 +68,25 @@ func TestManualSetActiveHouse(t *testing.T) {
 	}
 }
 
+// Taken at the house-choice step, the force-edit also advances the turn into the
+// play phase, the way choosing a house normally does. Without that the turn keeps
+// waiting to be asked for a house, so LegalActions offers only house choices and
+// the house the playtester just set cannot be played under.
+func TestManualSetActiveHouseAdvancesPastTheHouseChoice(t *testing.T) {
+	g := started(t)
+	g.State.Phase = PhaseChooseHouse
+	g.State.ActiveHouse = HouseNone
+	g.ManualSetActiveHouse(Dis)
+	if g.State.Phase != PhasePlay {
+		t.Errorf("phase = %v, want PhasePlay", g.State.Phase)
+	}
+	for _, cmd := range g.LegalActions(g.State.ActivePlayer) {
+		if cmd.Kind == CommandChooseHouse {
+			t.Fatal("the turn is still being offered a house choice")
+		}
+	}
+}
+
 func TestManualForgeAndUnforgeKey(t *testing.T) {
 	g := started(t)
 	g.ManualUnforgeKey(0) // no-op with no keys forged
