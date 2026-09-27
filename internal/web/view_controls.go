@@ -23,12 +23,10 @@ import (
 // desktop and is dropped for room on mobile, where the token is the only source
 // affordance.
 func (g *game) promptSourceHeader() app.UI {
-	return app.If(g.promptSource().HasCard, func() app.UI {
-		def := g.defByName[g.promptSourceName()]
-		if def == nil {
-			return app.Div()
-		}
-		house, changed := g.promptSourceHouse(def)
+	src := g.promptSource()
+	return app.If(src.HasCard, func() app.UI {
+		def := g.eng().Def(src.Card)
+		house, changed := g.promptSourceHouse(src.Card, def)
 		return app.Div().Class("prompt-source-block").Body(
 			app.Div().Class("prompt-card").Body(&cardView{
 				Title:        def.Name,
@@ -134,23 +132,17 @@ func (g *game) promptSourceName() string {
 
 // promptSourceHouse looks up the live house of the card driving a prompt, so a
 // maverick card (played out of its printed house) shows the house it is actually
-// resolving as instead of the one printed on it. It matches by name among the
-// cards actually in play, so a second copy of the same card can answer for the
-// source. A source with no match in play (its effect fires from hand, discard, or
-// another zone) falls back to the printed house.
-func (g *game) promptSourceHouse(def *engine.CardDefinition) (house engine.House, changed bool) {
-	for p := range 2 {
-		for _, ids := range [][]engine.LocalID{g.eng().Battleline(p), g.eng().Artifacts(p)} {
-			for _, id := range ids {
-				if g.eng().Def(id).Name != def.Name {
-					continue
-				}
-				h := g.eng().House(id)
-				return h, h != def.House
-			}
-		}
-	}
-	return def.House, false
+// resolving as instead of the one printed on it. It reads the house of that exact
+// card, so a second copy of the same card in play cannot answer for it — see
+// TestPromptSourceReadsTheAskingCopysHouse. Game.House already falls back to the
+// printed house for a card not in play, which covers a source whose effect fires
+// from hand, discard, or another zone.
+func (g *game) promptSourceHouse(
+	id engine.LocalID,
+	def *engine.CardDefinition,
+) (house engine.House, changed bool) {
+	h := g.eng().House(id)
+	return h, h != def.House
 }
 
 // endTurnButton is the End turn control. Once a confirm is armed (the player could
