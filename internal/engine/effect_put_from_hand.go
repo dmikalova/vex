@@ -6,6 +6,13 @@ package engine
 // value allows any. ExceptSameName excludes a card sharing the name of the card
 // currently in context (ctx.It), the "with a different name" clause — meant to
 // follow a gate that left a card in context, e.g. Then{PutFromPlay, PutFromHand}.
+//
+// It stays separate from PutIntoPlay because PutIntoPlay selects with a Target
+// and a Target only reaches cards in play. Folding the two would mean teaching
+// Target a hand domain — a hidden zone only its own controller may be prompted
+// over — for one source, so this node walks the hand directly through the shared
+// handCardsWhere gather instead, the way
+// EachPlayerPutsHandCreaturesIntoPlay does.
 type PutFromHand struct {
 	Type           CardType
 	House          HouseMatcher

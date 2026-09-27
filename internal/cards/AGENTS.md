@@ -272,6 +272,17 @@ After any wording change, run `mage generateComments` (regenerates every card's
 comment) and the engine tests (the `Text()` assertions live in
 `internal/engine/effect_*_test.go`).
 
+Because the first bullet reaches every card a node renders, **do not trust a
+"these cards are the same shape" grouping without reading each card's printed
+text with `mage tool:lookup` first**. A retired backlog item claimed three cards
+shared one fix and none of them did: one was already a single each-player effect
+and needed no fold, one spells both halves out on the printed card deliberately
+and must not be folded, and only the third was the shape the item described. The
+same trap retired the card-text fan-in sweep — an affix search reported a dozen
+candidates and all but three were either already-folded output or an asymmetric
+rule that must repeat, as Savage Clash spares the most powerful **enemy** and the
+**least** powerful **friendly**.
+
 ## Tests
 
 - Every card has its own `snake_case_test.go` in the same set package, built on

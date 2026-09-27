@@ -114,6 +114,13 @@ func (c PoolAember) Met(ctx *EffectContext) bool {
 // than the opponent. Trait, when set, restricts the comparison to creatures with
 // that trait (Pismire compares Mutant counts). It is the excess-creature Count
 // read as a threshold: "more than the opponent" is an excess of at least one.
+//
+// It stays separate from Overwhelmed on purpose. Overwhelmed is a pure count of
+// every creature on each side; this condition compares a trait per side. They ask
+// different questions, and a merged node would carry a Player x Trait combination
+// no card uses. The threshold itself is already decomposed onto the shared atoms
+// (CountIs over ExcessCreatures), so the separation is not a missed fold — it is
+// the fold, stopped at the right place.
 type ControlsMoreCreatures struct {
 	Trait Trait
 }
@@ -173,7 +180,9 @@ func (c ControlsNamed) Met(ctx *EffectContext) bool {
 
 // Overwhelmed reports whether the controller is overwhelmed — their opponent
 // controls more creatures than they do. "Overwhelmed" is the keyword form of that
-// board state; Numquid the Fair repeats its destruction while overwhelmed.
+// board state; Numquid the Fair repeats its destruction while overwhelmed. It
+// counts every creature, where ControlsMoreCreatures compares a trait per side;
+// see there for why the two are not merged.
 type Overwhelmed struct{}
 
 // CondText renders the condition.

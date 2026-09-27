@@ -12,6 +12,12 @@ import (
 // reads each Zone the way PlayFromOpponent does: Archives is a random facedown
 // card, Deck is the top card. One source discards from it with no prompt; several
 // offer the choice. An empty chosen source discards nothing and binds nothing.
+//
+// DiscardCard does not cover this even with Player: Opponent. Its Zones combine
+// into one pool of cards the selection picks a card out of, which a facedown pile
+// and a deck cannot join; here the choice is the pile itself, and the card falls
+// out of it. Folding the two would give DiscardCard a second, mutually exclusive
+// meaning for Zones.
 type DiscardFromOpponent struct {
 	Sources []Zone
 }
