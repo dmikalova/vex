@@ -199,7 +199,11 @@ type rearrangeChooser struct {
 	seconds []LocalID
 }
 
-func (c *rearrangeChooser) ChooseCardOrDecline(_, _ string, _ []LocalID) (LocalID, bool) {
+func (c *rearrangeChooser) ChooseCardOrDecline(
+	_ PromptSource,
+	_ string,
+	_ []LocalID,
+) (LocalID, bool) {
 	if len(c.firsts) == 0 {
 		return 0, false
 	}
@@ -208,7 +212,11 @@ func (c *rearrangeChooser) ChooseCardOrDecline(_, _ string, _ []LocalID) (LocalI
 	return id, true
 }
 
-func (c *rearrangeChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (c *rearrangeChooser) ChooseCreature(
+	_ PromptSource,
+	_ string,
+	cands []LocalID,
+) (LocalID, bool) {
 	if len(c.seconds) > 0 {
 		id := c.seconds[0]
 		c.seconds = c.seconds[1:]

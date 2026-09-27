@@ -10,14 +10,14 @@ import (
 // option when no label matches.
 type nameChooser struct{ want string }
 
-func (nameChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (nameChooser) ChooseCreature(_ PromptSource, _ string, cands []LocalID) (LocalID, bool) {
 	if len(cands) == 0 {
 		return 0, false
 	}
 	return cands[0], true
 }
 
-func (c nameChooser) ChooseOption(_, _ string, options []string) int {
+func (c nameChooser) ChooseOption(_ PromptSource, _ string, options []string) int {
 	for i, o := range options {
 		if o == c.want {
 			return i
@@ -30,14 +30,18 @@ func (c nameChooser) ChooseOption(_, _ string, options []string) int {
 // test can exercise the bounds guard in NameCard.Resolve.
 type outOfRangeOptionChooser struct{}
 
-func (outOfRangeOptionChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (outOfRangeOptionChooser) ChooseCreature(
+	_ PromptSource,
+	_ string,
+	cands []LocalID,
+) (LocalID, bool) {
 	if len(cands) == 0 {
 		return 0, false
 	}
 	return cands[0], true
 }
 
-func (outOfRangeOptionChooser) ChooseOption(_, _ string, options []string) int {
+func (outOfRangeOptionChooser) ChooseOption(_ PromptSource, _ string, options []string) int {
 	return len(options)
 }
 

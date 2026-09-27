@@ -60,8 +60,8 @@ func TestAnsweringACardPrompt(t *testing.T) {
 	if c.g.chooserPrompt() != "Choose a creature" {
 		t.Errorf("the prompt reads %q, want %q", c.g.chooserPrompt(), "Choose a creature")
 	}
-	if c.g.promptSource() != testCreature {
-		t.Errorf("the prompt is attributed to %q, want %q", c.g.promptSource(), testCreature)
+	if c.g.promptSourceName() != testCreature {
+		t.Errorf("the prompt is attributed to %q, want %q", c.g.promptSourceName(), testCreature)
 	}
 	if c.g.chooserDeclinable() {
 		t.Error("a mandatory prompt offered a way out")
@@ -73,7 +73,8 @@ func TestAnsweringACardPrompt(t *testing.T) {
 		t.Errorf("the effect was answered %v, want card %d", answer, cands[1])
 	}
 	c.await("the prompt to come down", func() bool { return !c.g.choosing() })
-	if c.g.chooserPrompt() != "" || c.g.chooserCandidates() != nil || c.g.promptSource() != "" {
+	if c.g.chooserPrompt() != "" || c.g.chooserCandidates() != nil ||
+		c.g.promptSource() != (engine.PromptSource{}) {
 		t.Error("the answered prompt left its question on screen")
 	}
 }

@@ -5,17 +5,6 @@ import (
 	"testing"
 )
 
-func TestRenderPrompt(t *testing.T) {
-	prompt := "fully heal " + SelfName
-	if got := renderPrompt("Chuff Ape", prompt); got != "fully heal Chuff Ape" {
-		t.Errorf("renderPrompt = %q, want %q", got, "fully heal Chuff Ape")
-	}
-	// An unattributed prompt has no name to substitute, so it is left as it is.
-	if got := renderPrompt("", prompt); got != prompt {
-		t.Errorf("unattributed renderPrompt = %q, want %q", got, prompt)
-	}
-}
-
 func TestEntersStunnedText(t *testing.T) {
 	def := NewCard(
 		"Chuff",

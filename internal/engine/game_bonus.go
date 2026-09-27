@@ -153,7 +153,7 @@ func (g *Game) bonusInsteadFor(
 // attributing the prompt to the offering card.
 func (g *Game) chooseBonusInstead(player int, src LocalID, rm BonusInstead) bool {
 	prompt := capitalizeFirst(bonusInsteadClause(rm)) + "?"
-	return g.chooseOption(player, g.sourceName(src), prompt, []string{"Yes", "No"}) == 0
+	return g.chooseOption(player, g.promptSource(src), prompt, []string{"Yes", "No"}) == 0
 }
 
 // resolveBonusIconEffect resolves a single bonus icon's own effect, crediting the

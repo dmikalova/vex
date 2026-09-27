@@ -354,7 +354,11 @@ type reactionOrderRecorder struct {
 	asked   bool
 }
 
-func (reactionOrderRecorder) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (reactionOrderRecorder) ChooseCreature(
+	_ PromptSource,
+	_ string,
+	cands []LocalID,
+) (LocalID, bool) {
 	if len(cands) == 0 {
 		return 0, false
 	}

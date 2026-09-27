@@ -546,7 +546,7 @@ type queueOptionChooser struct {
 	i    int
 }
 
-func (q *queueOptionChooser) ChooseOption(_, _ string, _ []string) int {
+func (q *queueOptionChooser) ChooseOption(_ PromptSource, _ string, _ []string) int {
 	v := q.opts[q.i]
 	q.i++
 	return v

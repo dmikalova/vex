@@ -149,7 +149,7 @@ type exaltRepeater struct {
 }
 
 func (exaltRepeater) ChooseCardOrDecline(
-	_, _ string,
+	_ PromptSource, _ string,
 	candidates []LocalID,
 ) (LocalID, bool) {
 	return candidates[0], true
@@ -347,4 +347,4 @@ func TestRepeatByExaltingMultiCardBackReferenceAsksYesNo(t *testing.T) {
 // optionDecliner answers No to a Yes/No question.
 type optionDecliner struct{ FirstChooser }
 
-func (optionDecliner) ChooseOption(_, _ string, _ []string) int { return 1 }
+func (optionDecliner) ChooseOption(_ PromptSource, _ string, _ []string) int { return 1 }

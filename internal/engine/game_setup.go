@@ -116,7 +116,7 @@ func (g *Game) offerMulligan(player int) {
 	// active player's hand shows this player their own opening hand to judge.
 	g.State.ActivePlayer = player
 	had := int(g.State.Hand[player].Count)
-	if g.chooseOption(player, "", "Mulligan your opening hand?",
+	if g.chooseOption(player, PromptSource{}, "Mulligan your opening hand?",
 		[]string{"Keep", "Mulligan"}) != 1 {
 		return
 	}

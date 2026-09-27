@@ -23,8 +23,8 @@ import (
 // desktop and is dropped for room on mobile, where the token is the only source
 // affordance.
 func (g *game) promptSourceHeader() app.UI {
-	return app.If(g.promptSource() != "", func() app.UI {
-		def := g.defByName[g.promptSource()]
+	return app.If(g.promptSource().HasCard, func() app.UI {
+		def := g.defByName[g.promptSourceName()]
 		if def == nil {
 			return app.Div()
 		}
@@ -61,7 +61,7 @@ func (g *game) promptLine(text string) app.UI {
 // card, wrapping every mention in a log-card token and leaving the rest plain.
 // With no source card, or none named in the text, the whole line is plain text.
 func (g *game) promptTextSegments(text string) []app.UI {
-	name := g.promptSource()
+	name := g.promptSourceName()
 	if name == "" || !strings.Contains(text, name) {
 		return []app.UI{app.Text(text)}
 	}
@@ -121,12 +121,23 @@ func (g *game) promptCardButtons() app.UI {
 	return app.Div().Class("btn-col", "prompt-picks").Body(body...)
 }
 
+// promptSourceName renders the card driving the current prompt by name, or ""
+// when no card raised it. The sidebar still keys its lookups off the name, so
+// this is the one place the prompt's card identity is turned back into one.
+func (g *game) promptSourceName() string {
+	src := g.promptSource()
+	if !src.HasCard {
+		return ""
+	}
+	return g.eng().Def(src.Card).Name
+}
+
 // promptSourceHouse looks up the live house of the card driving a prompt, so a
 // maverick card (played out of its printed house) shows the house it is actually
-// resolving as instead of the one printed on it — the engine's Chooser only names
-// the source by its card name, with no id, so this matches by name among the
-// cards actually in play. A source with no match in play (its effect fires from
-// hand, discard, or another zone) falls back to the printed house.
+// resolving as instead of the one printed on it. It matches by name among the
+// cards actually in play, so a second copy of the same card can answer for the
+// source. A source with no match in play (its effect fires from hand, discard, or
+// another zone) falls back to the printed house.
 func (g *game) promptSourceHouse(def *engine.CardDefinition) (house engine.House, changed bool) {
 	for p := range 2 {
 		for _, ids := range [][]engine.LocalID{g.eng().Battleline(p), g.eng().Artifacts(p)} {

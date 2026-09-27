@@ -21,6 +21,21 @@ func shortTimeout(t *testing.T) {
 	t.Cleanup(func() { actionTimeout = prev })
 }
 
+// A prompt no card raised has no name to report, so Prompt.Source reads it as the
+// empty string rather than naming whichever card happens to hold LocalID 0. Only
+// the harness can raise such a prompt — an ordering prompt carries no source
+// today — so it is asserted here rather than through a card.
+func TestPromptSourceOfAnUnsourcedPrompt(t *testing.T) {
+	var lone Card
+	h := Play(t, Setup{P1: Side{InPlay: []Entry{Bind(&lone, Creature())}}})
+	if got := h.sourceName(engine.PromptSource{}); got != "" {
+		t.Errorf("unsourced prompt source = %q, want \"\"", got)
+	}
+	if got := h.sourceName(engine.PromptSource{Card: lone.ID(), HasCard: true}); got == "" {
+		t.Error("a sourced prompt reported no card")
+	}
+}
+
 // A bridge asked to choose from nothing answers for itself. The engine already
 // short-circuits an empty candidate set, so these guards are the harness's own
 // belt and braces against an engine that stops doing so.
@@ -31,17 +46,25 @@ func TestBridgeAnswersDegenerateChoices(t *testing.T) {
 		h:      h,
 		player: 0,
 	}
-	if _, ok := b.ChooseCreature("src", "Choose a creature", nil); ok {
+	if _, ok := b.ChooseCreature(engine.PromptSource{}, "Choose a creature", nil); ok {
 		t.Error("chose a creature from an empty set")
 	}
-	if got, ok := b.ChooseCreature("src", "Choose a creature", []engine.LocalID{lone.ID()}); !ok ||
+	if got, ok := b.ChooseCreature(
+		engine.PromptSource{},
+		"Choose a creature",
+		[]engine.LocalID{lone.ID()},
+	); !ok ||
 		got != lone.ID() {
 		t.Errorf("sole creature = %v/%v, want %v/true", got, ok, lone.ID())
 	}
-	if _, ok := b.ChooseCardOrDecline("src", "Choose a card", nil); ok {
+	if _, ok := b.ChooseCardOrDecline(engine.PromptSource{}, "Choose a card", nil); ok {
 		t.Error("chose a card from an empty set")
 	}
-	if got := b.ChooseOption("src", "Choose one", []string{"the only one"}); got != 0 {
+	if got := b.ChooseOption(
+		engine.PromptSource{},
+		"Choose one",
+		[]string{"the only one"},
+	); got != 0 {
 		t.Errorf("sole option = %d, want 0", got)
 	}
 }

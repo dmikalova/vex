@@ -113,6 +113,10 @@ func TestRequestLegalCommands(t *testing.T) {
 	}
 }
 
+// stepSrc is the prompt source the stepper tests attribute every yielded Request
+// to; the suspending chooser copies it through untouched, so any card id serves.
+var stepSrc = PromptSource{Card: 1, HasCard: true}
+
 // A Stepper suspends the action at each decision and resumes it with the answer,
 // driving one action through every chooser capability in turn. The action calls
 // the choosers the engine would call, and the driver answers each yielded Request.
@@ -127,10 +131,10 @@ func TestStepperDrivesEachCapability(t *testing.T) {
 	)
 	action := func(g *Game) {
 		ch := g.chooserFor(0)
-		gotCreature, _ = ch.ChooseCreature("src", "pick", []LocalID{1, 2})
-		gotOption = ch.(OptionChooser).ChooseOption("src", "opt", []string{"a", "b"})
-		gotPosition = ch.(PositionChooser).ChoosePosition("src", "pos", []LocalID{3})
-		_, ok := ch.(DeclinableChooser).ChooseCardOrDecline("src", "may", []LocalID{4, 5})
+		gotCreature, _ = ch.ChooseCreature(stepSrc, "pick", []LocalID{1, 2})
+		gotOption = ch.(OptionChooser).ChooseOption(stepSrc, "opt", []string{"a", "b"})
+		gotPosition = ch.(PositionChooser).ChoosePosition(stepSrc, "pos", []LocalID{3})
+		_, ok := ch.(DeclinableChooser).ChooseCardOrDecline(stepSrc, "may", []LocalID{4, 5})
 		gotDeclined = !ok
 		gotReaction = ch.(ReactionChooser).ChooseReaction(
 			"react", []OrderableReaction{{Label: "x"}, {Label: "y"}})
@@ -231,7 +235,7 @@ func TestStepperCloseReleasesGoroutine(t *testing.T) {
 		released := make(chan struct{})
 		action := func(g *Game) {
 			defer close(released)
-			g.chooserFor(0).ChooseCreature("s", "p", []LocalID{1, 2})
+			g.chooserFor(0).ChooseCreature(stepSrc, "p", []LocalID{1, 2})
 		}
 		s := NewStepper(g, action)
 		s.Close()
@@ -245,7 +249,7 @@ func TestStepperCloseReleasesGoroutine(t *testing.T) {
 		released := make(chan struct{})
 		action := func(g *Game) {
 			defer close(released)
-			g.chooserFor(0).ChooseCreature("s", "p", []LocalID{1, 2})
+			g.chooserFor(0).ChooseCreature(stepSrc, "p", []LocalID{1, 2})
 		}
 		s := NewStepper(g, action)
 		if _, done := s.Start(); done {
@@ -280,7 +284,7 @@ func TestStepperDeclineAndNoDecision(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	var pickedOK bool
 	declineAction := func(g *Game) {
-		_, pickedOK = g.chooserFor(0).ChooseCreature("s", "p", []LocalID{1, 2})
+		_, pickedOK = g.chooserFor(0).ChooseCreature(stepSrc, "p", []LocalID{1, 2})
 	}
 	s := NewStepper(g, declineAction)
 	if _, done := s.Start(); done {
@@ -305,7 +309,7 @@ func TestStepperDeclineAndNoDecision(t *testing.T) {
 	)
 	takeAction := func(g *Game) {
 		pickedID, tookIt = g.chooserFor(0).(DeclinableChooser).
-			ChooseCardOrDecline("s", "may", []LocalID{7, 8})
+			ChooseCardOrDecline(stepSrc, "may", []LocalID{7, 8})
 	}
 	s = NewStepper(g, takeAction)
 	s.Start()
@@ -326,12 +330,12 @@ func TestStepperReportsBarrier(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	action := func(g *Game) {
 		ch := g.chooserFor(0)
-		ch.ChooseCreature("s", "p", []LocalID{1, 2}) // req 1
+		ch.ChooseCreature(stepSrc, "p", []LocalID{1, 2}) // req 1
 		g.State.PRNG.Intn(
 			10,
 		) // steps the PRNG resolving cmd 1
-		ch.(OptionChooser).ChooseOption("s", "o", []string{"a", "b"}) // req 2
-		ch.(OptionChooser).ChooseOption("s", "o", []string{"a", "b"}) // req 3
+		ch.(OptionChooser).ChooseOption(stepSrc, "o", []string{"a", "b"}) // req 2
+		ch.(OptionChooser).ChooseOption(stepSrc, "o", []string{"a", "b"}) // req 3
 	}
 	s := NewStepper(g, action)
 	s.Start()
@@ -412,10 +416,10 @@ func TestStepperStampsThePreviewedBadgeOnRequests(t *testing.T) {
 	}
 	action := func(g *Game) {
 		g.PreviewBadge(0, badge)
-		g.chooserFor(0).ChooseCreature("s", "first", []LocalID{1, 2})
-		g.chooserFor(0).ChooseCreature("s", "second", []LocalID{1, 2})
+		g.chooserFor(0).ChooseCreature(stepSrc, "first", []LocalID{1, 2})
+		g.chooserFor(0).ChooseCreature(stepSrc, "second", []LocalID{1, 2})
 		g.PreviewBadge(0, SelectionBadge{})
-		g.chooserFor(0).ChooseCreature("s", "after", []LocalID{1, 2})
+		g.chooserFor(0).ChooseCreature(stepSrc, "after", []LocalID{1, 2})
 	}
 	s := NewStepper(g, action)
 	pick := Command{
@@ -447,7 +451,7 @@ func TestStepperContainsAPanickingAction(t *testing.T) {
 	t.Run("after a decision", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		action := func(g *Game) {
-			g.chooserFor(0).ChooseCreature("s", "p", []LocalID{1, 2})
+			g.chooserFor(0).ChooseCreature(stepSrc, "p", []LocalID{1, 2})
 			panic("boom")
 		}
 		s := NewStepper(g, action)

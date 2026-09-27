@@ -198,7 +198,11 @@ func (m orderMark) Resolve(_ *EffectContext) { *m.log = append(*m.log, m.tag) }
 // identical abilities are never prompted while distinct ones are ordered in full.
 type countingReverseChooser struct{ picks int }
 
-func (c *countingReverseChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (c *countingReverseChooser) ChooseCreature(
+	_ PromptSource,
+	_ string,
+	cands []LocalID,
+) (LocalID, bool) {
 	return cands[len(cands)-1], true
 }
 

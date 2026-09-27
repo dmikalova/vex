@@ -362,7 +362,7 @@ type healChooserSpy struct {
 	ids   []LocalID
 }
 
-func (c *healChooserSpy) ChooseCreature(_, _ string, ids []LocalID) (LocalID, bool) {
+func (c *healChooserSpy) ChooseCreature(_ PromptSource, _ string, ids []LocalID) (LocalID, bool) {
 	c.asked = true
 	c.ids = ids
 	return ids[0], true

@@ -305,13 +305,24 @@ type Prompt struct {
 }
 
 // Source asserts which card raised the prompt, e.g.
-// ExpectPrompt("Choose a friendly creature").Source("Anger").
+// ExpectPrompt("Choose a friendly creature").Source("Anger"). The prompt carries
+// the source card's identity, so the name is resolved here rather than asserted
+// against a string the engine handed out.
 func (p Prompt) Source(name string) Prompt {
 	p.h.t.Helper()
-	if p.req.source != name {
-		p.h.t.Errorf("prompt %q source = %q, want %q", p.req.text, p.req.source, name)
+	if got := p.h.sourceName(p.req.source); got != name {
+		p.h.t.Errorf("prompt %q source = %q, want %q", p.req.text, got, name)
 	}
 	return p
+}
+
+// sourceName renders a prompt source as the asking card's name, or "" for a
+// prompt no card raised.
+func (h *Harness) sourceName(src engine.PromptSource) string {
+	if !src.HasCard {
+		return ""
+	}
+	return h.g.Name(src.Card)
 }
 
 // Amber returns this player's Æmber pool.

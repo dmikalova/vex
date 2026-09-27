@@ -10,7 +10,11 @@ type recordingBadgeChooser struct {
 	badges []SelectionBadge
 }
 
-func (c *recordingBadgeChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (c *recordingBadgeChooser) ChooseCreature(
+	_ PromptSource,
+	_ string,
+	cands []LocalID,
+) (LocalID, bool) {
 	if len(c.ids) == 0 || len(cands) == 0 {
 		return 0, false
 	}

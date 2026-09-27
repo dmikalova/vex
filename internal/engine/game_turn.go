@@ -881,7 +881,7 @@ func (g *Game) pickKeyColorChosenBy(forger, chooser int) KeyColor {
 		}
 		if idx := g.chooseOption(
 			chooser,
-			"",
+			PromptSource{},
 			KeyColorPrompt,
 			labels,
 		); idx >= 0 &&

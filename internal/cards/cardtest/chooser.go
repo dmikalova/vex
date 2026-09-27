@@ -19,7 +19,7 @@ var actionTimeout = 5 * time.Second
 // an option index, or -1 to decline.
 type promptReq struct {
 	player   int
-	source   string // name of the card whose ability raised the prompt, or ""
+	source   engine.PromptSource // the card whose ability raised the prompt, if any
 	text     string
 	isOption bool
 	// declinable marks a card prompt the player may pass on, answered with
@@ -57,7 +57,7 @@ var (
 
 // ChooseCreature forwards a creature choice to the test and waits for the click.
 func (b bridgeChooser) ChooseCreature(
-	source, prompt string,
+	src engine.PromptSource, prompt string,
 	candidates []engine.LocalID,
 ) (engine.LocalID, bool) {
 	if len(candidates) == 0 {
@@ -69,7 +69,7 @@ func (b bridgeChooser) ChooseCreature(
 	reply := make(chan int)
 	b.h.prompt <- promptReq{
 		player:     b.player,
-		source:     source,
+		source:     src,
 		text:       prompt,
 		candidates: append([]engine.LocalID(nil), candidates...),
 		reply:      reply,
@@ -85,7 +85,7 @@ func (b bridgeChooser) ChooseCreature(
 // the click. Unlike ChooseCreature a sole candidate is still offered, because
 // declining it is a legal answer the test must be able to script.
 func (b bridgeChooser) ChooseCardOrDecline(
-	source, prompt string,
+	src engine.PromptSource, prompt string,
 	candidates []engine.LocalID,
 ) (engine.LocalID, bool) {
 	if len(candidates) == 0 {
@@ -94,7 +94,7 @@ func (b bridgeChooser) ChooseCardOrDecline(
 	reply := make(chan int)
 	b.h.prompt <- promptReq{
 		player:     b.player,
-		source:     source,
+		source:     src,
 		text:       prompt,
 		declinable: true,
 		candidates: append([]engine.LocalID(nil), candidates...),
@@ -108,7 +108,7 @@ func (b bridgeChooser) ChooseCardOrDecline(
 }
 
 // ChooseOption forwards a labeled option choice to the test and waits for it.
-func (b bridgeChooser) ChooseOption(source, prompt string, options []string) int {
+func (b bridgeChooser) ChooseOption(src engine.PromptSource, prompt string, options []string) int {
 	if len(options) <= 1 {
 		return 0
 	}
@@ -130,7 +130,7 @@ func (b bridgeChooser) ChooseOption(source, prompt string, options []string) int
 	reply := make(chan int)
 	b.h.prompt <- promptReq{
 		player:   b.player,
-		source:   source,
+		source:   src,
 		text:     prompt,
 		isOption: true,
 		options:  append([]string(nil), options...),
@@ -146,7 +146,9 @@ func (b bridgeChooser) ChooseOption(source, prompt string, options []string) int
 // OrderCreatures arranges a multi-target resolution order. By default it keeps the
 // engine's order (no prompt, so ordinary AoE effects do not interrupt a test); a
 // test can take control for the next ordering with Player.Order.
-func (b bridgeChooser) OrderCreatures(_, _ string, ids []engine.LocalID) []engine.LocalID {
+func (b bridgeChooser) OrderCreatures(
+	_ engine.PromptSource, _ string, ids []engine.LocalID,
+) []engine.LocalID {
 	script := b.h.orderScript[b.player]
 	b.h.orderScript[b.player] = nil
 	if len(script) == 0 {

@@ -18,7 +18,7 @@ func (g *Game) offerArchives(player int) {
 	}
 	if g.chooseOption(
 		player,
-		"",
+		PromptSource{},
 		"Take all the cards from your archives and put them in your hand?",
 		[]string{"Yes", "No"},
 	) != 0 {
