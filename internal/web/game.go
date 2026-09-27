@@ -2,6 +2,15 @@
 // interactive two-player hotseat match on the Vex engine,
 // compiled to WebAssembly via the go-app framework: the playtester sees
 // the whole board and drives both sides.
+//
+// The package also carries its own browser-scenario suite at /ui-test (uitest.go,
+// uitest_scenarios.go), switched on by an environment variable the same way the
+// style gallery is. A scenario is a journey of several steps clicked through the
+// real DOM and ending in a state change a player would describe — "deal,
+// mulligan, choose a house, play a creature, undo it" — never a single-widget
+// assertion, which stays a host test in client_test.go. The host tests are the
+// fast fine-grained gate; the browser suite is the coarse proof that the whole
+// client is wired up in a real browser.
 package web
 
 import (
@@ -51,7 +60,12 @@ const (
 
 // NewGame returns the root component for a fresh browser client session. The
 // match itself is seeded on the client in OnMount.
-func NewGame() app.Composer {
+func NewGame() app.Composer { return newGame() }
+
+// newGame builds the client component. It is what NewGame returns; the ui-test
+// host calls it directly, because the client it embeds is one it configures (a
+// storage namespace and a seed of its own) rather than one it merely renders.
+func newGame() *game {
 	return &game{
 		selHand:     -1,
 		zonesPlayer: -1,
@@ -68,6 +82,15 @@ type game struct {
 	chooser    *webChooser
 	seed       int64             // deal seed; persisted so a hot-reload can rebuild the match
 	deckHouses [2][]engine.House // each player's three deck houses (house choices)
+	// storeKey overrides the local-storage slot this component saves its match in.
+	// It is empty in normal play (the match lives in persistKey); the ui-test host
+	// sets it so a browser scenario, which clicks through a whole match, cannot
+	// clobber the match a playtester has open in another tab (see matchKey).
+	storeKey string
+	// fixedSeed deals every match this component starts from one seed instead of
+	// the clock, and skips the set picker on a first load, so a scenario replays
+	// the same cards on every pass. Zero in normal play.
+	fixedSeed int64
 	// mavericks holds the LocalID of every Maverick card dealt this match (a card
 	// played out of its printed house), so its face shows the maverick emblem.
 	mavericks map[engine.LocalID]bool
@@ -525,6 +548,18 @@ type logMark struct {
 // hot-reload of the wasm — or leaving the page and coming back — resumes it
 // instead of dealing a new game.
 const persistKey = "vex.match"
+
+// matchKey is the local-storage slot this component's match is saved in and
+// resumed from: persistKey for a real match, and whatever namespace was injected
+// for a match that is not one (the ui-test host's scratch slot). Every read,
+// write, and delete of the match goes through it, so isolating a client from the
+// player's game is setting one field rather than remembering every call site.
+func (g *game) matchKey() string {
+	if g.storeKey != "" {
+		return g.storeKey
+	}
+	return persistKey
+}
 
 // snapshotVersion tags persisted state; bump it when an engine or command-log
 // change makes older snapshots invalid so a stale one is flushed instead of

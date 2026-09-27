@@ -30,10 +30,16 @@ func (g *game) OnMount(ctx app.Context) {
 			c.Defer(g.OnUpdate)
 		})
 	}
-	if g.resume(ctx) {
+	switch {
+	case g.resume(ctx):
 		g.inPlayPrev = g.inPlaySet()
 		g.save(ctx)
-	} else {
+	case g.fixedSeed != 0:
+		// A client dealt from an injected seed has its sets decided for it, so there
+		// is nothing for the picker to ask: deal straight away. This is the ui-test
+		// host's client, which must reach a board without a human answering anything.
+		g.newMatch()
+	default:
 		// Nothing to resume: open the set picker with no game dealt (g.g stays nil).
 		// The player picks two sets and only then is the first match dealt, so a
 		// fresh visit never assumes the base set.
