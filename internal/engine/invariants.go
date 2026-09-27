@@ -72,6 +72,11 @@ type cardPlacement struct {
 // Card conservation: every registered card must sit in exactly one place — some
 // zone list, attached as an upgrade to an in-play creature, or placed under an
 // in-play card. checkCardPresence then confirms the tally is exactly one.
+//
+// The chain walk is row-only. It already reaches every upgrade through its host's
+// chain, so listing upgrades as hosts too would tally each of them twice and turn
+// conservation into a false alarm
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) tallyPlacement(pl *cardPlacement) error {
 	tally := func(ids []LocalID) {
 		for _, id := range ids {

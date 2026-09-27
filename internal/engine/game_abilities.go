@@ -371,7 +371,10 @@ func (p subjectPolicy) reaches(id, subject LocalID) bool {
 }
 
 // addBoard collects trigger from every in-play card of both players, bound to
-// subject as "it".
+// subject as "it". It scans the rows only: this is a trigger scan, and an
+// upgrade's text is authored as Static.Granted and collected onto its host by
+// add, so walking upgrades as well would reach the same printed text twice by two
+// routes (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (w *abilityWindow) addBoard(trigger Trigger, subject LocalID, policy subjectPolicy) {
 	for player := range 2 {
 		for _, id := range w.g.creaturesAndArtifacts(player) {
@@ -383,7 +386,8 @@ func (w *abilityWindow) addBoard(trigger Trigger, subject LocalID, policy subjec
 }
 
 // addSide collects trigger from one player's in-play cards, bound to subject as
-// "it".
+// "it". Row-only for the same reason as addBoard: a trigger scan must not walk
+// upgrades (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (w *abilityWindow) addSide(
 	player int,
 	trigger Trigger,
@@ -416,7 +420,9 @@ func (w *abilityWindow) addMirrored(player int, friendly, enemy Trigger, subject
 // about the turn ("that player draws"), so it resolves as the actor whose turn it
 // is (true). A choose-house ability is about the reacting card ("steal 1 Æmber",
 // "gain 1 Æmber"), so it resolves as its own controller (false) and only reaches
-// the actor through an explicit ByActivePlayer or Opponent target.
+// the actor through an explicit ByActivePlayer or Opponent target. Row-only for
+// the same reason as addBoard: a trigger scan must not walk upgrades
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (w *abilityWindow) addTurnScoped(
 	actor int,
 	trigger Trigger,
@@ -462,7 +468,10 @@ func (g *Game) emitBoard(trigger Trigger, subject LocalID, policy subjectPolicy)
 
 // emitSide is emitBoard for one player's cards, for an event whose reactions must
 // resolve in an order the seat numbers do not give (the acting player's board
-// first, whichever seat that is).
+// first, whichever seat that is). Row-only for the same reason as addBoard: a
+// trigger scan must not walk upgrades, since triggerAbilities already reaches an
+// upgrade's text through its host
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) emitSide(player int, trigger Trigger, subject LocalID, policy subjectPolicy) {
 	for _, id := range g.creaturesAndArtifacts(player) {
 		if policy.reaches(id, subject) {
@@ -642,7 +651,9 @@ func (g *Game) useActionOf(actor int, id LocalID) {
 // card as one ordered window: the card's own "Action:" (resolving for actor, who
 // may be borrowing the card via Remote Access), its "after I am used" (resolving
 // for its own controller), and the "after you use a card" reactions on the acting
-// player's other in-play cards, with the used card as "it".
+// player's other in-play cards, with the used card as "it". The board scan is
+// row-only: it is a reaction gather, and add already reaches an upgrade's text
+// through its host (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) actionReactions(actor int, id LocalID) []triggeredAbility {
 	w := g.window()
 	w.addAs(id, TriggerAction, actor, 0, false)

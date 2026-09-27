@@ -72,7 +72,7 @@ func (g *Game) chargeToll(player int, action TollAction) error {
 		return ErrCannotPayToll
 	}
 	payee := 1 - player
-	for _, id := range g.creaturesAndArtifacts(payee) {
+	for _, id := range g.cardsInPlay(payee) {
 		t := g.cat.def(id).Restricts.Toll
 		if t.Amount <= 0 || t.Action != action {
 			continue
@@ -98,7 +98,7 @@ func (g *Game) chargeToll(player int, action TollAction) error {
 // tollOwed totals the Æmber player must hand the opponent to take action.
 func (g *Game) tollOwed(player int, action TollAction) int {
 	owed := 0
-	for _, id := range g.creaturesAndArtifacts(1 - player) {
+	for _, id := range g.cardsInPlay(1 - player) {
 		if t := g.cat.def(id).Restricts.Toll; t.Amount > 0 && t.Action == action {
 			owed += t.Amount
 		}
@@ -715,7 +715,10 @@ func (g *Game) DiscardCardFromHand(owner int, id LocalID) {
 }
 
 // discardFromHand carries out a hand-to-discard move and its after-discard
-// reactions.
+// reactions. The watcher scan is row-only: it is a reaction scan, and
+// triggerAbilities already reaches an upgrade's text through its host, so walking
+// upgrades as well would fire the same printed text twice
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) discardFromHand(owner int, id LocalID) {
 	hand := &g.State.Hand[owner]
 	i := hand.indexOf(id)
@@ -809,7 +812,7 @@ func (g *Game) consumeOffHousePlay(player int, def *CardDefinition) {
 // Maker frees any number of upgrades. It grants without limit, so nothing consumes
 // it and no per-turn counter tracks it.
 func (g *Game) freesTypeUnlimited(player int, def *CardDefinition) bool {
-	for _, id := range g.creaturesAndArtifacts(player) {
+	for _, id := range g.cardsInPlay(player) {
 		p := g.cat.def(id).PlayPermission
 		if p.Types != 0 && p.Types.has(def.Type) {
 			return true
@@ -823,7 +826,7 @@ func (g *Game) freesTypeUnlimited(player int, def *CardDefinition) bool {
 func (g *Game) playPermissionRemaining(player int, house House) int {
 	limit := 0
 	if g.State.ActiveHouse != house {
-		for _, id := range g.creaturesAndArtifacts(player) {
+		for _, id := range g.cardsInPlay(player) {
 			if p := g.cat.def(id).PlayPermission; p.granted() && p.House == house {
 				limit += p.count()
 			}

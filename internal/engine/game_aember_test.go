@@ -244,3 +244,42 @@ func TestAddAmberOnSaturates(t *testing.T) {
 		t.Fatalf("Æmber on card = %d, want 0", got)
 	}
 }
+
+// TestStolenRedirectSourceCountsUpgradesWithoutReordering pins that widening the
+// first-match redirect scan to every card in play only inserts upgrades: a
+// non-matching upgrade ahead of a matching creature leaves today's answer alone,
+// while an upgrade that carries the redirect answers from where it sits
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+func TestStolenRedirectSourceCountsUpgradesWithoutReordering(t *testing.T) {
+	redirect := Instead{
+		Of:   EventAemberStolen,
+		With: Capture,
+	}
+
+	g := NewGame("A", "B", 1)
+	host := g.AddToBattleline(testCreature("Host", 3), 0)
+	attachUpgrade(g, host, NewCard("Boon", Untamed, Upgrade, Common))
+	gorger := g.AddToBattleline(testCreature("Gorger", 3, WithReplaces(redirect)), 0)
+
+	got, ok := g.stolenRedirectSource()
+	if !ok || got != gorger {
+		t.Errorf(
+			"stolenRedirectSource = (%v, %v), want the creature %v ahead of any upgrade insertion",
+			got, ok, gorger,
+		)
+	}
+
+	g2 := NewGame("A", "B", 1)
+	h2 := g2.AddToBattleline(testCreature("Host", 3), 0)
+	up := attachUpgrade(g2, h2, NewCard("Siphon", Untamed, Upgrade, Common, WithReplaces(redirect)))
+
+	got, ok = g2.stolenRedirectSource()
+	if !ok || got != up {
+		t.Errorf(
+			"stolenRedirectSource = (%v, %v), want the upgrade %v that carries the redirect",
+			got,
+			ok,
+			up,
+		)
+	}
+}

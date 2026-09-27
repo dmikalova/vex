@@ -1031,6 +1031,35 @@ func TestTauntReachesNeighborsNeighbors(t *testing.T) {
 	}
 }
 
+// TestDamageRedirectCountsUpgradesWithoutReordering pins that widening the
+// first-match redirect scan to every card in play only inserts upgrades: an
+// upgrade sitting ahead of the shielding creature — cardsInPlay puts each host's
+// upgrades immediately before the host — leaves the relative order of the row
+// cards untouched, so today's answer is unchanged unless the upgrade genuinely
+// carries a TakesDamageFor
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+func TestDamageRedirectCountsUpgradesWithoutReordering(t *testing.T) {
+	g := started(t)
+	ward := g.AddToBattleline(testCreature("ward", 2), 0)
+	shield := g.AddToBattleline(
+		testCreature("shield", 9,
+			WithTakesDamageFor(Target{Kind: TargetEachCreature}.Neighboring())),
+		0,
+	)
+	attachUpgrade(g, shield, NewCard("Boon", Untamed, Upgrade, Common))
+
+	if got := g.damageRedirect(ward); got != shield {
+		t.Errorf(
+			"damageRedirect(ward) = %v, want the shielding creature %v: a non-matching upgrade ahead of it must not take the match",
+			got,
+			shield,
+		)
+	}
+	if got := g.damageRedirect(shield); got != shield {
+		t.Errorf("damageRedirect(shield) = %v, want %v: a redirect never chains", got, shield)
+	}
+}
+
 // A card that takes damage for other creatures absorbs the damage aimed at each
 // creature its Target names, and its own damage is never redirected onward.
 func TestTakesDamageFor(t *testing.T) {

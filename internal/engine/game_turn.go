@@ -244,7 +244,7 @@ func (g *Game) drawStep(player int) {
 func (g *Game) drawModifier(player int) int {
 	total := 0
 	for owner := range 2 {
-		for _, id := range g.creaturesAndArtifacts(owner) {
+		for _, id := range g.cardsInPlay(owner) {
 			if m := g.cat.def(id).DrawModifier; m.Amount != 0 && m.affects(owner, player) {
 				if m.OnlyWhileOffFlank && g.onFlankOf(id) {
 					continue
@@ -630,7 +630,7 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 	// turn-scoped, so it is not in State; name each in-play card whose bar
 	// currently holds against this player.
 	for p := range 2 {
-		for _, id := range g.creaturesAndArtifacts(p) {
+		for _, id := range g.cardsInPlay(p) {
 			bar := g.cat.def(id).CannotPlayWhile
 			if bar.When == nil {
 				continue
@@ -666,7 +666,7 @@ func (g *Game) KeyCostSources(player int) []LocalID {
 		name(g.State.KeyCostPerHouse[player].Source)
 	}
 	for controller := range 2 {
-		for _, id := range g.creaturesAndArtifacts(controller) {
+		for _, id := range g.cardsInPlay(controller) {
 			if g.keyCostChangeFor(id, controller, player) != 0 {
 				name(id)
 			}
@@ -759,7 +759,7 @@ func (g *Game) payKeyCost(player, cost int) {
 // vaults returns the player's in-play cards whose Æmber may be spent on a key.
 func (g *Game) vaults(player int) []LocalID {
 	var out []LocalID
-	for _, id := range g.creaturesAndArtifacts(player) {
+	for _, id := range g.cardsInPlay(player) {
 		if g.cat.def(id).SpendableAember {
 			out = append(out, id)
 		}
@@ -829,6 +829,11 @@ func (g *Game) finishForgeKey(player int, color KeyColor) {
 // the latter resolving for the forger so its "that player" names whoever forged.
 // Gathering them lets the forger order the set when several fire at once (ADR 0013);
 // the EventForgeKey lasting reactions are folded in by the caller.
+//
+// All three scans are row-only: this is a reaction gather, and abilityWindow.add
+// already reaches an upgrade's text through its host, so walking upgrades as well
+// would gather the same printed text twice
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) forgeKeyReactions(forger int) []triggeredAbility {
 	w := g.window()
 	for _, id := range g.creaturesAndArtifacts(forger) {

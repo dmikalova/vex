@@ -1572,3 +1572,110 @@ func TestCardsInPlayMatchesResolver(t *testing.T) {
 		t.Errorf("creaturesAndArtifacts(0) = %v, want the two rows only", rows)
 	}
 }
+
+// TestCannotPlayCreaturesCountsUpgrades pins that a Restrictions.CannotPlay bar
+// an upgrade carries stops its controller playing that card type. A play bar is
+// a standing rule a card in play imposes, so it applies from where the upgrade
+// sits, exactly as an artifact's would
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). No implemented
+// upgrade carries a play bar today, so the rule is pinned with a blueprint.
+func TestCannotPlayCreaturesCountsUpgrades(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	host := g.AddToBattleline(testCreature("Host", 3), 0)
+
+	if g.cannotPlayCreatures(0) {
+		t.Fatal("nothing bars creature plays yet")
+	}
+	bar := g.Register(
+		NewCard("Muzzle", Untamed, Upgrade, Common,
+			WithRestrictions(Restrictions{CannotPlay: Creature})),
+		0,
+	)
+	g.AttachUpgrade(host, bar)
+
+	if !g.cannotPlayCreatures(0) {
+		t.Error("an upgrade barring creature plays should bar its controller")
+	}
+	if g.cannotPlayCreatures(1) {
+		t.Error("the bar is the controller's own, so it should not reach the opponent")
+	}
+}
+
+// TestForgeAemberGainerCountsUpgradesWithoutReordering pins both halves of the
+// widening for a first-match scan
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). Widening only inserts
+// upgrades into the list and leaves the relative order of row cards untouched, so
+// a non-matching upgrade sitting ahead of a matching creature does not change
+// today's answer — and an upgrade that does carry the rule answers from where it
+// sits, exactly as an artifact would.
+func TestForgeAemberGainerCountsUpgradesWithoutReordering(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	host := g.AddToBattleline(testCreature("Host", 3), 1)
+	attachUpgrade(g, host, NewCard("Boon", Untamed, Upgrade, Common))
+	sting := g.AddToBattleline(
+		testCreature("Sting", 3, WithGainsForgeAember()),
+		1,
+	)
+
+	got, ok := g.forgeAemberGainer(0)
+	if !ok || got != sting {
+		t.Errorf(
+			"forgeAemberGainer = (%v, %v), want the creature %v: an upgrade ahead of it must not steal the match",
+			got,
+			ok,
+			sting,
+		)
+	}
+
+	g2 := NewGame("A", "B", 1)
+	h2 := g2.AddToBattleline(testCreature("Host", 3), 1)
+	up := attachUpgrade(g2, h2, NewCard("Tithe", Untamed, Upgrade, Common, WithGainsForgeAember()))
+
+	got, ok = g2.forgeAemberGainer(0)
+	if !ok || got != up {
+		t.Errorf(
+			"forgeAemberGainer = (%v, %v), want the upgrade %v that carries the rule",
+			got, ok, up,
+		)
+	}
+}
+
+// TestConstantAbilityOnUpgradeReachesTheBoard pins the load-bearing half of the
+// upgrade rule: a constant ability an upgrade carries applies from where the
+// upgrade sits. A constant ability is a standing rule, not a triggered ability,
+// and it carries its own Target, so it needs no host to speak for it
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). No implemented
+// upgrade carries one — 0 of 81 — so the rule is pinned with a blueprint, and the
+// grant must stop when the upgrade leaves play with its host.
+func TestConstantAbilityOnUpgradeReachesTheBoard(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	host := g.AddToBattleline(testCreature("Host", 3), 0)
+	ally := g.AddToBattleline(testCreature("Ally", 3), 0)
+	foe := g.AddToBattleline(testCreature("Foe", 3), 1)
+
+	attachUpgrade(g, host, NewCard("Standard", Untamed, Upgrade, Rare,
+		WithConstantAbility(ConstantAbility{
+			PowerBonus: 2,
+			Target:     Target{Kind: TargetEachFriendlyCreature},
+		})))
+
+	if got := g.Power(ally); got != 5 {
+		t.Errorf("ally power = %d, want 5 from the upgrade's constant ability", got)
+	}
+	if got := g.Power(host); got != 5 {
+		t.Errorf("host power = %d, want 5: its own upgrade's Target reaches it too", got)
+	}
+	if got := g.Power(foe); got != 3 {
+		t.Errorf("enemy power = %d, want 3: a friendly-only Target does not cross the board", got)
+	}
+
+	Destroy{Target: Target{Kind: TargetThisCreature}}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     host,
+		Controller: 0,
+	})
+
+	if got := g.Power(ally); got != 3 {
+		t.Errorf("ally power = %d, want 3 once the upgrade left play with its host", got)
+	}
+}

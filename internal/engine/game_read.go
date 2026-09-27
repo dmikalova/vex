@@ -200,9 +200,16 @@ func (g *Game) constantAbilitiesInPlay() iter.Seq2[LocalID, ConstantAbility] {
 
 // constantAbilitiesOf is constantAbilitiesInPlay narrowed to the cards one player
 // has in play, for the reads whose rule is per-player rather than board-wide.
+//
+// It scans every card in play, upgrades included. A constant ability is a standing
+// rule, not a triggered ability, and it carries its own Target, so it needs no host
+// to speak for it and applies from where the upgrade sits — exactly as an
+// artifact's would (docs/adr/0047-upgrade-in-play-not-an-ability-source.md,
+// TestConstantAbilityOnUpgradeReachesTheBoard). Widening here reaches
+// constantAbilitiesInPlay too, since that is this walk run for both players.
 func (g *Game) constantAbilitiesOf(player int) iter.Seq2[LocalID, ConstantAbility] {
 	return func(yield func(LocalID, ConstantAbility) bool) {
-		for _, src := range g.creaturesAndArtifacts(player) {
+		for _, src := range g.cardsInPlay(player) {
 			for _, c := range g.cat.def(src).ConstantAbilities {
 				if !yield(src, c) {
 					return
@@ -653,10 +660,11 @@ func (g *Game) Peekable(viewer int, host LocalID) bool {
 // A controlled creature physically sits in its controller's battleline while its
 // owner remains unchanged, so this must not assume owner == controller.
 //
-// It keeps its own two-zone loop rather than scanning allInPlay on purpose: this
-// is a contains predicate over both players that allocates nothing, and every
-// zone move re-checks it, so routing it through allInPlay would put a fresh slice
-// per call into a hot path to answer a question the row sets already answer.
+// It keeps its own two-zone contains loop rather than routing through
+// creaturesAndArtifacts or cardsInPlay on purpose: it allocates nothing and sits
+// in a hot path, so measure with mage profile before replacing it with a helper
+// that builds a slice
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) inPlay(id LocalID) bool {
 	if host, ok := g.hostOf(id); ok {
 		id = host
@@ -709,7 +717,7 @@ func (g *Game) cannotFight(player int) bool {
 	if g.State.CannotFight[player].Value {
 		return true
 	}
-	for _, id := range g.creaturesAndArtifacts(player) {
+	for _, id := range g.cardsInPlay(player) {
 		if g.cat.def(id).Restricts.Fighting {
 			return true
 		}
@@ -722,7 +730,7 @@ func (g *Game) cannotFight(player int) bool {
 // creatures, so it scans every in-play card.
 func (g *Game) mustFightIfAble() bool {
 	for owner := range 2 {
-		for _, id := range g.creaturesAndArtifacts(owner) {
+		for _, id := range g.cardsInPlay(owner) {
 			if g.cat.def(id).Restricts.MustFightIfAble {
 				return true
 			}
@@ -761,7 +769,7 @@ func (g *Game) cannotReap(player int) bool {
 		return true
 	}
 	for owner := range 2 {
-		for _, id := range g.creaturesAndArtifacts(owner) {
+		for _, id := range g.cardsInPlay(owner) {
 			r := g.cat.def(id).Restricts.Reaping
 			switch r {
 			case Controller:
@@ -807,7 +815,7 @@ func (g *Game) barredFromPlaying(player int, t CardType) bool {
 // because resetCore clears the stored name.
 func (g *Game) barredByNamedCard(def *CardDefinition) bool {
 	for p := range 2 {
-		for _, id := range g.creaturesAndArtifacts(p) {
+		for _, id := range g.cardsInPlay(p) {
 			named := g.State.Cards[id].NamedCardPlus
 			if named != 0 && g.cat.def(LocalID(named-1)).Name == def.Name {
 				return true
@@ -821,7 +829,7 @@ func (g *Game) barredByNamedCard(def *CardDefinition) bool {
 // constant "cannot play" rule on a card in play — either a Restrictions.CannotPlay
 // rule they control or a symmetric CannotPlayWhile bar whose condition holds.
 func (g *Game) cannotPlayCreatures(player int) bool {
-	for _, id := range g.creaturesAndArtifacts(player) {
+	for _, id := range g.cardsInPlay(player) {
 		if g.cat.def(id).Restricts.CannotPlay == Creature {
 			return true
 		}
@@ -834,7 +842,7 @@ func (g *Game) cannotPlayCreatures(player int) bool {
 // condition holds for player (Quixxle Stone bars whoever controls more creatures).
 func (g *Game) barredByConditionalPlayBar(player int, t CardType) bool {
 	for p := range 2 {
-		for _, id := range g.creaturesAndArtifacts(p) {
+		for _, id := range g.cardsInPlay(p) {
 			bar := g.cat.def(id).CannotPlayWhile
 			if bar.When == nil || bar.Type != t {
 				continue
@@ -855,7 +863,7 @@ func (g *Game) barredByConditionalPlayBar(player int, t CardType) bool {
 // skipsForge reports whether a player is barred from forging a key by a constant
 // Restrictions.SkipForge rule on a card they control in play (The Sting).
 func (g *Game) skipsForge(player int) bool {
-	for _, id := range g.creaturesAndArtifacts(player) {
+	for _, id := range g.cardsInPlay(player) {
 		if g.cat.def(id).Restricts.SkipForge {
 			return true
 		}
@@ -876,7 +884,7 @@ func (g *Game) keyForgeCapReached(player int) bool {
 func (g *Game) forgeKeyNumberBarred(player int) bool {
 	next := g.Keys(player) + 1
 	for p := range 2 {
-		for _, id := range g.creaturesAndArtifacts(p) {
+		for _, id := range g.cardsInPlay(p) {
 			if g.cat.def(id).Restricts.NoForgeKeyNumber == next {
 				return true
 			}
@@ -888,7 +896,7 @@ func (g *Game) forgeKeyNumberBarred(player int) bool {
 // forgeAemberGainer returns the opponent's in-play card that gains payer's forge
 // spending (The Sting), and whether one is in play.
 func (g *Game) forgeAemberGainer(payer int) (LocalID, bool) {
-	for _, id := range g.creaturesAndArtifacts(1 - payer) {
+	for _, id := range g.cardsInPlay(1 - payer) {
 		if g.cat.def(id).GainsForgeAember {
 			return id, true
 		}
@@ -900,7 +908,7 @@ func (g *Game) forgeAemberGainer(payer int) (LocalID, bool) {
 // because they have reached a card-play limit an in-play card imposes (Ember Imp).
 func (g *Game) cannotPlayCard(player int) bool {
 	for controller := range 2 {
-		for _, id := range g.creaturesAndArtifacts(controller) {
+		for _, id := range g.cardsInPlay(controller) {
 			limit := g.cat.def(id).Restricts.PlayCardLimit
 			if limit.Amount > 0 && limit.affects(controller, player) &&
 				int(g.State.PlayedThisTurn[player].Count) >= limit.Amount {
@@ -912,9 +920,14 @@ func (g *Game) cannotPlayCard(player int) bool {
 }
 
 // aemberProtected reports whether a card player controls makes their Æmber unable
-// to be stolen (The Vaultkeeper).
+// to be stolen (The Vaultkeeper). It scans every card in play, upgrades included,
+// because the protection is a standing rule and applies from where the card sits
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). The inner walk over a
+// host's upgrades reads a different field — the Static.AemberCannotBeStolen an
+// upgrade grants its host, evaluated with the host as Source — so an upgrade is
+// never counted twice: a card prints one field or the other, not both.
 func (g *Game) aemberProtected(player int) bool {
-	for _, id := range g.creaturesAndArtifacts(player) {
+	for _, id := range g.cardsInPlay(player) {
 		ctx := &EffectContext{
 			Resolver:   g,
 			Source:     id,
@@ -940,7 +953,7 @@ func (g *Game) forgeBarredWhileAhead(player int) bool {
 		return false
 	}
 	for controller := range 2 {
-		for _, id := range g.creaturesAndArtifacts(controller) {
+		for _, id := range g.cardsInPlay(controller) {
 			if g.cat.def(id).Restricts.NoForgeWhileAheadOnKeys {
 				return true
 			}
@@ -971,7 +984,7 @@ func (g *Game) choosableHouses(player int) []House {
 			add(h)
 		}
 	}
-	for _, id := range g.creaturesAndArtifacts(player) {
+	for _, id := range g.cardsInPlay(player) {
 		add(g.House(id))
 	}
 	return out
@@ -1031,7 +1044,7 @@ func (g *Game) houseConstraintLists(player int) (cannots, musts []House) {
 		}
 	}
 	for controller := range 2 {
-		for _, id := range g.creaturesAndArtifacts(controller) {
+		for _, id := range g.cardsInPlay(controller) {
 			if h, bars, ok := g.lockedHouse(id, controller, player); ok {
 				if bars {
 					addTo(&cannots, h)
@@ -1067,8 +1080,17 @@ func (g *Game) lockedHouse(id LocalID, controller, player int) (house House, bar
 }
 
 // keyCostChangeFor returns how much a single in-play card (controlled by
-// controller) changes target's key cost — its own change plus any granted by
-// attached upgrades.
+// controller) changes target's key cost — its own change plus every
+// Static.KeyCostChange an attached upgrade grants it, which is scaled against the
+// host as source because the host is what the grant speaks through.
+//
+// An upgrade's own KeyCostChanges are not folded in here. The upgrade is a card
+// in play and imposes that change from where it sits, so its caller keyCost
+// reaches it directly through cardsInPlay and asks this function about the
+// upgrade in its own right
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md); folding it in here as
+// well would count Disruption Field's surcharge twice
+// (TestCountersOnAttachedUpgrade).
 func (g *Game) keyCostChangeFor(id LocalID, controller, target int) int {
 	total := 0
 	for _, kc := range g.cat.def(id).KeyCostChanges {
@@ -1079,11 +1101,6 @@ func (g *Game) keyCostChangeFor(id LocalID, controller, target int) int {
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		if kc := g.cat.def(up).Static.KeyCostChange; kc.affects(controller, target) {
 			total += g.keyCostAmount(id, kc)
-		}
-		for _, kc := range g.cat.def(up).KeyCostChanges {
-			if kc.affects(controller, target) {
-				total += g.keyCostAmount(up, kc)
-			}
 		}
 	}
 	return total
@@ -1115,7 +1132,7 @@ func (g *Game) keyCost(target int) int {
 		cost += sure.Per * g.creaturesMatchingInPlay(sure.House)
 	}
 	for controller := range 2 {
-		for _, id := range g.creaturesAndArtifacts(controller) {
+		for _, id := range g.cardsInPlay(controller) {
 			cost += g.keyCostChangeFor(id, controller, target)
 		}
 	}
@@ -1205,7 +1222,7 @@ func (g *Game) creaturesAndArtifacts(player int) []LocalID {
 // withhold itself from one house (Fandangle readies only your non-Untamed
 // creatures).
 func (g *Game) entersPlayReady(player int, t CardType, house House) bool {
-	for _, id := range g.creaturesAndArtifacts(player) {
+	for _, id := range g.cardsInPlay(player) {
 		grant := g.cat.def(id).EntersReadyGrant
 		if grant.Type != t {
 			continue
