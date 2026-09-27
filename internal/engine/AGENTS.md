@@ -119,12 +119,16 @@ it plugs into the AST without desync:
   paired text (`CountText` / `CondText`). A number that scales with the board is a
   `Count`, not a bespoke effect; a branch is a `Condition` fed to `Conditional`.
 - **`CreatureVerb`** is a per-creature verb strategy for `OnChooseCreature`.
-- **`RepeatGate` (`effect_repeat.go`)** is the strategy a `Repeat` varies along:
-  `While` (repeat automatically while a `Condition` holds), `WhileYouDo` (the same,
-  but only while the effect keeps happening), `MayWhileYouDo` (repeat at
-  the controller's choice while a `Condition` holds), and `ByExalting` (repeat once,
-  paid by exalting a creature). Each gate carries both its loop and its trailing
-  "repeat" clause, so a new repeat shape is a new gate, not a new node.
+- **`RepeatGate` (`effect_repeat.go`)** is the strategy a `Repeat` varies along,
+  and the axis is **why the loop stops**. `While` stops only when its `Condition`
+  fails, so a condition the effect cannot move leaves the Rule of Six (ADR 0043)
+  as the only bound. `WhileYouDo` stops on that _or_ as soon as the effect does
+  nothing; `MayWhileYouDo` stops on either of those or when the controller
+  declines. `ByExalting` never loops — it offers one more resolution, paid by
+  exalting a creature. That split is what the printed text shows: the gates that
+  ask whether the effect happened print rule 5's `->`, and `While` prints two
+  plain sentences. Each gate carries both its loop and its trailing "repeat"
+  clause, so a new repeat shape is a new gate, not a new node.
 
 Rule of thumb: when behavior varies along an axis, model the axis as a small
 strategy interface that also renders its own text — not a new `Effect`/`Target`
