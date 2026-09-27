@@ -23,6 +23,14 @@ func LogEntrySamples() []LogEntry {
 			Player: 0,
 			Turn:   3,
 		},
+		FirstPlayerChosen{
+			Player: 1,
+			By:     RolledFirstPlayer,
+		},
+		FirstPlayerChosen{
+			Player: 1,
+			By:     0,
+		},
 		GameStarted{FirstPlayer: 0},
 		Mulliganed{
 			Player: 1,

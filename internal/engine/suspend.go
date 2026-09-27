@@ -1,7 +1,9 @@
 package engine
 
 import (
+	"fmt"
 	"runtime"
+	"runtime/debug"
 	"slices"
 )
 
@@ -101,7 +103,23 @@ const (
 	CommandManualHouse
 	// CommandManualAddCard registers the card named Name into Player's hand.
 	CommandManualAddCard
+
+	// The kind below is a SETUP decision — one settled before the first turn rather
+	// than taken during one. It is neither a root action (LegalActions never offers
+	// it, TestLegalActionsNeverOffersManualKinds) nor an answer pulled mid-
+	// resolution; the canonical turn loop asks for it once, before it deals.
+	// Appended last so no earlier kind's persisted value shifts.
+
+	// CommandSetFirstPlayer names in Player the player who takes the first turn, and
+	// in Index the player who decided it, or RolledFirstPlayer when it was rolled
+	// for. Index is provenance for the log only: it says who chose, not what was
+	// chosen, so legality ignores it (Request.IsLegal).
+	CommandSetFirstPlayer
 )
+
+// RolledFirstPlayer is the Index a CommandSetFirstPlayer carries when no player
+// decided who goes first — the match rolled for it.
+const RolledFirstPlayer = -1
 
 // Command is one player input crossing the engine boundary — an answer to a
 // Request or a root action (ADR 0039). It is a flat comparable value so a match's
@@ -121,7 +139,7 @@ type Command struct {
 	// Manual/debug fields (see the manual CommandKinds above). Left doubles as the
 	// on/face-down flag for CommandSetManual and CommandManualAttach; Card/Card2/
 	// Index/House carry the manual target the same way they carry a root action's.
-	Player int    // the manual kinds that name a player (Æmber, chains, keys, add).
+	Player int    // the manual kinds that name a player, and CommandSetFirstPlayer.
 	Delta  int    // CommandManualAmber / CommandManualChains: the signed delta.
 	Name   string // CommandManualAddCard: the card definition's name.
 }
@@ -147,6 +165,14 @@ const (
 	// they each yield mid-resolution to answer one choice, this one yields BETWEEN
 	// actions, so the canonical turn loop can ask what the player does next.
 	RequestAction
+
+	// RequestFirstPlayer asks who takes the first turn, the one SETUP decision: it
+	// is yielded once, before the decks are shuffled, because first player fixes
+	// the shuffle order and the opening hands (StartGame). The answer is a
+	// CommandSetFirstPlayer, which a match records like any other input so a replay
+	// deals the same game. Appended last so no earlier kind's persisted value
+	// shifts.
+	RequestFirstPlayer
 )
 
 // Request marks a decision point: which player owes a decision and in what
@@ -165,6 +191,14 @@ type Request struct {
 	// Actions is the legal root-action set a RequestAction offers (ADR 0039). It is
 	// the whole legal set, so LegalCommands returns it verbatim.
 	Actions []Command
+	// Badge is the display-only status preview showing while this decision is open
+	// — the "3 damage" a Festering Touch pick deals, the ward an Imperium "ward N"
+	// places — so the client can badge each candidate. It is context for the
+	// decision, like Cards and Prompt, not part of it: it has no mirror in Command,
+	// so it can never enter the command log or change a replay, and LegalCommands
+	// and IsLegal ignore it, so it can never change what answers are legal. The zero
+	// SelectionBadge means no badge.
+	Badge SelectionBadge
 }
 
 // StepInfo reports what an Advance step observed — whether it crossed an
@@ -191,6 +225,8 @@ func (r Request) LegalCommands() []Command {
 		return indexCommands(CommandReaction, len(r.Reactions))
 	case RequestAction:
 		return r.Actions
+	case RequestFirstPlayer:
+		return firstPlayerCommands()
 	default:
 		return nil
 	}
@@ -224,8 +260,33 @@ func indexCommands(kind CommandKind, n int) []Command {
 	return cmds
 }
 
-// IsLegal reports whether cmd is a valid answer to this request.
+// firstPlayerCommands builds the two answers to a first-player request, one per
+// player. Each carries RolledFirstPlayer as its Index: the canonical, unattributed
+// form of the decision, since who decided is provenance rather than part of the
+// answer (IsLegal normalizes it away).
+func firstPlayerCommands() []Command {
+	return []Command{
+		{
+			Kind:   CommandSetFirstPlayer,
+			Player: 0,
+			Index:  RolledFirstPlayer,
+		},
+		{
+			Kind:   CommandSetFirstPlayer,
+			Player: 1,
+			Index:  RolledFirstPlayer,
+		},
+	}
+}
+
+// IsLegal reports whether cmd is a valid answer to this request. It compares the
+// DECISION, not its provenance: a CommandSetFirstPlayer's Index records who chose
+// (or that it was rolled), which cannot make naming a player legal or illegal, so
+// it is normalized to the canonical unattributed form before the comparison.
 func (r Request) IsLegal(cmd Command) bool {
+	if cmd.Kind == CommandSetFirstPlayer {
+		cmd.Index = RolledFirstPlayer
+	}
 	return slices.Contains(r.LegalCommands(), cmd)
 }
 
@@ -241,16 +302,36 @@ type suspendChooser struct {
 	// is abandoned mid-action (an undo or replay deals a fresh game); yield unwinds
 	// via runtime.Goexit rather than leaking parked on an answer that never comes.
 	cancel <-chan struct{}
+	// badge is the selection badge an effect previewed for this player's next picks.
+	// The suspendable side has no chooser on the far end to push it to, so it is
+	// stashed here and stamped onto every Request yielded until the effect clears it
+	// (TestStepperStampsThePreviewedBadgeOnRequests).
+	badge SelectionBadge
 }
 
 // A suspendChooser installs every optional capability, including the turn loop's
-// ActionChooser, so the driving side is offered every kind of decision.
-var _ ActionChooser = (*suspendChooser)(nil)
+// ActionChooser and the display-only BadgeChooser, so the driving side is offered
+// every kind of decision and every hint that decorates one.
+var (
+	_ ActionChooser      = (*suspendChooser)(nil)
+	_ BadgeChooser       = (*suspendChooser)(nil)
+	_ FirstPlayerChooser = (*suspendChooser)(nil)
+)
+
+// PreviewBadge stashes the badge an effect previews before its choose loop, so
+// every Request yielded until the zero badge clears it carries the badge as
+// context. Where a pulled chooser is pushed the badge and draws it immediately, a
+// yielded decision has no client to push to: the badge rides along with the
+// decision it decorates.
+func (c *suspendChooser) PreviewBadge(badge SelectionBadge) {
+	c.badge = badge
+}
 
 // yield sends req and blocks until the driving side answers with a Command. If the
 // Stepper is closed while yield is parked, cancel fires and the goroutine unwinds
 // (Goexit runs its defers), so an abandoned action leaves no goroutine behind.
 func (c *suspendChooser) yield(req Request) Command {
+	req.Badge = c.badge
 	select {
 	case c.requests <- req:
 	case <-c.cancel:
@@ -325,17 +406,54 @@ func (c *suspendChooser) ChooseAction(actions []Command) Command {
 	})
 }
 
+// PanicError is the error a Stepper reports when the action it ran panicked. It
+// carries the recovered value and the stack captured AT RECOVER TIME, because the
+// recovered value alone says only what went wrong, not where: by the time a caller
+// sees it the panicking frames are gone, so the stack has to be taken inside the
+// deferred recover or it is lost.
+type PanicError struct {
+	Value any
+	Stack []byte
+}
+
+// Error renders the recovered value. The stack stays out of the message so a
+// caller can show a one-line failure and keep the trace for a log.
+func (e *PanicError) Error() string {
+	return fmt.Sprintf("engine: action panicked: %v", e.Value)
+}
+
+// ChooseFirstPlayer yields the match's one setup decision and returns the answer:
+// a CommandSetFirstPlayer naming who takes the first turn and who decided it. The
+// driving side is free to roll (answering with Index RolledFirstPlayer) or to ask
+// a player, because the engine records whichever answer comes back and a replay
+// reads it from the log rather than rolling again.
+func (c *suspendChooser) ChooseFirstPlayer() Command {
+	return c.yield(Request{
+		Player: c.player,
+		Kind:   RequestFirstPlayer,
+	})
+}
+
 // Stepper runs one engine action to completion on a goroutine, suspending it at
 // each decision so a driver can supply answers one Command at a time. It is the
 // coroutine behind the suspendable step function: Start yields the first Request
 // (or reports the action already finished), and Advance answers the current
 // Request and yields the next.
+//
+// A panic inside the action does not escape: the Stepper contains it and reports
+// it through Err, on the iterator convention Go uses for a loop that can fail
+// (bufio.Scanner's Scan/Err, sql.Rows' Next/Err). Start and Advance say only that
+// the action is done; the caller then asks Err why it stopped.
 type Stepper struct {
 	g        *Game
 	requests chan Request
 	commands chan Command
 	cancel   chan struct{}
 	done     bool
+	// err is written by the action goroutine before it closes requests, and read by
+	// the driver only after a receive on requests has seen that close, so the close
+	// orders the write before the read.
+	err error
 }
 
 // NewStepper installs suspending choosers on g and launches action on a goroutine.
@@ -355,8 +473,20 @@ func NewStepper(g *Game, action func(*Game)) *Stepper {
 		player: 1, requests: s.requests, commands: s.commands, cancel: s.cancel,
 	})
 	go func() {
+		// Recover before closing requests, never after: a panic that unwound past the
+		// close would leave every later Start/Advance blocked forever on a channel
+		// nobody will ever send to or close, and under wasm it would take the whole
+		// program down (TestStepperContainsAPanickingAction).
+		defer func() {
+			if v := recover(); v != nil {
+				s.err = &PanicError{
+					Value: v,
+					Stack: debug.Stack(),
+				}
+			}
+			close(s.requests)
+		}()
 		action(g)
-		close(s.requests)
 	}()
 	return s
 }
@@ -379,6 +509,13 @@ func (s *Stepper) Start() (Request, bool) {
 	req, ok := <-s.requests
 	s.done = !ok
 	return req, s.done
+}
+
+// Err reports why the action stopped: nil when it ran to completion, and a
+// *PanicError when it panicked. Ask it once Start or Advance reports done — the
+// two say that the action is over, this says whether it finished or broke.
+func (s *Stepper) Err() error {
+	return s.err
 }
 
 // Advance answers the current Request with cmd and returns the next Request, or

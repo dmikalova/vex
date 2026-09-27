@@ -227,23 +227,31 @@ func (omegaDriver) ChooseAction(actions []Command) Command {
 // every branch of the loop: setup, a house choice, a play, the Omega hand-off, and
 // the win that stops it.
 func TestRunMatchDrivesToWinnerThroughEndedTurn(t *testing.T) {
+	g := winnableMatch(omegaDriver{})
+
+	g.RunMatch()
+
+	if g.Winner() != 1 {
+		t.Fatalf("winner = %d, want 1", g.Winner())
+	}
+}
+
+// winnableMatch builds an undealt game the turn loop finishes quickly whichever
+// player goes first: both decks are all Omega creatures, so a play ends the play
+// phase mid-action, and player 1 forges their winning key the moment their turn
+// begins. Both players are driven by the given chooser.
+func winnableMatch(driver Chooser) *Game {
 	g := NewGame("Alice", "Bob", 1)
 	omega := testCreature("Omega", 3, WithKeywords(Omega))
 	for range 20 {
 		g.AddToDeck(omega, 0)
 		g.AddToDeck(omega, 1)
 	}
-	// Player 1 forges their winning key the moment their turn begins.
 	g.State.ForgeCanonicalKeys(1, KeysToWin-1)
 	g.State.Aember[1] = KeyCost
-	g.SetChooser(0, omegaDriver{})
-	g.SetChooser(1, omegaDriver{})
-
-	g.RunMatch(0)
-
-	if g.Winner() != 1 {
-		t.Fatalf("winner = %d, want 1", g.Winner())
-	}
+	g.SetChooser(0, driver)
+	g.SetChooser(1, driver)
+	return g
 }
 
 func TestRunMatchSkipsPhaseEndOfTurnHandOff(t *testing.T) {
@@ -254,9 +262,69 @@ func TestRunMatchSkipsPhaseEndOfTurnHandOff(t *testing.T) {
 	g.SetChooser(0, omegaDriver{})
 	g.SetChooser(1, omegaDriver{})
 
-	g.RunMatch(0)
+	g.RunMatch()
 
 	if g.State.ActivePlayer != 1 {
 		t.Fatalf("active player after end-of-turn handoff = %d, want 1", g.State.ActivePlayer)
 	}
+}
+
+// firstPlayerDriver is an omegaDriver that also answers the setup decision, the
+// way an interactive session's chooser does: player 1 goes first, chosen by
+// player 0.
+type firstPlayerDriver struct{ omegaDriver }
+
+func (firstPlayerDriver) ChooseFirstPlayer() Command {
+	return Command{
+		Kind:   CommandSetFirstPlayer,
+		Player: 1,
+		Index:  0,
+	}
+}
+
+// RunMatch asks its chooser who goes first before it deals, so the answer reaches
+// StartGame in time to fix the shuffle order and the opening hands, and narrates
+// the decision with the player who made it.
+func TestRunMatchAsksForFirstPlayer(t *testing.T) {
+	g := winnableMatch(firstPlayerDriver{})
+
+	g.RunMatch()
+
+	if !loggedEntry(g, GameStarted{FirstPlayer: 1}) {
+		t.Error("the answer did not reach StartGame: player 1 did not take the first turn")
+	}
+	want := FirstPlayerChosen{
+		Player: 1,
+		By:     0,
+	}
+	if !loggedEntry(g, want) {
+		t.Errorf("no %+v entry in the log; the decision was not recorded", want)
+	}
+}
+
+// A chooser that cannot answer the setup decision gives the first turn to player
+// 0 — today's behaviour for the sim and every non-interactive driver, which is why
+// they need no edit — and the log says the match rolled for it.
+func TestRunMatchDefaultsFirstPlayerToZero(t *testing.T) {
+	g := winnableMatch(omegaDriver{})
+
+	g.RunMatch()
+
+	want := FirstPlayerChosen{
+		Player: 0,
+		By:     RolledFirstPlayer,
+	}
+	if !loggedEntry(g, want) {
+		t.Errorf("no %+v entry in the log; the default did not record player 0", want)
+	}
+}
+
+// loggedEntry reports whether the game's log holds the given entry.
+func loggedEntry(g *Game, want LogEntry) bool {
+	for _, rec := range g.Log {
+		if rec.Entry == want {
+			return true
+		}
+	}
+	return false
 }

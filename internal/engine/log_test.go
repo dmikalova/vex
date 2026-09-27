@@ -24,6 +24,8 @@ func TestLogEntryText(t *testing.T) {
 	want := []string{
 		// Turn shape.
 		"P0 begins turn 3",
+		"P1 goes first by random choice",
+		"P1 is selected to go first by P0",
 		"P0 takes the first turn",
 		"P1 mulligans, drawing a new hand of 5",
 		"Ready phase",
