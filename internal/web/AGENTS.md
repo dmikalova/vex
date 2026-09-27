@@ -46,7 +46,11 @@ grouped by area, `view_*.go` holds rendering grouped by screen region.
 - `uitest.go` — the `/ui-test` scenario host: the run loop, the step probe over the
   real DOM, and the route switch.
 - `uitest_scenarios.go` — the scenarios themselves, as data. A new journey is an
-  entry here, not a new page.
+  entry here, not a new page. `UITestScenarios` is the exported view of that
+  registry the headless driver enumerates.
+
+The headless driver is the sibling package `internal/web/uitest`, every file
+behind the `uitest` build tag. It is only a driver.
 
 Styles live in `web/app.css`; assets are `web/assets/<stem>.svg`, referenced by
 stem through `icon(name, extra…)` and served from `/web/assets/`. The dev server
@@ -277,6 +281,28 @@ exhausted" is not** — a single-widget assertion stays a host test in
 a behaviour is pinned; the browser suite is the coarse proof that the whole thing
 is wired up in a browser, and every scenario added there costs seconds of wall
 clock, so keep them few and keep them whole journeys.
+
+`mage uiTest` runs the same scenarios headlessly. The driver is
+`internal/web/uitest`, every file behind the `uitest` build tag: it builds
+`web/app.wasm`, serves `cmd/web` on a free port with `VEX_UITEST=1` (`PORT` is
+the env var `cmd/web` already reads), launches headless Chrome through
+[go-rod](https://go-rod.dev) — pure Go, no Node — and opens
+`/ui-test/<slug>?once=1` for each entry in `web.UITestScenarios()`, polling
+`#ui-test-status` until its `data-state` leaves `running`. **The driver
+re-describes no scenario**: the registry here is the single definition, so a new
+journey lands in the page and in the suite with no second edit.
+
+It is deliberately **not** in `mage ci:check` or `ci:test` — the build tag keeps
+the package out of `./...`, so the shared CI workflow needs no browser — and it
+sits beside `mage profile` and `mage trace` as a real-but-ungated target. Costs,
+measured warm: the js/wasm build ~3 s (28 MB) and free when nothing changed,
+Chrome launch ~1 s, the first page load of the bundle ~1-2 s and ~0.5 s after.
+The steps run **in** the page rather than over CDP, so a step is a click plus a
+render (single-digit ms): today's suite is ~5 s warm (~13 s cold, including
+go-rod downloading its Chromium), a minimal one ~10-15 s, and a ~50-journey
+suite ~30-60 s, or ~15-25 s if passes share a page load. That budget is the
+reason a single-widget assertion stays a host test. See
+[docs/testing.md](../../docs/testing.md).
 
 Four rules the surface is built on:
 

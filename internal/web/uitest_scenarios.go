@@ -38,6 +38,28 @@ var uiScenarios = []uiScenario{
 	openingScenario(),
 }
 
+// UITestScenario is one registered scenario as a driver sees it: the name to
+// report it under and the slug that addresses its page. It carries no steps,
+// because a driver navigates to /ui-test/<slug> and reads the status element the
+// page writes — the journey is defined here once and is never re-described
+// outside this file.
+type UITestScenario struct {
+	Name string
+	Slug string
+}
+
+// UITestScenarios lists every registered scenario, in the order /ui-test shows
+// them. It exists so internal/web/uitest's headless driver enumerates the same
+// registry the page does: adding a scenario to uiScenarios above adds it to both
+// the page a human watches and the suite mage uiTest runs, with no second edit.
+func UITestScenarios() []UITestScenario {
+	out := make([]UITestScenario, len(uiScenarios))
+	for i, s := range uiScenarios {
+		out[i] = UITestScenario{Name: s.Name, Slug: s.Slug}
+	}
+	return out
+}
+
 // uiScenarioBySlug returns the registered scenario for a URL slug.
 func uiScenarioBySlug(slug string) (uiScenario, bool) {
 	for _, s := range uiScenarios {

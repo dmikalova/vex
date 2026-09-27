@@ -121,6 +121,12 @@ tools):
   Default runs the 1000 seeded games; `-random` runs a fresh random outlier batch;
   `-save` re-blesses the baseline. It never blocks and never gates — the baseline is
   advisory and lives outside `mage ci:check` and CI. See `docs/testing.md`.
+- `mage uiTest` — drive the `/ui-test` browser scenarios headlessly: build the
+  wasm client, serve it, and run each scenario registered in
+  `internal/web/uitest_scenarios.go` in headless Chrome (go-rod). The driver
+  package `internal/web/uitest` is behind the `uitest` build tag, so it is
+  invisible to `./...` and **not** part of `mage ci:check` or `ci:test` — a wasm
+  build plus a browser boot is not a per-save gate. See `docs/testing.md`.
 - `mage profileServer` — open a profile from the last `mage profile` run in the
   interactive pprof web UI (flame graph, call graph, source view); blocks until
   stopped. `-mem` serves the allocation profile, `-random` the outlier run's.

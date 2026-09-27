@@ -22,6 +22,9 @@ pieces fit together.
   in `mage ci:test`, deeply with `mage fuzz`, and at volume with `mage soak`.
 - **Frontend glue (`web`)?** Largely untested by design (DOM-bound);
   push logic worth testing down into the engine or `match`.
+- **Is the client wired up in a real browser?** Write a **browser scenario** — a
+  whole player journey — in `internal/web/uitest_scenarios.go` and run the suite
+  with `mage uiTest`. It is ungated and run by hand, never by `mage ci:check`.
 
 ## Coverage philosophy: what is gated and why
 
@@ -274,6 +277,54 @@ by `invariants_test.go` like any other engine code.
   internals — except in `package engine` tests, whose whole point is to reach the
   unexported rule you're covering.
 
+## Option 5 — Browser scenarios (`mage uiTest`)
+
+The host tests above drive the client off-browser, where `app.Window()` reads back
+empty: nothing proves the wasm bundle boots, the routes serve, or a click on a
+real element reaches the engine. Browser scenarios are that coarse proof.
+
+**One definition, two consumers.** A scenario is data — a name, a slug, a fixed
+seed, and ordered steps, each a description plus a do/check against the live DOM —
+registered in `internal/web/uitest_scenarios.go`. The page at `/ui-test/<slug>`
+runs it in a browser beside a per-step panel a human watches; `mage uiTest` runs
+the same page headlessly and reads its one status element. **Adding a scenario is
+one edit**: `internal/web/uitest` re-describes no journey, it enumerates
+`web.UITestScenarios()` and navigates.
+
+**A scenario is a journey, not a widget assertion.** "Deal, keep both hands,
+choose a house, play a creature, answer its prompt, undo it" is a scenario. "The
+reap button is disabled when the creature is exhausted" is not — that is a host
+test in `client_test.go`, where 300-odd of them run in a second. Every browser
+scenario costs seconds of wall clock, so keep them few and keep them whole.
+
+```sh
+mage uiTest      # the whole suite, headless
+mage web         # the same scenarios at http://localhost:8000/ui-test, looping
+```
+
+The driver (`internal/web/uitest`, every file behind the `uitest` build tag)
+builds `web/app.wasm`, builds and starts `cmd/web` on a free port with
+`VEX_UITEST=1` (it reads `PORT` from the environment already, so there is no new
+flag), launches headless Chrome through [go-rod](https://go-rod.dev) — pure Go,
+no Node — and opens `/ui-test/<slug>?once=1` per scenario, polling
+`#ui-test-status` until its `data-state` leaves `running`. A failure is reported
+with the failing step's own description. go-rod uses the installed Chrome and
+otherwise downloads its own Chromium into `~/.cache/rod` on first run.
+
+**It is not part of `mage ci:check` or `mage ci:test`, on purpose.** The build tag
+keeps the package out of `./...`, so the shared project-standards CI workflow
+never needs a browser, and a multi-megabyte wasm build plus a browser boot does
+not belong in a gate that runs on every save. Like `mage profile` and
+`mage trace`, it is a real target you reach for.
+
+**The budget.** Measured warm on an Apple-silicon laptop: the js/wasm build is
+~3 s (28 MB) and free when nothing changed, Chrome launches in ~1 s, the first
+page load of the bundle is ~1-2 s and ~0.5 s after. Because the steps run **in**
+the page rather than over CDP, a step is a click plus a render — single-digit
+milliseconds. So the current minimal suite is ~5 s warm (~13 s the first time,
+including the Chromium download), a fuller one ~10-15 s, and a ~50-journey suite
+would be ~30-60 s — or ~15-25 s if passes share a page load.
+
 ## Running tests
 
 ```sh
@@ -294,6 +345,8 @@ mage soak -duration=5m      # the soak's time budget
 mage testRun TestHeal
 mage testRun 'TestHeal|TestAmmoniaClouds'
 mage fuzzClean    # reset the local fuzz corpus if it gets stale
+
+mage uiTest       # the browser scenarios, headless (outside the gate)
 ```
 
 The debug and trace replays take flags the same way — `mage debug -script=<hex>

@@ -80,6 +80,24 @@ func Web() error {
 	})
 }
 
+// UITest drives the browser scenarios headlessly.
+//
+// It runs internal/web/uitest, which builds web/app.wasm, serves cmd/web on a
+// free port with /ui-test switched on, and points a headless Chrome at one page
+// per scenario registered in internal/web. The scenarios are defined once, in
+// internal/web/uitest_scenarios.go, so a new journey joins both the page a human
+// watches and this suite.
+//
+// It is deliberately NOT part of mage ci:check or ci:test: the uitest build tag
+// keeps the package out of ./..., so the shared CI workflow never needs a
+// browser, and a multi-megabyte wasm build plus a browser boot does not belong
+// in a gate that runs on every save. It sits beside mage profile and mage trace
+// as a real-but-ungated target. Budget ~10-15s for the current suite; see
+// docs/testing.md.
+func UITest() error {
+	return sh.RunV("go", "test", "-count=1", "-tags=uitest", "./internal/web/uitest/")
+}
+
 // webSettle reads the WEB_SETTLE debounce duration from the environment; an unset
 // or unparsable value defaults to 5s.
 func webSettle() time.Duration {
