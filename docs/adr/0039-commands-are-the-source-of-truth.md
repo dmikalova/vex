@@ -1,13 +1,13 @@
 # 39. Commands are the source of truth; state, log, and undo are replay projections
 
-This decision records the target architecture for match persistence. It guides a
-staged refactor. The engine seam that realizes it now exists — the
-`Command`/`Request` step function and `Stepper` (suspend.go), the
+This decision records the architecture of match persistence, and the switchover
+is complete. The engine seam is the `Command`/`Request` step function and
+`Stepper` (suspend.go) plus the
 `ApplyAction`/`ApplyManual`/`LegalActions`/`RunMatch` root-action and force-edit
-vocabulary (command_action.go, command_manual.go), and the `internal/session`
-driver that owns `{version, seed, sets, []Command}` and replays it. The remaining
-step is migrating the web client off its own hand-rolled `input`/replay log
-(`internal/web/replay.go`) onto that driver.
+vocabulary (command_action.go, command_manual.go). The `internal/session` driver
+owns `{version, seed, sets, []Command}` and replays it, and the web client drives
+that session: there is no second replay implementation (`internal/web/replay.go`
+is deleted), a saved match is a `session.Record`, and undo is `Session.Undo`.
 
 ## Context
 

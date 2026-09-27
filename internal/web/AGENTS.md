@@ -123,15 +123,21 @@ that zone's pill, which arcs in and shrinks onto the count (`.card-flight`).
 ## Every click is a Command; the session owns the turn loop
 
 The client drives one `*session.Session` (ADR 0039, 0040) whose action is the
-engine's own `RunMatch`. So the client takes no turn of its own and starts no
-goroutine: a click builds an `engine.Command` and applies it, which resolves the
-engine as far as the next decision **before the handler returns**. Everything is
-synchronous, and there is no in-flight action to guard against.
+engine's own `RunMatch`. **The client holds no `Chooser`** — the engine never
+calls into it. So the client takes no turn of its own and starts no goroutine: a
+click builds an `engine.Command` and applies it, which resolves the engine as far
+as the next decision **before the handler returns**. Everything is synchronous,
+and there is no in-flight action to guard against.
 
 - A root action goes through `applyRoot`, a prompt answer through `answer`, a
   manual force-edit through `applyManual`. Nothing else may call the engine to
   change state — a mutation that skips the session is a mutation the command log
   does not hold, so it does not survive a reload or an undo.
+- **Undo is `Session.Undo(n)`**, which rewinds by replaying the first `n` recorded
+  commands from a fresh deal — not a client-side stack of `GameState` copies. The
+  client keeps only the marks that say where each root action started
+  (`rootMarks`) and the commands it truncated, so `redoAction` can re-apply them;
+  the session has no `Redo` of its own.
 - **The root boundary is "`Pending()` is a `RequestAction`."** Between two of them
   lies exactly one root action and every prompt it raised. That one signal drives
   the undo marks, the flash baseline, and the log groups: `beginAction` opens an
@@ -148,6 +154,12 @@ synchronous, and there is no in-flight action to guard against.
   client: `choosing()`, `optionLabels()`, `positionLine()` and friends in
   `game_chooser.go` derive from the live `Request`, and the badge preview from
   `Request.Badge`.
+- **Anything the UI needs that is not an answer travels as display-only context on
+  `Request`** (ADR 0047): a new field the engine populates at the suspension point
+  and the client reads off `Pending()`, with no mirror in `Command`, so it cannot
+  enter the command log or change what answers are legal. Do **not** add a callback
+  field on `Session` or an interface the client implements for the session to call
+  — either one rebuilds the live chooser this architecture exists to remove.
 
 ## Prompts: cards are clicked, options are buttons
 
