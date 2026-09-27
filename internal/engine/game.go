@@ -370,22 +370,30 @@ func (g *Game) pickOptional(
 // the next one repeatedly (the final id is forced, so it is never prompted). With
 // 0 or 1 ids there is nothing to order and ids is returned unchanged; a rejected
 // pick falls back to the remaining order. The default FirstChooser keeps the
-// original order, so ordering only becomes interactive under a real UI.
-func (g *Game) orderByChoice(controller int, prompt string, ids []LocalID) []LocalID {
+// original order, so ordering only becomes interactive under a real UI. src is the
+// card whose ability is asking, and is the zero PromptSource for turn structure
+// that has no card behind it.
+func (g *Game) orderByChoice(
+	controller int,
+	src PromptSource,
+	prompt string,
+	ids []LocalID,
+) []LocalID {
 	if len(ids) <= 1 {
 		return ids
 	}
 	// Boundary: settle before presenting the choice, so the player never orders
 	// among creatures one of which is already dead (ADR 0029).
 	g.settleDestroyed(controller)
+	text := g.renderPrompt(src, prompt)
 	if o, ok := g.chooserFor(controller).(Orderer); ok {
-		return o.OrderCreatures(PromptSource{}, prompt, ids)
+		return o.OrderCreatures(src, text, ids)
 	}
 	remaining := make([]LocalID, len(ids))
 	copy(remaining, ids)
 	ordered := make([]LocalID, 0, len(ids))
 	for len(remaining) > 1 {
-		chosen, ok := g.chooserFor(controller).ChooseCreature(PromptSource{}, prompt, remaining)
+		chosen, ok := g.chooserFor(controller).ChooseCreature(src, text, remaining)
 		if !ok {
 			break
 		}

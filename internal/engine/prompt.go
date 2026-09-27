@@ -17,7 +17,7 @@ type PromptSource struct {
 	// HasCard is set.
 	Card LocalID
 	// HasCard reports whether Card names a card. It is false for a prompt with no
-	// card source, such as an ordering or turn-structure question.
+	// card source, such as a turn-structure question.
 	HasCard bool
 }
 

@@ -154,7 +154,13 @@ func (g *Game) discardArchives(owner int) {
 	}
 	ids := cloneIDs(arc.slice())
 	if owner == g.State.ActivePlayer {
-		ids = g.orderByChoice(owner, "Choose the order to discard your archives", ids)
+		// Turn structure, not a card ability, so the prompt has no source.
+		ids = g.orderByChoice(
+			owner,
+			PromptSource{},
+			"Choose the order to discard your archives",
+			ids,
+		)
 	} else {
 		g.State.PRNG.Shuffle(len(ids), func(i, j int) { ids[i], ids[j] = ids[j], ids[i] })
 	}

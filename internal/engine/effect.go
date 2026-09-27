@@ -313,9 +313,10 @@ func (ctx *EffectContext) ChooseCardOptional(
 	return ctx.Resolver.ChooseCardOptional(ctx.Controller, ctx.Source, prompt, candidates)
 }
 
-// OrderByChoice asks the controlling player to arrange ids into a resolution order.
+// OrderByChoice asks the controlling player to arrange ids into a resolution
+// order, attributing the prompt to this ability's source card.
 func (ctx *EffectContext) OrderByChoice(prompt string, ids []LocalID) []LocalID {
-	return ctx.Resolver.OrderByChoice(ctx.Controller, prompt, ids)
+	return ctx.Resolver.OrderByChoice(ctx.Controller, ctx.Source, prompt, ids)
 }
 
 // Player selects which player an effect targets, relative to the card's

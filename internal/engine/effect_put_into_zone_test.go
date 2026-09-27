@@ -135,6 +135,56 @@ func TestMoveFromPlayToDeck(t *testing.T) {
 	}
 }
 
+// orderSourceRecorder implements Orderer and records the PromptSource the
+// ordering prompt was raised with, keeping the given order.
+type orderSourceRecorder struct {
+	src PromptSource
+}
+
+func (orderSourceRecorder) ChooseCreature(
+	_ PromptSource,
+	_ string,
+	c []LocalID,
+) (LocalID, bool) {
+	return c[0], true
+}
+
+func (r *orderSourceRecorder) OrderCreatures(
+	src PromptSource,
+	_ string,
+	ids []LocalID,
+) []LocalID {
+	r.src = src
+	return ids
+}
+
+// TestMoveToDeckOrderingPromptCarriesItsSource pins that a card-driven ordering
+// prompt is attributed to the card that asked, like every other sourced prompt:
+// putting several cards on top of a deck asks for their order on behalf of the
+// effect's source card, not as an unattributed question.
+func TestMoveToDeckOrderingPromptCarriesItsSource(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 1), 0)
+	g.AddArtifact(NewCard("myrelic", Brobnar, Artifact, Rare), 0)
+	g.AddArtifact(NewCard("enemyrelic", Brobnar, Artifact, Rare), 1)
+	rec := &orderSourceRecorder{}
+	g.SetChooser(0, rec)
+
+	e := PutFromPlay{
+		Target:      Target{Kind: TargetEachArtifact},
+		Destination: ToTopOfDeck,
+	}
+	e.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
+
+	if want := (PromptSource{Card: src, HasCard: true}); rec.src != want {
+		t.Errorf("ordering prompt source = %+v, want %+v", rec.src, want)
+	}
+}
+
 func TestMoveFromPlayToHand(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 3), 0)

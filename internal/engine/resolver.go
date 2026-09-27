@@ -748,8 +748,10 @@ type TurnResolver interface {
 // picking a creature, card, or labeled option — so an effect can branch on the
 // answer. A sole candidate is taken automatically.
 type ChoiceResolver interface {
-	// OrderByChoice lets a player arrange ids into a resolution order.
-	OrderByChoice(controller int, prompt string, ids []LocalID) []LocalID
+	// OrderByChoice lets a player arrange ids into a resolution order. source is
+	// the card whose ability is asking (usually ctx.Source), for prompt
+	// attribution; turn structure with no card passes the zero LocalID.
+	OrderByChoice(controller int, source LocalID, prompt string, ids []LocalID) []LocalID
 	// ChooseCreature asks a player to pick one creature from candidates; a sole
 	// candidate is taken automatically. source is the card whose ability is asking
 	// (usually ctx.Source), for prompt attribution.
