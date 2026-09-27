@@ -24,9 +24,11 @@ import (
 // catalog_<family>.go per family). A text-bearing value enum is a set of
 // constants, discovered by the type they are declared with (catalog_enum.go) —
 // which closes the same hole one level down, where an enumerating function like
-// Keywords() was only as complete as its author remembered. Target is neither: it
-// is a flag struct, so it is covered as both, its kinds as an enum and its filter
-// builders as a family discovered by shape (catalog_target.go).
+// Keywords() was only as complete as its author remembered. Target and
+// Destination are neither: each is a value struct a card builds up, so each is
+// covered as both — its constants as an enum, and the builder methods that modify
+// them as a family discovered by shape (catalog_target.go,
+// catalog_destination.go).
 
 // Catalogued is one census row: a constructed node of the family, and the
 // classification saying whether it owes a rulebook term. The row carries a real
@@ -195,6 +197,7 @@ func Families() []Family {
 		gatherFamily(),
 		quantityFamily(),
 		targetFilterFamily(),
+		destinationFamily(),
 	}
 }
 

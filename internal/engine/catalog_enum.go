@@ -20,7 +20,7 @@ import (
 // source and fails the build when one is neither enumerated nor named as
 // excluded.
 //
-// Two shapes of entry. The seven enums a card's printed text renders carry a full
+// Two shapes of entry. An enum a card's printed text renders carries a full
 // catalog, one classified row per value, the same mandatory classification the
 // node families use. The five enums that already have their own rulebook
 // completeness test — Keyword, CardType, BonusIcon, Trigger, Phase — carry only
@@ -73,6 +73,8 @@ func Enums() []Enum {
 		comparisonEnum(),
 		counterKindEnum(),
 		targetKindEnum(),
+		useKindEnum(),
+		tollActionEnum(),
 
 		// The five that already carry their own rulebook completeness test, here
 		// only for the guard that their enumerating function is complete.
@@ -132,37 +134,6 @@ func durationEnum() Enum {
 			{Name: "UntilCardLeavesPlay", Node: UntilCardLeavesPlay, Rules: bears("Duration")},
 		},
 		Duration.String,
-	)
-}
-
-// destinationSubject is the noun the census renders each destination's move
-// around, standing in for the cards a card would name.
-const destinationSubject = "a card"
-
-// destinationEnum is the Destination enum's census, keyed by the zone half its
-// constants are declared with. Each destination binds to the term for the zone
-// rule it carries out rather than to a term of its own.
-func destinationEnum() Enum {
-	return newEnum(
-		"destinationZone",
-		[]string{"destUnset", "destDiscard", "destPurged"},
-		len(Destinations()),
-		[]Catalogued[Destination]{
-			{Name: "destHand", Node: ToHand, Rules: bears("Put a Card into Another Zone")},
-			{
-				Name:  "destTopOfDeck",
-				Node:  ToTopOfDeck,
-				Rules: bears("Put a Card into Another Zone"),
-			},
-			{
-				Name:  "destBottomOfDeck",
-				Node:  ToBottomOfDeck,
-				Rules: bears("Put a Card into Another Zone"),
-			},
-			{Name: "destDeckShuffled", Node: ToDeckShuffled, Rules: bears("Shuffle")},
-			{Name: "destArchives", Node: ToArchives, Rules: bears("Archive")},
-		},
-		func(d Destination) string { return d.clause(destinationSubject, false) },
 	)
 }
 
@@ -288,5 +259,41 @@ func counterKindEnum() Enum {
 			{Name: "CounterWarrant", Node: CounterWarrant, Rules: bears("Generic Counters")},
 		},
 		CounterKind.noun,
+	)
+}
+
+// useKindEnum is the UseKind enum's census: the three ways a card in play can be
+// used, and so the three verbs a "cannot" restriction bars. Each names the one
+// "Cannot Be Used To" term — barring a use is one rule, and the kind only says
+// which use it bars.
+func useKindEnum() Enum {
+	return newEnum(
+		"UseKind",
+		[]string{"useKindUnset", "useKindCount"},
+		len(allUseKinds()),
+		[]Catalogued[UseKind]{
+			{Name: "ReapUse", Node: ReapUse, Rules: bears("Cannot Be Used To")},
+			{Name: "FightUse", Node: FightUse, Rules: bears("Cannot Be Used To")},
+			{Name: "ActionUse", Node: ActionUse, Rules: bears("Cannot Be Used To")},
+		},
+		func(k UseKind) string { return "This creature cannot " + k.verb() + "." },
+	)
+}
+
+// tollActionEnum is the TollAction enum's census: the two artifact actions a card
+// in play can charge the opponent for. Both name the one "Toll" term, since the
+// action only says which move the Æmber is owed on.
+func tollActionEnum() Enum {
+	return newEnum(
+		"TollAction",
+		[]string{"tollActionUnset"},
+		len(allTollActions()),
+		[]Catalogued[TollAction]{
+			{Name: "TollPlayArtifact", Node: TollPlayArtifact, Rules: bears("Toll")},
+			{Name: "TollUseArtifact", Node: TollUseArtifact, Rules: bears("Toll")},
+		},
+		func(a TollAction) string {
+			return restrictionText(Restrictions{Toll: Toll{Action: a, Amount: 1}}, false)[0]
+		},
 	)
 }

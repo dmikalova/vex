@@ -243,16 +243,6 @@ game state for the fight in progress; the combat step reads and clears it.`,
 		},
 		{
 			Section:    SectionEffect,
-			Title:      "Must Fight When Used",
-			Definition: "While in play, force every creature that has a legal fight target to fight when used, barring reap and Action abilities.",
-			Body: `Some cards in play impose that creatures must fight when used, if able (Little
-Rapscal). While such a card is in play, a creature that has at least one legal
-enemy to fight cannot be used to reap or to use an "Action:" ability — its only
-use is to fight. A creature with no legal fight target is unaffected and may reap
-or act as usual. The rule applies to both players' creatures.`,
-		},
-		{
-			Section:    SectionEffect,
 			Title:      "Search",
 			Definition: "Search one or more of your zones for cards matching a filter, reveal what you take, and put it into your hand or archives.",
 			Body: `Search is the KeyForge "search" keyword: the controller looks through one or
