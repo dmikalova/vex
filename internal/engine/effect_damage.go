@@ -326,6 +326,13 @@ const (
 	IfSurvives
 )
 
+// DamageAftermaths lists every aftermath branch in declaration order. It is the
+// canonical enumeration: the node census ranges over it, so a branch added above
+// cannot be silently missed. The invalid zero value is excluded.
+func DamageAftermaths() []DamageAftermath {
+	return []DamageAftermath{Always, IfDestroyed, IfSurvives}
+}
+
 // resolveAftermath deals the damage to the chosen creature, then resolves Then
 // when After's branch holds. IfDestroyed snapshots the creature's neighbors before
 // the damage (a following effect may hit the destroyed creature's former
@@ -384,6 +391,14 @@ const (
 	// two (Mighty Lance).
 	OneNeighbor
 )
+
+// NeighborScopes lists every neighbor scope in declaration order. It is the
+// canonical enumeration: the node census ranges over it, so a scope added above
+// cannot be silently missed. AllNeighbors is the zero value and a real scope, so
+// every constant is listed.
+func NeighborScopes() []NeighborScope {
+	return []NeighborScope{AllNeighbors, OneNeighbor}
+}
 
 // CreatureAndNeighbors deals Amount to a chosen creature and Splash to its
 // battleline neighbors, all at once — a DealDamage Spread. Scope picks whether it

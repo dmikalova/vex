@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/dmikalova/vex/internal/census"
 	"github.com/dmikalova/vex/internal/engine"
 )
 
@@ -38,18 +37,16 @@ func (Tool) Census() error {
 	}
 	fmt.Println()
 	fmt.Println("TERM GAPS")
-	reportTermGaps(families)
+	reportTermGaps(families, engine.Enums())
 	return nil
 }
 
 // reportCatalogGaps prints one family's line, and under it the nodes it still
 // owes rows for (grouped by source file) and the rows that name no node.
 func reportCatalogGaps(family engine.Family) error {
-	declared, err := census.Implementations(
-		engineDir, family.Method, census.Params(family.Params...),
-	)
+	declared, err := family.Declared(engineDir)
 	if err != nil {
-		return fmt.Errorf("scanning for %s implementations: %w", family.Name, err)
+		return err
 	}
 	catalogued := map[string]bool{}
 	for _, row := range family.Rows {
@@ -70,7 +67,7 @@ func reportCatalogGaps(family engine.Family) error {
 		}
 	}
 	fmt.Printf("\n  %-31s %3d declared, %3d catalogued  %s\n",
-		family.Name+"."+family.Method, len(declared), len(family.Rows),
+		familyLabel(family), len(declared), len(family.Rows),
 		familyState(uncatalogued, family.Gated),
 	)
 	for _, file := range sortedKeys(missing) {
@@ -83,6 +80,16 @@ func reportCatalogGaps(family engine.Family) error {
 		fmt.Printf("    %-34s %s\n", "rows naming no node:", strings.Join(orphans, ", "))
 	}
 	return nil
+}
+
+// familyLabel names a family by how the scan finds it: the interface method its
+// members declare, or — for a family discovered by shape — the result its builder
+// methods return.
+func familyLabel(family engine.Family) string {
+	if family.Method == "" {
+		return family.Name + " -> " + family.Returns
+	}
+	return family.Name + "." + family.Method
 }
 
 // familyState renders a family's standing: complete and gated, complete but not
@@ -100,15 +107,13 @@ func familyState(uncatalogued int, gated bool) string {
 
 // reportTermGaps prints the rulebook terms the census still owes prose for, and
 // the terms in the census's sections that no row claims.
-func reportTermGaps(families []engine.Family) {
+func reportTermGaps(families []engine.Family, enums []engine.Enum) {
 	claimed := map[string][]string{}
 	for _, family := range families {
-		for _, row := range family.Rows {
-			if row.Rules.Term == "" {
-				continue
-			}
-			claimed[row.Rules.Term] = append(claimed[row.Rules.Term], family.Name+"."+row.Type)
-		}
+		claimRows(claimed, family.Name, family.Rows)
+	}
+	for _, enum := range enums {
+		claimRows(claimed, enum.Type, enum.Rows)
 	}
 	written := map[string]bool{}
 	sectioned := map[string]bool{}
@@ -128,6 +133,17 @@ func reportTermGaps(families []engine.Family) {
 		if len(claimed[title]) == 0 {
 			fmt.Printf("    %s\n", title)
 		}
+	}
+}
+
+// claimRows records the term each row names, under the owner it belongs to, so a
+// term's line names every node and enum value that leans on it.
+func claimRows(claimed map[string][]string, owner string, rows []engine.FamilyRow) {
+	for _, row := range rows {
+		if row.Rules.Term == "" {
+			continue
+		}
+		claimed[row.Rules.Term] = append(claimed[row.Rules.Term], owner+"."+row.Type)
 	}
 }
 

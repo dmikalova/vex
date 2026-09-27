@@ -47,6 +47,17 @@ const (
 	NumCounterKinds = int(iota)
 )
 
+// CounterKinds lists every real counter kind in declaration order. It is the
+// canonical enumeration: the node census ranges over it, so a kind added above
+// cannot be silently missed. The CounterNone zero value is excluded.
+func CounterKinds() []CounterKind {
+	all := make([]CounterKind, 0, NumCounterKinds-1)
+	for k := CounterNone + 1; int(k) < NumCounterKinds; k++ {
+		all = append(all, k)
+	}
+	return all
+}
+
 // valid reports whether the kind names a real counter.
 func (k CounterKind) valid() bool { return k != CounterNone }
 

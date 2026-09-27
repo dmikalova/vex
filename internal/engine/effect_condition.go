@@ -48,6 +48,21 @@ const (
 	Odd
 )
 
+// Comparisons lists every comparison in declaration order. It is the canonical
+// enumeration: the node census ranges over it, so a comparison added above cannot
+// be silently missed. The invalid zero value is excluded.
+func Comparisons() []Comparison {
+	return []Comparison{
+		AtLeast,
+		AtMost,
+		Exactly,
+		MoreThanYou,
+		MoreThanOpponent,
+		Even,
+		Odd,
+	}
+}
+
 // validateCondition returns any configuration error a condition reports (an unset
 // PoolAember comparison, say). Conditions that cannot be misconfigured
 // implement no validator and pass.
