@@ -27,8 +27,64 @@ func handCardID(id engine.LocalID) string  { return "hand-" + strconv.Itoa(int(i
 // colour — including the end-of-game "wins!" banner.
 func playerNameCls(player int) string { return "player-name--p" + strconv.Itoa(player) }
 
-func btn(label string, h app.EventHandler, class string) app.UI {
-	return app.Button().Class(class).Text(label).OnClick(h)
+// The act* constants name the stable data-act hooks the action bar's controls
+// carry, so a browser scenario can click a control by what it does rather than by
+// its (translatable, restyleable) label text — the same reason cards carry
+// boardCardID/handCardID instead of being found by name. Each control that draws
+// through btn passes one of these; a control drawn by hand (the house picker, the
+// per-destination manual-move buttons) sets its own data-act with houseActID or a
+// literal beside its own definition, so every act value still has exactly one
+// place it is spelled.
+const (
+	actEndTurn          = "end-turn"
+	actUndo             = "undo"
+	actRedo             = "redo"
+	actManual           = "manual"
+	actConcede          = "concede"
+	actKeys             = "keys"
+	actCancel           = "cancel"
+	actDone             = "done"
+	actAutoResolve      = "auto-resolve"
+	actNewGame          = "new-game"
+	actSameSets         = "same-sets"
+	actPlay             = "play"
+	actPlayCreature     = "play-creature"
+	actPlayUpgrade      = "play-upgrade"
+	actDiscard          = "discard"
+	actManualPlay       = "manual-put-into-play"
+	actReap             = "reap"
+	actFight            = "fight"
+	actAction           = "action"
+	actUnstun           = "unstun"
+	actFlankLeft        = "flank-left"
+	actFlankRight       = "flank-right"
+	actDeployLeft       = "deploy-left"
+	actDeployRight      = "deploy-right"
+	actDeployBack       = "deploy-back"
+	actManualAddCard    = "manual-add-card"
+	actManualReady      = "manual-ready"
+	actManualExhaust    = "manual-exhaust"
+	actManualToHand     = "manual-to-hand"
+	actManualGraft      = "manual-graft"
+	actManualPlaceUnder = "manual-place-under"
+)
+
+// houseActID is the data-act value for a house-picker or house-option button, so
+// a scenario can pick a house by name ("house-brobnar") instead of its label text.
+func houseActID(h engine.House) string {
+	return "house-" + strings.ToLower(strings.ReplaceAll(h.String(), " ", "-"))
+}
+
+// optionActID is the data-act value for a generic labeled option button — the
+// fallback optionGeneric draws for a prompt none of the specific classifiers
+// claim (Yes/No, Mulligan, a card's own two-way choice) — so it too is
+// selectable by what it says rather than only by its rendered text.
+func optionActID(label string) string {
+	return "option-" + strings.ToLower(strings.ReplaceAll(label, " ", "-"))
+}
+
+func btn(label, act string, h app.EventHandler, class string) app.UI {
+	return app.Button().Class(class).Text(label).DataSet("act", act).OnClick(h)
 }
 
 // cardFace builds the plain face of a card that is on the table — everything the

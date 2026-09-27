@@ -20,7 +20,7 @@ func (g *game) overPanel() app.UI {
 			app.Span().Class(playerNameCls(winner)).Text(g.g.PlayerName(winner)),
 			app.Text(" wins!"),
 		),
-		btn("New game", g.openSetup, "btn-primary"),
+		btn("New game", actNewGame, g.openSetup, "btn-primary"),
 	)
 }
 
@@ -47,7 +47,7 @@ func (g *game) zonesOverlay() app.UI {
 				// current selection with no further pick. Closing the viewer answers
 				// nothing, so Done is the only way to pass from inside it.
 				app.If(g.promptZone != "" && g.chooserDeclinable, func() app.UI {
-					return btn("Done", g.declineChooser, "btn-primary zones-done")
+					return btn("Done", actDone, g.declineChooser, "btn-primary zones-done")
 				}),
 			),
 			app.Div().Class("zones-body").Body(

@@ -148,11 +148,11 @@ func (g *game) promptSourceHouse(def *engine.CardDefinition) (house engine.House
 func (g *game) endTurnButton() app.UI {
 	cursor := ifCls(g.isEndTurnCursor(), "btn-cursor")
 	if g.confirmEndTurn {
-		return btn("Confirm end turn", g.endTurn, cx("btn-danger", cursor))
+		return btn("Confirm end turn", actEndTurn, g.endTurn, cx("btn-danger", cursor))
 	}
 	// With nothing left to do, the button fades green to invite ending the turn.
 	ready := ifCls(!g.hasMoves(), "btn-endturn--ready")
-	return btn("End turn", g.endTurn, cx("btn-secondary", ready, cursor))
+	return btn("End turn", actEndTurn, g.endTurn, cx("btn-secondary", ready, cursor))
 }
 
 // undoIcon is the icon-only Undo that rides in the top-right of the action area,
@@ -162,6 +162,7 @@ func (g *game) undoIcon() app.UI {
 	return app.Button().
 		Class(cx("btn-secondary", "btn-icon")).
 		Title("Undo").
+		DataSet("act", actUndo).
 		Disabled(!g.canUndo()).
 		OnClick(g.undoAction).
 		Body(icon("undo", "icon-nav"))
@@ -205,6 +206,7 @@ func (g *game) endTurnBar() app.UI {
 		extra = append(extra, app.Button().
 			Class(cx("btn-nav", "btn-icon", "btn-nav-on")).
 			Title("Manual mode is on — click to turn it off").
+			DataSet("act", actManual).
 			OnClick(g.toggleManual).
 			Body(icon("wrench", "icon-nav")))
 	}
@@ -294,7 +296,7 @@ func (g *game) hostTargetingControls() app.UI {
 		app.Div().Class("btn-col").Body(
 			app.Div().Class("prompt").Text(
 				"Click a card to "+verb+" "+g.g.Def(g.sel).Name+" under it"),
-			btn("Cancel", g.cancelHostTargeting, "btn-secondary"),
+			btn("Cancel", actCancel, g.cancelHostTargeting, "btn-secondary"),
 		),
 	)
 }
@@ -368,7 +370,7 @@ func (g *game) optionPromptControls() app.UI {
 	// Manual mode adds a Cancel that backs the whole action out — an option prompt
 	// has no decline of its own, so this is the only way out of a stuck one.
 	if g.g.Manual() {
-		body = append(body, btn("Cancel", g.cancelChooser, "btn-secondary"))
+		body = append(body, btn("Cancel", actCancel, g.cancelChooser, "btn-secondary"))
 	}
 	return app.Div().Class("controls").Body(body...)
 }
@@ -399,16 +401,19 @@ func (g *game) cardPromptControls() app.UI {
 	// adds a Cancel on every prompt — optional or mandatory — that backs the whole
 	// action out, the way out of a prompt with no clickable candidate.
 	if g.chooserDeclinable {
-		body = append(body, btn("Done", g.declineChooser,
+		body = append(body, btn("Done", actDone, g.declineChooser,
 			cx("btn-primary", ifCls(g.isDoneCursor(), "btn-cursor"))))
 	}
 	// An ordering prompt offers Auto-resolve, which answers with a random order
 	// so the player need not arrange abilities whose order does not matter to them.
 	if g.chooserOrdering {
-		body = append(body, btn("Auto-resolve", g.autoResolveOrder, "btn-secondary"))
+		body = append(
+			body,
+			btn("Auto-resolve", actAutoResolve, g.autoResolveOrder, "btn-secondary"),
+		)
 	}
 	if g.g.Manual() {
-		body = append(body, btn("Cancel", g.cancelChooser, "btn-secondary"))
+		body = append(body, btn("Cancel", actCancel, g.cancelChooser, "btn-secondary"))
 	}
 	return app.Div().Class("controls").Body(body...)
 }
@@ -420,7 +425,7 @@ func (g *game) setChooser() app.UI {
 	names := cards.DeckSetNames()
 	body := []app.UI{app.Div().Class("section-title").Text("New game")}
 	if g.hasPrevSets() {
-		body = append(body, btn("Same sets — "+g.prevSetLabel(),
+		body = append(body, btn("Same sets — "+g.prevSetLabel(), actSameSets,
 			func(ctx app.Context, _ app.Event) { g.continueSameSets(ctx) }, "btn-primary"))
 	}
 	body = append(body,
@@ -436,6 +441,7 @@ func (g *game) setChooser() app.UI {
 	for _, name := range names {
 		body = append(body, app.Button().
 			Class(cx("btn-secondary", "set-btn", setAccent(name))).
+			DataSet("set", name).
 			OnClick(func(ctx app.Context, _ app.Event) { g.pickSet(ctx, name) }).
 			Body(app.Span().Class("set-emblem"), app.Text(name)))
 	}
@@ -443,7 +449,7 @@ func (g *game) setChooser() app.UI {
 	// first-time load the picker is the whole screen with nothing behind it, so
 	// there is nothing to cancel to.
 	if g.g != nil {
-		body = append(body, btn("Cancel", g.cancelSetup, "btn-secondary"))
+		body = append(body, btn("Cancel", actCancel, g.cancelSetup, "btn-secondary"))
 	}
 	return app.Div().Class("btn-col", "set-pick").Body(body...)
 }
@@ -466,30 +472,36 @@ func (g *game) setupScreen() app.UI {
 func (g *game) manualPanel() app.UI {
 	items := []app.UI{
 		app.Div().Class("section-title").Text("Manual"),
-		btn("Add card…", g.openPicker, "btn-secondary"),
+		btn("Add card…", actManualAddCard, g.openPicker, "btn-secondary"),
 	}
 	if g.hasSel {
 		name := g.g.Def(g.sel).Name
 		if g.isInPlay(g.sel) {
 			if g.g.Exhausted(g.sel) {
-				items = append(items, btn("Ready "+name, g.manualReady, "btn-secondary"))
+				items = append(
+					items,
+					btn("Ready "+name, actManualReady, g.manualReady, "btn-secondary"),
+				)
 			} else {
-				items = append(items, btn("Exhaust "+name, g.manualExhaust, "btn-secondary"))
+				items = append(
+					items,
+					btn("Exhaust "+name, actManualExhaust, g.manualExhaust, "btn-secondary"),
+				)
 			}
 		}
 		// An attached card (upgrade or under-card) can only leave to hand by
 		// detaching first, so it gets a To hand of its own rather than the Move
 		// buttons' Hand, which would leave it attached and duplicated.
 		if g.isAttached(g.sel) {
-			items = append(items, btn("To hand", g.manualToHand, "btn-secondary"))
+			items = append(items, btn("To hand", actManualToHand, g.manualToHand, "btn-secondary"))
 		}
 		items = append(items,
 			app.Div().Class("hint").Text("Move "+name+" to:"),
 			g.moveButtons(),
 			app.Div().Class("hint").Text("Thread "+name+" under a host:"),
 			app.Div().Class("btn-wrap").Body(
-				btn("Graft", g.manualGraft, "btn-mini"),
-				btn("Place under", g.manualPlaceUnder, "btn-mini"),
+				btn("Graft", actManualGraft, g.manualGraft, "btn-mini"),
+				btn("Place under", actManualPlaceUnder, g.manualPlaceUnder, "btn-mini"),
 			),
 		)
 	}
@@ -501,18 +513,19 @@ func (g *game) manualPanel() app.UI {
 func (g *game) moveButtons() app.UI {
 	dests := []struct {
 		label string
+		act   string
 		dest  engine.ManualZone
 	}{
-		{"Hand", engine.ManualHand},
-		{"Deck top", engine.ManualDeckTop},
-		{"Deck bottom", engine.ManualDeckBottom},
-		{"Discard", engine.ManualDiscard},
-		{"Archives", engine.ManualArchives},
-		{"Purge", engine.ManualPurge},
+		{"Hand", "manual-move-hand", engine.ManualHand},
+		{"Deck top", "manual-move-deck-top", engine.ManualDeckTop},
+		{"Deck bottom", "manual-move-deck-bottom", engine.ManualDeckBottom},
+		{"Discard", "manual-move-discard", engine.ManualDiscard},
+		{"Archives", "manual-move-archives", engine.ManualArchives},
+		{"Purge", "manual-move-purge", engine.ManualPurge},
 	}
 	buttons := make([]app.UI, len(dests))
 	for i, d := range dests {
-		buttons[i] = btn(d.label, g.manualMove(d.dest), "btn-mini")
+		buttons[i] = btn(d.label, d.act, g.manualMove(d.dest), "btn-mini")
 	}
 	return app.Div().Class("btn-wrap").Body(buttons...)
 }
@@ -613,11 +626,13 @@ func (g *game) housePicker() app.UI {
 			if h == engine.HouseNone {
 				return app.Button().
 					Class(cx("house-btn", ifCls(g.isButtonCursor(i), "btn-cursor"))).
+					DataSet("act", houseActID(h)).
 					OnClick(g.pickHouse(h)).
 					Text("No House")
 			}
 			return app.Button().
 				Class(cx("house-btn", houseAccent(h), ifCls(g.isButtonCursor(i), "btn-cursor"))).
+				DataSet("act", houseActID(h)).
 				OnClick(g.pickHouse(h)).
 				Body(houseIcon(h, "icon-inline"), app.Text(h.String()))
 		}),
@@ -726,7 +741,7 @@ func (g *game) optionControls(kind optionKind) (app.UI, bool) {
 			}
 			k, _ := useVerbKindOfLabel(label)
 			s := useVerbSpec(k)
-			body = append(body, btn(s.text, g.chooseOptionIdx(i),
+			body = append(body, btn(s.text, useVerbAct(k), g.chooseOptionIdx(i),
 				cx(s.class, ifCls(g.isButtonCursor(i), "btn-cursor"))))
 		}
 		return app.Div().Class("btn-col").Body(body...), true
@@ -734,10 +749,10 @@ func (g *game) optionControls(kind optionKind) (app.UI, bool) {
 		// A move-to-a-flank prompt (Reassembling Automaton, Harland Mindlock) uses
 		// the same flank buttons as placing a creature.
 		return app.Div().Class("btn-col").Body(
-			btn(engine.FlankLeftLabel, g.chooseOptionIdx(0),
+			btn(engine.FlankLeftLabel, actFlankLeft, g.chooseOptionIdx(0),
 				cx("btn-primary", "btn-flank", "btn-flank--left",
 					ifCls(g.isButtonCursor(0), "btn-cursor"))),
-			btn(engine.FlankRightLabel, g.chooseOptionIdx(1),
+			btn(engine.FlankRightLabel, actFlankRight, g.chooseOptionIdx(1),
 				cx("btn-primary", "btn-flank", "btn-flank--right",
 					ifCls(g.isButtonCursor(1), "btn-cursor"))),
 		), true
@@ -753,6 +768,7 @@ func (g *game) optionControls(kind optionKind) (app.UI, bool) {
 						Class(cx("house-btn", "house-btn--icon", houseAccent(h),
 							ifCls(g.isButtonCursor(i), "btn-cursor"))).
 						Title(g.optionLabels[i]).
+						DataSet("act", houseActID(h)).
 						OnClick(g.chooseOptionIdx(i)).
 						Body(houseIcon(h, "icon-house"))
 				}),
@@ -768,7 +784,7 @@ func (g *game) optionControls(kind optionKind) (app.UI, bool) {
 				if isDecliningOption(g.optionLabels[i]) {
 					kind = "btn-danger"
 				}
-				return btn(g.optionLabels[i], g.chooseOptionIdx(i),
+				return btn(g.optionLabels[i], optionActID(g.optionLabels[i]), g.chooseOptionIdx(i),
 					cx(kind, ifCls(g.isButtonCursor(i), "btn-cursor")))
 			}),
 		), true
@@ -885,13 +901,22 @@ func (g *game) useVerbCardActions() []cardAction {
 		k, _ := useVerbKindOfLabel(label)
 		s := useVerbSpec(k)
 		acts = append(acts, cardAction{
-			s.text,
-			cx(s.class, ifCls(g.isButtonCursor(i), "btn-cursor")),
-			g.chooseOptionIdx(i),
+			Label: s.text,
+			Class: cx(s.class, ifCls(g.isButtonCursor(i), "btn-cursor")),
+			Act:   useVerbAct(k),
+			On:    g.chooseOptionIdx(i),
 		})
 	}
 	if g.g.Manual() {
-		acts = append(acts, cardAction{"Cancel", "btn-secondary", g.cancelChooser})
+		acts = append(
+			acts,
+			cardAction{
+				Label: "Cancel",
+				Class: "btn-secondary",
+				Act:   actCancel,
+				On:    g.cancelChooser,
+			},
+		)
 	}
 	return acts
 }
@@ -904,7 +929,7 @@ func (g *game) targetingPrompt() app.UI {
 	if g.phase == phaseFightTarget {
 		return app.Div().Class("btn-col").Body(
 			app.Div().Class("prompt").Text("Pick an enemy creature to fight"),
-			btn("Cancel", g.cancelTargeting, "btn-secondary"),
+			btn("Cancel", actCancel, g.cancelTargeting, "btn-secondary"),
 		)
 	}
 	// Placing a creature asks its which-end question on the lifted card, so the dock
@@ -919,6 +944,7 @@ func (g *game) targetingPrompt() app.UI {
 type cardAction struct {
 	Label string
 	Class string
+	Act   string
 	On    app.EventHandler
 }
 
@@ -966,11 +992,11 @@ func (g *game) selActions() ([]cardAction, string) {
 // in a dock the player has to look away to.
 func (g *game) flankActions() ([]cardAction, string) {
 	return []cardAction{
-		{"Left flank", cx("btn-primary", "btn-flank", "btn-flank--left",
-			ifCls(g.isButtonCursor(0), "btn-cursor")), g.playFlank(true)},
-		{"Right flank", cx("btn-primary", "btn-flank", "btn-flank--right",
-			ifCls(g.isButtonCursor(1), "btn-cursor")), g.playFlank(false)},
-		{"Cancel", "btn-secondary", g.cancelTargeting},
+		{Label: "Left flank", Class: cx("btn-primary", "btn-flank", "btn-flank--left",
+			ifCls(g.isButtonCursor(0), "btn-cursor")), Act: actFlankLeft, On: g.playFlank(true)},
+		{Label: "Right flank", Class: cx("btn-primary", "btn-flank", "btn-flank--right",
+			ifCls(g.isButtonCursor(1), "btn-cursor")), Act: actFlankRight, On: g.playFlank(false)},
+		{Label: "Cancel", Class: "btn-secondary", Act: actCancel, On: g.cancelTargeting},
 	}, ""
 }
 
@@ -992,13 +1018,30 @@ func (g *game) deployActions() ([]cardAction, string) {
 			side = "right"
 		}
 		note = "Click a creature to deploy " + side + " of it."
-		acts = append(acts, cardAction{"Back", "btn-secondary", g.deploySideBack})
+		acts = append(
+			acts,
+			cardAction{
+				Label: "Back",
+				Class: "btn-secondary",
+				Act:   actDeployBack,
+				On:    g.deploySideBack,
+			},
+		)
 	} else {
-		acts = append(acts,
-			cardAction{"Deploy left", cx("btn-primary", "btn-flank", "btn-flank--left"),
-				g.chooseDeploySide(false)},
-			cardAction{"Deploy right", cx("btn-primary", "btn-flank", "btn-flank--right"),
-				g.chooseDeploySide(true)},
+		acts = append(
+			acts,
+			cardAction{
+				Label: "Deploy left",
+				Class: cx("btn-primary", "btn-flank", "btn-flank--left"),
+				Act:   actDeployLeft,
+				On:    g.chooseDeploySide(false),
+			},
+			cardAction{
+				Label: "Deploy right",
+				Class: cx("btn-primary", "btn-flank", "btn-flank--right"),
+				Act:   actDeployRight,
+				On:    g.chooseDeploySide(true),
+			},
 		)
 	}
 	if g.g.Manual() {
@@ -1006,7 +1049,10 @@ func (g *game) deployActions() ([]cardAction, string) {
 		if g.manualPlacing {
 			cancel = g.cancelManualPlace
 		}
-		acts = append(acts, cardAction{"Cancel", "btn-secondary", cancel})
+		acts = append(
+			acts,
+			cardAction{Label: "Cancel", Class: "btn-secondary", Act: actCancel, On: cancel},
+		)
 	}
 	return acts, note
 }
@@ -1021,23 +1067,48 @@ func (g *game) handCardActions() ([]cardAction, string) {
 		// as two explicit buttons, so it is made before the play instead of by a
 		// later sidebar prompt. Play upgrade skips the flank step (upgrades take no
 		// flank); Play creature keeps the flank question.
-		acts = append(acts,
-			cardAction{"Play creature", "btn-primary", g.playAsCreature},
-			cardAction{"Play upgrade", "btn-primary", g.playAsUpgrade},
+		acts = append(
+			acts,
+			cardAction{
+				Label: "Play creature",
+				Class: "btn-primary",
+				Act:   actPlayCreature,
+				On:    g.playAsCreature,
+			},
+			cardAction{
+				Label: "Play upgrade",
+				Class: "btn-primary",
+				Act:   actPlayUpgrade,
+				On:    g.playAsUpgrade,
+			},
 		)
 	} else {
-		acts = append(acts, cardAction{"Play", "btn-primary", g.play})
+		acts = append(
+			acts,
+			cardAction{Label: "Play", Class: "btn-primary", Act: actPlay, On: g.play},
+		)
 	}
 	// Discarding is offered whenever the engine allows it (active house, and not
 	// barred by the first-turn one-card rule).
 	if g.discardableFromHand(g.sel) {
-		acts = append(acts, cardAction{"Discard", "btn-danger", g.discard})
+		acts = append(
+			acts,
+			cardAction{Label: "Discard", Class: "btn-danger", Act: actDiscard, On: g.discard},
+		)
 	}
 	// Manual mode adds a "Put into play" that stages the card straight onto the
 	// board — no play effects, no bonus Æmber — deploying a creature anywhere in
 	// the line.
 	if g.g.Manual() {
-		acts = append(acts, cardAction{"Put into play", "btn-secondary", g.manualPlay})
+		acts = append(
+			acts,
+			cardAction{
+				Label: "Put into play",
+				Class: "btn-secondary",
+				Act:   actManualPlay,
+				On:    g.manualPlay,
+			},
+		)
 	}
 	return acts, note
 }
@@ -1053,26 +1124,34 @@ func (g *game) creatureCardActions() ([]cardAction, string) {
 	// A stunned creature recovers from stun instead of acting, so any use just
 	// removes the stun: offer a single Unstun rather than Reap/Fight/Action.
 	if g.g.Stunned(g.sel) {
-		return []cardAction{{"Unstun", "btn-unstun", g.unstun}}, "Stunned"
+		return []cardAction{
+			{Label: "Unstun", Class: "btn-unstun", Act: actUnstun, On: g.unstun},
+		}, "Stunned"
 	}
 	// Each way of using a creature is offered only when the card allows it —
 	// Tireless Crocag fights and uses its Action: ability but cannot reap.
 	var acts []cardAction
 	if g.g.CanUseTo(g.active(), g.sel, engine.ReapUse) == nil {
 		s := useVerbSpec(engine.ReapUse)
-		acts = append(acts, cardAction{s.text, s.class, g.reap})
+		acts = append(acts, cardAction{Label: s.text, Class: s.class, Act: actReap, On: g.reap})
 	}
 	// Fight also needs a legal target (e.g. with no enemy creatures, a ready Valdr
 	// can still reap but has nothing to fight).
 	if g.g.CanUseTo(g.active(), g.sel, engine.FightUse) == nil &&
 		len(g.g.FightTargets(g.active(), g.sel)) > 0 {
 		s := useVerbSpec(engine.FightUse)
-		acts = append(acts, cardAction{s.text, s.class, g.startFight})
+		acts = append(
+			acts,
+			cardAction{Label: s.text, Class: s.class, Act: actFight, On: g.startFight},
+		)
 	}
 	if g.g.HasTrigger(g.sel, engine.TriggerAction) &&
 		g.g.CanUseTo(g.active(), g.sel, engine.ActionUse) == nil {
 		s := useVerbSpec(engine.ActionUse)
-		acts = append(acts, cardAction{s.text, s.class, g.useAction})
+		acts = append(
+			acts,
+			cardAction{Label: s.text, Class: s.class, Act: actAction, On: g.useAction},
+		)
 	}
 	return acts, ""
 }
@@ -1096,6 +1175,20 @@ func useVerbSpec(k engine.UseKind) useVerbButtonSpec {
 		return useVerbButtonSpec{"Action", "btn-primary"}
 	default: // ReapUse
 		return useVerbButtonSpec{"Reap", "btn-warning"}
+	}
+}
+
+// useVerbAct returns the data-act value for a use kind's button, so a triggered
+// use (Inspiration's UseVerb) carries the same hook as the ordinary reap/fight/
+// action buttons it mirrors.
+func useVerbAct(k engine.UseKind) string {
+	switch k {
+	case engine.FightUse:
+		return actFight
+	case engine.ActionUse:
+		return actAction
+	default: // ReapUse
+		return actReap
 	}
 }
 
@@ -1144,5 +1237,7 @@ func (g *game) artifactCardActions() ([]cardAction, string) {
 		}
 		return nil, "Cannot act: " + err.Error() + "."
 	}
-	return []cardAction{{"Action", "btn-primary", g.useAction}}, ""
+	return []cardAction{
+		{Label: "Action", Class: "btn-primary", Act: actAction, On: g.useAction},
+	}, ""
 }

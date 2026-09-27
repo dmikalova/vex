@@ -135,27 +135,29 @@ func (g *game) brandMenu() app.UI {
 			Title("Menu").Text("☰").OnClick(g.toggleMenu),
 		app.If(g.menuOpen, func() app.UI {
 			items := []app.UI{
-				menuItem("undo", "Undo", g.undoMenu, !g.canUndo(), false),
-				menuItem("redo", "Redo", g.redoMenu, !g.canRedo(), false),
+				menuItem("undo", actUndo, "Undo", g.undoMenu, !g.canUndo(), false),
+				menuItem("redo", actRedo, "Redo", g.redoMenu, !g.canRedo(), false),
 				menuItem(
 					"wrench",
+					actManual,
 					"Manual mode",
 					g.manualMenu,
 					g.busy && !g.choosing && !g.choosingOption &&
 						!g.choosingPosition,
 					g.g.Manual(),
 				),
-				menuItem("restart", "New game", g.restartMenu,
+				menuItem("restart", actNewGame, "New game", g.restartMenu,
 					g.busy || g.choosing || g.choosingOption || g.choosingPosition, false),
 				menuItem(
 					"glyph-ban",
+					actConcede,
 					"Concede",
 					g.concedeMenu,
 					g.busy || g.choosing || g.choosingOption || g.choosingPosition ||
 						g.g.Winner() >= 0,
 					false,
 				),
-				menuItem("", "Keyboard shortcuts", g.keysMenu, false, false),
+				menuItem("", actKeys, "Keyboard shortcuts", g.keysMenu, false, false),
 				app.Hr().Class("menu-divider"),
 			}
 			for _, l := range referencePages() {
@@ -178,14 +180,17 @@ func menuLink(label, href string) app.UI {
 }
 
 // menuItem is one line of the menu: an icon (or the ? glyph for the shortcut
-// sheet), its name, and the on-state for a mode that is currently engaged.
-func menuItem(iconName, label string, onClick app.EventHandler, disabled, on bool) app.UI {
+// sheet), its name, and the on-state for a mode that is currently engaged. It
+// carries its own data-act (distinct from the icon name, which "Keyboard
+// shortcuts" has none of) so a scenario can open it by what it does.
+func menuItem(iconName, act, label string, onClick app.EventHandler, disabled, on bool) app.UI {
 	glyph := app.UI(app.Span().Class("menu-glyph").Text("?"))
 	if iconName != "" {
 		glyph = icon(iconName, "icon-nav")
 	}
 	return app.Button().
 		Class(cx("menu-item", ifCls(on, "menu-item-on"))).
+		DataSet("act", act).
 		Disabled(disabled).
 		OnClick(onClick).
 		Body(glyph, app.Span().Class("menu-label").Text(label))
