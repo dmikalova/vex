@@ -1,6 +1,11 @@
 package engine
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+
+	"github.com/dmikalova/vex/internal/census"
+)
 
 // This file holds the census machinery: the row type every catalog_<family>.go
 // file is written in, the rules classification each row carries, and the
@@ -13,17 +18,38 @@ import "reflect"
 // could ship a player-facing rule no term described. A catalog gives each family
 // the enumeration the enums already had, proved complete against the package's
 // own source the way LogEntrySamples is (ADR 0046).
+//
+// The census has three shapes, one per shape its members take. A node family is
+// an interface, discovered by the method its members declare (this file, and a
+// catalog_<family>.go per family). A text-bearing value enum is a set of
+// constants, discovered by the type they are declared with (catalog_enum.go) —
+// which closes the same hole one level down, where an enumerating function like
+// Keywords() was only as complete as its author remembered. Target is neither: it
+// is a flag struct, so it is covered as both, its kinds as an enum and its filter
+// builders as a family discovered by shape (catalog_target.go).
 
 // Catalogued is one census row: a constructed node of the family, and the
 // classification saying whether it owes a rulebook term. The row carries a real
 // value rather than a type name so a consumer — a totality test, a Visitor, the
 // style gallery — can render and walk the node it names.
 type Catalogued[T any] struct {
-	// Node is a representative value of the node type, filled only as far as it
-	// needs to render and resolve sensibly.
+	// Node is a representative value of the member, filled only as far as it needs
+	// to render and resolve sensibly: a constructed node for a node family, the
+	// constant itself for an enum, the base target with one filter applied for a
+	// Target builder.
 	Node T
+	// Name is the member's own name in source, for a family whose members are not
+	// types — an enum constant, a Target filter builder — because reflection can
+	// recover a value's type but never the identifier that names it. A node family
+	// leaves it empty and is keyed by its node's concrete type.
+	Name string
 	// Rules classifies the node: the term it owes, or the reason it owes none.
 	Rules RulesBearing
+	// Silent says the node renders no text by design, so the census does not read
+	// its empty rendering as an underfilled literal. It is rare and deliberate: an
+	// always-met condition adds no "while …" clause, and a bare quantity prints
+	// nothing before the noun it counts.
+	Silent bool
 }
 
 // RulesBearing is a node's rules classification, and the record of the judgement
@@ -72,12 +98,63 @@ type Family struct {
 	// Params are the method's parameter types as written in source, which
 	// separate two families whose methods share a name.
 	Params []string
+	// Also are the family's remaining interface methods, for a family one method
+	// does not identify. A Count is a Value and a CountText, and CardsDiscarded is
+	// a condition that exposes a Value for CountIs to read without being a Count,
+	// so naming Value alone would report it as an uncatalogued member.
+	Also []MethodSpec
+	// Returns, set with Method left empty, discovers the family by shape rather
+	// than by a method name: every exported method on the Name receiver whose only
+	// result is this type. Target is the one family shaped that way — it is a flag
+	// struct rather than an interface, because ADR 0005 keeps it comparable, so its
+	// members are its filter builders.
+	Returns string
 	// Rows is the family's census, in catalog order.
 	Rows []FamilyRow
 	// Gated reports whether the family's totality test is switched on. A family
 	// part-way through being catalogued is reported by `mage tool:census` but
 	// does not yet fail the build; the task that completes its catalog gates it.
 	Gated bool
+}
+
+// MethodSpec names one method a family's members declare: the method's name and
+// its parameter types as written in source. It is the unit the source scan
+// matches against, and a family whose interface has more than one method lists
+// its remaining ones in Also.
+type MethodSpec struct {
+	Method string
+	Params []string
+}
+
+// Declared returns every type in dir's non-test source that declares all of the
+// family's methods, mapped to the file declaring the primary one — the members
+// the family's catalog must cover. Both the totality test and `mage tool:census`
+// read the source through here, so the two always see the same family.
+func (f Family) Declared(dir string) (map[string]string, error) {
+	if f.Method == "" {
+		found, err := census.Builders(dir, f.Name, f.Returns)
+		if err != nil {
+			return nil, fmt.Errorf("scanning for %s builders: %w", f.Name, err)
+		}
+		return found, nil
+	}
+	var found map[string]string
+	for _, spec := range append([]MethodSpec{{Method: f.Method, Params: f.Params}}, f.Also...) {
+		declared, err := census.Implementations(dir, spec.Method, census.Params(spec.Params...))
+		if err != nil {
+			return nil, fmt.Errorf("scanning for %s.%s: %w", f.Name, spec.Method, err)
+		}
+		if found == nil {
+			found = declared
+			continue
+		}
+		for name := range found {
+			if _, ok := declared[name]; !ok {
+				delete(found, name)
+			}
+		}
+	}
+	return found, nil
 }
 
 // FamilyRow is a Catalogued row with its node erased to what the census asks of
@@ -92,6 +169,9 @@ type FamilyRow struct {
 	// that the catalogued value says something rather than standing in as an
 	// empty literal.
 	Text func() string
+	// Silent carries the row's declaration that its node prints nothing by
+	// design, which is what exempts it from that check.
+	Silent bool
 }
 
 // Families returns every catalogued node family. Each catalog_<family>.go
@@ -99,35 +179,22 @@ type FamilyRow struct {
 // totality tests, `mage tool:census` — picks up a new family without being
 // edited.
 func Families() []Family {
-	return append([]Family{
+	return []Family{
 		effectFamily(),
 		refinementFamily(),
-	}, uncataloguedFamilies()...)
-}
-
-// uncataloguedFamilies are the node families the census has not reached yet:
-// their discovery spec with no rows, so `mage tool:census` reports the whole
-// family as a gap and the task that catalogues one replaces its entry here with
-// a catalog_<family>.go. The list is what keeps a family from being forgotten
-// rather than merely uncatalogued.
-func uncataloguedFamilies() []Family {
-	return []Family{
-		{Name: "Condition", Method: "CondText"},
-		{Name: "Count", Method: "Value", Params: []string{"*EffectContext"}},
-		{Name: "CreatureVerb", Method: "VerbText"},
-		{Name: "Selection", Method: "pick", Params: []string{"*EffectContext", "[]LocalID"}},
-		{Name: "Spread", Method: "hits", Params: []string{"*EffectContext"}},
-		{Name: "TopAct", Method: "terminal"},
-		{
-			Name:   "PerTarget",
-			Method: "perTargetValue",
-			Params: []string{"*EffectContext", "LocalID"},
-		},
-		{Name: "Loss", Method: "lose", Params: []string{"int"}},
-		{Name: "RepeatGate", Method: "run", Params: []string{"*EffectContext", "Effect"}},
-		{Name: "Gather", Method: "gather", Params: []string{"*EffectContext"}},
-		{Name: "Quantity", Method: "picks", Params: []string{"*EffectContext"}},
-		{Name: "BonusIconSubject", Method: "bonusIconCards", Params: []string{"*EffectContext"}},
+		conditionFamily(),
+		countFamily(),
+		bonusIconSubjectFamily(),
+		creatureVerbFamily(),
+		selectionFamily(),
+		spreadFamily(),
+		topActFamily(),
+		perTargetFamily(),
+		lossFamily(),
+		repeatGateFamily(),
+		gatherFamily(),
+		quantityFamily(),
+		targetFilterFamily(),
 	}
 }
 
@@ -149,12 +216,28 @@ func newFamily[T any](
 	for i := range rows {
 		node := rows[i].Node
 		out[i] = FamilyRow{
-			Type:  nodeTypeName(node),
-			Rules: rows[i].Rules,
-			Text:  func() string { return text(node) },
+			Type:   rowName(rows[i].Name, node),
+			Rules:  rows[i].Rules,
+			Text:   func() string { return text(node) },
+			Silent: rows[i].Silent,
 		}
 	}
 	return Family{Name: name, Method: method, Params: params, Rows: out}
+}
+
+// also records the family's remaining interface methods, narrowing the source
+// scan to the types that declare all of them.
+func (f Family) also(specs ...MethodSpec) Family {
+	f.Also = specs
+	return f
+}
+
+// builds discovers the family by shape instead of by a method name — the
+// exported methods on its own receiver that return result — for a family that is
+// a struct rather than an interface.
+func (f Family) builds(result string) Family {
+	f.Method, f.Params, f.Returns = "", nil, result
+	return f
 }
 
 // gated switches the family's totality test on, which a family does once its
@@ -164,8 +247,13 @@ func (f Family) gated() Family {
 	return f
 }
 
-// nodeTypeName returns the name of a node's concrete type, unwrapping a pointer
-// so a pointer-receiver node is named the way the source declares it.
-func nodeTypeName(node any) string {
+// rowName is the name the census keys a row by: the one the row states outright,
+// or — for a node family, whose members are types — the node's concrete type,
+// unwrapping a pointer so a pointer-receiver node is named the way the source
+// declares it.
+func rowName(stated string, node any) string {
+	if stated != "" {
+		return stated
+	}
 	return reflect.Indirect(reflect.ValueOf(node)).Type().Name()
 }

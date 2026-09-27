@@ -214,10 +214,15 @@ the `tools` mage namespace, invoked with a colon (`mage tool:stub`):
   it prints the node types `internal/engine` declares that no census row covers,
   grouped by the file declaring them, and the rows that name no type; then the
   rulebook terms the rows name that no term carries — the prose still to write —
-  and the terms in the census's sections that no row claims. It only reports, so
-  it is readable while the census is half-filled; the per-family totality tests
-  in `catalog_test.go` are what fail the build, each switched on by the task that
-  completes its catalog (ADR 0018).
+  and the terms in the census's sections that no row claims, counting the
+  text-bearing value enums (`engine.Enums()`) alongside the node families. It only
+  reports, so it is readable while the census is half-filled; the totality tests
+  in `catalog_test.go` and `catalog_enum_test.go` are what fail the build (ADR
+  0018). The enum guard is the one to know about when adding a constant: a new
+  `Keyword`, `Duration` or `CounterKind` that its enumerating function
+  (`Keywords()`, `Durations()`, `CounterKinds()`) does not return fails the build
+  rather than going silently undescribed — add it to that function, or name it in
+  the enum's `Excluded` list with the reason it is not a real member.
 
 - `mage tool:gameSize` — report the in-memory `GameState` size (the cost of one
   undo snapshot), the number of implemented cards, and — after building a fresh

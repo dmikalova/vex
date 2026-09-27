@@ -1,10 +1,6 @@
 package engine
 
-import (
-	"testing"
-
-	"github.com/dmikalova/vex/internal/census"
-)
+import "testing"
 
 // TestFamilyTotality binds every gated family to the set of node types the
 // package's own source declares, so a node with no census row — and a row naming
@@ -42,25 +38,48 @@ func TestFamilyTotality(t *testing.T) {
 // owing exactly one of a term or a reason for owing none, and the node it
 // carries renders text. The render check is what stops a zero-valued literal
 // standing in for a node that reads a Target and cataloguing something that
-// prints nothing.
+// prints nothing; a row that marks itself Silent has declared that its node
+// prints nothing by design and is exempt.
 func TestFamilyRowsWellFormed(t *testing.T) {
 	for _, family := range Families() {
 		t.Run(family.Name, func(t *testing.T) {
 			for _, row := range family.Rows {
-				switch {
-				case row.Rules.Term != "" && row.Rules.NoTerm != "":
-					t.Errorf("%s names both a term (%q) and a reason for none (%q)",
-						row.Type, row.Rules.Term, row.Rules.NoTerm)
-				case row.Rules.Term == "" && row.Rules.NoTerm == "":
-					t.Errorf("%s is unclassified: name the rulebook term it owes, "+
-						"or the reason it owes none", row.Type)
-				}
-				if text := row.Text(); text == "" {
-					t.Errorf("%s renders no text; fill its census literal far enough to print",
-						row.Type)
-				}
+				checkRowClassified(t, row)
 			}
 		})
+	}
+}
+
+// TestDeclaredReportsAScanFailure pins the error arm of both source scans: a
+// directory that cannot be read is reported rather than read as a family with no
+// members, which would silently pass every totality check.
+func TestDeclaredReportsAScanFailure(t *testing.T) {
+	const missing = "no-such-directory"
+	for _, family := range []Family{effectFamily(), targetFilterFamily()} {
+		if _, err := family.Declared(missing); err == nil {
+			t.Errorf("%s.Declared(%q) returned no error", family.Name, missing)
+		}
+	}
+	if _, err := durationEnum().Declared(missing); err == nil {
+		t.Errorf("Duration.Declared(%q) returned no error", missing)
+	}
+}
+
+// checkRowClassified checks one census row, whether it names a node type or an
+// enum constant: exactly one of a term or a reason for owing none, and text that
+// renders unless the row declared itself Silent.
+func checkRowClassified(t *testing.T, row FamilyRow) {
+	t.Helper()
+	switch {
+	case row.Rules.Term != "" && row.Rules.NoTerm != "":
+		t.Errorf("%s names both a term (%q) and a reason for none (%q)",
+			row.Type, row.Rules.Term, row.Rules.NoTerm)
+	case row.Rules.Term == "" && row.Rules.NoTerm == "":
+		t.Errorf("%s is unclassified: name the rulebook term it owes, "+
+			"or the reason it owes none", row.Type)
+	}
+	if text := row.Text(); text == "" && !row.Silent {
+		t.Errorf("%s renders no text; fill its census literal far enough to print", row.Type)
 	}
 }
 
@@ -70,7 +89,7 @@ func TestFamilyRowsWellFormed(t *testing.T) {
 // orphan.
 func familyTypes(t *testing.T, family Family) map[string]string {
 	t.Helper()
-	types, err := census.Implementations(".", family.Method, census.Params(family.Params...))
+	types, err := family.Declared(".")
 	if err != nil {
 		t.Fatalf("scanning for %s implementations: %v", family.Name, err)
 	}

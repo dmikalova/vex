@@ -62,6 +62,21 @@ var (
 	toPurged  = Destination{zone: destPurged}
 )
 
+// Destinations lists every destination a card can name, in declaration order. It
+// is the canonical enumeration: the node census ranges over it, so a destination
+// added above cannot be silently missed. The invalid zero value is excluded, and
+// so are the two terminal destinations (destDiscard, destPurged) — a card writes
+// the Purge or Discard verb, never the destination those verbs move through.
+func Destinations() []Destination {
+	return []Destination{
+		ToHand,
+		ToTopOfDeck,
+		ToBottomOfDeck,
+		ToDeckShuffled,
+		ToArchives,
+	}
+}
+
 // Yours sends the card to the resolving player's own copy of the zone rather than
 // its owner's — an abduction into your archives (Uxlyx the Zookeeper).
 func (d Destination) Yours() Destination {

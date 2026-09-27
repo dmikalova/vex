@@ -339,6 +339,20 @@ const (
 	IntoBottomOfDeck
 )
 
+// DeckDests lists every deck routing in declaration order. It is the canonical
+// enumeration: the node census ranges over it, so a routing added above cannot be
+// silently missed. The enum has no invalid zero value — IntoHand is the first
+// real routing — so every constant is listed.
+func DeckDests() []DeckDest {
+	return []DeckDest{
+		IntoHand,
+		IntoArchives,
+		IntoDiscard,
+		IntoPurge,
+		IntoBottomOfDeck,
+	}
+}
+
 // validate rejects a DeckDest outside the known routing destinations.
 func (d DeckDest) validate() error {
 	if d < IntoHand || d > IntoBottomOfDeck {
