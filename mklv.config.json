@@ -68,7 +68,8 @@
         }
       ],
       "ignores": [
-        "docs/todo.md"
+        "docs/todo.md",
+        ".diatom/**"
       ]
     },
     "misspell": {
