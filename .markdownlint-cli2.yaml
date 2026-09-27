@@ -19,6 +19,7 @@ config:
 gitignore: true
 ignores:
   - docs/todo.md
+  - .diatom/**
 overrides:
   - config:
       MD024: false
