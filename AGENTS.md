@@ -147,6 +147,13 @@ tools):
   it as one minimized entry per bug that still reproduces, dropping the entries
   whose bug is fixed. The corpus is the list of open findings, not an archive of
   every script a soak ever saw; run this after fixing a soak or fuzz find.
+- `mage capturePrune` — the same, for the browser client's replay captures in
+  `internal/web/testdata/capture`: replay every entry, delete the ones whose fault
+  no longer reproduces and every one recorded against a different command-log
+  version or card pool, keep the rest. A capture is written by the dev server when
+  the client fails to replay a saved match; `TestCaptures` replays them all and
+  fails, so the directory is the list of **open findings** and a capture in a
+  commit is a lapse. See [docs/testing.md](docs/testing.md).
 
 When you add or update a mage target that writes a binary, keep the output in an
 ignored location (for example `./bin`) or add it under `ignore.git` in

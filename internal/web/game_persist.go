@@ -2,6 +2,7 @@ package web
 
 import (
 	"math/rand"
+	"runtime/debug"
 	"sort"
 	"time"
 
@@ -102,12 +103,43 @@ func (g *game) restoreUI(ui savedUI) {
 	}
 }
 
+// replayFailedNotice is the standing message shown once a current-version
+// snapshot failed to replay. It says the match could not be restored and that the
+// save was kept, because the kept snapshot is the reproduction and the player's
+// only lever over it is not clearing site data before it is collected.
+const replayFailedNotice = "This match could not be restored — replaying it " +
+	"failed. The save was kept so the fault can be investigated."
+
+// quarantine moves a snapshot that failed to replay out of the live slot into the
+// quarantine slot, posts it to the dev server's capture endpoint, and raises the
+// standing notice. The snapshot is kept rather than deleted because resume has
+// already ruled out the innocent explanations — wrong version, undecodable —
+// before any replay is attempted, so a failure here is a current-version snapshot
+// this build cannot replay, which is evidence. Proven by
+// TestAPanickingReplayIsQuarantined.
+//
+// The two halves of keeping it are deliberate duplicates: the quarantine key
+// survives in the one browser that hit the fault, and the capture carries it out
+// to a file somebody else can replay (see capture.go). A capture only lands on a
+// dev build, so the local copy is the fallback whenever the post cannot happen.
+func (g *game) quarantine(ctx app.Context, snap snapshot, reason any, stack []byte) {
+	store := ctx.LocalStorage()
+	// A failed write loses only the reproduction, and the match is unrestorable
+	// either way, so the live slot is cleared regardless.
+	_ = store.Set(quarantineKey, snap)
+	store.Del(g.matchKey())
+	postCapture(ctx, snap, reason, stack)
+	g.setNotice(replayFailedNotice)
+}
+
 // resume rebuilds the match from a saved snapshot, reporting whether it restored
-// one. A missing, wrong-version, or engine-incompatible snapshot is dropped and
-// resume returns false, so the caller deals a fresh game. The snapshot holds only
-// the session's Record, so the resume replays its command log from a fresh deal to
-// regenerate the exact state and typed log; a replay that diverges (an older card
-// pool, a since-changed action) is caught and started over.
+// one. A missing, wrong-version, or undecodable snapshot is deleted and resume
+// returns false, so the caller deals a fresh game. The snapshot holds only the
+// session's Record, so the resume replays its command log from a fresh deal to
+// regenerate the exact state and typed log; a replay that fails — diverging on a
+// since-changed action, or panicking on an id the current pool no longer hands out
+// — is caught, and that snapshot is moved to quarantine rather than deleted,
+// because by then it is a current-version save the current build cannot replay.
 func (g *game) resume(ctx app.Context) (ok bool) {
 	store := ctx.LocalStorage()
 	if !store.Contains(g.matchKey()) {
@@ -115,21 +147,24 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 	}
 	var snap snapshot
 	if err := store.Get(g.matchKey(), &snap); err != nil ||
-		snap.Version != snapshotVersion || snap.Record.Seed == 0 {
+		snap.Version != snapshotVersion || snap.Record.Seed == 0 ||
+		snap.Record.Version != session.Version {
 		store.Del(g.matchKey())
 		return false
 	}
 	// Replaying a log against a different engine/card pool can panic on an
 	// out-of-range id; recover and fall back to a fresh deal.
 	defer func() {
-		if recover() != nil {
-			store.Del(g.matchKey())
+		if r := recover(); r != nil {
+			// debug.Stack inside the recovering deferred call still walks the panicking
+			// frames, so the capture carries where it broke, not just that it did.
+			g.quarantine(ctx, snap, r, debug.Stack())
 			ok = false
 		}
 	}()
 
 	if err := g.replayRecord(snap.Record); err != nil {
-		store.Del(g.matchKey())
+		g.quarantine(ctx, snap, err, nil)
 		return false
 	}
 	g.restoreUI(snap.UI)

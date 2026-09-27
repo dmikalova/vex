@@ -566,6 +566,14 @@ type logMark struct {
 // instead of dealing a new game.
 const persistKey = "vex.match"
 
+// quarantineKey names the local-storage slot a snapshot is moved to when its
+// replay fails. A snapshot only reaches that path after its version and its
+// decode have both been checked, so the failure is a current-version snapshot the
+// current build cannot replay — an engine regression, not a stale save — and
+// deleting it would destroy the only reproduction. One slot holds the most recent
+// one; a later failure overwrites it rather than accumulating.
+const quarantineKey = "vex.match.failed"
+
 // matchKey is the local-storage slot this component's match is saved in and
 // resumed from: persistKey for a real match, and whatever namespace was injected
 // for a match that is not one (the ui-test host's scratch slot). Every read,

@@ -259,6 +259,55 @@ engine line that broke. Once diagnosed, write a focused **engine or card test** 
 the specific rule — the simulation finds the bug, the unit test pins the fix — and
 keep or delete the corpus entry as you prefer.
 
+## Option 5 — Replay captures from the browser client
+
+A capture is the web client's sibling of a `FuzzPlay` corpus entry: a match the
+client saved and then **could not replay**. `resume` checks the snapshot's version
+and decode _before_ it replays, so anything that gets past those checks and then
+panics or diverges is a current-version save the current build cannot replay — an
+engine regression, and the only reproduction of it.
+
+**How one gets written.** The client is wasm in a browser sandbox and cannot write
+a file, so it is a round trip. The failure is kept twice, and the two halves
+degrade into each other:
+
+- Locally, the snapshot is **moved to a quarantine key** in local storage rather
+  than deleted, and the player is told the save was kept.
+- Over the wire, the client POSTs the record, the panic and the stack to
+  `POST /debug/capture`, and the **dev server** writes one JSON file per finding
+  under `internal/web/testdata/capture/`, named by content hash so re-hitting the
+  same bug does not pile up duplicates. That endpoint is registered only when
+  `web.DevEnabled()` — the same switch `/style` uses — so a deployed build has no
+  endpoint, the POST silently fails, and the quarantine key is all there is.
+
+**A capture is an open finding, not an archive entry.** `TestCaptures` in
+`internal/web` replays every file in that directory and **fails** with the panic
+it recorded, so it runs inside `mage ci:test` with no new target and surfaces the
+finding to an agent who was never at the keyboard. Captures are committed, not
+gitignored, which is what makes that work — and a capture sitting in a commit is
+therefore a lapse: findings are expected to be fixed and pruned before commit,
+exactly like soak and fuzz findings.
+
+**Why a stale capture is skipped, not failed.** Each capture stamps the
+command-log version, the commit the dev server was built from, and a **card-pool
+digest** — a hash over every implemented card's name, type, house, power, armor
+and rendered text. The digest catches the case a version bump does not: the pool
+changes constantly, the same seed deals different cards from a different pool, and
+a capture replayed against a pool it was never recorded against cannot be reasoned
+about. So a capture whose version or digest differs from the current tree is
+**ignored with a note** rather than failed — a stale capture is not evidence and
+must never fail the gate. The commit is recorded for whoever investigates and is
+deliberately _not_ a prune key, because an ancestry test would be wrong across
+branches.
+
+**Pruning.** `mage capturePrune` replays every entry, deletes the ones whose fault
+no longer reproduces along with every stale one, and keeps the rest. Same contract
+as `mage corpusPrune`.
+
+**Not a `FuzzPlay` entry.** A web capture is a seed plus sets plus a command log,
+not a `sim.Simulate` byte script, so it gets its own directory and its own replay
+test rather than joining the fuzz corpus.
+
 **Where the coverage gate does _not_ apply.** `internal/sim` is intentionally
 outside the 100% engine gate: it drives the engine through its public API and the
 real card database (which the engine may not import). The only engine-side addition
@@ -345,6 +394,10 @@ mage soak -duration=5m      # the soak's time budget
 mage testRun TestHeal
 mage testRun 'TestHeal|TestAmmoniaClouds'
 mage fuzzClean    # reset the local fuzz corpus if it gets stale
+
+# prune the lists of open findings once a fault is fixed:
+mage corpusPrune   # internal/sim/testdata/fuzz/FuzzPlay
+mage capturePrune  # internal/web/testdata/capture
 
 mage uiTest       # the browser scenarios, headless (outside the gate)
 ```
