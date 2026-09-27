@@ -30,5 +30,21 @@ would be dealt: each point of armor stops 1 damage, and armor spent this way doe
 not come back until the creature's controller readies at the end of their turn.
 Armor never reduces a creature's power, and healing does not restore spent armor.`,
 		},
+		{
+			// A combat term, not an effect one: no effect node imposes this rule. It is
+			// a standing restriction a card in play carries (Restrictions.MustFightIfAble
+			// in card.go), so it has no census row and belongs beside the other rules
+			// about when a creature fights rather than in the Effects section, whose
+			// terms the census claims one for one.
+			Section:    SectionCombat,
+			Title:      "Must Fight When Used",
+			Definition: "While in play, force every creature that has a legal fight target to fight when used, barring reap and Action abilities.",
+			Body: `Some cards in play impose that creatures must fight when used, if able (Little
+Rapscal). While such a card is in play, a creature that has at least one legal
+enemy to fight cannot be used to reap or to use an "Action:" ability — its only
+use is to fight. A creature with no legal fight target is unaffected and may reap
+or act as usual. The rule applies to both players' creatures. An enraged creature
+is under the same restriction from its own status.`,
+		},
 	})
 }

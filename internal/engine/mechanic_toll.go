@@ -29,6 +29,13 @@ const (
 	TollUseArtifact
 )
 
+// allTollActions lists the actions a toll can charge for, in declaration order.
+// It is the canonical enumeration the node census ranges over, so a third action
+// added above cannot be silently missed; the invalid zero value is excluded.
+func allTollActions() []TollAction {
+	return []TollAction{TollPlayArtifact, TollUseArtifact}
+}
+
 // phrase renders the toll's action for card text and the log, e.g. "play an
 // artifact".
 func (a TollAction) phrase() string {

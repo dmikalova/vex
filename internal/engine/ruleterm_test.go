@@ -1,14 +1,19 @@
 package engine
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 // TestClosedCatalogsAreComplete enforces ADR 0018: each closed catalog the game
 // defines is complete in the rulebook registry. A member with no term fails the
 // build here rather than going silently undescribed (the gap that once left
-// Elusive and Taunt out of the rulebook). Turn phases are covered too; only
-// effects stay exempt (no closed effect catalog exists yet — see docs/todo.md),
-// and combat is deliberately not a step catalog: fighting is an action taken
-// during the main phase, described in its own section, not a turn step.
+// Elusive and Taunt out of the rulebook). Turn phases are covered too. Effects
+// are no longer exempt: the node census closes them from the other end, and
+// TestCatalogTermsAreRegistered / TestCensusSectionTermsAreClaimed bind its rows
+// to the registry in both directions. Combat is deliberately not a step catalog:
+// fighting is an action taken during the main phase, described in its own
+// section, not a turn step.
 func TestClosedCatalogsAreComplete(t *testing.T) {
 	titled := func(section Section) map[string]bool {
 		have := map[string]bool{}
@@ -79,6 +84,72 @@ func TestClosedCatalogsAreComplete(t *testing.T) {
 			}
 		}
 	})
+}
+
+// censusTermSections are the rulebook sections the node census claims one for
+// one: Card text holds the sentence parts a node leans on (Target, For Each,
+// Duration), Effects holds the verbs. A term filed here is owed a row, which is
+// what TestCensusSectionTermsAreClaimed enforces. A row may still bind to a term
+// in any other section — Ward is a keyword, forging is a turn step — so the
+// forward check in TestCatalogTermsAreRegistered matches across the whole
+// registry.
+var censusTermSections = []Section{SectionCardText, SectionEffect}
+
+// TestCatalogTermsAreRegistered is the forward half of the census's binding to
+// the rulebook (ADR 0018): a row that names a Term must name a title some
+// registered term carries, so a classification cannot point at prose nobody
+// wrote. The match is across the whole registry rather than one section, because
+// a node binds to the term a player would actually look up — the ward nodes to
+// the Keyword section's Ward, a forge node to the Turn section's forge step.
+func TestCatalogTermsAreRegistered(t *testing.T) {
+	registered := map[string]bool{}
+	for _, term := range RuleTerms() {
+		registered[term.Title] = true
+	}
+	check := func(t *testing.T, rows []FamilyRow) {
+		t.Helper()
+		for _, row := range rows {
+			if title := row.Rules.Term; title != "" && !registered[title] {
+				t.Errorf("%s names rulebook term %q, which no term carries; "+
+					"write it or correct the row (ADR 0018)", row.Type, title)
+			}
+		}
+	}
+	for _, family := range Families() {
+		t.Run(family.Name, func(t *testing.T) { check(t, family.Rows) })
+	}
+	for _, enum := range Enums() {
+		t.Run(enum.Type, func(t *testing.T) { check(t, enum.Rows) })
+	}
+}
+
+// TestCensusSectionTermsAreClaimed is the reverse half: every term in the
+// sections the census claims must be named by at least one row. A term left
+// behind by a deleted or renamed node fails here instead of rotting in the
+// rulebook. A rule that genuinely has no census member — a standing restriction a
+// card carries rather than an effect node — belongs in another section, which is
+// why "Must Fight When Used" is filed under Combat.
+func TestCensusSectionTermsAreClaimed(t *testing.T) {
+	claimed := map[string]bool{}
+	claim := func(rows []FamilyRow) {
+		for _, row := range rows {
+			claimed[row.Rules.Term] = true
+		}
+	}
+	for _, family := range Families() {
+		claim(family.Rows)
+	}
+	for _, enum := range Enums() {
+		claim(enum.Rows)
+	}
+	for _, term := range RuleTerms() {
+		if !slices.Contains(censusTermSections, term.Section) || claimed[term.Title] {
+			continue
+		}
+		t.Errorf("term %q in section %q is claimed by no census row; "+
+			"give a node the term, or file the term in another section (ADR 0018)",
+			term.Title, term.Section)
+	}
 }
 
 // TestRuleTermsWellFormed checks the registry itself: it is non-empty and every

@@ -23,6 +23,14 @@ const (
 	useKindCount
 )
 
+// allUseKinds lists the three real ways to use a card, in declaration order. It
+// is the canonical enumeration the node census ranges over, so a fourth way added
+// above cannot be silently missed; the invalid zero value and the bound are
+// excluded.
+func allUseKinds() []UseKind {
+	return []UseKind{ReapUse, FightUse, ActionUse}
+}
+
 // valid reports whether the use kind is one of the three real ways to use a card.
 func (k UseKind) valid() bool { return k > useKindUnset && k < useKindCount }
 

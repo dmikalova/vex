@@ -55,7 +55,8 @@ with the enums they describe, and the registry is **complete by construction**,
   combat step — and fails if any member has no registered term. Adding a keyword
   without describing it breaks the build. `Elusive` and `Taunt` are the first two
   the test lights up. Effects are **not** a closed catalog in v1 and are exempt
-  until ADR 0019's classification lands; see Consequences.
+  until ADR 0019's classification lands; see Consequences. (That exemption is
+  withdrawn — see "Update: the node census closes the effect catalog".)
 
 - **Fresh by gate.** `mage gen` regenerates the rulebook from the registry and the
   prose fragments, and `mage ci:check` fails on any diff between the committed file
@@ -86,7 +87,8 @@ with the enums they describe, and the registry is **complete by construction**,
   stale file is a red gate, not a silent lie.
 - The generator stops string-scraping Go source and reads typed values, so a
   renamed term or a new keyword flows through as data, not as a re-parsed comment.
-- **Effects are deferred.** They are not a closed catalog and many are pure
+- **Effects are deferred** (withdrawn — see "Update: the node census closes the
+  effect catalog"). They are not a closed catalog and many are pure
   composition or plumbing that bear no player-facing rule. ADR 0019 classifies
   each effect node as RuleBearing, Composition, or Implementation; only
   RuleBearing effects owe a term, and a non-RuleBearing effect that nonetheless
@@ -111,3 +113,76 @@ each section intro registers from its `ruleterms_<section>.go` init, beside that
 section's terms. `genrules` reads all three from the engine and no longer touches
 the filesystem for prose, so the whole rulebook — terms and framing alike — flows
 through one typed contract. The `docs/rulebook/` directory is removed.
+
+## Update: the node census closes the effect catalog
+
+Effects are no longer exempt, and the deferral to ADR 0019 is **withdrawn**. ADR
+0019 is the controlled Rules voice; it contains no RuleBearing / Composition /
+Implementation classification and never did, so the exemption above pointed at a
+promise nothing kept. The hole it stood in for is now closed by a **node census**
+in `internal/engine`, built on the mechanism ADR 0046 introduced for
+`LogEntrySamples`: a hand-written catalog of constructed values, proved complete
+against the package's own source by an AST scan.
+
+**Closed catalogs, one per node family.** The AST node families — `Effect` and
+the strategies beside it (`Refinement`, `Condition`, `Count`, `Selection`,
+`Spread`, `Gather`, `Quantity`, and the rest) — are struct types rather than an
+enum, so nothing enumerated them. Each now has a `catalog_<family>.go` holding one
+`Catalogued` row per member, carrying a **constructed node** rather than a type
+name, so a consumer can render and walk what the row names. `Families()`
+(`catalog.go`) returns them all, and `TestFamilyTotality` binds each gated family
+to the types the package's non-test source declares, **in both directions**: a
+node with no row fails, and a row naming no declared type fails. `Target` is the
+odd member — a flag struct kept comparable by ADR 0005 — so it is catalogued as
+both an enum of its kinds and a family of its filter builders discovered by
+shape; `Destination` is covered the same way.
+
+**Interfaces and constants are guarded too.** A new `type X interface` in
+`internal/engine` is a red build until `Interfaces()` (`catalog_interface.go`)
+classifies it as a catalogued node family or records why it is not one
+(`TestInterfaceTotality`) — so adding a family cannot skip the census. One level
+down, `Enums()` (`catalog_enum.go`) scans the constants declared with each
+text-bearing enum's type, so a `Keyword`, `Duration` or `CounterKind` that its
+enumerating function forgot fails the build rather than going silently
+undescribed (`TestEnumTotality`). That closes the original hole from underneath:
+"complete by construction" no longer rests on an author remembering to extend
+`Keywords()`.
+
+**Two classes, not three.** Every row carries a mandatory `RulesBearing` with
+exactly one of two columns set: `Term`, the rulebook title the node owes, or
+`NoTerm`, a required one-line reason it owes none. Both empty and both set fail
+(`TestFamilyRowsWellFormed`, `TestEnumRowsWellFormed`). The rule for `NoTerm` is
+stated plainly: **a node is plumbing when its text contributes no vocabulary of
+its own** — it only joins, repeats, gates or re-aims its children, and everything
+a player reads comes from those children (`Sequence`, `Then`, `ForEach`,
+`Repeat`, the duration wrappers). The three classes the Consequences promised
+collapsed to two because nothing downstream reads the Composition /
+Implementation distinction: every consumer asks only whether a term is owed. A
+row also renders its node's text, so a zero-valued literal cannot stand in for a
+node that prints nothing.
+
+**Binding rules.** Terms bind **many-to-one**: several nodes may name one title
+(all the Archive nodes are "Archive"; every `Duration` window is "Duration"),
+because a term per node would turn the rulebook into an API listing. Binding is
+**cross-section**: a row may name a title in any section, matched across the
+whole registry, so the ward nodes point at the Keyword section's "Ward" and a
+forge node at the Turn section's step rather than restating the rule
+(`TestCatalogTermsAreRegistered`). And the binding is checked in **reverse**:
+every term in the Effects and Card text sections must be claimed by at least one
+row (`TestCensusSectionTermsAreClaimed`), so a term left behind by a deleted or
+renamed node fails the build instead of rotting in the rulebook. A rule with no
+census member — a standing restriction a card definition carries rather than an
+effect node, such as "Must Fight When Used" — belongs in another section, not in
+an exemption.
+
+**The spine gained a "Card text" section.** The Decision names the spine as
+"(turn, combat, cardtype, keyword, ability, effect)". It is now turn, combat,
+cardtype, keyword, bonus, ability, **cardtext**, effect. Card text holds the
+sentence parts a node leans on — Target, For Each, Duration, the conditional
+frame — which the Effects section's verbs would otherwise have to restate one
+verb at a time. It and Effects are the two sections the reverse check claims.
+
+`mage tool:census` reports the whole census — uncatalogued nodes grouped by
+declaring file, rows naming no node, unclassified interfaces, titles no term
+carries, and unclaimed terms — so the state is readable without reading the
+tests. The tests are what fail the build.
