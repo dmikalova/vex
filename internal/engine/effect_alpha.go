@@ -17,7 +17,7 @@ func (g *Game) actedThisTurn(player int) bool {
 		g.State.DiscardedThisTurn[player].Count > 0 {
 		return true
 	}
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		if g.State.Cards[id].TimesUsedThisTurn > 0 {
 			return true
 		}

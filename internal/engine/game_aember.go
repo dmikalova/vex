@@ -62,7 +62,7 @@ func (g *Game) GainAember(
 func (g *Game) aemberCaptorFor(player int) (LocalID, bool) {
 	var captors []LocalID
 	for p := range 2 {
-		for _, id := range g.allInPlay(p) {
+		for _, id := range g.creaturesAndArtifacts(p) {
 			def := g.cat.def(id)
 			r := def.Replaces
 			if g.TypeOf(id) != Creature ||
@@ -104,7 +104,7 @@ func (g *Game) aemberCaptorFor(player int) (LocalID, bool) {
 // pool scoping is consulted.
 func (g *Game) stolenRedirectSource() (LocalID, bool) {
 	for p := range 2 {
-		for _, id := range g.allInPlay(p) {
+		for _, id := range g.creaturesAndArtifacts(p) {
 			r := g.cat.def(id).Replaces
 			if r.Of == EventAemberStolen && r.With == Capture {
 				return id, true
@@ -152,7 +152,7 @@ func (g *Game) StolenAemberCaptor(player int) (captor, cause LocalID, ok bool) {
 // watches, rather than a bespoke flag.
 func (g *Game) AemberTakenFromSupply(player int) (LocalID, bool) {
 	for p := range 2 {
-		for _, id := range g.allInPlay(p) {
+		for _, id := range g.creaturesAndArtifacts(p) {
 			r := g.cat.def(id).Replaces
 			if r.Of != EventAemberTakenFromPool || r.With != FromCommonSupply {
 				continue

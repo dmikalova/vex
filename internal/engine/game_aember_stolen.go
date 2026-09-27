@@ -9,7 +9,7 @@ func (g *Game) EmitAemberStolenFrom(victim, amount int) {
 	if amount <= 0 {
 		return
 	}
-	for _, id := range g.allInPlay(victim) {
+	for _, id := range g.creaturesAndArtifacts(victim) {
 		pending := g.triggeredBy(id, TriggerAfterAemberStolenFromYou)
 		if len(pending) == 0 || !g.inPlay(id) {
 			continue

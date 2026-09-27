@@ -374,7 +374,7 @@ func (p subjectPolicy) reaches(id, subject LocalID) bool {
 // subject as "it".
 func (w *abilityWindow) addBoard(trigger Trigger, subject LocalID, policy subjectPolicy) {
 	for player := range 2 {
-		for _, id := range w.g.allInPlay(player) {
+		for _, id := range w.g.creaturesAndArtifacts(player) {
 			if policy.reaches(id, subject) {
 				w.add(id, trigger, subject, true)
 			}
@@ -390,7 +390,7 @@ func (w *abilityWindow) addSide(
 	subject LocalID,
 	policy subjectPolicy,
 ) {
-	for _, id := range w.g.allInPlay(player) {
+	for _, id := range w.g.creaturesAndArtifacts(player) {
 		if policy.reaches(id, subject) {
 			w.add(id, trigger, subject, true)
 		}
@@ -423,7 +423,7 @@ func (w *abilityWindow) addTurnScoped(
 	resolveAsActivePlayer bool,
 ) {
 	w.addSide(actor, trigger, 0, includeSubject)
-	for _, id := range w.g.allInPlay(1 - actor) {
+	for _, id := range w.g.creaturesAndArtifacts(1 - actor) {
 		resolver := w.g.controller(id)
 		if resolveAsActivePlayer {
 			resolver = actor
@@ -464,7 +464,7 @@ func (g *Game) emitBoard(trigger Trigger, subject LocalID, policy subjectPolicy)
 // resolve in an order the seat numbers do not give (the acting player's board
 // first, whichever seat that is).
 func (g *Game) emitSide(player int, trigger Trigger, subject LocalID, policy subjectPolicy) {
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		if policy.reaches(id, subject) {
 			g.triggerAbilities(id, trigger, subject, true)
 		}
@@ -647,7 +647,7 @@ func (g *Game) actionReactions(actor int, id LocalID) []triggeredAbility {
 	w := g.window()
 	w.addAs(id, TriggerAction, actor, 0, false)
 	w.add(id, TriggerAfterUsedSelf, 0, false)
-	for _, o := range g.allInPlay(actor) {
+	for _, o := range g.creaturesAndArtifacts(actor) {
 		if o != id {
 			w.add(o, TriggerAfterUse, id, true)
 		}

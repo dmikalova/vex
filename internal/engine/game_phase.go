@@ -65,7 +65,7 @@ func (g *Game) startOfTurnPhase(player int) {
 	// loss) lasts through the rest of the granting turn and the opponent's whole
 	// turn, then lifts here at the start of the controller's next turn — before any
 	// start-of-turn ability resolves, so those abilities see the grant already gone.
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		g.State.Cards[id].KeywordsUntilNextTurn = 0
 		g.State.Cards[id].LostKeywordsUntilNextTurn = 0
 		g.State.Cards[id].AssaultUntilNextTurn = 0
@@ -99,7 +99,7 @@ func (g *Game) forgePhase(player int) {
 // new turn, and lifts the this-turn-only state that expires with the turn.
 func (g *Game) readyPhase(player int) {
 	var readied []LocalID
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		core := &g.State.Cards[id]
 		if core.Exhausted {
 			readied = append(readied, id)
@@ -123,7 +123,7 @@ func (g *Game) readyPhase(player int) {
 	// "Cannot be dealt damage" lasts only the turn, so clear it on every creature,
 	// including any enemy one an effect protected (Protectrix). A keyword gained for
 	// the turn (Scout) expires the same way, on whichever creature holds it.
-	for _, id := range append(g.allInPlay(player), g.allInPlay(1-player)...) {
+	for _, id := range append(g.creaturesAndArtifacts(player), g.creaturesAndArtifacts(1-player)...) {
 		g.State.Cards[id].GrantedKeywords = 0
 		g.State.Cards[id].LostKeywords = 0
 		g.State.Cards[id].ConsideredFlank = false
@@ -170,7 +170,7 @@ func (g *Game) readyPhase(player int) {
 	g.clearLasting(player)
 	// End of the "ready cards" step: every card has readied (Greater Oxtet purges
 	// a card from hand to grow).
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		g.triggerAbilities(id, TriggerEndOfReadyStep, 0, false)
 	}
 	// A power buff that lasted only the turn has just expired.

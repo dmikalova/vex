@@ -67,7 +67,7 @@ func (g *Game) ResolveBonusIconsOn(player int, id LocalID) {
 // resolving the bonus icons on cards they play (Master of the Grey).
 func (g *Game) cannotResolveBonusIcons(player int) bool {
 	for owner := range 2 {
-		for _, id := range g.allInPlay(owner) {
+		for _, id := range g.creaturesAndArtifacts(owner) {
 			switch g.cat.def(id).Restricts.BonusIcons {
 			case Controller:
 				if player == owner {
@@ -130,7 +130,7 @@ func (g *Game) bonusInsteadFor(
 	ic BonusIcon,
 	offered []LocalID,
 ) (BonusInstead, LocalID, bool) {
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		if slices.Contains(offered, id) {
 			continue
 		}
@@ -198,7 +198,7 @@ func (g *Game) resolveBonusIconEffect(player int, id LocalID, ic BonusIcon) {
 // Maleficorn (Damage, with the creature it hit bound as "it").
 func (g *Game) afterBonusReaction(player int, tr Trigger, it LocalID, hasIt bool) {
 	w := g.window()
-	for _, src := range g.allInPlay(player) {
+	for _, src := range g.creaturesAndArtifacts(player) {
 		w.add(src, tr, it, hasIt)
 	}
 	g.resolveWindow(g.orderTriggered(player, w.pending))
@@ -255,7 +255,7 @@ func (g *Game) resolveBonusCapture(player int, id LocalID) {
 // creaturesInPlay lists a player's in-play creatures.
 func (g *Game) creaturesInPlay(player int) []LocalID {
 	var out []LocalID
-	for _, c := range g.allInPlay(player) {
+	for _, c := range g.creaturesAndArtifacts(player) {
 		if g.TypeOf(c) == Creature {
 			out = append(out, c)
 		}

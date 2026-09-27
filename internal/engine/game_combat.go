@@ -295,19 +295,19 @@ func (g *Game) fightReactions(
 	// Colosseum) whose controller is the enemy of a combatant killed in the fight
 	// reacts, with the destroyed creature as "it".
 	if !defenderAlive {
-		for _, id := range g.allInPlay(1 - defenderSide) {
+		for _, id := range g.creaturesAndArtifacts(1 - defenderSide) {
 			add(id, TriggerAfterEnemyDestroyedFighting, defender, true)
 		}
 	}
 	if !attackerAlive {
-		for _, id := range g.allInPlay(1 - attackerSide) {
+		for _, id := range g.creaturesAndArtifacts(1 - attackerSide) {
 			add(id, TriggerAfterEnemyDestroyedFighting, attacker, true)
 		}
 	}
 	// The used card's own "after I am used", then "after you use a card" on the
 	// attacking player's other cards, with the attacker as "it".
 	add(attacker, TriggerAfterUsedSelf, 0, false)
-	for _, id := range g.allInPlay(attackerSide) {
+	for _, id := range g.creaturesAndArtifacts(attackerSide) {
 		if id != attacker {
 			add(id, TriggerAfterUse, attacker, true)
 		}
@@ -317,7 +317,7 @@ func (g *Game) fightReactions(
 	// a friendly fighter (Lieutenant Gorvenal, by ItIsFriendly), which firesForSubject
 	// keeps only when the fighter is on the reacting card's side.
 	for player := range 2 {
-		for _, id := range g.allInPlay(player) {
+		for _, id := range g.creaturesAndArtifacts(player) {
 			add(id, TriggerAfterCreatureFights, attacker, true)
 		}
 	}
@@ -652,7 +652,7 @@ func (g *Game) dealDamage(controller int, targets ...DamageTarget) {
 func (g *Game) armorPreventWatchers() []LocalID {
 	var watchers []LocalID
 	for player := range 2 {
-		for _, id := range g.allInPlay(player) {
+		for _, id := range g.creaturesAndArtifacts(player) {
 			if len(g.triggeredBy(id, TriggerAfterArmorPrevents)) > 0 {
 				watchers = append(watchers, id)
 			}
@@ -702,7 +702,7 @@ func (g *Game) emitArmorPrevented(watchers []LocalID, armorBefore map[LocalID]in
 // cannot bounce damage between them.
 func (g *Game) damageRedirect(id LocalID) LocalID {
 	for player := range 2 {
-		for _, shield := range g.allInPlay(player) {
+		for _, shield := range g.creaturesAndArtifacts(player) {
 			t := g.cat.def(shield).TakesDamageFor
 			if shield == id || !t.valid() {
 				continue
@@ -728,7 +728,7 @@ func (g *Game) neighborFightSplash(targets []DamageTarget) []DamageTarget {
 	}
 	var sharers []LocalID
 	for player := range 2 {
-		for _, id := range g.allInPlay(player) {
+		for _, id := range g.creaturesAndArtifacts(player) {
 			if g.cat.def(id).AlsoTakesNeighborFightDamage {
 				sharers = append(sharers, id)
 			}

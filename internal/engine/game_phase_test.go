@@ -140,7 +140,7 @@ func TestEndOfTurnAbilitiesResolveAfterReadyAndDraw(t *testing.T) {
 	var handAtTrigger, exhaustedAtTrigger int
 	watcher := gameEffect{fn: func() {
 		handAtTrigger = len(g.Hand(0))
-		for _, id := range g.allInPlay(0) {
+		for _, id := range g.creaturesAndArtifacts(0) {
 			if g.State.Cards[id].Exhausted {
 				exhaustedAtTrigger++
 			}
