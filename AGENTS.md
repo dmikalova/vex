@@ -308,23 +308,6 @@ When you insert a function directly above an existing one, re-read the seam (or
 check `git diff`) to confirm you did not swallow the first line of the next
 declaration's doc comment.
 
-## Multiple agents may be running
-
-More than one agent can be working in this repo at the same time. If the build,
-vet, or tests fail because of a change you did **not** make — an unfamiliar file,
-a symbol you never touched, an in-progress edit that doesn't yet compile — assume
-another agent is mid-change. Wait a little and try again rather than "fixing" or
-reverting their work. Only act on failures that stem from your own changes.
-
-Prefer **targeted `go test`** for your own work and save the full `mage ci:check`
-for when you actually need the whole-tree gate. `mage ci:check` is the single most
-contended command in a multi-agent run: it builds and lints everything, so it
-catches every sibling's mid-edit as a failure that is not yours. Before you run
-it, glance at `git status --short internal/engine internal/web` — if a shared
-package is mid-edit, the gate will fail on their work, not yours. When it fails
-only on files outside your change set, record it and move on; do not chase a red
-gate you did not cause.
-
 ## Leave git alone
 
 Do not perform or propose git operations. Do not stage, commit, amend, branch,
