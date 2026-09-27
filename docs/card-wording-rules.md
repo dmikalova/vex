@@ -164,14 +164,8 @@ written with an arrow, not a follow-up sentence.
 (`A. B.`) and from a state branch (`If <fact>, …`).
 
 A **self-repeat** takes the arrow only when its loop really is gated on the effect
-having happened. Bait and Switch's steal stops the moment it moves no Æmber, so it
-prints `Steal 1 Æmber -> if your opponent has more Æmber than you, repeat this
-effect`. Numquid the Fair repeats on a board fact alone — it comes back while you
-are overwhelmed even when a ward absorbs its destroy — so it is two plain
-sentences: `Destroy an enemy creature. If you are overwhelmed, repeat this
-effect`. The gates are named for the split (`WhileYouDo` and `MayWhileYouDo` print
-the arrow, `While` prints the sentence), so the printed text says which loop the
-card has.
+having happened; a loop that turns on a board fact alone is two plain sentences.
+Rule 39 gives both templates and what picks between them.
 
 A gate takes an `otherwise` **only** for a genuine two-way branch — arms that are
 **different verbs**, the same carve-out rule 22 grants a state branch. When the
@@ -838,6 +832,44 @@ happened.
 
 The renderer applies this too: `fightTense` in `internal/engine/text.go`, pinned
 by `TestBeforeFightTargetReadsInPresentTense`.
+
+---
+
+## 39. A self-repeat is a sentence, and takes `->` only when the effect gates it
+
+An effect that repeats itself is written one of two ways, and which one it takes
+says why the loop stops.
+
+- `<do>. If <cond>, repeat this effect.` — the loop turns on a fact about the
+  board alone. The effect may do nothing and the loop still continues, so the
+  repeat clause is a plain second sentence with no arrow.
+- `<do> -> if <cond>, repeat this effect.` — the loop also stops because the
+  effect did nothing. The arrow is rule 5's result gate ("if you do"), so the
+  printed text says the repeat is gated on the effect having happened.
+
+| Original                                                                                                                                             | Curated                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `Destroy an enemy creature. Repeat this card's effect if your opponent still controls more creatures than you.`                                      | `Destroy an enemy creature. If you are overwhelmed, repeat this effect.`                                                 |
+| `Steal 1 Æmber. Discard the top card of your deck. If that card is a Shadows card, trigger this effect again.`                                       | `Steal 1 Æmber. Discard the top card of your deck. If the discarded card is a Shadows card, repeat this effect.`         |
+| `If your opponent has more Æmber than you, steal 1 Æmber. Repeat this card's effect if your opponent still has more Æmber than you.`                 | `Steal 1 Æmber -> if your opponent has more Æmber than you, repeat this effect.`                                         |
+| `Destroy an enemy creature and a friendly creature. You may repeat this effect as many times as you like, as long as it is possible to repeat the entire effect.` | `Destroy an enemy creature and a friendly creature -> if there is a friendly creature in play, you may repeat this effect.` |
+
+The clause after the arrow stays lowercase, as every example in rule 5's table
+does — `->` joins one sentence, it does not start a second.
+
+**Numquid the Fair**, **Neutron Shark** and **Ransack** take the sentence.
+Numquid repeats while you are overwhelmed, so it comes back even when a ward
+absorbs its destroy; Neutron Shark and Ransack repeat on the house of the card
+they discarded. **Bait and Switch** and **Bouncing Deathquark** take the arrow:
+a steal that moves no Æmber, or a destroy pair the controller declines, ends the
+loop.
+
+Rule 5 owns `->` and defines it; this rule only says when a self-repeat has
+earned it. The split is carried by the repeat's gate — `While` prints the
+sentence, `WhileYouDo` and `MayWhileYouDo` print the arrow — so the printed text
+names the loop the card actually has. A condition-only `While` has no other
+bound, so the Rule of Six ([ADR 0043](adr/0043-rule-of-six-per-name-usage-pool.md))
+is what stops it.
 
 ---
 

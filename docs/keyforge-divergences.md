@@ -107,16 +107,18 @@ to another creature`. The two branches collapse into one linear sequence:
   the removal finds no ward. Vex keeps the two atomic effects — `RemoveWard`
   (any creature, warded or not) then `Ward` — instead of a bespoke `MoveWard` node,
   so there is one fewer one-off mechanic to carry.
-- **Bait and Switch** reads `Steal 1 Æmber -> if your opponent has more Æmber than
-you, repeat this effect`, not KeyForge's`If your opponent has more Æmber than
-you, steal 1 Æmber. Repeat this effect`. Vex writes a self-repeat whose loop stops
-  when the effect does nothing as `<do> -> if <cond>, repeat this effect`, so the
-  steal leads and the result gate carries the repeat. (A self-repeat that turns on
-  a board fact alone — Numquid the Fair, Neutron Shark — is two plain sentences
-  instead: `<do>. If <cond>, repeat this effect`.) The
-  first steal is therefore unconditional: with equal pools KeyForge steals nothing
-  while Vex steals 1, then stops. In every case where the opponent already
-  leads the two are identical.- **Gebuk** swaps the discarded creature into play immediately rather than waiting
+- **Bait and Switch** reads `Steal 1 Æmber -> if your opponent has more Æmber
+  than you, repeat this effect`, not KeyForge's `If your opponent has more Æmber
+  than you, steal 1 Æmber. Repeat this effect`. Vex writes a self-repeat one of
+  two ways (wording rule 39): `<do>. If <cond>, repeat this effect` when the loop
+  turns on a fact about the board alone — Numquid the Fair, Neutron Shark,
+  Ransack — and `<do> -> if <cond>, repeat this effect` when the loop also stops
+  because the effect did nothing. Bait and Switch takes the arrow because its
+  loop ends the moment a steal moves no Æmber, so the steal leads and the result
+  gate carries the repeat. The first steal is therefore unconditional: with equal
+  pools KeyForge steals nothing while Vex steals 1, then stops. In every case
+  where the opponent already leads the two are identical.
+- **Gebuk** swaps the discarded creature into play immediately rather than waiting
   until it has left play. KeyForge reads "Destroyed: ... **after Gebuk leaves
   play**, put that creature into play in Gebuk's position"; Vex reads
   "Destroyed: Discard the top card of your deck. If it is a creature, swap it with
