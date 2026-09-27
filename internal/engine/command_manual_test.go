@@ -278,3 +278,33 @@ func TestLegalActionsNeverOffersManualKinds(t *testing.T) {
 		}
 	}
 }
+
+// IsManual draws the line ApplyManual dispatches on: every manual force-edit is
+// inside the range, and the answer kinds, the root actions, and the setup decision
+// appended after them are all outside it. It is checked against ApplyManual itself
+// rather than a hand-listed set, so a kind added inside the manual block cannot be
+// classified one way by the predicate and the other way by the dispatch.
+func TestCommandKindIsManualMatchesApplyManual(t *testing.T) {
+	for k := CommandPickCard; k <= CommandSetFirstPlayer; k++ {
+		g := started(t)
+		// Every manual edit is aimed at two real cards, because the predicate is being
+		// checked against the dispatch actually running: a force-edit on card 0 would
+		// panic inside the engine and say nothing about how the kind is classified.
+		host := g.AddToHand(testCreature("host", 3), 0)
+		id := g.AddToHand(testCreature("c", 3), 0)
+		// ManualAddCard is the one kind whose dispatch needs the card pool; give it a
+		// resolver so a missing lookup cannot masquerade as a classification.
+		err := g.ApplyManual(Command{
+			Kind:  k,
+			Card:  host,
+			Card2: id,
+			Name:  "c",
+		}, func(string) (CardDefinition, bool) {
+			return testCreature("c", 3), true
+		})
+		if dispatched := err != ErrNotManualAction; dispatched != k.IsManual() {
+			t.Errorf("kind %d: IsManual = %v but ApplyManual dispatched = %v",
+				k, k.IsManual(), dispatched)
+		}
+	}
+}

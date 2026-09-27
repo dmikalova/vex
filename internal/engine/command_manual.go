@@ -16,6 +16,15 @@ import (
 // action or a choice answer rather than one of the manual force-edits it performs.
 var ErrNotManualAction = errors.New("command is not a manual action")
 
+// IsManual reports whether a command of this kind is a manual force-edit — one
+// ApplyManual performs, rather than a root action ApplyAction performs or an answer
+// a chooser pulls. It is the single authority on the manual kind range, so a driver
+// that routes a recorded command by kind (internal/session's replay) never
+// re-spells the bounds.
+func (k CommandKind) IsManual() bool {
+	return k >= CommandSetManual && k <= CommandManualAddCard
+}
+
 // ApplyManual performs one manual/debug Command, dispatching to the engine's
 // Manual* method for its Kind. resolveCard maps a card name to its definition for
 // CommandManualAddCard — the one manual edit that needs the card pool the engine
