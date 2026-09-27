@@ -72,7 +72,7 @@ func (g *Game) chargeToll(player int, action TollAction) error {
 		return ErrCannotPayToll
 	}
 	payee := 1 - player
-	for _, id := range g.allInPlay(payee) {
+	for _, id := range g.creaturesAndArtifacts(payee) {
 		t := g.cat.def(id).Restricts.Toll
 		if t.Amount <= 0 || t.Action != action {
 			continue
@@ -98,7 +98,7 @@ func (g *Game) chargeToll(player int, action TollAction) error {
 // tollOwed totals the Æmber player must hand the opponent to take action.
 func (g *Game) tollOwed(player int, action TollAction) int {
 	owed := 0
-	for _, id := range g.allInPlay(1 - player) {
+	for _, id := range g.creaturesAndArtifacts(1 - player) {
 		if t := g.cat.def(id).Restricts.Toll; t.Amount > 0 && t.Action == action {
 			owed += t.Amount
 		}
@@ -563,11 +563,24 @@ func (g *Game) playCreatureCard(player int, id LocalID, fl flank) {
 // A gigantic creature enters play only by being played, which recruits its other
 // half; a lone half cannot be put into play, so a gigantic half is left where it
 // came from.
+//
+// Only a creature and an artifact have a place to enter: the battleline and the
+// artifact row. Every other card type is refused the same way — an upgrade would
+// need a host chosen for it, and a tactic has no zone in play. The refusal comes
+// before the card leaves its resting zone, so putting one into play is a true
+// no-op and the card stays where it was; removing it first would count it in no
+// zone and break card conservation. Pinned by
+// TestPutIntoPlayRefusesTypesWithNoPlace.
 func (g *Game) putIntoPlay(id LocalID, controller int) {
 	if g.inPlay(id) {
 		return
 	}
 	if g.cat.def(id).GiganticRole != GiganticNone {
+		return
+	}
+	switch g.cat.def(id).Type {
+	case Creature, Artifact:
+	default:
 		return
 	}
 	g.removeFromRestingZones(id)
@@ -718,7 +731,7 @@ func (g *Game) discardFromHand(owner int, id LocalID) {
 		Player: owner,
 		Card:   id,
 	})
-	for _, watcher := range g.allInPlay(owner) {
+	for _, watcher := range g.creaturesAndArtifacts(owner) {
 		g.triggerAbilities(watcher, TriggerAfterDiscardFromHand, id, true)
 	}
 }
@@ -796,7 +809,7 @@ func (g *Game) consumeOffHousePlay(player int, def *CardDefinition) {
 // Maker frees any number of upgrades. It grants without limit, so nothing consumes
 // it and no per-turn counter tracks it.
 func (g *Game) freesTypeUnlimited(player int, def *CardDefinition) bool {
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		p := g.cat.def(id).PlayPermission
 		if p.Types != 0 && p.Types.has(def.Type) {
 			return true
@@ -810,7 +823,7 @@ func (g *Game) freesTypeUnlimited(player int, def *CardDefinition) bool {
 func (g *Game) playPermissionRemaining(player int, house House) int {
 	limit := 0
 	if g.State.ActiveHouse != house {
-		for _, id := range g.allInPlay(player) {
+		for _, id := range g.creaturesAndArtifacts(player) {
 			if p := g.cat.def(id).PlayPermission; p.granted() && p.House == house {
 				limit += p.count()
 			}

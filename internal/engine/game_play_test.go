@@ -631,3 +631,39 @@ func TestResolvingCardRedirectIsPerCard(t *testing.T) {
 		t.Error("the inner card's redirect should not follow the outer card")
 	}
 }
+
+// TestPutIntoPlayRefusesTypesWithNoPlace pins that putIntoPlay refuses a card
+// type it has no arm for — an upgrade, which would need a host chosen for it,
+// and a tactic, which has no zone in play. The refusal must come before the card
+// leaves its resting zone: a card removed from hand and placed nowhere sits in no
+// zone at all, which is card-conservation corruption, not a harmless no-op.
+func TestPutIntoPlayRefusesTypesWithNoPlace(t *testing.T) {
+	cases := []struct {
+		name string
+		def  func() CardDefinition
+	}{
+		{"upgrade", func() CardDefinition { return NewCard("Boon", Untamed, Upgrade, Common) }},
+		{"tactic", func() CardDefinition { return NewCard("Blast", Brobnar, Tactic, Common) }},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			g := started(t)
+			id := g.AddToHand(c.def(), 0)
+
+			g.putIntoPlay(id, 0)
+
+			if !g.State.Hand[0].contains(id) {
+				t.Errorf("a %s put into play should stay in the hand it came from", c.name)
+			}
+			if g.inPlay(id) {
+				t.Errorf("a %s should not reach play", c.name)
+			}
+			if g.State.Battleline[0].contains(id) || g.State.Artifacts[0].contains(id) {
+				t.Errorf("a %s should reach neither row", c.name)
+			}
+			if err := g.InvariantError(); err != nil {
+				t.Errorf("card conservation broken after refusing a %s: %v", c.name, err)
+			}
+		})
+	}
+}

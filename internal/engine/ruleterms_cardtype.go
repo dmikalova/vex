@@ -44,7 +44,9 @@ ability.`,
 			Title:      "Upgrade",
 			Definition: "A card that attaches to a creature as you play it, changing its stats or granting it abilities while attached.",
 			Body: `An upgrade attaches to a creature as you play it, changing that creature's
-stats or granting it keywords and abilities for as long as it stays attached.`,
+stats or granting it keywords and abilities for as long as it stays attached. An
+upgrade is a card in play. The abilities it grants belong to the creature it is
+attached to, and that creature uses them.`,
 		},
 		{
 			Section:    SectionCardType,

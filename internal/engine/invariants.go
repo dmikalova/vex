@@ -86,7 +86,7 @@ func (g *Game) tallyPlacement(pl *cardPlacement) error {
 		tally(g.State.Artifacts[p].slice())
 		tally(g.State.Archives[p].slice())
 		tally(g.State.Purge[p].slice())
-		for _, id := range g.allInPlay(p) {
+		for _, id := range g.creaturesAndArtifacts(p) {
 			if err := g.tallyUpgradeChain(id, pl); err != nil {
 				return err
 			}

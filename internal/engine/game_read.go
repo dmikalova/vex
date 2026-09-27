@@ -202,7 +202,7 @@ func (g *Game) constantAbilitiesInPlay() iter.Seq2[LocalID, ConstantAbility] {
 // has in play, for the reads whose rule is per-player rather than board-wide.
 func (g *Game) constantAbilitiesOf(player int) iter.Seq2[LocalID, ConstantAbility] {
 	return func(yield func(LocalID, ConstantAbility) bool) {
-		for _, src := range g.allInPlay(player) {
+		for _, src := range g.creaturesAndArtifacts(player) {
 			for _, c := range g.cat.def(src).ConstantAbilities {
 				if !yield(src, c) {
 					return
@@ -709,7 +709,7 @@ func (g *Game) cannotFight(player int) bool {
 	if g.State.CannotFight[player].Value {
 		return true
 	}
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		if g.cat.def(id).Restricts.Fighting {
 			return true
 		}
@@ -722,7 +722,7 @@ func (g *Game) cannotFight(player int) bool {
 // creatures, so it scans every in-play card.
 func (g *Game) mustFightIfAble() bool {
 	for owner := range 2 {
-		for _, id := range g.allInPlay(owner) {
+		for _, id := range g.creaturesAndArtifacts(owner) {
 			if g.cat.def(id).Restricts.MustFightIfAble {
 				return true
 			}
@@ -761,7 +761,7 @@ func (g *Game) cannotReap(player int) bool {
 		return true
 	}
 	for owner := range 2 {
-		for _, id := range g.allInPlay(owner) {
+		for _, id := range g.creaturesAndArtifacts(owner) {
 			r := g.cat.def(id).Restricts.Reaping
 			switch r {
 			case Controller:
@@ -807,7 +807,7 @@ func (g *Game) barredFromPlaying(player int, t CardType) bool {
 // because resetCore clears the stored name.
 func (g *Game) barredByNamedCard(def *CardDefinition) bool {
 	for p := range 2 {
-		for _, id := range g.allInPlay(p) {
+		for _, id := range g.creaturesAndArtifacts(p) {
 			named := g.State.Cards[id].NamedCardPlus
 			if named != 0 && g.cat.def(LocalID(named-1)).Name == def.Name {
 				return true
@@ -821,7 +821,7 @@ func (g *Game) barredByNamedCard(def *CardDefinition) bool {
 // constant "cannot play" rule on a card in play — either a Restrictions.CannotPlay
 // rule they control or a symmetric CannotPlayWhile bar whose condition holds.
 func (g *Game) cannotPlayCreatures(player int) bool {
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		if g.cat.def(id).Restricts.CannotPlay == Creature {
 			return true
 		}
@@ -834,7 +834,7 @@ func (g *Game) cannotPlayCreatures(player int) bool {
 // condition holds for player (Quixxle Stone bars whoever controls more creatures).
 func (g *Game) barredByConditionalPlayBar(player int, t CardType) bool {
 	for p := range 2 {
-		for _, id := range g.allInPlay(p) {
+		for _, id := range g.creaturesAndArtifacts(p) {
 			bar := g.cat.def(id).CannotPlayWhile
 			if bar.When == nil || bar.Type != t {
 				continue
@@ -855,7 +855,7 @@ func (g *Game) barredByConditionalPlayBar(player int, t CardType) bool {
 // skipsForge reports whether a player is barred from forging a key by a constant
 // Restrictions.SkipForge rule on a card they control in play (The Sting).
 func (g *Game) skipsForge(player int) bool {
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		if g.cat.def(id).Restricts.SkipForge {
 			return true
 		}
@@ -876,7 +876,7 @@ func (g *Game) keyForgeCapReached(player int) bool {
 func (g *Game) forgeKeyNumberBarred(player int) bool {
 	next := g.Keys(player) + 1
 	for p := range 2 {
-		for _, id := range g.allInPlay(p) {
+		for _, id := range g.creaturesAndArtifacts(p) {
 			if g.cat.def(id).Restricts.NoForgeKeyNumber == next {
 				return true
 			}
@@ -888,7 +888,7 @@ func (g *Game) forgeKeyNumberBarred(player int) bool {
 // forgeAemberGainer returns the opponent's in-play card that gains payer's forge
 // spending (The Sting), and whether one is in play.
 func (g *Game) forgeAemberGainer(payer int) (LocalID, bool) {
-	for _, id := range g.allInPlay(1 - payer) {
+	for _, id := range g.creaturesAndArtifacts(1 - payer) {
 		if g.cat.def(id).GainsForgeAember {
 			return id, true
 		}
@@ -900,7 +900,7 @@ func (g *Game) forgeAemberGainer(payer int) (LocalID, bool) {
 // because they have reached a card-play limit an in-play card imposes (Ember Imp).
 func (g *Game) cannotPlayCard(player int) bool {
 	for controller := range 2 {
-		for _, id := range g.allInPlay(controller) {
+		for _, id := range g.creaturesAndArtifacts(controller) {
 			limit := g.cat.def(id).Restricts.PlayCardLimit
 			if limit.Amount > 0 && limit.affects(controller, player) &&
 				int(g.State.PlayedThisTurn[player].Count) >= limit.Amount {
@@ -914,7 +914,7 @@ func (g *Game) cannotPlayCard(player int) bool {
 // aemberProtected reports whether a card player controls makes their Æmber unable
 // to be stolen (The Vaultkeeper).
 func (g *Game) aemberProtected(player int) bool {
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		ctx := &EffectContext{
 			Resolver:   g,
 			Source:     id,
@@ -940,7 +940,7 @@ func (g *Game) forgeBarredWhileAhead(player int) bool {
 		return false
 	}
 	for controller := range 2 {
-		for _, id := range g.allInPlay(controller) {
+		for _, id := range g.creaturesAndArtifacts(controller) {
 			if g.cat.def(id).Restricts.NoForgeWhileAheadOnKeys {
 				return true
 			}
@@ -971,7 +971,7 @@ func (g *Game) choosableHouses(player int) []House {
 			add(h)
 		}
 	}
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		add(g.House(id))
 	}
 	return out
@@ -1031,7 +1031,7 @@ func (g *Game) houseConstraintLists(player int) (cannots, musts []House) {
 		}
 	}
 	for controller := range 2 {
-		for _, id := range g.allInPlay(controller) {
+		for _, id := range g.creaturesAndArtifacts(controller) {
 			if h, bars, ok := g.lockedHouse(id, controller, player); ok {
 				if bars {
 					addTo(&cannots, h)
@@ -1115,7 +1115,7 @@ func (g *Game) keyCost(target int) int {
 		cost += sure.Per * g.creaturesMatchingInPlay(sure.House)
 	}
 	for controller := range 2 {
-		for _, id := range g.allInPlay(controller) {
+		for _, id := range g.creaturesAndArtifacts(controller) {
 			cost += g.keyCostChangeFor(id, controller, target)
 		}
 	}
@@ -1156,8 +1156,38 @@ func (g *Game) battlelineCopy(player int) []LocalID {
 	return cloneIDs(g.State.Battleline[player].slice())
 }
 
-// allInPlay returns a fresh slice of a player's creatures and artifacts.
-func (g *Game) allInPlay(player int) []LocalID {
+// cardsInPlay lists every card a player has in play: their creatures, their
+// artifacts, and the upgrades attached to either, each host's upgrades
+// immediately ahead of the host. A card placed *under* another card is not in
+// play and is never listed. It is the Game-side twin of resolverCardsInPlay
+// (effect_cross_zone.go), which answers the same question through the Resolver
+// port; TestCardsInPlayMatchesResolver pins the two equal element for element,
+// including order, so they cannot drift.
+//
+// Read this for a scan over a standing rule a card in play imposes — a play
+// permission, a key-cost or forge modifier, an Æmber capture or redirect — since
+// an upgrade sits in play and imposes such a rule from where it sits. A trigger
+// or reaction scan must NOT use it: an upgrade's triggered text is authored as
+// Static.Granted and is collected onto its host, so walking upgrades as well
+// would reach the same printed text twice by two routes
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+func (g *Game) cardsInPlay(player int) []LocalID {
+	var out []LocalID
+	for _, host := range g.creaturesAndArtifacts(player) {
+		out = append(out, g.upgradesOf(host)...)
+		out = append(out, host)
+	}
+	return out
+}
+
+// creaturesAndArtifacts returns a fresh slice of a player's creatures and
+// artifacts — the two rows only, reaching no upgrade. It is the row-only half of
+// the pair documented in docs/adr/0047-upgrade-in-play-not-an-ability-source.md:
+// trigger and reaction scans, and reads of per-card row state, use it, while a
+// scan for a standing rule a card in play imposes uses cardsInPlay. It shares its
+// name with the free function in target_select.go on purpose: same name, same
+// meaning, different receiver.
+func (g *Game) creaturesAndArtifacts(player int) []LocalID {
 	b := g.State.Battleline[player].slice()
 	a := g.State.Artifacts[player].slice()
 	out := make([]LocalID, 0, len(b)+len(a))
@@ -1175,7 +1205,7 @@ func (g *Game) allInPlay(player int) []LocalID {
 // withhold itself from one house (Fandangle readies only your non-Untamed
 // creatures).
 func (g *Game) entersPlayReady(player int, t CardType, house House) bool {
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		grant := g.cat.def(id).EntersReadyGrant
 		if grant.Type != t {
 			continue

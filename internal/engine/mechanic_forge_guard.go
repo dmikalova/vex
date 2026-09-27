@@ -9,7 +9,7 @@ package engine
 func (g *Game) beforeForgePrevented(forger int) bool {
 	guard := 1 - forger
 	w := g.window()
-	for _, id := range g.allInPlay(guard) {
+	for _, id := range g.creaturesAndArtifacts(guard) {
 		w.add(id, TriggerBeforeOpponentForgesKey, 0, false)
 	}
 	if len(w.pending) == 0 {

@@ -244,7 +244,7 @@ func (g *Game) drawStep(player int) {
 func (g *Game) drawModifier(player int) int {
 	total := 0
 	for owner := range 2 {
-		for _, id := range g.allInPlay(owner) {
+		for _, id := range g.creaturesAndArtifacts(owner) {
 			if m := g.cat.def(id).DrawModifier; m.Amount != 0 && m.affects(owner, player) {
 				if m.OnlyWhileOffFlank && g.onFlankOf(id) {
 					continue
@@ -630,7 +630,7 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 	// turn-scoped, so it is not in State; name each in-play card whose bar
 	// currently holds against this player.
 	for p := range 2 {
-		for _, id := range g.allInPlay(p) {
+		for _, id := range g.creaturesAndArtifacts(p) {
 			bar := g.cat.def(id).CannotPlayWhile
 			if bar.When == nil {
 				continue
@@ -666,7 +666,7 @@ func (g *Game) KeyCostSources(player int) []LocalID {
 		name(g.State.KeyCostPerHouse[player].Source)
 	}
 	for controller := range 2 {
-		for _, id := range g.allInPlay(controller) {
+		for _, id := range g.creaturesAndArtifacts(controller) {
 			if g.keyCostChangeFor(id, controller, player) != 0 {
 				name(id)
 			}
@@ -759,7 +759,7 @@ func (g *Game) payKeyCost(player, cost int) {
 // vaults returns the player's in-play cards whose Æmber may be spent on a key.
 func (g *Game) vaults(player int) []LocalID {
 	var out []LocalID
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		if g.cat.def(id).SpendableAember {
 			out = append(out, id)
 		}
@@ -831,15 +831,15 @@ func (g *Game) finishForgeKey(player int, color KeyColor) {
 // the EventForgeKey lasting reactions are folded in by the caller.
 func (g *Game) forgeKeyReactions(forger int) []triggeredAbility {
 	w := g.window()
-	for _, id := range g.allInPlay(forger) {
+	for _, id := range g.creaturesAndArtifacts(forger) {
 		w.add(id, TriggerAfterForgeKey, 0, false)
 	}
 	for _, p := range []int{forger, 1 - forger} {
-		for _, id := range g.allInPlay(p) {
+		for _, id := range g.creaturesAndArtifacts(p) {
 			w.addAs(id, TriggerAfterPlayerForgesKey, forger, 0, false)
 		}
 	}
-	for _, id := range g.allInPlay(1 - forger) {
+	for _, id := range g.creaturesAndArtifacts(1 - forger) {
 		w.add(id, TriggerAfterOpponentForgesKey, 0, false)
 	}
 	return w.pending

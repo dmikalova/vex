@@ -490,7 +490,7 @@ func (g *Game) PutIntoBattlelineAsCreature(id LocalID, right bool, d Duration) {
 func (g *Game) revertTemporaryCreatures() {
 	var revert []LocalID
 	for owner := range 2 {
-		for _, id := range g.allInPlay(owner) {
+		for _, id := range g.creaturesAndArtifacts(owner) {
 			if g.State.Cards[id].CreatureUntilTurnEnd {
 				revert = append(revert, id)
 			}

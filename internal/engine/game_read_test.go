@@ -1537,3 +1537,38 @@ func TestAtCheck(t *testing.T) {
 		t.Errorf("AtCheck(0, %d) = false, want true at cost %d", cost, cost)
 	}
 }
+
+// TestCardsInPlayMatchesResolver pins the Game-side cardsInPlay equal to the
+// effect-side resolverCardsInPlay, element for element and in the same order,
+// with an upgrade on a creature and an upgrade on an artifact. Two
+// implementations of one list exist — cardsInPlay reads state directly,
+// resolverCardsInPlay goes through the Resolver port so test doubles see it —
+// and without this test they drift
+// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). A card placed under
+// another card is out of play and appears in neither list.
+func TestCardsInPlayMatchesResolver(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	host := g.AddToBattleline(testCreature("Host", 3), 0)
+	art := g.AddArtifact(NewCard("Relic", Untamed, Artifact, Common), 0)
+	onCreature := g.Register(NewCard("Boon", Untamed, Upgrade, Common), 0)
+	g.AttachUpgrade(host, onCreature)
+	onArtifact := g.Register(NewCard("Mod", Untamed, Upgrade, Common), 0)
+	g.AttachUpgrade(art, onArtifact)
+	g.AttachUnder(host, g.Register(testCreature("Buried", 1), 0), true)
+
+	got := g.cardsInPlay(0)
+	want := []LocalID{onCreature, host, onArtifact, art}
+	if !slices.Equal(got, want) {
+		t.Errorf("cardsInPlay(0) = %v, want %v (each host's upgrades ahead of it)", got, want)
+	}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+	}
+	if viaPort := resolverCardsInPlay(ctx, 0); !slices.Equal(got, viaPort) {
+		t.Errorf("cardsInPlay(0) = %v, resolverCardsInPlay = %v, want identical", got, viaPort)
+	}
+	if rows := g.creaturesAndArtifacts(0); !slices.Equal(rows, []LocalID{host, art}) {
+		t.Errorf("creaturesAndArtifacts(0) = %v, want the two rows only", rows)
+	}
+}

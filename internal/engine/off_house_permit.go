@@ -52,7 +52,7 @@ func (p OffHousePermit) frees(g *Game, player int, house House, typ CardType) bo
 
 // controlsHouseInPlay reports whether the player has any card of house in play.
 func (g *Game) controlsHouseInPlay(player int, house House) bool {
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		if g.House(id) == house {
 			return true
 		}
@@ -115,7 +115,7 @@ func (g *Game) consumeOffHousePermit(player, i int) {
 // but only while its centered condition holds.
 func (g *Game) nonActivePlayLimit(player int) int {
 	limit := 0
-	for _, id := range g.allInPlay(player) {
+	for _, id := range g.creaturesAndArtifacts(player) {
 		p := g.cat.def(id).PlayPermission
 		if !p.NonActive {
 			continue
