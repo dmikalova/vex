@@ -8,7 +8,7 @@ type optionPicker struct {
 	idx int
 }
 
-func (o optionPicker) ChooseOption(_, _ string, _ []string) int { return o.idx }
+func (o optionPicker) ChooseOption(_ PromptSource, _ string, _ []string) int { return o.idx }
 
 func TestChooseOne(t *testing.T) {
 	g := NewGame("A", "B", 1)

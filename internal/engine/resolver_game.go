@@ -924,7 +924,7 @@ func (g *Game) ChooseCreature(
 	prompt string,
 	candidates []LocalID,
 ) (LocalID, bool) {
-	return g.pickCreature(player, g.sourceName(source), prompt, candidates)
+	return g.pickCreature(player, g.promptSource(source), prompt, candidates)
 }
 
 // ChooseCard asks a player to choose one card from candidates, attributing the
@@ -935,7 +935,7 @@ func (g *Game) ChooseCard(
 	prompt string,
 	candidates []LocalID,
 ) (LocalID, bool) {
-	return g.pickCard(player, g.sourceName(source), prompt, candidates)
+	return g.pickCard(player, g.promptSource(source), prompt, candidates)
 }
 
 // ChooseCardOptional asks a player to choose one card from candidates or to
@@ -947,13 +947,13 @@ func (g *Game) ChooseCardOptional(
 	prompt string,
 	candidates []LocalID,
 ) (LocalID, bool) {
-	return g.pickOptional(player, g.sourceName(source), prompt, candidates)
+	return g.pickOptional(player, g.promptSource(source), prompt, candidates)
 }
 
 // ChooseOption asks a player to choose one of several labeled options, attributing
 // (does not implement OptionChooser), the first option is taken.
 func (g *Game) ChooseOption(player int, source LocalID, prompt string, options []string) int {
-	return g.chooseOption(player, g.sourceName(source), prompt, options)
+	return g.chooseOption(player, g.promptSource(source), prompt, options)
 }
 
 // ChooseRandom picks one uniformly random card from candidates using the game's
@@ -976,17 +976,17 @@ func (g *Game) PreviewBadge(player int, badge SelectionBadge) {
 }
 
 // chooseOption is the shared option-choice path: it attributes the prompt to a
-// source name (empty for a source-less prompt such as a turn-structure choice)
-// and defaults to the first option when the chooser has no preference. A sole
-// option is taken automatically without consulting the chooser.
-func (g *Game) chooseOption(player int, source, prompt string, options []string) int {
+// source card (an empty PromptSource for a source-less prompt such as a
+// turn-structure choice) and defaults to the first option when the chooser has no
+// preference. A sole option is taken automatically without consulting the chooser.
+func (g *Game) chooseOption(player int, src PromptSource, prompt string, options []string) int {
 	if len(options) == 1 {
 		return 0
 	}
 	// Boundary: settle before presenting the choice (ADR 0029).
 	g.settleDestroyed(player)
 	if oc, ok := g.chooserFor(player).(OptionChooser); ok {
-		return oc.ChooseOption(source, renderPrompt(source, prompt), options)
+		return oc.ChooseOption(src, g.renderPrompt(src, prompt), options)
 	}
 	return 0
 }
@@ -998,6 +998,17 @@ func (g *Game) sourceName(source LocalID) string {
 		return g.cat.defs[source].Name
 	}
 	return ""
+}
+
+// promptSource flattens a source LocalID into the identity a Chooser is handed.
+// It is the single place a bare id becomes a PromptSource, and it treats an
+// unregistered id (an unset source in a unit test) as no source at all — the same
+// ids sourceName has always rendered as "".
+func (g *Game) promptSource(source LocalID) PromptSource {
+	if int(source) < len(g.cat.defs) {
+		return PromptSource{Card: source, HasCard: true}
+	}
+	return PromptSource{}
 }
 
 // FightWith makes attacker fight defender, ability-driven (ignoring active player

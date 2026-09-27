@@ -720,3 +720,30 @@ func TestKeyCostWhileOffFlank(t *testing.T) {
 		t.Errorf("key cost off the flanks = %d, want %d", got, KeyCost+1)
 	}
 }
+
+// TestRenderPrompt pins that the SelfName placeholder is resolved inside the
+// engine, so every prompt a Chooser receives is already complete text and the
+// PromptSource beside it carries identity only.
+func TestRenderPrompt(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ape := g.AddToBattleline(NewCard("Chuff Ape", Untamed, Creature, Common, WithPower(3)), 0)
+	prompt := "fully heal " + SelfName
+	if got := g.renderPrompt(g.promptSource(ape), prompt); got != "fully heal Chuff Ape" {
+		t.Errorf("renderPrompt = %q, want %q", got, "fully heal Chuff Ape")
+	}
+	// An unattributed prompt has no card to name, so it is left as it is.
+	if got := g.renderPrompt(PromptSource{}, prompt); got != prompt {
+		t.Errorf("unattributed renderPrompt = %q, want %q", got, prompt)
+	}
+}
+
+// TestPromptSourceUnregisteredID pins that an id outside the catalog flattens to
+// no source at all, the same ids sourceName has always rendered as "" — so a unit
+// test that leaves a source unset raises an unattributed prompt rather than one
+// naming a card that does not exist.
+func TestPromptSourceUnregisteredID(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	if got := g.promptSource(99); got != (PromptSource{}) {
+		t.Errorf("promptSource(99) = %+v, want the empty source", got)
+	}
+}

@@ -71,7 +71,7 @@ type scriptChooser struct{ d *decoder }
 // ChooseCreature picks a candidate by script byte, declining only when there are
 // no candidates. This is the mandatory-choice path, so it never stops early.
 func (c *scriptChooser) ChooseCreature(
-	_, _ string,
+	_ engine.PromptSource, _ string,
 	candidates []engine.LocalID,
 ) (engine.LocalID, bool) {
 	if len(candidates) == 0 {
@@ -84,7 +84,7 @@ func (c *scriptChooser) ChooseCreature(
 // so both branches of an optional effect get exercised without most of them being
 // thrown away.
 func (c *scriptChooser) ChooseCardOrDecline(
-	_, _ string,
+	_ engine.PromptSource, _ string,
 	candidates []engine.LocalID,
 ) (engine.LocalID, bool) {
 	i := c.d.pick(len(candidates), declineOneIn)
@@ -95,7 +95,7 @@ func (c *scriptChooser) ChooseCardOrDecline(
 }
 
 // ChooseOption picks one of a set of option prompts by script byte.
-func (c *scriptChooser) ChooseOption(_, _ string, options []string) int {
+func (c *scriptChooser) ChooseOption(_ engine.PromptSource, _ string, options []string) int {
 	if len(options) == 0 {
 		return 0
 	}

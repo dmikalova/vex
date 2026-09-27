@@ -420,7 +420,7 @@ func (g *Game) playCardFromZone(
 		candidates := append(g.battlelineCopy(player), g.battlelineCopy(1-player)...)
 		host, ok := g.pickCreature(
 			player,
-			g.Name(id),
+			g.promptSource(id),
 			"Choose a creature to attach "+SelfName+" to",
 			candidates,
 		)
@@ -456,7 +456,7 @@ func (g *Game) playCreatureFromZone(
 		// allowed even while creatures are barred — a ban then forces upgrade mode.
 		asUpgrade := banned
 		if !banned {
-			asUpgrade = g.chooseOption(player, g.Name(id),
+			asUpgrade = g.chooseOption(player, g.promptSource(id),
 				"Play "+SelfName+" as a creature or an upgrade?",
 				[]string{"Creature", "Upgrade"}) == 1
 		}
@@ -464,7 +464,7 @@ func (g *Game) playCreatureFromZone(
 			candidates := append(g.battlelineCopy(player), g.battlelineCopy(1-player)...)
 			host, ok := g.pickCreature(
 				player,
-				g.Name(id),
+				g.promptSource(id),
 				"Choose a creature to attach "+SelfName+" to",
 				candidates,
 			)

@@ -66,7 +66,7 @@ type cardDecliner struct {
 }
 
 func (c *cardDecliner) ChooseCardOrDecline(
-	_, _ string,
+	_ PromptSource, _ string,
 	candidates []LocalID,
 ) (LocalID, bool) {
 	c.asked++
@@ -286,7 +286,7 @@ type optionRecorder struct {
 	asked int
 }
 
-func (o *optionRecorder) ChooseOption(_, _ string, _ []string) int {
+func (o *optionRecorder) ChooseOption(_ PromptSource, _ string, _ []string) int {
 	o.asked++
 	return 0
 }

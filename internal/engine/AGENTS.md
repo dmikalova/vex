@@ -100,6 +100,16 @@ it plugs into the AST without desync:
   interface** discovered by type assertion — `OptionChooser`, `Orderer` — with a
   graceful fallback when unimplemented. That is the idiomatic-Go form of Strategy
   (cf. `io.WriterTo`, `http.Flusher`); prefer it over widening the base `Chooser`.
+  Every asking capability takes the same leading pair: a `PromptSource`
+  (`prompt.go`) naming the card whose ability raised the prompt, then the prompt
+  text. The text is already rendered — `renderPrompt` substitutes `SelfName`
+  inside the engine — so the source is **identity, not text**: a client uses it to
+  point at the card, never to rebuild the sentence. Add a new source of prompt
+  context as a field on `PromptSource`, not as another parameter on all 68 chooser
+  implementations. A trigger window (`ReactionChooser`) and a badge
+  (`BadgeChooser`) take no source: a window is not raised by one card (each
+  `OrderableReaction` names its own), and a badge decorates a pick that already
+  carries one.
 - **`Refinement` (`target.go`)** is a set-relative refinement (`refine` + `clause`)
   such as `MostPowerful` (or `Except(MostPowerful)`). It narrows the ids _and_
   contributes a phrase, so niche "compare candidates to each other" rules compose

@@ -456,9 +456,9 @@ func TestPlayableAsUpgradeChoosesUpgrade(t *testing.T) {
 // play finds no target.
 type upgradeThenDecline struct{}
 
-func (upgradeThenDecline) ChooseOption(_, _ string, _ []string) int { return 1 }
+func (upgradeThenDecline) ChooseOption(_ PromptSource, _ string, _ []string) int { return 1 }
 
-func (upgradeThenDecline) ChooseCreature(_, _ string, _ []LocalID) (LocalID, bool) {
+func (upgradeThenDecline) ChooseCreature(_ PromptSource, _ string, _ []LocalID) (LocalID, bool) {
 	return 0, false
 }
 

@@ -71,11 +71,11 @@ type positionPicker struct {
 	line []LocalID
 }
 
-func (positionPicker) ChooseCreature(_, _ string, _ []LocalID) (LocalID, bool) {
+func (positionPicker) ChooseCreature(_ PromptSource, _ string, _ []LocalID) (LocalID, bool) {
 	return 0, false
 }
 
-func (p *positionPicker) ChoosePosition(_, _ string, line []LocalID) int {
+func (p *positionPicker) ChoosePosition(_ PromptSource, _ string, line []LocalID) int {
 	p.line = line
 	return p.pos
 }

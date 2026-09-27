@@ -77,8 +77,8 @@ func (g *Game) chooseFlank(id LocalID) flank {
 // and Y". Both return the same position index: before line[i], 0..len(line).
 func (g *Game) ChoosePosition(player int, source LocalID, prompt string, line []LocalID) int {
 	if pc, ok := g.chooserFor(player).(PositionChooser); ok {
-		name := g.sourceName(source)
-		return pc.ChoosePosition(name, renderPrompt(name, prompt), line)
+		src := g.promptSource(source)
+		return pc.ChoosePosition(src, g.renderPrompt(src, prompt), line)
 	}
 	n := len(line)
 	options := make([]string, n+1)

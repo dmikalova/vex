@@ -117,14 +117,14 @@ func (g *Game) resolveLastingWindow(event Event, actor int, subject LocalID) {
 // orderLastChooser always picks the last candidate, reversing an ordering.
 type orderLastChooser struct{}
 
-func (orderLastChooser) ChooseCreature(_, _ string, c []LocalID) (LocalID, bool) {
+func (orderLastChooser) ChooseCreature(_ PromptSource, _ string, c []LocalID) (LocalID, bool) {
 	return c[len(c)-1], true
 }
 
 // orderRejectChooser refuses to pick, so ordering falls back to the given order.
 type orderRejectChooser struct{}
 
-func (orderRejectChooser) ChooseCreature(_, _ string, _ []LocalID) (LocalID, bool) {
+func (orderRejectChooser) ChooseCreature(_ PromptSource, _ string, _ []LocalID) (LocalID, bool) {
 	return 0, false
 }
 
@@ -133,20 +133,24 @@ func (orderRejectChooser) ChooseCreature(_, _ string, _ []LocalID) (LocalID, boo
 // declined branch of an optional prompt.
 type declineOptionChooser struct{}
 
-func (declineOptionChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (declineOptionChooser) ChooseCreature(
+	_ PromptSource,
+	_ string,
+	cands []LocalID,
+) (LocalID, bool) {
 	if len(cands) == 0 {
 		return 0, false
 	}
 	return cands[0], true
 }
 
-func (declineOptionChooser) ChooseOption(_, _ string, _ []string) int { return 1 }
+func (declineOptionChooser) ChooseOption(_ PromptSource, _ string, _ []string) int { return 1 }
 
 // idQueueChooser pops the next scripted id for each choice, falling back to the
 // first candidate once the queue empties.
 type idQueueChooser struct{ ids []LocalID }
 
-func (c *idQueueChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (c *idQueueChooser) ChooseCreature(_ PromptSource, _ string, cands []LocalID) (LocalID, bool) {
 	if len(c.ids) > 0 {
 		id := c.ids[0]
 		c.ids = c.ids[1:]
@@ -159,7 +163,11 @@ func (c *idQueueChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, 
 // so a test can assert a vacuous choice prompts for nothing.
 type countingChooser struct{ calls int }
 
-func (c *countingChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (c *countingChooser) ChooseCreature(
+	_ PromptSource,
+	_ string,
+	cands []LocalID,
+) (LocalID, bool) {
 	c.calls++
 	return cands[0], true
 }
@@ -169,14 +177,18 @@ func (c *countingChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID,
 // candidate for any non-option choice.
 type panicOnOptionChooser struct{}
 
-func (panicOnOptionChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (panicOnOptionChooser) ChooseCreature(
+	_ PromptSource,
+	_ string,
+	cands []LocalID,
+) (LocalID, bool) {
 	if len(cands) == 0 {
 		return 0, false
 	}
 	return cands[0], true
 }
 
-func (panicOnOptionChooser) ChooseOption(_, _ string, _ []string) int {
+func (panicOnOptionChooser) ChooseOption(_ PromptSource, _ string, _ []string) int {
 	panic("no option should be offered")
 }
 
@@ -184,11 +196,11 @@ func (panicOnOptionChooser) ChooseOption(_, _ string, _ []string) int {
 // them) instead of being asked to pick the next id repeatedly.
 type orderAllChooser struct{}
 
-func (orderAllChooser) ChooseCreature(_, _ string, c []LocalID) (LocalID, bool) {
+func (orderAllChooser) ChooseCreature(_ PromptSource, _ string, c []LocalID) (LocalID, bool) {
 	return c[0], true
 }
 
-func (orderAllChooser) OrderCreatures(_, _ string, ids []LocalID) []LocalID {
+func (orderAllChooser) OrderCreatures(_ PromptSource, _ string, ids []LocalID) []LocalID {
 	out := make([]LocalID, len(ids))
 	copy(out, ids)
 	for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {

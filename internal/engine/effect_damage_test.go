@@ -832,11 +832,19 @@ func TestSpreadFlankWalk(t *testing.T) {
 // declineAfterChooser answers with each queued id in turn, then declines.
 type declineAfterChooser struct{ ids []LocalID }
 
-func (c *declineAfterChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (c *declineAfterChooser) ChooseCreature(
+	_ PromptSource,
+	_ string,
+	cands []LocalID,
+) (LocalID, bool) {
 	return cands[0], true
 }
 
-func (c *declineAfterChooser) ChooseCardOrDecline(_, _ string, _ []LocalID) (LocalID, bool) {
+func (c *declineAfterChooser) ChooseCardOrDecline(
+	_ PromptSource,
+	_ string,
+	_ []LocalID,
+) (LocalID, bool) {
 	if len(c.ids) > 0 {
 		id := c.ids[0]
 		c.ids = c.ids[1:]
@@ -1080,7 +1088,11 @@ func TestDealDamageDamageOnIt(t *testing.T) {
 // damage must not reach a prompt at all.
 type damageChooserTrap struct{ t *testing.T }
 
-func (c damageChooserTrap) ChooseCreature(_, prompt string, _ []LocalID) (LocalID, bool) {
+func (c damageChooserTrap) ChooseCreature(
+	_ PromptSource,
+	prompt string,
+	_ []LocalID,
+) (LocalID, bool) {
 	c.t.Errorf("unexpected prompt %q: dealing 0 damage should ask nothing", prompt)
 	return 0, false
 }
@@ -1112,7 +1124,7 @@ type midThenFirst struct {
 	mid LocalID
 }
 
-func (c midThenFirst) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (c midThenFirst) ChooseCreature(_ PromptSource, _ string, cands []LocalID) (LocalID, bool) {
 	for _, x := range cands {
 		if x == c.mid {
 			return x, true

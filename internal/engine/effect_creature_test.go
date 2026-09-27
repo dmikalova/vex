@@ -222,12 +222,12 @@ type promptRecorder struct {
 	asked int
 }
 
-func (p *promptRecorder) ChooseCreature(a, b string, cands []LocalID) (LocalID, bool) {
+func (p *promptRecorder) ChooseCreature(a PromptSource, b string, cands []LocalID) (LocalID, bool) {
 	p.asked++
 	return p.FirstChooser.ChooseCreature(a, b, cands)
 }
 
-func (p *promptRecorder) ChooseOption(_, _ string, _ []string) int {
+func (p *promptRecorder) ChooseOption(_ PromptSource, _ string, _ []string) int {
 	p.asked++
 	return 0
 }
@@ -263,7 +263,7 @@ type idChooser struct {
 	id LocalID
 }
 
-func (c idChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (c idChooser) ChooseCreature(_ PromptSource, _ string, cands []LocalID) (LocalID, bool) {
 	for _, x := range cands {
 		if x == c.id {
 			return x, true

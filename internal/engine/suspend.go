@@ -183,7 +183,7 @@ const (
 type Request struct {
 	Player    int
 	Kind      RequestKind
-	Source    string
+	Source    PromptSource
 	Prompt    string
 	Cards     []LocalID
 	Options   []string
@@ -347,9 +347,11 @@ func (c *suspendChooser) yield(req Request) Command {
 }
 
 // ChooseCreature yields a card pick and returns the answered card.
-func (c *suspendChooser) ChooseCreature(source, prompt string, cands []LocalID) (LocalID, bool) {
+func (c *suspendChooser) ChooseCreature(
+	src PromptSource, prompt string, cands []LocalID,
+) (LocalID, bool) {
 	cmd := c.yield(Request{
-		Player: c.player, Kind: RequestPickCard, Source: source, Prompt: prompt, Cards: cands,
+		Player: c.player, Kind: RequestPickCard, Source: src, Prompt: prompt, Cards: cands,
 	})
 	if cmd.Kind == CommandDecline {
 		return 0, false
@@ -359,11 +361,11 @@ func (c *suspendChooser) ChooseCreature(source, prompt string, cands []LocalID) 
 
 // ChooseCardOrDecline yields a declinable card pick.
 func (c *suspendChooser) ChooseCardOrDecline(
-	source, prompt string, cands []LocalID,
+	src PromptSource, prompt string, cands []LocalID,
 ) (LocalID, bool) {
 	cmd := c.yield(Request{
 		Player: c.player, Kind: RequestPickCardOrDecline,
-		Source: source, Prompt: prompt, Cards: cands,
+		Source: src, Prompt: prompt, Cards: cands,
 	})
 	if cmd.Kind == CommandDecline {
 		return 0, false
@@ -372,16 +374,16 @@ func (c *suspendChooser) ChooseCardOrDecline(
 }
 
 // ChooseOption yields a labeled-option pick and returns the chosen index.
-func (c *suspendChooser) ChooseOption(source, prompt string, options []string) int {
+func (c *suspendChooser) ChooseOption(src PromptSource, prompt string, options []string) int {
 	return c.yield(Request{
-		Player: c.player, Kind: RequestOption, Source: source, Prompt: prompt, Options: options,
+		Player: c.player, Kind: RequestOption, Source: src, Prompt: prompt, Options: options,
 	}).Index
 }
 
 // ChoosePosition yields a battleline placement and returns the chosen gap index.
-func (c *suspendChooser) ChoosePosition(source, prompt string, line []LocalID) int {
+func (c *suspendChooser) ChoosePosition(src PromptSource, prompt string, line []LocalID) int {
 	return c.yield(Request{
-		Player: c.player, Kind: RequestPosition, Source: source, Prompt: prompt, Cards: line,
+		Player: c.player, Kind: RequestPosition, Source: src, Prompt: prompt, Cards: line,
 	}).Index
 }
 

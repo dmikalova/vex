@@ -1,5 +1,26 @@
 package engine
 
+// PromptSource identifies the card whose ability raised a prompt, so a client
+// can attribute the question to the card that asked it — highlight it, preview
+// its text, or name it — rather than re-deriving the card from a rendered
+// string. It travels as one value so a chooser method takes a single source
+// parameter, and a later non-card prompt source is a new field here rather than
+// another parameter on every implementation.
+//
+// LocalID 0 is a real card, so presence is carried by the paired boolean rather
+// than by a sentinel id (ADR 0010, the OrderableReaction{Card, HasCard} idiom).
+// The struct is flat and comparable, so it is safe inside a Request (ADR 0005).
+// Build one with Game.promptSource, the single point where a LocalID flattens
+// into this shape.
+type PromptSource struct {
+	// Card is the card whose ability raised the prompt; meaningful only when
+	// HasCard is set.
+	Card LocalID
+	// HasCard reports whether Card names a card. It is false for a prompt with no
+	// card source, such as an ordering or turn-structure question.
+	HasCard bool
+}
+
 // PromptKind is the closed catalog of decision points a Chooser can be asked to
 // answer — one kind per capability method on the Chooser interface and its
 // optional extensions. It is the forward form of the decision-point context ADR

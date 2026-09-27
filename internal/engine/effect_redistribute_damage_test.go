@@ -9,7 +9,7 @@ type redistChooser struct {
 	ids     []LocalID
 }
 
-func (c *redistChooser) ChooseOption(_, _ string, _ []string) int {
+func (c *redistChooser) ChooseOption(_ PromptSource, _ string, _ []string) int {
 	if len(c.options) > 0 {
 		o := c.options[0]
 		c.options = c.options[1:]
@@ -18,7 +18,7 @@ func (c *redistChooser) ChooseOption(_, _ string, _ []string) int {
 	return 0
 }
 
-func (c *redistChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+func (c *redistChooser) ChooseCreature(_ PromptSource, _ string, cands []LocalID) (LocalID, bool) {
 	if len(c.ids) > 0 {
 		id := c.ids[0]
 		c.ids = c.ids[1:]
@@ -158,7 +158,7 @@ func TestRedistributeDamageChoosesOpponent(t *testing.T) {
 // exercising Resolve's fallback to the first creature.
 type redistNoPick struct{ options []int }
 
-func (c *redistNoPick) ChooseOption(_, _ string, _ []string) int {
+func (c *redistNoPick) ChooseOption(_ PromptSource, _ string, _ []string) int {
 	if len(c.options) > 0 {
 		o := c.options[0]
 		c.options = c.options[1:]
@@ -167,7 +167,7 @@ func (c *redistNoPick) ChooseOption(_, _ string, _ []string) int {
 	return 0
 }
 
-func (redistNoPick) ChooseCreature(_, _ string, _ []LocalID) (LocalID, bool) {
+func (redistNoPick) ChooseCreature(_ PromptSource, _ string, _ []LocalID) (LocalID, bool) {
 	return 0, false
 }
 

@@ -88,9 +88,10 @@ func (g *game) chooserPrompt() string {
 	return req.Prompt
 }
 
-// promptSource names the card driving the prompt on screen, or "" for a prompt no
-// card is attributable to (an ordering step, a trigger window).
-func (g *game) promptSource() string {
+// promptSource identifies the card driving the prompt on screen, or the zero
+// value for a prompt no card is attributable to (an ordering step, a trigger
+// window).
+func (g *game) promptSource() engine.PromptSource {
 	req, _ := g.prompt()
 	return req.Source
 }
@@ -115,7 +116,7 @@ func (g *game) chooserDeclinable() bool {
 func (g *game) chooserOrdering() bool {
 	req, ok := g.prompt()
 	return ok && req.Kind == engine.RequestPickCard &&
-		req.Source == "" && len(req.Cards) >= 2
+		!req.Source.HasCard && len(req.Cards) >= 2
 }
 
 // choosingOption reports whether the prompt on screen is a labeled multiple choice

@@ -199,7 +199,7 @@ func TestApplyActionRejectsNonRoot(t *testing.T) {
 // asked for a house, and otherwise takes the first legal action.
 type omegaDriver struct{}
 
-func (omegaDriver) ChooseCreature(_, _ string, c []LocalID) (LocalID, bool) {
+func (omegaDriver) ChooseCreature(_ PromptSource, _ string, c []LocalID) (LocalID, bool) {
 	if len(c) == 0 {
 		return 0, false
 	}

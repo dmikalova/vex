@@ -29,10 +29,11 @@ const (
 // be reproduced from a seed.
 type Chooser interface {
 	// ChooseCreature returns one id from candidates and true, or false if none.
-	// source is the name of the card whose ability is asking (for prompt
-	// attribution), or "" when the choice has no card source such as an ordering
-	// or turn-structure prompt.
-	ChooseCreature(source, prompt string, candidates []LocalID) (LocalID, bool)
+	// src identifies the card whose ability is asking (for prompt attribution), and
+	// carries no card when the choice has no card source such as an ordering or
+	// turn-structure prompt. prompt is already rendered, so a chooser needs the
+	// source only to attribute the question, never to build its text.
+	ChooseCreature(src PromptSource, prompt string, candidates []LocalID) (LocalID, bool)
 }
 
 // FirstChooser always picks the first available candidate. It is the default and
@@ -46,7 +47,7 @@ type FirstChooser struct{}
 var _ Chooser = FirstChooser{}
 
 // ChooseCreature returns the first candidate, or false if the list is empty.
-func (FirstChooser) ChooseCreature(_, _ string, candidates []LocalID) (LocalID, bool) {
+func (FirstChooser) ChooseCreature(_ PromptSource, _ string, candidates []LocalID) (LocalID, bool) {
 	if len(candidates) == 0 {
 		return 0, false
 	}
@@ -57,7 +58,7 @@ func (FirstChooser) ChooseCreature(_, _ string, candidates []LocalID) (LocalID, 
 // labeled options, for "choose one" effects. Choosers that do not implement it
 // default to the first option.
 type OptionChooser interface {
-	ChooseOption(source, prompt string, options []string) int
+	ChooseOption(src PromptSource, prompt string, options []string) int
 }
 
 // PositionChooser is an optional Chooser capability: choosing where a Deploy
@@ -67,7 +68,7 @@ type OptionChooser interface {
 // of one labeled option per gap. A Chooser that does not implement it falls back
 // to the OptionChooser channel with those gaps rendered as labeled options.
 type PositionChooser interface {
-	ChoosePosition(source, prompt string, line []LocalID) int
+	ChoosePosition(src PromptSource, prompt string, line []LocalID) int
 }
 
 // DeclinableChooser is an optional Chooser capability: an optional card choice
@@ -77,7 +78,7 @@ type PositionChooser interface {
 // A Chooser that does not implement it is asked through the OptionChooser channel
 // with the candidate names plus a trailing DoneOption.
 type DeclinableChooser interface {
-	ChooseCardOrDecline(source, prompt string, candidates []LocalID) (LocalID, bool)
+	ChooseCardOrDecline(src PromptSource, prompt string, candidates []LocalID) (LocalID, bool)
 }
 
 // DoneOption labels the pass entry appended to a declinable prompt's fallback
@@ -89,7 +90,7 @@ const DoneOption = "Done"
 // A Chooser that implements it takes full control of ordering (see
 // Game.orderByChoice); one that does not falls back to repeated ChooseCreature.
 type Orderer interface {
-	OrderCreatures(source, prompt string, ids []LocalID) []LocalID
+	OrderCreatures(src PromptSource, prompt string, ids []LocalID) []LocalID
 }
 
 // OrderableReaction is one entry the active player may pick as the next to
@@ -279,11 +280,13 @@ func (g *Game) chooserFor(player int) Chooser {
 // renderPrompt resolves the SelfName placeholder in a prompt to the name of the
 // card asking, so a runtime prompt reads like the card's printed text ("fully
 // heal Chuff Ape", not "fully heal {self}"). An unattributed prompt is left as is.
-func renderPrompt(source, prompt string) string {
-	if source == "" {
+// Substitution happens here, inside the engine, so every prompt a Chooser sees is
+// already complete: the PromptSource beside it is identity, not text.
+func (g *Game) renderPrompt(src PromptSource, prompt string) string {
+	if !src.HasCard {
 		return prompt
 	}
-	return strings.ReplaceAll(prompt, SelfName, source)
+	return strings.ReplaceAll(prompt, SelfName, g.sourceName(src.Card))
 }
 
 // pickCreature resolves a "choose one creature" prompt. When only one candidate
@@ -292,7 +295,8 @@ func renderPrompt(source, prompt string) string {
 // decline). Callers guard the empty case before calling.
 func (g *Game) pickCreature(
 	player int,
-	source, prompt string,
+	src PromptSource,
+	prompt string,
 	candidates []LocalID,
 ) (LocalID, bool) {
 	// A choice with no candidates has no answer to give, so it is never put to a
@@ -308,13 +312,18 @@ func (g *Game) pickCreature(
 	// Boundary: settle before presenting the choice, so the player never chooses
 	// among creatures one of which is already dead (ADR 0029).
 	g.settleDestroyed(player)
-	return g.chooserFor(player).ChooseCreature(source, renderPrompt(source, prompt), candidates)
+	return g.chooserFor(player).ChooseCreature(src, g.renderPrompt(src, prompt), candidates)
 }
 
 // pickCard resolves a "choose one card" prompt. It uses the same chooser channel
 // as creature choices because a prompt is still one visible card chosen from a set;
 // callers are responsible for passing the legal card candidates.
-func (g *Game) pickCard(player int, source, prompt string, candidates []LocalID) (LocalID, bool) {
+func (g *Game) pickCard(
+	player int,
+	src PromptSource,
+	prompt string,
+	candidates []LocalID,
+) (LocalID, bool) {
 	if len(candidates) == 0 {
 		return 0, false
 	}
@@ -323,7 +332,7 @@ func (g *Game) pickCard(player int, source, prompt string, candidates []LocalID)
 	}
 	// Boundary: settle before presenting the choice (ADR 0029).
 	g.settleDestroyed(player)
-	return g.chooserFor(player).ChooseCreature(source, renderPrompt(source, prompt), candidates)
+	return g.chooserFor(player).ChooseCreature(src, g.renderPrompt(src, prompt), candidates)
 }
 
 // pickOptional resolves a "choose a card, or stop" prompt: the player may take one
@@ -334,7 +343,8 @@ func (g *Game) pickCard(player int, source, prompt string, candidates []LocalID)
 // is the shape every optional prompt used to have.
 func (g *Game) pickOptional(
 	player int,
-	source, prompt string,
+	src PromptSource,
+	prompt string,
 	candidates []LocalID,
 ) (LocalID, bool) {
 	if len(candidates) == 0 {
@@ -343,14 +353,14 @@ func (g *Game) pickOptional(
 	// Boundary: settle before presenting the choice (ADR 0029).
 	g.settleDestroyed(player)
 	if dc, ok := g.chooserFor(player).(DeclinableChooser); ok {
-		return dc.ChooseCardOrDecline(source, renderPrompt(source, prompt), candidates)
+		return dc.ChooseCardOrDecline(src, g.renderPrompt(src, prompt), candidates)
 	}
 	options := make([]string, len(candidates)+1)
 	for i, id := range candidates {
 		options[i] = g.Name(id)
 	}
 	options[len(candidates)] = DoneOption
-	if i := g.chooseOption(player, source, prompt, options); i < len(candidates) {
+	if i := g.chooseOption(player, src, prompt, options); i < len(candidates) {
 		return candidates[i], true
 	}
 	return 0, false
@@ -369,13 +379,13 @@ func (g *Game) orderByChoice(controller int, prompt string, ids []LocalID) []Loc
 	// among creatures one of which is already dead (ADR 0029).
 	g.settleDestroyed(controller)
 	if o, ok := g.chooserFor(controller).(Orderer); ok {
-		return o.OrderCreatures("", prompt, ids)
+		return o.OrderCreatures(PromptSource{}, prompt, ids)
 	}
 	remaining := make([]LocalID, len(ids))
 	copy(remaining, ids)
 	ordered := make([]LocalID, 0, len(ids))
 	for len(remaining) > 1 {
-		chosen, ok := g.chooserFor(controller).ChooseCreature("", prompt, remaining)
+		chosen, ok := g.chooserFor(controller).ChooseCreature(PromptSource{}, prompt, remaining)
 		if !ok {
 			break
 		}
