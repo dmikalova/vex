@@ -539,14 +539,18 @@ type (
 	// Conditional resolves Then only when Cond is met.
 	Conditional = engine.Conditional
 	// Repeat resolves Do and repeats it as its Gate allows — While (automatically
-	// while a condition holds), MayWhile (optionally at the controller's choice), or
-	// ByExalting (once, paid by exalting a creature).
+	// while a condition holds), WhileYouDo (automatically while the effect keeps
+	// happening and a condition holds), MayWhileYouDo (optionally at the controller's
+	// choice), or ByExalting (once, paid by exalting a creature).
 	Repeat = engine.Repeat
 	// While repeats automatically while its Cond holds (Numquid the Fair).
 	While = engine.While
-	// MayWhile repeats at the controller's choice while its Cond holds (Bouncing
+	// WhileYouDo repeats automatically while the effect keeps happening and its Cond
+	// holds (Bait and Switch).
+	WhileYouDo = engine.WhileYouDo
+	// MayWhileYouDo repeats at the controller's choice while its Cond holds (Bouncing
 	// Deathquark).
-	MayWhile = engine.MayWhile
+	MayWhileYouDo = engine.MayWhileYouDo
 	// ByExalting repeats once if the controller exalts its Creature to pay for it
 	// (Phalanx Strike, Tribute).
 	ByExalting = engine.ByExalting
@@ -560,7 +564,7 @@ type (
 	OrAmount = engine.OrAmount
 )
 
-// Conditions gate a Conditional or a Repeat's While/MayWhile gate.
+// Conditions gate a Conditional or a Repeat's While/WhileYouDo/MayWhileYouDo gate.
 type (
 	// PoolAember gates on one player's Æmber pool (Player + Is + Amount).
 	PoolAember = engine.PoolAember
