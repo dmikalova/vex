@@ -7,8 +7,8 @@ package engine
 // implements it.
 //
 // The catalogue is deliberately wide, so it is composed from the focused role
-// interfaces below (reads, economy, creature state, combat, zones, turn-scoped
-// grants, choices, logging). An effect or a test double can depend on just the
+// interfaces below (reads, economy, creature state, board-wide rules, combat,
+// playing a card, zones, turn-scoped grants, choices, logging). An effect or a test double can depend on just the
 // role it needs, and each new mechanic adds its method to the matching role —
 // which keeps the capability clusters, and any gaps worth refactoring, visible in
 // one place. Add a method to the role it belongs to, not to a flat list.
@@ -16,7 +16,9 @@ type Resolver interface {
 	StateReader
 	EconomyResolver
 	CreatureResolver
+	BoardResolver
 	CombatResolver
+	PlayResolver
 	ZoneResolver
 	TurnResolver
 	ChoiceResolver
@@ -279,6 +281,8 @@ type EconomyResolver interface {
 
 // CreatureResolver changes the in-play state carried on a single card — its
 // damage, status, Æmber, counters, house, controller, and battleline position.
+// Every method here names the card it changes; a rule that applies to creatures
+// collectively belongs on BoardResolver.
 type CreatureResolver interface {
 	// SetDamage sets the damage on a creature (never below zero).
 	SetDamage(id LocalID, amount int)
@@ -293,14 +297,6 @@ type CreatureResolver interface {
 	SetWarded(id LocalID, warded bool)
 	// SetDamageImmune marks a creature unable to be dealt damage for the duration.
 	SetDamageImmune(id LocalID, d Duration)
-	// SetSideDamageImmune makes every creature player controls unable to be dealt
-	// damage for the duration, read live so creatures gained after it resolves are
-	// covered too (Shield of Justice, Lucky Dice).
-	SetSideDamageImmune(player int, d Duration)
-	// SetStatOverride masks every creature's power and/or armor to a fixed value for
-	// the duration (The Pale Star), read live and revealing the real values again
-	// when it lifts. An unset StatMask leaves that stat alone.
-	SetStatOverride(power, armor StatMask, d Duration)
 	// SetExhausted sets a creature's exhausted status.
 	SetExhausted(id LocalID, exhausted bool)
 	// AddAmberOn changes the Æmber sitting on a card.
@@ -361,9 +357,6 @@ type CreatureResolver interface {
 	// controller's battleline, chooser picking the destination slot (which may be
 	// the creature's opponent — Malison moves an enemy creature).
 	MoveWithinBattleline(chooser int, id LocalID)
-	// LoseKeyword takes a keyword away from every creature in play for the
-	// remainder of the turn.
-	LoseKeyword(k Keyword)
 	// GrantKeyword gives one creature a keyword for the remainder of the turn
 	// (Scout grants Skirmish).
 	GrantKeyword(id LocalID, k Keyword)
@@ -403,6 +396,26 @@ type CreatureResolver interface {
 	// leaves play: its power becomes source's printed power, and it gains source's
 	// printed armor, keywords, and traits — Cyber-Clone copies a creature it purges.
 	CopyStats(recipient, source LocalID)
+}
+
+// BoardResolver installs duration-scoped rules that apply to creatures
+// collectively rather than to one card. A method here takes no LocalID and is
+// read live, so creatures that arrive after it resolves are covered too; a
+// method that names one card belongs on CreatureResolver — which is why
+// LoseKeywordFrom, GrantKeyword, LoseKeywordUntilNextTurn, and
+// GrantKeywordUntilNextTurn stay there while the board-wide LoseKeyword is here.
+type BoardResolver interface {
+	// SetSideDamageImmune makes every creature player controls unable to be dealt
+	// damage for the duration, read live so creatures gained after it resolves are
+	// covered too (Shield of Justice, Lucky Dice).
+	SetSideDamageImmune(player int, d Duration)
+	// SetStatOverride masks every creature's power and/or armor to a fixed value for
+	// the duration (The Pale Star), read live and revealing the real values again
+	// when it lifts. An unset StatMask leaves that stat alone.
+	SetStatOverride(power, armor StatMask, d Duration)
+	// LoseKeyword takes a keyword away from every creature in play for the
+	// remainder of the turn.
+	LoseKeyword(k Keyword)
 }
 
 // CombatResolver resolves damage, destruction, and the fights, reaps, and actions
@@ -457,8 +470,73 @@ type CombatResolver interface {
 	RecordUsage(id LocalID)
 }
 
-// ZoneResolver moves cards between zones — drawing, and shuffling a card between
-// play, hand, deck, discard, archives, and purge.
+// PlayResolver puts a card into play or runs the play sequence for it —
+// bonus icons, Play: abilities, and where the played card comes to rest. A
+// method belongs here when it plays a card or puts one into play; a method that
+// moves a card between zones without playing it belongs on ZoneResolver.
+type PlayResolver interface {
+	// PlayFromDeck plays a specific card from a player's deck, removing it from the
+	// deck as it is played (Chaos Portal plays the card it revealed).
+	PlayFromDeck(player int, id LocalID)
+	// PlayFromDiscard plays a specific card from a player's discard pile, bypassing
+	// the active-house gate (Sacrificial Altar). It does nothing when the card is
+	// not in that discard pile.
+	PlayFromDiscard(player int, id LocalID)
+	// PlayFromOpponentDiscard plays a card out of the given player's opponent's
+	// discard pile as that player's own play (Mimicry copies an action from the
+	// other player's discard). It does nothing when the card is not in that discard
+	// pile.
+	PlayFromOpponentDiscard(player int, id LocalID)
+	// PlayFromOpponentHand plays a card out of the given player's opponent's hand
+	// as that player's own play (Lateral Shift plays a card out of the other
+	// player's hand "as if it were yours"). The play counts against the active
+	// player's own card-play limit and, for a creature or artifact, that player
+	// takes control of it while its owner stays the opponent. It does nothing when
+	// the card is not in that hand.
+	PlayFromOpponentHand(player int, id LocalID)
+	// PlayFromHand plays a specific card from a player's hand, bypassing the
+	// active-house gate (Phase Shift's off-house card).
+	PlayFromHand(player int, id LocalID)
+	// PlayFromUnder plays a specific card from under whatever host it sits under
+	// (Masterplan's and Jargogle's own "play the card under me"). It does nothing
+	// when the card is not currently placed under anything.
+	PlayFromUnder(player int, id LocalID)
+	// PlayFromArchives plays a specific card from a player's archives, bypassing the
+	// active-house gate (Project Z.Y.X.). It does nothing when the card is not in
+	// that player's archives.
+	PlayFromArchives(player int, id LocalID)
+	// PlayFromOpponent plays a card from a zone of player's opponent as player's own
+	// play, giving player control of it if it stays in play (Murkens): the top card
+	// of their deck (from Deck) or a uniformly random card from their facedown
+	// archives (from Archives). It does nothing when that zone is empty.
+	PlayFromOpponent(player int, from Zone)
+	// PutIntoPlay puts a card into play under controller's control without playing
+	// it — no bonus icons and no Play: abilities resolve.
+	PutIntoPlay(id LocalID, controller int)
+	// PutUnderIntoPlay puts every card placed under host into play under its
+	// owner's control (Spangler Box's Destroyed ability).
+	PutUnderIntoPlay(host LocalID)
+	// RedirectResolvingCard sends a card whose play is still resolving to dest when
+	// that play completes, rather than to its owner's discard pile (Sucker Punch
+	// archives itself, Library Access purges itself). It names no source zone
+	// because a resolving card is in none, which is what makes the redirect work
+	// whatever the card was played from — Wild Wormhole plays Causal Loop off the
+	// deck and Causal Loop still archives itself.
+	RedirectResolvingCard(id LocalID, dest Destination)
+	// ResolveBonusIconsOn resolves the bonus icons printed on a card as if
+	// controller had just played it — one at a time, honoring a bar such as Master
+	// of the Grey and any substitution — but running none of the card's other text
+	// and no play reactions. The icons are read from the card's definition, so a card in
+	// hand (Ensign El-Samra), in a discard pile (LCdr. Trigon), or just purged
+	// (Reclaimed by Nature) still resolves them; the leaves-play gate the play path
+	// applies does not, since the card is not in play as its icons resolve.
+	ResolveBonusIconsOn(controller int, id LocalID)
+}
+
+// ZoneResolver moves cards between zones without playing them — drawing, and
+// shuffling a card between play, hand, deck, discard, archives, purge, and
+// under. A method that plays a card or puts one into play belongs on
+// PlayResolver instead.
 type ZoneResolver interface {
 	// Simultaneously runs a batch of moves as one moment, settling the board once
 	// after it rather than between the cards. Without it a card's own "Leaves Play:"
@@ -528,16 +606,6 @@ type ZoneResolver interface {
 	// PurgeFromPlay moves a card from play to its owner's purge pile (set aside out
 	// of the game).
 	PurgeFromPlay(id LocalID)
-	// RedirectResolvingCard sends a card whose play is still resolving to dest when
-	// that play completes, rather than to its owner's discard pile (Sucker Punch
-	// archives itself, Library Access purges itself). It names no source zone
-	// because a resolving card is in none, which is what makes the redirect work
-	// whatever the card was played from — Wild Wormhole plays Causal Loop off the
-	// deck and Causal Loop still archives itself.
-	RedirectResolvingCard(id LocalID, dest Destination)
-	// PutIntoPlay puts a card into play under controller's control without playing
-	// it — no bonus icons and no Play: abilities resolve.
-	PutIntoPlay(id LocalID, controller int)
 	// PutFromDiscardIntoHand moves a card from its owner's discard to their hand.
 	PutFromDiscardIntoHand(id LocalID)
 	// MoveFromDeckToHand moves a card from its owner's deck to their hand.
@@ -557,58 +625,18 @@ type ZoneResolver interface {
 	// they looked at (Navigator Ali). The ids must be exactly the cards currently
 	// in those top positions, permuted.
 	SetDeckTop(player int, order []LocalID)
-	// PlayFromDeck plays a specific card from a player's deck, removing it from the
-	// deck as it is played (Chaos Portal plays the card it revealed).
-	PlayFromDeck(player int, id LocalID)
-	// PlayFromDiscard plays a specific card from a player's discard pile, bypassing
-	// the active-house gate (Sacrificial Altar). It does nothing when the card is
-	// not in that discard pile.
-	PlayFromDiscard(player int, id LocalID)
-	// PlayFromOpponentDiscard plays a card out of the given player's opponent's
-	// discard pile as that player's own play (Mimicry copies an action from the
-	// other player's discard). It does nothing when the card is not in that discard
-	// pile.
-	PlayFromOpponentDiscard(player int, id LocalID)
-	// PlayFromOpponentHand plays a card out of the given player's opponent's hand
-	// as that player's own play (Lateral Shift plays a card out of the other
-	// player's hand "as if it were yours"). The play counts against the active
-	// player's own card-play limit and, for a creature or artifact, that player
-	// takes control of it while its owner stays the opponent. It does nothing when
-	// the card is not in that hand.
-	PlayFromOpponentHand(player int, id LocalID)
-	// PlayFromHand plays a specific card from a player's hand, bypassing the
-	// active-house gate (Phase Shift's off-house card).
-	PlayFromHand(player int, id LocalID)
-	// PlayFromUnder plays a specific card from under whatever host it sits under
-	// (Masterplan's and Jargogle's own "play the card under me"). It does nothing
-	// when the card is not currently placed under anything.
-	PlayFromUnder(player int, id LocalID)
-	// PlayFromArchives plays a specific card from a player's archives, bypassing the
-	// active-house gate (Project Z.Y.X.). It does nothing when the card is not in
-	// that player's archives.
-	PlayFromArchives(player int, id LocalID)
-	// PlayFromOpponent plays a card from a zone of player's opponent as player's own
-	// play, giving player control of it if it stays in play (Murkens): the top card
-	// of their deck (from Deck) or a uniformly random card from their facedown
-	// archives (from Archives). It does nothing when that zone is empty.
-	PlayFromOpponent(player int, from Zone)
-	// ResolveBonusIconsOn resolves the bonus icons printed on a card as if
-	// controller had just played it — one at a time, honoring a bar such as Master
-	// of the Grey and any substitution — but running none of the card's other text
-	// and no play reactions. The icons are read from the card's definition, so a card in
-	// hand (Ensign El-Samra), in a discard pile (LCdr. Trigon), or just purged
-	// (Reclaimed by Nature) still resolves them; the leaves-play gate the play path
-	// applies does not, since the card is not in play as its icons resolve.
-	ResolveBonusIconsOn(controller int, id LocalID)
+	// The under-card family below stays here rather than moving to PlayResolver:
+	// under is a zone (ADR 0016), so placing a card there or moving it out of there
+	// is a zone move like any other. Playing a card out from under a host is
+	// PlayResolver.PlayFromUnder, and putting those cards into play is
+	// PlayResolver.PutUnderIntoPlay.
+	//
 	// PutCardUnder removes a card from a player's hand and places it under host,
 	// face up or face down (Masterplan, Jargogle).
 	PutCardUnder(owner int, id, host LocalID, faceDown bool)
 	// GraftUnder moves a card from play to faceup under host, out of play
 	// (rulebook: Graft; Spangler Box).
 	GraftUnder(id, host LocalID)
-	// PutUnderIntoPlay puts every card placed under host into play under its
-	// owner's control (Spangler Box's Destroyed ability).
-	PutUnderIntoPlay(host LocalID)
 	// ArchiveCardUnder moves each card placed under host to its owner's archives
 	// (Jargogle's Destroyed ability when it is not its controller's turn).
 	ArchiveCardUnder(host LocalID)

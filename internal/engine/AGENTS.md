@@ -261,10 +261,13 @@ The port and its rationale are ADR 0008. In practice it is composed from focused
 role interfaces, not one flat list:
 
 `StateReader` (reads) · `EconomyResolver` (Æmber/keys/chains) ·
-`CreatureResolver` (per-card in-play state) · `CombatResolver` (damage,
-destruction, ability-driven fight/reap/action) · `ZoneResolver` (card movement
-between zones + draw) · `TurnResolver` (turn-scoped grants + the lasting
-registry) · `ChoiceResolver` (ordering + choosing) · `Logger`.
+`CreatureResolver` (per-card in-play state) · `BoardResolver` (duration-scoped
+rules over creatures collectively) · `CombatResolver` (damage,
+destruction, ability-driven fight/reap/action) · `PlayResolver` (playing a card
+from a zone, putting one into play, the play sequence) · `ZoneResolver` (card
+movement between zones without playing + draw) · `TurnResolver` (turn-scoped
+grants + the lasting registry) · `ChoiceResolver` (ordering + choosing) ·
+`Logger`.
 
 **When adding a mechanic that needs a new engine capability**, add the method to
 the role interface it belongs to (and implement it on `*Game`). Do not append to a
