@@ -43,8 +43,8 @@ const (
 	// means — reaping, fighting, or using an Action ability — the umbrella "used"
 	// tally Sloth reads to reward a turn with no creature use. It is kept from the
 	// using (active) player's side and, unlike the reap/fight tallies, is reset at
-	// StartTurn rather than rolled at the ready step, so an end-of-turn ability can
-	// still read it after ready and draw have run (ADR 0013).
+	// StartTurn rather than in the end-of-turn cleanup, so it reads as "this turn"
+	// for the whole of the turn that follows the one it counted.
 	CreaturesUsedThisTurn
 	// AemberStolenFromThisTurn counts the Æmber stolen from the player during the
 	// current turn — kept from the victim's side so a card can ask whether they were

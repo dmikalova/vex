@@ -789,7 +789,7 @@ func (g *Game) cannotReap(player int) bool {
 }
 
 // creaturesPlayedThisTurn counts how many of the cards a player played this turn
-// were creatures — the tally the ready phase freezes so the next player can ask
+// were creatures — the tally the end of the turn freezes so the next player can ask
 // how many creatures their opponent played on their previous turn (Lifeweb).
 func (g *Game) creaturesPlayedThisTurn(player int) int {
 	n := 0

@@ -11,7 +11,7 @@ import (
 // the turn. StartOfPlayerNextTurn holds the grant on each creature and lifts it at
 // the start of that player's next turn, before any start-of-turn ability resolves,
 // so it survives the opponent's turn — which a defensive keyword like elusive needs.
-// RemainderOfPlayerTurn clears at the ready phase, for an offensive keyword like
+// RemainderOfPlayerTurn clears at the end of the turn, for an offensive keyword like
 // skirmish that only matters on the controller's own turn. It renders a duration
 // body, so it composes under GainUntilNextTurn (next turn) or ForDuration
 // (remainder) with another per-creature grant. A keyword that only matters on your

@@ -139,8 +139,9 @@ For the full pattern rationale and the tradeoffs, see
 **A turn** (driven by a frontend): `StartTurn(p)` readies the player, forges a key
 if affordable, and promotes any armed "next turn" effects; the player chooses an
 active house (`ChooseHouse`) and then plays cards / reaps / fights / uses actions
-through `Game` methods; `EndPlayPhase(p)` runs the ready phase, which clears
-turn-scoped state, and the phases that follow it. Wins are checked after
+through `Game` methods; `EndPlayPhase(p)` runs the ready phase and the phases
+that follow it, ending with the end-of-turn phase, whose cleanup tail clears
+turn-scoped state after the end-of-turn abilities have resolved (ADR 0047). Wins are checked after
 `StartTurn`.
 
 **An ability** (e.g. a creature's "Play:"): the `Game` method that triggers it

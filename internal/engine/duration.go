@@ -22,8 +22,8 @@ const (
 	OpponentNextTurn
 	// StartOfPlayerNextTurn is live the moment it is established and stays live
 	// through the opponent's turn, lifting at the start of the caster's next turn
-	// (their ready phase) — so a defensive effect survives the opponent's turn (Into
-	// the Night, Sow Salt, Diplomacy). It lifts at the same boundary as
+	// (their start-of-turn phase) — so a defensive effect survives the opponent's
+	// turn (Into the Night, Sow Salt, Diplomacy). It lifts at the same boundary as
 	// OpponentNextTurn but, unlike it, is in force from the moment it resolves.
 	StartOfPlayerNextTurn
 	// EndOfPlayerNextTurn lasts from now through the end of the affected player's

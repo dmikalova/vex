@@ -61,7 +61,7 @@ func TestGrantFightForHouse(t *testing.T) {
 		t.Errorf("other-house attacker: err = %v, want ErrWrongHouse", err)
 	}
 
-	// The ready phase clears the grant.
+	// The end of the turn clears the grant.
 	g.EndPlayPhase(0)
 	def3 := g.AddToBattleline(testCreature("def3", 3), 1)
 	if err := g.Fight(0, att, def3); !errors.Is(err, ErrWrongHouse) {

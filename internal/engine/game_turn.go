@@ -299,7 +299,7 @@ func (g *Game) CannotUseNextTurn(player int, source LocalID) {
 
 // CannotUseThisTurn bars a player from reaping, fighting, or using an "Action:"
 // ability for the rest of the current turn (United Action). It sets the use bar
-// directly rather than arming the next-turn form, so the ready phase lifts it at
+// directly rather than arming the next-turn form, so the end of the turn lifts it at
 // the end of this turn.
 func (g *Game) CannotUseThisTurn(player int, source LocalID) {
 	g.State.CannotUse[player] = Bar[bool]{
@@ -321,7 +321,7 @@ func (g *Game) CannotReapNextTurn(player int, source LocalID) {
 
 // CannotReapThisTurn bars a player from reaping with any creature for the rest of
 // the current turn (Ragnarok). It sets the reap bar directly rather than arming
-// the next-turn form, so the ready phase lifts it at the end of this turn. Only
+// the next-turn form, so the end of the turn lifts it at the end of this turn. Only
 // the active player can reap on their own turn, so barring them stops reaping this
 // turn.
 func (g *Game) CannotReapThisTurn(player int, source LocalID) {
@@ -429,8 +429,8 @@ func (g *Game) RaiseKeyCostPerHouseNextTurn(
 // (ADR 0037). It dispatches the axes onto the flat this-turn state slots — a fight
 // grant onto MayFightHouse/MayFightAny, a use/play grant onto MayUseHouse/
 // MayPlayHouse or MayUseArtifactsAnyHouse, and an exclusion or controlled grant
-// onto an off-house permit — and records one MayPlayOrUseGranted. The ready phase
-// clears every slot.
+// onto an off-house permit — and records one MayPlayOrUseGranted. The end of the
+// turn clears every slot.
 func (g *Game) GrantMayPlayOrUse(
 	player int,
 	houses HouseSelector,
@@ -673,16 +673,6 @@ func (g *Game) KeyCostSources(player int) []LocalID {
 		}
 	}
 	return out
-}
-
-// Forge a key: at the start of your turn you forge a single key if you can pay
-// its current cost — 6 Æmber by default. A player forges at most one key per turn.
-// Keys are the win condition — forge your third key and you win the game.
-// forgeKey forges one key when the player can afford the current key cost, paying
-// it and firing "after you forge a key" abilities. StartTurn forges at most one
-// key at the start of a turn; cards may forge one more via the ForgeKey effect.
-func (g *Game) forgeKey(player int) {
-	g.forgeKeyAtExtraCost(player, 0)
 }
 
 // forgeKeyAtExtraCost forges one key at the current cost plus a surcharge for

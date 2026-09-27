@@ -1064,7 +1064,7 @@ func TestForgeAemberGain(t *testing.T) {
 	}
 
 	g.State.Aember[0] = 6
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if g.Keys(0) != 1 {
 		t.Fatal("the payer should still forge their key")
 	}

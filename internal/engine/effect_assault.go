@@ -4,7 +4,7 @@ import "fmt"
 
 // GainAssault gives each creature its Target selects Assault equal to a Count for
 // the remainder of the turn — Creed of Nature grants a chosen creature assault
-// equal to its power. The ready phase clears the bonus. It is the lasting-Assault
+// equal to its power. The end of the turn clears the bonus. It is the lasting-Assault
 // companion to GainStats (power and armor). Because it renders a duration body it
 // composes under ForDuration with another per-creature grant, so "gains skirmish
 // and assault equal to its power" reads under one shared clause.

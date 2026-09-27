@@ -339,7 +339,7 @@ func TestMayPlayOrUseResolvePermit(t *testing.T) {
 	g.EndPlayPhase(0)
 	g.StartTurn(0)
 	if g.State.OffHousePermitCount[0] != 0 {
-		t.Error("ready phase should clear off-house permits")
+		t.Error("end-of-turn cleanup should clear off-house permits")
 	}
 }
 

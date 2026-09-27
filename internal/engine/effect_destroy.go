@@ -280,8 +280,8 @@ func (g ChosenFromEach) gather(ctx *EffectContext) []LocalID {
 // the active player's end-of-turn window rather than now — Ragnarok wipes the board
 // only once the turn it is played is ending, after its owner has spent the turn
 // fighting for Æmber. The wipe orders alongside the in-play "at the end of your
-// turn" abilities (ADR 0013); the schedule survives the ready phase, which runs
-// earlier.
+// turn" abilities (ADR 0013); the schedule is cleared only once that window has
+// fired.
 type DestroyEachCreatureAtEndOfTurn struct{}
 
 // Text renders the effect, e.g. "at the end of the turn, destroy each creature".

@@ -337,7 +337,7 @@ func TestTypeUnlimitedPermissionText(t *testing.T) {
 }
 
 // TestCannotUseThisTurnBar arms the this-turn use bar and confirms it stops the
-// player using creatures until the ready phase lifts it.
+// player using creatures until the end of the turn lifts it.
 func TestCannotUseThisTurnBar(t *testing.T) {
 	g := started(t)
 	reaper := g.AddToBattleline(testCreature("reaper", 3), 0)
@@ -348,7 +348,7 @@ func TestCannotUseThisTurnBar(t *testing.T) {
 	g.EndPlayPhase(0)
 	g.StartTurn(0)
 	if g.State.CannotUse[0].Value {
-		t.Error("the this-turn use bar should lift at the ready phase")
+		t.Error("the this-turn use bar should lift at the end of the turn")
 	}
 }
 

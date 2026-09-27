@@ -231,7 +231,7 @@ func TestForRemainderOfTurnGainsOnPlay(t *testing.T) {
 	}
 	g.EndPlayPhase(0)
 	if g.State.LastingCount != 0 {
-		t.Error("the ready phase should clear the reaction")
+		t.Error("the end of the turn should clear the reaction")
 	}
 }
 
@@ -564,7 +564,7 @@ func TestGainAbilityBeforeFightExaltValidateAndText(t *testing.T) {
 }
 
 // A StartOfPlayerNextTurn "Before Fight: Exalt this creature" grant is owned
-// by the opponent so it clears at their ready phase, and it exalts whichever
+// by the opponent so it clears at the end of their turn, and it exalts whichever
 // granted creature fights — friendly or enemy — regardless of whose turn it is
 // (Diplomacy).
 func TestGainAbilityBeforeFightExaltResolveAndFire(t *testing.T) {
@@ -602,7 +602,7 @@ func TestGainAbilityBeforeFightExaltResolveAndFire(t *testing.T) {
 		}
 	}
 
-	// The caster's ready phase does not clear an opponent-owned grant.
+	// The end of the caster's turn does not clear an opponent-owned grant.
 	g.clearLasting(0)
 	if g.State.LastingCount != 2 {
 		t.Fatalf("caster's ready cleared the grant, count = %d, want 2", g.State.LastingCount)
@@ -618,7 +618,7 @@ func TestGainAbilityBeforeFightExaltResolveAndFire(t *testing.T) {
 		t.Errorf("enemy Æmber-on-card = %d, want 1", got)
 	}
 
-	// The opponent's ready phase lifts the grant.
+	// The end of the opponent's turn lifts the grant.
 	g.clearLasting(1)
 	if g.State.LastingCount != 0 {
 		t.Fatalf("opponent's ready did not lift the grant, count = %d", g.State.LastingCount)

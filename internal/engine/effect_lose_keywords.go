@@ -9,7 +9,7 @@ import (
 // selects for a duration — Niffle Grounds strips a chosen creature of taunt and
 // elusive for the remainder of the turn, Reckless Rizzo loses elusive until the
 // start of its controller's next turn so the loss survives the opponent's turn. The
-// loss is held on the creature; RemainderOfPlayerTurn lifts it at the ready phase,
+// loss is held on the creature; RemainderOfPlayerTurn lifts it at the end of the turn,
 // StartOfPlayerNextTurn at the start of the controller's next turn. Every keyword
 // check honors it meanwhile.
 type LoseKeywords struct {

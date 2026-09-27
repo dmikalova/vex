@@ -76,7 +76,7 @@ func TestLoseKeywordsValidate(t *testing.T) {
 }
 
 // TestLoseKeywordsResolveForTurn strips a creature of taunt and elusive for the
-// turn, and the ready phase restores them.
+// turn, and the end of the turn restores them.
 func TestLoseKeywordsResolveForTurn(t *testing.T) {
 	g := started(t)
 	id := g.AddToBattleline(testCreature("warded", 3, WithKeywords(Elusive, Taunt)), 0)
@@ -151,9 +151,9 @@ func TestLoseKeywordsResolveNextTurn(t *testing.T) {
 		t.Error("re-losing a keyword already lost should log nothing new")
 	}
 
-	// Neither ready phase lifts it, nor the opponent's start-of-turn; only the
-	// controller's own start-of-turn restores the keyword.
-	g.readyPhase(0)
+	// Neither the end of the turn lifts it, nor the opponent's start-of-turn; only
+	// the controller's own start-of-turn restores the keyword.
+	g.expireTurnScoped(0)
 	g.startOfTurnPhase(1)
 	if g.hasKeyword(id, Elusive) {
 		t.Error("the loss should survive the opponent's turn")

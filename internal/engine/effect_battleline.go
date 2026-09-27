@@ -183,7 +183,8 @@ type TurnIntoCreature struct {
 	Duration Duration
 	// Versatile grants the animated creature versatile, so it can be used this turn
 	// as if in the active house (Animator). It is granted for the remainder of the
-	// turn, lifting in the same ready phase that reverts a turn-scoped conversion.
+	// turn, lifting in the same end-of-turn cleanup that reverts a turn-scoped
+	// conversion.
 	Versatile bool
 }
 

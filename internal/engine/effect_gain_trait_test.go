@@ -69,9 +69,10 @@ func TestGainTraitResolve(t *testing.T) {
 		t.Error("re-granting a held trait should log nothing new")
 	}
 
-	// Neither ready phase lifts it, and the opponent's start-of-turn does not; only
-	// the controller's own start-of-turn does, before start-of-turn abilities run.
-	g.readyPhase(0)
+	// The end of the turn does not lift it, and the opponent's start-of-turn does
+	// not; only the controller's own start-of-turn does, before start-of-turn
+	// abilities run.
+	g.expireTurnScoped(0)
 	g.startOfTurnPhase(1)
 	if !g.HasTrait(beast, Mutant) {
 		t.Error("the grant should survive the opponent's turn")

@@ -343,7 +343,7 @@ func TestForgeKeyWins(t *testing.T) {
 	// Forging the third key wins the game.
 	g.State.ForgeCanonicalKeys(0, 2)
 	g.State.Aember[0] = KeyCost
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if g.Keys(0) != KeysToWin || g.Winner() != 0 {
 		t.Errorf("keys = %d, winner = %d, want %d and 0", g.Keys(0), g.Winner(), KeysToWin)
 	}
@@ -414,13 +414,13 @@ func TestKeyCost(t *testing.T) {
 
 	// Forging respects the raised cost: one Æmber short forges nothing.
 	g.State.Aember[0] = KeyCost + 2
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if g.Keys(0) != 0 {
 		t.Errorf("keys = %d, want 0 (below the raised cost)", g.Keys(0))
 	}
 	// At exactly the cost it forges one key, paying the full raised amount.
 	g.State.Aember[0] = KeyCost + 3
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if g.Keys(0) != 1 {
 		t.Errorf("keys = %d, want 1", g.Keys(0))
 	}

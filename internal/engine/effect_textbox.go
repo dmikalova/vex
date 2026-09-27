@@ -18,7 +18,7 @@ package engine
 // Because the game state is a flat, pointerless value, a gain is stored as the
 // source's LocalID+1 on the gaining creature's CardCore: TextBoxSourcePlus lasts
 // until the creature leaves play (resetCore clears it) and TextBoxTurnSourcePlus
-// lasts the turn (the ready phase clears it). Traits, keywords, and triggered
+// lasts the turn (the end of the turn clears it). Traits, keywords, and triggered
 // abilities each fold the gained sources in at their read seam — HasTrait,
 // hasKeyword, and triggeredBy. Constant abilities and numeric combat keywords
 // (Assault N, Hazardous N) are not yet part of a gained text box; add them at

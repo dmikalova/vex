@@ -134,7 +134,7 @@ func TestGainTextBoxResolve(t *testing.T) {
 }
 
 // TestGainTextBoxTurnExpires lends a text box for the remainder of the turn and
-// clears it at the ready phase.
+// clears it at the end of the turn.
 func TestGainTextBoxTurnExpires(t *testing.T) {
 	g := started(t)
 	source := g.AddToBattleline(testCreature("source", 3, WithTraits(Beast)), 0)
@@ -148,11 +148,11 @@ func TestGainTextBoxTurnExpires(t *testing.T) {
 		t.Error("the recipient should gain the source's trait for the turn")
 	}
 
-	// The ready phase clears the loan for every creature.
+	// The end of the turn clears the loan for every creature.
 	g.StartTurn(0)
 	g.EndPlayPhase(0)
 	if g.State.Cards[recipient].TextBoxTurnSourcePlus != 0 {
-		t.Error("the ready phase should clear the turn loan")
+		t.Error("the end of the turn should clear the turn loan")
 	}
 }
 

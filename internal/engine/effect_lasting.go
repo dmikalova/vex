@@ -87,8 +87,8 @@ func validateLastingReaction(name string, on Event, do Effect) error {
 	return validateEffect(do)
 }
 
-// installLastingReaction registers a reaction owned by owner (whose ready phase
-// clears it). On EventCardPlayed the installing card is excepted, so an event
+// installLastingReaction registers a reaction owned by owner (the end of whose
+// turn clears it). On EventCardPlayed the installing card is excepted, so an event
 // phrased as "another card" does not count the play that armed it.
 func installLastingReaction(ctx *EffectContext, on Event, do Effect, owner int) {
 	action, amount, _ := lastingActionOf(do)
@@ -164,8 +164,8 @@ func reactionEventOf(t Trigger) (Event, bool) {
 // remainder of the controller's turn. StartOfPlayerNextTurn lasts until the
 // start of the controller's next turn — through the opponent's whole turn — so an
 // enemy creature fires the grant on the opponent's turn too (Diplomacy). Because
-// the registry clears a player's own entries at their ready phase, a next-turn
-// grant is owned by the opponent, whose ready phase falls just before the
+// the registry clears a player's own entries at the end of their turn, a next-turn
+// grant is owned by the opponent, whose turn ends just before the
 // controller's next turn, and it fires only for a Before Fight ability, whose
 // firing (fireLastingBeforeFight) matches on the subject alone rather than the
 // acting player.
@@ -218,7 +218,7 @@ func (e GainAbility) Text() string {
 
 // Resolve registers the ability as a per-creature reaction on each selected
 // creature for the rest of the controller's turn. A next-turn grant is owned by
-// the opponent so it clears at their ready phase — the start of the controller's
+// the opponent so it clears at the end of their turn — just before the controller's
 // next turn — rather than at the end of this one.
 func (e GainAbility) Resolve(ctx *EffectContext) {
 	event, _ := reactionEventOf(e.Ability.Trigger)

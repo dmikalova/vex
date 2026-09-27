@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func TestPhaseNames(t *testing.T) {
 	for _, tc := range []struct {
@@ -361,5 +364,51 @@ func TestEndOfTurnTriggerFires(t *testing.T) {
 
 	if g.State.Aember[1] != 2 {
 		t.Errorf("opponent Æmber = %d, want 2 after end-of-turn drain", g.State.Aember[1])
+	}
+}
+
+// TestAnimatorRevertsAfterEndOfTurnAbilities is the Animator plus Fangtooth
+// Cavern ruling (docs/keyforge-master-rulebook.md): a card animated for the
+// remainder of the turn is "a lasting effect that expires at the end of the turn,
+// which is after Fangtooth Cavern's 'end of turn' effect resolves". So an
+// end-of-turn ability that reads the board still sees the animated artifact as a
+// creature, and the revert lands in the cleanup tail after that ability has
+// resolved (ADR 0047).
+func TestAnimatorRevertsAfterEndOfTurnAbilities(t *testing.T) {
+	g := NewGame("Alice", "Bob", 1)
+	art := g.AddArtifact(testArtifact("animated"), 0)
+	// Animator gives the artifact three +1 power counters before animating it, so
+	// it is a 3-power creature and survives the settles along the way.
+	g.AddPowerCounter(art, 3)
+	var typeAtTrigger CardType
+	var inBattlelineAtTrigger bool
+	g.AddToBattleline(NewCard("cavern", Brobnar, Creature, Common, WithPower(3),
+		WithAbility(TriggerEndOfTurn, gameEffect{fn: func() {
+			typeAtTrigger = g.TypeOf(art)
+			inBattlelineAtTrigger = slices.Contains(g.Battleline(0), art)
+		}})), 0)
+	g.StartTurn(0)
+	TurnIntoCreature{
+		Target:   Target{Kind: TargetThisCreature},
+		Duration: RemainderOfPlayerTurn,
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     art,
+		Controller: 0,
+	})
+
+	g.EndPlayPhase(0)
+
+	if typeAtTrigger != Creature {
+		t.Errorf(
+			"the end-of-turn ability saw the animated card as %v, want %v (the revert comes after)",
+			typeAtTrigger, Creature,
+		)
+	}
+	if !inBattlelineAtTrigger {
+		t.Error("the end-of-turn ability should still see the animated card in the battleline")
+	}
+	if got := g.TypeOf(art); got != Artifact {
+		t.Errorf("after the turn ended the card is %v, want %v", got, Artifact)
 	}
 }

@@ -1389,7 +1389,7 @@ func TestForgeKeyNumberBarred(t *testing.T) {
 
 	g.State.Aember[0] = 3 * KeyCost
 	keysBefore := g.Keys(0)
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if g.Keys(0) != keysBefore {
 		t.Error("the first key should be barred while a NoForgeKeyNumber:1 card is in play")
 	}
@@ -1404,7 +1404,7 @@ func TestForgeKeyNumberBarred(t *testing.T) {
 
 	// A second key is not barred by the first-key Imp.
 	g.State.ForgeCanonicalKeys(0, 1)
-	g.forgeKey(0)
+	g.ForgeKeyAtExtraCost(0, 0)
 	if g.Keys(0) != 2 {
 		t.Error("the second key should forge when only the first is barred")
 	}

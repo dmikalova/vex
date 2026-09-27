@@ -3,8 +3,8 @@ package engine
 // ConsiderFlank makes each creature its Target selects count as a flank creature
 // for the remainder of the turn, regardless of where it actually sits in its
 // battleline (Spectral Tunneler). A flank is normally a battleline position, so
-// this is a lasting override the ready phase lifts, not a move; every flank check
-// — combat's FlankOnly damage bonus and the OnFlank/NotOnFlank target filters —
+// this is a lasting override the end of the turn lifts, not a move; every flank
+// check — combat's FlankOnly damage bonus and the OnFlank/NotOnFlank target filters —
 // honors it.
 type ConsiderFlank struct {
 	Target Target

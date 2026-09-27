@@ -4,7 +4,7 @@ import "fmt"
 
 // GainStats gives each creature its Target selects power and/or armor for the
 // remainder of the turn — Abond the Armorsmith's Action grants other friendly
-// creatures +1 armor until end of turn. The ready phase clears the bonus. A
+// creatures +1 armor until end of turn. The end of the turn clears the bonus. A
 // constant "+N armor" that lasts while a card stays in play is a ConstantAbility
 // instead; this node is the one-shot, end-of-turn grant.
 type GainStats struct {

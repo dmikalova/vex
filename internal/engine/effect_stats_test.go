@@ -56,7 +56,7 @@ func TestGainStats(t *testing.T) {
 		t.Errorf("friend power = %d, want 7", got)
 	}
 
-	// The ready phase clears the bonus for every creature.
+	// The end of the turn clears the bonus for every creature.
 	g.StartTurn(0)
 	g.EndPlayPhase(0)
 	if g.State.Cards[friend].TempArmorBonus != 0 || g.State.Cards[friend].TempPowerBonus != 0 {

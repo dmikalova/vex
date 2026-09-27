@@ -60,8 +60,8 @@ func scheduledActionOf(e Effect) (scheduledAction, bool) {
 }
 
 // ScheduleAtEndOfTurn arms an effect to resolve in the active player's end-of-turn
-// window, dropping it silently when the schedule is full. The schedule survives the
-// ready phase (which runs before end of turn) and is cleared as the window fires.
+// window, dropping it silently when the schedule is full. The schedule is cleared
+// as the window fires.
 func (g *Game) ScheduleAtEndOfTurn(source LocalID, do scheduledAction) {
 	g.schedule(source, do, RemainderOfPlayerTurn)
 }
