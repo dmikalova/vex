@@ -78,14 +78,16 @@ func zoneEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 		more, _ := effectGlyphs(v.Then)
 		return append(gs, more...), true, true
 	case engine.Shuffle:
-		return []glyph{{asset: "zone-deck"}}, true, true
+		return []glyph{{asset: "zone-deck", sigil: sigilShuffle}}, true, true
 	case engine.ShuffleIntoDeck:
 		// A multi-zone shuffle has no single source glyph, so it shows what it takes.
+		// The shuffle sigil on the deck is what separates it from a plain PutCard,
+		// which lands a card on top at a known position (ADR 0047).
 		src := glyph{asset: "zone-discard"}
 		if len(v.From) > 1 {
 			src = glyph{asset: "type-creature"}
 		}
-		return []glyph{src, arrowTo(glyph{asset: "zone-deck"})}, true, true
+		return []glyph{src, arrowTo(glyph{asset: "zone-deck", sigil: sigilShuffle})}, true, true
 	case engine.SwapDeckAndDiscard:
 		return []glyph{
 			{asset: "zone-deck"},
@@ -107,7 +109,13 @@ func zoneEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 		return fallbackGlyphs(e), false, true
 	case engine.PutChosen:
 		if a := destinationGlyph(v.Destination); a != "" {
-			return []glyph{targetGlyph(v.Target), arrowTo(glyph{asset: a})}, true, true
+			// PutChosen is the bounded-choice counterpart to PutFromPlay: the
+			// controller picks how many of the pool move, so the subject is outlined
+			// as chosen and carries the count.
+			src := targetGlyph(v.Target)
+			src.decor |= decorChosen
+			src.qty = engine.FixedCardCount(v.Quantity)
+			return []glyph{src, arrowTo(glyph{asset: a})}, true, true
 		}
 		return fallbackGlyphs(e), false, true
 	case engine.PutCard:

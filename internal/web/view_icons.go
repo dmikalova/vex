@@ -65,8 +65,86 @@ func iconGlyph(g glyph) app.UI {
 		}),
 		app.Span().Class(cx("card-glyph-icon", decorClass(g.decor))).Body(
 			icon(g.asset, "card-glyph-img", "icon-outline"),
+			app.If(g.sigil != sigilNone, func() app.UI {
+				return sigilMark(g.sigil)
+			}),
 		),
 	)
+}
+
+// sigilMark renders a glyph's verb as the corner mark composited onto it. A verb
+// is either a text mark or a small asset; the choice lives here rather than on the
+// glyph, so promoting a mark to art touches no family file (ADR 0047).
+//
+// The tint is a second cue, never the only one: each verb has its own silhouette,
+// following the precedent rarityMark set so the strip stays legible to
+// colour-blind players.
+func sigilMark(s sigil) app.UI {
+	cls := cx("card-glyph-sigil", "card-glyph-sigil--"+sigilName(s))
+	if stem := sigilAsset(s); stem != "" {
+		return app.Span().Class(cls).Body(icon(stem, "card-glyph-sigil-img", "icon-outline"))
+	}
+	return app.Span().Class(cls).Text(sigilText(s))
+}
+
+// sigilName is a sigil's CSS modifier stem, which is also how a test names one.
+func sigilName(s sigil) string {
+	switch s {
+	case sigilGain:
+		return "gain"
+	case sigilLose:
+		return "lose"
+	case sigilSteal:
+		return "steal"
+	case sigilExalt:
+		return "exalt"
+	case sigilReveal:
+		return "reveal"
+	case sigilShuffle:
+		return "shuffle"
+	case sigilMay:
+		return "may"
+	case sigilGrafted:
+		return "grafted"
+	case sigilNone:
+		return ""
+	}
+	return ""
+}
+
+// sigilAsset is the asset stem a verb draws, or "" when the verb draws a text
+// mark instead (sigilText).
+func sigilAsset(s sigil) string {
+	switch s {
+	case sigilSteal:
+		return "sigil-steal"
+	case sigilExalt:
+		return "sigil-exalt"
+	case sigilReveal:
+		return "sigil-reveal"
+	case sigilShuffle:
+		return "glyph-swap"
+	case sigilGrafted:
+		return "glyph-action"
+	case sigilNone, sigilGain, sigilLose, sigilMay:
+		return ""
+	}
+	return ""
+}
+
+// sigilText is the typographic mark a verb draws when it has no asset.
+func sigilText(s sigil) string {
+	switch s {
+	case sigilGain:
+		return "+"
+	case sigilLose:
+		return "−"
+	case sigilMay:
+		return "?"
+	case sigilNone, sigilSteal, sigilExalt, sigilReveal, sigilShuffle, sigilGrafted:
+		return ""
+	}
+	return ""
 }
 
 // decorClass turns a glyph's decoration flags into the space-joined CSS classes

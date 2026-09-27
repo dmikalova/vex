@@ -17,12 +17,12 @@ func creatureEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 			arrowTo(targetGlyph(v.Target)),
 		}, true, true
 	case engine.Enrage:
-		return []glyph{{asset: "glyph-fight"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return []glyph{{asset: "enrage"}, arrowTo(targetGlyph(v.Target))}, true, true
 	case engine.Ward:
-		return []glyph{{asset: "shield"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return []glyph{{asset: "ward"}, arrowTo(targetGlyph(v.Target))}, true, true
 	case engine.RemoveWard:
 		return []glyph{
-			{asset: "shield"},
+			{asset: "ward"},
 			{asset: "glyph-ban"},
 			arrowTo(targetGlyph(v.Target)),
 		}, true, true
@@ -47,9 +47,15 @@ func creatureEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	case engine.CancelFight:
 		return []glyph{{asset: "glyph-fight"}, {asset: "glyph-ban"}}, true, true
 	case engine.PlaceCounter:
-		return []glyph{{asset: counterAsset(v.Kind)}, arrowTo(targetGlyph(v.Target))}, true, true
+		return []glyph{
+			{asset: counterAsset(v.Kind), sigil: sigilGain},
+			arrowTo(targetGlyph(v.Target)),
+		}, true, true
 	case engine.RemoveCounters:
-		return []glyph{{asset: counterAsset(v.Kind)}, arrowTo(targetGlyph(v.Target))}, true, true
+		return []glyph{
+			{asset: counterAsset(v.Kind), sigil: sigilLose},
+			arrowTo(targetGlyph(v.Target)),
+		}, true, true
 	case engine.AddPowerCounter:
 		if v.Per != nil || v.Equal != nil {
 			return []glyph{{asset: "power"}, arrowTo(targetGlyph(v.Target))}, true, true

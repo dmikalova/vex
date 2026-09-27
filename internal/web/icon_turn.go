@@ -41,13 +41,21 @@ func turnEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 		case engine.RestrictUse:
 			verb = "glyph-action"
 		}
-		return []glyph{{asset: verb}, {asset: "glyph-ban"}}, true, true
+		// Restrict bars a player, where CreaturesCannot bars the creatures on the
+		// board; the subject decor is what tells the two apart (ADR 0047).
+		return []glyph{
+			{asset: verb, decor: playerDecor(v.Player)},
+			{asset: "glyph-ban"},
+		}, true, true
 	case engine.CreaturesCannot:
 		action := "glyph-reap"
 		if v.Action == engine.FightUse {
 			action = "glyph-fight"
 		}
-		return []glyph{{asset: action}, {asset: "glyph-ban"}}, true, true
+		return []glyph{
+			{asset: action, decor: decorEach},
+			{asset: "glyph-ban"},
+		}, true, true
 	case engine.GainChains:
 		return []glyph{{asset: "chains", qty: v.Amount, decor: playerDecor(v.Player)}}, true, true
 	case engine.ResolveBonusIcons:

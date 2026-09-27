@@ -3345,6 +3345,40 @@ button:disabled {
   outline: 1px dotted rgba(255, 255, 255, 0.5);
   border-radius: 0.15rem;
 }
+/* the verb sigil: a small mark in the glyph's lower-right corner saying what
+   happens to the noun, where decor above says who it is about. Each verb has its
+   own silhouette or mark, so the tint below is a second cue and never the only
+   one — the rule rarityMark set so the strip stays legible to colour-blind
+   players. */
+.card-glyph-sigil {
+  position: absolute;
+  right: -0.14rem;
+  bottom: -0.14rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: rgba(20, 20, 22, 0.85);
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+  color: #e8e4da;
+}
+.card-glyph-sigil-img {
+  width: 0.38rem;
+  height: 0.38rem;
+}
+.card-glyph-sigil--gain {
+  color: #7ed09a;
+}
+.card-glyph-sigil--lose {
+  color: #e58b8b;
+}
+.card-glyph-sigil--may {
+  color: #d8d5cd;
+}
 /* trait line: sits under the stat line and above the rules, muted so it reads as
    secondary to the rules text without shouting */
 .card-traits {

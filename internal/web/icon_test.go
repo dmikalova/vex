@@ -1,8 +1,11 @@
 package web
 
 import (
+	"fmt"
+	"maps"
 	"reflect"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
@@ -99,6 +102,106 @@ func TestNoResidualUnknownGlyph(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+// glyphSynonyms declares the effect nodes that are the same mechanic under two
+// node names and so *should* draw the same strip. This is a positive assertion,
+// not an allowlist: an undeclared collision is a bug in the vocabulary, the way an
+// unmapped mechanic is a bug rather than an exemption (ADR 0047). Nothing here is
+// a way to opt out of drawing a distinct glyph — a node whose mechanic differs
+// from every node listed beside it does not belong in a group.
+var glyphSynonyms = []struct {
+	reason string
+	types  []string
+}{
+	{
+		reason: "three spellings of destroying creatures; the target does the varying",
+		types: []string{
+			"engine.Destroy",
+			"engine.DestroyChosen",
+			"engine.BatchDestroy",
+		},
+	},
+	{
+		reason: "readying one creature and readying several are the same verb",
+		types: []string{
+			"engine.Ready",
+			"engine.ReadyCreatures",
+		},
+	},
+	{
+		reason: "three spellings of putting a card into play; only the origin differs",
+		types: []string{
+			"engine.PlayFrom",
+			"engine.PlayTopOfDeck",
+			"engine.PutIntoPlay",
+		},
+	},
+	{
+		reason: "archiving from hand and archiving from play are the same move",
+		types: []string{
+			"engine.ArchiveCard",
+			"engine.ArchiveFromPlay",
+		},
+	},
+}
+
+// synonymReason reports the declared reason a set of effect type names is allowed
+// to share one strip, and whether any declared group covers all of them.
+func synonymReason(types []string) (string, bool) {
+	for _, group := range glyphSynonyms {
+		all := true
+		for _, t := range types {
+			if !slices.Contains(group.types, t) {
+				all = false
+				break
+			}
+		}
+		if all {
+			return group.reason, true
+		}
+	}
+	return "", false
+}
+
+// TestDistinctMechanicsDrawDistinctGlyphs is the verb axis's gate: it walks every
+// triggered ability on every card (the corpus TestIconTotality walks), renders each
+// effect, groups the effects by the strip they drew, and fails when two distinct
+// leaf mechanics land in one group. Without it the next agent to add an effect node
+// could quietly reuse another mechanic's picture, which is how twelve pairs came to
+// render identically before ADR 0047.
+//
+// The composition family is excluded: a Conditional, May, ForEach, Repeat, Then or
+// Sequence is *supposed* to render as the effect it wraps. Everything else must
+// either draw its own strip or be a declared synonym (glyphSynonyms).
+func TestDistinctMechanicsDrawDistinctGlyphs(t *testing.T) {
+	byStrip := map[string]map[string]bool{}
+	forEachAbilityEffect(func(e engine.Effect) {
+		if _, _, ok := composeEffectGlyphs(e); ok {
+			return
+		}
+		gs, _ := effectGlyphs(e)
+		strip := fmt.Sprintf("%+v", gs)
+		if byStrip[strip] == nil {
+			byStrip[strip] = map[string]bool{}
+		}
+		byStrip[strip][effectTypeName(e)] = true
+	})
+	for strip, set := range byStrip {
+		if len(set) < 2 {
+			continue
+		}
+		types := slices.Sorted(maps.Keys(set))
+		if _, ok := synonymReason(types); ok {
+			continue
+		}
+		t.Errorf(
+			"%s draw the same strip %s; give one a distinct glyph or sigil, or declare "+
+				"them synonyms in glyphSynonyms with the reason (ADR 0047)",
+			strings.Join(types, " and "),
+			strip,
+		)
 	}
 }
 
