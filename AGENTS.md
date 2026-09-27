@@ -33,10 +33,23 @@ Where the mechanic contradicts what the code does, the human's explanation is th
 authority — but say so plainly, and fix the code rather than quietly reshaping
 the explanation to match what is already there.
 
-## Don't write into `docs/todo.md`
+## The repo carries no agent backlog file
 
-`docs/todo.md` is the **human's** personal list — do not write into it, and don't
-keep a todo file of your own: outstanding work is tracked outside the repo.
+There is **no in-tree list of outstanding agent work**. Outstanding work is
+tracked outside the tree, by whatever is driving the session; do not create a
+markdown backlog to stand in for it, because a second source of truth hands the
+next agent work that is already assigned elsewhere. `docs/todo.md` is the
+**human's** personal list — read it if it helps, but never write into it.
+
+When you do record a work item, wherever it lives, it is a **handoff to a future
+agent who was not in the conversation that wrote it**, so it must carry the
+decision, not just the task. Write down _what was decided and why_ — the chosen
+behavior, the cards affected, the expected text — so the next agent does not have
+to reconstruct it from code that may already be stale. When you pick an item up,
+the recorded decision **wins over a contradicting code comment**: a comment that
+disagrees with the item is out of date (it describes the behavior the item exists
+to change), so fix the comment to match the decision — do not treat the comment as
+evidence the item is wrong and re-litigate it.
 
 Work that is decided but has **no consuming card in an implemented set yet** goes
 in [docs/todo-future-set.md](docs/todo-future-set.md), keyed to the set
