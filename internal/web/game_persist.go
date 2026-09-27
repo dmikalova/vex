@@ -133,9 +133,9 @@ func (g *game) quarantine(ctx app.Context, snap snapshot, reason any, stack []by
 }
 
 // resume rebuilds the match from a saved snapshot, reporting whether it restored
-// one. A missing, wrong-version, or undecodable snapshot is deleted and resume
-// returns false, so the caller deals a fresh game. The snapshot holds only the
-// session's Record, so the resume replays its command log from a fresh deal to
+// one. A missing, wrong-version, or engine-incompatible snapshot is dropped and
+// resume returns false, so the caller deals a fresh game. The snapshot holds only
+// the session's Record, so the resume replays its command log from a fresh deal to
 // regenerate the exact state and typed log; a replay that fails — diverging on a
 // since-changed action, or panicking on an id the current pool no longer hands out
 // — is caught, and that snapshot is moved to quarantine rather than deleted,

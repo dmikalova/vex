@@ -15,7 +15,9 @@ func mutatingRoles() map[string]reflect.Type {
 	return map[string]reflect.Type{
 		"EconomyResolver":  reflect.TypeFor[engine.EconomyResolver](),
 		"CreatureResolver": reflect.TypeFor[engine.CreatureResolver](),
+		"BoardResolver":    reflect.TypeFor[engine.BoardResolver](),
 		"CombatResolver":   reflect.TypeFor[engine.CombatResolver](),
+		"PlayResolver":     reflect.TypeFor[engine.PlayResolver](),
 		"ZoneResolver":     reflect.TypeFor[engine.ZoneResolver](),
 		"TurnResolver":     reflect.TypeFor[engine.TurnResolver](),
 	}
