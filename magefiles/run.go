@@ -40,6 +40,17 @@ func wasmBuild(out string) error {
 	)
 }
 
+// CapturePrune trims closed replay captures. It replays every entry the dev
+// server has written into internal/web/testdata/capture and deletes the ones that
+// are no longer open findings: the faults that have been fixed, and every entry
+// recorded against a different command-log version or card pool, which can never
+// be evidence about this tree again. What is left is the list of findings still to
+// fix — the directory is that list, not an archive of every failure a dev server
+// ever saw. Same contract as `mage corpusPrune`.
+func CapturePrune() error {
+	return sh.RunV("go", "run", "./magefiles/webcapture")
+}
+
 // Web serves the wasm client with live rebuilds. It listens on
 // http://localhost:8000 and rebuilds and restarts on any Go or CSS change so edits
 // show up live. It also serves the Style gallery at /style and the browser

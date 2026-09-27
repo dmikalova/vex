@@ -31,7 +31,7 @@ func main() {
 	app.Route("/cards", web.NewGallery)
 	app.Route("/rulebook", web.NewRulebook)
 	app.Route("/glossary", web.NewGlossary)
-	if styleEnabled() {
+	if web.DevEnabled() {
 		app.Route("/style", web.NewStyle)
 		app.Route("/clusters", web.NewClusters)
 	}
@@ -43,6 +43,14 @@ func main() {
 
 	version := resourceVersion()
 	assets := assetPaths()
+
+	// The client cannot write a file from the browser sandbox, so a replay failure
+	// posts its record here and the dev server lands it on disk for somebody else to
+	// replay. Registered behind the same switch the Style gallery uses, so a
+	// deployed build has no endpoint and no handler at all.
+	if web.DevEnabled() {
+		http.Handle(web.CapturePath, web.CaptureHandler(web.CaptureDir))
+	}
 
 	// Serve a fullscreen web app manifest at go-app's manifest path. go-app
 	// hardcodes display "standalone"; overriding the route makes an installed PWA
@@ -102,7 +110,7 @@ func main() {
 			"VEX_BUILD": buildID(version),
 			// Passed down so the wasm client registers the same routes the server
 			// serves; without it the gallery's page would be served and render blank.
-			styleEnv: os.Getenv(styleEnv),
+			web.DevEnv: os.Getenv(web.DevEnv),
 			// The same bridge for the browser-scenario page's switch.
 			web.UITestEnv: os.Getenv(web.UITestEnv),
 		},
@@ -575,21 +583,6 @@ const devReloadScript = `<script>
 })();
 </script>`
 
-// styleEnv is the variable that turns the Style gallery on. mage web sets it, so
-// the gallery is there whenever the client is being developed and absent from
-// every other deployment.
-const styleEnv = "VEX_STYLE"
-
-// styleEnabled reports whether the Style gallery's route should exist. The check
-// has to run on both sides of the build and agree: the server must register the
-// route or it serves no page at all (go-app 404s an unregistered path), and the
-// wasm client must register it or the served page renders nothing. app.Getenv
-// bridges the two — it reads the process environment on the server and the Env
-// map the server passed down on the client — so one variable decides both.
-//
-// It is an environment switch rather than a build tag because go-app routes on
-// the client: a tag would have to exclude the gallery from the wasm bundle every
-// player downloads, which means the gallery would not be compiled by default and
-// would rot exactly as the //go:build todo card stubs do. See
-// docs/adr/0014-style-gallery-on-real-components.md.
-func styleEnabled() bool { return app.Getenv(styleEnv) == "1" }
+// The development-only switch both sides of the build read — web.DevEnv and
+// web.DevEnabled — lives in internal/web, because the client half of the capture
+// endpoint needs the same answer this file does.

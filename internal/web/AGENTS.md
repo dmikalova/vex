@@ -23,6 +23,10 @@ grouped by area, `view_*.go` holds rendering grouped by screen region.
   shortcuts, and the hot-reload hand-off.
 - `game_persist.go` — saving a match to local storage, resuming it, and dealing a
   new one when there is nothing to resume.
+- `capture.go` — writing a replay failure out to a file an agent can replay: the
+  `Capture` record, its staleness stamps, the dev-server endpoint, and `Replay`.
+- `dev.go` — `DevEnv`/`DevEnabled`, the one switch both the wasm client and the
+  native server read to decide whether a development-only surface exists.
 - `game_action.go` — the action plumbing: applying a Command to the session,
   settling what it yields, undo/redo over the command log, and the flash/flight
   bookkeeping after each action.
@@ -249,6 +253,45 @@ and `replayRecord` refuses a mismatch the same way `session.Load` does.
 
 Manual force-edits are in the record **on purpose**: a force-edited board that
 hits a bug is the reproduction worth keeping.
+
+**A snapshot that fails to *replay* is kept, not deleted.** `resume` checks the
+version and the decode **before** it attempts a replay, so anything that gets past
+those checks and then diverges or panics is a **current-version** save this build
+cannot replay — an engine regression, and the only reproduction of it. Those two
+paths (the `recover`, and a false `rebuildFromLog`) call `quarantine`, which moves
+the snapshot to `quarantineKey` and raises `replayFailedNotice`; the live slot is
+still cleared so the player gets a fresh deal. One slot holds the most recent
+finding — a later failure overwrites it. A wrong version or a bad decode keeps
+being **deleted**: those are the innocent explanations and are not evidence.
+(`TestAPanickingReplayIsQuarantined`, `TestUnusableSnapshotsAreDropped`.)
+
+## A replay failure is captured to disk, not just to local storage
+
+The quarantine slot keeps a reproduction where only the one browser that hit the
+fault can see it. `capture.go` is the other half: the client cannot write a file
+from the browser sandbox, so on a replay failure it POSTs the record, the panic
+and the stack to `POST /debug/capture`, and the **dev server** writes it under
+`internal/web/testdata/capture/`. The endpoint is registered only when
+`web.DevEnabled()` — the same switch `/style` uses — so a deployed build has no
+handler, the POST silently fails, and the quarantine key is the fallback. The two
+halves degrade into each other.
+
+Three rules hold that ratchet up:
+
+- **A capture on disk is an open finding, not an archive entry.** `TestCaptures`
+  replays every one and fails, so a capture sitting in a commit is a lapse. Fix
+  the fault, then `mage capturePrune` — the same contract as the `FuzzPlay` seed
+  corpus.
+- **A stale capture is skipped with a note, never failed.** It carries the
+  command-log version, the dev server's commit, and a **card-pool digest** (a hash
+  over every implemented card's name, type, house, power, armor and rendered
+  text). The pool changes constantly without a version bump, and the same seed
+  deals different cards from a different pool, so a capture recorded against
+  another pool is not evidence. The commit is recorded for whoever investigates
+  and is deliberately **not** a staleness key — an ancestry test would be wrong
+  across branches.
+- **The filename is a content hash**, so re-hitting the same bug overwrites its
+  file rather than piling up a copy per page load.
 
 A failed write is not swallowed. `writeSnapshot` frees the storage the client can
 spare — the style gallery's scroll memo and the snapshot the write is replacing —

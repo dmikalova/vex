@@ -154,9 +154,10 @@ func TestManualAddsAreReplayed(t *testing.T) {
 }
 
 // A command log naming a card the pool no longer holds cannot be replayed — the
-// missing registration leaves every later id misaligned — so it is dropped rather
-// than restored onto the wrong cards.
-func TestASnapshotNamingAnUnknownCardIsDropped(t *testing.T) {
+// missing registration leaves every later id misaligned — so the match is not
+// restored onto the wrong cards. The snapshot is current-version, so it is
+// quarantined rather than deleted.
+func TestASnapshotNamingAnUnknownCardIsQuarantined(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	c.saveWithExtraCommand(engine.Command{
@@ -164,7 +165,7 @@ func TestASnapshotNamingAnUnknownCardIsDropped(t *testing.T) {
 		Name:   "A Card That Was Never Printed",
 		Player: 0,
 	})
-	c.expectDropped()
+	c.expectQuarantined()
 }
 
 // saveWithExtraCommand saves the match and then splices cmd onto the end of the
@@ -184,9 +185,12 @@ func (c *client) saveWithExtraCommand(cmd engine.Command) {
 	}
 }
 
-// Every reason a snapshot is unusable ends the same way: it is deleted and a
-// fresh match is dealt, rather than the client coming up on a state it cannot
-// read.
+// A snapshot rejected before any replay is attempted — a version this build no
+// longer reads, a seed it cannot re-deal from, a payload that is not a snapshot —
+// is deleted outright and a fresh match is dealt. These are the innocent
+// explanations, so none of them is evidence and none is quarantined; only a
+// snapshot that got past these checks and then failed to replay is kept (see
+// TestAPanickingReplayIsQuarantined).
 func TestUnusableSnapshotsAreDropped(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -220,7 +224,13 @@ func TestUnusableSnapshotsAreDropped(t *testing.T) {
 			if err := c.ctx.LocalStorage().Set(persistKey, tt.damage(snap)); err != nil {
 				t.Fatalf("write the damaged snapshot: %v", err)
 			}
-			c.expectDropped()
+			next := c.expectDropped()
+			if next.ctx.LocalStorage().Contains(quarantineKey) {
+				t.Error("a snapshot rejected before replay was quarantined, not deleted")
+			}
+			if next.g.notice == replayFailedNotice {
+				t.Error("a snapshot rejected before replay raised the replay-failed notice")
+			}
 		})
 	}
 }
@@ -269,9 +279,12 @@ func TestSavingBeforeTheDeal(t *testing.T) {
 
 // A command log that replays into a corrupt engine state — here a manual move of
 // a card id the deal never handed out — panics during replay. That panic is
-// caught and the snapshot dropped rather than the board drawn from a broken
-// state.
-func TestACommandLogThatPanicsOnReplayIsDropped(t *testing.T) {
+// caught and the board is not drawn from a broken state, but the snapshot is
+// kept: resume has already ruled out a wrong version and a bad decode, so what is
+// left is a save this build cannot replay, and deleting it would destroy the
+// reproduction. Only the latest one is kept — the slot is overwritten, not
+// appended to.
+func TestAPanickingReplayIsQuarantined(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	c.saveWithExtraCommand(engine.Command{
@@ -279,7 +292,26 @@ func TestACommandLogThatPanicsOnReplayIsDropped(t *testing.T) {
 		Card:  engine.LocalID(250),
 		Index: int(engine.ManualDiscard),
 	})
-	c.expectDropped()
+	first := c.expectQuarantined()
+	if n := len(first.Record.Commands); n != len(c.g.s.Record().Commands)+1 {
+		t.Errorf("quarantined %d commands, want the failing log's %d",
+			n, len(c.g.s.Record().Commands)+1)
+	}
+
+	// A second failure replaces the first rather than piling up beside it.
+	first.Record.Commands = append(first.Record.Commands, engine.Command{
+		Kind:  engine.CommandManualMove,
+		Card:  engine.LocalID(251),
+		Index: int(engine.ManualDiscard),
+	})
+	if err := c.ctx.LocalStorage().Set(c.g.matchKey(), first); err != nil {
+		t.Fatalf("write the spliced snapshot: %v", err)
+	}
+	second := c.expectQuarantined()
+	if len(second.Record.Commands) != len(first.Record.Commands) {
+		t.Errorf("quarantined %d commands, want the later log's %d",
+			len(second.Record.Commands), len(first.Record.Commands))
+	}
 }
 
 // A resumed match starts its toast caught up: reopening a page with the sidebar
@@ -345,8 +377,10 @@ func (c *client) reload() *client {
 }
 
 // expectDropped asserts that the next page load refuses the saved snapshot and
-// clears it, so the client deals fresh rather than failing the same way again.
-func (c *client) expectDropped() {
+// clears the live slot, so the client deals fresh rather than failing the same way
+// again. It hands that page load back so a caller can go on to assert where the
+// snapshot went.
+func (c *client) expectDropped() *client {
 	c.t.Helper()
 	next := c.nextLoad()
 	if next.g.resume(next.ctx) {
@@ -355,4 +389,24 @@ func (c *client) expectDropped() {
 	if next.ctx.LocalStorage().Contains(persistKey) {
 		c.t.Error("the unusable snapshot was left in storage to fail again")
 	}
+	return next
+}
+
+// expectQuarantined asserts that the next page load refuses the saved snapshot,
+// keeps it under the quarantine key instead of deleting it, and tells the player
+// the save was kept. It returns the snapshot that was kept.
+func (c *client) expectQuarantined() snapshot {
+	c.t.Helper()
+	next := c.expectDropped()
+	if next.g.notice != replayFailedNotice {
+		c.t.Errorf("notice = %q, want the replay-failed notice", next.g.notice)
+	}
+	var kept snapshot
+	if err := next.ctx.LocalStorage().Get(quarantineKey, &kept); err != nil {
+		c.t.Fatalf("read back the quarantined snapshot: %v", err)
+	}
+	if kept.Record.Seed == 0 {
+		c.t.Fatal("the failing snapshot was deleted, not quarantined")
+	}
+	return kept
 }
