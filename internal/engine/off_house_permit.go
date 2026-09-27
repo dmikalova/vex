@@ -122,7 +122,7 @@ func (g *Game) nonActivePlayLimit(player int) int {
 		}
 		if c := p.Condition; c != nil &&
 			!c.Met(&EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     id,
 				Controller: player,
 			}) {

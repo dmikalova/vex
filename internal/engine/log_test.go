@@ -226,6 +226,15 @@ func TestLogEntryText(t *testing.T) {
 		"P0 manually forges a Blue key and now has 2 of 3 keys",
 		"P1 manually unforges a key and now has 0 of 3 keys",
 
+		// Board changes that used to pass unnarrated.
+		"Card2 heals 3 damage",
+		"Card2 loses 2 armor",
+		"Card2 gets 2 +1 power counters",
+		"Card2 gets 1 -1 power counter",
+		"Card2 gets 2 doom counters",
+		"Card2 loses 1 doom counter",
+		"Card2 belongs to house Untamed",
+
 		// A restored entry reads back exactly as it was narrated.
 		"P0 gains 1 Æmber",
 	}

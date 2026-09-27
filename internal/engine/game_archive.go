@@ -44,7 +44,7 @@ func (g *Game) offerArchives(player int) {
 // granting the rule.
 func (g *Game) selectiveArchivePickup(player int, src LocalID) {
 	ctx := &EffectContext{
-		Resolver:   g,
+		Resolver:   g.resolver,
 		Controller: player,
 		Source:     src,
 	}

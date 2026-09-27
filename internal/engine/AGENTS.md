@@ -554,6 +554,19 @@ to)` names a card once either end of the move is public and calls it "a card"
   as it happens.
 - Recording is switchable (`SetRecording`), so a search that plays thousands of
   games pays nothing for narration.
+- **Two ratchets keep the log complete, and both fail the build rather than
+  waiting to be noticed** (ADR 0002 of the narration goal). `fieldNarration`
+  (`state_test.go`) classifies every `GameState` field by dotted path —
+  `Cards.Damage`, `Controls.Controller` — as narrated directly, narrated by its
+  cause, or never; a new field fails
+  `TestEveryStateFieldDeclaresItsNarration` until it is classified.
+  `methodNarration` (`narrationaudit/narration.go`) does the same for every method
+  of the mutating `Resolver` roles, and the `Auditor` in that package enforces it:
+  a method classified as narrating directly that changes `GameState` without
+  appending an entry fails the test that drove it. The audit is installed by the
+  `cardtest` harness (so every card test drives it) and by the seeded sim batch.
+  **Adding a port method therefore means deciding where its line comes from**, and
+  answering "it narrates" binds you to record inside the method body.
 
 ## Prompts: name the card, and let the player click a target
 

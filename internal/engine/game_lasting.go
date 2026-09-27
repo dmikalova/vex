@@ -379,7 +379,7 @@ func (g *Game) matchingLasting(event Event, actor int, subject LocalID) []Lastin
 		if int(le.Controller) != actor || le.On != event {
 			continue
 		}
-		if !le.House.matches(&EffectContext{Resolver: g}, subject) {
+		if !le.House.matches(&EffectContext{Resolver: g.resolver}, subject) {
 			continue
 		}
 		if le.Type != TypeUnset && !le.Type.reacts(g.cat.def(subject).Type) {
@@ -470,7 +470,7 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 			Target: Target{Kind: TargetChosenEnemyCreature},
 		}.Resolve(
 			&EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     subject,
 				Controller: actor,
 			},
@@ -481,7 +481,7 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 			Target: Target{Kind: TargetEachCreature}.ExceptTrait(le.Trait),
 		}.Resolve(
 			&EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     subject,
 				Controller: actor,
 			},
@@ -496,7 +496,7 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 			Source: Opponent,
 		}.Resolve(
 			&EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     subject,
 				Controller: actor,
 				It:         subject,
@@ -510,7 +510,7 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 			Source: Opponent,
 		}.Resolve(
 			&EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     le.Source,
 				Controller: actor,
 			},
@@ -526,7 +526,7 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 		if g.inPlay(subject) {
 			Stun{Target: Target{Kind: TargetTriggeringCreature}}.Resolve(
 				&EffectContext{
-					Resolver:   g,
+					Resolver:   g.resolver,
 					Source:     subject,
 					Controller: actor,
 					It:         subject,
@@ -547,7 +547,7 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 			Amount: int(le.Amount),
 		}.Resolve(
 			&EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     subject,
 				Controller: actor,
 			},
@@ -555,7 +555,7 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 	case actSteal:
 		StealAember{Amount: int(le.Amount)}.Resolve(
 			&EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     subject,
 				Controller: actor,
 			},

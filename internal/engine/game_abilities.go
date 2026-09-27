@@ -81,7 +81,7 @@ func (g *Game) usable(player int, id LocalID) error {
 	def := g.cat.def(id)
 	if def.Restricts.UseCondition != nil {
 		ctx := &EffectContext{
-			Resolver:   g,
+			Resolver:   g.resolver,
 			Source:     id,
 			Controller: player,
 		}
@@ -93,7 +93,7 @@ func (g *Game) usable(player int, id LocalID) error {
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		if c := g.cat.def(up).Restricts.UseCondition; c != nil {
 			ctx := &EffectContext{
-				Resolver:   g,
+				Resolver:   g.resolver,
 				Source:     id,
 				Controller: player,
 			}
@@ -499,7 +499,7 @@ func (g *Game) firesForSubject(t triggeredAbility) bool {
 		return true
 	}
 	ctx := &EffectContext{
-		Resolver:   g,
+		Resolver:   g.resolver,
 		Source:     t.source,
 		Controller: int(t.actor),
 		It:         t.it,
@@ -715,7 +715,7 @@ func (g *Game) validateFight(player int, attacker, defender LocalID) error {
 	}
 	if fr := g.cat.def(attacker).FightRestriction; fr != (Target{}) &&
 		!fr.allows(&EffectContext{
-			Resolver:   g,
+			Resolver:   g.resolver,
 			Source:     attacker,
 			Controller: player,
 		}, defender) {
@@ -799,7 +799,7 @@ func (g *Game) fightAllows(player int, attacker, def LocalID) bool {
 	fr := g.cat.def(attacker).FightRestriction
 	return fr == (Target{}) ||
 		fr.allows(&EffectContext{
-			Resolver:   g,
+			Resolver:   g.resolver,
 			Source:     attacker,
 			Controller: player,
 		}, def)
@@ -877,7 +877,7 @@ func (g *Game) resolveUpgradePlay(host, upgrade LocalID, up *CardDefinition) {
 			HasGrantor: true,
 		})
 		ab.Effect.Resolve(&EffectContext{
-			Resolver:   g,
+			Resolver:   g.resolver,
 			Source:     host,
 			Upgrade:    upgrade,
 			Controller: g.owner(upgrade),
@@ -976,7 +976,7 @@ func (g *Game) playCreatureReactions(player int, played LocalID) []triggeredAbil
 	w := g.window()
 	w.add(played, TriggerAfterPlay, 0, false)
 	w.addEntersPlay(player, played)
-	for _, neighbor := range neighbors(&EffectContext{Resolver: g}, played) {
+	for _, neighbor := range neighbors(&EffectContext{Resolver: g.resolver}, played) {
 		w.add(neighbor, TriggerAfterCreaturePlayedAdjacent, played, true)
 	}
 	w.addBoard(TriggerAfterCreaturePlayed, played, skipSubject)
@@ -1108,7 +1108,7 @@ func (g *Game) resolveTriggered(t triggeredAbility) bool {
 		HasGrantor: t.grantor != src,
 	})
 	ec := &EffectContext{
-		Resolver:   g,
+		Resolver:   g.resolver,
 		Source:     src,
 		Controller: actor,
 		It:         t.it,

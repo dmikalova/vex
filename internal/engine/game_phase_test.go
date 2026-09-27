@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"reflect"
 	"slices"
 	"testing"
 )
@@ -410,5 +411,178 @@ func TestAnimatorRevertsAfterEndOfTurnAbilities(t *testing.T) {
 	}
 	if got := g.TypeOf(art); got != Artifact {
 		t.Errorf("after the turn ended the card is %v, want %v", got, Artifact)
+	}
+}
+
+// ---- witness tests for the end-of-turn cleanup tail ----
+//
+// The cleanup tail (expireTurnScoped, run after the end-of-turn abilities under
+// ADR 0047) writes state directly rather than through the Resolver port, so it is
+// outside the narration audit by design: refreshing armor, lifting the turn's
+// bars, and rolling TurnHistory are not capabilities any card has. These tests
+// cover it instead, one step each — what the step changed, and what it did or did
+// not say about it.
+//
+// The silent steps are silent on purpose, and each test below says why. The rule
+// they share: the turn boundary is not an event a card causes, and every
+// "remainder of the turn" effect ends at it, so narrating each expiry would
+// append a line per creature per turn for something the log already told the
+// player was temporary. The expiries that ARE narrated are the ones that change
+// what a card is (a reverting animation), not the ones that merely return it to
+// its printed state.
+
+// entriesAppended runs step and returns the type name of each log entry it
+// appended, in order — the witness one phase step leaves in the log.
+func entriesAppended(g *Game, step func()) []string {
+	before := len(g.Log)
+	step()
+	var out []string
+	for _, r := range g.Log[before:] {
+		out = append(out, reflect.TypeOf(r.Entry).Name())
+	}
+	return out
+}
+
+// TestReadyStepNarratesTheCardsItReadied is the witness for readying: it names
+// the cards that were actually turned upright, in one line, so a player can see
+// what came back.
+func TestReadyStepNarratesTheCardsItReadied(t *testing.T) {
+	g := started(t)
+	exhausted := g.AddToBattleline(testCreature("exhausted", 3), 0)
+	g.AddToBattleline(testCreature("ready", 3), 0)
+	g.State.Cards[exhausted].Exhausted = true
+
+	got := entriesAppended(g, func() { g.readyPhase(0) })
+
+	if !slices.Contains(got, "CardsReadied") {
+		t.Fatalf("ready step appended %v, want a CardsReadied entry", got)
+	}
+	for _, r := range g.Log {
+		if e, ok := r.Entry.(CardsReadied); ok {
+			if !slices.Equal(e.Cards, []LocalID{exhausted}) {
+				t.Errorf("CardsReadied names %v, want only the exhausted card %d",
+					e.Cards, exhausted)
+			}
+		}
+	}
+	if g.State.Cards[exhausted].Exhausted {
+		t.Error("the card is still exhausted after the ready step")
+	}
+}
+
+// TestCleanupNarratesATemporaryAnimationReverting is the witness for the Animator
+// revert. This expiry IS narrated: the card stops being a creature and leaves the
+// battleline, which changes what the board is, so RevertedToArtifact tells the
+// player why a creature they could see is gone.
+func TestCleanupNarratesATemporaryAnimationReverting(t *testing.T) {
+	g := NewGame("Alice", "Bob", 1)
+	art := g.AddArtifact(testArtifact("animated"), 0)
+	g.AddPowerCounter(art, 3)
+	g.StartTurn(0)
+	TurnIntoCreature{
+		Target:   Target{Kind: TargetThisCreature},
+		Duration: RemainderOfPlayerTurn,
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     art,
+		Controller: 0,
+	})
+
+	got := entriesAppended(g, func() { g.expireTurnScoped(0) })
+
+	if !slices.Contains(got, "RevertedToArtifact") {
+		t.Fatalf("cleanup appended %v, want a RevertedToArtifact entry", got)
+	}
+	if typ := g.TypeOf(art); typ != Artifact {
+		t.Errorf("the animated card is %v after cleanup, want %v", typ, Artifact)
+	}
+}
+
+// TestCleanupLiftsTurnBarsSilently pins the decision that a bar expiring is not
+// narrated. Arming one is not narrated either (ADR 0011): a bar narrates when it
+// bites, as CardCannotBeUsed on the use it refuses. A line for the lift would be
+// the only mention of a bar the log never announced.
+func TestCleanupLiftsTurnBarsSilently(t *testing.T) {
+	g := started(t)
+	source := g.AddToBattleline(testCreature("fogbank", 3), 0)
+	g.State.CannotFight[0] = Bar[bool]{
+		Value:  true,
+		Source: source,
+	}
+
+	got := entriesAppended(g, func() { g.expireTurnScoped(0) })
+
+	if len(got) != 0 {
+		t.Errorf("lifting the fight bar appended %v, want nothing", got)
+	}
+	if g.State.CannotFight[0].Value {
+		t.Error("the fight bar is still in force after cleanup")
+	}
+}
+
+// TestCleanupExpiresTemporaryBuffsSilently pins the decision that a "remainder of
+// the turn" stat or keyword grant expiring is not narrated. The grant itself was
+// narrated (CreatureGainedStats, CreatureGainedKeyword) and every such grant ends
+// at the same moment, so a line per buffed creature per turn would restate the
+// turn boundary rather than tell the player anything new.
+func TestCleanupExpiresTemporaryBuffsSilently(t *testing.T) {
+	g := started(t)
+	id := g.AddToBattleline(testCreature("buffed", 3), 0)
+	g.GainStats(id, 2, 0)
+	g.GrantKeyword(id, Skirmish)
+
+	got := entriesAppended(g, func() { g.expireTurnScoped(0) })
+
+	if len(got) != 0 {
+		t.Errorf("expiring the turn's buffs appended %v, want nothing", got)
+	}
+	if bonus := g.State.Cards[id].TempPowerBonus; bonus != 0 {
+		t.Errorf("temporary power bonus is %d after cleanup, want 0", bonus)
+	}
+	if g.State.Cards[id].GrantedKeywords != 0 {
+		t.Error("granted keywords survived the cleanup")
+	}
+}
+
+// TestCleanupRefreshesArmorSilently pins the decision that the armor refresh is
+// not narrated. Armor spent (ArmorAbsorbed) and armor stripped (ArmorLost) are
+// both narrated when they happen; returning a creature to its printed armor for
+// the turn to come is the rule, not an outcome, and applies to every creature in
+// play every turn.
+func TestCleanupRefreshesArmorSilently(t *testing.T) {
+	g := started(t)
+	id := g.AddToBattleline(testCreature("armored", 3, WithArmor(2)), 0)
+	g.StripArmor(id)
+
+	got := entriesAppended(g, func() { g.expireTurnScoped(0) })
+
+	if len(got) != 0 {
+		t.Errorf("refreshing armor appended %v, want nothing", got)
+	}
+	core := g.State.Cards[id]
+	if core.ArmorRemaining != 2 || core.ArmorStripped != 0 {
+		t.Errorf("armor after cleanup is %d remaining, %d stripped; want 2 and 0",
+			core.ArmorRemaining, core.ArmorStripped)
+	}
+}
+
+// TestCleanupRollsTurnHistorySilently pins the decision that the TurnHistory roll
+// is not narrated: it is pure bookkeeping. The tallies it rolls record things the
+// log already narrated as they happened (a key forged, a creature destroyed), and
+// no player can see the tallies themselves — they exist only for the cards that
+// ask "did your opponent forge a key on their previous turn?".
+func TestCleanupRollsTurnHistorySilently(t *testing.T) {
+	g := started(t)
+	g.State.TurnHistory[0][KeysForgedThisTurn] = 1
+
+	got := entriesAppended(g, func() { g.expireTurnScoped(0) })
+
+	if len(got) != 0 {
+		t.Errorf("rolling the turn history appended %v, want nothing", got)
+	}
+	h := g.State.TurnHistory[0]
+	if h[KeysForgedLastTurn] != 1 || h[KeysForgedThisTurn] != 0 {
+		t.Errorf("turn history after cleanup is last=%d this=%d, want 1 and 0",
+			h[KeysForgedLastTurn], h[KeysForgedThisTurn])
 	}
 }

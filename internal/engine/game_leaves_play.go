@@ -308,7 +308,7 @@ func (g *Game) applyDestructionReplacement(id LocalID) bool {
 	})
 	g.recordUsage(id)
 	r.With.Resolve(&EffectContext{
-		Resolver:   g,
+		Resolver:   g.resolver,
 		Source:     src,
 		It:         id,
 		HasIt:      true,
@@ -344,7 +344,7 @@ func (g *Game) replacesDestruction(id LocalID, r Replace) bool {
 		return false
 	}
 	if r.Cond != nil && !r.Cond.Met(&EffectContext{
-		Resolver:   g,
+		Resolver:   g.resolver,
 		Source:     id,
 		Controller: g.controller(id),
 	}) {

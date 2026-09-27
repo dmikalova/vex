@@ -124,7 +124,9 @@ func (g *Game) PlaceCounter(id LocalID, kind CounterKind, n int) {
 		return
 	}
 	if i := g.counterIndex(id, kind); i >= 0 {
-		g.State.Counters[i].N = saturateCounter(int(g.State.Counters[i].N) + n)
+		before := int(g.State.Counters[i].N)
+		g.State.Counters[i].N = saturateCounter(before + n)
+		g.recordCountersPlaced(id, kind, int(g.State.Counters[i].N)-before)
 		return
 	}
 	if int(g.State.CounterCount) >= maxCounterEntries {
@@ -136,6 +138,20 @@ func (g *Game) PlaceCounter(id LocalID, kind CounterKind, n int) {
 		N:    saturateCounter(n),
 	}
 	g.State.CounterCount++
+	g.recordCountersPlaced(id, kind, int(g.State.Counters[g.State.CounterCount-1].N))
+}
+
+// recordCountersPlaced narrates counters that actually landed, which is fewer
+// than asked for when the entry saturates at 255.
+func (g *Game) recordCountersPlaced(id LocalID, kind CounterKind, n int) {
+	if n <= 0 {
+		return
+	}
+	g.record(CountersPlaced{
+		Card: id,
+		Kind: kind,
+		N:    n,
+	})
 }
 
 // CountersOn returns how many counters of a kind sit on a card.
@@ -163,9 +179,17 @@ func (g *Game) clearCounters(id LocalID) {
 // kinds untouched — Vineapple Tree removes each growth counter from itself after a
 // key is forged. A card carrying no counter of that kind is left as is.
 func (g *Game) RemoveCounters(id LocalID, kind CounterKind) {
-	if i := g.counterIndex(id, kind); i >= 0 {
-		g.removeCounterEntryAt(i)
+	i := g.counterIndex(id, kind)
+	if i < 0 {
+		return
 	}
+	n := int(g.State.Counters[i].N)
+	g.removeCounterEntryAt(i)
+	g.record(CountersRemoved{
+		Card: id,
+		Kind: kind,
+		N:    n,
+	})
 }
 
 // RemoveCountersN takes n counters of one kind off a card, dropping the entry
@@ -179,11 +203,18 @@ func (g *Game) RemoveCountersN(id LocalID, kind CounterKind, n int) {
 	if i < 0 {
 		return
 	}
-	if n >= int(g.State.Counters[i].N) {
+	held := int(g.State.Counters[i].N)
+	if n >= held {
 		g.removeCounterEntryAt(i)
-		return
+		n = held
+	} else {
+		g.State.Counters[i].N -= uint8(n)
 	}
-	g.State.Counters[i].N -= uint8(n)
+	g.record(CountersRemoved{
+		Card: id,
+		Kind: kind,
+		N:    n,
+	})
 }
 
 // removeCounterEntryAt deletes the entry at position i, shifting the tail left to
