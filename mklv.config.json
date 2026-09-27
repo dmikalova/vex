@@ -32,12 +32,6 @@
             },
             {
               "linters": [
-                "gocognit"
-              ],
-              "text": "residualEffectGlyphs"
-            },
-            {
-              "linters": [
                 "revive"
               ],
               "path": "magefiles/cards\\.go",

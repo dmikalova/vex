@@ -32,9 +32,6 @@ linters:
         path: internal/cards/sets/
         text: should have a package comment
       - linters:
-          - gocognit
-        text: residualEffectGlyphs
-      - linters:
           - revive
         path: magefiles/cards\.go
         text: redefinition of the built-in function (new|max)

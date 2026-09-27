@@ -220,3 +220,35 @@ func playerDecor(p engine.Player) decor {
 		return 0
 	}
 }
+
+// verbGlyphs renders the verbs a chosen-creature effect applies in order — ready,
+// fight, use, stun, exhaust, gain-keyword — reusing the same glyphs those actions
+// draw on their own. It stays here rather than in a family file because more than
+// one family (creature-state, composition) reads it.
+func verbGlyphs(verbs []engine.CreatureVerb) []glyph {
+	gs := make([]glyph, 0, len(verbs))
+	for _, verb := range verbs {
+		switch vv := verb.(type) {
+		case engine.ReadyVerb:
+			gs = append(gs, glyph{
+				asset: "exhausted",
+				decor: decorFriendly,
+			})
+		case engine.ReapVerb:
+			gs = append(gs, glyph{asset: "glyph-reap"})
+		case engine.FightVerb:
+			gs = append(gs, glyph{asset: "glyph-fight"})
+		case engine.UseVerb:
+			gs = append(gs, glyph{asset: "glyph-action"})
+		case engine.StunVerb:
+			gs = append(gs, glyph{asset: "stun"})
+		case engine.ExhaustVerb:
+			gs = append(gs, glyph{asset: "exhausted"})
+		case engine.GainKeywordVerb:
+			if a := keywordIcon(vv.Keyword); a != "" {
+				gs = append(gs, glyph{asset: a})
+			}
+		}
+	}
+	return gs
+}
