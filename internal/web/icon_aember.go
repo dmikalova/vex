@@ -14,21 +14,44 @@ func aemberEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	switch v := e.(type) {
 	case engine.GainAember:
 		if v.Per != nil || v.EqualTo != nil {
-			return []glyph{{asset: "aember", decor: playerDecor(v.Player)}}, true, true
+			return []glyph{
+				{asset: "aember", decor: playerDecor(v.Player), sigil: sigilGain},
+			}, true, true
 		}
-		return []glyph{{asset: "aember", qty: v.Amount, decor: playerDecor(v.Player)}}, true, true
+		return []glyph{
+			{asset: "aember", qty: v.Amount, decor: playerDecor(v.Player), sigil: sigilGain},
+		}, true, true
 	case engine.LoseAember:
-		return []glyph{{asset: "aember", text: "−", decor: playerDecor(v.Player)}}, true, true
+		// The amount is only a numeral in the plain fixed case; a By/Per/EqualTo loss
+		// scales by something that lives in the text, as GainAember's does.
+		g := glyph{asset: "aember", decor: playerDecor(v.Player), sigil: sigilLose}
+		if v.By == nil && v.Per == nil && v.EqualTo == nil {
+			g.qty = v.Amount
+		}
+		return []glyph{g}, true, true
 	case engine.StealAember:
 		return []glyph{
-			{asset: "aember", qty: v.Amount, decor: decorEnemy | decorChosen},
+			{
+				asset: "aember",
+				qty:   v.Amount,
+				decor: decorEnemy | decorChosen,
+				sigil: sigilSteal,
+			},
 		}, true, true
 	case engine.CaptureAember:
-		return []glyph{{asset: "aember", qty: v.Amount, decor: decorEnemy}}, true, true
+		return []glyph{{asset: "capture", qty: v.Amount, decor: decorEnemy}}, true, true
 	case engine.CaptureFromAnyPlayer:
-		return []glyph{{asset: "aember", qty: v.Amount}}, true, true
+		return []glyph{{asset: "capture", qty: v.Amount}}, true, true
 	case engine.DistributeCapture:
-		return []glyph{{asset: "aember", decor: decorEnemy}}, true, true
+		// The share is spread over as many friendly creatures as the controller
+		// picks, which is what separates it from a single creature's capture.
+		return []glyph{
+			{asset: "capture", decor: decorEnemy},
+			arrowTo(glyph{
+				asset: "type-creature",
+				decor: decorFriendly | decorEach,
+			}),
+		}, true, true
 	case engine.GiveAember:
 		src := glyph{
 			asset: "aember",
@@ -40,7 +63,7 @@ func aemberEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 		return []glyph{src, arrowTo(glyph{asset: "aember"})}, true, true
 	case engine.Exalt:
 		return []glyph{
-			{asset: "aember", qty: v.Amount},
+			{asset: "aember", qty: v.Amount, sigil: sigilExalt},
 			arrowTo(targetGlyph(v.Target)),
 		}, true, true
 	case engine.MoveAember:

@@ -325,9 +325,14 @@ contention rather than serializing:
 - **When the mechanics agent adds new `Effect` nodes, the central `mage ci:check`
   will fail two ungated spots the subagents cannot see — fix them in the
   reconcile:** `internal/web` `TestIconTotality` fails until each new effect gets a
-  glyph `case` in `internal/web/icon.go` `effectGlyphs` (the `iconFallbackAllowed`
-  list is empty, so every effect needs a mapping — reuse the nearest sibling's
-  asset), and `internal/cards` `TestOptionsAreInCanonicalOrder` fails if a card
+  glyph `case` in the `internal/web/icon_<family>.go` for its mechanic domain (the
+  `iconFallbackAllowed` list is empty, so every effect needs a mapping).
+  `TestDistinctMechanicsDrawDistinctGlyphs` then fails if the new effect draws the
+  same strip as an existing one — so start from the nearest sibling's assets, but
+  the new node must end up **visually distinct**: separate it on the subject axis
+  (`decor`) or the verb axis (`sigil`), or, when it really is the same mechanic
+  under a second name, declare it in `glyphSynonyms` with the reason (ADR 0047).
+  And `internal/cards` `TestOptionsAreInCanonicalOrder` fails if a card
   uses a `WithX` option no card used before until that option gets an
   `optionRank` entry in `cardorder_test.go`.
 

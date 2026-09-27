@@ -47,7 +47,9 @@ func boardEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 			arrowTo(glyph{asset: "glyph-play"}),
 		}, true, true
 	case engine.MayPlayOrUse:
-		return mayPlayOrUseGlyphs(v), true, true
+		// A standing permission the controller may decline, where PlayOrUse makes the
+		// same play-or-use happen now; the may sigil is the only thing between them.
+		return markVerb(mayPlayOrUseGlyphs(v), sigilMay), true, true
 	case engine.PlayOrUse:
 		var gs []glyph
 		if v.Grant == 0 || v.Grant&engine.GrantPlay != 0 {
@@ -89,7 +91,12 @@ func boardEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	case engine.Graft:
 		return []glyph{targetGlyph(v.Target), arrowTo(glyph{asset: "card-back"})}, true, true
 	case engine.TriggerGraftedPlayEffect:
-		return []glyph{{asset: "card-back"}, arrowTo(glyph{asset: "glyph-play"})}, true, true
+		// Only the buried card's "Play:" ability fires; the card itself stays under
+		// its host, which is what separates this from PutUnderIntoPlay (ADR 0047).
+		return []glyph{
+			{asset: "card-back"},
+			arrowTo(glyph{asset: "glyph-play", sigil: sigilGrafted}),
+		}, true, true
 	case engine.Swap:
 		return []glyph{
 			{asset: "type-creature", decor: decorThis},

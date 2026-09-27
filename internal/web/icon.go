@@ -16,6 +16,18 @@ import (
 // effect that falls back to the abstract unknown glyph. There is no allowlist to
 // exempt one: an unmapped mechanic is a bug, and the fix is always to draw a
 // glyph, so a new mechanic cannot ship without a glyph decision.
+//
+// A glyph carries two axes over its noun asset (ADR 0047). decor is the subject —
+// *who* the glyph is about: an enemy or friendly tint, an "each" stack, a "chosen"
+// outline, a "this/self" marker. sigil is the verb — *what happens*: a corner mark
+// for gain, lose, steal, exalt, reveal, shuffle, may. A noun drawn with neither is
+// the common case; the verb axis exists to disambiguate, so it is spent only where
+// two mechanics would otherwise draw the same picture.
+//
+// That property is the gate: TestDistinctMechanicsDrawDistinctGlyphs (icon_test.go)
+// walks every ability on every card and fails when two distinct leaf mechanics land
+// on one strip, so reusing another mechanic's picture cannot pass quietly. The four
+// same-mechanic-two-names groups are declared there as synonyms with their reason.
 
 // decor is a set of edge/overlay treatments applied to a noun glyph to carry a
 // Target's shape without spending a horizontal slot: an enemy tint, a friendly
@@ -30,6 +42,50 @@ const (
 	decorThis
 )
 
+// sigil is the strip's verb axis: a small mark composited into the corner of a
+// noun glyph saying *what happens* to it, where decor says *who* it is about
+// (ADR 0047). Unlike decor it is single-valued — a glyph has one verb — so it is
+// an enum rather than a flag set.
+//
+// A constant names the verb, never the picture, so changing the art a verb draws
+// does not rename the vocabulary. Whether a verb draws a text mark or an asset is
+// sigilMark's business (view_icons.go), which is what lets a mark be promoted to
+// art without touching a family file.
+//
+// The axis exists to disambiguate, so a verb takes a sigil only where the noun
+// alone would collide with another mechanic's — a strip where every glyph wears a
+// badge is noise. TestDistinctMechanicsDrawDistinctGlyphs holds that property.
+type sigil uint8
+
+const (
+	sigilNone sigil = iota
+	// sigilGain and sigilLose are the increase/decrease pair: more of this noun,
+	// less of it. Æmber gained or lost, a counter placed or removed.
+	sigilGain
+	sigilLose
+	sigilSteal   // taken from the opponent into your own pool
+	sigilExalt   // placed on a card rather than kept
+	sigilReveal  // shown to both players, not looked at privately
+	sigilShuffle // mixed in at no known position
+	sigilMay     // the controller may decline this
+	sigilGrafted // a buried card's own ability fires; the card stays buried
+)
+
+// sigils lists every sigil the vocabulary defines, so a test can assert each one
+// renders a mark. sigilNone is excluded: it is the absence of a verb.
+func sigils() []sigil {
+	return []sigil{
+		sigilGain,
+		sigilLose,
+		sigilSteal,
+		sigilExalt,
+		sigilReveal,
+		sigilShuffle,
+		sigilMay,
+		sigilGrafted,
+	}
+}
+
 // glyph is one composed icon in the strip. A glyph with an asset renders that SVG
 // (tinted and decorated); a glyph with no asset renders its text as a small chip,
 // which is how a not-yet-drawn mechanic still shows something readable. Qty, when
@@ -39,6 +95,7 @@ type glyph struct {
 	text  string
 	qty   int
 	decor decor
+	sigil sigil
 	arrow bool // render a leading result-gate arrow (→) before this glyph
 }
 
@@ -178,6 +235,16 @@ func claim(gs []glyph, covered bool) ([]glyph, bool, bool) {
 // a nested effect falls back to the abstract glyph.
 func mustCompose(effects ...engine.Effect) []glyph {
 	gs, _ := composeGlyphs(effects...)
+	return gs
+}
+
+// markVerb stamps a verb sigil on the head of an already-composed run of glyphs,
+// which is how a family gives a whole rendering one verb without threading the
+// sigil through the helper that built it. An empty run is left alone.
+func markVerb(gs []glyph, s sigil) []glyph {
+	if len(gs) > 0 {
+		gs[0].sigil = s
+	}
 	return gs
 }
 
