@@ -1,7 +1,9 @@
 package engine
 
 import (
+	"errors"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -66,6 +68,22 @@ func TestRequestLegalCommands(t *testing.T) {
 				{Kind: CommandEndTurn},
 			}},
 			[]Command{{Kind: CommandReap, Card: 3}, {Kind: CommandEndTurn}},
+		},
+		{
+			"first player",
+			Request{Kind: RequestFirstPlayer},
+			[]Command{
+				{
+					Kind:   CommandSetFirstPlayer,
+					Player: 0,
+					Index:  RolledFirstPlayer,
+				},
+				{
+					Kind:   CommandSetFirstPlayer,
+					Player: 1,
+					Index:  RolledFirstPlayer,
+				},
+			},
 		},
 		{
 			"unknown kind",
@@ -329,4 +347,151 @@ func TestStepperReportsBarrier(t *testing.T) {
 		t.Error("a step that did not touch the PRNG reported a barrier crossing")
 	}
 	s.Advance(Command{Kind: CommandOption})
+}
+
+// A first-player answer is legal whoever decided it: Index records who chose, not
+// what was chosen, so legality ignores it and a session can validate a rolled
+// answer and a player's pick alike. The player named still has to be a real one.
+func TestFirstPlayerLegalityIgnoresWhoDecided(t *testing.T) {
+	req := Request{Kind: RequestFirstPlayer}
+	for _, by := range []int{RolledFirstPlayer, 0, 1} {
+		cmd := Command{
+			Kind:   CommandSetFirstPlayer,
+			Player: 1,
+			Index:  by,
+		}
+		if !req.IsLegal(cmd) {
+			t.Errorf("IsLegal(%+v) = false, want true", cmd)
+		}
+	}
+	if req.IsLegal(Command{
+		Kind:   CommandSetFirstPlayer,
+		Player: 2,
+		Index:  RolledFirstPlayer,
+	}) {
+		t.Error("IsLegal accepted a first player who is not in the match")
+	}
+}
+
+// The Stepper yields the setup decision like any other, so a driving session
+// answers who goes first with a Command instead of the engine taking an argument.
+func TestStepperYieldsFirstPlayerRequest(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	var got Command
+	action := func(g *Game) {
+		got = g.chooserFor(0).(FirstPlayerChooser).ChooseFirstPlayer()
+	}
+	s := NewStepper(g, action)
+	req, done := s.Start()
+	if done || req.Kind != RequestFirstPlayer {
+		t.Fatalf("first request = %+v, want a RequestFirstPlayer", req)
+	}
+	want := Command{
+		Kind:   CommandSetFirstPlayer,
+		Player: 1,
+		Index:  0,
+	}
+	if _, done, _ := s.Advance(want); !done {
+		t.Fatal("the action did not finish after the setup answer")
+	}
+	if got != want {
+		t.Errorf("ChooseFirstPlayer returned %+v, want %+v", got, want)
+	}
+}
+
+// A badge an effect previews before its choose loop rides out on every Request the
+// loop yields, so a client that holds no chooser still sees the status each
+// candidate is about to get; the zero badge clears it on the next Request. The
+// badge is context only — it never reaches a Command, so LegalCommands is the same
+// with it as without.
+func TestStepperStampsThePreviewedBadgeOnRequests(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	badge := SelectionBadge{
+		Icon:   DamageIcon,
+		Amount: 3,
+	}
+	action := func(g *Game) {
+		g.PreviewBadge(0, badge)
+		g.chooserFor(0).ChooseCreature("s", "first", []LocalID{1, 2})
+		g.chooserFor(0).ChooseCreature("s", "second", []LocalID{1, 2})
+		g.PreviewBadge(0, SelectionBadge{})
+		g.chooserFor(0).ChooseCreature("s", "after", []LocalID{1, 2})
+	}
+	s := NewStepper(g, action)
+	pick := Command{
+		Kind: CommandPickCard,
+		Card: 1,
+	}
+	req, done := s.Start()
+	if done || req.Badge != badge {
+		t.Fatalf("first request badge = %+v, want %+v", req.Badge, badge)
+	}
+	if req, done, _ = s.Advance(pick); done || req.Badge != badge {
+		t.Fatalf("second request badge = %+v, want %+v", req.Badge, badge)
+	}
+	if req, done, _ = s.Advance(pick); done || req.Badge != (SelectionBadge{}) {
+		t.Fatalf("badge after the loop = %+v, want the zero badge", req.Badge)
+	}
+	if got := len(req.LegalCommands()); got != 2 {
+		t.Errorf("LegalCommands() offered %d answers, want 2; a badge is not an answer", got)
+	}
+	s.Advance(pick)
+}
+
+// A panic inside the action is contained by the Stepper rather than unwinding past
+// the close that releases the driver: the request channel still closes, the step
+// reports done, and Err returns a *PanicError carrying the recovered value and the
+// stack taken where it happened.
+func TestStepperContainsAPanickingAction(t *testing.T) {
+	// A panic after a decision: Advance reports done and Err says why.
+	t.Run("after a decision", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		action := func(g *Game) {
+			g.chooserFor(0).ChooseCreature("s", "p", []LocalID{1, 2})
+			panic("boom")
+		}
+		s := NewStepper(g, action)
+		if _, done := s.Start(); done {
+			t.Fatal("expected a card pick request, got done")
+		}
+		if _, done, _ := s.Advance(Command{
+			Kind: CommandPickCard,
+			Card: 1,
+		}); !done {
+			t.Fatal("a panicking action did not report done")
+		}
+		var pe *PanicError
+		if !errors.As(s.Err(), &pe) {
+			t.Fatalf("Err() = %v, want a *PanicError", s.Err())
+		}
+		if pe.Value != "boom" {
+			t.Errorf("PanicError.Value = %v, want boom", pe.Value)
+		}
+		if len(pe.Stack) == 0 {
+			t.Error("PanicError.Stack is empty; capture the stack at recover time")
+		}
+		if !strings.Contains(pe.Error(), "boom") {
+			t.Errorf("Error() = %q, want it to name the recovered value", pe.Error())
+		}
+	})
+
+	// A panic before any decision: Start itself reports done, and Err explains it.
+	t.Run("before any decision", func(t *testing.T) {
+		s := NewStepper(NewGame("A", "B", 1), func(*Game) { panic("early") })
+		if _, done := s.Start(); !done {
+			t.Fatal("a panic before the first decision did not report done from Start")
+		}
+		if _, ok := errors.AsType[*PanicError](s.Err()); !ok {
+			t.Fatalf("Err() = %v, want a *PanicError", s.Err())
+		}
+	})
+
+	// An action that finishes normally reports no error.
+	t.Run("no panic", func(t *testing.T) {
+		s := NewStepper(NewGame("A", "B", 1), func(*Game) {})
+		s.Start()
+		if err := s.Err(); err != nil {
+			t.Errorf("Err() = %v, want nil for an action that ran to completion", err)
+		}
+	})
 }

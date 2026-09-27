@@ -249,7 +249,10 @@ func TestApplyManualRejectsNonManual(t *testing.T) {
 // enumerates only real root actions, never a manual edit, so the canonical turn
 // loop (RunMatch) and the simulator that drives it can never wander into manual
 // mode. It plays many seeded games with a random legal-action driver and asserts
-// every command offered at every step is a root action, not a manual kind.
+// every command offered at every step is a root action, not a manual kind. The
+// bound catches every non-root kind appended after the manual ones too — the
+// setup CommandSetFirstPlayer, which RunMatch asks for before it deals and
+// LegalActions must never offer as an in-turn action.
 func TestLegalActionsNeverOffersManualKinds(t *testing.T) {
 	for seed := int64(1); seed <= 30; seed++ {
 		g := NewGame("Alice", "Bob", seed)

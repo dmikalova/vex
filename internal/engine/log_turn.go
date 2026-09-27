@@ -20,6 +20,24 @@ func (e TurnBegan) Text(n Namer) string {
 	return fmt.Sprintf("%s begins turn %d", n.PlayerName(e.Player), e.Turn)
 }
 
+// FirstPlayerChosen narrates the match's one setup decision: who takes the first
+// turn, and how that was settled. By is the player who decided, or
+// RolledFirstPlayer when nobody did and the match rolled for it. It precedes
+// GameStarted, which narrates the deal that follows from it.
+type FirstPlayerChosen struct {
+	Player int
+	By     int
+}
+
+// Text renders who goes first, and whether a player chose it or a roll did.
+func (e FirstPlayerChosen) Text(n Namer) string {
+	if e.By == RolledFirstPlayer {
+		return fmt.Sprintf("%s goes first by random choice", n.PlayerName(e.Player))
+	}
+	return fmt.Sprintf("%s is selected to go first by %s",
+		n.PlayerName(e.Player), n.PlayerName(e.By))
+}
+
 // GameStarted narrates the game's opening: who takes the first turn, and the
 // opening hand each player drew. It names no card, since hands are hidden
 // (ADR 0011); the per-player CardsDrawn entries that follow carry the counts.

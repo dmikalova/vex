@@ -137,6 +137,18 @@ type ActionChooser interface {
 	ChooseAction(actions []Command) Command
 }
 
+// FirstPlayerChooser is an optional Chooser capability: settling who takes the
+// first turn, the one SETUP decision. It is asked once, before the canonical turn
+// loop deals, because first player fixes the shuffle order and the opening hands
+// (StartGame), so it cannot be patched in afterwards. The answer is a
+// CommandSetFirstPlayer, which names both the player who goes first and who
+// decided — a roll, or a player in the formats that ask one. A Chooser that does
+// not implement it gives the first turn to player 0, which is what the sim and
+// every non-interactive driver want.
+type FirstPlayerChooser interface {
+	ChooseFirstPlayer() Command
+}
+
 // Game bundles the flat GameState with the read-only Catalog and the surrounding
 // engine services (player names, choosers, RNG, log). Cloning a state for MCTS
 // only needs GameState.FastCopy; this wrapper is the live match harness.

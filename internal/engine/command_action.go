@@ -207,8 +207,11 @@ func (g *Game) legalCreatureUses(player int, id LocalID) []Command {
 // its own turn driver — each yielded RequestAction is one click, and ApplyAction
 // folds the answer back in.
 //
-// Because the loop owns setup, the mulligan prompts StartGame raises surface
-// through the same choosers as every later decision, so they are recorded answers
+// Because the loop owns setup, first player is a decision the loop asks for and
+// records rather than an argument it is handed, so a match's whole input — the
+// opening roll included — lives in its command log; and the mulligan prompts
+// StartGame raises surface through the same choosers as every later decision, so
+// they are recorded answers
 // like any other. Between actions it hands off a turn an effect ended without
 // pairing a StartTurn — the Omega keyword ends the play phase mid-action, and
 // EndTurn (Book of leQ) jumps to the end-of-turn phase — so the loop resumes on the
@@ -218,9 +221,9 @@ func (g *Game) legalCreatureUses(player int, id LocalID) []Command {
 // (the Stepper's suspendChooser) installs one, and the sim, which drives legal play
 // its own way, never calls this. The assertion is deliberate: a chooser that cannot
 // answer a RequestAction has no business driving the loop.
-func (g *Game) RunMatch(firstPlayer int) {
+func (g *Game) RunMatch() {
 	if g.State.Turn == 0 && g.State.Phase == phaseUnset {
-		g.StartGame(firstPlayer)
+		g.StartGame(g.chooseFirstPlayer())
 	}
 	if g.State.Phase == PhaseEndOfTurn {
 		g.StartTurn(1 - g.State.ActivePlayer)
@@ -240,4 +243,26 @@ func (g *Game) RunMatch(firstPlayer int) {
 		// which ApplyAction always accepts, so its error is unreachable here.
 		_ = g.ApplyAction(chooser.ChooseAction(g.LegalActions(player)))
 	}
+}
+
+// chooseFirstPlayer settles who takes the first turn and narrates the decision,
+// returning the player StartGame deals for. It asks player 0's chooser because
+// first player belongs to the match rather than to a player — whoever ends up
+// deciding, the answer names them in its Index — and falls back to player 0 for a
+// chooser that cannot answer, which is what the sim and every non-interactive
+// driver want (TestRunMatchDefaultsFirstPlayerToZero).
+func (g *Game) chooseFirstPlayer() int {
+	cmd := Command{
+		Kind:   CommandSetFirstPlayer,
+		Player: 0,
+		Index:  RolledFirstPlayer,
+	}
+	if chooser, ok := g.chooserFor(0).(FirstPlayerChooser); ok {
+		cmd = chooser.ChooseFirstPlayer()
+	}
+	g.record(FirstPlayerChosen{
+		Player: cmd.Player,
+		By:     cmd.Index,
+	})
+	return cmd.Player
 }
