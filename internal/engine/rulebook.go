@@ -29,6 +29,7 @@ var ruleSpine = []ruleSpineEntry{
 	{SectionKeyword, "Keywords"},
 	{SectionBonus, "Bonus Icons"},
 	{SectionAbility, "Abilities"},
+	{SectionCardText, "Card text"},
 	{SectionEffect, "Effects"},
 }
 
