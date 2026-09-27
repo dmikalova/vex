@@ -36,7 +36,7 @@ mage ci:check                                # the baseline: know what was alrea
 mage ci:lint                                 # golangci-lint: unused code, shadowing, staticcheck
 wc -l $(git ls-files '<area>/*.go' | grep -v _test) | sort -rn | head -20
 grep -rn 'fmt\.Print\|println(\|TODO\|FIXME\|XXX' <area> --include='*.go' | grep -v _test
-git status --porcelain                       # stray files another agent has not committed
+git status --porcelain                       # stray uncommitted files
 ```
 
 Undocumented struct fields (a candidate list, not a to-do list — comment only the

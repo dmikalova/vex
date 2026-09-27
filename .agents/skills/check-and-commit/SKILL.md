@@ -1,6 +1,6 @@
 ---
 name: check-and-commit
-description: Get `mage ci:fix && mage ci:check` fully green, then stage, commit, and push the work in one go. Use when the user wants to finish up by verifying the gate and committing ("check and commit", "/check-and-commit", "get it green and push"). Assumes this is the only agent running in the repo.
+description: Get `mage ci:fix && mage ci:check` fully green, then stage, commit, and push the work in one go. Use when the user wants to finish up by verifying the gate and committing ("check and commit", "/check-and-commit", "get it green and push").
 ---
 
 This skill takes the repo from "work in progress" to "pushed", in order:
@@ -11,14 +11,6 @@ This skill takes the repo from "work in progress" to "pushed", in order:
 **This skill is the one exception to the repo's "leave git alone" rule.** The
 user has explicitly asked for the commit and push, so run them — but only as the
 final step, only after the gate is green, and only within this skill.
-
-## Assume you are the only agent running
-
-Every safeguard the repo carries for concurrent agents is off here. A build,
-vet, lint, or test failure is **yours** — there is no sibling mid-edit to blame,
-so do not wave a red gate off as someone else's work. Fix it. An unfamiliar file
-or an unexpected diff is part of the change set you are about to commit, so
-account for it rather than working around it.
 
 ## 1. Get `mage ci:check` green
 

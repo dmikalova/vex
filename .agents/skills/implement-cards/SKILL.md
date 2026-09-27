@@ -18,11 +18,8 @@ run through the entire stop condition** — never frame it to the user as a
 "multi-session grind", a "first batch", or work that will be "continued later".When the user says "do all the cards", they mean do all the cards now, in this
 run, without handing back partway. Do not propose stopping, do not ask whether to
 keep going, and do not offer a status report as a substitute for finishing. Tests
-matter, and you should get your own work passing; but if a card is a reasonable
-best-effort implementation and the only failures come from **another agent's**
-in-progress changes (an unfamiliar file, a symbol you never touched, a gate that
-was green before you started), note it and keep going rather than stalling on
-someone else's edit.
+matter, and you should get your own work passing — a reasonable best-effort
+implementation with everything green is what "done" means.
 
 **Do not call `task_complete`, and do not end your turn, until the stop condition
 below is met.** A card that compiles, a green `mage ci:check`, a reconnaissance
@@ -254,15 +251,11 @@ rather than a single card. Aim to leave the tree with `mage ci:check` printing
 page, and nothing you retired should still be listed.
 
 But a green gate is a checkpoint, not a finish line: the run's purpose is to keep
-converting stubs into implemented cards. Do not stall chasing a green gate you did
-not break. If `mage ci:check` fails only on **another agent's** in-progress change —
-a file you never touched, a symbol you did not add, a check that was green before
-your edits — record it briefly and move on to the next card rather than reverting
-or "fixing" their work. Get _your_ changes passing; leave theirs alone. Report
-progress as it lands rather than saving one summary for the end — but a report is
-not a handoff: after reporting, immediately run `mage tool:nextCard` and begin the
-next card. **Hand back (and only then call `task_complete`) solely when the stop
-condition is met** or you have run out of implementable cards.
+converting stubs into implemented cards. Report progress as it lands rather than
+saving one summary for the end — but a report is not a handoff: after reporting,
+immediately run `mage tool:nextCard` and begin the next card. **Hand back (and
+only then call `task_complete`) solely when the stop condition is met** or you
+have run out of implementable cards.
 
 ## 4. Running the backlog in parallel with subagents
 
@@ -338,6 +331,6 @@ contention rather than serializing:
   uses a `WithX` option no card used before until that option gets an
   `optionRank` entry in `cardorder_test.go`.
 
-The stop condition, the "keep going" discipline, and the "leave another agent's
-failures alone" rule from sections 1–3 all still hold — parallelism changes
-_how many cards are in flight_, not _when the run ends_.
+The stop condition and the "keep going" discipline from sections 1–3 all still
+hold — parallelism changes _how many cards are in flight_, not _when the run
+ends_.
