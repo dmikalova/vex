@@ -718,7 +718,7 @@ func (g *Game) DiscardCardFromHand(owner int, id LocalID) {
 // reactions. The watcher scan is row-only: it is a reaction scan, and
 // triggerAbilities already reaches an upgrade's text through its host, so walking
 // upgrades as well would fire the same printed text twice
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) discardFromHand(owner int, id LocalID) {
 	hand := &g.State.Hand[owner]
 	i := hand.indexOf(id)

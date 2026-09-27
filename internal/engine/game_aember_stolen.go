@@ -8,7 +8,7 @@ package engine
 //
 // The scan is row-only: it is a reaction emit, and triggeredBy already reaches an
 // upgrade's text through its host, so walking upgrades as well would fire the same
-// printed text twice (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// printed text twice (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) EmitAemberStolenFrom(victim, amount int) {
 	if amount <= 0 {
 		return

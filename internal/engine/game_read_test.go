@@ -1544,7 +1544,7 @@ func TestAtCheck(t *testing.T) {
 // implementations of one list exist — cardsInPlay reads state directly,
 // resolverCardsInPlay goes through the Resolver port so test doubles see it —
 // and without this test they drift
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). A card placed under
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md). A card placed under
 // another card is out of play and appears in neither list.
 func TestCardsInPlayMatchesResolver(t *testing.T) {
 	g := NewGame("A", "B", 1)
@@ -1577,7 +1577,7 @@ func TestCardsInPlayMatchesResolver(t *testing.T) {
 // an upgrade carries stops its controller playing that card type. A play bar is
 // a standing rule a card in play imposes, so it applies from where the upgrade
 // sits, exactly as an artifact's would
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). No implemented
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md). No implemented
 // upgrade carries a play bar today, so the rule is pinned with a blueprint.
 func TestCannotPlayCreaturesCountsUpgrades(t *testing.T) {
 	g := NewGame("A", "B", 1)
@@ -1603,7 +1603,7 @@ func TestCannotPlayCreaturesCountsUpgrades(t *testing.T) {
 
 // TestForgeAemberGainerCountsUpgradesWithoutReordering pins both halves of the
 // widening for a first-match scan
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). Widening only inserts
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md). Widening only inserts
 // upgrades into the list and leaves the relative order of row cards untouched, so
 // a non-matching upgrade sitting ahead of a matching creature does not change
 // today's answer — and an upgrade that does carry the rule answers from where it
@@ -1644,7 +1644,7 @@ func TestForgeAemberGainerCountsUpgradesWithoutReordering(t *testing.T) {
 // upgrade rule: a constant ability an upgrade carries applies from where the
 // upgrade sits. A constant ability is a standing rule, not a triggered ability,
 // and it carries its own Target, so it needs no host to speak for it
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). No implemented
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md). No implemented
 // upgrade carries one — 0 of 81 — so the rule is pinned with a blueprint, and the
 // grant must stop when the upgrade leaves play with its host.
 func TestConstantAbilityOnUpgradeReachesTheBoard(t *testing.T) {

@@ -60,7 +60,7 @@ func (g *Game) runPhase() {
 // abilities. It runs before the forge phase, so an ability that changes what a
 // key costs still has time to. Its expiry sweep is row-only: the fields it clears
 // are per-card row state an upgrade never carries
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) startOfTurnPhase(player int) {
 	// An effect granted "until the start of your next turn" (Hideaway Hole's
 	// elusive, the Mutation cycle's Assault and trait, Reckless Rizzo's keyword
@@ -104,7 +104,7 @@ func (g *Game) forgePhase(player int) {
 // per-card row state — exhaustion, armor, the turn-scoped bonuses — which an
 // upgrade never carries; the third is a trigger scan, and triggerAbilities
 // already reaches an upgrade's text through its host
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) readyPhase(player int) {
 	var readied []LocalID
 	for _, id := range g.creaturesAndArtifacts(player) {

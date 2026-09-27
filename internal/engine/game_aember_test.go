@@ -249,7 +249,7 @@ func TestAddAmberOnSaturates(t *testing.T) {
 // first-match redirect scan to every card in play only inserts upgrades: a
 // non-matching upgrade ahead of a matching creature leaves today's answer alone,
 // while an upgrade that carries the redirect answers from where it sits
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func TestStolenRedirectSourceCountsUpgradesWithoutReordering(t *testing.T) {
 	redirect := Instead{
 		Of:   EventAemberStolen,

@@ -1,4 +1,4 @@
-# 47. An upgrade is a card in play, but not a source of triggered abilities
+# 48. An upgrade is a card in play, but not a source of triggered abilities
 
 ## Context
 

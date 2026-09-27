@@ -11,7 +11,7 @@ package engine
 // standing rule, and abilityWindow.add already reaches an upgrade's text through
 // its host (upgradeGrantedTriggers), so walking upgrades here as well would fire
 // the same printed text twice by two routes
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) beforeForgePrevented(forger int) bool {
 	guard := 1 - forger
 	w := g.window()

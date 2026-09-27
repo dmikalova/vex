@@ -198,7 +198,7 @@ func (g *Game) resolveBonusIconEffect(player int, id LocalID, ic BonusIcon) {
 // Maleficorn (Damage, with the creature it hit bound as "it"). The scan is
 // row-only: it is a reaction window, and abilityWindow.add already reaches an
 // upgrade's text through its host
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) afterBonusReaction(player int, tr Trigger, it LocalID, hasIt bool) {
 	w := g.window()
 	for _, src := range g.creaturesAndArtifacts(player) {
@@ -258,7 +258,7 @@ func (g *Game) resolveBonusCapture(player int, id LocalID) {
 // creaturesInPlay lists a player's in-play creatures. It scans the rows only
 // because it names its type: an upgrade is never a creature, so widening the scan
 // could only add cards this filter drops
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) creaturesInPlay(player int) []LocalID {
 	var out []LocalID
 	for _, c := range g.creaturesAndArtifacts(player) {

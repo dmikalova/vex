@@ -1037,7 +1037,7 @@ func TestTauntReachesNeighborsNeighbors(t *testing.T) {
 // upgrades immediately before the host — leaves the relative order of the row
 // cards untouched, so today's answer is unchanged unless the upgrade genuinely
 // carries a TakesDamageFor
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func TestDamageRedirectCountsUpgradesWithoutReordering(t *testing.T) {
 	g := started(t)
 	ward := g.AddToBattleline(testCreature("ward", 2), 0)

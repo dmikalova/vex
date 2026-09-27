@@ -204,7 +204,7 @@ func (g *Game) constantAbilitiesInPlay() iter.Seq2[LocalID, ConstantAbility] {
 // It scans every card in play, upgrades included. A constant ability is a standing
 // rule, not a triggered ability, and it carries its own Target, so it needs no host
 // to speak for it and applies from where the upgrade sits — exactly as an
-// artifact's would (docs/adr/0047-upgrade-in-play-not-an-ability-source.md,
+// artifact's would (docs/adr/0048-upgrade-in-play-not-an-ability-source.md,
 // TestConstantAbilityOnUpgradeReachesTheBoard). Widening here reaches
 // constantAbilitiesInPlay too, since that is this walk run for both players.
 func (g *Game) constantAbilitiesOf(player int) iter.Seq2[LocalID, ConstantAbility] {
@@ -664,7 +664,7 @@ func (g *Game) Peekable(viewer int, host LocalID) bool {
 // creaturesAndArtifacts or cardsInPlay on purpose: it allocates nothing and sits
 // in a hot path, so measure with mage profile before replacing it with a helper
 // that builds a slice
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) inPlay(id LocalID) bool {
 	if host, ok := g.hostOf(id); ok {
 		id = host
@@ -922,7 +922,7 @@ func (g *Game) cannotPlayCard(player int) bool {
 // aemberProtected reports whether a card player controls makes their Æmber unable
 // to be stolen (The Vaultkeeper). It scans every card in play, upgrades included,
 // because the protection is a standing rule and applies from where the card sits
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md). The inner walk over a
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md). The inner walk over a
 // host's upgrades reads a different field — the Static.AemberCannotBeStolen an
 // upgrade grants its host, evaluated with the host as Source — so an upgrade is
 // never counted twice: a card prints one field or the other, not both.
@@ -1088,7 +1088,7 @@ func (g *Game) lockedHouse(id LocalID, controller, player int) (house House, bar
 // in play and imposes that change from where it sits, so its caller keyCost
 // reaches it directly through cardsInPlay and asks this function about the
 // upgrade in its own right
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md); folding it in here as
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md); folding it in here as
 // well would count Disruption Field's surcharge twice
 // (TestCountersOnAttachedUpgrade).
 func (g *Game) keyCostChangeFor(id LocalID, controller, target int) int {
@@ -1187,7 +1187,7 @@ func (g *Game) battlelineCopy(player int) []LocalID {
 // or reaction scan must NOT use it: an upgrade's triggered text is authored as
 // Static.Granted and is collected onto its host, so walking upgrades as well
 // would reach the same printed text twice by two routes
-// (docs/adr/0047-upgrade-in-play-not-an-ability-source.md).
+// (docs/adr/0048-upgrade-in-play-not-an-ability-source.md).
 func (g *Game) cardsInPlay(player int) []LocalID {
 	var out []LocalID
 	for _, host := range g.creaturesAndArtifacts(player) {
@@ -1199,7 +1199,7 @@ func (g *Game) cardsInPlay(player int) []LocalID {
 
 // creaturesAndArtifacts returns a fresh slice of a player's creatures and
 // artifacts — the two rows only, reaching no upgrade. It is the row-only half of
-// the pair documented in docs/adr/0047-upgrade-in-play-not-an-ability-source.md:
+// the pair documented in docs/adr/0048-upgrade-in-play-not-an-ability-source.md:
 // trigger and reaction scans, and reads of per-card row state, use it, while a
 // scan for a standing rule a card in play imposes uses cardsInPlay. It shares its
 // name with the free function in target_select.go on purpose: same name, same
