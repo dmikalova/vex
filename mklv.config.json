@@ -34,7 +34,7 @@
               "linters": [
                 "gocognit"
               ],
-              "text": "effectGlyphs"
+              "text": "residualEffectGlyphs"
             },
             {
               "linters": [

@@ -1,6 +1,9 @@
 package web
 
 import (
+	"reflect"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/dmikalova/vex/internal/card"
@@ -15,15 +18,14 @@ import (
 
 // forEachAbilityEffect walks every triggered-ability effect on every card the
 // gallery shows (materialized variants included) and calls fn with it.
-func forEachAbilityEffect(fn func(name string, covered bool)) {
+func forEachAbilityEffect(fn func(e engine.Effect)) {
 	regs := card.Cards()
 	for i := range regs {
 		defs := materializedDefs(regs[i])
 		for j := range defs {
 			def := defs[j]
 			for _, ab := range def.Abilities {
-				_, covered := effectGlyphs(ab.Effect)
-				fn(effectTypeName(ab.Effect), covered)
+				fn(ab.Effect)
 			}
 		}
 	}
@@ -34,9 +36,40 @@ func forEachAbilityEffect(fn func(name string, covered bool)) {
 // mechanic with no glyph decision fails here: the fix is to add a glyph, never to
 // tolerate the fallback — there is no allowlist to exempt it (ADR 0022).
 func TestIconTotality(t *testing.T) {
-	forEachAbilityEffect(func(name string, covered bool) {
-		if !covered {
-			t.Errorf("effect %s has no glyph mapping; add one (ADR 0022)", name)
+	forEachAbilityEffect(func(e engine.Effect) {
+		if _, covered := effectGlyphs(e); !covered {
+			t.Errorf("effect %s has no glyph mapping; add one (ADR 0022)", effectTypeName(e))
+		}
+	})
+}
+
+// familyName is a glyph family's function name, so a disjointness failure names
+// the families that clashed rather than their positions in the chain.
+func familyName(family func(engine.Effect) ([]glyph, bool, bool)) string {
+	name := runtime.FuncForPC(reflect.ValueOf(family).Pointer()).Name()
+	return name[strings.LastIndex(name, ".")+1:]
+}
+
+// TestGlyphFamiliesAreDisjoint walks every triggered-ability effect on every card
+// and fails unless exactly one family in glyphFamilies claims it. The chain is not
+// compiler-checked: two families listing the same effect type would make the
+// second dead code and draw a wrong glyph rather than an unknown one, which no
+// other test catches (ADR 0047). Zero claims is a failure too — an effect the
+// chain drops renders the abstract unknown glyph.
+func TestGlyphFamiliesAreDisjoint(t *testing.T) {
+	forEachAbilityEffect(func(e engine.Effect) {
+		var claimed []string
+		for _, family := range glyphFamilies {
+			if _, _, ok := family(e); ok {
+				claimed = append(claimed, familyName(family))
+			}
+		}
+		if len(claimed) != 1 {
+			t.Errorf(
+				"effect %s claimed by families %v, want exactly one (ADR 0047)",
+				effectTypeName(e),
+				claimed,
+			)
 		}
 	})
 }
