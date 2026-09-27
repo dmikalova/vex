@@ -272,6 +272,28 @@ flat list. If a new method fits no existing role, that is a signal a new role �
 and probably a new area of the game — is emerging: add a small role interface and
 embed it in `Resolver`.
 
+## Every interface this package declares is classified
+
+Declaring a `type X interface` in `internal/engine` fails the build until
+`Interfaces()` in `catalog_interface.go` carries a row for it
+(`TestInterfaceTotality`). A row states one of two things:
+
+- **a catalogued family** — the interface a card definition's meaning varies
+  along, whose implementations print their own fragment of card text. The row
+  names the catalog enumerating them, which must be a `Families()` entry (or
+  `LogEntrySamples` for `LogEntry`). Adding a strategy axis therefore means
+  adding a `catalog_<family>.go` beside it; `Quantity`, `Gather` and `TopAct`
+  each arrived this way.
+- **not a family, with the reason** — a port (`Resolver`'s roles, `Chooser` and
+  its optional capabilities, `Namer`), an optional capability that only reshapes
+  the text of a node already catalogued elsewhere (`negatable`, `combinable`,
+  `framedClause`), or an internal shape two value types share (`cardPile`).
+
+Write the reason as a reason, not as a category label: the next reader has to be
+able to judge from the row alone whether the interface was classified wrongly, or
+has since grown members that print card text and so now owes a catalog. When in
+doubt, classify it as a family and write the catalog.
+
 ## New whole-tree operations: a type-switch "Visitor", not a new AST method
 
 `Text()` and `Resolve()` are **intrinsic** to a card's identity, so they live on

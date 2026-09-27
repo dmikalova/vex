@@ -212,17 +212,22 @@ the `tools` mage namespace, invoked with a colon (`mage tool:stub`):
 - `mage tool:census` — report what the node census still owes. Per node family
   (the `Effect` AST and the strategies beside it, listed by `engine.Families()`)
   it prints the node types `internal/engine` declares that no census row covers,
-  grouped by the file declaring them, and the rows that name no type; then the
-  rulebook terms the rows name that no term carries — the prose still to write —
-  and the terms in the census's sections that no row claims, counting the
-  text-bearing value enums (`engine.Enums()`) alongside the node families. It only
-  reports, so it is readable while the census is half-filled; the totality tests
-  in `catalog_test.go` and `catalog_enum_test.go` are what fail the build (ADR
-  0018). The enum guard is the one to know about when adding a constant: a new
-  `Keyword`, `Duration` or `CounterKind` that its enumerating function
-  (`Keywords()`, `Durations()`, `CounterKinds()`) does not return fails the build
-  rather than going silently undescribed — add it to that function, or name it in
-  the enum's `Excluded` list with the reason it is not a real member.
+  grouped by the file declaring them, and the rows that name no type; then how
+  the interfaces `internal/engine` declares are classified and which are not
+  classified at all; then the rulebook terms the rows name that no term carries —
+  the prose still to write — and the terms in the census's sections that no row
+  claims, counting the text-bearing value enums (`engine.Enums()`) alongside the
+  node families. It only reports, so it is readable while the census is
+  half-filled; the totality tests in `catalog_test.go`, `catalog_enum_test.go`
+  and `catalog_interface_test.go` are what fail the build (ADR 0018). Two guards
+  are the ones to know about. Adding a **constant**: a new `Keyword`, `Duration`
+  or `CounterKind` that its enumerating function (`Keywords()`, `Durations()`,
+  `CounterKinds()`) does not return fails the build rather than going silently
+  undescribed — add it to that function, or name it in the enum's `Excluded` list
+  with the reason it is not a real member. Adding an **interface**: a new
+  `type X interface` in `internal/engine` fails the build until `Interfaces()` in
+  `catalog_interface.go` classifies it as a catalogued node family or records the
+  reason it is not a family — see `internal/engine/AGENTS.md`.
 
 - `mage tool:gameSize` — report the in-memory `GameState` size (the cost of one
   undo snapshot), the number of implemented cards, and — after building a fresh
