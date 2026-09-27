@@ -15,9 +15,9 @@ import (
 const engineDir = "internal/engine"
 
 // censusSections are the rulebook sections whose terms the census claims, and so
-// the sections an orphan term is reported from. The Card text section joins the
-// Effects section here once the rulebook carries one.
-var censusSections = []engine.Section{engine.SectionEffect}
+// the sections an orphan term is reported from. Card text holds the sentence
+// parts a node leans on (Target, For Each, Duration); Effects holds the verbs.
+var censusSections = []engine.Section{engine.SectionCardText, engine.SectionEffect}
 
 // Census reports the node census's catalog and term gaps. Per family it prints
 // the node types the source scan finds that no census row covers, grouped by the

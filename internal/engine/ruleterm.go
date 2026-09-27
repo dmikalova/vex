@@ -34,6 +34,7 @@ const (
 	SectionKeyword  Section = "keyword"
 	SectionBonus    Section = "bonus"
 	SectionAbility  Section = "ability"
+	SectionCardText Section = "cardtext"
 	SectionEffect   Section = "effect"
 )
 

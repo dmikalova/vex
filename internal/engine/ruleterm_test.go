@@ -123,7 +123,8 @@ func TestRuleFramingRegistered(t *testing.T) {
 		t.Error("RuleOverview() is empty")
 	}
 	for _, sec := range []Section{
-		SectionTurn, SectionCardType, SectionKeyword, SectionBonus, SectionAbility, SectionEffect,
+		SectionTurn, SectionCardType, SectionKeyword, SectionBonus, SectionAbility,
+		SectionCardText, SectionEffect,
 	} {
 		if RuleSectionIntro(sec) == "" {
 			t.Errorf("section %q has no intro", sec)

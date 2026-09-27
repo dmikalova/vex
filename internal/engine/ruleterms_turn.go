@@ -67,6 +67,23 @@ the rest of the turn you may play from hand and use only cards of that house,
 except cards that ignore the restriction such as Versatile ones.`,
 		},
 		{
+			Section:    SectionTurn,
+			Title:      "Active House",
+			Definition: "The house a player chooses for their turn; they may play and use only cards of that house.",
+			Body: `The house a player picks in the choose-a-house phase is their active house for
+that turn. They may play cards from hand and use cards in play only of that
+house, except where a card frees them from the restriction. A player may pick
+any house of their deck, and also any house they control a card of in play.
+
+An ability can watch which house was picked — "After you choose Dis as your
+active house, ..." — and an ability can read that no card in play, on either
+side, belongs to the house just picked.
+
+An effect can also change the active house for the rest of the turn. The new
+house takes over at once, so the player may play and use that house's cards from
+then on; the house they picked no longer frees anything.`,
+		},
+		{
 			Section:  SectionTurn,
 			Title:    "Turn structure",
 			Subtitle: PhaseArchives.rulebookStep(),
