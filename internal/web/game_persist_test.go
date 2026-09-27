@@ -179,10 +179,22 @@ func (c *client) saveWithExtraCommand(cmd engine.Command) {
 	if err := c.ctx.LocalStorage().Get(c.g.matchKey(), &snap); err != nil {
 		c.t.Fatalf("read back the snapshot: %v", err)
 	}
-	snap.Record.Commands = append(snap.Record.Commands, cmd)
-	if err := c.ctx.LocalStorage().Set(c.g.matchKey(), snap); err != nil {
+	c.writeSnapshotWithCommand(snap, cmd)
+}
+
+// writeSnapshotWithCommand splices cmd onto base's command log and writes the
+// result to the client's match key, returning the snapshot written. A caller
+// stages a second failing record on top of a first this way — rather than
+// re-reading storage, which a failed resume has already cleared — so building up
+// a growing record across several failures does not depend on the live slot
+// still holding the previous one.
+func (c *client) writeSnapshotWithCommand(base snapshot, cmd engine.Command) snapshot {
+	c.t.Helper()
+	base.Record.Commands = append(base.Record.Commands, cmd)
+	if err := c.ctx.LocalStorage().Set(c.g.matchKey(), base); err != nil {
 		c.t.Fatalf("write the spliced snapshot: %v", err)
 	}
+	return base
 }
 
 // A snapshot rejected before any replay is attempted — a version this build no
@@ -299,18 +311,15 @@ func TestAPanickingReplayIsQuarantined(t *testing.T) {
 	}
 
 	// A second failure replaces the first rather than piling up beside it.
-	first.Record.Commands = append(first.Record.Commands, engine.Command{
+	c.writeSnapshotWithCommand(first, engine.Command{
 		Kind:  engine.CommandManualMove,
 		Card:  engine.LocalID(251),
 		Index: int(engine.ManualDiscard),
 	})
-	if err := c.ctx.LocalStorage().Set(c.g.matchKey(), first); err != nil {
-		t.Fatalf("write the spliced snapshot: %v", err)
-	}
 	second := c.expectQuarantined()
-	if len(second.Record.Commands) != len(first.Record.Commands) {
+	if len(second.Record.Commands) != len(first.Record.Commands)+1 {
 		t.Errorf("quarantined %d commands, want the later log's %d",
-			len(second.Record.Commands), len(first.Record.Commands))
+			len(second.Record.Commands), len(first.Record.Commands)+1)
 	}
 }
 

@@ -258,7 +258,7 @@ hits a bug is the reproduction worth keeping.
 version and the decode **before** it attempts a replay, so anything that gets past
 those checks and then diverges or panics is a **current-version** save this build
 cannot replay — an engine regression, and the only reproduction of it. Those two
-paths (the `recover`, and a false `rebuildFromLog`) call `quarantine`, which moves
+paths (the `recover`, and an error from `replayRecord`) call `quarantine`, which moves
 the snapshot to `quarantineKey` and raises `replayFailedNotice`; the live slot is
 still cleared so the player gets a fresh deal. One slot holds the most recent
 finding — a later failure overwrites it. A wrong version or a bad decode keeps
