@@ -209,6 +209,16 @@ the `tools` mage namespace, invoked with a colon (`mage tool:stub`):
   `-max=<n>` and `-category=<substring>`, e.g.
   `mage tool:nodeUsage -max=1 -category=damage`.
 
+- `mage tool:census` — report what the node census still owes. Per node family
+  (the `Effect` AST and the strategies beside it, listed by `engine.Families()`)
+  it prints the node types `internal/engine` declares that no census row covers,
+  grouped by the file declaring them, and the rows that name no type; then the
+  rulebook terms the rows name that no term carries — the prose still to write —
+  and the terms in the census's sections that no row claims. It only reports, so
+  it is readable while the census is half-filled; the per-family totality tests
+  in `catalog_test.go` are what fail the build, each switched on by the task that
+  completes its catalog (ADR 0018).
+
 - `mage tool:gameSize` — report the in-memory `GameState` size (the cost of one
   undo snapshot), the number of implemented cards, and — after building a fresh
   wasm — the shipped web bundle's size raw and compressed (brotli and gzip, the
