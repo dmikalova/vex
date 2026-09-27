@@ -9,8 +9,14 @@ import "fmt"
 // picks its colour; that forced forge spends nothing, so it never purges a source.
 // Both controller paths fire "after you forge a key" abilities and, on the final
 // key, win the game. A controller forge that lands purges the card that made it —
-// every forge outside the normal step spends its source (a Vex divergence;
-// see docs/keyforge-divergences.md).
+// every forge outside the normal step spends its source (a Vex divergence; see
+// "Key cheats purge themselves" in docs/keyforge-divergences.md).
+//
+// That purge is deliberate and overrides the printed text. Of the 17 cards that
+// forge through this node, 15 print no self-removal at all and two print
+// "sacrifice"; the rule applies to all of them, and the node carries no opt-out
+// flag. A generated "-> purge <self>" that the printed card text does not mention
+// is the rule working, not a bug — the register entry says why it is upheld.
 type ForgeKey struct {
 	// Player is who forges. The zero value forges for the controller; Opponent
 	// forces the opponent to forge a key at no cost.
@@ -96,7 +102,8 @@ func (e ForgeKey) Text() string {
 
 // Resolve forges one key for the controller if affordable, then purges the source
 // card when a key was actually forged. An opponent forge instead forces the
-// opponent to forge for free, spends nothing, and never purges.
+// opponent to forge for free, spends nothing, and never purges. The discount floor
+// and the gated purge are pinned by TestForgeKeyDiscountFloorsAndPurges.
 func (e ForgeKey) Resolve(ctx *EffectContext) {
 	if e.Player == Opponent {
 		ctx.Resolver.ForgeKeyFreeForced(ctx.Opponent())

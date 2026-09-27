@@ -279,8 +279,11 @@ friendly Shard, …`). Their effects — Shard of Glory exalts a friendly creatu
   Forging an Alliance, Key of Darkness, Key Charge, Chota Hazri, The Colosseum,
   Nightforge, Key Abduction, Triumph, Might Makes Right, [REDACTED], Epic Quest,
   Obsidian Forge). Because the forge is now its own cost, the optional wrapper is
-  dropped from the two key cheats that carried one — **Nightforge** and **Obsidian
-  Forge** are mandatory when affordable (the `you may` is gone) — and the cards
+  dropped from the four key cheats that carried one — **Nightforge**, **Obsidian
+  Forge**, **Data Forge** (printed `Play: You may forge a key at +10 Aember current
+  cost, reduced by 1 Aember for each card in your hand.`) and **Key Abduction**
+  (printed `Then, you may forge a key at +9A current cost, …`) are mandatory when
+  affordable (the `you may` is gone) — and the cards
   that used to **destroy** themselves on forging (**Epic Quest**, **[REDACTED]**,
   **Obsidian Forge**) now **purge** instead, removing them from the game rather
   than sending them to the discard pile where they could return.
@@ -296,6 +299,14 @@ current cost, reduced by 1 Æmber for each friendly Sin creature -> purge Desire
   keep forging turn after turn. The rule has **no exception** — every key cheat
   purges itself on a successful forge, creatures included — so the `ForgeKey` node
   carries no opt-out flag.
+  **Re-examined 2026-09-26 and upheld.** The case against the rule is real: it
+  diverges from 15 printed card texts that name no self-removal, and it caps two
+  cards whose printed design is repeatable — The Colosseum's "remove 6 glory
+  counters and forge" and Desire's `After Reap: forge` can each land exactly one
+  key before the card is spent. It was kept anyway, because it is the single rule
+  stopping a discard-recursion loop from replaying a free-forge card several times
+  in one turn, and one uniform rule on the node beats a per-card opt-out. Do not
+  re-file the reversal as a new finding.
 - **A bonus icon's source is the card that carries it.** When a bonus icon
   resolves (Æmber, Capture, Damage, Draw), KeyForge treats the game itself as the
   source of the effect; Vex treats the card the icon is printed on as the
