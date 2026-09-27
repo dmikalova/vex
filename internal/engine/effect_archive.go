@@ -218,6 +218,15 @@ func archiveFrom(ctx *EffectContext, from Zone, owner int, id LocalID) {
 
 // ArchiveFromPlay moves each in-play card its Target selects into its owner's
 // archives, shedding damage, armor, upgrades, and other in-play state.
+//
+// It is not PutFromPlay with its destination fixed to ToArchives, though both
+// batch the move. Folding it there would cost the archive verb its own printed
+// text — "archive each friendly Knight creature from play", not "put … into its
+// owner's archives" — and would lose the set it records on ctx.Produced.Archived,
+// which a following condition reads (ArchivedCreaturesShareHouse, how Code Monkey
+// asks whether the neighbors it archived share a house). A Destination carries
+// neither, so the fold would
+// have to push an archive-only flag into the general mover.
 type ArchiveFromPlay struct {
 	Target Target
 }

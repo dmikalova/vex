@@ -582,7 +582,15 @@ func (g *game) matchKey() string {
 // change makes older snapshots invalid so a stale one is flushed instead of
 // replayed. Because a resume replays the command log rather than deserializing
 // state, a change to how any recorded action resolves also dates every snapshot
-// and counts as such a change.
+// and counts as such a change. Rewording a rendered log string is such a change
+// too: the log persists as the prose each entry was narrated with, so an edited
+// string dates every snapshot that holds the old one.
+//
+// Bumping costs nothing. The only consequence is that one stale snapshot is
+// flushed and the next visit deals a fresh game — there is no migration to write
+// and no data anyone was keeping. So fix a wrong log string the moment you see it
+// and bump; never batch unrelated log work to hold the number down, and never
+// leave a string wrong because a bump felt expensive.
 const snapshotVersion = 22
 
 // snapshot is the persisted match (ADR 0039): the session's own Record — version,

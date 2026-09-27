@@ -236,10 +236,16 @@ the log bubbles are all replayed from it (`replayRecord`). **Bump
 `snapshotVersion` whenever an engine change makes an older record unreplayable**
 — a stale snapshot is dropped rather than restored into a mismatched engine.
 
-That includes any change to how a recorded command resolves, because a resume
-replays the log rather than deserializing state: the same commands would rebuild
-a different match. `session.Version` guards the command format itself, and
-`replayRecord` refuses a mismatch the same way `session.Load` does.
+That includes rewording a log entry. The log persists as the prose each entry was
+narrated with (a typed entry does not survive JSON), so an old snapshot keeps
+restoring the old wording long after the engine stopped producing it, and the
+change looks like it did not take. What a bump costs, and why that means log
+fixes are never batched, is on the `snapshotVersion` doc comment.
+
+That also includes any change to how a recorded command resolves, because a
+resume replays the log rather than deserializing state: the same commands would
+rebuild a different match. `session.Version` guards the command format itself,
+and `replayRecord` refuses a mismatch the same way `session.Load` does.
 
 Manual force-edits are in the record **on purpose**: a force-edited board that
 hits a bug is the reproduction worth keeping.

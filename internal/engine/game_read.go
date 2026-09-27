@@ -652,6 +652,11 @@ func (g *Game) Peekable(viewer int, host LocalID) bool {
 // own right, so every reachability re-check must see it (TestInPlayCountsUpgrades).
 // A controlled creature physically sits in its controller's battleline while its
 // owner remains unchanged, so this must not assume owner == controller.
+//
+// It keeps its own two-zone loop rather than scanning allInPlay on purpose: this
+// is a contains predicate over both players that allocates nothing, and every
+// zone move re-checks it, so routing it through allInPlay would put a fresh slice
+// per call into a hot path to answer a question the row sets already answer.
 func (g *Game) inPlay(id LocalID) bool {
 	if host, ok := g.hostOf(id); ok {
 		id = host
