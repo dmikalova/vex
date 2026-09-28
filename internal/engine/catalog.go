@@ -28,7 +28,9 @@ import (
 // Destination are neither: each is a value struct a card builds up, so each is
 // covered as both — its constants as an enum, and the builder methods that modify
 // them as a family discovered by shape (catalog_target.go,
-// catalog_destination.go).
+// catalog_destination.go). Filter is the fourth shape: a card writes its axes as
+// a struct literal, so its members are the struct's exported fields
+// (catalog_filter.go).
 
 // Catalogued is one census row: a constructed node of the family, and the
 // classification saying whether it owes a rulebook term. The row carries a real
@@ -111,6 +113,11 @@ type Family struct {
 	// struct rather than an interface, because ADR 0005 keeps it comparable, so its
 	// members are its filter builders.
 	Returns string
+	// Fields, set with Method and Returns left empty, discovers the family as the
+	// exported fields of the Name struct. Filter is the family shaped that way: its
+	// members are the axes a card writes in a struct literal, so a new axis is a
+	// field rather than a type or a builder.
+	Fields bool
 	// Rows is the family's census, in catalog order.
 	Rows []FamilyRow
 	// Gated reports whether the family's totality test is switched on. A family
@@ -133,6 +140,13 @@ type MethodSpec struct {
 // the family's catalog must cover. Both the totality test and `mage tool:census`
 // read the source through here, so the two always see the same family.
 func (f Family) Declared(dir string) (map[string]string, error) {
+	if f.Fields {
+		found, err := census.Fields(dir, f.Name)
+		if err != nil {
+			return nil, fmt.Errorf("scanning for %s fields: %w", f.Name, err)
+		}
+		return found, nil
+	}
 	if f.Method == "" {
 		found, err := census.Builders(dir, f.Name, f.Returns)
 		if err != nil {
@@ -197,6 +211,7 @@ func Families() []Family {
 		gatherFamily(),
 		quantityFamily(),
 		targetFilterFamily(),
+		filterFamily(),
 		destinationFamily(),
 	}
 }
@@ -240,6 +255,14 @@ func (f Family) also(specs ...MethodSpec) Family {
 // a struct rather than an interface.
 func (f Family) builds(result string) Family {
 	f.Method, f.Params, f.Returns = "", nil, result
+	return f
+}
+
+// fieldsOf discovers the family as the exported fields of its own struct, for a
+// family whose members are the axes of one comparable value rather than types or
+// builders.
+func (f Family) fieldsOf() Family {
+	f.Method, f.Params, f.Returns, f.Fields = "", nil, "", true
 	return f
 }
 

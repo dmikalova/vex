@@ -50,12 +50,12 @@ func TestFamilyRowsWellFormed(t *testing.T) {
 	}
 }
 
-// TestDeclaredReportsAScanFailure pins the error arm of both source scans: a
+// TestDeclaredReportsAScanFailure pins the error arm of every source scan: a
 // directory that cannot be read is reported rather than read as a family with no
 // members, which would silently pass every totality check.
 func TestDeclaredReportsAScanFailure(t *testing.T) {
 	const missing = "no-such-directory"
-	for _, family := range []Family{effectFamily(), targetFilterFamily()} {
+	for _, family := range []Family{effectFamily(), targetFilterFamily(), filterFamily()} {
 		if _, err := family.Declared(missing); err == nil {
 			t.Errorf("%s.Declared(%q) returned no error", family.Name, missing)
 		}
