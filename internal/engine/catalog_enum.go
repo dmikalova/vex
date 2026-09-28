@@ -78,6 +78,7 @@ func Enums() []Enum {
 		aemberPresenceEnum(),
 		positionEnum(),
 		exclusionEnum(),
+		neighborModeEnum(),
 		useKindEnum(),
 		tollActionEnum(),
 

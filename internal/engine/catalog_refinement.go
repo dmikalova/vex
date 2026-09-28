@@ -25,7 +25,8 @@ func refinementFamily() Family {
 // RefinementCatalog returns one representative value of every Refinement, with
 // the rulebook term each owes. Refinements group by what they measure: the
 // combinators that reshape another refinement's result, the power tiers and
-// thresholds, the trait and house rules, and the per-battleline selections.
+// thresholds, and the per-battleline selections. A rule decidable one candidate
+// at a time is a Filter axis, not a refinement, so it has no row here.
 func RefinementCatalog() []Catalogued[Refinement] {
 	return []Catalogued[Refinement]{
 		// Combinators over other refinements.
@@ -36,6 +37,12 @@ func RefinementCatalog() []Catalogued[Refinement] {
 		{
 			Node:  AnyOf(LowestPower, HighestPower),
 			Rules: plumbing("composition: keeps what any of its inner refinements keeps"),
+		},
+		{
+			Node: Filter{Trait: Dinosaur},
+			Rules: plumbing(
+				"composition: a per-card Filter, whose axes carry their own terms as " +
+					"Target filters; it is a refinement only inside a union combinator"),
 		},
 
 		// Power tiers: which end of the power scale is selected, and how many.
@@ -58,34 +65,12 @@ func RefinementCatalog() []Catalogued[Refinement] {
 
 		// Power thresholds: a power compared against a number, a count, or a card.
 		{
-			Node:  PowerAtLeast(6),
-			Rules: bears("Power Threshold"),
-		},
-		{
 			Node:  PowerLessThan(ForgedKeys{Player: Controller}),
-			Rules: bears("Power Threshold"),
-		},
-		{
-			Node:  PowerLessThanSource(),
 			Rules: bears("Power Threshold"),
 		},
 		{
 			Node:  SamePowerAsChosen,
 			Rules: bears("Same Power as a Chosen Creature"),
-		},
-
-		// Traits and houses.
-		{
-			Node:  OfTrait(Dinosaur),
-			Rules: bears("Trait"),
-		},
-		{
-			Node:  WithoutSharedTrait(),
-			Rules: bears("Trait"),
-		},
-		{
-			Node:  HouseWithAtLeast(3),
-			Rules: bears("Creatures of a House"),
 		},
 
 		// Per-battleline selections, which act on each side in turn.

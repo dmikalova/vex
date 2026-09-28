@@ -21,8 +21,9 @@ var ArdentHero = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithKeywords(card.Keyword.Taunt),
-	card.WithCannotBeDealtDamageBy(card.DamageSource{
+	card.WithCannotBeDealtDamageBy(card.Filter{
 		Trait:    card.Traits.Mutant,
-		MinPower: 5,
+		Power:    card.Power.AtLeast(5),
+		MatchAny: true,
 	}),
 )

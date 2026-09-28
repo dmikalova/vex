@@ -25,12 +25,9 @@ type Search struct {
 	// Sources are the zones searched, in order. A search must name at least one
 	// zone; there is no assumed default (validate rejects an empty Sources).
 	Sources []Zone
-	// House restricts the search to cards a matcher admits; the zero value (any
-	// house) does not narrow by house. House and Filter conjoin.
-	House HouseMatcher
-	// Filter restricts the search by name, trait, or type; the zero value admits
-	// any card.
-	Filter CardFilter
+	// Filter restricts the search by house, name, trait, or type; the zero value
+	// admits any card.
+	Filter Filter
 	// Any takes every matching card (any number). Otherwise the controller chooses
 	// one, or up to Max when Max is set.
 	Any bool
@@ -68,7 +65,7 @@ func (e Search) validate() error {
 	if e.ShuffleBeforePlacing && e.Dest != ToTopOfDeck {
 		return errSearchShuffleNotTopOfDeck
 	}
-	return nil
+	return e.Filter.validateIdentityOnly("Search")
 }
 
 // revealsFound reports whether a taken card is shown to both players.
@@ -76,7 +73,7 @@ func (e Search) revealsFound() bool { return e.Reveal }
 
 // noun renders the kind of card the search takes, e.g. "card", "Niffle creature",
 // or "Saurian card".
-func (e Search) noun() string { return e.House.qualify(e.Filter.noun()) }
+func (e Search) noun() string { return e.Filter.noun("card") }
 
 // zonesPhrase renders the searched zones, e.g. "deck" or "deck and discard pile".
 func (e Search) zonesPhrase() string {
@@ -161,7 +158,7 @@ func (e Search) resolveGate(ctx *EffectContext) bool {
 		return e.resolveShuffleBeforePlacing(ctx, mover)
 	}
 	candidates := mover.gather(ctx, func(id LocalID) bool {
-		return e.House.matches(ctx, id) && e.Filter.admits(ctx.Resolver, id)
+		return e.Filter.matches(ctx, id)
 	})
 	if e.Any {
 		for _, id := range candidates {
@@ -188,7 +185,7 @@ func (e Search) resolveUpToMax(ctx *EffectContext, mover crossZoneMover) bool {
 	took := false
 	for range e.Max {
 		cands := mover.gather(ctx, func(id LocalID) bool {
-			return e.House.matches(ctx, id) && e.Filter.admits(ctx.Resolver, id)
+			return e.Filter.matches(ctx, id)
 		})
 		if len(cands) == 0 {
 			break
@@ -240,7 +237,7 @@ func (e Search) chooseFound(ctx *EffectContext, mover crossZoneMover) []LocalID 
 	}
 	for range limit {
 		cands := mover.gather(ctx, func(id LocalID) bool {
-			return !picked[id] && e.House.matches(ctx, id) && e.Filter.admits(ctx.Resolver, id)
+			return !picked[id] && e.Filter.matches(ctx, id)
 		})
 		if len(cands) == 0 {
 			break

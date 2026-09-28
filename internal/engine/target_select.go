@@ -4,10 +4,12 @@ import "slices"
 
 // This file holds a Target's selection machinery: resolving a Target into
 // concrete card ids (Select, SelectOptional, selectWith), narrowing them by the
-// Target's filters (filter), the base sets each Kind draws from (selectBase), and
-// the battleline geometry the flank and neighbor filters read (onFlank,
-// isNeighbor, neighbors, …). See target.go for the Target type and its filter
-// builders, and target_refinement.go for the Refinement strategies selectWith applies.
+// Target's per-card Filter (admitted), the base sets each Kind draws from
+// (selectBase), and
+// the battleline geometry the flank and neighbor axes read (onFlank, isNeighbor,
+// neighbors, …). See target.go for the Target type and its filter builders,
+// filter.go for the Filter those builders write, and target_refinement.go for the
+// Refinement strategies selectWith applies.
 
 // Select resolves the target into concrete card ids, applying its filters. For a
 // chosen kind it asks the controller to pick one of the filtered candidates
@@ -50,9 +52,9 @@ func (t Target) SelectOptional(ctx *EffectContext) []LocalID {
 // from, without making the choice — for an effect that repeats the choice itself,
 // like a "for each" DealDamage that picks a creature per instance.
 func (t Target) candidates(ctx *EffectContext) []LocalID {
-	ids := t.filter(ctx, t.selectBase(ctx))
-	if t.refinement != nil {
-		ids = t.refinement.refine(ctx, ids)
+	ids := t.admitted(ctx, t.selectBase(ctx))
+	if t.Refinement != nil {
+		ids = t.Refinement.refine(ctx, ids)
 	}
 	return ids
 }
@@ -61,7 +63,7 @@ func (t Target) candidates(ctx *EffectContext) []LocalID {
 // refinement would narrow: with nothing to narrow there is nothing to select, and
 // unlike Select it asks the controller nothing.
 func (t Target) empty(ctx *EffectContext) bool {
-	return len(t.filter(ctx, t.selectBase(ctx))) == 0
+	return len(t.admitted(ctx, t.selectBase(ctx))) == 0
 }
 
 // couldSelect reports whether id is among the target's candidates without making
@@ -69,14 +71,14 @@ func (t Target) empty(ctx *EffectContext) bool {
 // membership test conditions use (ItIsAmong). A refinement that ties at its
 // cutoff counts every tied card as included.
 func (t Target) couldSelect(ctx *EffectContext, id LocalID) bool {
-	base := t.filter(ctx, t.selectBase(ctx))
+	base := t.admitted(ctx, t.selectBase(ctx))
 	if !slices.Contains(base, id) {
 		return false
 	}
-	if t.refinement == nil {
+	if t.Refinement == nil {
 		return true
 	}
-	if mr, ok := t.refinement.(membershipRefiner); ok {
+	if mr, ok := t.Refinement.(membershipRefiner); ok {
 		return mr.includes(ctx, base, id)
 	}
 	return slices.Contains(t.candidates(ctx), id)
@@ -90,7 +92,7 @@ func (t Target) selectWith(
 	optional bool,
 	keep func(LocalID) bool,
 ) []LocalID {
-	ids := t.filter(ctx, t.selectBase(ctx))
+	ids := t.admitted(ctx, t.selectBase(ctx))
 	if keep != nil {
 		kept := ids[:0:0]
 		for _, id := range ids {
@@ -100,8 +102,8 @@ func (t Target) selectWith(
 		}
 		ids = kept
 	}
-	if t.refinement != nil {
-		ids = t.refinement.refine(ctx, ids)
+	if t.Refinement != nil {
+		ids = t.Refinement.refine(ctx, ids)
 	}
 	if !t.isChosen() {
 		return t.expandNeighbors(ctx, ids)
@@ -128,19 +130,19 @@ func (t Target) selectWith(
 // NeighborsOf replaces the selection with them (Lord Golgotha hits the neighbors
 // of the creature it fights, not that creature).
 func (t Target) expandNeighbors(ctx *EffectContext, ids []LocalID) []LocalID {
-	if !t.withNeighbors && !t.neighborsOf {
+	if !t.Neighbors.expands() {
 		return ids
 	}
 	out := ids[:0:0]
 	for _, id := range ids {
-		if t.withNeighbors {
+		if t.Neighbors.keepsSelected() {
 			out = append(out, id)
 		}
 		ns := neighbors(ctx, id)
 		// The fought creature may have left play in the fight that named it, so
 		// "each neighbor of the fought creature" falls back to the neighbors the
 		// fight snapshotted (Smite pops a warded neighbor even when the target dies).
-		if t.neighborsOf && len(ns) == 0 && !resolverInPlay(ctx, id) {
+		if t.Neighbors == NeighborsOnly && len(ns) == 0 && !resolverInPlay(ctx, id) {
 			ns = ctx.Produced.Neighbors
 		}
 		out = append(out, ns...)
@@ -198,159 +200,18 @@ func isOfMostPopulousHouse(ctx *EffectContext, id LocalID) bool {
 	return most > 0 && counts[ctx.Resolver.House(id)] == most
 }
 
-// filter narrows ids to those matching the target's trait, power, damaged, and
-// flank filters.
-func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
-	if t.hasNoFilters() {
+// admitted narrows ids to those the target's per-card Filter admits.
+func (t Target) admitted(ctx *EffectContext, ids []LocalID) []LocalID {
+	if !t.Filter.Narrows() {
 		return ids
 	}
 	out := make([]LocalID, 0, len(ids))
 	for _, id := range ids {
-		if t.matches(ctx, id) {
+		if t.Filter.matches(ctx, id) {
 			out = append(out, id)
 		}
 	}
 	return out
-}
-
-// hasNoFilters reports whether a target narrows its candidates at all. A target
-// that sets no trait, house, power, state, position, or identity filter matches
-// every candidate, so filter returns the input unchanged.
-func (t Target) hasNoFilters() bool {
-	return t.trait == traitUnset &&
-		t.exceptTrait == traitUnset &&
-		!t.house.filters() &&
-		!t.houseWithMostCreatures &&
-		!t.sharesTrait &&
-		!t.power.filters() &&
-		!t.damage.filters() &&
-		!t.stunned &&
-		!t.ready &&
-		!t.aember.filters() &&
-		!t.withoutBonusIcons &&
-		!t.withCounter.valid() &&
-		!t.withArmor &&
-		!t.withUpgrade &&
-		t.sharesHouseNeighbors == 0 &&
-		t.keyword == keywordUnset &&
-		!t.position.filters() &&
-		!t.neighboring &&
-		!t.exclusion.filters() &&
-		t.named == ""
-}
-
-// matches reports whether one candidate passes every filter the target sets. The
-// filters are pure reads combined with AND, grouped into families so no single
-// predicate carries them all; a candidate must pass every family to match.
-func (t Target) matches(ctx *EffectContext, id LocalID) bool {
-	return t.matchesTraitHouse(ctx, id) &&
-		t.matchesPower(ctx, id) &&
-		t.matchesState(ctx, id) &&
-		t.matchesPosition(ctx, id) &&
-		t.matchesIdentity(ctx, id)
-}
-
-// matchesTraitHouse reports whether a candidate passes the target's trait and house
-// filters. A disjoining target matches a candidate of either the trait or the
-// house; otherwise both the trait and the house must match, and an except-trait,
-// most-populous-house, or shares-trait-with-"it" filter can still exclude it.
-func (t Target) matchesTraitHouse(ctx *EffectContext, id LocalID) bool {
-	if t.disjoins() {
-		if !ctx.Resolver.HasTrait(id, t.trait) && !t.house.matches(ctx, id) {
-			return false
-		}
-	} else {
-		if t.trait != traitUnset && !ctx.Resolver.HasTrait(id, t.trait) {
-			return false
-		}
-		if !t.house.matches(ctx, id) {
-			return false
-		}
-	}
-	if t.exceptTrait != traitUnset && ctx.Resolver.HasTrait(id, t.exceptTrait) {
-		return false
-	}
-	if t.houseWithMostCreatures && !isOfMostPopulousHouse(ctx, id) {
-		return false
-	}
-	if t.sharesTrait && (!ctx.HasIt || !ctx.Resolver.SharesTrait(ctx.It, id)) {
-		return false
-	}
-	return true
-}
-
-// matchesPower reports whether a candidate's power passes the target's power
-// bound — a maximum, minimum, exact, odd, or even power requirement. A target
-// that bounds no power reads no power, so a card without one is never asked.
-func (t Target) matchesPower(ctx *EffectContext, id LocalID) bool {
-	if !t.power.filters() {
-		return true
-	}
-	return t.power.admits(ctx.Resolver.Power(id))
-}
-
-// matchesState reports whether a candidate passes the target's per-card state
-// filters: damage, Æmber, bonus icons, counters, armor, upgrades, house-sharing
-// neighbors, a keyword, and the stunned/ready flags.
-func (t Target) matchesState(ctx *EffectContext, id LocalID) bool {
-	if t.damage.filters() && !t.damage.admits(ctx.Resolver.Damage(id)) {
-		return false
-	}
-	if t.aember.filters() && !t.aember.admits(ctx.Resolver.AmberOn(id)) {
-		return false
-	}
-	if t.withoutBonusIcons && ctx.Resolver.HasBonusIcons(id) {
-		return false
-	}
-	if t.withCounter.valid() && ctx.Resolver.CountersOn(id, t.withCounter) == 0 {
-		return false
-	}
-	if t.withArmor && ctx.Resolver.Armor(id) == 0 {
-		return false
-	}
-	if t.withUpgrade && len(ctx.Resolver.Upgrades(id)) == 0 {
-		return false
-	}
-	if t.sharesHouseNeighbors > 0 &&
-		sharedHouseNeighbors(ctx, id) < t.sharesHouseNeighbors {
-		return false
-	}
-	if t.keyword.valid() && !ctx.Resolver.HasKeyword(id, t.keyword) {
-		return false
-	}
-	if t.stunned && !ctx.Resolver.Stunned(id) {
-		return false
-	}
-	if t.ready && ctx.Resolver.Exhausted(id) {
-		return false
-	}
-	return true
-}
-
-// matchesPosition reports whether a candidate passes the target's battleline
-// position filters — on or off a flank, in the center, neighboring the source, or
-// to the source's right or left.
-func (t Target) matchesPosition(ctx *EffectContext, id LocalID) bool {
-	if t.position.filters() && !t.position.admits(ctx, id) {
-		return false
-	}
-	if t.neighboring && !isNeighbor(ctx, ctx.Source, id) {
-		return false
-	}
-	return true
-}
-
-// matchesIdentity reports whether a candidate passes the target's identity filters:
-// an exclusion drops one card the target is defined against, and a name filter
-// keeps only a named card.
-func (t Target) matchesIdentity(ctx *EffectContext, id LocalID) bool {
-	if !t.exclusion.admits(ctx, id) {
-		return false
-	}
-	if t.named != "" && ctx.Resolver.Name(id) != t.named {
-		return false
-	}
-	return true
 }
 
 // onFlank reports whether a creature is on a flank of its battleline (its

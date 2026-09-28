@@ -87,6 +87,16 @@ func TargetFilterCatalog() []Catalogued[Target] {
 			Rules: bears("Belong to House"),
 		},
 		{
+			Name:  "OfHouseWithAtLeast",
+			Node:  targetBase.OfHouseWithAtLeast(3),
+			Rules: bears("Creatures of a House"),
+		},
+		{
+			Name:  "WithoutSharedTrait",
+			Node:  targetBase.WithoutSharedTrait(),
+			Rules: bears("Trait"),
+		},
+		{
 			Name:  "Named",
 			Node:  targetBase.Named("Ancient Bear"),
 			Rules: bears("Target"),
@@ -221,6 +231,14 @@ func TargetFilterCatalog() []Catalogued[Target] {
 			Name:  "ToLeftOfSource",
 			Node:  targetBase.ToLeftOfSource(),
 			Rules: bears("Battleline Position"),
+		},
+
+		// The whole-Filter writer, which sets the same axes the builders above do.
+		{
+			Name: "With",
+			Node: targetBase.With(Filter{Trait: Scientist}),
+			Rules: plumbing(
+				"composition: writes a Filter, whose axes are the rows above"),
 		},
 
 		// The set-relative refinement, which carries its own census and its own term.
@@ -384,9 +402,17 @@ func powerBoundKindEnum() Enum {
 			{Name: "BoundExactly", Node: BoundExactly, Rules: bears("Power Threshold")},
 			{Name: "BoundOdd", Node: BoundOdd, Rules: bears("Power Threshold")},
 			{Name: "BoundEven", Node: BoundEven, Rules: bears("Power Threshold")},
+			{
+				Name:  "BoundLessThanSource",
+				Node:  BoundLessThanSource,
+				Rules: bears("Power Threshold"),
+			},
 		},
 		func(k PowerBoundKind) string {
-			return Target{Kind: TargetEachCreature, power: PowerBound{Kind: k, Amount: 3}}.Text()
+			return Target{
+				Kind:   TargetEachCreature,
+				Filter: Filter{Power: PowerBound{Kind: k, Amount: 3}},
+			}.Text()
 		},
 	)
 }
@@ -404,7 +430,7 @@ func damagePresenceEnum() Enum {
 			{Name: "DamageNone", Node: DamageNone, Rules: bears("Damage")},
 		},
 		func(d DamagePresence) string {
-			return Target{Kind: TargetEachCreature, damage: d}.Text()
+			return Target{Kind: TargetEachCreature, Filter: Filter{Damage: d}}.Text()
 		},
 	)
 }
@@ -422,7 +448,7 @@ func aemberPresenceEnum() Enum {
 			{Name: "AemberNone", Node: AemberNone, Rules: bears("Æmber")},
 		},
 		func(a AemberPresence) string {
-			return Target{Kind: TargetEachCreature, aember: a}.Text()
+			return Target{Kind: TargetEachCreature, Filter: Filter{Aember: a}}.Text()
 		},
 	)
 }
@@ -455,7 +481,33 @@ func positionEnum() Enum {
 			},
 		},
 		func(p Position) string {
-			return Target{Kind: TargetEachCreature, position: p}.Text()
+			return Target{Kind: TargetEachCreature, Filter: Filter{Position: p}}.Text()
+		},
+	)
+}
+
+// neighborModeEnum is the NeighborMode census: how a target reaches the
+// battleline neighbors of what it selects. Both modes name the battleline
+// positions term, which is where adjacency is taught.
+func neighborModeEnum() Enum {
+	return newEnum(
+		"NeighborMode",
+		[]string{"NeighborsNone"},
+		len(NeighborModes()),
+		[]Catalogued[NeighborMode]{
+			{
+				Name:  "NeighborsIncluded",
+				Node:  NeighborsIncluded,
+				Rules: bears("Battleline Position"),
+			},
+			{
+				Name:  "NeighborsOnly",
+				Node:  NeighborsOnly,
+				Rules: bears("Battleline Position"),
+			},
+		},
+		func(m NeighborMode) string {
+			return Target{Kind: TargetChosenCreature, Neighbors: m}.Text()
 		},
 	)
 }
@@ -474,7 +526,7 @@ func exclusionEnum() Enum {
 			{Name: "ExcludeFocus", Node: ExcludeFocus, Rules: bears("Target")},
 		},
 		func(e Exclusion) string {
-			return Target{Kind: TargetEachCreature, exclusion: e}.Text()
+			return Target{Kind: TargetEachCreature, Filter: Filter{Except: e}}.Text()
 		},
 	)
 }

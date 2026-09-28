@@ -135,6 +135,11 @@ type Refinement = engine.Refinement
 // LeastPowerful. Compose them with the Except (complement) and AnyOf (union)
 // combinators — Except(MostPowerful) spares one creature and takes the rest,
 // AnyOf(LowestPower, HighestPower) takes both extremes at once.
+//
+// A card.Filter is a Refinement too, so a union can take a per-card narrowing as
+// one of its members: AnyOf(card.Filter{Trait: ...}, card.Filter{Power: ...})
+// (Regrettable Meteor). A Filter is only ever a refinement inside such a union —
+// on its own it belongs in the target's With.
 var Refine = refinements{
 	HighestPower:            engine.HighestPower,
 	LowestPower:             engine.LowestPower,
@@ -209,18 +214,6 @@ func (refinements) PortionPerSide(f engine.Fraction) Refinement { return engine.
 // which.
 func (refinements) MostPowerfulN(n int) Refinement { return engine.MostPowerfulN(n) }
 
-// HouseWithAtLeast returns a Refinement that keeps only creatures whose house has
-// at least n creatures in play, counting each house across both battlelines, e.g.
-// card.Target.EachCreature.Refine(card.Refine.HouseWithAtLeast(3)) (No Safety in
-// Numbers).
-func (refinements) HouseWithAtLeast(n int) Refinement { return engine.HouseWithAtLeast(n) }
-
-// WithoutSharedTrait returns a Refinement that keeps only creatures that share no
-// trait with another creature in the same controller's battleline, e.g.
-// card.Target.EachCreature.Refine(card.Refine.WithoutSharedTrait()) (Good of the
-// Many).
-func (refinements) WithoutSharedTrait() Refinement { return engine.WithoutSharedTrait() }
-
 // PowerLessThan is a Refinement that keeps every creature of a set whose power is
 // below a running count, e.g.
 // card.Target.EachCreature.House(card.Houses.Except(card.House.Self)).Refine(card.Refine.PowerLessThan(count))
@@ -230,23 +223,6 @@ func (refinements) PowerLessThan(
 ) Refinement {
 	return engine.PowerLessThan(limit)
 }
-
-// PowerLessThanSource is a Refinement that keeps every creature whose power is
-// below the source card's own power, e.g.
-// card.Target.Creature.Refine(card.Refine.PowerLessThanSource()) (Dreadbone
-// Decimus).
-func (refinements) PowerLessThanSource() Refinement { return engine.PowerLessThanSource() }
-
-// PowerAtLeast is a Refinement that keeps every creature whose power reaches a
-// minimum. Prefer the Target axis of the same name; reach for this one only to
-// union power against another axis inside a card.Refine.AnyOf (Regrettable
-// Meteor).
-func (refinements) PowerAtLeast(minPower int) Refinement { return engine.PowerAtLeast(minPower) }
-
-// OfTrait is a Refinement that keeps every creature with a trait. Prefer the
-// Target axis card.Target.EachCreature.WithTrait; reach for this one only to union
-// a trait against another axis inside a card.Refine.AnyOf (Regrettable Meteor).
-func (refinements) OfTrait(trait Trait) Refinement { return engine.OfTrait(trait) }
 
 // Stunned is the set of stunned creatures, used as a fight restriction: pass it to
 // card.WithFightRestriction to limit a creature to fighting only stunned creatures

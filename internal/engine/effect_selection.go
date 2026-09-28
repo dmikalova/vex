@@ -191,9 +191,10 @@ type Chosen struct {
 	// Name restricts the choice to cards of this exact name; the zero value allows
 	// any (Igon the Green recovers an Igon the Terrible).
 	Name string
-	// Or lists alternative identity filters: a card also qualifies if it satisfies
-	// any of them (Chief Engineer Walls recovers an upgrade or a Robot card).
-	Or []CardFilter
+	// MatchAny disjoins the axes above instead of conjoining them, so a card
+	// qualifies by satisfying any one of them (Chief Engineer Walls recovers an
+	// upgrade or a Robot card).
+	MatchAny bool
 	// Optional makes the pick a "you may" the controller can decline; the default is
 	// a mandatory pick that forces the choice when a card matches.
 	Optional bool
@@ -204,21 +205,21 @@ type Chosen struct {
 	Another bool
 }
 
-// filter is the identity predicate the choice narrows by, conjoining Type, Trait,
-// and Name and admitting any Or alternative.
-func (s Chosen) filter() CardFilter {
-	return CardFilter{
-		Type:  s.Type,
-		Trait: s.Trait,
-		Name:  s.Name,
-		Or:    s.Or,
+// filter is the predicate the choice narrows by — the house, type, trait, and
+// name axes as one Filter, conjoined unless MatchAny disjoins them.
+func (s Chosen) filter() Filter {
+	return Filter{
+		House:    s.House,
+		Type:     s.Type,
+		Trait:    s.Trait,
+		Name:     s.Name,
+		MatchAny: s.MatchAny,
 	}
 }
 
-// noun renders the bare kind of card chosen, qualified by the identity filter and
-// by house.
+// noun renders the bare kind of card chosen, qualified by the filter.
 func (s Chosen) noun() string {
-	return s.House.qualify(s.filter().noun())
+	return s.filter().noun("card")
 }
 
 // object renders the single card chosen, e.g. "a Sanctum creature".
@@ -239,7 +240,7 @@ func (s Chosen) qualifiedObject(adjective string) string {
 // "a <type>" that a noun-list fold can collapse (Look What I Found!).
 func (s Chosen) plainType() bool {
 	return s.Type != TypeUnset && s.Type != AnyType && !s.House.filters() &&
-		s.Trait == traitUnset && s.Name == "" && s.Or == nil && !s.Optional &&
+		s.Trait == traitUnset && s.Name == "" && !s.MatchAny && !s.Optional &&
 		!s.Another
 }
 
@@ -253,7 +254,7 @@ func (s Chosen) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
 		if s.Another && ctx.HasIt && id == ctx.It {
 			return false
 		}
-		return s.House.matches(ctx, id) && s.filter().admits(ctx.Resolver, id)
+		return s.filter().matches(ctx, id)
 	})
 }
 
@@ -325,26 +326,27 @@ type Each struct {
 	// Name restricts to cards of this exact name; the zero value admits any
 	// (Ortannu the Chained recovers each Ortannu's Binding).
 	Name string
-	// Or lists alternative identity filters: a card also qualifies if it satisfies
-	// any of them.
-	Or []CardFilter
+	// MatchAny disjoins the axes above instead of conjoining them, so a card
+	// qualifies by satisfying any one of them.
+	MatchAny bool
 }
 
-// filter is the identity predicate the take narrows by, conjoining Type, Trait,
-// and Name and admitting any Or alternative.
-func (s Each) filter() CardFilter {
-	return CardFilter{
-		Type:  s.Type,
-		Trait: s.Trait,
-		Name:  s.Name,
-		Or:    s.Or,
+// filter is the predicate the take narrows by — the house, type, trait, and name
+// axes as one Filter, conjoined unless MatchAny disjoins them.
+func (s Each) filter() Filter {
+	return Filter{
+		House:    s.House,
+		Type:     s.Type,
+		Trait:    s.Trait,
+		Name:     s.Name,
+		MatchAny: s.MatchAny,
 	}
 }
 
 // noun renders the bare kind of card taken, e.g. "non-Mars creature" or "creature
 // of the chosen house".
 func (s Each) noun() string {
-	return s.House.qualify(s.filter().noun())
+	return s.filter().noun("card")
 }
 
 // object renders the kind of card taken, e.g. "each non-Mars creature".
@@ -359,7 +361,7 @@ func (s Each) qualifiedObject(adjective string) string {
 // candidates returns every card the filters admit — Each takes all of them.
 func (s Each) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
 	return filterIDs(cands, func(id LocalID) bool {
-		return s.House.matches(ctx, id) && s.filter().admits(ctx.Resolver, id)
+		return s.filter().matches(ctx, id)
 	})
 }
 
@@ -385,7 +387,7 @@ func (s Named) object() string { return s.Name }
 // candidates keeps the cards whose name matches.
 func (s Named) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
 	return filterIDs(cands, func(id LocalID) bool {
-		return CardFilter{Name: s.Name}.admits(ctx.Resolver, id)
+		return Filter{Name: s.Name}.matches(ctx, id)
 	})
 }
 

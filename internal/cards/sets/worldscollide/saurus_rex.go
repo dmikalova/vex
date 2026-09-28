@@ -30,7 +30,7 @@ var SaurusRex = set.New(
 				Effects: []card.Effect{
 					card.Search{
 						Sources: []card.Zone{card.Deck},
-						House:   card.Houses.Named(card.House.Self),
+						Filter:  card.Filter{House: card.Houses.Named(card.House.Self)},
 						Reveal:  true,
 						Dest:    card.To.Hand,
 					},

@@ -641,10 +641,13 @@ func TestCandidatesAppliesRefinement(t *testing.T) {
 	}
 }
 
+// TestHouseWithAtLeast covers the Filter axis that counts a creature's house
+// across both battlelines. It reads the whole board but is decided one creature
+// at a time, which is what makes it a filter rather than a Refinement.
 func TestHouseWithAtLeast(t *testing.T) {
 	// Text renders the "belongs to a house" clause with the threshold.
 	want := "each creature that belongs to a house that has 3 or more creatures in play"
-	if got := (Target{Kind: TargetEachCreature}).Refine(HouseWithAtLeast(3)).
+	if got := (Target{Kind: TargetEachCreature}).With(Filter{HouseWithAtLeast: 3}).
 		Text(); got != want {
 		t.Errorf("text = %q", got)
 	}
@@ -661,22 +664,25 @@ func TestHouseWithAtLeast(t *testing.T) {
 		Resolver:   g,
 		Controller: 0,
 	}
-	got := (Target{Kind: TargetEachCreature}).Refine(HouseWithAtLeast(3)).Select(ctx)
+	got := (Target{Kind: TargetEachCreature}).With(Filter{HouseWithAtLeast: 3}).Select(ctx)
 	if len(got) != 3 || !containsID(got, m1) || !containsID(got, m2) || !containsID(got, m3) {
 		t.Errorf("HouseWithAtLeast(3) = %v, want the three Mars creatures", got)
 	}
 
 	// Raising the threshold above every house's count keeps nothing.
-	none := (Target{Kind: TargetEachCreature}).Refine(HouseWithAtLeast(4)).Select(ctx)
+	none := (Target{Kind: TargetEachCreature}).With(Filter{HouseWithAtLeast: 4}).Select(ctx)
 	if len(none) != 0 {
 		t.Errorf("HouseWithAtLeast(4) = %v, want nothing", none)
 	}
 }
 
+// TestWithoutSharedTrait covers the Filter axis that checks one creature against
+// its own battleline — a per-candidate test like SharesTrait beside it, not a
+// comparison between candidates.
 func TestWithoutSharedTrait(t *testing.T) {
 	// Text renders the "does not share a trait" clause.
 	want := "each creature that does not share a trait with another creature in its controller's battleline"
-	if got := (Target{Kind: TargetEachCreature}).Refine(WithoutSharedTrait()).
+	if got := (Target{Kind: TargetEachCreature}).With(Filter{WithoutSharedTrait: true}).
 		Text(); got != want {
 		t.Errorf("text = %q", got)
 	}
@@ -701,7 +707,7 @@ func TestWithoutSharedTrait(t *testing.T) {
 		Controller: 0,
 	}
 
-	got := (Target{Kind: TargetEachCreature}).Refine(WithoutSharedTrait()).Select(ctx)
+	got := (Target{Kind: TargetEachCreature}).With(Filter{WithoutSharedTrait: true}).Select(ctx)
 	if len(got) != 2 || !containsID(got, h0) || !containsID(got, h1) {
 		t.Errorf("WithoutSharedTrait = %v, want the two Human loners", got)
 	}
@@ -820,22 +826,20 @@ func TestTargetMatchingAny(t *testing.T) {
 	}
 }
 
-// TestTargetMatchingAnyNeedsTwoAxes covers the degenerate case: with only one
-// identity axis carrying an adjective there is nothing for "or" to join, so the
-// target narrows conjunctively and its text cannot promise a union it does not
-// select.
-func TestTargetMatchingAnyNeedsTwoAxes(t *testing.T) {
+// TestTargetMatchingAnyDegenerateAxes covers the edges of the disjunction: a
+// MatchAny that sets one axis has nothing to join and reads as that axis alone,
+// and a house that renders after the noun is a branch like any other — it prints
+// its own phrase rather than folding into the adjectives.
+func TestTargetMatchingAnyDegenerateAxes(t *testing.T) {
 	lone := (Target{Kind: TargetEachCreature}).House(namedHouse(Mars)).MatchingAny()
-	if lone.disjoins() {
-		t.Error("a house alone has no second axis to disjoin")
-	}
 	if got := lone.Text(); got != "each Mars creature" {
-		t.Errorf("text = %q, want the plain conjunctive noun", got)
+		t.Errorf("text = %q, want the single axis alone", got)
 	}
 	suffix := (Target{Kind: TargetEachCreature}).
 		House(HouseMatcher{Kind: MatchChosenHouse}).WithTrait(Robot).MatchingAny()
-	if suffix.disjoins() {
-		t.Error("a suffix-kind house renders after the noun and cannot be an \"or\" branch")
+	if got := suffix.Text(); got !=
+		"each creature of the chosen house or Robot creature" {
+		t.Errorf("suffix-house text = %q", got)
 	}
 }
 
@@ -1221,22 +1225,26 @@ func TestPowerLessThanSource(t *testing.T) {
 		Source:     source,
 	}
 
-	got := Target{Kind: TargetEachEnemyCreature}.Refine(PowerLessThanSource()).Select(ctx)
+	got := Target{
+		Kind: TargetEachEnemyCreature,
+	}.With(Filter{Power: PowerBound{Kind: BoundLessThanSource}}).
+		Select(ctx)
 	if len(got) != 1 || got[0] != weak || containsID(got, equal) || containsID(got, strong) {
 		t.Errorf("PowerLessThanSource = %v, want [weak]", got)
 	}
 
-	if text := (Target{Kind: TargetChosenEnemyCreature}).Refine(PowerLessThanSource()).
+	if text := (Target{Kind: TargetChosenEnemyCreature}).With(Filter{Power: PowerBound{Kind: BoundLessThanSource}}).
 		Text(); text != "an enemy creature with lower power than "+SelfName {
 		t.Errorf("PowerLessThanSource text = %q", text)
 	}
 }
 
-// TestUnionableAxisRefinements covers the trait and power-floor refinements that
-// restate a Target axis so AnyOf can union them — Regrettable Meteor destroys the
-// Dinosaurs and the power-6-or-higher creatures as one set, so a creature matching
-// both halves is destroyed once.
-func TestUnionableAxisRefinements(t *testing.T) {
+// TestFilterAsRefinementInAUnion covers a Filter serving as a Refinement inside
+// AnyOf, which is the one place a Filter is a refinement: Regrettable Meteor
+// destroys the Dinosaurs and the power-6-or-higher creatures as one set, so a
+// creature matching both halves is destroyed once. Target.Refine panics on a bare
+// Filter, so one narrowing has exactly one spelling.
+func TestFilterAsRefinementInAUnion(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	dino := g.AddToBattleline(
 		NewCard("dino", Untamed, Creature, Common, WithPower(2), WithTraits(Dinosaur)), 1)
@@ -1250,7 +1258,10 @@ func TestUnionableAxisRefinements(t *testing.T) {
 	}
 
 	each := Target{Kind: TargetEachEnemyCreature}
-	union := each.Refine(AnyOf(OfTrait(Dinosaur), PowerAtLeast(6)))
+	union := each.Refine(AnyOf(
+		Filter{Trait: Dinosaur},
+		Filter{Power: PowerBound{Kind: BoundAtLeast, Amount: 6}},
+	))
 	got := union.Select(ctx)
 	if len(got) != 3 || !containsID(got, dino) || !containsID(got, big) ||
 		!containsID(got, bigDino) || containsID(got, small) {
@@ -1262,21 +1273,25 @@ func TestUnionableAxisRefinements(t *testing.T) {
 		t.Errorf("union text = %q", text)
 	}
 
-	// Each half also stands on its own.
-	if ids := each.Refine(OfTrait(Dinosaur)).Select(ctx); len(ids) != 2 {
-		t.Errorf("OfTrait = %v, want the two Dinosaurs", ids)
+	// Each half also stands on its own, as a filter rather than a refinement.
+	if ids := each.With(Filter{Trait: Dinosaur}).Select(ctx); len(ids) != 2 {
+		t.Errorf("trait filter = %v, want the two Dinosaurs", ids)
 	}
-	if ids := each.Refine(PowerAtLeast(6)).Select(ctx); len(ids) != 2 {
-		t.Errorf("PowerAtLeast = %v, want the two power-6+ creatures", ids)
+	power := Filter{Power: PowerBound{Kind: BoundAtLeast, Amount: 6}}
+	if ids := each.With(power).Select(ctx); len(ids) != 2 {
+		t.Errorf("power filter = %v, want the two power-6+ creatures", ids)
 	}
-}
 
-// TestQualifyLastNoun covers the one-word phrase, which has no space to insert an
-// adjective before.
-func TestQualifyLastNoun(t *testing.T) {
-	if got := qualifyLastNoun("creature", "Dinosaur"); got != "Dinosaur creature" {
-		t.Errorf("qualifyLastNoun = %q", got)
-	}
+	// Refining by a bare Filter is a definition error: it says the same thing With
+	// says, and two spellings of one narrowing is what this rejects.
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Error("refining by a bare Filter should panic")
+			}
+		}()
+		each.Refine(power)
+	}()
 }
 
 func TestTargetChosenOtherFriendly(t *testing.T) {

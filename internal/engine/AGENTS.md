@@ -382,12 +382,14 @@ is no `Logf`.
 ## Deliberate tradeoffs: handle them, don't "fix" them
 
 - **Wide `Resolver`** (ADR 0008): add to the right role.
-- **`Target` flag-soup and paired `x`/`hasX`** (ADR 0005): route per-card
-  filters through the builder methods (`WithTrait`, `OfHouse`, `PowerAtMost`,
-  …), set-relative rules through `Refinement`, and add a `Target` field only
-  when a per-card filter has no `Refinement` form. If the field count ever
-  hurts, the in-constraint move is one fixed-size comparable filter
-  descriptor, **not** a slice.
+- **`Filter` as a wide comparable struct + paired kind/amount values** (ADR 0005):
+  `Target` is `Target{Kind, Filter, Refinement, Neighbors}` and must stay
+  comparable, which rules out a `[]filter` slice and `*int` optionals. A new
+  per-card axis is a field on `Filter` (`filter.go`) plus its census row,
+  set-relative rules route through `Refinement` instead, and an optional
+  number is a named comparable kind-and-amount value (`PowerBound`), never a
+  `*int`. Do **not** add a new `Target` field for a narrowing: `Target` has
+  four.
 - **Enum-tagged lasting records instead of stored closures** (ADR 0007).
 - **`panic` in `EffectContext.PlayerFor` on `playerUnset`** (ADR 0010) is
   acceptable **only** because `validate()` at init keeps real cards from

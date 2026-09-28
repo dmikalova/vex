@@ -1487,3 +1487,54 @@ func TestDealsNoDamageWhenAttacked(t *testing.T) {
 		t.Errorf("Lollop damage = %d, want 5 (it still takes fight damage)", got)
 	}
 }
+
+// TestRefusesDamageFrom checks the live predicate against trait, power, and the
+// uncredited-source and inactive cases.
+func TestRefusesDamageFrom(t *testing.T) {
+	m := Filter{
+		Trait:    Mutant,
+		Power:    PowerBound{Kind: BoundAtLeast, Amount: 5},
+		MatchAny: true,
+	}
+	g := NewGame("A", "B", 1)
+	hero := g.AddToBattleline(testCreature("hero", 4, WithCannotBeDealtDamageBy(m)), 0)
+	plain := g.AddToBattleline(testCreature("plain", 4), 0)
+	mutant := g.AddToBattleline(testCreature("mutant", 2, WithTraits(Mutant)), 1)
+	brute := g.AddToBattleline(testCreature("brute", 6), 1)
+	weakling := g.AddToBattleline(testCreature("weakling", 3), 1)
+
+	if !g.refusesDamageFrom(hero, mutant) {
+		t.Error("a Mutant source should be refused")
+	}
+	if !g.refusesDamageFrom(hero, brute) {
+		t.Error("a power-5-or-higher source should be refused")
+	}
+	if g.refusesDamageFrom(hero, weakling) {
+		t.Error("a weak non-Mutant source should not be refused")
+	}
+	if g.refusesDamageFrom(hero, 0) {
+		t.Error("an uncredited source should never be refused")
+	}
+	if g.refusesDamageFrom(plain, mutant) {
+		t.Error("a creature without the passive should not refuse anything")
+	}
+
+	// The refusal reaches the damage pipeline: a Mutant's blow lands nothing, a
+	// weakling's lands in full.
+	g.applyRawDamage(DamageTarget{
+		ID:     hero,
+		Amount: 3,
+		Source: mutant,
+	})
+	if g.Damage(hero) != 0 {
+		t.Errorf("Mutant-dealt damage landed: hero has %d", g.Damage(hero))
+	}
+	g.applyRawDamage(DamageTarget{
+		ID:     hero,
+		Amount: 3,
+		Source: weakling,
+	})
+	if g.Damage(hero) != 3 {
+		t.Errorf("weak source's damage refused: hero has %d, want 3", g.Damage(hero))
+	}
+}

@@ -710,8 +710,12 @@ func combatRules(def *CardDefinition) []string {
 			"Damage dealt to "+def.Name+"'s neighbors during fights is also dealt to "+
 				def.Name+".")
 	}
-	if m := def.CannotBeDealtDamageBy; m.Active() {
-		rules = append(rules, def.Name+" cannot be dealt damage by "+m.clause()+".")
+	if f := def.CannotBeDealtDamageBy; f.Narrows() {
+		// Plural, because the passive names a kind of creature rather than one card:
+		// the filter renders over "creatures" and its branches follow suit ("Mutant
+		// creatures or creatures with power 5 or higher", Ardent Hero).
+		rules = append(rules,
+			def.Name+" cannot be dealt damage by "+f.noun("creatures")+".")
 	}
 	if px := def.PowerX; px != nil {
 		rules = append(rules,
@@ -1183,10 +1187,10 @@ func constantBonusLine(def *CardDefinition, c ConstantAbility) string {
 	if c.PerTarget != nil {
 		line += " for each " + c.PerTarget.perTargetText()
 	}
-	if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.position == PositionOnFlank {
+	if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.Filter.Position == PositionOnFlank {
 		line += " while it is on a flank"
 	}
-	if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.damage == DamageSome {
+	if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.Filter.Damage == DamageSome {
 		line += " while it is damaged"
 	}
 	if c.WhileOffFlank {

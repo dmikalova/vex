@@ -2,6 +2,17 @@ package card
 
 import "github.com/dmikalova/vex/internal/engine"
 
+// Filter is the one narrowing a card writes: a comparable record of the axes a
+// card must satisfy — its type, house, traits, name, power, state, and place in a
+// battleline. Chain it onto a target with With
+// (card.Target.EachCreature.With(card.Filter{Power: card.Power.AtMost(3)})), or
+// pass it to the nodes that point at a card in a pile (Search, DiscardUntil) or at
+// the sources a creature refuses damage from.
+//
+// Every axis conjoins; MatchAny disjoins them instead, so Chief Engineer Walls
+// names "an upgrade or Robot card" as one filter rather than two.
+type Filter = engine.Filter
+
 // The axes a target's filters narrow on, each re-exported as a grouped namespace
 // the way card.House and card.Type are: card.Power.AtMost(3) is plainly a power
 // bound, card.Position.OnFlank plainly a place in a battleline. Each axis holds
@@ -41,6 +52,13 @@ func (powerBounds) AtLeast(n int) engine.PowerBound {
 // Exactly admits a creature whose power is exactly n, printed "with power n".
 func (powerBounds) Exactly(n int) engine.PowerBound {
 	return engine.PowerBound{Kind: engine.BoundExactly, Amount: n}
+}
+
+// LessThanSource admits a creature whose power is below the source card's own,
+// read live when the effect resolves, printed "with lower power than <self>"
+// (Dreadbone Decimus).
+func (powerBounds) LessThanSource() engine.PowerBound {
+	return engine.PowerBound{Kind: engine.BoundLessThanSource}
 }
 
 // Damage groups the damage filters, e.g. card.Damage.Some.

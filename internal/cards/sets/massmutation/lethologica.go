@@ -21,7 +21,7 @@ var Lethologica = set.New(
 		card.Trigger.Play, card.Then{
 			First: card.DiscardUntil{
 				Player: card.Controller,
-				House:  card.Houses.Named(card.House.Self),
+				Filter: card.Filter{House: card.Houses.Named(card.House.Self)},
 			},
 			Result: card.PutDiscardedIntoHand{},
 		}),

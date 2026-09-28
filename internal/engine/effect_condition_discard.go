@@ -85,7 +85,7 @@ func (c NamedCardInDiscard) CondText() string {
 // Met reports whether a card of the name sits in the controller's discard pile.
 func (c NamedCardInDiscard) Met(ctx *EffectContext) bool {
 	for _, id := range ctx.Resolver.Discard(ctx.Controller) {
-		if (CardFilter{Name: c.Name}).admits(ctx.Resolver, id) {
+		if (Filter{Name: c.Name}).matches(ctx, id) {
 			return true
 		}
 	}

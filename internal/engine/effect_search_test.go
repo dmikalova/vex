@@ -8,7 +8,7 @@ import (
 func TestSearchForName(t *testing.T) {
 	e := Search{
 		Sources: []Zone{Deck, Discard},
-		Filter:  CardFilter{Name: "Timetraveller"},
+		Filter:  Filter{Name: "Timetraveller"},
 		Reveal:  true,
 		Dest:    ToHand,
 	}
@@ -157,7 +157,7 @@ func TestShuffleIntoDeck(t *testing.T) {
 func TestSearchForNameAll(t *testing.T) {
 	e := Search{
 		Sources: []Zone{Deck, Discard},
-		Filter:  CardFilter{Name: "Ancient Bear"},
+		Filter:  Filter{Name: "Ancient Bear"},
 		Any:     true,
 		Reveal:  true,
 		Dest:    ToHand,
@@ -222,7 +222,7 @@ func TestSearchDeck(t *testing.T) {
 	}
 	if got := (Search{
 		Sources: []Zone{Deck},
-		House:   namedHouse(Saurian),
+		Filter:  Filter{House: namedHouse(Saurian)},
 		Reveal:  true,
 		Dest:    ToHand,
 	}).Text(); got !=
@@ -231,7 +231,7 @@ func TestSearchDeck(t *testing.T) {
 	}
 	if got := (Search{
 		Sources: []Zone{Deck},
-		Filter:  CardFilter{Type: Upgrade},
+		Filter:  Filter{Type: Upgrade},
 		Reveal:  true,
 		Dest:    ToHand,
 	}).Text(); got !=
@@ -248,7 +248,7 @@ func TestSearchDeck(t *testing.T) {
 	g.State.Deck[0].add(other)
 	Search{
 		Sources: []Zone{Deck},
-		House:   namedHouse(Saurian),
+		Filter:  Filter{House: namedHouse(Saurian)},
 		Dest:    ToHand,
 	}.Resolve(
 		&EffectContext{
@@ -273,7 +273,7 @@ func TestSearchDeck(t *testing.T) {
 	gf.State.Deck[0].add(creature)
 	Search{
 		Sources: []Zone{Deck},
-		Filter:  CardFilter{Type: Upgrade},
+		Filter:  Filter{Type: Upgrade},
 		Dest:    ToHand,
 	}.Resolve(
 		&EffectContext{
@@ -315,7 +315,7 @@ func TestSearchDeck(t *testing.T) {
 	before := len(g3.Hand(0))
 	Search{
 		Sources: []Zone{Deck},
-		House:   namedHouse(Saurian),
+		Filter:  Filter{House: namedHouse(Saurian)},
 		Dest:    ToHand,
 	}.Resolve(
 		&EffectContext{
@@ -372,7 +372,7 @@ func TestSearchToArchives(t *testing.T) {
 func TestSearchToTopOfDeck(t *testing.T) {
 	e := Search{
 		Sources: []Zone{Deck, Discard},
-		Filter:  CardFilter{Gigantic: true},
+		Filter:  Filter{Gigantic: true},
 		Any:     true,
 		Reveal:  true,
 		Dest:    ToTopOfDeck,
@@ -441,7 +441,7 @@ func TestShuffleDeck(t *testing.T) {
 func TestSearchUpToMaxGiganticHalves(t *testing.T) {
 	twoHalves := Search{
 		Sources: []Zone{Deck, Discard},
-		Filter:  CardFilter{Gigantic: true},
+		Filter:  Filter{Gigantic: true},
 		Max:     2,
 		Reveal:  true,
 		Dest:    ToArchives,
@@ -452,7 +452,7 @@ func TestSearchUpToMaxGiganticHalves(t *testing.T) {
 	}
 	eitherHalf := Search{
 		Sources: []Zone{Deck, Discard},
-		Filter:  CardFilter{Gigantic: true},
+		Filter:  Filter{Gigantic: true},
 		Reveal:  true,
 	}
 	if got := eitherHalf.Text(); got !=
@@ -542,7 +542,7 @@ func TestSearchUpToMaxGiganticHalves(t *testing.T) {
 func TestSearchShuffleBeforePlacing(t *testing.T) {
 	twoHalves := Search{
 		Sources:              []Zone{Deck, Discard},
-		Filter:               CardFilter{Gigantic: true},
+		Filter:               Filter{Gigantic: true},
 		Max:                  2,
 		Reveal:               true,
 		ShuffleBeforePlacing: true,
@@ -606,7 +606,7 @@ func TestSearchShuffleBeforePlacing(t *testing.T) {
 	t.Run("a single mandatory take without reveal", func(t *testing.T) {
 		single := Search{
 			Sources:              []Zone{Deck, Discard},
-			Filter:               CardFilter{Gigantic: true},
+			Filter:               Filter{Gigantic: true},
 			ShuffleBeforePlacing: true,
 			Dest:                 ToTopOfDeck,
 		}
