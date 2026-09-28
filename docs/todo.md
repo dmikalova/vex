@@ -114,6 +114,8 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - lights out doesn't need a may
 - warrant counters not showing on book of malefaction
 - remove openspec
+- get rid of batch destroy
+- remove glyphsynonyms
 
 ### Automatic linters
 
