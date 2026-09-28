@@ -12,28 +12,24 @@
         "exclusions": {
           "rules": [
             {
-              "linters": [
-                "unused"
-              ],
+              "linters": ["dupl"],
+              "path": "internal/cards/sets/"
+            },
+            {
+              "linters": ["unused"],
               "text": "const \\w+Unset is unused"
             },
             {
-              "linters": [
-                "revive"
-              ],
+              "linters": ["revive"],
               "text": "should be of the form"
             },
             {
-              "linters": [
-                "revive"
-              ],
+              "linters": ["revive"],
               "path": "internal/cards/sets/",
               "text": "should have a package comment"
             },
             {
-              "linters": [
-                "revive"
-              ],
+              "linters": ["revive"],
               "path": "magefiles/cards\\.go",
               "text": "redefinition of the built-in function (new|max)"
             }
@@ -52,24 +48,17 @@
       },
       "overrides": [
         {
-          "files": [
-            "docs/keyforge-master-rulebook.md"
-          ],
+          "files": ["docs/keyforge-master-rulebook.md"],
           "config": {
             "MD024": false,
             "MD025": false
           }
         }
       ],
-      "ignores": [
-        "docs/todo.md",
-        ".diatom/**"
-      ]
+      "ignores": ["docs/todo.md", ".diatom/**"]
     },
     "misspell": {
-      "exclude": [
-        "internal/cards/provenance/**"
-      ]
+      "exclude": ["internal/cards/provenance/**"]
     }
   },
   "ignore": {
@@ -85,9 +74,6 @@
       "/web/**/*.gz",
       ".vscode/"
     ],
-    "docker": [
-      "docs",
-      "web/app.wasm"
-    ]
+    "docker": ["docs", "web/app.wasm"]
   }
 }

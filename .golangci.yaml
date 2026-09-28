@@ -22,6 +22,9 @@ linters:
           - dupl
         path: _test\.go
       - linters:
+          - dupl
+        path: internal/cards/sets/
+      - linters:
           - unused
         text: const \w+Unset is unused
       - linters:
