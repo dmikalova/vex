@@ -31,7 +31,7 @@ var ChainGang = set.New(
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithAbility(
 		card.Trigger.AfterCardPlayed, card.Conditional{
-			Cond: card.ItIsNamed{Name: SubtleChain.Name},
+			Cond: card.ItIs{Filter: card.Filter{Name: SubtleChain.Name}},
 			Then: card.Ready{Target: card.Target.This},
 		}),
 	card.WithAbility(

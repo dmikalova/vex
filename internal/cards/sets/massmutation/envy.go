@@ -26,8 +26,7 @@ var Envy = set.New(
 	card.WithAbility(card.Trigger.Reap, card.Conditional{
 		Cond: card.CardsInPlay{
 			Player: card.Controller,
-			Type:   card.Type.Creature,
-			Trait:  card.Traits.Sin,
+			Filter: card.Filter{Type: card.Type.Creature, Trait: card.Traits.Sin},
 			Amount: 2,
 		},
 		Then: card.CaptureAember{

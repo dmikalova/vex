@@ -176,6 +176,76 @@ func TestFilterValidateIdentityOnly(t *testing.T) {
 	}
 }
 
+// TestOutOfPlayConsumersRejectInPlayAxes pins the same guard on every node that
+// narrows cards in a hand, a pile, or the turn log. Each is a separate validate
+// method, so each is checked: a definition that asks whether a card in hand is
+// stunned names a state that zone has none of, and the build says so rather than
+// leaving a card that quietly does nothing.
+func TestOutOfPlayConsumersRejectInPlayAxes(t *testing.T) {
+	inPlay := Filter{Stunned: true}
+	identity := Filter{Type: Creature, House: namedHouse(Mars)}
+	cases := []struct {
+		name string
+		bad  interface{ validate() error }
+		ok   interface{ validate() error }
+	}{
+		{"PutFromHand", PutFromHand{Filter: inPlay}, PutFromHand{Filter: identity}},
+		{
+			"PutUnderFromHand",
+			PutUnderFromHand{Filter: inPlay},
+			PutUnderFromHand{Filter: identity},
+		},
+		{
+			"RevealHand",
+			RevealHand{Player: Controller, Filter: inPlay},
+			RevealHand{Player: Controller, Filter: identity},
+		},
+		{
+			"CardsInDiscardAtLeast",
+			CardsInDiscardAtLeast{Amount: 1, Filter: inPlay},
+			CardsInDiscardAtLeast{Amount: 1, Filter: identity},
+		},
+		{
+			"DiscardedThisWay",
+			DiscardedThisWay{Filter: inPlay},
+			DiscardedThisWay{Filter: identity},
+		},
+		{
+			"ForEachDiscarded",
+			ForEachDiscarded{Filter: inPlay, Do: Draw{Amount: 1}},
+			ForEachDiscarded{Filter: identity, Do: Draw{Amount: 1}},
+		},
+		{
+			"CardsDiscarded",
+			CardsDiscarded{Player: Controller, Amount: 1, Filter: inPlay},
+			CardsDiscarded{Player: Controller, Amount: 1, Filter: identity},
+		},
+		{
+			"CardsPlayed",
+			CardsPlayed{Player: Controller, Filter: inPlay},
+			CardsPlayed{Player: Controller, Filter: identity},
+		},
+		{
+			"NamedCardInDiscard",
+			NamedCardInDiscard{Filter: inPlay},
+			NamedCardInDiscard{Filter: Filter{Name: "Angry Mob"}},
+		},
+		{
+			"NamedCardPurged",
+			NamedCardPurged{Filter: inPlay},
+			NamedCardPurged{Filter: Filter{Name: "Angry Mob"}},
+		},
+	}
+	for _, c := range cases {
+		if err := c.bad.validate(); err == nil {
+			t.Errorf("%s: an in-play axis should be rejected", c.name)
+		}
+		if err := c.ok.validate(); err != nil {
+			t.Errorf("%s: identity axes rejected: %v", c.name, err)
+		}
+	}
+}
+
 // TestCardRejectsBareFilterRefinement pins the rejection at the place it bites: a
 // card whose ability passes a Filter to Refine rather than to With never reaches a
 // game. Targets sit at many depths in a definition, so the check walks the whole

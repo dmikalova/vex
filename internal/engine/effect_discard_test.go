@@ -147,10 +147,7 @@ func TestPutFromDiscardByTrait(t *testing.T) {
 	}
 
 	e := PutCard{Zones: []Zone{Discard},
-		Selection: Each{
-			Type:  Creature,
-			Trait: Horseman,
-		},
+		Selection:   Each{Filter: Filter{Type: Creature, Trait: Horseman}},
 		Destination: ToHand,
 	}
 	if e.Text() != "put each Horseman creature from your discard pile into your hand" {
@@ -199,11 +196,8 @@ func TestPutFromDiscardByTraitChoose(t *testing.T) {
 	// Not All: the non-Horseman card is filtered out of the candidates, leaving
 	// only the Horseman for the controller to choose.
 	e := PutCard{
-		Zones: []Zone{Discard},
-		Selection: Chosen{
-			Type:  Creature,
-			Trait: Horseman,
-		},
+		Zones:       []Zone{Discard},
+		Selection:   Chosen{Filter: Filter{Type: Creature, Trait: Horseman}},
 		Destination: ToHand,
 	}
 	e.Resolve(ctx)
@@ -234,10 +228,7 @@ func TestMoveFromDiscardAll(t *testing.T) {
 	}
 
 	e := PutCard{Zones: []Zone{Discard},
-		Selection: Each{
-			Type:  Creature,
-			House: chosenHouse,
-		},
+		Selection:   Each{Filter: Filter{Type: Creature, House: chosenHouse}},
 		Destination: ToHand,
 	}
 	if e.Text() != "put each creature of the chosen house from your discard pile into your hand" {
@@ -273,7 +264,7 @@ func TestPutFromDiscardByName(t *testing.T) {
 	}
 
 	e := PutCard{Zones: []Zone{Discard},
-		Selection:   Each{Name: "Ortannu's Binding"},
+		Selection:   Each{Filter: Filter{Name: "Ortannu's Binding"}},
 		Destination: ToHand,
 	}
 	if e.Text() != "put each Ortannu's Binding from your discard pile into your hand" {
@@ -308,7 +299,7 @@ func TestPutFromDiscardByNameChoose(t *testing.T) {
 	// leaving only the Binding for the controller to choose.
 	e := PutCard{
 		Zones:       []Zone{Discard},
-		Selection:   Chosen{Name: "Ortannu's Binding"},
+		Selection:   Chosen{Filter: Filter{Name: "Ortannu's Binding"}},
 		Destination: ToHand,
 	}
 	e.Resolve(ctx)
@@ -336,7 +327,7 @@ func TestReturnCreatureFromDiscardToDeck(t *testing.T) {
 
 	e := PutCard{
 		Zones:       []Zone{Discard},
-		Selection:   Chosen{Type: Creature},
+		Selection:   Chosen{Filter: Filter{Type: Creature}},
 		Destination: ToTopOfDeck,
 	}
 	if e.Text() != "put a creature from your discard pile on top of your deck" {
@@ -390,22 +381,22 @@ func TestPutFromDiscardTypeOrTrait(t *testing.T) {
 	}
 
 	e := PutCard{Zones: []Zone{Discard},
-		Selection: Each{
+		Selection: Each{Filter: Filter{
 			Type:     Upgrade,
 			Trait:    Robot,
 			MatchAny: true,
-		},
+		}},
 		Destination: ToHand,
 	}
 	if e.Text() != "put each upgrade or Robot card from your discard pile into your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
 	choose := PutCard{Zones: []Zone{Discard},
-		Selection: Chosen{
+		Selection: Chosen{Filter: Filter{
 			Type:     Upgrade,
 			Trait:    Robot,
 			MatchAny: true,
-		},
+		}},
 		Destination: ToHand,
 	}
 	if choose.Text() != "put an upgrade or Robot card from your discard pile into your hand" {
@@ -456,11 +447,11 @@ func TestPutFromDiscardVacuousUnderMay(t *testing.T) {
 
 	may := May{
 		Do: PutCard{Zones: []Zone{Discard},
-			Selection: Chosen{
+			Selection: Chosen{Filter: Filter{
 				Type:     Upgrade,
 				Trait:    Robot,
 				MatchAny: true,
-			},
+			}},
 			Destination: ToHand,
 		},
 	}
@@ -512,12 +503,9 @@ func TestDiscardFromHandEach(t *testing.T) {
 	// Each from an opponent's hand reads as a controller-directed discard, not
 	// "your opponent discards".
 	e := DiscardCard{
-		Player: Opponent,
-		Zones:  []Zone{Hand},
-		Selection: Each{
-			Type:  Creature,
-			House: chosenHouse,
-		},
+		Player:    Opponent,
+		Zones:     []Zone{Hand},
+		Selection: Each{Filter: Filter{Type: Creature, House: chosenHouse}},
 	}
 	if e.Text() != "discard each creature of the chosen house from your opponent's hand" {
 		t.Errorf("text = %q", e.Text())
@@ -878,7 +866,7 @@ func TestDiscardFromHandCreaturesOnlyGate(t *testing.T) {
 	e := DiscardCard{
 		Player:    Controller,
 		Zones:     []Zone{Hand},
-		Selection: Chosen{Type: Creature},
+		Selection: Chosen{Filter: Filter{Type: Creature}},
 		Quantity:  Takes{N: Fixed(1)},
 	}
 	if e.Text() != "discard a creature from your hand" {
@@ -887,7 +875,7 @@ func TestDiscardFromHandCreaturesOnlyGate(t *testing.T) {
 	plural := DiscardCard{
 		Player:    Controller,
 		Zones:     []Zone{Hand},
-		Selection: Chosen{Type: Creature},
+		Selection: Chosen{Filter: Filter{Type: Creature}},
 		Quantity:  Takes{N: Fixed(2)},
 	}
 	if plural.Text() != "discard 2 creatures from your hand" {

@@ -20,9 +20,8 @@ var MartianHounds = set.New(
 			Target: card.Target.Creature,
 			Amount: 2,
 			Per: card.CardsInPlay{
-				Player:  card.EachPlayer,
-				Type:    card.Type.Creature,
-				Damaged: true,
+				Player: card.EachPlayer,
+				Filter: card.Filter{Type: card.Type.Creature, Damage: card.Damage.Some},
 			},
 		}),
 )

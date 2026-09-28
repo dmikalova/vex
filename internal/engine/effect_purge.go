@@ -270,11 +270,14 @@ func (e PurgeCreature) purge(ctx *EffectContext, ids []LocalID) bool {
 }
 
 // CardsPurged counts the cards the most recent purge in this resolution removed,
-// both players' shares together — the "for each card purged this way" tally. Type
-// names the noun the clause repeats: unset it reads "card", Creature it reads
-// "creature" (One Last Job steals 1 Æmber for each creature it purged).
+// both players' shares together — the "for each card purged this way" tally.
 type CardsPurged struct {
-	Type CardType
+	// Noun names the word the clause repeats and narrows nothing. The count reads
+	// an integer tally (ctx.Produced.Purged) and never looks at a card, so there is
+	// no card to point the test at and a Filter here would promise a narrowing the
+	// node cannot perform (ADR 0005). Unset it reads "card"; Creature it reads
+	// "creature" (One Last Job steals 1 Æmber for each creature it purged).
+	Noun CardType
 }
 
 // Value reads the whole tally the preceding purge recorded, both sides together.
@@ -285,7 +288,7 @@ func (CardsPurged) Value(ctx *EffectContext) int {
 // CountText renders the singular noun the "for each" clause repeats.
 func (c CardsPurged) CountText() string {
 	noun := "card"
-	if c.Type == Creature {
+	if c.Noun == Creature {
 		noun = "creature"
 	}
 	return noun + " purged this way"

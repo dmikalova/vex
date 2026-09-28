@@ -70,7 +70,7 @@ func CountCatalog() []Catalogued[Count] {
 
 		// The board: what is in play, and how the sides compare.
 		{
-			Node:  CardsInPlay{Player: Controller, Type: Creature},
+			Node:  CardsInPlay{Player: Controller, Filter: Filter{Type: Creature}},
 			Rules: bears("For Each"),
 		},
 		{
@@ -90,7 +90,7 @@ func CountCatalog() []Catalogued[Count] {
 			Rules: bears("Belong to House"),
 		},
 		{
-			Node:  HousesAmong{Player: Controller, Type: Creature},
+			Node:  HousesAmong{Player: Controller, Filter: Filter{Type: Creature}},
 			Rules: bears("Belong to House"),
 		},
 
@@ -126,7 +126,9 @@ func CountCatalog() []Catalogued[Count] {
 			Rules: bears("Battleline Position"),
 		},
 		{
-			Node:  NeighborsMatching{House: HouseMatcher{Kind: MatchNamedHouse, House: Mars}},
+			Node: NeighborsMatching{
+				Filter: Filter{House: HouseMatcher{Kind: MatchNamedHouse, House: Mars}},
+			},
 			Rules: bears("Battleline Position"),
 		},
 		{
@@ -188,7 +190,7 @@ func CountCatalog() []Catalogued[Count] {
 			Rules: bears("For Each"),
 		},
 		{
-			Node:  CardsPurged{Type: Creature},
+			Node:  CardsPurged{Noun: Creature},
 			Rules: bears("Purge"),
 		},
 		{

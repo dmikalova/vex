@@ -653,10 +653,12 @@ func TestOrderByChoice(t *testing.T) {
 func TestKeyCostChangePerAndFlank(t *testing.T) {
 	obelisk := NewCard("Iron Obelisk", Brobnar, Artifact, Rare,
 		WithKeyCost(NewKeyCostChange(Opponent, 1).Per(CardsInPlay{
-			Player:  Controller,
-			Type:    Creature,
-			House:   namedHouse(Brobnar),
-			Damaged: true,
+			Player: Controller,
+			Filter: Filter{
+				Type:   Creature,
+				House:  namedHouse(Brobnar),
+				Damage: DamageSome,
+			},
 		})))
 	want := "Your opponent's keys cost +1 Æmber for each friendly damaged Brobnar creature."
 	if got := keyCostText(obelisk.KeyCostChanges[0]); got != want {

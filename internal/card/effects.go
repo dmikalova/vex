@@ -666,13 +666,11 @@ type (
 	TideIsLow = engine.TideIsLow
 	// TideIsHigh is met when the tide is high for you.
 	TideIsHigh = engine.TideIsHigh
-	// ItIs is met when the card in context matches a House (named, non-<house>, or
-	// the chosen/active house) and/or Type filter.
+	// ItIs is met when the card in context is a card its Filter admits — of a house
+	// (named, non-<house>, or the chosen/active house), a type, a trait, or a
+	// printed name, e.g. card.ItIs{Filter: card.Filter{Trait: card.Traits.Giant,
+	// Type: card.Type.Creature}}.
 	ItIs = engine.ItIs
-	// ItIsNamed is met when the card in context carries a given printed name.
-	ItIsNamed = engine.ItIsNamed
-	// ItIsOfTrait is met when the creature in context has the named trait.
-	ItIsOfTrait = engine.ItIsOfTrait
 	// HasAember is met when its Subject has Æmber on it (default: the card in
 	// context; card.Subject.This asks about the card itself).
 	HasAember = engine.HasAember

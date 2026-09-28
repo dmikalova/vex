@@ -38,11 +38,14 @@ var ChiefEngineerWalls = set.New(
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(card.Trigger.PlayFightReap, card.May{
-		Do: card.PutCard{Zones: []card.Zone{card.Discard},
+		Do: card.PutCard{
+			Zones: []card.Zone{card.Discard},
 			Selection: card.Chosen{
-				Type:     card.Type.Upgrade,
-				Trait:    card.Traits.Robot,
-				MatchAny: true,
+				Filter: card.Filter{
+					Type:     card.Type.Upgrade,
+					Trait:    card.Traits.Robot,
+					MatchAny: true,
+				},
 			},
 			Destination: card.To.Hand,
 		},

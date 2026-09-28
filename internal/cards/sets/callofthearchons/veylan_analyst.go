@@ -20,7 +20,7 @@ var VeylanAnalyst = set.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(card.Trigger.AfterUse, card.Conditional{
-		Cond: card.ItIs{Type: card.Type.Artifact},
+		Cond: card.ItIs{Filter: card.Filter{Type: card.Type.Artifact}},
 		Then: card.GainAember{
 			Player: card.Controller,
 			Amount: 1,

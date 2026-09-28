@@ -27,7 +27,7 @@ var NovuDynamo = set.New(
 				Player: card.Controller,
 				Zones:  []card.Zone{card.Hand, card.Archives},
 				Selection: card.Chosen{
-					House:    card.Houses.Named(card.House.Self),
+					Filter:   card.Filter{House: card.Houses.Named(card.House.Self)},
 					Optional: true,
 				},
 			},

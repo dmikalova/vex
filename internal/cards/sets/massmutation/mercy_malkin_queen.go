@@ -26,7 +26,10 @@ var MercyMalkinQueen = set.New(
 		card.Trigger.AfterCreatureEnters, card.Conditional{
 			Cond: card.And{Conditions: []card.Condition{
 				card.ItIsFriendly{},
-				card.ItIsOfTrait{Trait: card.Traits.Cat},
+				card.ItIs{Filter: card.Filter{
+					Type:  card.Type.Creature,
+					Trait: card.Traits.Cat,
+				}},
 			}},
 			Then: card.Ward{Target: card.Target.Triggering},
 		}),

@@ -57,7 +57,7 @@ func TestBookOfLeQComposition(t *testing.T) {
 	a := Ability{Trigger: TriggerAction, Effect: Sequence{Effects: []Effect{
 		RevealTopOfDeck{Amount: 1},
 		Conditional{
-			Cond: ItIs{House: exceptHouse(StarAlliance)},
+			Cond: ItIs{Filter: Filter{House: exceptHouse(StarAlliance)}},
 			Then: ChangeActiveHouse{To: TheContextualHouse},
 			Else: EndTurn{},
 		},

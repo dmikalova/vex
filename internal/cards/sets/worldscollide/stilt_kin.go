@@ -23,7 +23,9 @@ var StiltKin = set.New(
 	card.WithKeywords(card.Keyword.Skirmish),
 	card.WithAbility(
 		card.Trigger.AfterCreaturePlayedAdjacent, card.Conditional{
-			Cond: card.ItIsOfTrait{Trait: card.Traits.Giant},
+			Cond: card.ItIs{
+				Filter: card.Filter{Type: card.Type.Creature, Trait: card.Traits.Giant},
+			},
 			Then: card.OnChooseCreature{
 				Target: card.Target.This,
 				Verbs: []card.CreatureVerb{

@@ -20,7 +20,7 @@ var Bigtwig = set.New(
 	card.Provenance(card.CotA, "346"),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Beast),
-	card.WithFightRestriction(card.Stunned),
+	card.WithFightRestriction(card.Filter{Stunned: true}),
 	card.WithAbility(
 		card.Trigger.Reap, card.OnChooseCreature{
 			Target: card.Target.Creature,

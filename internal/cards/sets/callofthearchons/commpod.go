@@ -22,7 +22,7 @@ var Commpod = set.New(
 			Effects: []card.Effect{
 				card.RevealHand{
 					Player: card.Controller,
-					House:  card.Houses.Named(card.House.Self),
+					Filter: card.Filter{House: card.Houses.Named(card.House.Self)},
 				},
 				card.ReadyCreatures{
 					Max: card.CardsRevealed{},

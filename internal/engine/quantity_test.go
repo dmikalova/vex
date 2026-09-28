@@ -5,10 +5,7 @@ import "testing"
 // TestQuantityObject covers the noun phrase each quantity renders, including the
 // defaults a verb gets when it leaves Quantity unset.
 func TestQuantityObject(t *testing.T) {
-	shards := CardsInPlay{
-		Player: Controller,
-		Trait:  Shard,
-	}
+	shards := CardsInPlay{Player: Controller, Filter: Filter{Trait: Shard}}
 	for _, tc := range []struct {
 		name string
 		q    Quantity
@@ -35,10 +32,7 @@ func TestQuantityObject(t *testing.T) {
 // clause: only the ones whose number is read off the board, because a constant
 // has somewhere else to print.
 func TestQuantityLeadIn(t *testing.T) {
-	shards := CardsInPlay{
-		Player: Controller,
-		Trait:  Shard,
-	}
+	shards := CardsInPlay{Player: Controller, Filter: Filter{Trait: Shard}}
 	for _, tc := range []struct {
 		name string
 		q    Quantity
@@ -68,10 +62,7 @@ func TestQuantityPicks(t *testing.T) {
 		Resolver:   g,
 		Controller: 0,
 	}
-	shards := CardsInPlay{
-		Player: Controller,
-		Trait:  Shard,
-	}
+	shards := CardsInPlay{Player: Controller, Filter: Filter{Trait: Shard}}
 	for _, tc := range []struct {
 		name    string
 		q       Quantity
@@ -119,10 +110,7 @@ func TestQuantityOptional(t *testing.T) {
 // exactly one card — the test a verb uses to render as one clickable "you may"
 // rather than its own cycle (PurgeCard.declinable).
 func TestQuantitySingle(t *testing.T) {
-	shards := CardsInPlay{
-		Player: Controller,
-		Trait:  Shard,
-	}
+	shards := CardsInPlay{Player: Controller, Filter: Filter{Trait: Shard}}
 	for _, tc := range []struct {
 		name string
 		q    Quantity
@@ -147,10 +135,7 @@ func TestQuantitySingle(t *testing.T) {
 // TestFixedCardCount covers the numeral the web renderer badges a glyph with: a
 // constant above one, and nothing for a single card or a board-scaled number.
 func TestFixedCardCount(t *testing.T) {
-	shards := CardsInPlay{
-		Player: Controller,
-		Trait:  Shard,
-	}
+	shards := CardsInPlay{Player: Controller, Filter: Filter{Trait: Shard}}
 	for _, tc := range []struct {
 		name string
 		q    Quantity
@@ -186,7 +171,7 @@ func TestQuantityValidate(t *testing.T) {
 		{"takes of one", Takes{N: Fixed(1)}, false},
 		{"takes of a board count", Takes{N: CardsInPlay{
 			Player: Controller,
-			Trait:  Shard,
+			Filter: Filter{Trait: Shard},
 		}}, false},
 		{"up to with no ceiling", UpTo{}, true},
 		{"up to none", UpTo{N: Fixed(0)}, true},

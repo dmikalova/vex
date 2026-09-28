@@ -6,13 +6,16 @@ package engine
 // opponent's whole hand before discarding from it — which is why the printed text
 // is careful about which cards are shown.
 //
-// A House narrows the reveal to cards of that house (the wording "reveal any
+// A narrowing Filter reveals only the cards it admits (the wording "reveal any
 // number of Mars cards"): the player picks which of them to show, one at a time,
-// until they are done — "any number" includes none. An unset House reveals the
+// until they are done — "any number" includes none. The zero Filter reveals the
 // whole hand, which is not a choice.
 type RevealHand struct {
 	Player Player
-	House  HouseMatcher
+	// Filter narrows which cards in hand are revealed and supplies the noun the
+	// clause prints. A card in hand is in no battleline, so validate rejects an
+	// in-play axis rather than letting it silently match nothing.
+	Filter Filter
 }
 
 // validate rejects a Reveal whose player was left unset.
@@ -20,7 +23,7 @@ func (e RevealHand) validate() error {
 	if !e.Player.valid() {
 		return errUnsetPlayer("Reveal")
 	}
-	return nil
+	return e.Filter.validateIdentityOnly("Reveal")
 }
 
 // Text renders the effect, e.g. "reveal any number of Mars cards from your hand"
@@ -30,10 +33,11 @@ func (e RevealHand) Text() string {
 	if e.Player == Opponent {
 		whose = "your opponent's"
 	}
-	if !e.House.filters() {
+	if !e.Filter.Narrows() {
 		return "reveal " + whose + " hand"
 	}
-	return "reveal any number of " + e.House.qualify("cards") + " from " + whose + " hand"
+	return "reveal any number of " + plural(2, e.Filter.noun("card")) +
+		" from " + whose + " hand"
 }
 
 // Resolve shows the matching cards, logs them, and records how many were revealed.
@@ -54,15 +58,10 @@ func (e RevealHand) Resolve(ctx *EffectContext) {
 // reveal is "any number of <house> cards".
 func (e RevealHand) reveal(ctx *EffectContext, owner int) []LocalID {
 	hand := ctx.Resolver.Hand(owner)
-	if !e.House.filters() {
+	if !e.Filter.Narrows() {
 		return hand
 	}
-	var remaining []LocalID
-	for _, id := range hand {
-		if e.House.matches(ctx, id) {
-			remaining = append(remaining, id)
-		}
-	}
+	remaining := e.Filter.refine(ctx, hand)
 	var shown []LocalID
 	for len(remaining) > 0 {
 		chosen, ok := ctx.ChooseCardOptional("Choose a card to reveal", remaining)

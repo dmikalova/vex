@@ -418,10 +418,7 @@ func TestDealDamagePerCount(t *testing.T) {
 
 	e := DealDamage{
 		Amount: 1,
-		Per: CardsInPlay{
-			Player: Controller,
-			Type:   Creature,
-		},
+		Per:    CardsInPlay{Player: Controller, Filter: Filter{Type: Creature}},
 		Target: Target{Kind: TargetEachEnemyCreature},
 	}
 	if e.Text() != "for each friendly creature in play, deal 1 damage to each enemy creature" {
@@ -453,10 +450,7 @@ func TestDealDamagePerInstanceChoosesEachTarget(t *testing.T) {
 
 	e := DealDamage{
 		Amount: 1,
-		Per: CardsInPlay{
-			Player: Controller,
-			Type:   Creature,
-		},
+		Per:    CardsInPlay{Player: Controller, Filter: Filter{Type: Creature}},
 		Target: Target{Kind: TargetChosenEnemyCreature},
 	}
 	e.Resolve(ctx)
@@ -471,10 +465,7 @@ func TestDealDamagePerInstanceChoosesEachTarget(t *testing.T) {
 func TestDealDamagePerInstanceDegenerate(t *testing.T) {
 	base := DealDamage{
 		Amount: 1,
-		Per: CardsInPlay{
-			Player: Controller,
-			Type:   Creature,
-		},
+		Per:    CardsInPlay{Player: Controller, Filter: Filter{Type: Creature}},
 		Target: Target{Kind: TargetChosenEnemyCreature},
 	}
 
@@ -1299,8 +1290,7 @@ func TestSpreadDivideDamage(t *testing.T) {
 			Amount: 2,
 			Per: CardsInPlay{
 				Player: Controller,
-				House:  namedHouse(Brobnar),
-				Type:   Creature,
+				Filter: Filter{House: namedHouse(Brobnar), Type: Creature},
 			},
 		}}
 		want := "deal 2 damage for each friendly Brobnar creature, " +
@@ -1353,8 +1343,7 @@ func TestSpreadDivideDamage(t *testing.T) {
 			Amount: 2,
 			Per: CardsInPlay{
 				Player: Controller,
-				House:  namedHouse(Brobnar),
-				Type:   Creature,
+				Filter: Filter{House: namedHouse(Brobnar), Type: Creature},
 			},
 		}}.Resolve(&EffectContext{
 			Resolver:   g,
@@ -1372,8 +1361,7 @@ func TestSpreadDivideDamage(t *testing.T) {
 			Amount: 2,
 			Per: CardsInPlay{
 				Player: Opponent,
-				House:  namedHouse(Brobnar),
-				Type:   Creature,
+				Filter: Filter{House: namedHouse(Brobnar), Type: Creature},
 			},
 		}}.Resolve(&EffectContext{
 			Resolver:   g,

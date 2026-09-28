@@ -519,7 +519,7 @@ func TestBeforeFightCanCancelFight(t *testing.T) {
 		WithAbility(TriggerBeforeFight, Sequence{Effects: []Effect{
 			DiscardTop{Amount: 1},
 			Conditional{
-				Cond: ItIs{House: activeHouse},
+				Cond: ItIs{Filter: Filter{House: activeHouse}},
 				Then: CancelFight{},
 			},
 		}}),
@@ -568,7 +568,7 @@ func TestBeforeFightCancelMissStillFights(t *testing.T) {
 		WithAbility(TriggerBeforeFight, Sequence{Effects: []Effect{
 			DiscardTop{Amount: 1},
 			Conditional{
-				Cond: ItIs{House: activeHouse},
+				Cond: ItIs{Filter: Filter{House: activeHouse}},
 				Then: CancelFight{},
 			},
 		}}),
@@ -843,7 +843,7 @@ func TestElusive(t *testing.T) {
 
 func TestFightRestriction(t *testing.T) {
 	g := started(t) // Brobnar active
-	stunnedOnly := Target{Kind: TargetEachCreature}.With(Filter{Stunned: true})
+	stunnedOnly := Filter{Stunned: true}
 	att := g.AddToBattleline(
 		NewCard("twig", Brobnar, Creature, Common, WithPower(7), WithFightRestriction(stunnedOnly)),
 		0,
@@ -906,7 +906,7 @@ func TestFightTargets(t *testing.T) {
 	g5 := started(t)
 	picky := g5.AddToBattleline(
 		NewCard("picky", Brobnar, Creature, Common, WithPower(7),
-			WithFightRestriction(Target{Kind: TargetEachCreature}.With(Filter{Stunned: true}))), 0)
+			WithFightRestriction(Filter{Stunned: true})), 0)
 	awake := g5.AddToBattleline(testCreature("awake", 3), 1)
 	stunned := g5.AddToBattleline(testCreature("stunned", 3), 1)
 	g5.State.Cards[stunned].Stunned = true
@@ -1043,7 +1043,7 @@ func TestDamageRedirectCountsUpgradesWithoutReordering(t *testing.T) {
 	ward := g.AddToBattleline(testCreature("ward", 2), 0)
 	shield := g.AddToBattleline(
 		testCreature("shield", 9,
-			WithTakesDamageFor(Target{Kind: TargetEachCreature}.With(Filter{Neighboring: true}))),
+			WithTakesDamageFor(Filter{Neighboring: true})),
 		0,
 	)
 	attachUpgrade(g, shield, NewCard("Boon", Untamed, Upgrade, Common))
@@ -1065,7 +1065,7 @@ func TestDamageRedirectCountsUpgradesWithoutReordering(t *testing.T) {
 func TestTakesDamageFor(t *testing.T) {
 	g := started(t)
 	shield := NewCard("Shield", Shadows, Creature, Common, WithPower(9),
-		WithTakesDamageFor(Target{Kind: TargetEachCreature}.With(Filter{Neighboring: true})))
+		WithTakesDamageFor(Filter{Neighboring: true}))
 	ward := g.AddToBattleline(testCreature("ward", 2), 0)
 	sid := g.AddToBattleline(shield, 0)
 	far := g.AddToBattleline(testCreature("far", 2), 0)
@@ -1124,7 +1124,7 @@ func TestTakesDamageFor(t *testing.T) {
 func TestTakesDamageForAfterArmor(t *testing.T) {
 	g := started(t)
 	shield := NewCard("Shield", Shadows, Creature, Common, WithPower(9), WithArmor(2),
-		WithTakesDamageFor(Target{Kind: TargetEachCreature}.With(Filter{Neighboring: true})))
+		WithTakesDamageFor(Filter{Neighboring: true}))
 	ward := g.AddToBattleline(NewCard("ward", Shadows, Creature, Common,
 		WithPower(6), WithArmor(2)), 0)
 	sid := g.AddToBattleline(shield, 0)

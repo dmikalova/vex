@@ -22,7 +22,7 @@ var Proclamation346E = set.New(
 			card.Not{Cond: card.CountIs{
 				Count: card.HousesAmong{
 					Player: card.Opponent,
-					Type:   card.Type.Creature,
+					Filter: card.Filter{Type: card.Type.Creature},
 				},
 				Is:     card.AtLeast,
 				Amount: 3,

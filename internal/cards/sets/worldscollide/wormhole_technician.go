@@ -24,7 +24,7 @@ var WormholeTechnician = set.New(
 			Effects: []card.Effect{
 				card.RevealTopOfDeck{Amount: 1},
 				card.Conditional{
-					Cond: card.ItIs{House: card.Houses.Named(card.House.Self)},
+					Cond: card.ItIs{Filter: card.Filter{House: card.Houses.Named(card.House.Self)}},
 					Then: card.PlayRevealedCard{},
 					Else: card.PutRevealedCard{To: card.Into.Archives},
 				},

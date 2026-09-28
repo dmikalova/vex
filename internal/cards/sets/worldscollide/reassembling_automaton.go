@@ -24,8 +24,7 @@ var ReassemblingAutomaton = set.New(
 			When: card.Event.Destroyed,
 			Cond: card.CardsInPlay{
 				Player: card.Controller,
-				Type:   card.Type.Creature,
-				Other:  true,
+				Filter: card.Filter{Type: card.Type.Creature, Except: card.Except.Source},
 			},
 			With: card.Sequence{Effects: []card.Effect{
 				card.Heal{

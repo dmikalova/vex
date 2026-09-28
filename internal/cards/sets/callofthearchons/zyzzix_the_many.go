@@ -24,7 +24,7 @@ var ZyzzixTheMany = set.New(
 			First: card.ArchiveCard{
 				Zone: card.Hand,
 				Selection: card.Chosen{
-					Type:     card.Type.Creature,
+					Filter:   card.Filter{Type: card.Type.Creature},
 					Optional: true,
 				},
 				Revealed: true,

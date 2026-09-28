@@ -22,8 +22,10 @@ var HypnoticCommand = set.New(
 			Source: card.Opponent,
 			Times: card.CardsInPlay{
 				Player: card.Controller,
-				Type:   card.Type.Creature,
-				House:  card.Houses.Named(card.House.Self),
+				Filter: card.Filter{
+					Type:  card.Type.Creature,
+					House: card.Houses.Named(card.House.Self),
+				},
 			},
 		}),
 )

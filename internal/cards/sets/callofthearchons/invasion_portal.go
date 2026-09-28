@@ -23,6 +23,6 @@ var InvasionPortal = set.New("Invasion Portal",
 					House: card.Houses.Named(card.House.Self),
 				},
 			},
-			Result: card.PutDiscardedIntoHand{Type: card.Type.Creature},
+			Result: card.PutDiscardedIntoHand{Noun: card.Type.Creature},
 		}),
 )

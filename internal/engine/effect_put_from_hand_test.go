@@ -17,8 +17,7 @@ func TestPutFromHand(t *testing.T) {
 	ctx.It, ctx.HasIt = returned, true
 
 	e := PutFromHand{
-		Type:           Creature,
-		House:          namedHouse(Mars),
+		Filter:         Filter{Type: Creature, House: namedHouse(Mars)},
 		ExceptSameName: true,
 	}
 	if e.Text() != "put a Mars creature with a different name from your hand into play" {
@@ -45,7 +44,7 @@ func TestPutFromHand(t *testing.T) {
 		Source:     src,
 		Controller: 0,
 	}
-	(PutFromHand{Type: Artifact}).Resolve(ctx2)
+	(PutFromHand{Filter: Filter{Type: Artifact}}).Resolve(ctx2)
 	if ctx2.HasIt {
 		t.Error("a Resolve with no candidates should leave ctx.It unset")
 	}

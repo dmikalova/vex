@@ -683,8 +683,8 @@ A card that deals one amount of damage to a chosen creature and a larger amount
 instead when that creature meets a condition is authored as a `ChooseCreatureThen`
 whose `Then` is a `Conditional` — the condition picks which amount is dealt —
 rather than a bespoke damage-boost strategy on `DealDamage`. Compound conditions
-compose (`Or{ItIsOfTrait{…}, HasAember{}}`) instead of baking each combination
-into a one-off condition, and the rendered form names both amounts and the branch
+compose (`Or{ItIs{Filter: Filter{Trait: …}}, HasAember{}}`) instead of baking
+each combination into a one-off condition, and the rendered form names both amounts and the branch
 plainly.
 
 | Original                                                                                              | Curated                                                                                                                        |

@@ -117,23 +117,26 @@ func (SourceReady) Met(ctx *EffectContext) bool {
 }
 
 // SourceHasNoNeighbor is met while no battleline neighbor of the source card is
-// admitted by House — Crewman Jorg steals only while it has no Star Alliance
-// neighbor (House.Named), and Xanthyx Harvester can be used only while it has no
-// non-Mars neighbor (House.Except).
+// admitted by its Filter — Crewman Jorg steals only while it has no Star Alliance
+// neighbor (Houses.Named), and Xanthyx Harvester can be used only while it has no
+// non-Mars neighbor (Houses.Except).
 type SourceHasNoNeighbor struct {
-	House HouseMatcher
+	// Filter names the neighbor the source must not have, and qualifies the noun
+	// the condition prints. The zero value is met only while the source has no
+	// neighbor at all.
+	Filter Filter
 }
 
 // CondText renders the condition, e.g. "if Crewman Jorg has no Star Alliance
 // neighbor" or "if Xanthyx Harvester has no non-Mars neighbor".
 func (c SourceHasNoNeighbor) CondText() string {
-	return "if " + SelfName + " has no " + c.House.qualifyNoun("neighbor")
+	return "if " + SelfName + " has no " + c.Filter.noun("neighbor")
 }
 
-// Met reports whether none of the source card's neighbors are admitted by House.
+// Met reports whether none of the source card's neighbors pass the filter.
 func (c SourceHasNoNeighbor) Met(ctx *EffectContext) bool {
 	for _, n := range neighbors(ctx, ctx.Source) {
-		if c.House.matches(ctx, n) {
+		if c.Filter.matches(ctx, n) {
 			return false
 		}
 	}

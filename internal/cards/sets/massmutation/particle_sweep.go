@@ -21,7 +21,9 @@ var ParticleSweep = set.New(
 		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.Creature,
 			Then: card.Conditional{
-				Cond: card.ItIsOfTrait{Trait: card.Traits.Mutant},
+				Cond: card.ItIs{
+					Filter: card.Filter{Type: card.Type.Creature, Trait: card.Traits.Mutant},
+				},
 				Then: card.Destroy{Target: card.Target.TheChosenCreature},
 				Else: card.DealDamage{
 					Amount: 2,

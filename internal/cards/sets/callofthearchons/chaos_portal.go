@@ -23,7 +23,7 @@ var ChaosPortal = set.New(
 				Effects: []card.Effect{
 					card.RevealTopOfDeck{Amount: 1},
 					card.Conditional{
-						Cond: card.ItIs{House: card.Houses.Chosen},
+						Cond: card.ItIs{Filter: card.Filter{House: card.Houses.Chosen}},
 						Then: card.PlayRevealedCard{},
 					},
 				},

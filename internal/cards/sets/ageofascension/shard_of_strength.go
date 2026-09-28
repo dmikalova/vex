@@ -28,7 +28,7 @@ var ShardOfStrength = set.New(
 			Amount: 3,
 			Per: card.CardsInPlay{
 				Player: card.Controller,
-				Trait:  card.Traits.Shard,
+				Filter: card.Filter{Trait: card.Traits.Shard},
 			},
 		}),
 )

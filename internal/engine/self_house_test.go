@@ -13,10 +13,7 @@ import (
 func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 	def := NewCard("Probe", Mars, Creature, Common,
 		WithAbility(TriggerAfterPlay, Sequence{Effects: []Effect{
-			RevealHand{
-				Player: Controller,
-				House:  namedHouse(SelfHouse),
-			},
+			RevealHand{Player: Controller, Filter: Filter{House: namedHouse(SelfHouse)}},
 			Stun{
 				Target: Target{Kind: TargetEachCreature}.With(Filter{House: namedHouse(SelfHouse)}).
 					Refine(Except(MostPowerful)),
@@ -39,8 +36,7 @@ func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 		}),
 		WithKeyCost(NewKeyCostChange(Opponent, 1).Per(CardsInPlay{
 			Player: Controller,
-			Type:   Creature,
-			House:  namedHouse(SelfHouse),
+			Filter: Filter{Type: Creature, House: namedHouse(SelfHouse)},
 		})),
 	)
 	text := RenderCardText(&def)
@@ -69,10 +65,7 @@ func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 func TestRehouseMovesEverySelfHouseReference(t *testing.T) {
 	def := NewCard("Probe", Mars, Creature, Common,
 		WithAbility(TriggerAfterPlay, Sequence{Effects: []Effect{
-			RevealHand{
-				Player: Controller,
-				House:  namedHouse(SelfHouse),
-			},
+			RevealHand{Player: Controller, Filter: Filter{House: namedHouse(SelfHouse)}},
 			Stun{
 				Target: Target{Kind: TargetEachCreature}.With(Filter{House: namedHouse(SelfHouse)}),
 			},

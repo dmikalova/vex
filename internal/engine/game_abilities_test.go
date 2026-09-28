@@ -21,12 +21,17 @@ func TestSubjectPredicateNarrowing(t *testing.T) {
 		ItIsFriendly{},
 		ItIsEnemy{},
 		ItIsYourTurn{},
-		ItIsOfTrait{Trait: Giant},
+		ItIs{Filter: Filter{Type: Creature, Trait: Giant}},
 		OnFlank{
 			OfIt:  true,
 			Where: RightFlank,
 		},
-		And{Conditions: []Condition{ItIsFriendly{}, ItIsOfTrait{Trait: Giant}}},
+		And{
+			Conditions: []Condition{
+				ItIsFriendly{},
+				ItIs{Filter: Filter{Type: Creature, Trait: Giant}},
+			},
+		},
 		And{Conditions: []Condition{ItIsEnemy{}, ItIsYourTurn{}}},
 	}
 	for _, c := range fixed {
@@ -349,7 +354,7 @@ func TestSubjectNarrowedReactionEntersWindowOnlyWhenMatched(t *testing.T) {
 	g.AddToBattleline(testCreature("narrowed", 3, WithAbility(
 		TriggerAfterCardPlayed,
 		Conditional{
-			Cond: ItIs{Type: Artifact},
+			Cond: ItIs{Filter: Filter{Type: Artifact}},
 			Then: GainAember{
 				Player: Controller,
 				Amount: 1,

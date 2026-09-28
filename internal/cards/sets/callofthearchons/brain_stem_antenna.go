@@ -19,8 +19,10 @@ var BrainStemAntenna = set.New(
 		Granted: []card.Ability{
 			{Trigger: card.Trigger.AfterCardPlayed, Effect: card.Conditional{
 				Cond: card.ItIs{
-					House: card.Houses.Named(card.House.Self),
-					Type:  card.Type.Creature,
+					Filter: card.Filter{
+						House: card.Houses.Named(card.House.Self),
+						Type:  card.Type.Creature,
+					},
 				},
 				Then: card.Sequence{
 					Effects: []card.Effect{

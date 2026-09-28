@@ -24,7 +24,7 @@ var DoomSigil = set.New(
 	}),
 	card.WithDestroyedWhen(card.CardsInPlay{
 		Player: card.EachPlayer,
-		Type:   card.Type.Creature,
+		Filter: card.Filter{Type: card.Type.Creature},
 		None:   true,
 	}),
 )

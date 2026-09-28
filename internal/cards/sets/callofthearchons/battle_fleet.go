@@ -21,7 +21,7 @@ var BattleFleet = set.New(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.RevealHand{
 				Player: card.Controller,
-				House:  card.Houses.Named(card.House.Self),
+				Filter: card.Filter{House: card.Houses.Named(card.House.Self)},
 			},
 			card.Draw{
 				Amount: 1,

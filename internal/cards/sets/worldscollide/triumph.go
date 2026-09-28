@@ -21,7 +21,7 @@ var Triumph = set.New(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.CardsInPlay{
 				Player: card.Opponent,
-				Type:   card.Type.Creature,
+				Filter: card.Filter{Type: card.Type.Creature},
 				None:   true,
 			},
 			Then: card.Sequence{Effects: []card.Effect{
@@ -32,7 +32,7 @@ var Triumph = set.New(
 				card.Conditional{
 					Cond: card.CardsInPlay{
 						Player: card.Controller,
-						Type:   card.Type.Creature,
+						Filter: card.Filter{Type: card.Type.Creature},
 						Amount: 6,
 					},
 					Then: card.ForgeKey{FreeOfCost: true},

@@ -24,7 +24,9 @@ var Berinon = set.New(
 	card.WithTraits(card.Traits.Spirit, card.Traits.Knight),
 	card.WithAbility(
 		card.Trigger.AfterCreatureEnters, card.Conditional{
-			Cond: card.ItIsOfTrait{Trait: card.Traits.Mutant},
+			Cond: card.ItIs{
+				Filter: card.Filter{Type: card.Type.Creature, Trait: card.Traits.Mutant},
+			},
 			Then: card.Enrage{Target: card.Target.This},
 		}),
 	card.WithAbility(

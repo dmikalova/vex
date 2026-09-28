@@ -25,9 +25,8 @@ var Dharna = set.New(
 			Player: card.Controller,
 			Amount: 1,
 			Per: card.CardsInPlay{
-				Player:  card.Controller,
-				Type:    card.Type.Creature,
-				Damaged: true,
+				Player: card.Controller,
+				Filter: card.Filter{Type: card.Type.Creature, Damage: card.Damage.Some},
 			},
 		}),
 	card.WithAbility(

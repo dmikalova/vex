@@ -25,8 +25,7 @@ var Gluttony = set.New(
 	card.WithAbility(card.Trigger.Play, card.ForEach{
 		Times: card.CardsInPlay{
 			Player: card.Controller,
-			Type:   card.Type.Creature,
-			Trait:  card.Traits.Sin,
+			Filter: card.Filter{Type: card.Type.Creature, Trait: card.Traits.Sin},
 		},
 		Do: card.Exalt{
 			Target: card.Target.This,

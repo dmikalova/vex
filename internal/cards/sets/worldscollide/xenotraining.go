@@ -24,7 +24,7 @@ var Xenotraining = set.New(
 			Source: card.Opponent,
 			Times: card.HousesAmong{
 				Player: card.Controller,
-				Type:   card.Type.Creature,
+				Filter: card.Filter{Type: card.Type.Creature},
 			},
 		}),
 )

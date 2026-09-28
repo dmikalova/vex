@@ -36,7 +36,7 @@ var MonumentToOctavia = set.New(
 				Source: card.Opponent,
 			},
 			card.Conditional{
-				Cond: card.NamedCardInDiscard{Name: CornicenOctavia.Name},
+				Cond: card.NamedCardInDiscard{Filter: card.Filter{Name: CornicenOctavia.Name}},
 				Then: card.CaptureAember{
 					Amount: 1,
 					Target: card.Target.Triggering,

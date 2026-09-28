@@ -535,7 +535,7 @@ func fixedNarrowing(e Effect) (Condition, bool) {
 // rechecked at resolution.
 func isFixedPredicate(c Condition) bool {
 	switch cc := c.(type) {
-	case ItIs, ItIsNamed, ItIsOfTrait, ItIsFriendly, ItIsEnemy, ItIsYourTurn:
+	case ItIs, ItIsFriendly, ItIsEnemy, ItIsYourTurn:
 		return true
 	case OnFlank:
 		return cc.OfIt
@@ -713,8 +713,8 @@ func (g *Game) validateFight(player int, attacker, defender LocalID) error {
 	if g.protectedFromNonFlank(defender) && !g.onFlankOf(attacker) {
 		return ErrNoTarget
 	}
-	if fr := g.cat.def(attacker).FightRestriction; fr != (Target{}) &&
-		!fr.allows(&EffectContext{
+	if fr := g.cat.def(attacker).FightRestriction; fr.Narrows() &&
+		!fr.matches(&EffectContext{
 			Resolver:   g.resolver,
 			Source:     attacker,
 			Controller: player,
@@ -797,8 +797,8 @@ func (g *Game) fightAllows(player int, attacker, def LocalID) bool {
 		return false
 	}
 	fr := g.cat.def(attacker).FightRestriction
-	return fr == (Target{}) ||
-		fr.allows(&EffectContext{
+	return !fr.Narrows() ||
+		fr.matches(&EffectContext{
 			Resolver:   g.resolver,
 			Source:     attacker,
 			Controller: player,

@@ -26,7 +26,7 @@ var Gebuk = set.New(
 				Player: card.Controller,
 			},
 			card.Conditional{
-				Cond: card.ItIs{Type: card.Type.Creature},
+				Cond: card.ItIs{Filter: card.Filter{Type: card.Type.Creature}},
 				Then: card.Swap{
 					With:        card.Target.TheOtherCreature,
 					FromContext: true,

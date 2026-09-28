@@ -20,14 +20,18 @@ var GrumpBuggy = set.New(
 	card.Provenance(card.AoA, "24"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Vehicle),
-	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.CardsInPlay{
-		Player:   card.Controller,
-		Type:     card.Type.Creature,
-		MinPower: 5,
-	})),
-	card.WithKeyCost(card.KeyCostChange(card.Controller, 1).Per(card.CardsInPlay{
-		Player:   card.Opponent,
-		Type:     card.Type.Creature,
-		MinPower: 5,
-	})),
+	card.WithKeyCost(
+		card.KeyCostChange(card.Opponent, 1).
+			Per(card.CardsInPlay{
+				Player: card.Controller,
+				Filter: card.Filter{Type: card.Type.Creature, Power: card.Power.AtLeast(5)},
+			}),
+	),
+	card.WithKeyCost(
+		card.KeyCostChange(card.Controller, 1).
+			Per(card.CardsInPlay{
+				Player: card.Opponent,
+				Filter: card.Filter{Type: card.Type.Creature, Power: card.Power.AtLeast(5)},
+			}),
+	),
 )

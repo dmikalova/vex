@@ -23,8 +23,7 @@ var WretchedAnathema = set.Gigantic(
 		Target: card.Target.This,
 		WhileCondition: card.CardsInPlay{
 			Player: card.Controller,
-			Type:   card.Type.Creature,
-			Other:  true,
+			Filter: card.Filter{Type: card.Type.Creature, Except: card.Except.Source},
 			None:   true,
 		},
 		Granted: []card.Ability{{

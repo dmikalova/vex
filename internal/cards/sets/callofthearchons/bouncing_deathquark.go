@@ -17,10 +17,12 @@ var BouncingDeathquark = set.New(
 	card.Provenance(card.CotA, "107"),
 	card.WithAbility(
 		card.Trigger.Play, card.Repeat{
-			Gate: card.MayWhileYouDo{Cond: card.CardsInPlay{
-				Player: card.Controller,
-				Type:   card.Type.Creature,
-			}},
+			Gate: card.MayWhileYouDo{
+				Cond: card.CardsInPlay{
+					Player: card.Controller,
+					Filter: card.Filter{Type: card.Type.Creature},
+				},
+			},
 			Do: card.Sequence{
 				Effects: []card.Effect{
 					card.Destroy{Target: card.Target.EnemyCreature},

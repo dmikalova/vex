@@ -735,11 +735,11 @@ func (g *Game) emitArmorPrevented(watchers []LocalID, armorBefore map[LocalID]in
 func (g *Game) damageRedirect(id LocalID) LocalID {
 	for player := range 2 {
 		for _, shield := range g.cardsInPlay(player) {
-			t := g.cat.def(shield).TakesDamageFor
-			if shield == id || !t.valid() {
+			f := g.cat.def(shield).TakesDamageFor
+			if shield == id || !f.Narrows() {
 				continue
 			}
-			if slices.Contains(t.Select(g.constantContext(shield)), id) {
+			if f.matches(g.constantContext(shield), id) {
 				return shield
 			}
 		}

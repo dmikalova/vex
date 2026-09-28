@@ -35,8 +35,10 @@ var SaurianEgg = set.New(
 				Amount: 2,
 			},
 			card.ForEachDiscarded{
-				House: card.Houses.Named(card.House.Self),
-				Type:  card.Type.Creature,
+				Filter: card.Filter{
+					House: card.Houses.Named(card.House.Self),
+					Type:  card.Type.Creature,
+				},
 				Do: card.Sequence{Effects: []card.Effect{
 					card.PutIntoPlay{
 						Target: card.Target.Triggering,
@@ -50,8 +52,10 @@ var SaurianEgg = set.New(
 			},
 			card.Conditional{
 				Cond: card.DiscardedThisWay{
-					House: card.Houses.Named(card.House.Self),
-					Type:  card.Type.Creature,
+					Filter: card.Filter{
+						House: card.Houses.Named(card.House.Self),
+						Type:  card.Type.Creature,
+					},
 				},
 				Then: card.Destroy{Target: card.Target.This},
 			},

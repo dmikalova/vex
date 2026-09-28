@@ -21,8 +21,10 @@ var SongOfSpring = set.New(
 		card.Trigger.Play, card.ShuffleIntoDeck{
 			Player: card.Controller, From: []card.Zone{card.Hand, card.Discard, card.InPlay},
 			Selection: card.Chosen{
-				House:    card.Houses.Named(card.House.Self),
-				Type:     card.Type.Creature,
+				Filter: card.Filter{
+					House: card.Houses.Named(card.House.Self),
+					Type:  card.Type.Creature,
+				},
 				Optional: true,
 			},
 			Quantity: card.AnyNumber{},

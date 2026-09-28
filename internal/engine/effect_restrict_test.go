@@ -964,7 +964,7 @@ func TestRestrictionSourcesConditionalPlayBar(t *testing.T) {
 func TestUseConditionRestriction(t *testing.T) {
 	cond := CardsDiscarded{
 		Player: Controller,
-		House:  namedHouse(Untamed),
+		Filter: Filter{House: namedHouse(Untamed)},
 		Amount: 1,
 	}
 	want := "You cannot use this card unless you have discarded an Untamed card " +

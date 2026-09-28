@@ -21,7 +21,7 @@ var Memolith = set.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.ChooseOne{Options: []card.Effect{
-			card.PutUnderFromHand{Type: card.Type.Tactic},
+			card.PutUnderFromHand{Filter: card.Filter{Type: card.Type.Tactic}},
 			card.TriggerGraftedPlayEffect{},
 		}}),
 )

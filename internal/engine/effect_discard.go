@@ -82,7 +82,7 @@ func (e PutCard) listHead() string { return "put" }
 
 func (e PutCard) listNoun() string {
 	if s, ok := e.Selection.(Chosen); ok && s.plainType() {
-		return typeWord(s.Type)
+		return typeWord(s.Filter.Type)
 	}
 	return ""
 }

@@ -22,8 +22,10 @@ var GrimReminder = set.New(
 					card.ArchiveCard{
 						Zone: card.Discard,
 						Selection: card.Each{
-							Type:  card.Type.Creature,
-							House: card.Houses.Chosen,
+							Filter: card.Filter{
+								Type:  card.Type.Creature,
+								House: card.Houses.Chosen,
+							},
 						},
 					},
 					card.GainChains{Amount: 1},

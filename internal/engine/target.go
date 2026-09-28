@@ -399,13 +399,6 @@ func (t Target) Ready() Target {
 	return t
 }
 
-// allows reports whether a single card satisfies the target's per-card filters,
-// ignoring its base-set Kind. It is how a Target expresses a condition on one
-// specific card (e.g. a fight restriction testing the defender).
-func (t Target) allows(ctx *EffectContext, id LocalID) bool {
-	return len(t.admitted(ctx, []LocalID{id})) == 1
-}
-
 // OnFlank narrows the target to creatures on a flank of their battleline (its
 // leftmost or rightmost creature). A flank is a battleline position, so the
 // filter only constrains creatures: on a target that also reaches artifacts

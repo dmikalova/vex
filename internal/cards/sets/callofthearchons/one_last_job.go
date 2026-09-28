@@ -26,7 +26,7 @@ var OneLastJob = set.New(
 			},
 			card.StealAember{
 				Amount: 1,
-				Per:    card.CardsPurged{Type: card.Type.Creature},
+				Per:    card.CardsPurged{Noun: card.Type.Creature},
 			},
 		}}),
 )

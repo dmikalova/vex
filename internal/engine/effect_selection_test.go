@@ -18,10 +18,7 @@ func TestSelfSelectionText(t *testing.T) {
 // ctx.It from the candidates rather than trusting the first pick to have moved
 // the card out of the pile.
 func TestChosenAnotherExcludesTheCardInContext(t *testing.T) {
-	sel := Chosen{
-		Type:    Creature,
-		Another: true,
-	}
+	sel := Chosen{Filter: Filter{Type: Creature, Except: ExcludeIt}}
 	if got := sel.object(); got != "another creature" {
 		t.Errorf("object() = %q, want %q", got, "another creature")
 	}
@@ -42,7 +39,7 @@ func TestChosenAnotherExcludesTheCardInContext(t *testing.T) {
 	if len(got) != 1 || got[0] != second {
 		t.Errorf("candidates = %v, want only the creature the first pick did not take", got)
 	}
-	if plain := (Chosen{Type: Creature}).candidates(
+	if plain := (Chosen{Filter: Filter{Type: Creature}}).candidates(
 		ctx,
 		[]LocalID{first, second},
 	); len(

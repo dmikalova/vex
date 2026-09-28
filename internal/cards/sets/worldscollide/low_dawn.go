@@ -20,8 +20,10 @@ var LowDawn = set.New(
 	card.WithAbility(card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 		card.Conditional{
 			Cond: card.CardsInDiscardAtLeast{
-				House:  card.Houses.Named(card.House.Self),
-				Type:   card.Type.Creature,
+				Filter: card.Filter{
+					House: card.Houses.Named(card.House.Self),
+					Type:  card.Type.Creature,
+				},
 				Amount: 3,
 			},
 			Then: card.GainAember{
@@ -30,9 +32,14 @@ var LowDawn = set.New(
 			},
 		},
 		card.ShuffleIntoDeck{
-			Player: card.Controller, From: []card.Zone{card.Discard}, Selection: card.Each{
-				House: card.Houses.Named(card.House.Self),
-				Type:  card.Type.Creature,
-			}},
+			Player: card.Controller,
+			From:   []card.Zone{card.Discard},
+			Selection: card.Each{
+				Filter: card.Filter{
+					House: card.Houses.Named(card.House.Self),
+					Type:  card.Type.Creature,
+				},
+			},
+		},
 	}}),
 )

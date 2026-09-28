@@ -30,7 +30,7 @@ var Purify = set.New(
 						ExceptTrait: card.Traits.Mutant,
 					},
 				},
-				Result: card.PutDiscardedIntoPlay{Type: card.Type.Creature},
+				Result: card.PutDiscardedIntoPlay{Noun: card.Type.Creature},
 			},
 		}),
 )

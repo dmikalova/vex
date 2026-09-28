@@ -69,8 +69,7 @@ func TestStealAemberPer(t *testing.T) {
 		Amount: 1,
 		Per: CardsInPlay{
 			Player: Controller,
-			Type:   Creature,
-			Ready:  true,
+			Filter: Filter{Type: Creature, Ready: true},
 		},
 	}
 	if want := "for each friendly ready creature in play, steal 1 Æmber"; e.Text() != want {

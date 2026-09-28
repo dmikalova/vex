@@ -104,9 +104,8 @@ func TestAddPowerCounterPer(t *testing.T) {
 		Target: Target{Kind: TargetThisCreature},
 		Amount: 2,
 		Per: CardsInPlay{
-			Player:  EachPlayer,
-			Type:    Creature,
-			Damaged: true,
+			Player: EachPlayer,
+			Filter: Filter{Type: Creature, Damage: DamageSome},
 		},
 	}
 	want := "for each damaged creature in play, give {self} two +1 power counters"

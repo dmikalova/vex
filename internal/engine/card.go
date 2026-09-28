@@ -70,9 +70,12 @@ type CardDefinition struct {
 	EntersReadyGrant EntersReadyGrant
 
 	// FightRestriction, when set, limits which enemy creatures this creature may
-	// fight to those its Target allows (Bigtwig can only fight stunned creatures).
-	// The zero Target imposes no restriction.
-	FightRestriction Target
+	// fight to those its Filter admits (Bigtwig can only fight stunned creatures).
+	// It is a Filter rather than a Target because the rule tests one defender at a
+	// time — the base set is always "the enemy creatures this creature could
+	// fight" — and the rule sentence owns the quantifier. The zero Filter imposes
+	// no restriction.
+	FightRestriction Filter
 
 	// CannotBeUsedTo are the ways this card may not be used — Tireless Crocag cannot
 	// reap, but still fights. It bars the card itself, unlike the player-wide
@@ -95,8 +98,10 @@ type CardDefinition struct {
 	// TakesDamageFor, when set, names the creatures whose damage this card takes
 	// instead — Shadow Self takes the damage dealt to its non-Specter neighbors.
 	// It is read wherever damage lands, so it covers fight damage and effect damage
-	// alike. The zero Target shields nobody.
-	TakesDamageFor Target
+	// alike. It is a Filter rather than a Target because the rule asks of the one
+	// creature being dealt damage whether this card shields it; the zero Filter
+	// shields nobody.
+	TakesDamageFor Filter
 
 	// AlsoTakesNeighborFightDamage, when set, makes this creature take an equal
 	// share of any damage dealt to its battleline neighbors during a fight (Drecker).
@@ -874,10 +879,10 @@ func WithPowerX(c Count) CardOption {
 	return func(d *CardDefinition) { d.PowerX = c }
 }
 
-// WithTakesDamageFor makes this card take the damage dealt to the creatures its
-// Target names, instead of them (Shadow Self shields its non-Specter neighbors).
-func WithTakesDamageFor(t Target) CardOption {
-	return func(c *CardDefinition) { c.TakesDamageFor = t }
+// WithTakesDamageFor makes this card take the damage dealt to the creatures a
+// Filter admits, instead of them (Shadow Self shields its non-Specter neighbors).
+func WithTakesDamageFor(f Filter) CardOption {
+	return func(c *CardDefinition) { c.TakesDamageFor = f }
 }
 
 // WithAlsoTakesNeighborFightDamage makes this creature take an equal share of any
@@ -999,10 +1004,10 @@ func WithFriendlyEntersPlayReady(g EntersReadyGrant) CardOption {
 	return func(c *CardDefinition) { c.EntersReadyGrant = g }
 }
 
-// WithFightRestriction limits which creatures a creature may fight to those the
-// Target allows (e.g. card-level "can only fight stunned creatures").
-func WithFightRestriction(t Target) CardOption {
-	return func(c *CardDefinition) { c.FightRestriction = t }
+// WithFightRestriction limits which creatures a creature may fight to those a
+// Filter admits (e.g. card-level "can only fight stunned creatures").
+func WithFightRestriction(f Filter) CardOption {
+	return func(c *CardDefinition) { c.FightRestriction = f }
 }
 
 // WithAttackIgnores makes a creature ignore defensive keywords while it attacks

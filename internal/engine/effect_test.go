@@ -96,7 +96,7 @@ func TestEffectValidation(t *testing.T) {
 		PurgeCard{
 			Zones:     []Zone{Discard},
 			Player:    ChosenPlayer,
-			Selection: Chosen{Type: Creature},
+			Selection: Chosen{Filter: Filter{Type: Creature}},
 		},
 	); err != nil {
 		t.Errorf(
@@ -133,7 +133,7 @@ func TestEffectValidation(t *testing.T) {
 			First: PurgeCard{
 				Zones:     []Zone{Discard},
 				Player:    ChosenPlayer,
-				Selection: Chosen{Type: Creature},
+				Selection: Chosen{Filter: Filter{Type: Creature}},
 			},
 			Result: AddPowerCounter{
 				Target: Target{Kind: TargetThisCreature},

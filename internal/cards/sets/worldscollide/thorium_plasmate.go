@@ -22,7 +22,7 @@ var ThoriumPlasmate = set.New(
 			First: card.MoveWithinBattleline{Target: card.Target.EnemyCreature},
 			Result: card.DealDamage{
 				Amount: 2,
-				Per:    card.NeighborsMatching{House: card.Houses.Contextual},
+				Per:    card.NeighborsMatching{Filter: card.Filter{House: card.Houses.Contextual}},
 				Target: card.Target.TheChosenCreature,
 			},
 		}),

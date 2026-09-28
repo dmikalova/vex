@@ -179,82 +179,58 @@ func filterIDs(ids []LocalID, keep func(LocalID) bool) []LocalID {
 // for "may do fewer" — a card that must do either none or exactly N (all-or-
 // nothing) cannot be expressed this way; no card currently needs that.
 type Chosen struct {
-	// House restricts the choice to cards the matcher admits; the zero value
-	// (any house) allows any card (Information Officer Gray reveals a non-Star
-	// Alliance card).
-	House HouseMatcher
-	// Type restricts the choice to cards of this type; the zero value allows any.
-	Type CardType
-	// Trait restricts the choice to cards carrying this trait; the zero value
-	// allows any (Horseman of Death recovers a Horseman creature).
-	Trait Trait
-	// Name restricts the choice to cards of this exact name; the zero value allows
-	// any (Igon the Green recovers an Igon the Terrible).
-	Name string
-	// MatchAny disjoins the axes above instead of conjoining them, so a card
-	// qualifies by satisfying any one of them (Chief Engineer Walls recovers an
-	// upgrade or a Robot card).
-	MatchAny bool
+	// Filter restricts the choice to the cards it admits — their type, house,
+	// trait, and name — and supplies the noun the object prints (Horseman of Death
+	// recovers a Horseman creature, Chief Engineer Walls an upgrade or a Robot
+	// card). Its Except axis is what "another" means here: ExcludeIt drops the card
+	// in context so a second pick cannot re-take what the first one took
+	// (Resurgence), enforcing the promise the word makes rather than leaving it to
+	// the zone the first pick moved the card out of. The zero value allows any card.
+	Filter Filter
 	// Optional makes the pick a "you may" the controller can decline; the default is
-	// a mandatory pick that forces the choice when a card matches.
+	// a mandatory pick that forces the choice when a card matches. It is not a
+	// narrowing — it says whether the pick may be passed, not which cards qualify —
+	// so it stays Chosen's own field.
 	Optional bool
-	// Another excludes the card in context (ctx.It) and renders the object as
-	// "another …" rather than "a …", so a second pick cannot re-take what the first
-	// one took (Resurgence). It enforces the promise the word "another" makes rather
-	// than leaving it to the zone the first pick moved the card out of.
-	Another bool
-}
-
-// filter is the predicate the choice narrows by — the house, type, trait, and
-// name axes as one Filter, conjoined unless MatchAny disjoins them.
-func (s Chosen) filter() Filter {
-	return Filter{
-		House:    s.House,
-		Type:     s.Type,
-		Trait:    s.Trait,
-		Name:     s.Name,
-		MatchAny: s.MatchAny,
-	}
 }
 
 // noun renders the bare kind of card chosen, qualified by the filter.
 func (s Chosen) noun() string {
-	return s.filter().noun("card")
+	return s.Filter.noun("card")
 }
 
 // object renders the single card chosen, e.g. "a Sanctum creature".
 func (s Chosen) object() string { return s.qualifiedObject("") }
 
 // qualifiedObject renders the choice with an adjective before the noun, e.g.
-// "a friendly Sanctum creature".
+// "a friendly Sanctum creature". The article is the consumer's, which is why an
+// exclusion reads "another creature" here where a Target reads "each other
+// creature" from the same field.
 func (s Chosen) qualifiedObject(adjective string) string {
 	noun := qualifyNoun(adjective, s.noun())
-	if s.Another {
+	if s.Filter.Except.filters() {
 		return "another " + noun
 	}
 	return indefinite(noun)
 }
 
 // plainType reports that the choice narrows by a single concrete card type alone —
-// no house, trait, name, Or, Another, or Optional — so its object is a bare
-// "a <type>" that a noun-list fold can collapse (Look What I Found!).
+// no other filter axis and no Optional — so its object is a bare "a <type>" that a
+// noun-list fold can collapse (Look What I Found!).
 func (s Chosen) plainType() bool {
-	return s.Type != TypeUnset && s.Type != AnyType && !s.House.filters() &&
-		s.Trait == traitUnset && s.Name == "" && !s.MatchAny && !s.Optional &&
-		!s.Another
+	t := s.Filter.Type
+	return t != TypeUnset && t != AnyType && !s.Optional &&
+		s.Filter == Filter{Type: t}
 }
 
 // declinable reports that an Optional Chosen may be passed.
 func (s Chosen) declinable() bool { return s.Optional }
 
-// candidates keeps the cards the house and identity filters admit, dropping the
-// card in context when Another is set.
+// candidates keeps the cards the filter admits, which includes dropping the card
+// in context when the filter excludes it.
 func (s Chosen) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
 	return filterIDs(cands, func(id LocalID) bool {
-		if s.Another && ctx.HasIt && id == ctx.It {
-			return false
-		}
-		return s.filter().matches(ctx, id)
+		return s.Filter.matches(ctx, id)
 	})
 }
 
@@ -314,39 +290,18 @@ func (s Random) pick(ctx *EffectContext, cands []LocalID) []LocalID {
 // (Martians Make Bad Allies purges each non-Mars creature). A following effect
 // can scale with the tally the verb records.
 type Each struct {
-	// House restricts to cards the matcher admits; the zero value (any house) admits
-	// any card (Soldiers to Flowers purges each Untamed creature, Martians Make Bad
-	// Allies each non-Mars creature, Deep Probe each creature of the chosen house).
-	House HouseMatcher
-	// Type restricts to cards of this type; the zero value admits any.
-	Type CardType
-	// Trait restricts to cards carrying this trait; the zero value admits any
-	// (Troop Call recovers each Niffle creature).
-	Trait Trait
-	// Name restricts to cards of this exact name; the zero value admits any
-	// (Ortannu the Chained recovers each Ortannu's Binding).
-	Name string
-	// MatchAny disjoins the axes above instead of conjoining them, so a card
-	// qualifies by satisfying any one of them.
-	MatchAny bool
-}
-
-// filter is the predicate the take narrows by — the house, type, trait, and name
-// axes as one Filter, conjoined unless MatchAny disjoins them.
-func (s Each) filter() Filter {
-	return Filter{
-		House:    s.House,
-		Type:     s.Type,
-		Trait:    s.Trait,
-		Name:     s.Name,
-		MatchAny: s.MatchAny,
-	}
+	// Filter restricts to the cards it admits — their type, house, trait, and
+	// name — and supplies the noun the object prints: Soldiers to Flowers purges
+	// each Untamed creature, Martians Make Bad Allies each non-Mars creature, Deep
+	// Probe each creature of the chosen house, Ortannu the Chained recovers each
+	// Ortannu's Binding. The zero value takes every card.
+	Filter Filter
 }
 
 // noun renders the bare kind of card taken, e.g. "non-Mars creature" or "creature
 // of the chosen house".
 func (s Each) noun() string {
-	return s.filter().noun("card")
+	return s.Filter.noun("card")
 }
 
 // object renders the kind of card taken, e.g. "each non-Mars creature".
@@ -358,10 +313,10 @@ func (s Each) qualifiedObject(adjective string) string {
 	return "each " + qualifyNoun(adjective, s.noun())
 }
 
-// candidates returns every card the filters admit — Each takes all of them.
+// candidates returns every card the filter admits — Each takes all of them.
 func (s Each) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
 	return filterIDs(cands, func(id LocalID) bool {
-		return s.filter().matches(ctx, id)
+		return s.Filter.matches(ctx, id)
 	})
 }
 

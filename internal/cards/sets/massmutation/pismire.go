@@ -20,6 +20,6 @@ var Pismire = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant),
 	card.WithKeyCost(card.KeyCostChange(card.Opponent, 2).While(
-		card.ControlsMoreCreatures{Trait: card.Traits.Mutant},
+		card.ControlsMoreCreatures{Filter: card.Filter{Trait: card.Traits.Mutant}},
 	)),
 )

@@ -26,11 +26,11 @@ func selectionFamily() Family {
 func SelectionCatalog() []Catalogued[Selection] {
 	return []Catalogued[Selection]{
 		{
-			Node:  Chosen{Type: Creature},
+			Node:  Chosen{Filter: Filter{Type: Creature}},
 			Rules: bears("Target"),
 		},
 		{
-			Node:  Each{Type: Creature},
+			Node:  Each{Filter: Filter{Type: Creature}},
 			Rules: bears("Target"),
 		},
 		{

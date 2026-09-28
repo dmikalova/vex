@@ -122,9 +122,9 @@ func cardGlyphs(def *engine.CardDefinition) []glyphLine {
 			covered: true,
 		})
 	}
-	if def.FightRestriction != (engine.Target{}) {
+	if def.FightRestriction.Narrows() {
 		lines = append(lines, glyphLine{
-			glyphs:  fightRestrictionGlyphs(def.FightRestriction),
+			glyphs:  fightRestrictionGlyphs(),
 			covered: true,
 		})
 	}

@@ -24,7 +24,7 @@ var RiggedLottery = set.New(
 				Amount: 5,
 			},
 			card.ForEachDiscarded{
-				House: card.Houses.Named(card.House.Self),
+				Filter: card.Filter{House: card.Houses.Named(card.House.Self)},
 				Do: card.GainAember{
 					Player: card.ItsOwner,
 					Amount: 1,

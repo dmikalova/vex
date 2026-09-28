@@ -643,8 +643,7 @@ func TestPowerLessThan(t *testing.T) {
 	// power == 2 and power 3 both survive.
 	limit := CardsInPlay{
 		Player: Controller,
-		Type:   Creature,
-		House:  namedHouse(Mars),
+		Filter: Filter{Type: Creature, House: namedHouse(Mars)},
 	}
 	got := Target{Kind: TargetEachEnemyCreature}.Refine(PowerLessThan(limit)).Select(ctx)
 	if len(got) != 1 || got[0] != weak || containsID(got, equal) || containsID(got, strong) {
@@ -673,8 +672,7 @@ func TestPowerLessThan(t *testing.T) {
 	// though it lives in the refinement's unexported field.
 	selfLimit := CardsInPlay{
 		Player: Controller,
-		Type:   Creature,
-		House:  namedHouse(SelfHouse),
+		Filter: Filter{Type: Creature, House: namedHouse(SelfHouse)},
 	}
 	resolved := replacedIn(
 		(Target{Kind: TargetEachEnemyCreature}).Refine(PowerLessThan(selfLimit)),

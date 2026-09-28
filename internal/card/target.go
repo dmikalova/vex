@@ -223,8 +223,3 @@ func (refinements) PowerLessThan(
 ) Refinement {
 	return engine.PowerLessThan(limit)
 }
-
-// Stunned is the set of stunned creatures, used as a fight restriction: pass it to
-// card.WithFightRestriction to limit a creature to fighting only stunned creatures
-// (Bigtwig).
-var Stunned = engine.Target{Kind: engine.TargetEachCreature}.Stunned()

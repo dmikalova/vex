@@ -27,7 +27,7 @@ var CustomVirus = set.New(
 			card.PurgeCard{
 				Zones:     []card.Zone{card.Hand},
 				Player:    card.Controller,
-				Selection: card.Chosen{Type: card.Type.Creature},
+				Selection: card.Chosen{Filter: card.Filter{Type: card.Type.Creature}},
 			},
 			card.Destroy{Target: card.Target.EachCreature.With(card.Filter{SharesTrait: true})},
 		}}),

@@ -25,7 +25,9 @@ var CityGates = set.New(
 				Source: card.Opponent,
 			},
 			card.Conditional{
-				Cond: card.ItIsOfTrait{Trait: card.Traits.Dinosaur},
+				Cond: card.ItIs{
+					Filter: card.Filter{Type: card.Type.Creature, Trait: card.Traits.Dinosaur},
+				},
 				Then: card.CaptureAember{
 					Amount: 1,
 					Target: card.Target.Triggering,

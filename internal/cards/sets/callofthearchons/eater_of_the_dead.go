@@ -23,7 +23,7 @@ var EaterOfTheDead = set.New(
 		First: card.PurgeCard{
 			Zones:     []card.Zone{card.Discard},
 			Player:    card.ChosenPlayer,
-			Selection: card.Chosen{Type: card.Type.Creature},
+			Selection: card.Chosen{Filter: card.Filter{Type: card.Type.Creature}},
 		},
 		Result: card.AddPowerCounter{
 			Target: card.Target.This,

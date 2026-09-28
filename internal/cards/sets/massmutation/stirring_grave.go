@@ -20,6 +20,6 @@ var StirringGrave = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.ArchiveCard{
 			Zone:      card.Discard,
-			Selection: card.Chosen{Type: card.Type.Creature},
+			Selection: card.Chosen{Filter: card.Filter{Type: card.Type.Creature}},
 		}),
 )

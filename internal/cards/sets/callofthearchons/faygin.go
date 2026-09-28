@@ -33,7 +33,7 @@ var Faygin = set.New(
 	card.WithAbility(
 		card.Trigger.Reap, card.PutCard{
 			Zones:       []card.Zone{card.InPlay, card.Discard},
-			Selection:   card.Chosen{Name: Urchin.Name},
+			Selection:   card.Chosen{Filter: card.Filter{Name: Urchin.Name}},
 			Destination: card.To.Hand,
 		}),
 )

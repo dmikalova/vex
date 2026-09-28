@@ -25,8 +25,10 @@ var RedPlanetRayGun = set.New(
 				Target: card.Target.Creature,
 				Per: card.CardsInPlay{
 					Player: card.EachPlayer,
-					Type:   card.Type.Creature,
-					House:  card.Houses.Named(card.House.Self),
+					Filter: card.Filter{
+						Type:  card.Type.Creature,
+						House: card.Houses.Named(card.House.Self),
+					},
 				},
 			},
 		}},

@@ -141,7 +141,7 @@ func TestControlsMoreCreaturesTrait(t *testing.T) {
 		Controller: 0,
 	}
 
-	c := ControlsMoreCreatures{Trait: Mutant}
+	c := ControlsMoreCreatures{Filter: Filter{Trait: Mutant}}
 	if got := c.CondText(); got != "if you control more Mutant creatures than your opponent" {
 		t.Errorf("CondText = %q", got)
 	}
@@ -301,10 +301,7 @@ func TestHousesRepresented(t *testing.T) {
 		Controller: 0,
 	}
 
-	among := HousesAmong{
-		Player: EachPlayer,
-		Type:   Creature,
-	}
+	among := HousesAmong{Player: EachPlayer, Filter: Filter{Type: Creature}}
 	cases := []struct {
 		is   Comparison
 		amt  int
@@ -579,7 +576,7 @@ func TestSourceHasNoNeighborExcept(t *testing.T) {
 	src := g.AddToBattleline(marsCreature("mid"), 0)
 	g.AddToBattleline(testCreature("right", 2), 0) // Brobnar
 
-	c := SourceHasNoNeighbor{House: exceptHouse(Mars)}
+	c := SourceHasNoNeighbor{Filter: Filter{House: exceptHouse(Mars)}}
 	if c.CondText() != "if "+SelfName+" has no non-Mars neighbor" {
 		t.Errorf("CondText = %q", c.CondText())
 	}
@@ -614,7 +611,7 @@ func TestSourceHasNoNeighborNamed(t *testing.T) {
 	g.AddToBattleline(marsCreature("left"), 0)
 	src := g.AddToBattleline(testCreature("mid", 2), 0)
 
-	c := SourceHasNoNeighbor{House: namedHouse(Mars)}
+	c := SourceHasNoNeighbor{Filter: Filter{House: namedHouse(Mars)}}
 	if c.CondText() != "if "+SelfName+" has no Mars neighbor" {
 		t.Errorf("CondText = %q", c.CondText())
 	}
@@ -648,10 +645,7 @@ func TestCountIsHousesAmong(t *testing.T) {
 	}
 
 	c := CountIs{
-		Count: HousesAmong{
-			Player: Controller,
-			Type:   Creature,
-		},
+		Count:  HousesAmong{Player: Controller, Filter: Filter{Type: Creature}},
 		Is:     AtLeast,
 		Amount: 3,
 	}
@@ -695,7 +689,7 @@ func TestCardsPlayed(t *testing.T) {
 	}
 	cond := CardsPlayed{
 		Player: Controller,
-		House:  namedHouse(Sanctum),
+		Filter: Filter{House: namedHouse(Sanctum)},
 		Amount: 7,
 	}
 	if cond.CondText() != "if you have played 7 or more Sanctum cards this turn" {
@@ -723,7 +717,7 @@ func TestCardsPlayed(t *testing.T) {
 	// The default threshold is one played card.
 	if (CardsPlayed{
 		Player: Controller,
-		House:  namedHouse(Mars),
+		Filter: Filter{House: namedHouse(Mars)},
 	}).Met(ctx) {
 		t.Error("no Mars cards played should not meet the default threshold")
 	}
@@ -771,7 +765,7 @@ func TestRepeatMayWhileYouDo(t *testing.T) {
 			Do: StealAember{Amount: 1},
 			Gate: MayWhileYouDo{Cond: CardsInPlay{
 				Player: Controller,
-				Type:   Creature,
+				Filter: Filter{Type: Creature},
 			}},
 		},
 	); err != nil {
@@ -785,7 +779,7 @@ func TestRepeatMayWhileYouDoDrivenByChoice(t *testing.T) {
 	e := Repeat{
 		Gate: MayWhileYouDo{Cond: CardsInPlay{
 			Player: Controller,
-			Type:   Creature,
+			Filter: Filter{Type: Creature},
 		}},
 		Do: Sequence{Effects: []Effect{
 			Destroy{Target: Target{Kind: TargetChosenEnemyCreature}},
@@ -829,14 +823,25 @@ func TestRepeatMayWhileYouDoDrivenByChoice(t *testing.T) {
 func TestItIs(t *testing.T) {
 	// CondText renders the filtered noun with the right article.
 	cases := map[string]ItIs{
-		"if it is a Mars creature":          {House: namedHouse(Mars), Type: Creature},
-		"if it is an artifact":              {Type: Artifact},
-		"if it is a Mars card":              {House: namedHouse(Mars)},
+		"if it is a Mars creature": {Filter: Filter{
+			House: namedHouse(Mars),
+			Type:  Creature,
+		}},
+		"if it is an artifact":              {Filter: Filter{Type: Artifact}},
+		"if it is a Mars card":              {Filter: Filter{House: namedHouse(Mars)}},
 		"if it is a card":                   {},
-		"if it is a non-Star Alliance card": {House: exceptHouse(StarAlliance)},
-		"if it is of the chosen house":      {House: chosenHouse},
-		"if it is of the active house":      {House: activeHouse},
-		"if it is another creature":         {Type: Creature, Other: true},
+		"if it is a non-Star Alliance card": {Filter: Filter{House: exceptHouse(StarAlliance)}},
+		"if it is of the chosen house":      {Filter: Filter{House: chosenHouse}},
+		"if it is of the active house":      {Filter: Filter{House: activeHouse}},
+		"if it is another creature": {Filter: Filter{
+			Type:   Creature,
+			Except: ExcludeSource,
+		}},
+		"if it is a Giant creature": {Filter: Filter{
+			Type:  Creature,
+			Trait: Giant,
+		}},
+		"if it is Subtle Chain": {Filter: Filter{Name: "Subtle Chain"}},
 	}
 	for want, e := range cases {
 		if got := e.CondText(); got != want {
@@ -846,10 +851,10 @@ func TestItIs(t *testing.T) {
 
 	// A Not wrapper renders each condition's own negated clause.
 	negated := map[string]ItIs{
-		"if it is not a Logos card": {House: namedHouse(Logos)},
+		"if it is not a Logos card": {Filter: Filter{House: namedHouse(Logos)}},
 		"if the discarded card is not a Logos card": {
-			House: namedHouse(Logos),
-			Noun:  DiscardedCard,
+			Filter: Filter{House: namedHouse(Logos)},
+			Noun:   DiscardedCard,
 		},
 	}
 	for want, e := range negated {
@@ -866,45 +871,36 @@ func TestItIs(t *testing.T) {
 	}
 
 	// No card in context is never met.
-	if (ItIs{Type: Creature}).Met(ctx) {
+	if (ItIs{Filter: Filter{Type: Creature}}).Met(ctx) {
 		t.Error("Met with no context card should be false")
 	}
 	ctx.It, ctx.HasIt = mars, true
-	if !(ItIs{
-		House: namedHouse(Mars),
-		Type:  Creature,
-	}).Met(ctx) {
+	if !(ItIs{Filter: Filter{House: namedHouse(Mars), Type: Creature}}).Met(ctx) {
 		t.Error("a Mars creature should match a Mars-creature filter")
 	}
-	if (ItIs{House: namedHouse(Logos)}).Met(ctx) {
+	if (ItIs{Filter: Filter{House: namedHouse(Logos)}}).Met(ctx) {
 		t.Error("a Mars creature should not match a Logos filter")
 	}
-	if (ItIs{Type: Artifact}).Met(ctx) {
+	if (ItIs{Filter: Filter{Type: Artifact}}).Met(ctx) {
 		t.Error("a creature should not match an artifact filter")
 	}
 
 	// Other bars the source card itself: a creature never counts its own play.
 	ctx.Source = mars + 1 // any card that is not the context card
-	if !(ItIs{
-		Type:  Creature,
-		Other: true,
-	}).Met(ctx) {
+	if !(ItIs{Filter: Filter{Type: Creature, Except: ExcludeSource}}).Met(ctx) {
 		t.Error("another creature should meet an Other filter")
 	}
 	ctx.Source = mars
-	if (ItIs{
-		Type:  Creature,
-		Other: true,
-	}).Met(ctx) {
+	if (ItIs{Filter: Filter{Type: Creature, Except: ExcludeSource}}).Met(ctx) {
 		t.Error("the source card should not meet an Other filter")
 	}
 	ctx.Source = 0
 
 	// Not inverts the match, so the condition holds for everything that does not fit.
-	if !(Not{Cond: ItIs{House: namedHouse(Logos)}}).Met(ctx) {
+	if !(Not{Cond: ItIs{Filter: Filter{House: namedHouse(Logos)}}}).Met(ctx) {
 		t.Error("a Mars creature should meet a not-Logos filter")
 	}
-	if (Not{Cond: ItIs{House: namedHouse(Mars)}}).Met(ctx) {
+	if (Not{Cond: ItIs{Filter: Filter{House: namedHouse(Mars)}}}).Met(ctx) {
 		t.Error("a Mars creature should not meet a not-Mars filter")
 	}
 }
@@ -1338,7 +1334,7 @@ func TestOrCondition(t *testing.T) {
 		Controller: 0,
 	}
 
-	trait := ItIsOfTrait{Trait: Dinosaur}
+	trait := ItIs{Filter: Filter{Type: Creature, Trait: Dinosaur}}
 	aember := HasAember{}
 	or := Or{Conditions: []Condition{trait, aember}}
 
@@ -1385,14 +1381,14 @@ func TestOrCondition(t *testing.T) {
 // differ only in a single named house renders as one phrase (Ambassador Liu).
 func TestOrCombinesNamedHouses(t *testing.T) {
 	cards := Or{Conditions: []Condition{
-		ItIs{House: HouseMatcher{
+		ItIs{Filter: Filter{House: HouseMatcher{
 			Kind:  MatchNamedHouse,
 			House: Dis,
-		}},
-		ItIs{House: HouseMatcher{
+		}}},
+		ItIs{Filter: Filter{House: HouseMatcher{
 			Kind:  MatchNamedHouse,
 			House: Shadows,
-		}},
+		}}},
 	}}
 	if got := cards.CondText(); got != "if it is a Dis or Shadows card" {
 		t.Errorf("combined house text = %q", got)
@@ -1400,20 +1396,14 @@ func TestOrCombinesNamedHouses(t *testing.T) {
 
 	// Sharing a type folds the type into the combined noun.
 	creatures := Or{Conditions: []Condition{
-		ItIs{
-			House: HouseMatcher{
-				Kind:  MatchNamedHouse,
-				House: Untamed,
-			},
-			Type: Creature,
-		},
-		ItIs{
-			House: HouseMatcher{
-				Kind:  MatchNamedHouse,
-				House: Logos,
-			},
-			Type: Creature,
-		},
+		ItIs{Filter: Filter{House: HouseMatcher{
+			Kind:  MatchNamedHouse,
+			House: Untamed,
+		}, Type: Creature}},
+		ItIs{Filter: Filter{House: HouseMatcher{
+			Kind:  MatchNamedHouse,
+			House: Logos,
+		}, Type: Creature}},
 	}}
 	if got := creatures.CondText(); got != "if it is an Untamed or Logos creature" {
 		t.Errorf("combined creature text = %q", got)
@@ -1421,20 +1411,14 @@ func TestOrCombinesNamedHouses(t *testing.T) {
 
 	// A differing type breaks the fold, so each clause renders on its own.
 	mixed := Or{Conditions: []Condition{
-		ItIs{
-			House: HouseMatcher{
-				Kind:  MatchNamedHouse,
-				House: Dis,
-			},
-			Type: Creature,
-		},
-		ItIs{
-			House: HouseMatcher{
-				Kind:  MatchNamedHouse,
-				House: Shadows,
-			},
-			Type: Artifact,
-		},
+		ItIs{Filter: Filter{House: HouseMatcher{
+			Kind:  MatchNamedHouse,
+			House: Dis,
+		}, Type: Creature}},
+		ItIs{Filter: Filter{House: HouseMatcher{
+			Kind:  MatchNamedHouse,
+			House: Shadows,
+		}, Type: Artifact}},
 	}}
 	if got := mixed.CondText(); got != "if it is a Dis creature or it is a Shadows artifact" {
 		t.Errorf("mixed text = %q", got)
@@ -1442,10 +1426,10 @@ func TestOrCombinesNamedHouses(t *testing.T) {
 
 	// A non-ItIs clause breaks the fold too.
 	nonHouse := Or{Conditions: []Condition{
-		ItIs{House: HouseMatcher{
+		ItIs{Filter: Filter{House: HouseMatcher{
 			Kind:  MatchNamedHouse,
 			House: Dis,
-		}},
+		}}},
 		HasAember{},
 	}}
 	if got := nonHouse.CondText(); got != "if it is a Dis card or it has Æmber on it" {
@@ -1455,11 +1439,11 @@ func TestOrCombinesNamedHouses(t *testing.T) {
 	// An ItIs that filters by something other than a single named house
 	// (here the active house) breaks the fold, so each clause renders on its own.
 	notNamed := Or{Conditions: []Condition{
-		ItIs{House: HouseMatcher{
+		ItIs{Filter: Filter{House: HouseMatcher{
 			Kind:  MatchNamedHouse,
 			House: Dis,
-		}},
-		ItIs{House: activeHouse},
+		}}},
+		ItIs{Filter: Filter{House: activeHouse}},
 	}}
 	if got := notNamed.CondText(); got != "if it is a Dis card or it is of the active house" {
 		t.Errorf("not-named text = %q", got)
@@ -1478,7 +1462,7 @@ func TestAndCondition(t *testing.T) {
 	}
 
 	friendly := ItIsFriendly{}
-	trait := ItIsOfTrait{Trait: Mutant}
+	trait := ItIs{Filter: Filter{Type: Creature, Trait: Mutant}}
 	and := And{Conditions: []Condition{friendly, trait}}
 
 	if got := and.CondText(); got != "if it is a friendly Mutant creature" {
@@ -1523,37 +1507,37 @@ func TestAndCollapsesItShapeClauses(t *testing.T) {
 		conds []Condition
 		want  string
 	}{{
-		name:  "scope and trait",
-		conds: []Condition{ItIsFriendly{}, ItIsOfTrait{Trait: Cat}},
-		want:  "if it is a friendly Cat creature",
+		name: "scope and trait",
+		conds: []Condition{ItIsFriendly{}, ItIs{Filter: Filter{
+			Type:  Creature,
+			Trait: Cat,
+		}}},
+		want: "if it is a friendly Cat creature",
 	}, {
-		name:  "an enemy scope takes the right article",
-		conds: []Condition{ItIsEnemy{}, ItIsOfTrait{Trait: Cat}},
-		want:  "if it is an enemy Cat creature",
+		name: "an enemy scope takes the right article",
+		conds: []Condition{ItIsEnemy{}, ItIs{Filter: Filter{
+			Type:  Creature,
+			Trait: Cat,
+		}}},
+		want: "if it is an enemy Cat creature",
 	}, {
 		name: "a house joins the phrase",
 		conds: []Condition{
 			ItIsFriendly{},
-			ItIs{
-				House: HouseMatcher{
-					Kind:  MatchNamedHouse,
-					House: Mars,
-				},
-				Type: Creature,
-			},
+			ItIs{Filter: Filter{House: HouseMatcher{
+				Kind:  MatchNamedHouse,
+				House: Mars,
+			}, Type: Creature}},
 		},
 		want: "if it is a friendly Mars creature",
 	}, {
 		name: "clauses that disagree on the noun do not collapse",
 		conds: []Condition{
 			ItIsFriendly{},
-			ItIs{
-				House: HouseMatcher{
-					Kind:  MatchNamedHouse,
-					House: Mars,
-				},
-				Type: Artifact,
-			},
+			ItIs{Filter: Filter{House: HouseMatcher{
+				Kind:  MatchNamedHouse,
+				House: Mars,
+			}, Type: Artifact}},
 		},
 		want: "if it is a friendly creature and it is a Mars artifact",
 	}, {
@@ -1564,35 +1548,27 @@ func TestAndCollapsesItShapeClauses(t *testing.T) {
 		name: "a clause with no adjective blocks the collapse",
 		conds: []Condition{
 			ItIsFriendly{},
-			ItIs{House: HouseMatcher{Kind: MatchChosenHouse}},
+			ItIs{Filter: Filter{House: HouseMatcher{Kind: MatchChosenHouse}}},
 		},
 		want: "if it is a friendly creature and it is of the chosen house",
 	}, {
 		name: "a clause naming another card blocks the collapse",
 		conds: []Condition{
 			ItIsFriendly{},
-			ItIs{
-				House: HouseMatcher{
-					Kind:  MatchNamedHouse,
-					House: Mars,
-				},
-				Type:  Creature,
-				Other: true,
-			},
+			ItIs{Filter: Filter{House: HouseMatcher{
+				Kind:  MatchNamedHouse,
+				House: Mars,
+			}, Type: Creature, Except: ExcludeSource}},
 		},
 		want: "if it is a friendly creature and it is another Mars creature",
 	}, {
 		name: "a clause that renames it blocks the collapse",
 		conds: []Condition{
 			ItIsFriendly{},
-			ItIs{
-				House: HouseMatcher{
-					Kind:  MatchNamedHouse,
-					House: Mars,
-				},
-				Type: Creature,
-				Noun: ThatCard,
-			},
+			ItIs{Filter: Filter{House: HouseMatcher{
+				Kind:  MatchNamedHouse,
+				House: Mars,
+			}, Type: Creature}, Noun: ThatCard},
 		},
 		want: "if it is a friendly creature and that card is a Mars creature",
 	}}
@@ -1662,7 +1638,7 @@ func TestCountIs(t *testing.T) {
 			cond: CountIs{
 				Count: CardsPlayed{
 					Player: Controller,
-					House:  namedHouse(Mars),
+					Filter: Filter{House: namedHouse(Mars)},
 				},
 				Is:     Exactly,
 				Amount: 2,
@@ -1806,7 +1782,7 @@ func TestCardsPlayedCountsEveryHouseWhenUnset(t *testing.T) {
 	}
 	if got := (CardsPlayed{
 		Player: Controller,
-		House:  namedHouse(Logos),
+		Filter: Filter{House: namedHouse(Logos)},
 	}).Value(ctx); got != 1 {
 		t.Errorf("house-filtered value = %d, want 1", got)
 	}
@@ -1964,8 +1940,8 @@ func TestAemberOnThisAtLeast(t *testing.T) {
 // TestNamedCardPurged covers Igon the Terrible's gate: whether a card of a name
 // sits in the controller's purge pile, both senses.
 func TestNamedCardPurged(t *testing.T) {
-	present := NamedCardPurged{Name: "Igon the Green"}
-	absent := Not{Cond: NamedCardPurged{Name: "Igon the Green"}}
+	present := NamedCardPurged{Filter: Filter{Name: "Igon the Green"}}
+	absent := Not{Cond: NamedCardPurged{Filter: Filter{Name: "Igon the Green"}}}
 	if got := present.CondText(); got != "if Igon the Green has been purged" {
 		t.Errorf("present text = %q", got)
 	}
@@ -2244,10 +2220,7 @@ func TestKeyCostChangeWhileCondition(t *testing.T) {
 		return NewCard("proc", Sanctum, Artifact, Rare,
 			WithKeyCost(NewKeyCostChange(Opponent, 2).While(
 				Not{Cond: CountIs{
-					Count: HousesAmong{
-						Player: Opponent,
-						Type:   Creature,
-					},
+					Count:  HousesAmong{Player: Opponent, Filter: Filter{Type: Creature}},
 					Is:     AtLeast,
 					Amount: 3,
 				}})))

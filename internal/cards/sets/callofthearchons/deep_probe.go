@@ -25,8 +25,7 @@ var DeepProbe = set.New(
 					Player: card.Opponent,
 					Zones:  []card.Zone{card.Hand},
 					Selection: card.Each{
-						Type:  card.Type.Creature,
-						House: card.Houses.Chosen,
+						Filter: card.Filter{Type: card.Type.Creature, House: card.Houses.Chosen},
 					},
 				},
 			}},

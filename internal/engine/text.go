@@ -45,10 +45,15 @@ func side(p Player) string {
 }
 
 // qualifyNoun places an adjective before a noun, leaving the noun alone when
-// there is no adjective to place.
+// there is no adjective to place and standing in as the noun when there is no
+// noun to qualify — a word that names a kind of card by itself, such as a trait,
+// is the whole phrase ("each friendly Shard").
 func qualifyNoun(adjective, noun string) string {
 	if adjective == "" {
 		return noun
+	}
+	if noun == "" {
+		return adjective
 	}
 	return adjective + " " + noun
 }
@@ -140,9 +145,9 @@ func abilityPrefix(a Ability) (text string, capitalizeEffect bool) {
 // a <shape>, <then>" wording: Carlo Phantom's "after you play an artifact, steal
 // 1 Æmber", Veylan Analyst's "after you use an artifact, gain 1 Æmber", and Baron
 // Mengevin's "after you discard a Sanctum card, ...", rather than the literal
-// "after you <verb> a card, if it is a <shape>, ...". A Conditional{ItIsNamed}
-// folds the same way to a named card — Chain Gang's "after you play Subtle Chain,
-// ready Chain Gang" — and a Conditional{ItIsOfTrait} to a trait creature — Dark
+// "after you <verb> a card, if it is a <shape>, ...". The shape is whatever the
+// condition's Filter names, so the same fold covers a named card — Chain Gang's
+// "after you play Subtle Chain, ready Chain Gang" — and a trait creature — Dark
 // Æmber Vault's "after you play a Mutant creature, draw a card". Any other effect
 // renders with the broad prefix, so an unconditional or state-gated reaction still
 // reads "After you <verb> a card, ...".
@@ -153,15 +158,7 @@ func afterYouActOnText(verb string, e Effect) (string, bool) {
 	}
 	switch it := cond.Cond.(type) {
 	case ItIs:
-		return "after you " + verb + " " + indefinite(
-			it.shapeNoun(),
-		) + ", " + cond.Then.Text(), true
-	case ItIsNamed:
-		return "after you " + verb + " " + it.Name + ", " + cond.Then.Text(), true
-	case ItIsOfTrait:
-		return "after you " + verb + " " + indefinite(
-			it.Trait.String()+" creature",
-		) + ", " + cond.Then.Text(), true
+		return "after you " + verb + " " + it.object() + ", " + cond.Then.Text(), true
 	case ItHasBonusIcon:
 		return "after you " + verb + " a card with a bonus icon, " + cond.Then.Text(), true
 	default:
@@ -254,23 +251,22 @@ func scopedCreatureAdjective(c Condition) (string, bool) {
 }
 
 // afterCreaturePlayedAdjacentText folds an "after a creature is played adjacent
-// to <self>" reaction gated only on the played creature's trait — a
-// Conditional{ItIsOfTrait} — into the natural "after a <Trait> creature is played
-// adjacent to <self>, <then>" wording (Stilt-Kin's "after a Giant creature is
-// played adjacent to Stilt-Kin, ready and fight with Stilt-Kin"), rather than the
-// literal "after a creature is played adjacent to <self>, if it is a <Trait>
-// creature, ...". Any other effect shape reports false and renders with the broad
-// prefix.
+// to <self>" reaction gated only on the played creature's shape — a
+// Conditional{ItIs} — into the natural "after a <shape> is played adjacent to
+// <self>, <then>" wording (Stilt-Kin's "after a Giant creature is played adjacent
+// to Stilt-Kin, ready and fight with Stilt-Kin"), rather than the literal "after a
+// creature is played adjacent to <self>, if it is a <shape>, ...". Any other
+// effect shape reports false and renders with the broad prefix.
 func afterCreaturePlayedAdjacentText(e Effect) (string, bool) {
 	cond, ok := e.(Conditional)
 	if !ok {
 		return "", false
 	}
-	trait, ok := cond.Cond.(ItIsOfTrait)
+	it, ok := cond.Cond.(ItIs)
 	if !ok {
 		return "", false
 	}
-	return "after a " + trait.Trait.String() + " creature is played adjacent to " +
+	return "after " + it.object() + " is played adjacent to " +
 		SelfName + ", " + cond.Then.Text(), true
 }
 
@@ -687,8 +683,12 @@ func combatRules(def *CardDefinition) []string {
 	if s := entersReadyText(def.EntersReadyGrant); s != "" {
 		rules = append(rules, s)
 	}
-	if fr := def.FightRestriction; fr != (Target{}) {
-		rules = append(rules, def.Name+" can only fight "+singularNoun(fr.Text())+"s.")
+	if fr := def.FightRestriction; fr.Narrows() {
+		// The rule sentence owns the quantifier ("can only fight …"), so the filter
+		// supplies a bare noun that is pluralized before its trailing clauses are
+		// appended: "can only fight stunned creatures".
+		rules = append(rules,
+			def.Name+" can only fight "+fr.clauses(fr.qualifyNoun("creature")+"s")+".")
 	}
 	for _, k := range def.CannotBeUsedTo {
 		rules = append(rules, def.Name+" cannot "+k.verb()+".")
@@ -701,9 +701,12 @@ func combatRules(def *CardDefinition) []string {
 		cond := strings.ReplaceAll(dw.CondText(), SelfName, def.Name)
 		rules = append(rules, capitalizeFirst(cond)+", destroy "+def.Name+".")
 	}
-	if t := def.TakesDamageFor; t.valid() {
+	if f := def.TakesDamageFor; f.Narrows() {
+		// The sentence supplies the quantifier and the filter the noun, so Shadow Self
+		// reads "Damage dealt to each neighboring non-Specter creature …".
 		rules = append(rules,
-			"Damage dealt to "+t.Text()+" is dealt to "+def.Name+" instead.")
+			"Damage dealt to each "+f.noun("creature")+" is dealt to "+
+				def.Name+" instead.")
 	}
 	if def.AlsoTakesNeighborFightDamage {
 		rules = append(rules,

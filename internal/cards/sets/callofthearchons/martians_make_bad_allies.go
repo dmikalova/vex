@@ -22,14 +22,16 @@ var MartiansMakeBadAllies = set.New(
 				Zones:  []card.Zone{card.Hand},
 				Player: card.Controller,
 				Selection: card.Each{
-					Type:  card.Type.Creature,
-					House: card.Houses.Except(card.House.Self),
+					Filter: card.Filter{
+						Type:  card.Type.Creature,
+						House: card.Houses.Except(card.House.Self),
+					},
 				},
 			},
 			card.GainAember{
 				Player: card.Controller,
 				Amount: 1,
-				Per:    card.CardsPurged{Type: card.Type.Creature},
+				Per:    card.CardsPurged{Noun: card.Type.Creature},
 			},
 		}}),
 )

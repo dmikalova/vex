@@ -21,8 +21,10 @@ var Tunk = set.New(
 	card.WithTraits(card.Traits.Robot),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{
 		Cond: card.ItIs{
-			House: card.Houses.Named(card.House.Self),
-			Type:  card.Type.Creature,
+			Filter: card.Filter{
+				House: card.Houses.Named(card.House.Self),
+				Type:  card.Type.Creature,
+			},
 		},
 		Then: card.Heal{
 			Fully:  true,

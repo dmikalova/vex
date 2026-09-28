@@ -39,7 +39,9 @@ var DarkAemberVault = set.New(
 	}),
 	card.WithAbility(
 		card.Trigger.AfterCardPlayed, card.Conditional{
-			Cond: card.ItIsOfTrait{Trait: card.Traits.Mutant},
+			Cond: card.ItIs{
+				Filter: card.Filter{Type: card.Type.Creature, Trait: card.Traits.Mutant},
+			},
 			Then: card.Draw{Amount: 1},
 		}),
 )

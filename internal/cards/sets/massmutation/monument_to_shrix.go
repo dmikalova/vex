@@ -31,7 +31,7 @@ var MonumentToShrix = set.New(
 	card.WithSpendableAember(),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{
-			Cond: card.NamedCardInDiscard{Name: CitizenShrix.Name},
+			Cond: card.NamedCardInDiscard{Filter: card.Filter{Name: CitizenShrix.Name}},
 			Then: card.MoveAemberFromPool{
 				Amount: 1,
 				Target: card.Target.This,

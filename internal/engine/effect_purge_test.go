@@ -15,7 +15,7 @@ func TestPurge(t *testing.T) {
 	if got := (PurgeCard{
 		Zones:     []Zone{Discard},
 		Player:    ChosenPlayer,
-		Selection: Chosen{Type: Creature},
+		Selection: Chosen{Filter: Filter{Type: Creature}},
 	}).Text(); got != "purge a creature from a discard pile" {
 		t.Errorf("single text = %q", got)
 	}
@@ -30,17 +30,17 @@ func TestPurge(t *testing.T) {
 	if got := (PurgeCard{
 		Zones:     []Zone{Discard},
 		Player:    ChosenPlayer,
-		Selection: Chosen{House: namedHouse(Dis)},
+		Selection: Chosen{Filter: Filter{House: namedHouse(Dis)}},
 	}).Text(); got != "purge a Dis card from a discard pile" {
 		t.Errorf("house text = %q", got)
 	}
 	if got := (PurgeCard{
 		Zones:  []Zone{Discard},
 		Player: EachPlayer,
-		Selection: Each{
+		Selection: Each{Filter: Filter{
 			House: namedHouse(Untamed),
 			Type:  Creature,
-		},
+		}},
 		GainOwnerAember: true,
 	}).Text(); got != "purge each Untamed creature from each player's discard pile. For each card purged this way, its owner gains 1 Æmber" {
 		t.Errorf("each text = %q", got)
@@ -138,7 +138,7 @@ func TestPurge(t *testing.T) {
 	if !(PurgeCard{
 		Zones:     []Zone{Discard},
 		Player:    ChosenPlayer,
-		Selection: Chosen{Type: Creature},
+		Selection: Chosen{Filter: Filter{Type: Creature}},
 	}).resolveGate(
 		ctx4,
 	) {
@@ -163,7 +163,7 @@ func TestPurge(t *testing.T) {
 	if (PurgeCard{
 		Zones:     []Zone{Discard},
 		Player:    ChosenPlayer,
-		Selection: Chosen{Type: Creature},
+		Selection: Chosen{Filter: Filter{Type: Creature}},
 	}).resolveGate(
 		ctx5,
 	) {
@@ -186,7 +186,7 @@ func TestPurge(t *testing.T) {
 	if !(PurgeCard{
 		Zones:     []Zone{Discard},
 		Player:    ChosenPlayer,
-		Selection: Chosen{House: namedHouse(Dis)},
+		Selection: Chosen{Filter: Filter{House: namedHouse(Dis)}},
 	}).resolveGate(
 		ctx6,
 	) {
@@ -227,10 +227,10 @@ func TestPurgeEachFromBothPiles(t *testing.T) {
 	(PurgeCard{
 		Zones:  []Zone{Discard},
 		Player: EachPlayer,
-		Selection: Each{
+		Selection: Each{Filter: Filter{
 			House: namedHouse(Untamed),
 			Type:  Creature,
-		},
+		}},
 		GainOwnerAember: true,
 	}).Resolve(ctx)
 
@@ -306,12 +306,9 @@ func TestPurgeFromHand(t *testing.T) {
 
 	// Text and object variants across the three selections.
 	if got := (PurgeCard{
-		Zones:  []Zone{Hand},
-		Player: Opponent,
-		Selection: Chosen{
-			House:    namedHouse(Sanctum),
-			Optional: true,
-		},
+		Zones:     []Zone{Hand},
+		Player:    Opponent,
+		Selection: Chosen{Filter: Filter{House: namedHouse(Sanctum)}, Optional: true},
 	}).Text(); got != "you may purge a Sanctum card from your opponent's hand" {
 		t.Errorf("chosen house text = %q", got)
 	}
@@ -330,12 +327,9 @@ func TestPurgeFromHand(t *testing.T) {
 		t.Errorf("random text = %q", got)
 	}
 	if got := (PurgeCard{
-		Zones:  []Zone{Hand},
-		Player: Controller,
-		Selection: Each{
-			Type:  Creature,
-			House: exceptHouse(Mars),
-		},
+		Zones:     []Zone{Hand},
+		Player:    Controller,
+		Selection: Each{Filter: Filter{Type: Creature, House: exceptHouse(Mars)}},
 	}).Text(); got != "purge each non-Mars creature from your hand" {
 		t.Errorf("each text = %q", got)
 	}
@@ -357,12 +351,9 @@ func TestPurgeFromHand(t *testing.T) {
 		Controller: 0,
 	}
 	PurgeCard{
-		Zones:  []Zone{Hand},
-		Player: Opponent,
-		Selection: Chosen{
-			House:    namedHouse(Sanctum),
-			Optional: true,
-		},
+		Zones:     []Zone{Hand},
+		Player:    Opponent,
+		Selection: Chosen{Filter: Filter{House: namedHouse(Sanctum)}, Optional: true},
 	}.Resolve(
 		ctx,
 	)
@@ -389,12 +380,9 @@ func TestPurgeFromHand(t *testing.T) {
 		optionPicker{idx: 1},
 	) // options [holy, Done] -> idx 1 is Done
 	PurgeCard{
-		Zones:  []Zone{Hand},
-		Player: Opponent,
-		Selection: Chosen{
-			House:    namedHouse(Sanctum),
-			Optional: true,
-		},
+		Zones:     []Zone{Hand},
+		Player:    Opponent,
+		Selection: Chosen{Filter: Filter{House: namedHouse(Sanctum)}, Optional: true},
 	}.Resolve(
 		ctx2,
 	)
@@ -415,12 +403,9 @@ func TestPurgeFromHand(t *testing.T) {
 		Controller: 0,
 	}
 	PurgeCard{
-		Zones:  []Zone{Hand},
-		Player: Opponent,
-		Selection: Chosen{
-			House:    namedHouse(Sanctum),
-			Optional: true,
-		},
+		Zones:     []Zone{Hand},
+		Player:    Opponent,
+		Selection: Chosen{Filter: Filter{House: namedHouse(Sanctum)}, Optional: true},
 	}.Resolve(
 		ctx3,
 	)
@@ -605,7 +590,7 @@ func TestPurgeFromHandChosenCreature(t *testing.T) {
 	e := PurgeCard{
 		Zones:     []Zone{Hand},
 		Player:    Controller,
-		Selection: Chosen{Type: Creature},
+		Selection: Chosen{Filter: Filter{Type: Creature}},
 	}
 	if e.Text() != "purge a creature from your hand" {
 		t.Errorf("text = %q", e.Text())
@@ -696,7 +681,7 @@ func TestCardsPurgedCount(t *testing.T) {
 	if got := (CardsPurged{}).CountText(); got != "card purged this way" {
 		t.Errorf("count text = %q", got)
 	}
-	if got := (CardsPurged{Type: Creature}).CountText(); got != "creature purged this way" {
+	if got := (CardsPurged{Noun: Creature}).CountText(); got != "creature purged this way" {
 		t.Errorf("creature count text = %q", got)
 	}
 	PurgeCreature{
@@ -897,18 +882,15 @@ func TestPurgeFromHandEachText(t *testing.T) {
 			PurgeCard{
 				Zones:     []Zone{Hand},
 				Player:    Opponent,
-				Selection: Each{Type: Creature},
+				Selection: Each{Filter: Filter{Type: Creature}},
 			},
 			"purge each creature from your opponent's hand",
 		},
 		{
 			PurgeCard{
-				Zones:  []Zone{Hand},
-				Player: Controller,
-				Selection: Each{
-					Type:  Creature,
-					House: exceptHouse(Mars),
-				},
+				Zones:     []Zone{Hand},
+				Player:    Controller,
+				Selection: Each{Filter: Filter{Type: Creature, House: exceptHouse(Mars)}},
 			},
 			"purge each non-Mars creature from your hand",
 		},
@@ -937,12 +919,9 @@ func TestPurgeFromHandEachPurgesEveryMatch(t *testing.T) {
 	}
 
 	PurgeCard{
-		Zones:  []Zone{Hand},
-		Player: Controller,
-		Selection: Each{
-			Type:  Creature,
-			House: exceptHouse(Mars),
-		},
+		Zones:     []Zone{Hand},
+		Player:    Controller,
+		Selection: Each{Filter: Filter{Type: Creature, House: exceptHouse(Mars)}},
 	}.
 		Resolve(
 			ctx,
