@@ -3299,11 +3299,24 @@ button:disabled {
   align-items: center;
   gap: 0.08rem;
 }
-.card-glyph-arrow {
+/* punctuation: a mark drawn between glyphs saying where one clause ends and the
+   next begins, where the decor and sigil below are drawn on a glyph. The arrow is
+   flow ("and then this, to that"); the gate and branch are the two ways one
+   condition can fall, drawn as one shape in two fills; the divider is "or". */
+.card-glyph-punct {
   font-size: 9px;
   font-weight: 800;
   color: var(--nm-fg);
   opacity: 0.7;
+}
+.card-glyph-punct--gate,
+.card-glyph-punct--branch {
+  font-size: 8px;
+  opacity: 0.85;
+}
+.card-glyph-punct--divider {
+  font-size: 10px;
+  opacity: 0.55;
 }
 .card-glyph-icon {
   position: relative;
@@ -3320,6 +3333,13 @@ button:disabled {
   font-weight: 800;
   color: var(--nm-fg);
   padding: 0 0.1rem;
+}
+/* the comparison qualifying that number — the "≥" in "≥3 power", read as "power 3
+   or more". It rides the quantity badge rather than taking a badge of its own,
+   and is muted so the number stays the thing the eye lands on. */
+.card-glyph-cmp {
+  font-weight: 700;
+  opacity: 0.75;
 }
 /* decorations carry a Target's shape without spending a slot: enemy/friendly
    tint the glyph, each stacks it, chosen outlines it, this marks the source. */

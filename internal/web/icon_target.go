@@ -187,7 +187,7 @@ func deckDestZone(d engine.DeckDest) string {
 // arrowTo marks a glyph as the result of a result-gate arrow, so a target reads
 // as "→ <target>".
 func arrowTo(g glyph) glyph {
-	g.arrow = true
+	g.punct = punctArrow
 	return g
 }
 

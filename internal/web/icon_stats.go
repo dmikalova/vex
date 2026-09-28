@@ -50,7 +50,14 @@ func statsEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	case engine.GainAssault:
 		return []glyph{{asset: "kw-assault"}, arrowTo(targetGlyph(v.Target))}, true, true
 	case engine.GainAssaultUntilNextTurn:
-		return []glyph{{asset: "kw-assault"}, arrowTo(targetGlyph(v.Target))}, true, true
+		// The same grant as GainAssault, bounded by a window rather than kept, so the
+		// turn marker is the whole difference between the two (ADR 0047). Declaring
+		// them synonyms was the alternative — a lasting buff and a permanent one are
+		// one act with a different shelf life — but composition costs one slot on one
+		// rare effect and says the shelf life out loud, so it is drawn.
+		return inWindow(
+			[]glyph{{asset: "kw-assault"}, arrowTo(targetGlyph(v.Target))},
+		), true, true
 	case engine.GainKeywords:
 		gs := make([]glyph, 0, len(v.Keywords)+1)
 		for _, k := range v.Keywords {

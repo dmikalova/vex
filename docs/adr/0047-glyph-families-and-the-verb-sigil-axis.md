@@ -105,6 +105,104 @@ still be tinted, so green and red survive as a second cue rather than the only o
 A verb glyph of its own in the strip was rejected: it spends a horizontal slot on a
 strip already squeezed to fit by `cardFitScript`, and it is not composition.
 
+### Structure is punctuation drawn between glyphs, never a third badge
+
+`decor` and `sigil` are both drawn **on** a noun: the subject glows, the verb wears
+a corner mark. Neither can say where one clause ends and the next begins, so an
+effect that puts more than one clause on a line renders them fused. An
+`engine.Conditional` concatenated its `Then` and its `Else` with nothing between
+them, so "if x, destroy a creature, otherwise draw a card" drew as destroy,
+creature, draw, card and read as one sentence; `engine.ChooseOne` did the same,
+prefixing the choose glyph and then running every option together.
+
+**Structure is a third axis, `punct`, drawn between glyphs rather than inside
+them.** Three marks, defined once and reused everywhere:
+
+- a **gate** mark opening a condition clause,
+- a **branch** mark between a `Conditional`'s `Then` and its `Else`,
+- a **divider** between the options of a `ChooseOne`.
+
+A glyph carries the mark that precedes it, so a family punctuates an
+already-composed run by stamping its head (`punctuate`), exactly as `markVerb`
+stamps a verb. What each mark draws is `punctMark`'s business alone
+(`view_icons.go`), the same seam `sigilMark` owns for a verb, so promoting a mark
+to art touches no family file.
+
+The marks are **not** a badge on the glyph, because a badge has to mean something
+about the noun it sits on, and a tint meaning "enemy" on one noun and
+"hypothetical" on another is exactly the ambiguity the two badge axes exist to
+remove. Structure is about the space *between* two mechanics, so it is drawn
+there.
+
+The existing arrow is **not** reused for the gate. The arrow is a flow mark
+meaning "and then this happens to that" — æmber → creature, discard → hand — and
+overloading it with "if" is the same conflation the rules-text side is currently
+undoing for a self-repeat. It joins `punct` as a fourth member so there is one
+punctuation channel rather than two, but it keeps its own character and meaning,
+and `TestPunctMarkCoversEveryPunct` fails if two marks ever draw the same one.
+
+The cost is horizontal. Measured over all 1231 materialized defs the median card
+draws 3 glyph slots and the widest 16; the estimate after the whole grammar lands
+is a median of 4 and a widest of 22. `iconStrip` scales `.card-icons-fit`
+horizontally through `cardFitScript`, so a busy card squeezes rather than wraps.
+That squeeze is accepted as-is and the fit behaviour is deliberately untouched; it
+can be reworked if it becomes untenable.
+
+### A comparison is a mark on the quantity badge, not a seventh picture
+
+`engine.Comparison` — `AtLeast`, `AtMost`, `Exactly`, `MoreThanYou`,
+`MoreThanOpponent`, `Even`, `Odd` — is the shared vocabulary behind the power
+filters and most conditions. Drawing seven pictures for it would give the strip
+seven nouns that are not nouns; "power 3 or more" is the power glyph with a 3 and
+an at-least mark, not a new drawing.
+
+**A comparison qualifies the quantity badge the glyph already prints.** It is a
+field on `glyph` typed as the engine's own `Comparison`, so the vocabulary cannot
+drift from the enum it draws, and `comparisonMark` (`view_icons.go`) owns what
+each member draws — text first, exactly as `sigilMark` allows for a verb, so
+promoting one to art later touches no family file.
+
+It rides the existing badge rather than taking a third badge axis beside `decor`
+and `sigil`, for the reason above: a strip where every glyph wears one more badge
+is noise, and a comparison is a qualifier on a number the badge is already
+printing.
+
+Two members print no number at all. `Even` and `Odd` ignore `Amount` — they
+compare a quantity's shape, not its size — so their mark is the whole badge, which
+is why the badge draws for a bare comparison as well as for a count. The two
+relative comparisons share one mark: both mean "more than the other player's
+pool", and which pool is the subject is already carried by the glyph's
+enemy/friendly decor, so a second mark would encode the subject twice.
+`TestComparisonMarkCoversEveryComparison` walks `engine.Comparisons()`, so a
+comparison added to the engine cannot reach the strip undrawn.
+
+### A timing window is drawn by composition, not by a fourth axis
+
+The strip had no duration channel at all. `internal/web` mentioned `Duration` in
+one place — `icon_compose.go` recursing through `engine.ForDuration` into whatever
+it wrapped — so the wrapper rendered as its child and the window was dropped. Two
+measured pairs came out byte-identical: `BatchDestroy` and
+`DestroyEachCreatureAtEndOfTurn` both drew `[destroy, → each creature]`, and
+`GainAssault` and `GainAssaultUntilNextTurn` both drew `[assault, → this
+creature]`.
+
+**An effect bound to a window appends the `phase-turn` glyph to its run** —
+`inWindow`, and `windowed` for a wrapper that still holds a covered flag. The
+end-of-turn wipe reads as destroy, each creature, turn marker. `phase-turn` is
+already the trigger glyph for the start and end of a turn, so the marker is a word
+the player has met rather than a new one, and the cost is one horizontal slot on
+the handful of effects that have a window.
+
+*Which* window is deliberately not drawn. The marker says "not now"; saying more
+would need a picture per `Duration`, and six pictures for a distinction the printed
+text already carries is the seventh-picture mistake the comparison marks avoid.
+
+Declaring the assault pair synonyms was the alternative — a lasting buff and a
+permanent one are one act with a different shelf life. They are drawn apart
+instead: the marker costs one slot on one rare effect, and how long a buff lasts is
+a thing a player plays around. `TestTimedAssaultDrawsItsWindow` and
+`TestDelayedWipeDrawsItsWindow` pin both pairs.
+
 ### No collision is exempt, but synonyms are declared
 
 A collision test asserts that two distinct leaf mechanics never render the same
@@ -141,6 +239,10 @@ have nothing to do with glyphs.
   move-plus-edit diff cannot.
 - New sigil SVGs join `web/assets` and must be registered in `galleryIcons`, which
   `TestGalleryShowsEveryIcon` holds equal to the assets directory.
+- A glyph's `arrow bool` becomes `punct punct`, so there is one punctuation
+  channel and `arrowTo` is one of its callers rather than its own mechanism. The
+  CSS class `.card-glyph-arrow` becomes `.card-glyph-punct` with a modifier per
+  mark.
 - The four defensive `covered = false` paths are carried across unchanged. None is
   reachable for a shipped card — `TestIconTotality` would be red if one were — but
   they are what forces the three-valued family return.

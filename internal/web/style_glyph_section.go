@@ -251,6 +251,32 @@ func glyphCompositions() []glyphComposition {
 				Target: engine.Target{Kind: engine.TargetChosenEnemyCreature},
 			},
 		},
+		{
+			"If your opponent has 7 Æmber or more, they lose 4. Otherwise, draw a card",
+			[]string{"glyph-play"},
+			engine.Conditional{
+				Cond: engine.PoolAember{
+					Player: engine.Opponent,
+					Is:     engine.AtLeast,
+					Amount: 7,
+				},
+				Then: engine.LoseAember{Player: engine.Opponent, Amount: 4},
+				Else: engine.Draw{Amount: 1},
+			},
+		},
+		{
+			"Choose one: gain 1 Æmber, or draw a card",
+			[]string{"glyph-action"},
+			engine.ChooseOne{Options: []engine.Effect{
+				engine.GainAember{Amount: 1},
+				engine.Draw{Amount: 1},
+			}},
+		},
+		{
+			"At the end of the turn, destroy each creature",
+			[]string{"glyph-play"},
+			engine.DestroyEachCreatureAtEndOfTurn{},
+		},
 	}
 }
 

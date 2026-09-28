@@ -77,13 +77,16 @@ func damageEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 			}),
 		}, true, true
 	case engine.DestroyEachCreatureAtEndOfTurn:
-		return []glyph{
+		// The turn marker is what tells this from BatchDestroy over every creature:
+		// the same wipe, scheduled into the end-of-turn window rather than resolved
+		// now (ADR 0047).
+		return inWindow([]glyph{
 			{asset: "glyph-destroy"},
 			arrowTo(glyph{
 				asset: "type-creature",
 				decor: decorEach,
 			}),
-		}, true, true
+		}), true, true
 	case engine.PurgeCreature:
 		return []glyph{{asset: "zone-purge"}, arrowTo(targetGlyph(v.Target))}, true, true
 	case engine.PurgeSource:

@@ -28,12 +28,9 @@ func composeEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	case engine.Sequence:
 		return claim(composeGlyphs(v.Effects...))
 	case engine.ChooseOne:
-		return append([]glyph{{asset: "glyph-choose"}}, mustCompose(v.Options...)...), true, true
+		return append([]glyph{{asset: "glyph-choose"}}, dividedOptions(v.Options)...), true, true
 	case engine.Conditional:
-		if v.Else != nil {
-			return claim(composeGlyphs(v.Then, v.Else))
-		}
-		return claim(effectGlyphs(v.Then))
+		return claim(conditionalGlyphs(v))
 	case engine.ChooseCreatureThen:
 		gs := []glyph{targetGlyph(v.Target)}
 		more, covered := effectGlyphs(v.Then)
@@ -60,16 +57,50 @@ func composeEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	case engine.Instead:
 		return []glyph{{asset: "glyph-swap"}}, true, true
 	case engine.ForDuration:
-		return claim(composeGlyphs(v.Effects...))
+		return claim(windowed(composeGlyphs(v.Effects...)))
 	case engine.ForRemainderOfTurn:
-		return claim(effectGlyphs(v.Do))
+		return claim(windowed(effectGlyphs(v.Do)))
 	case engine.ForOpponentNextTurn:
-		return claim(effectGlyphs(v.Do))
+		return claim(windowed(effectGlyphs(v.Do)))
 	case engine.NextPlayed:
 		return append([]glyph{{asset: "glyph-play"}}, mustCompose(v.EntersPlay)...), true, true
 	case engine.GainUntilNextTurn:
-		return claim(composeGlyphs(v.Effects...))
+		return claim(windowed(composeGlyphs(v.Effects...)))
 	default:
 		return nil, false, false
 	}
+}
+
+// conditionalGlyphs draws a gated effect as two punctuated clauses: a gate mark
+// opens the consequence, and a branch mark opens the alternative when there is
+// one (ADR 0047). Without the marks "if x, destroy a creature, otherwise draw a
+// card" runs together into one sentence of four glyphs.
+//
+// The condition itself draws nothing yet — the Condition family has no renderer —
+// so the gate mark is currently the only sign that what follows is hypothetical.
+// It stays the clause opener once conditions are drawn: the condition's glyphs
+// take the mark, and the consequence follows them.
+func conditionalGlyphs(v engine.Conditional) ([]glyph, bool) {
+	gs, covered := effectGlyphs(v.Then)
+	gs = punctuate(gs, punctGate)
+	if v.Else == nil {
+		return gs, covered
+	}
+	alt, altCovered := effectGlyphs(v.Else)
+	return append(gs, punctuate(alt, punctBranch)...), covered && altCovered
+}
+
+// dividedOptions renders a choice's options as one run with a divider mark
+// opening every option after the first, so the strip reads as alternatives rather
+// than as a sequence of things that all happen (ADR 0047).
+func dividedOptions(options []engine.Effect) []glyph {
+	out := make([]glyph, 0, len(options)*2)
+	for i := range options {
+		gs := mustCompose(options[i])
+		if i > 0 {
+			gs = punctuate(gs, punctDivider)
+		}
+		out = append(out, gs...)
+	}
+	return out
 }

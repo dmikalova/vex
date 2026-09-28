@@ -17,12 +17,16 @@ import (
 // exempt one: an unmapped mechanic is a bug, and the fix is always to draw a
 // glyph, so a new mechanic cannot ship without a glyph decision.
 //
-// A glyph carries two axes over its noun asset (ADR 0047). decor is the subject —
+// A glyph carries three axes over its noun asset (ADR 0047). decor is the subject —
 // *who* the glyph is about: an enemy or friendly tint, an "each" stack, a "chosen"
 // outline, a "this/self" marker. sigil is the verb — *what happens*: a corner mark
-// for gain, lose, steal, exalt, reveal, shuffle, may. A noun drawn with neither is
-// the common case; the verb axis exists to disambiguate, so it is spent only where
-// two mechanics would otherwise draw the same picture.
+// for gain, lose, steal, exalt, reveal, shuffle, may. Both are drawn *on* the noun.
+// punct is the punctuation drawn *between* nouns — the flow arrow, and the gate,
+// branch and divider marks that say where one clause ends and the next begins.
+//
+// A noun drawn with none of them is the common case; the verb axis exists to
+// disambiguate, so it is spent only where two mechanics would otherwise draw the
+// same picture, and punctuation only where a line carries more than one clause.
 //
 // That property is the gate: TestDistinctMechanicsDrawDistinctGlyphs (icon_test.go)
 // walks every ability on every card and fails when two distinct leaf mechanics land
@@ -86,17 +90,65 @@ func sigils() []sigil {
 	}
 }
 
+// punct is the strip's punctuation axis: a mark drawn *between* glyphs saying
+// where one clause ends and the next begins, where decor and sigil are drawn
+// *on* a glyph and say who it is about and what happens to it (ADR 0047).
+// Structure is punctuation rather than a third badge because a badge meaning
+// "enemy" on one noun and "hypothetical" on another is the ambiguity the two
+// badge axes exist to remove.
+//
+// A glyph carries the mark that precedes it, so a run of glyphs is punctuated by
+// stamping its head (punctuate). A constant names the role, never the character,
+// so promoting a mark to art later renames nothing; punctMark (view_icons.go)
+// owns what each one draws.
+type punct uint8
+
+const (
+	punctNone punct = iota
+	// punctArrow is the flow mark: "and then this happens to that" — æmber → a
+	// creature, discard → hand. It is deliberately not reused for structure.
+	punctArrow
+	// punctGate opens a condition clause: what follows holds only if the gate does.
+	punctGate
+	// punctBranch separates a Conditional's Then from its Else — the other way the
+	// same gate can fall.
+	punctBranch
+	// punctDivider separates the options of a ChooseOne, which are alternatives
+	// rather than a sequence.
+	punctDivider
+)
+
+// puncts lists every punctuation mark the vocabulary defines, so a test can
+// assert each one renders. punctNone is excluded: it is the absence of a mark.
+func puncts() []punct {
+	return []punct{punctArrow, punctGate, punctBranch, punctDivider}
+}
+
+// comparisonNone is the absence of a comparison on a glyph: a quantity badge
+// printing a plain count rather than a threshold. It mirrors the engine's
+// unexported comparisonUnset, which is Comparison's invalid zero value, so a
+// glyph that names no comparison reads the same way a condition that names none
+// does — as unset, never as "0 or more".
+const comparisonNone engine.Comparison = 0
+
 // glyph is one composed icon in the strip. A glyph with an asset renders that SVG
 // (tinted and decorated); a glyph with no asset renders its text as a small chip,
 // which is how a not-yet-drawn mechanic still shows something readable. Qty, when
 // positive, prints a numeral badge on the glyph (the "3" on 3 damage).
+//
+// comparison qualifies that badge rather than taking a badge of its own: "power 3
+// or more" is the power noun with a 3 and an at-least mark, not a new drawing and
+// not a third badge axis beside decor and sigil (ADR 0047). It is the engine's own
+// Comparison so the vocabulary cannot drift from the enum it draws, and
+// comparisonMark (view_icons.go) owns the mark each member gets.
 type glyph struct {
-	asset string
-	text  string
-	qty   int
-	decor decor
-	sigil sigil
-	arrow bool // render a leading result-gate arrow (→) before this glyph
+	asset      string
+	text       string
+	qty        int
+	decor      decor
+	sigil      sigil
+	punct      punct // punctuation mark drawn before this glyph
+	comparison engine.Comparison
 }
 
 // glyphLine is one ability's transcription: its trigger glyph(s) and the glyphs
@@ -244,6 +296,42 @@ func mustCompose(effects ...engine.Effect) []glyph {
 func markVerb(gs []glyph, s sigil) []glyph {
 	if len(gs) > 0 {
 		gs[0].sigil = s
+	}
+	return gs
+}
+
+// inWindow appends the turn marker to an already-composed run, which is how an
+// effect that lands later or lifts later draws the window it is bound to: the
+// end-of-turn board wipe reads as destroy, each creature, turn marker (ADR 0047).
+//
+// Timing is drawn by composition rather than by a badge axis of its own. phase-turn
+// is already the trigger glyph for the start and end of a turn, so the marker is a
+// word the player has met rather than a new one, and the cost is one horizontal
+// slot on the handful of effects that have a window. Which window it is — the rest
+// of this turn, the opponent's next turn — is not drawn: the marker says "not now",
+// and six durations would need six pictures to say more.
+//
+// It is the counterpart of markVerb and punctuate: a run that is already composed,
+// marked as a whole rather than glyph by glyph.
+func inWindow(gs []glyph) []glyph {
+	return append(gs, glyph{asset: "phase-turn"})
+}
+
+// windowed adapts a two-valued glyph rendering — a recursive effectGlyphs, a
+// composeGlyphs over the effects a duration wrapper carries — into the same
+// rendering bound to a turn window, so a wrapper can mark what it wrapped without
+// unpacking the covered flag first. It is inWindow's counterpart the way claim is
+// a family's.
+func windowed(gs []glyph, covered bool) ([]glyph, bool) {
+	return inWindow(gs), covered
+}
+
+// punctuate stamps a punctuation mark on the head of an already-composed run of
+// glyphs, which is how a family says where a clause begins without threading the
+// mark through the helper that built it. An empty run is left alone.
+func punctuate(gs []glyph, p punct) []glyph {
+	if len(gs) > 0 {
+		gs[0].punct = p
 	}
 	return gs
 }
