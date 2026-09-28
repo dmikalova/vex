@@ -19,6 +19,6 @@ var UnnaturalSelection = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
-			Target: card.Target.EachCreature.Refine(card.KeepPerSide(3)),
+			Target: card.Target.EachCreature.Refine(card.Refine.KeepPerSide(3)),
 		}),
 )

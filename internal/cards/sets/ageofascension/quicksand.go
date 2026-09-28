@@ -26,6 +26,6 @@ var Quicksand = set.New(
 				House:  card.Houses.Named(card.House.Self),
 				Ready:  true,
 			},
-			Take: card.MostPowerfulN(1),
+			Take: card.Refine.MostPowerfulN(1),
 		}}),
 )

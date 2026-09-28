@@ -21,6 +21,6 @@ var HorsemanOfFamine = set.New(
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithAbility(card.Trigger.PlayFightReap, card.Destroy{
-		Target: card.Target.EachCreature.Refine(card.LeastPowerful),
+		Target: card.Target.EachCreature.Refine(card.Refine.LeastPowerful),
 	}),
 )

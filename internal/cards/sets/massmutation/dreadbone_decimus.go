@@ -25,7 +25,7 @@ var DreadboneDecimus = set.New(
 			Amount: 1,
 		},
 		Result: card.Destroy{
-			Target: card.Target.Creature.Refine(card.PowerLessThanSource()),
+			Target: card.Target.Creature.Refine(card.Refine.PowerLessThanSource()),
 		},
 	}}),
 )

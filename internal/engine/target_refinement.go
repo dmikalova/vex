@@ -405,8 +405,9 @@ func (p portionPerSide) share(ctx *EffectContext, side []LocalID) []LocalID {
 }
 
 // LeastPowerful is a Refinement that keeps only the single least powerful creature
-// of a set, e.g. card.Target.EachCreature.Refine(card.LeastPowerful) (Horseman
-// of Famine). When several tie for least powerful the controller chooses which.
+// of a set, e.g. card.Target.EachCreature.Refine(card.Refine.LeastPowerful)
+// (Horseman of Famine). When several tie for least powerful the controller
+// chooses which.
 var LeastPowerful Refinement = leastPowerful{}
 
 // leastPowerful implements the LeastPowerful refinement.
@@ -448,12 +449,13 @@ func (leastPowerful) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 // MostPowerful is a Refinement that keeps the single most powerful creature of a
 // set, letting the controller choose which to keep when several tie — the
 // highest-power mirror of LeastPowerful, e.g.
-// card.Target.EachCreature.Refine(card.MostPowerful). For the "keep the top N"
-// form use MostPowerfulN.
+// card.Target.EachCreature.Refine(card.Refine.MostPowerful). For the "keep the
+// top N" form use MostPowerfulN.
 var MostPowerful Refinement = mostPowerfulN{n: 1}
 
 // MostPowerfulN returns a Refinement that keeps the n most powerful creatures of a
-// set, e.g. card.Target.EachCreature.Refine(card.MostPowerfulN(3)) (Three Fates).
+// set, e.g. card.Target.EachCreature.Refine(card.Refine.MostPowerfulN(3)) (Three
+// Fates).
 // When more creatures tie at the cutoff than there are remaining slots, the
 // controller chooses which of the tied creatures to include.
 func MostPowerfulN(n int) Refinement { return mostPowerfulN{n: n} }

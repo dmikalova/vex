@@ -19,6 +19,6 @@ var CullTheWeak = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
-			Target: card.Target.EachEnemyCreature.Refine(card.LeastPowerful),
+			Target: card.Target.EachEnemyCreature.Refine(card.Refine.LeastPowerful),
 		}),
 )
