@@ -6,7 +6,8 @@ import "strings"
 // terms of noun phrases — "this creature", "each enemy creature", "a friendly
 // creature", "each Scientist creature", "each creature with power 3 or
 // lower" — and Target captures exactly that: a base set chosen by Kind, narrowed
-// by optional filters. Because the same value both renders the phrase (Text) and
+// per card by one Filter and relative to the whole set by one Refinement. Because
+// the same value both renders the phrase (Text) and
 // selects the cards (Select), one effect such as Destroy can express many
 // different printed cards just by changing its Target.
 
@@ -45,9 +46,6 @@ const (
 	// TargetEachFriendlyCardInPlay selects the controller's cards in play — their
 	// creatures and artifacts.
 	TargetEachFriendlyCardInPlay
-	// TargetEachOtherFriendlyCreature selects the controller's creatures except
-	// the source card.
-	TargetEachOtherFriendlyCreature
 	// TargetChosenCreature selects a single creature the controller chooses from
 	// all creatures in play (either player's).
 	TargetChosenCreature
@@ -57,15 +55,6 @@ const (
 	// TargetChosenFriendlyCreature selects a single friendly creature the
 	// controller chooses.
 	TargetChosenFriendlyCreature
-	// TargetChosenOtherFriendlyCreature selects a single friendly creature the
-	// controller chooses, excluding the source card ("another friendly creature").
-	TargetChosenOtherFriendlyCreature
-	// TargetChosenOtherCreature selects a single creature the controller chooses
-	// from all in play, excluding the card in focus — "another creature" than the
-	// one a preceding effect put in context (Guardian Demon deals to another
-	// creature than the one it healed), or than the choosing card itself when no
-	// effect has put one there.
-	TargetChosenOtherCreature
 	// TargetChosenArtifact selects a single artifact the controller chooses from
 	// all artifacts in play (either player's).
 	TargetChosenArtifact
@@ -207,242 +196,6 @@ func (t Target) With(f Filter) Target {
 	return t
 }
 
-// WithTrait narrows the target to cards that have the given trait, e.g.
-// Target{Kind: TargetEachCreature}.WithTrait(Scientist).
-func (t Target) WithTrait(trait Trait) Target {
-	t.Filter.Trait = trait
-	return t
-}
-
-// ExceptTrait narrows the target to cards that do NOT have the given trait,
-// rendering the "non-<trait>" qualifier, e.g. a friendly Mars creature
-// ExceptTrait(Agent) reads "a friendly non-Agent Mars creature".
-func (t Target) ExceptTrait(trait Trait) Target {
-	t.Filter.ExceptTrait = trait
-	return t
-}
-
-// House narrows the target to the cards a HouseMatcher admits — a named house,
-// every house but one, the chosen house, the active house, or the house of the
-// card in context. Target{Kind: TargetEachCreature}.House(namedHouse(Mars)) reads
-// "each Mars creature"; .House(exceptHouse(Sanctum)) reads "each non-Sanctum
-// creature"; .House(HouseMatcher{Kind: MatchChosenHouse}) reads "each creature of
-// the chosen house".
-func (t Target) House(m HouseMatcher) Target {
-	t.Filter.House = m
-	return t
-}
-
-// MatchingAny makes the house and trait axes disjoin rather than conjoin, so
-// Target{Kind: TargetEachCreature}.House(namedHouse(Mars)).WithTrait(Robot).
-// MatchingAny() reads "each Mars or Robot creature" and a Mars Robot is one
-// member of that set, not two (EMP Blast).
-func (t Target) MatchingAny() Target {
-	t.Filter.MatchAny = true
-	return t
-}
-
-// OfHouseWithMostCreatures narrows the target to creatures of the house with the
-// most creatures in play across both battlelines, ties keeping every tied house
-// eligible (Etaromme).
-func (t Target) OfHouseWithMostCreatures() Target {
-	t.Filter.HouseWithMostCreatures = true
-	return t
-}
-
-// SharingTrait narrows the target to cards that share at least one trait with the
-// card in context (ctx.It), rendering "that shares a trait with it" — the purged
-// creature after a PurgeCard that moves a single card (Custom Virus), or
-// whatever an earlier effect put in context.
-func (t Target) SharingTrait() Target {
-	t.Filter.SharesTrait = true
-	return t
-}
-
-// PowerAtMost narrows the target to creatures whose power is maxPower or lower,
-// e.g. Target{Kind: TargetEachCreature}.PowerAtMost(3).
-func (t Target) PowerAtMost(maxPower int) Target {
-	t.Filter.Power = PowerBound{Kind: BoundAtMost, Amount: maxPower}
-	return t
-}
-
-// PowerAtLeast narrows the target to creatures whose power is minPower or higher,
-// e.g. Target{Kind: TargetEachCreature}.PowerAtLeast(3).
-func (t Target) PowerAtLeast(minPower int) Target {
-	t.Filter.Power = PowerBound{Kind: BoundAtLeast, Amount: minPower}
-	return t
-}
-
-// PowerExactly narrows the target to creatures whose power is exactly power,
-// e.g. Target{Kind: TargetChosenCreature}.PowerExactly(1).
-func (t Target) PowerExactly(power int) Target {
-	t.Filter.Power = PowerBound{Kind: BoundExactly, Amount: power}
-	return t
-}
-
-// OddPower narrows the target to creatures whose power is odd (Onyx Knight).
-func (t Target) OddPower() Target {
-	t.Filter.Power = PowerBound{Kind: BoundOdd}
-	return t
-}
-
-// EvenPower narrows the target to creatures whose power is even (Opal Knight).
-func (t Target) EvenPower() Target {
-	t.Filter.Power = PowerBound{Kind: BoundEven}
-	return t
-}
-
-// Damaged narrows the target to creatures that currently have damage on them.
-func (t Target) Damaged() Target {
-	t.Filter.Damage = DamageSome
-	return t
-}
-
-// Undamaged narrows the target to creatures that currently have no damage on them.
-func (t Target) Undamaged() Target {
-	t.Filter.Damage = DamageNone
-	return t
-}
-
-// Named narrows the target to cards with the given printed name, e.g.
-// Target{Kind: TargetChosenCreature}.Named("Ancient Bear").
-func (t Target) Named(name string) Target {
-	t.Filter.Name = name
-	return t
-}
-
-// WithAember narrows the target to creatures that have Æmber on them, rendering
-// " with Æmber on it", e.g. "each creature with Æmber on it".
-func (t Target) WithAember() Target {
-	t.Filter.Aember = AemberSome
-	return t
-}
-
-// WithoutAember narrows the target to creatures that have no Æmber on them,
-// rendering " with no Æmber on it", e.g. "a creature with no Æmber on it".
-func (t Target) WithoutAember() Target {
-	t.Filter.Aember = AemberNone
-	return t
-}
-
-// WithoutBonusIcons narrows the target to cards that print no bonus icons,
-// rendering " with no bonus icons", e.g. "a creature with no bonus icons"
-// (Wail of the Damned).
-func (t Target) WithoutBonusIcons() Target {
-	t.Filter.NoBonusIcons = true
-	return t
-}
-
-// WithCounter narrows the target to cards carrying a generic counter of the
-// given kind, rendering " with a <kind>", e.g. "each creature with a doom
-// counter".
-func (t Target) WithCounter(kind CounterKind) Target {
-	t.Filter.Counter = kind
-	return t
-}
-
-// WithArmor narrows the target to creatures that have armor, rendering " with
-// armor", e.g. "each enemy creature with armor".
-func (t Target) WithArmor() Target {
-	t.Filter.Armor = true
-	return t
-}
-
-// WithUpgrade narrows the target to creatures that have at least one upgrade
-// attached, rendering " with an upgrade", e.g. "each creature with an upgrade"
-// (Tachyon Pulse).
-func (t Target) WithUpgrade() Target {
-	t.Filter.Upgrade = true
-	return t
-}
-
-// SharesHouseWithNeighbors narrows the target to creatures sharing a house with
-// at least the given number of their battleline neighbors, rendering "that shares
-// a house with at least 1 of its neighbors" for 1 (Groupthink Tank) and "that
-// shares a house with N of its neighbors" otherwise (Mini Groupthink Tank).
-func (t Target) SharesHouseWithNeighbors(atLeast int) Target {
-	t.Filter.SharesHouseWithNeighbors = atLeast
-	return t
-}
-
-// OfHouseWithAtLeast narrows the target to creatures whose house has at least n
-// creatures in play, counting that house across both players' battlelines (No
-// Safety in Numbers).
-func (t Target) OfHouseWithAtLeast(n int) Target {
-	t.Filter.HouseWithAtLeast = n
-	return t
-}
-
-// WithoutSharedTrait narrows the target to creatures that share no trait with
-// another creature in the same controller's battleline (Good of the Many).
-func (t Target) WithoutSharedTrait() Target {
-	t.Filter.WithoutSharedTrait = true
-	return t
-}
-
-// Keyword narrows the target to creatures that have the given keyword (e.g.
-// Elusive), rendering it as an adjective: "each elusive creature".
-func (t Target) Keyword(k Keyword) Target {
-	t.Filter.Keyword = k
-	return t
-}
-
-// Stunned narrows the target to creatures that are currently stunned.
-func (t Target) Stunned() Target {
-	t.Filter.Stunned = true
-	return t
-}
-
-// Ready narrows the target to creatures that are not exhausted.
-func (t Target) Ready() Target {
-	t.Filter.Ready = true
-	return t
-}
-
-// OnFlank narrows the target to creatures on a flank of their battleline (its
-// leftmost or rightmost creature). A flank is a battleline position, so the
-// filter only constrains creatures: on a target that also reaches artifacts
-// ("an artifact or flank creature", Snudge) an artifact passes it untouched.
-func (t Target) OnFlank() Target {
-	t.Filter.Position = PositionOnFlank
-	return t
-}
-
-// NotOnFlank narrows the target to creatures that are not on a flank of their
-// battleline (neither its leftmost nor rightmost creature).
-func (t Target) NotOnFlank() Target {
-	t.Filter.Position = PositionNotOnFlank
-	return t
-}
-
-// InCenter narrows the target to the creature in the center of its controller's
-// battleline (an even-sized line has no center, so nothing is selected).
-func (t Target) InCenter() Target {
-	t.Filter.Position = PositionCenter
-	return t
-}
-
-// ToRightOfSource narrows the target to the creatures positioned to the right of
-// the source card in its battleline (Panpaca, Anga).
-func (t Target) ToRightOfSource() Target {
-	t.Filter.Position = PositionRightOfSource
-	return t
-}
-
-// ToLeftOfSource narrows the target to the creatures positioned to the left of
-// the source card in its battleline (Panpaca, Jaga).
-func (t Target) ToLeftOfSource() Target {
-	t.Filter.Position = PositionLeftOfSource
-	return t
-}
-
-// Neighboring narrows the target to the source card's battleline neighbors (the
-// creatures immediately to its left and right).
-func (t Target) Neighboring() Target {
-	t.Filter.Neighboring = true
-	return t
-}
-
 // AndNeighbors expands a single chosen creature to also include its battleline
 // neighbors, so an effect applies to the chosen creature and each of its
 // neighbors (Tremor). It is meaningful only on a chosen-creature target.
@@ -456,13 +209,6 @@ func (t Target) AndNeighbors() Target {
 // the creature it fights, but not that creature.
 func (t Target) NeighborsOf() Target {
 	t.Neighbors = NeighborsOnly
-	return t
-}
-
-// Other excludes the source card from the selected set, rendering the "other"
-// qualifier ("each other friendly card").
-func (t Target) Other() Target {
-	t.Filter.Except = ExcludeSource
 	return t
 }
 
@@ -589,26 +335,17 @@ func (t Target) quantifiedPhrase(noun string) string {
 		phrase = "each card in play"
 	case TargetEachCreature, TargetEachArtifact:
 		phrase = "each " + t.Filter.Except.qualifyNoun(noun)
-	case TargetEachFriendlyCreature:
-		phrase = "each friendly " + noun
-	case TargetEachFriendlyArtifact:
-		phrase = "each friendly " + noun
+	case TargetEachFriendlyCreature, TargetEachFriendlyArtifact,
+		TargetEachFriendlyCardInPlay:
+		phrase = "each " + t.Filter.Except.qualifyNoun("friendly "+noun)
 	case TargetEachEnemyArtifact:
 		phrase = "each enemy " + noun
-	case TargetEachFriendlyCardInPlay:
-		phrase = "each " + t.Filter.Except.qualifyNoun("friendly "+noun)
 	case TargetEachEnemyCreature:
 		phrase = "each enemy " + noun
-	case TargetEachOtherFriendlyCreature:
-		phrase = "each other friendly " + noun
 	case TargetChosenEnemyCreature:
 		phrase = "an enemy " + noun
 	case TargetChosenFriendlyCreature, TargetChosenFriendlyCreatureOrArtifact:
-		phrase = "a friendly " + noun
-	case TargetChosenOtherFriendlyCreature:
-		phrase = "another friendly " + noun
-	case TargetChosenOtherCreature:
-		phrase = "another " + noun
+		phrase = t.Filter.Except.quantifyOne("friendly " + noun)
 	case TargetChosenArtifact:
 		phrase = "an " + noun
 	case TargetChosenUpgrade:
@@ -620,13 +357,7 @@ func (t Target) quantifiedPhrase(noun string) string {
 	case TargetChosenFriendlyArtifact:
 		phrase = "a friendly " + noun
 	case TargetChosenCreature:
-		// An exclusion drops the source card, which reads as "another creature" — the
-		// wording Replicator prints for a creature in play that is not itself.
-		if t.Filter.Except.filters() {
-			phrase = "another " + noun
-		} else {
-			phrase = indefinite(noun)
-		}
+		phrase = t.Filter.Except.quantifyOne(noun)
 	default:
 		phrase = indefinite(noun)
 	}

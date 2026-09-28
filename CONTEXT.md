@@ -200,6 +200,28 @@ House, and type). While the gigantic is in play it lends its bonus icons to the
 one creature; it never stands on the battleline in its own right.
 _Avoid_: top half, "1 of 2".
 
+**Target**:
+The noun phrase an ability names the cards it acts on with — "each enemy
+creature", "another friendly Wolf creature". A Target is a base set (its Kind)
+narrowed per card by one **Filter** and relative to the whole set by one
+**Refinement**. The same value both prints the phrase and selects the cards.
+
+**Filter**:
+The per-card half of a Target: a predicate decidable by looking at one card
+alone, however much board it reads to do so. A card writes it as one struct
+literal (`card.Filter{Trait: card.Traits.Wolf, Except: card.Except.Focus}`),
+never as a chain of methods. A rule that needs to compare candidates to each
+other is a Refinement, not a Filter.
+_Avoid_: predicate, matcher, criteria.
+
+**Filter axis**:
+One field of a Filter — one question about a card, holding one value at a time.
+**Identity axes** (type, house, trait, name) are true of a card in any zone;
+**in-play axes** (power, damage, position, Æmber, state, exclusion) read the
+board, so a consumer pointing at a deck, a hand, a pile, or the turn log rejects
+them at build time.
+_Avoid_: filter field, filter option.
+
 **Constant ability**:
 An ability with no boldfaced trigger, which applies continuously while its card
 stays in play — the power and armor bonuses one card hands its neighbors, a

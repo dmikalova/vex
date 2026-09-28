@@ -13,8 +13,11 @@ func TestGainStats(t *testing.T) {
 	}
 
 	e := GainStats{
-		Target: Target{Kind: TargetEachOtherFriendlyCreature},
-		Armor:  1,
+		Target: Target{
+			Kind:   TargetEachFriendlyCreature,
+			Filter: Filter{Except: ExcludeFocus},
+		},
+		Armor: 1,
 	}
 	if got := e.Text(); got != "for the remainder of the turn, each other friendly creature gains +1 armor" {
 		t.Errorf("text = %q", got)

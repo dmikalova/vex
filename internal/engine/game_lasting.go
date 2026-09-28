@@ -478,7 +478,10 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 	case actDamageOthersOfTrait:
 		DealDamage{
 			Amount: int(le.Amount),
-			Target: Target{Kind: TargetEachCreature}.ExceptTrait(le.Trait),
+			Target: Target{
+				Kind:   TargetEachCreature,
+				Filter: Filter{ExceptTrait: le.Trait},
+			},
 		}.Resolve(
 			&EffectContext{
 				Resolver:   g.resolver,

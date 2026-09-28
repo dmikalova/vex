@@ -757,7 +757,10 @@ func TestOneAtATimeEachSetStopsWhenPoolLeaves(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	wipe := NewCard("wipe", Brobnar, Creature, Common, WithPower(1),
 		WithAbility(TriggerAfterReap,
-			Destroy{Target: Target{Kind: TargetEachOtherFriendlyCreature}}))
+			Destroy{Target: Target{
+				Kind:   TargetEachFriendlyCreature,
+				Filter: Filter{Except: ExcludeFocus},
+			}}))
 	left := g.AddToBattleline(wipe, 0)
 	mid := g.AddToBattleline(testCreature("mid", 1), 0)
 	right := g.AddToBattleline(testCreature("right", 1), 0)

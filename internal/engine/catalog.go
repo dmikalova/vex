@@ -210,7 +210,7 @@ func Families() []Family {
 		repeatGateFamily(),
 		gatherFamily(),
 		quantityFamily(),
-		targetFilterFamily(),
+		targetBuilderFamily(),
 		filterFamily(),
 		destinationFamily(),
 	}

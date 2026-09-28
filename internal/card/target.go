@@ -3,9 +3,12 @@ package card
 import "github.com/dmikalova/vex/internal/engine"
 
 // Target groups ready-made targets, e.g. card.Target.EachEnemyCreature. Each is
-// an engine.Target value, so the filter methods (WithTrait, PowerAtMost, OnFlank,
-// Refine, ...) chain off them:
+// an engine.Target value, so a card narrows one per card with a Filter literal —
+// card.Target.EachEnemyCreature.With(card.Filter{Power: card.Power.AtMost(3)}) —
+// and narrows it relative to the whole set with Refine:
 // card.Target.EachEnemyCreature.Refine(card.Refine.Except(card.Refine.MostPowerful)).
+// With, Refine, AndNeighbors and NeighborsOf are the only methods a Target has;
+// every per-card axis is a field of card.Filter.
 var Target = targets{
 	This:                 engine.Target{Kind: engine.TargetThisCreature},
 	Triggering:           engine.Target{Kind: engine.TargetTriggeringCreature},
@@ -19,11 +22,20 @@ var Target = targets{
 	EachFriendlyArtifact: engine.Target{
 		Kind: engine.TargetEachFriendlyArtifact,
 	},
-	EachEnemyArtifact:          engine.Target{Kind: engine.TargetEachEnemyArtifact},
-	EachFriendlyCardInPlay:     engine.Target{Kind: engine.TargetEachFriendlyCardInPlay},
-	EachOtherFriendlyCreature:  engine.Target{Kind: engine.TargetEachOtherFriendlyCreature},
-	OtherFriendlyCreature:      engine.Target{Kind: engine.TargetChosenOtherFriendlyCreature},
-	OtherCreature:              engine.Target{Kind: engine.TargetChosenOtherCreature},
+	EachEnemyArtifact:      engine.Target{Kind: engine.TargetEachEnemyArtifact},
+	EachFriendlyCardInPlay: engine.Target{Kind: engine.TargetEachFriendlyCardInPlay},
+	EachOtherFriendlyCreature: engine.Target{
+		Kind:   engine.TargetEachFriendlyCreature,
+		Filter: engine.Filter{Except: engine.ExcludeFocus},
+	},
+	OtherFriendlyCreature: engine.Target{
+		Kind:   engine.TargetChosenFriendlyCreature,
+		Filter: engine.Filter{Except: engine.ExcludeFocus},
+	},
+	OtherCreature: engine.Target{
+		Kind:   engine.TargetChosenCreature,
+		Filter: engine.Filter{Except: engine.ExcludeFocus},
+	},
 	TheOtherCreature:           engine.Target{Kind: engine.TargetTheOtherCreature},
 	TheSameCreature:            engine.Target{Kind: engine.TargetTheSameCreature},
 	TheChosenCreature:          engine.Target{Kind: engine.TargetTheChosenCreature},
@@ -71,11 +83,19 @@ type targets struct {
 	EachEnemyArtifact engine.Target
 	// EachFriendlyCardInPlay selects the controller's creatures and artifacts.
 	EachFriendlyCardInPlay engine.Target
-	// EachOtherFriendlyCreature selects the controller's creatures except the source.
+	// EachOtherFriendlyCreature selects the controller's creatures except the card
+	// in focus — the plain each-friendly target plus card.Except.Focus. Narrowing
+	// it further means writing that exclusion into the Filter, since With replaces
+	// the whole Filter: card.Target.EachFriendlyCreature.With(card.Filter{Trait:
+	// card.Traits.Wolf, Except: card.Except.Focus}) is Moor Wolf's "each other
+	// friendly Wolf creature".
 	EachOtherFriendlyCreature engine.Target
-	// OtherFriendlyCreature is a friendly creature the controller chooses except the source.
+	// OtherFriendlyCreature is a friendly creature the controller chooses except the
+	// card in focus — the plain friendly target plus card.Except.Focus.
 	OtherFriendlyCreature engine.Target
-	// OtherCreature is a creature the controller chooses except the one in context (ctx.It).
+	// OtherCreature is a creature the controller chooses except the card in focus —
+	// the card in context (ctx.It) when an effect put one there, the source card
+	// otherwise. It is the plain creature target plus card.Except.Focus.
 	OtherCreature engine.Target
 	// TheOtherCreature selects the creature in context (ctx.It), "the other creature".
 	TheOtherCreature engine.Target
@@ -113,7 +133,7 @@ type targets struct {
 	TheFoughtCreature engine.Target
 	// AttachedHost selects the creature the resolving upgrade is attached to — the
 	// instance a blaster bound to when AttachSelfTo homed it, not a same-named copy.
-	// Chain Named() to give it the signature creature's printed name.
+	// Set the Filter's Name axis to give it the signature creature's printed name.
 	AttachedHost engine.Target
 	// GrantingCard selects the in-play card whose constant ability or static modifier
 	// granted the resolving ability — the exact card, not a same-named copy. Its text
@@ -216,7 +236,8 @@ func (refinements) MostPowerfulN(n int) Refinement { return engine.MostPowerfulN
 
 // PowerLessThan is a Refinement that keeps every creature of a set whose power is
 // below a running count, e.g.
-// card.Target.EachCreature.House(card.Houses.Except(card.House.Self)).Refine(card.Refine.PowerLessThan(count))
+// card.Target.EachCreature.With(card.Filter{House: card.Houses.Except(card.House.Self)}).
+// Refine(card.Refine.PowerLessThan(count))
 // (Exterminate! Exterminate!).
 func (refinements) PowerLessThan(
 	limit engine.Count,

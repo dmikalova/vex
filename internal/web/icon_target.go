@@ -48,7 +48,7 @@ func targetGlyph(t engine.Target) glyph {
 			asset: "card-back",
 			decor: decorChosen,
 		}
-	case engine.TargetEachFriendlyCreature, engine.TargetEachOtherFriendlyCreature:
+	case engine.TargetEachFriendlyCreature:
 		return glyph{
 			asset: "type-creature",
 			decor: decorEach | decorFriendly,
@@ -58,12 +58,12 @@ func targetGlyph(t engine.Target) glyph {
 			asset: "type-creature",
 			decor: decorEach | decorEnemy,
 		}
-	case engine.TargetChosenCreature, engine.TargetChosenOtherCreature:
+	case engine.TargetChosenCreature:
 		return glyph{
 			asset: "type-creature",
 			decor: decorChosen,
 		}
-	case engine.TargetChosenFriendlyCreature, engine.TargetChosenOtherFriendlyCreature:
+	case engine.TargetChosenFriendlyCreature:
 		return glyph{
 			asset: "type-creature",
 			decor: decorChosen | decorFriendly,

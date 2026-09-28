@@ -52,6 +52,18 @@ func (e Exclusion) admits(ctx *EffectContext, id LocalID) bool {
 	return !drops || id != excluded
 }
 
+// quantifyOne renders the whole phrase for a target that names a single card,
+// given the noun with its side adjective already attached ("friendly creature").
+// An exclusion reads "another", because "another friendly creature" is exactly "a
+// friendly creature" that is not the card the exclusion names; without one the
+// noun takes its indefinite article.
+func (e Exclusion) quantifyOne(noun string) string {
+	if e.filters() {
+		return "another " + noun
+	}
+	return indefinite(noun)
+}
+
 // qualifyNoun prefixes the "other" qualifier to the noun the target names, e.g.
 // "card" becomes "other card" for "each other friendly card". Every exclusion
 // prints the same word: printed text names an exclusion by contrast, never by

@@ -39,8 +39,11 @@ func TestHealEffect(t *testing.T) {
 	}
 
 	full := Heal{
-		Fully:  true,
-		Target: Target{Kind: TargetEachOtherFriendlyCreature},
+		Fully: true,
+		Target: Target{
+			Kind:   TargetEachFriendlyCreature,
+			Filter: Filter{Except: ExcludeFocus},
+		},
 	}
 	if full.Text() != "fully heal each other friendly creature" {
 		t.Errorf("full text = %q", full.Text())
@@ -235,7 +238,10 @@ func TestDealDamageAmountFrom(t *testing.T) {
 	// Text and validate for the "deal that amount of damage" mode.
 	e := DealDamage{
 		AmountFrom: DamageHealed{},
-		Target:     Target{Kind: TargetChosenOtherCreature},
+		Target: Target{
+			Kind:   TargetChosenCreature,
+			Filter: Filter{Except: ExcludeFocus},
+		},
 	}
 	if got := e.Text(); got != "deal that amount of damage to another creature" {
 		t.Errorf("text = %q", got)
@@ -304,7 +310,10 @@ func TestDealDamageAmountFrom(t *testing.T) {
 	a := g3.AddToBattleline(testCreature("a", 3), 0)
 	b := g3.AddToBattleline(testCreature("b", 3), 1)
 	g3.SetChooser(0, &idQueueChooser{ids: []LocalID{b}})
-	if ids := (Target{Kind: TargetChosenOtherCreature}).Select(
+	if ids := (Target{
+		Kind:   TargetChosenCreature,
+		Filter: Filter{Except: ExcludeFocus},
+	}).Select(
 		&EffectContext{
 			Resolver:   g3,
 			Controller: 0,

@@ -298,7 +298,10 @@ func TestDestroyChosen(t *testing.T) {
 	}
 	// "another creature" pluralizes to "other creatures" (Wretched Anathema).
 	if got := (DestroyChosen{
-		Target: Target{Kind: TargetChosenOtherCreature},
+		Target: Target{
+			Kind:   TargetChosenCreature,
+			Filter: Filter{Except: ExcludeFocus},
+		},
 		Amount: 2,
 	}).Text(); got != "destroy 2 other creatures" {
 		t.Errorf("other-creature text = %q", got)

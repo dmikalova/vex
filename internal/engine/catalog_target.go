@@ -3,249 +3,77 @@ package engine
 // This file is the census of Target, which is the odd member of the census: a
 // Target is a flag struct rather than an interface, because ADR 0005 keeps it
 // comparable, so it has no implementations to scan for. Its members are instead
-// its halves — the TargetKind constants that pick a base set, the filter builders
-// that narrow one, and the axis values those builders write — and the census
-// covers each half with the machinery that fits it: the kinds and the axis values
-// as Enums, discovered as the constants of their types, and the filters as a
-// Family discovered by shape, every exported method on Target returning a Target.
-// An added kind, an added axis value and an added filter are all a red build
-// until they have a row.
+// its halves — the TargetKind constants that pick a base set, the builders that
+// narrow one, and the values of the axes they narrow on — and the census covers
+// each half with the machinery that fits it: the kinds and the axis values as
+// Enums, discovered as the constants of their types, and the builders as a Family
+// discovered by shape, every exported method on Target returning a Target. An
+// added kind, an added axis value and an added builder are all a red build until
+// they have a row.
 //
-// An axis value and the builder that writes it are catalogued separately and
-// carry the same term, because neither implies the other: a builder could be
-// dropped without its axis losing a value, and an axis can gain a value no
-// builder writes.
+// Target once carried one builder per filter, and those builders are gone: a card
+// writes its narrowing as a Filter literal, so the axes are catalogued as the
+// fields of Filter in catalog_filter.go. What the Target family still covers is
+// the four methods left — With, Refine, AndNeighbors, NeighborsOf — each of which
+// defers to a value with a census of its own, so their rows say which census owns
+// the words rather than owning any. The family stays because the discovery is what
+// makes a newly added Target method a red build.
+//
+// An axis value and the field that carries it are catalogued separately and carry
+// the same term, because neither implies the other: a field could be dropped
+// without its axis losing a value, and an axis can gain a value no field writes.
 //
 // Nearly every row names the one "Target" umbrella term. "Each enemy creature"
 // and "a friendly creature with power 3 or lower" are the same rule about how
-// card text names what an effect reaches, and a term per filter would turn the
-// rulebook into an API listing. A filter that rests on a concept with a term of
+// card text names what an effect reaches, and a term per axis would turn the
+// rulebook into an API listing. An axis that rests on a concept with a term of
 // its own — a flank, a trait, a house, Æmber on a card, a counter — names that
 // term instead, because binding is by title across every section.
 
-// targetBase is the base set the census applies each filter to, standing in for
-// the kind a card would pair it with. It is the widest board-scanning kind, so
-// every positional and per-card filter has something to narrow.
-var targetBase = Target{Kind: TargetEachCreature}
-
-// targetFilterFamily is the Target filter builders' census entry. They are
-// discovered by shape rather than by a method name: an exported method on Target
-// that returns a Target is a filter a card can write.
-func targetFilterFamily() Family {
+// targetBuilderFamily is the Target builders' census entry. They are discovered by
+// shape rather than by a method name: an exported method on Target that returns a
+// Target is a narrowing a card can write. Every survivor defers — to a Filter, a
+// Refinement, or a NeighborMode — so every row is plumbing pointing at the census
+// that owns its words.
+func targetBuilderFamily() Family {
 	return newFamily(
 		"Target",
 		"",
 		nil,
-		TargetFilterCatalog(),
+		TargetBuilderCatalog(),
 		Target.Text,
 	).builds("Target").gated()
 }
 
-// TargetFilterCatalog returns one representative Target per filter builder — the
-// base set with that filter applied — with the rulebook term each owes. The rows
-// are grouped by what the filter reads: identity, power, condition, position, and
-// the set-relative refinement.
-func TargetFilterCatalog() []Catalogued[Target] {
+// TargetBuilderCatalog returns one representative Target per surviving builder —
+// the base set with that builder applied — with the census each defers to.
+func TargetBuilderCatalog() []Catalogued[Target] {
+	base := Target{Kind: TargetEachCreature}
 	return []Catalogued[Target]{
-		// Identity: trait, house, and printed name.
-		{
-			Name:  "WithTrait",
-			Node:  targetBase.WithTrait(Scientist),
-			Rules: bears("Trait"),
-		},
-		{
-			Name:  "ExceptTrait",
-			Node:  targetBase.ExceptTrait(Scientist),
-			Rules: bears("Trait"),
-		},
-		{
-			Name:  "SharingTrait",
-			Node:  targetBase.SharingTrait(),
-			Rules: bears("Trait"),
-		},
-		{
-			Name:  "House",
-			Node:  targetBase.House(HouseMatcher{Kind: MatchNamedHouse, House: Mars}),
-			Rules: bears("Belong to House"),
-		},
-		{
-			Name: "MatchingAny",
-			Node: targetBase.
-				House(HouseMatcher{Kind: MatchNamedHouse, House: Mars}).
-				WithTrait(Robot).
-				MatchingAny(),
-			Rules: bears("Belong to House"),
-		},
-		{
-			Name:  "OfHouseWithMostCreatures",
-			Node:  targetBase.OfHouseWithMostCreatures(),
-			Rules: bears("Belong to House"),
-		},
-		{
-			Name:  "SharesHouseWithNeighbors",
-			Node:  targetBase.SharesHouseWithNeighbors(1),
-			Rules: bears("Belong to House"),
-		},
-		{
-			Name:  "OfHouseWithAtLeast",
-			Node:  targetBase.OfHouseWithAtLeast(3),
-			Rules: bears("Creatures of a House"),
-		},
-		{
-			Name:  "WithoutSharedTrait",
-			Node:  targetBase.WithoutSharedTrait(),
-			Rules: bears("Trait"),
-		},
-		{
-			Name:  "Named",
-			Node:  targetBase.Named("Ancient Bear"),
-			Rules: bears("Target"),
-		},
-		{
-			Name:  "Keyword",
-			Node:  targetBase.Keyword(Taunt),
-			Rules: bears("Target"),
-		},
-		{
-			Name:  "Other",
-			Node:  targetBase.Other(),
-			Rules: bears("Target"),
-		},
-
-		// Power.
-		{
-			Name:  "PowerAtMost",
-			Node:  targetBase.PowerAtMost(3),
-			Rules: bears("Power Threshold"),
-		},
-		{
-			Name:  "PowerAtLeast",
-			Node:  targetBase.PowerAtLeast(5),
-			Rules: bears("Power Threshold"),
-		},
-		{
-			Name:  "PowerExactly",
-			Node:  targetBase.PowerExactly(4),
-			Rules: bears("Power Threshold"),
-		},
-		{
-			Name:  "OddPower",
-			Node:  targetBase.OddPower(),
-			Rules: bears("Power Threshold"),
-		},
-		{
-			Name:  "EvenPower",
-			Node:  targetBase.EvenPower(),
-			Rules: bears("Power Threshold"),
-		},
-
-		// What the card carries or has had done to it.
-		{
-			Name:  "Damaged",
-			Node:  targetBase.Damaged(),
-			Rules: bears("Damage"),
-		},
-		{
-			Name:  "Undamaged",
-			Node:  targetBase.Undamaged(),
-			Rules: bears("Damage"),
-		},
-		{
-			Name:  "WithArmor",
-			Node:  targetBase.WithArmor(),
-			Rules: bears("Armor"),
-		},
-		{
-			Name:  "WithAember",
-			Node:  targetBase.WithAember(),
-			Rules: bears("Æmber"),
-		},
-		{
-			Name:  "WithoutAember",
-			Node:  targetBase.WithoutAember(),
-			Rules: bears("Æmber"),
-		},
-		{
-			Name:  "WithUpgrade",
-			Node:  targetBase.WithUpgrade(),
-			Rules: bears("Upgrade"),
-		},
-		{
-			Name:  "WithCounter",
-			Node:  targetBase.WithCounter(CounterDoom),
-			Rules: bears("Generic Counters"),
-		},
-		{
-			Name:  "WithoutBonusIcons",
-			Node:  targetBase.WithoutBonusIcons(),
-			Rules: bears("Resolve Bonus Icons"),
-		},
-		{
-			Name:  "Stunned",
-			Node:  targetBase.Stunned(),
-			Rules: bears("Stun"),
-		},
-		{
-			Name:  "Ready",
-			Node:  targetBase.Ready(),
-			Rules: bears("Ready"),
-		},
-
-		// Position in the battleline.
-		{
-			Name:  "OnFlank",
-			Node:  targetBase.OnFlank(),
-			Rules: bears("Flank"),
-		},
-		{
-			Name:  "NotOnFlank",
-			Node:  targetBase.NotOnFlank(),
-			Rules: bears("Flank"),
-		},
-		{
-			Name:  "InCenter",
-			Node:  targetBase.InCenter(),
-			Rules: bears("Battleline Position"),
-		},
-		{
-			Name:  "Neighboring",
-			Node:  targetBase.Neighboring(),
-			Rules: bears("Battleline Position"),
-		},
-		{
-			Name:  "AndNeighbors",
-			Node:  Target{Kind: TargetChosenCreature}.AndNeighbors(),
-			Rules: bears("Battleline Position"),
-		},
-		{
-			Name:  "NeighborsOf",
-			Node:  Target{Kind: TargetChosenCreature}.NeighborsOf(),
-			Rules: bears("Battleline Position"),
-		},
-		{
-			Name:  "ToRightOfSource",
-			Node:  targetBase.ToRightOfSource(),
-			Rules: bears("Battleline Position"),
-		},
-		{
-			Name:  "ToLeftOfSource",
-			Node:  targetBase.ToLeftOfSource(),
-			Rules: bears("Battleline Position"),
-		},
-
-		// The whole-Filter writer, which sets the same axes the builders above do.
 		{
 			Name: "With",
-			Node: targetBase.With(Filter{Trait: Scientist}),
+			Node: base.With(Filter{Trait: Scientist}),
 			Rules: plumbing(
-				"composition: writes a Filter, whose axes are the rows above"),
+				"composition: writes a Filter, whose axes are catalogued as the " +
+					"Filter family"),
 		},
-
-		// The set-relative refinement, which carries its own census and its own term.
 		{
-			Name:  "Refine",
-			Node:  targetBase.Refine(MostPowerful),
-			Rules: plumbing("composition: defers to a Refinement, which owes its own term"),
+			Name: "Refine",
+			Node: base.Refine(MostPowerful),
+			Rules: plumbing(
+				"composition: defers to a Refinement, which owes its own term"),
+		},
+		{
+			Name: "AndNeighbors",
+			Node: Target{Kind: TargetChosenCreature}.AndNeighbors(),
+			Rules: plumbing(
+				"composition: writes a NeighborMode, which owes its own term"),
+		},
+		{
+			Name: "NeighborsOf",
+			Node: Target{Kind: TargetChosenCreature}.NeighborsOf(),
+			Rules: plumbing(
+				"composition: writes a NeighborMode, which owes its own term"),
 		},
 	}
 }
@@ -312,11 +140,6 @@ func targetKindRows() []Catalogued[TargetKind] {
 			Node:  TargetEachEnemyCreature,
 			Rules: bears("Target"),
 		},
-		{
-			Name:  "TargetEachOtherFriendlyCreature",
-			Node:  TargetEachOtherFriendlyCreature,
-			Rules: bears("Target"),
-		},
 		{Name: "TargetEachArtifact", Node: TargetEachArtifact, Rules: bears("Target")},
 		{
 			Name:  "TargetEachFriendlyArtifact",
@@ -345,16 +168,6 @@ func targetKindRows() []Catalogued[TargetKind] {
 		{
 			Name:  "TargetChosenFriendlyCreature",
 			Node:  TargetChosenFriendlyCreature,
-			Rules: bears("Target"),
-		},
-		{
-			Name:  "TargetChosenOtherCreature",
-			Node:  TargetChosenOtherCreature,
-			Rules: bears("Target"),
-		},
-		{
-			Name:  "TargetChosenOtherFriendlyCreature",
-			Node:  TargetChosenOtherFriendlyCreature,
 			Rules: bears("Target"),
 		},
 		{Name: "TargetChosenArtifact", Node: TargetChosenArtifact, Rules: bears("Target")},

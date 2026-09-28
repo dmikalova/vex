@@ -741,7 +741,10 @@ func TestFilterAsRefinementInAUnion(t *testing.T) {
 }
 
 func TestTargetChosenOtherFriendly(t *testing.T) {
-	if got := (Target{Kind: TargetChosenOtherFriendlyCreature}).Text(); got != "another friendly creature" {
+	if got := (Target{
+		Kind:   TargetChosenFriendlyCreature,
+		Filter: Filter{Except: ExcludeFocus},
+	}).Text(); got != "another friendly creature" {
 		t.Errorf("text = %q, want %q", got, "another friendly creature")
 	}
 
@@ -756,7 +759,10 @@ func TestTargetChosenOtherFriendly(t *testing.T) {
 	}
 
 	// The source is excluded, leaving one candidate that is auto-selected.
-	if ids := (Target{Kind: TargetChosenOtherFriendlyCreature}).Select(
+	if ids := (Target{
+		Kind:   TargetChosenFriendlyCreature,
+		Filter: Filter{Except: ExcludeFocus},
+	}).Select(
 		ctx,
 	); len(ids) != 1 ||
 		ids[0] != other {
@@ -766,7 +772,10 @@ func TestTargetChosenOtherFriendly(t *testing.T) {
 	// With two other friendly creatures the chooser decides, and may decline.
 	g.AddToBattleline(testCreature("other2", 3), 0)
 	g.SetChooser(0, orderRejectChooser{})
-	if ids := (Target{Kind: TargetChosenOtherFriendlyCreature}).Select(ctx); ids != nil {
+	if ids := (Target{
+		Kind:   TargetChosenFriendlyCreature,
+		Filter: Filter{Except: ExcludeFocus},
+	}).Select(ctx); ids != nil {
 		t.Errorf("chosen-other-friendly (reject) = %v, want nil", ids)
 	}
 
@@ -778,7 +787,10 @@ func TestTargetChosenOtherFriendly(t *testing.T) {
 		Source:     lone,
 		Controller: 0,
 	}
-	if ids := (Target{Kind: TargetChosenOtherFriendlyCreature}).Select(ctx2); ids != nil {
+	if ids := (Target{
+		Kind:   TargetChosenFriendlyCreature,
+		Filter: Filter{Except: ExcludeFocus},
+	}).Select(ctx2); ids != nil {
 		t.Errorf("lone source chosen-other-friendly = %v, want nil", ids)
 	}
 }

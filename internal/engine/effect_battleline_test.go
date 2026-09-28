@@ -134,7 +134,10 @@ func TestSwap(t *testing.T) {
 		Source:     host,
 		Controller: 0,
 	}
-	e := Swap{With: Target{Kind: TargetChosenOtherFriendlyCreature}}
+	e := Swap{With: Target{
+		Kind:   TargetChosenFriendlyCreature,
+		Filter: Filter{Except: ExcludeFocus},
+	}}
 
 	if err := (Swap{}).validate(); err == nil {
 		t.Fatal("an unset target should be rejected")
