@@ -7,7 +7,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/term v0.2.2
-	github.com/dmikalova/project-standards v1.32.0
+	github.com/dmikalova/project-standards v1.33.1
 	github.com/go-rod/rod v0.116.2
 	github.com/magefile/mage v1.17.2
 	github.com/maxence-charriere/go-app/v11 v11.0.5
