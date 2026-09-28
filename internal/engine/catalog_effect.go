@@ -932,7 +932,7 @@ func EffectCatalog() []Catalogued[Effect] {
 				Do:   Draw{Amount: 1},
 				Gate: ByExalting{Creature: Target{Kind: TargetThisCreature}},
 			},
-			Rules: plumbing("composition: resolves its child again while its gate allows"),
+			Rules: bears("Repeat"),
 		},
 		{
 			Node: ForDuration{

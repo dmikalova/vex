@@ -243,6 +243,19 @@ action succeeding.`,
 		},
 		{
 			Section:    SectionCardText,
+			Title:      "Repeat",
+			Definition: "Resolve an effect again while its stated condition holds, bounded by the six uses a card name has each turn.",
+			Body: `An effect that repeats resolves again while its stated condition holds. The
+condition is a fact about the board, so the effect may do nothing and the repeat
+still happens (Numquid the Fair comes back while you are overwhelmed, even when
+a ward absorbs its destroy). When the repeat clause is written with -> it is a
+result gate: the effect also stops repeating as soon as it does nothing (Bait and
+Switch stops the moment a steal moves no Æmber). A repeat is always bounded.
+Every resolution past the first counts against the six uses a card name has each
+turn, so a condition the effect cannot change still ends the loop.`,
+		},
+		{
+			Section:    SectionCardText,
 			Title:      "May",
 			Definition: "Offer the controller the choice to resolve the inner effect or decline it entirely.",
 			Body: `A "you may" effect is optional: it offers the controller the choice to resolve
