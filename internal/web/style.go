@@ -107,6 +107,12 @@ type style struct {
 	// re-renders the whole gallery, which made recomputing them per hover crawl.
 	cardText *cardTextSpecimens
 
+	// glyphCatalog caches the Glyph vocabulary section's rows, for the same reason
+	// cardText is cached: they are fixed for a page load but drawing them runs the
+	// whole Iconography pass over every catalogued node, which is too much to redo
+	// on every hover.
+	glyphCatalog []glyphFamilyView
+
 	// dispatch re-renders the gallery from its always-mounted root, bound in
 	// OnMount. The specimen faces raise the hover preview and the held enlargement
 	// by mutating this component's state from inside a nested cardView's own event
@@ -557,75 +563,6 @@ var styleTokens = []string{
 }
 
 var houseTokens = []string{"--nm", "--nm-fg", "--tp", "--tp-fg", "--edge"}
-
-// glyphVocabSection is the full glyph vocabulary: every glyph asset shown with its
-// name, followed by worked composition examples run through the real effectGlyphs
-// pass, so the catalog can never drift from what cards actually render. The
-// examples end with the abstract fallback glyph a mechanic gets before it is
-// drawn.
-func (s *style) glyphVocabSection() app.UI {
-	type example struct {
-		label    string
-		triggers []string
-		effect   engine.Effect
-	}
-	examples := []example{
-		{"Play/Fight/Reap: destroy the least powerful creature",
-			[]string{"glyph-play", "glyph-fight", "glyph-reap"}, engine.Destroy{
-				Target: engine.Target{Kind: engine.TargetChosenCreature},
-			}},
-		{"Deal 3 damage to an enemy creature", []string{"glyph-play"}, engine.DealDamage{
-			Amount: 3,
-			Target: engine.Target{Kind: engine.TargetChosenEnemyCreature},
-		}},
-		{"Gain 1 Æmber", []string{"glyph-reap"}, engine.GainAember{Amount: 1}},
-		{"Stun an enemy creature", []string{"glyph-fight"}, engine.Stun{
-			Target: engine.Target{Kind: engine.TargetChosenEnemyCreature},
-		}},
-		{"Draw 2 cards", []string{"glyph-reap"}, engine.Draw{Amount: 2}},
-		{"A creature cannot fight", []string{"glyph-action"}, engine.Restrict{
-			Player:   engine.Opponent,
-			Action:   engine.RestrictFighting,
-			Duration: engine.OpponentNextTurn,
-		}},
-		{
-			"Look at the top card of your deck",
-			[]string{"glyph-play"},
-			engine.LookAtTopOfDeck{Amount: 1},
-		},
-		{"Take control of an enemy creature", []string{"glyph-play"}, engine.TakeControl{
-			Target: engine.Target{Kind: engine.TargetChosenEnemyCreature},
-		}},
-	}
-	grid := make([]app.UI, 0, len(galleryIcons))
-	for _, name := range galleryIcons {
-		grid = append(grid, app.Div().Class("style-swatch").Body(
-			icon(name, "icon-outline"),
-			app.Span().Class("style-mono").Text(name),
-		))
-	}
-	rows := make([]app.UI, 0, len(examples)+1)
-	for _, ex := range examples {
-		gs, _ := effectGlyphs(ex.effect)
-		rows = append(rows, app.Div().Class("style-swatch").Body(
-			iconLine(glyphLine{
-				triggers: ex.triggers,
-				glyphs:   gs,
-			}),
-			app.Span().Class("style-mono").Text(ex.label),
-		))
-	}
-	rows = append(rows, app.Div().Class("style-swatch").Body(
-		iconLine(glyphLine{glyphs: []glyph{{asset: "glyph-unknown"}}}),
-		app.Span().Class("style-mono").Text("a mechanic not yet drawn"),
-	))
-	return app.Div().Body(
-		app.H3().Class("style-h3").Text("Every glyph"),
-		app.Div().Class("style-row style-row--icons").Body(grid...),
-		app.H3().Class("style-h3").Text("Compositions"),
-		app.Div().Class("style-row").Body(rows...),
-	)
-}
 
 // typeSection is the font comparison: the same specimen rendered once per loaded
 // family, side by side. Everywhere else on the page shows the active selection;

@@ -21,6 +21,14 @@ import (
 
 // forEachAbilityEffect walks every triggered-ability effect on every card the
 // gallery shows (materialized variants included) and calls fn with it.
+//
+// It is the second population beside the census (icon_catalog.go), not a
+// leftover the census replaces. The census holds one bare node per member,
+// filled only as far as it needs to render, so it never forms the composed
+// shapes a real card does — a ChooseHouseThen wrapping a granted ability, a
+// Conditional over a nested sequence — and those compose through the family
+// chain differently from the nodes they wrap. Deleting this walk as redundant
+// would drop that coverage.
 func forEachAbilityEffect(fn func(e engine.Effect)) {
 	regs := card.Cards()
 	for i := range regs {
@@ -34,11 +42,31 @@ func forEachAbilityEffect(fn func(e engine.Effect)) {
 	}
 }
 
-// TestIconTotality walks every card and fails loud if any triggered ability's
-// effect falls back to the abstract glyph instead of a real mapping. A new
-// mechanic with no glyph decision fails here: the fix is to add a glyph, never to
-// tolerate the fallback — there is no allowlist to exempt it (ADR 0022).
+// TestIconTotality fails loud if a mechanic falls back to the abstract glyph
+// instead of a real mapping. A new mechanic with no glyph decision fails here:
+// the fix is to add a glyph, never to tolerate the fallback — there is no
+// allowlist to exempt it (ADR 0022).
+//
+// It runs over two populations. The census (icon_catalog.go) is the contract: it
+// holds every rule-bearing node internal/engine declares, whether or not a card
+// uses one yet, so a node's glyph is owed the moment the node exists. The card
+// walk is kept beside it for what the census cannot reach — the continuous rules
+// cardGlyphs draws (keywords, a FightRestriction, a DrawModifier, Static bonuses,
+// Restricts, Replaces, KeyCostChanges, ConstantAbilities, trigger heads), none of
+// which is an Effect, and the composed shapes a real card forms (a ChooseHouseThen
+// wrapping a granted ability) that a bare catalogued node, filled only as far as
+// it needs to render, never forms.
 func TestIconTotality(t *testing.T) {
+	forEachGatedIconRow(func(family iconFamily, row iconRow) {
+		if _, covered := row.draw(); !covered {
+			t.Errorf(
+				"%s node %s owes the term %q and has no glyph mapping; add one (ADR 0022)",
+				family.name,
+				row.name,
+				row.rules.Term,
+			)
+		}
+	})
 	forEachAbilityEffect(func(e engine.Effect) {
 		if _, covered := effectGlyphs(e); !covered {
 			t.Errorf("effect %s has no glyph mapping; add one (ADR 0022)", effectTypeName(e))
@@ -53,13 +81,32 @@ func familyName(family func(engine.Effect) ([]glyph, bool, bool)) string {
 	return name[strings.LastIndex(name, ".")+1:]
 }
 
-// TestGlyphFamiliesAreDisjoint walks every triggered-ability effect on every card
-// and fails unless exactly one family in glyphFamilies claims it. The chain is not
-// compiler-checked: two families listing the same effect type would make the
-// second dead code and draw a wrong glyph rather than an unknown one, which no
-// other test catches (ADR 0047). Zero claims is a failure too — an effect the
-// chain drops renders the abstract unknown glyph.
+// TestGlyphFamiliesAreDisjoint fails unless exactly one family in glyphFamilies
+// claims each effect. The chain is not compiler-checked: two families listing the
+// same effect type would make the second dead code and draw a wrong glyph rather
+// than an unknown one, which no other test catches (ADR 0047). Zero claims is a
+// failure too — an effect the chain drops renders the abstract unknown glyph.
+//
+// Like TestIconTotality it runs over both populations: the census, which holds
+// every effect node the engine declares, and the card walk, which alone reaches
+// the composed shapes a real card forms (a ChooseHouseThen wrapping a granted
+// ability) that a bare catalogued node never forms.
 func TestGlyphFamiliesAreDisjoint(t *testing.T) {
+	forEachCatalogedEffect(func(_ iconRow, e engine.Effect) {
+		var claimed []string
+		for _, family := range glyphFamilies {
+			if _, _, ok := family(e); ok {
+				claimed = append(claimed, familyName(family))
+			}
+		}
+		if len(claimed) != 1 {
+			t.Errorf(
+				"catalogued effect %s claimed by families %v, want exactly one (ADR 0047)",
+				effectTypeName(e),
+				claimed,
+			)
+		}
+	})
 	forEachAbilityEffect(func(e engine.Effect) {
 		var claimed []string
 		for _, family := range glyphFamilies {
@@ -166,11 +213,17 @@ func synonymReason(types []string) (string, bool) {
 }
 
 // TestDistinctMechanicsDrawDistinctGlyphs is the verb axis's gate: it walks every
-// triggered ability on every card (the corpus TestIconTotality walks), renders each
-// effect, groups the effects by the strip they drew, and fails when two distinct
-// leaf mechanics land in one group. Without it the next agent to add an effect node
-// could quietly reuse another mechanic's picture, which is how twelve pairs came to
-// render identically before ADR 0047.
+// triggered ability on every card, renders each effect, groups the effects by the
+// strip they drew, and fails when two distinct leaf mechanics land in one group.
+// Without it the next agent to add an effect node could quietly reuse another
+// mechanic's picture, which is how twelve pairs came to render identically before
+// ADR 0047.
+//
+// It is the one icon test still on the card walk alone. Over the census it
+// reports eleven collision groups today — mechanics no card has yet exercised,
+// drawing each other's pictures — and resolving those is the work this goal is
+// for; pointing it at the census before they are drawn would only turn the gate
+// red. It moves once they are.
 //
 // The composition family is excluded: a Conditional, May, ForEach, Repeat, Then or
 // Sequence is *supposed* to render as the effect it wraps. Everything else must
