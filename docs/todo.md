@@ -116,6 +116,13 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - remove openspec
 - get rid of batch destroy
 - remove glyphsynonyms
+- add state space exploration/exhaustive path testing to tests
+- entropic swirl - just gain one?
+- commune cannot have aember bonus
+- can't unstun gargatodon
+- are agents files loaded?
+- quick tasks?
+- generate implementation guide from go docs
 
 ### Automatic linters
 
