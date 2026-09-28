@@ -1183,10 +1183,10 @@ func constantBonusLine(def *CardDefinition, c ConstantAbility) string {
 	if c.PerTarget != nil {
 		line += " for each " + c.PerTarget.perTargetText()
 	}
-	if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.onFlank {
+	if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.position == PositionOnFlank {
 		line += " while it is on a flank"
 	}
-	if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.damaged {
+	if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.damage == DamageSome {
 		line += " while it is damaged"
 	}
 	if c.WhileOffFlank {

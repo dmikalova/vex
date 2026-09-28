@@ -3,12 +3,18 @@ package engine
 // This file is the census of Target, which is the odd member of the census: a
 // Target is a flag struct rather than an interface, because ADR 0005 keeps it
 // comparable, so it has no implementations to scan for. Its members are instead
-// its two halves — the TargetKind constants that pick a base set, and the filter
-// builders that narrow one — and the census covers each half with the machinery
-// that fits it: the kinds as an Enum, discovered as the constants of type
-// TargetKind, and the filters as a Family discovered by shape, every exported
-// method on Target returning a Target. An added kind and an added filter are both
-// a red build until they have a row.
+// its halves — the TargetKind constants that pick a base set, the filter builders
+// that narrow one, and the axis values those builders write — and the census
+// covers each half with the machinery that fits it: the kinds and the axis values
+// as Enums, discovered as the constants of their types, and the filters as a
+// Family discovered by shape, every exported method on Target returning a Target.
+// An added kind, an added axis value and an added filter are all a red build
+// until they have a row.
+//
+// An axis value and the builder that writes it are catalogued separately and
+// carry the same term, because neither implies the other: a builder could be
+// dropped without its axis losing a value, and an axis can gain a value no
+// builder writes.
 //
 // Nearly every row names the one "Target" umbrella term. "Each enemy creature"
 // and "a friendly creature with power 3 or lower" are the same rule about how
@@ -361,4 +367,114 @@ func targetKindRows() []Catalogued[TargetKind] {
 			Rules: bears("Target"),
 		},
 	}
+}
+
+// powerBoundKindEnum is the PowerBoundKind census: the comparison a target's
+// power filter makes. Every kind names the one "Power Threshold" term — whether
+// a bound reads a number or a parity, the rule it rests on is how a card names
+// the powers it reaches.
+func powerBoundKindEnum() Enum {
+	return newEnum(
+		"PowerBoundKind",
+		[]string{"boundUnset"},
+		len(allPowerBoundKinds()),
+		[]Catalogued[PowerBoundKind]{
+			{Name: "BoundAtMost", Node: BoundAtMost, Rules: bears("Power Threshold")},
+			{Name: "BoundAtLeast", Node: BoundAtLeast, Rules: bears("Power Threshold")},
+			{Name: "BoundExactly", Node: BoundExactly, Rules: bears("Power Threshold")},
+			{Name: "BoundOdd", Node: BoundOdd, Rules: bears("Power Threshold")},
+			{Name: "BoundEven", Node: BoundEven, Rules: bears("Power Threshold")},
+		},
+		func(k PowerBoundKind) string {
+			return Target{Kind: TargetEachCreature, power: PowerBound{Kind: k, Amount: 3}}.Text()
+		},
+	)
+}
+
+// damagePresenceEnum is the DamagePresence census: whether a target's damage
+// filter wants a creature carrying damage or one carrying none. Both name the
+// damage rule that puts it there.
+func damagePresenceEnum() Enum {
+	return newEnum(
+		"DamagePresence",
+		[]string{"damageAny"},
+		len(allDamagePresences()),
+		[]Catalogued[DamagePresence]{
+			{Name: "DamageSome", Node: DamageSome, Rules: bears("Damage")},
+			{Name: "DamageNone", Node: DamageNone, Rules: bears("Damage")},
+		},
+		func(d DamagePresence) string {
+			return Target{Kind: TargetEachCreature, damage: d}.Text()
+		},
+	)
+}
+
+// aemberPresenceEnum is the AemberPresence census: whether a target's Æmber
+// filter wants a card with Æmber on it or one with none. Both name the term for
+// Æmber sitting on a card.
+func aemberPresenceEnum() Enum {
+	return newEnum(
+		"AemberPresence",
+		[]string{"aemberAny"},
+		len(allAemberPresences()),
+		[]Catalogued[AemberPresence]{
+			{Name: "AemberSome", Node: AemberSome, Rules: bears("Æmber")},
+			{Name: "AemberNone", Node: AemberNone, Rules: bears("Æmber")},
+		},
+		func(a AemberPresence) string {
+			return Target{Kind: TargetEachCreature, aember: a}.Text()
+		},
+	)
+}
+
+// positionEnum is the Position census: the battleline place a target narrows to.
+// The two flank values name the flank rule; the rest name the battleline
+// positions term, which is where a line's center and sides are taught.
+func positionEnum() Enum {
+	return newEnum(
+		"Position",
+		[]string{"positionAny"},
+		len(allPositions()),
+		[]Catalogued[Position]{
+			{Name: "PositionOnFlank", Node: PositionOnFlank, Rules: bears("Flank")},
+			{Name: "PositionNotOnFlank", Node: PositionNotOnFlank, Rules: bears("Flank")},
+			{
+				Name:  "PositionCenter",
+				Node:  PositionCenter,
+				Rules: bears("Battleline Position"),
+			},
+			{
+				Name:  "PositionRightOfSource",
+				Node:  PositionRightOfSource,
+				Rules: bears("Battleline Position"),
+			},
+			{
+				Name:  "PositionLeftOfSource",
+				Node:  PositionLeftOfSource,
+				Rules: bears("Battleline Position"),
+			},
+		},
+		func(p Position) string {
+			return Target{Kind: TargetEachCreature, position: p}.Text()
+		},
+	)
+}
+
+// exclusionEnum is the Exclusion census: the one card a target leaves out. Each
+// value names the Target umbrella, because all three print the same "other" and
+// differ only in which card the exclusion is aimed at.
+func exclusionEnum() Enum {
+	return newEnum(
+		"Exclusion",
+		[]string{"excludeNone"},
+		len(allExclusions()),
+		[]Catalogued[Exclusion]{
+			{Name: "ExcludeSource", Node: ExcludeSource, Rules: bears("Target")},
+			{Name: "ExcludeIt", Node: ExcludeIt, Rules: bears("Target")},
+			{Name: "ExcludeFocus", Node: ExcludeFocus, Rules: bears("Target")},
+		},
+		func(e Exclusion) string {
+			return Target{Kind: TargetEachCreature, exclusion: e}.Text()
+		},
+	)
 }
