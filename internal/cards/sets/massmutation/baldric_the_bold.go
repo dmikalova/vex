@@ -23,7 +23,7 @@ var BaldricTheBold = set.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithAbility(card.Trigger.BeforeFight, card.Conditional{
 		Cond: card.ItIsAmong{
-			Target: card.Target.EachEnemyCreature.Refine(card.MostPowerful),
+			Target: card.Target.EachEnemyCreature.Refine(card.Refine.MostPowerful),
 			Noun:   card.ItNoun.FoughtCreature,
 		},
 		Then: card.GainAember{

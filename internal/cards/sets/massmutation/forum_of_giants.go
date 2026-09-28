@@ -20,7 +20,7 @@ var ForumOfGiants = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(card.Trigger.StartOfTurn, card.ChooseCreatureThen{
-		Target: card.Target.EachCreature.Refine(card.MostPowerful),
+		Target: card.Target.EachCreature.Refine(card.Refine.MostPowerful),
 		Then: card.GainAember{
 			Player: card.ItsController,
 			Amount: 1,

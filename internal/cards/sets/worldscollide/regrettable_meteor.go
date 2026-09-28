@@ -19,9 +19,9 @@ var RegrettableMeteor = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
-			Target: card.Target.EachCreature.Refine(card.AnyOf(
-				card.OfTrait(card.Traits.Dinosaur),
-				card.PowerAtLeast(6),
+			Target: card.Target.EachCreature.Refine(card.Refine.AnyOf(
+				card.Refine.OfTrait(card.Traits.Dinosaur),
+				card.Refine.PowerAtLeast(6),
 			)),
 		}),
 )

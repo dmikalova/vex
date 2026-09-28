@@ -172,7 +172,7 @@ Tribute captures onto the most powerful friendly creature:
 ```go
 card.CaptureAember{
   Amount: 2,
-  Target: card.Target.EachFriendlyCreature.Refine(card.MostPowerful),
+  Target: card.Target.EachFriendlyCreature.Refine(card.Refine.MostPowerful),
   Source: card.Opponent,
 }
 ```
@@ -253,7 +253,7 @@ Chain off any target; they conjoin.
 
 `.Refine(r)` narrows relative to the whole selected set — so "each enemy creature
 except the most powerful" is
-`card.Target.EachEnemyCreature.Refine(card.Except(card.MostPowerful))`.
+`card.Target.EachEnemyCreature.Refine(card.Refine.Except(card.Refine.MostPowerful))`.
 
 **Power:**
 

@@ -24,7 +24,7 @@ var CuriaSaurus = set.New(
 			Effect: card.MoveAember{
 				Amount: 1,
 				From:   card.Target.This,
-				Onto:   card.Target.EachEnemyCreature.Refine(card.MostPowerful),
+				Onto:   card.Target.EachEnemyCreature.Refine(card.Refine.MostPowerful),
 			},
 		}},
 	}),

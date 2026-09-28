@@ -21,6 +21,6 @@ var Scaethe = set.New(
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.Destroy{
-			Target: card.Target.EachEnemyCreature.Refine(card.LeastPowerful),
+			Target: card.Target.EachEnemyCreature.Refine(card.Refine.LeastPowerful),
 		}),
 )

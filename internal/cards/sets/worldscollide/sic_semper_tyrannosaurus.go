@@ -20,7 +20,7 @@ var SicSemperTyrannosaurus = set.New(
 			Effects: []card.Effect{
 				card.MoveAember{
 					All:  true,
-					From: card.Target.EachCreature.Refine(card.MostPowerful),
+					From: card.Target.EachCreature.Refine(card.Refine.MostPowerful),
 					To:   card.Controller,
 					Bind: true,
 				},

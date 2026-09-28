@@ -22,7 +22,7 @@ var Tribute = set.New(
 			Do: card.CaptureAember{
 				Amount: 2,
 				Target: card.Target.EachFriendlyCreature.
-					Refine(card.MostPowerful),
+					Refine(card.Refine.MostPowerful),
 				Source: card.Opponent,
 			},
 			Gate: card.ByExalting{Creature: card.Target.TheChosenCreature},

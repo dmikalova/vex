@@ -19,6 +19,6 @@ var FangsOfGizelhart = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.PurgeCreature{
-			Target: card.Target.EachCreature.Refine(card.MostPowerful),
+			Target: card.Target.EachCreature.Refine(card.Refine.MostPowerful),
 		}),
 )
