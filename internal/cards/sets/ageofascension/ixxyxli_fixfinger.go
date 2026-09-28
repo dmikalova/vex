@@ -25,8 +25,9 @@ var IxxyxliFixfinger = set.New(
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithConstant(card.ConstantAbility{
 		ArmorBonus: 1,
-		Target: card.Target.EachOtherFriendlyCreature.With(
-			card.Filter{House: card.Houses.Named(card.House.Self)},
-		),
+		Target: card.Target.EachFriendlyCreature.With(card.Filter{
+			House:  card.Houses.Named(card.House.Self),
+			Except: card.Except.Focus,
+		}),
 	}),
 )

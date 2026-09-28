@@ -55,7 +55,7 @@ func TestFamilyRowsWellFormed(t *testing.T) {
 // members, which would silently pass every totality check.
 func TestDeclaredReportsAScanFailure(t *testing.T) {
 	const missing = "no-such-directory"
-	for _, family := range []Family{effectFamily(), targetFilterFamily(), filterFamily()} {
+	for _, family := range []Family{effectFamily(), targetBuilderFamily(), filterFamily()} {
 		if _, err := family.Declared(missing); err == nil {
 			t.Errorf("%s.Declared(%q) returned no error", family.Name, missing)
 		}

@@ -429,7 +429,10 @@ func (e DamageOthersAfterUsingTrait) validate() error {
 func (e DamageOthersAfterUsingTrait) Text() string {
 	damage := DealDamage{
 		Amount: e.Amount,
-		Target: Target{Kind: TargetEachCreature}.ExceptTrait(e.Trait),
+		Target: Target{
+			Kind:   TargetEachCreature,
+			Filter: Filter{ExceptTrait: e.Trait},
+		},
 	}
 	return durationClause(RemainderOfPlayerTurn, "") + ", after you use a " +
 		e.Trait.String() + " creature, " + damage.Text()

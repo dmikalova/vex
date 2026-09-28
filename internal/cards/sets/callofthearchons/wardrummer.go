@@ -21,9 +21,10 @@ var Wardrummer = set.New(
 	card.WithTraits(card.Traits.Goblin),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromPlay{
-			Target: card.Target.EachOtherFriendlyCreature.With(
-				card.Filter{House: card.Houses.Named(card.House.Self)},
-			),
+			Target: card.Target.EachFriendlyCreature.With(card.Filter{
+				House:  card.Houses.Named(card.House.Self),
+				Except: card.Except.Focus,
+			}),
 			Destination: card.To.Hand,
 		}),
 )

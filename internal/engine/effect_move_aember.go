@@ -101,7 +101,7 @@ func (e MoveAember) Text() string {
 func (e MoveAember) Resolve(ctx *EffectContext) {
 	source := e.From
 	if !e.Bind {
-		source = source.WithAember()
+		source.Filter.Aember = AemberSome
 	}
 	sources := source.Select(ctx)
 	if len(sources) == 0 {

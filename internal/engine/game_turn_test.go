@@ -14,7 +14,10 @@ func TestChooseHouseSkipsCardsRemovedMidWindow(t *testing.T) {
 	destroyer := NewCard("Purge Kin", Logos, Creature, Rare, WithPower(3),
 		WithAbility(TriggerAfterChooseHouse, Conditional{
 			Cond: ChoseHouse{House: Logos},
-			Then: Destroy{Target: Target{Kind: TargetEachOtherFriendlyCreature}},
+			Then: Destroy{Target: Target{
+				Kind:   TargetEachFriendlyCreature,
+				Filter: Filter{Except: ExcludeFocus},
+			}},
 		}))
 	hoarder := NewCard("Aember Sink", Logos, Creature, Rare, WithPower(3),
 		WithAbility(TriggerAfterChooseHouse, Conditional{

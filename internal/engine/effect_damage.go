@@ -464,7 +464,7 @@ func (s CreatureAndNeighbors) hits(ctx *EffectContext) []DamageTarget {
 	}
 	target := Target{Kind: TargetChosenCreature}
 	if s.NotOnFlank {
-		target = target.NotOnFlank()
+		target = target.With(Filter{Position: PositionNotOnFlank})
 	}
 	chosen := target.Select(ctx)
 	if len(chosen) == 0 {
@@ -580,12 +580,12 @@ func (s UpToCreatures) spreadText() string {
 
 // hits asks for creatures one at a time, up to Creatures, stopping when the controller
 // declines or none remain. Undamaged narrows the pool through the shared
-// Target.Undamaged() refinement. WhenDamaged raises the amount for a creature that
+// Filter damage axis. WhenDamaged raises the amount for a creature that
 // already carries damage before this batch resolves.
 func (s UpToCreatures) hits(ctx *EffectContext) []DamageTarget {
 	pool := Target{Kind: TargetEachCreature}
 	if s.Undamaged {
-		pool = pool.Undamaged()
+		pool = pool.With(Filter{Damage: DamageNone})
 	}
 	picked := pickCards(ctx, "Choose a creature", s.Creatures, true, func() []LocalID {
 		return pool.Select(ctx)
@@ -694,7 +694,10 @@ type flankWalkStep struct {
 // far flank when the battleline is shorter than the list. Shared by the FlankWalk
 // damage spread and AddPowerCounter's counter walk.
 func flankWalkSteps(ctx *EffectContext, amounts []int) []flankWalkStep {
-	chosen := (Target{Kind: TargetChosenCreature}).OnFlank().Select(ctx)
+	chosen := Target{
+		Kind:   TargetChosenCreature,
+		Filter: Filter{Position: PositionOnFlank},
+	}.Select(ctx)
 	if len(chosen) == 0 {
 		return nil
 	}

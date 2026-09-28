@@ -14,7 +14,7 @@ this way, read [../internal/engine/AGENTS.md](../internal/engine/AGENTS.md).
 The failure mode this page exists to prevent is **building something the engine
 already has**. Before deciding a card is gated on new work, in this order:
 
-1. **Scan this page.** The tables below list every effect node, target, filter,
+1. **Scan this page.** The tables below list every effect node, target, filter axis,
    condition, count, trigger, and card-level option by name.
 2. **Read the facade.** `internal/card/` is the whole authoring surface, and every
    entry carries a doc comment with an example card:
@@ -224,9 +224,11 @@ card.CaptureAember{
 | `AttachedHost`      | the creature this upgrade is attached to |
 | `GrantingCard`      | the card that granted this ability       |
 
-### Target filters
+### Filters
 
-A narrowing is one `card.Filter`, chained onto a target with `.With(...)`:
+A narrowing is one `card.Filter` — a comparable struct literal naming one value
+per axis, never a chain of methods. `Target` has four methods (`With`, `Refine`,
+`AndNeighbors`, `NeighborsOf`); every per-card question is a `Filter` field:
 
 ```go
 card.Target.EachCreature.With(card.Filter{
@@ -235,44 +237,98 @@ card.Target.EachCreature.With(card.Filter{
 })
 ```
 
+`With` replaces the whole filter, since a `Filter` already says every axis. That
+matters for the named "other" targets, which are their plain kind plus an
+exclusion: narrowing `card.Target.EachOtherFriendlyCreature` means writing the
+exclusion back into the literal —
+`card.Target.EachFriendlyCreature.With(card.Filter{Trait: card.Traits.Wolf,
+Except: card.Except.Focus})` is Moor Wolf's "each other friendly Wolf creature".
+
 The axes conjoin — a card must satisfy all of them — unless `MatchAny: true`
-disjoins them into one "or" phrase ("each Mars or Robot creature", EMP Blast).
-The same `Filter` narrows a `Search` or a `DiscardUntil`; there the in-play axes
-are rejected, because a card in a deck has no power or place in a battleline to
-read. Each axis also has a one-line `Target` builder of the same name
-(`.WithTrait(t)`, `.PowerAtMost(n)`, …), which writes the field and is what older
-cards use.
+disjoins the identity axes into one "or" phrase ("each Mars or Robot creature",
+EMP Blast).
 
-| Axis                                     | Keeps                                  |
-| ---------------------------------------- | -------------------------------------- |
-| `Type`                                   | by card type                           |
-| `House`                                  | cards a `card.Houses` matcher admits   |
-| `Trait` / `ExceptTrait`                  | by trait                               |
-| `Name`                                   | by printed name                        |
-| `Gigantic`                               | either half of a gigantic creature     |
-| `MatchAny`                               | disjoins the axes instead of conjoining |
-| `SharesTrait`                            | creatures sharing a trait with "it"    |
-| `Power`                                  | a `card.Power` bound                   |
-| `Damage`                                 | a `card.Damage` presence               |
-| `Aember`                                 | a `card.Aember` presence               |
-| `Armor` / `Upgrade` / `Counter`          | by what it carries                     |
-| `NoBonusIcons`                           | cards with no bonus icons              |
-| `Keyword`                                | creatures with a keyword               |
-| `Stunned` / `Ready`                      | by state                               |
-| `Position`                               | a `card.Position` in the battleline    |
-| `Neighboring`                            | the source card's neighbors            |
-| `SharesHouseWithNeighbors`               | by neighboring houses                  |
-| `HouseWithMostCreatures`                 | the most-represented house             |
-| `HouseWithAtLeast`                       | houses with at least n creatures       |
-| `WithoutSharedTrait`                     | creatures sharing no trait with a mate |
-| `Except`                                 | leaves out a `card.Except` card        |
+**Identity axes** are what a card _is_: printed on it and true in any zone. They
+are legal for every consumer.
 
-`card.Power` bounds: `AtMost(n)`, `AtLeast(n)`, `Exactly(n)`, `Odd`, `Even`,
-`LessThanSource()`.
+| Axis          | Keeps                                        | Values                                                  |
+| ------------- | -------------------------------------------- | ------------------------------------------------------- |
+| `Type`        | by card type, and supplies the printed noun  | `card.Type.Creature`, `.Artifact`, `.Tactic`, `.Upgrade` |
+| `House`       | cards a house matcher admits                 | `card.Houses.Named(h)`, `.Except(h)`, `.Chosen`, `.Active`, `.Contextual` |
+| `Trait`       | by trait                                     | `card.Traits.Beast`, …                                   |
+| `ExceptTrait` | by the absence of a trait ("non-Agent")      | `card.Traits.Agent`, …                                   |
+| `Name`        | by printed name, replacing the noun          | `"Ancient Bear"`                                          |
+| `Gigantic`    | either half of a gigantic creature           | `true`                                                    |
+| `MatchAny`    | disjoins the identity axes instead of joining | `true`                                                   |
 
-Battleline neighbours are a set expansion rather than an axis, so they stay on
-the target: `.AndNeighbors()` keeps each selected creature and adds its
+**In-play axes** read the board — what has happened to a card and where it
+stands. A consumer pointing at a deck, a hand, a discard pile, or the turn log has
+no board to read, so it **rejects** these at build time rather than silently
+matching nothing (`Filter.validateIdentityOnly`).
+
+| Axis                       | Keeps                                    | Values                                                   |
+| -------------------------- | ---------------------------------------- | -------------------------------------------------------- |
+| `Power`                    | a power bound                            | `card.Power.AtMost(n)`, `.AtLeast(n)`, `.Exactly(n)`, `.Odd`, `.Even`, `.LessThanSource()` |
+| `Damage`                   | by damage on the card                    | `card.Damage.Some`, `.None`                               |
+| `Aember`                   | by Æmber on the card                     | `card.Aember.Some`, `.None`                               |
+| `Position`                 | a place in the battleline                | `card.Position.OnFlank`, `.NotOnFlank`, `.Center`, `.Left`, `.Right` |
+| `Except`                   | leaves one card out ("other", "another") | `card.Except.Source`, `.It`, `.Focus`                     |
+| `Keyword`                  | creatures with a keyword, as an adjective | `card.Keyword.Elusive`, …                                |
+| `Counter`                  | cards carrying a generic counter          | `card.Counter.Doom`, `.Fuse`, `.Growth`, …               |
+| `Stunned` / `Ready`        | by state                                  | `true`                                                   |
+| `Armor` / `Upgrade`        | by what it carries                        | `true`                                                   |
+| `NoBonusIcons`             | cards printing no bonus icons             | `true`                                                   |
+| `Neighboring`              | the source card's neighbors               | `true`                                                   |
+| `SharesTrait`              | cards sharing a trait with "it"           | `true`                                                   |
+| `WithoutSharedTrait`       | creatures sharing no trait with a mate    | `true`                                                   |
+| `HouseWithMostCreatures`   | the most-represented house                | `true`                                                   |
+| `HouseWithAtLeast`         | houses with at least n creatures          | `n`                                                      |
+| `SharesHouseWithNeighbors` | creatures sharing a house with n neighbors | `n`                                                     |
+
+`Except` is an in-play axis because it names a card by the position it holds in
+this resolution. Its three values differ only in which card they leave out:
+`Source` the card the ability is printed on, `It` the card in context (and
+nothing when no effect put one there), `Focus` the card in context when there is
+one and the source card otherwise — the fallback that keeps "another creature"
+off the card it is defined against (Guardian Demon).
+
+Battleline neighbours are a set expansion rather than a per-card test, so they
+stay on the target: `.AndNeighbors()` keeps each selected creature and adds its
 neighbours, `.NeighborsOf()` replaces the selection with them.
+
+#### Who takes a Filter
+
+The same `Filter` narrows every node that points at a card, so one narrowing is
+written one way wherever it appears:
+
+| Node                                                    | Points at                     |
+| ------------------------------------------------------- | ----------------------------- |
+| `Target`                                                | cards in play                 |
+| `CardsInPlay`, `ExcessCreatures`, `ControlsMoreCreatures` | the board, counted or tested |
+| `Chosen`, `Each`                                        | a selection from a pile       |
+| `Search`, `DiscardUntil`, `ForEachDiscarded`            | a deck dig                    |
+| `PutFromHand`, `PutUnderFromHand`, `RevealHand`         | the hand                      |
+| `CardsInDiscardAtLeast`, `NamedCardInDiscard`, `DiscardedThisWay`, `CardsDiscarded` | the discard pile |
+| `CardsPlayed`, `NamedCardPurged`                        | the turn log                  |
+| `ItIs`, `HousesAmong`, `NeighborsMatching`, `SourceHasNoNeighbor` | the card in context or its neighbors |
+| `CardDefinition.FightRestriction`                       | the defenders a creature may fight |
+
+The fight restriction is a `Filter` rather than a `Target` because the rule tests
+one defender at a time — the base set is always "the enemy creatures this
+creature could fight" — and the rule sentence owns the quantifier.
+
+Three families deliberately take a bare `CardType` and **not** a `Filter`:
+
+- `CannotPlay` and `PlayersCannotPlay` bar a whole card type for a player and a
+  duration. The bar is armed ahead of the cards it will stop, so there is no card
+  to test when it is written; a `Filter` would promise a narrowing the rule cannot
+  perform.
+- `ConditionalPlayBar`, `EntersReadyGrant` and `NextPlayed` arm the same way,
+  against cards not yet played.
+- `CardsPurged.Noun`, `PutDiscardedIntoHand.Noun` and
+  `PutDiscardedIntoPlay.Noun` are noun-only: they supply the word the clause
+  prints and narrow nothing, because the count reads a tally or the card is
+  already chosen and sits in context.
 
 ### Refinements
 
@@ -347,7 +403,8 @@ The sentinel never survives past `card.New`, so the printed text, resolution, an
 state all see the concrete house — the generated comment still reads "one Untamed
 card". The same holds for a `Target` filtered by house: Ixxyxli Fixfinger (Mars)
 buffing each other Martian creature writes
-`card.Target.EachOtherFriendlyCreature.House(card.Houses.Named(card.House.Self))`.
+`card.Target.EachFriendlyCreature.With(card.Filter{House:
+card.Houses.Named(card.House.Self), Except: card.Except.Focus})`.
 
 The test is what the card is _about_, not which house it happens to print. Take
 That, Smarty Pants names Logos because it is about Logos creatures, whichever
@@ -745,7 +802,7 @@ Mega Ganger Chieftain readies a neighbor and makes it fight:
 ```go
 card.WithAbility(
   card.Trigger.Play, card.OnChooseCreature{
-    Target: card.Target.Creature.Neighboring(),
+    Target: card.Target.Creature.With(card.Filter{Neighboring: true}),
     Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}},
   }),
 ```
@@ -1358,14 +1415,14 @@ Extend along the cheapest surface first:
 1. A new **field** on an existing effect.
 2. A new **Strategy** — a `Refinement`, `Count`, `Condition`, `Selection`,
    `Spread`, or `Chooser` — each of which carries its own text fragment.
-3. A new **target filter**.
+3. A new **filter axis** on `card.Filter`.
 4. A new **effect node** in `effect_<mechanic>.go`. Grill-gated: present the case
    and stop (see the `implement-cards` skill).
 5. A new **Resolver** capability, then new state. Both are last resorts; state
    must stay flat, pointerless, and comparable (ADR 0005).
 
-Name what you add for the **mechanic**, not the card: prefer a `Target` or
-`Refinement` filter, a `Count`, a `Duration` field, or a portion (`By: Half`)
+Name what you add for the **mechanic**, not the card: prefer a `Filter` axis, a
+`Refinement`, a `Count`, a `Duration` field, or a portion (`By: Half`)
 over a name that spells out the whole card sentence (see
 [style-guide.md](style-guide.md), "Composition and design").
 

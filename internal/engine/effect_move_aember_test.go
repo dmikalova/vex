@@ -235,7 +235,10 @@ func TestMoveAember(t *testing.T) {
 	MoveAember{
 		Amount: 1,
 		From:   friendly,
-		Onto:   Target{Kind: TargetChosenOtherCreature},
+		Onto: Target{
+			Kind:   TargetChosenCreature,
+			Filter: Filter{Except: ExcludeFocus},
+		},
 	}.
 		Resolve(&EffectContext{
 			Resolver:   g5,

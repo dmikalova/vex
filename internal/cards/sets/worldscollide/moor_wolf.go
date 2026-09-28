@@ -30,8 +30,9 @@ var MoorWolf = set.New(
 	card.WithKeywords(card.Keyword.Skirmish),
 	card.WithAbility(
 		card.Trigger.Play, card.Ready{
-			Target: card.Target.EachOtherFriendlyCreature.With(
-				card.Filter{Trait: card.Traits.Wolf},
-			),
+			Target: card.Target.EachFriendlyCreature.With(card.Filter{
+				Trait:  card.Traits.Wolf,
+				Except: card.Except.Focus,
+			}),
 		}),
 )

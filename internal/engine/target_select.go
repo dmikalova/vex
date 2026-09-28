@@ -5,10 +5,9 @@ import "slices"
 // This file holds a Target's selection machinery: resolving a Target into
 // concrete card ids (Select, SelectOptional, selectWith), narrowing them by the
 // Target's per-card Filter (admitted), the base sets each Kind draws from
-// (selectBase), and
-// the battleline geometry the flank and neighbor axes read (onFlank, isNeighbor,
-// neighbors, …). See target.go for the Target type and its filter builders,
-// filter.go for the Filter those builders write, and target_refinement.go for the
+// (selectBase), and the battleline geometry the flank and neighbor axes read
+// (onFlank, isNeighbor, neighbors, …). See target.go for the Target type,
+// filter.go for the Filter it narrows by, and target_refinement.go for the
 // Refinement strategies selectWith applies.
 
 // Select resolves the target into concrete card ids, applying its filters. For a
@@ -162,19 +161,16 @@ func focus(ctx *EffectContext) LocalID {
 	return ctx.Source
 }
 
-// excludesFocus reports whether the Kind is an "another …" Target, i.e. one
-// defined by excluding the card in focus.
+// excludesFocus reports whether the target is an "another …" one, i.e. defined
+// by excluding the card in focus.
 func (t Target) excludesFocus() bool {
-	return t.Kind == TargetChosenOtherCreature ||
-		t.Kind == TargetChosenOtherFriendlyCreature ||
-		t.Kind == TargetEachOtherFriendlyCreature
+	return t.Filter.Except == ExcludeFocus
 }
 
 // isChosen reports whether the Kind resolves to a single player-chosen creature.
 func (t Target) isChosen() bool {
 	return t.Kind == TargetChosenCreature || t.Kind == TargetChosenEnemyCreature ||
-		t.Kind == TargetChosenFriendlyCreature || t.Kind == TargetChosenOtherFriendlyCreature ||
-		t.Kind == TargetChosenOtherCreature ||
+		t.Kind == TargetChosenFriendlyCreature ||
 		t.Kind == TargetChosenArtifact || t.Kind == TargetChosenEnemyArtifact || t.Kind == TargetChosenFriendlyArtifact || t.Kind == TargetChosenCreatureOrArtifact ||
 		t.Kind == TargetChosenUpgrade ||
 		t.Kind == TargetChosenFriendlyCreatureOrArtifact ||
@@ -286,21 +282,6 @@ func neighbors(ctx *EffectContext, id LocalID) []LocalID {
 	}
 	if i < len(bl)-1 {
 		out = append(out, bl[i+1])
-	}
-	return out
-}
-
-// creaturesExcept returns every creature in play except one, walking both
-// players' battlelines in order. It backs effects that target "a different
-// creature" or "another creature" than one already chosen.
-func creaturesExcept(ctx *EffectContext, exclude LocalID) []LocalID {
-	var out []LocalID
-	for p := range 2 {
-		for _, id := range ctx.Resolver.Battleline(p) {
-			if id != exclude {
-				out = append(out, id)
-			}
-		}
 	}
 	return out
 }
@@ -448,17 +429,6 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 		return ctx.Resolver.Battleline(ctx.Controller)
 	case TargetEachEnemyCreature, TargetChosenEnemyCreature:
 		return ctx.Resolver.Battleline(ctx.Opponent())
-	case TargetEachOtherFriendlyCreature, TargetChosenOtherFriendlyCreature:
-		skip := focus(ctx)
-		out := make([]LocalID, 0)
-		for _, id := range ctx.Resolver.Battleline(ctx.Controller) {
-			if id != skip {
-				out = append(out, id)
-			}
-		}
-		return out
-	case TargetChosenOtherCreature:
-		return creaturesExcept(ctx, focus(ctx))
 	case TargetFormerNeighbors:
 		return ctx.Produced.Neighbors
 	case TargetEachNeighbor:
