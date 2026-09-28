@@ -34,7 +34,13 @@ func RepeatGateCatalog() []Catalogued[RepeatGate] {
 			Rules: plumbing("composition: reruns the effect while its condition holds"),
 		},
 		{
-			Node: MayWhile{Cond: Overwhelmed{}},
+			Node: WhileYouDo{Cond: Overwhelmed{}},
+			Rules: plumbing(
+				"composition: reruns the effect while it keeps happening and its condition holds",
+			),
+		},
+		{
+			Node: MayWhileYouDo{Cond: Overwhelmed{}},
 			Rules: plumbing(
 				"composition: reruns the effect while the controller keeps choosing to",
 			),
