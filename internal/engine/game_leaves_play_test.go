@@ -50,8 +50,7 @@ func TestDestructionReplacedByOwnStatic(t *testing.T) {
 				When: EventCreatureDestroyed,
 				Cond: CardsInPlay{
 					Player: Controller,
-					Type:   Creature,
-					Other:  true,
+					Filter: Filter{Type: Creature, Except: ExcludeSource},
 				},
 				With: GainAember{
 					Player: Controller,
@@ -111,8 +110,7 @@ func TestDestructionReplacementDoesNotHangAtZeroPower(t *testing.T) {
 			When: EventCreatureDestroyed,
 			Cond: CardsInPlay{
 				Player: Controller,
-				Type:   Creature,
-				Other:  true,
+				Filter: Filter{Type: Creature, Except: ExcludeSource},
 			},
 			With: Sequence{Effects: []Effect{
 				Heal{
@@ -161,8 +159,7 @@ func TestCreatureSelfDestructionReplacementText(t *testing.T) {
 				When: EventCreatureDestroyed,
 				Cond: CardsInPlay{
 					Player: Controller,
-					Type:   Creature,
-					Other:  true,
+					Filter: Filter{Type: Creature, Except: ExcludeSource},
 				},
 				With: Sequence{Effects: []Effect{
 					Heal{

@@ -25,9 +25,11 @@ var Lumilu = set.New(
 			Amount: 1,
 			Per: card.CardsInPlay{
 				Player: card.Controller,
-				Type:   card.Type.Creature,
-				Trait:  card.Traits.Beast,
-				Other:  true,
+				Filter: card.Filter{
+					Type:   card.Type.Creature,
+					Trait:  card.Traits.Beast,
+					Except: card.Except.Source,
+				},
 			},
 		}),
 )

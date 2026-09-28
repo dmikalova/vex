@@ -22,7 +22,7 @@ var XanthyxHarvester = set.New(
 	card.WithTraits(card.Traits.Beast),
 	card.WithRestrictions(card.Restrictions{
 		UseCondition: card.SourceHasNoNeighbor{
-			House: card.Houses.Except(card.House.Self),
+			Filter: card.Filter{House: card.Houses.Except(card.House.Self)},
 		},
 	}),
 	card.WithAbility(

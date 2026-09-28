@@ -19,7 +19,7 @@ var WorldTree = set.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.PutCard{Zones: []card.Zone{card.Discard},
-			Selection:   card.Chosen{Type: card.Type.Creature},
+			Selection:   card.Chosen{Filter: card.Filter{Type: card.Type.Creature}},
 			Destination: card.To.TopOfDeck,
 		}),
 )

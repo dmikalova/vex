@@ -139,7 +139,7 @@ func TestAfterYouPlayFolding(t *testing.T) {
 		Ability{
 			Trigger: TriggerAfterCardPlayed,
 			Effect: Conditional{
-				Cond: ItIs{Type: Artifact},
+				Cond: ItIs{Filter: Filter{Type: Artifact}},
 				Then: StealAember{Amount: 1},
 			},
 		},
@@ -147,12 +147,13 @@ func TestAfterYouPlayFolding(t *testing.T) {
 	if want := "After you play an artifact, steal 1 Æmber."; folded != want {
 		t.Errorf("folded = %q, want %q", folded, want)
 	}
-	// A Conditional{ItIsNamed} folds into the natural "after you play <Name>" wording.
+	// A Conditional{ItIs} naming a card folds into the natural "after you play
+	// <Name>" wording, with no article before the proper name.
 	named := RenderAbility(
 		Ability{
 			Trigger: TriggerAfterCardPlayed,
 			Effect: Conditional{
-				Cond: ItIsNamed{Name: "Subtle Chain"},
+				Cond: ItIs{Filter: Filter{Name: "Subtle Chain"}},
 				Then: GainAember{
 					Player: Controller,
 					Amount: 1,
@@ -163,13 +164,13 @@ func TestAfterYouPlayFolding(t *testing.T) {
 	if want := "After you play Subtle Chain, gain 1 Æmber."; named != want {
 		t.Errorf("named = %q, want %q", named, want)
 	}
-	// A Conditional{ItIsOfTrait} folds into "after you play a <Trait> creature"
+	// A Conditional{ItIs} naming a trait folds into "after you play a <Trait> creature"
 	// (Dark Æmber Vault), so a treachery-gifted Mutant still triggers "you played".
 	trait := RenderAbility(
 		Ability{
 			Trigger: TriggerAfterCardPlayed,
 			Effect: Conditional{
-				Cond: ItIsOfTrait{Trait: Mutant},
+				Cond: ItIs{Filter: Filter{Type: Creature, Trait: Mutant}},
 				Then: Draw{Amount: 1},
 			},
 		},
@@ -236,7 +237,7 @@ func TestAfterYouUseFolding(t *testing.T) {
 		Ability{
 			Trigger: TriggerAfterUse,
 			Effect: Conditional{
-				Cond: ItIs{Type: Artifact},
+				Cond: ItIs{Filter: Filter{Type: Artifact}},
 				Then: GainAember{
 					Player: Controller,
 					Amount: 1,
@@ -270,7 +271,7 @@ func TestAfterYouDiscardFolding(t *testing.T) {
 		Ability{
 			Trigger: TriggerAfterDiscardFromHand,
 			Effect: Conditional{
-				Cond: ItIs{House: namedHouse(Sanctum)},
+				Cond: ItIs{Filter: Filter{House: namedHouse(Sanctum)}},
 				Then: CaptureAember{
 					Target: Target{Kind: TargetThisCreature},
 					Amount: 1,
@@ -298,13 +299,13 @@ func TestAfterYouDiscardFolding(t *testing.T) {
 }
 
 func TestAfterCreaturePlayedAdjacentFolding(t *testing.T) {
-	// Stilt-Kin: a Conditional{ItIsOfTrait} on an AfterCreaturePlayedAdjacent
+	// Stilt-Kin: a Conditional{ItIs} on an AfterCreaturePlayedAdjacent
 	// reaction folds the trait into the trigger phrase.
 	folded := RenderAbility(
 		Ability{
 			Trigger: TriggerAfterCreaturePlayedAdjacent,
 			Effect: Conditional{
-				Cond: ItIsOfTrait{Trait: Giant},
+				Cond: ItIs{Filter: Filter{Type: Creature, Trait: Giant}},
 				Then: OnChooseCreature{
 					Target: Target{Kind: TargetThisCreature},
 					Verbs:  []CreatureVerb{ReadyVerb{}, FightVerb{}},
@@ -407,7 +408,7 @@ func TestAfterEnemyPlaysCreatureOnFlankFolding(t *testing.T) {
 			OfIt:  false,
 			Where: RightFlank,
 		}, nil},
-		{"non-flank", ItIsOfTrait{Trait: Giant}, nil},
+		{"non-flank", ItIs{Filter: Filter{Type: Creature, Trait: Giant}}, nil},
 	}
 	for _, tc := range literal {
 		got := RenderAbility(
@@ -532,7 +533,7 @@ func TestAfterCreatureScopeFolding(t *testing.T) {
 			Ability{
 				Trigger: TriggerAfterCreatureReaps,
 				Effect: Conditional{
-					Cond: ItIsOfTrait{Trait: Giant},
+					Cond: ItIs{Filter: Filter{Type: Creature, Trait: Giant}},
 					Then: draw,
 				},
 			},
@@ -605,7 +606,7 @@ func TestAfterCreatureScopeFolding(t *testing.T) {
 			Ability{
 				Trigger: TriggerAfterCreatureFights,
 				Effect: Conditional{
-					Cond: ItIsOfTrait{Trait: Giant},
+					Cond: ItIs{Filter: Filter{Type: Creature, Trait: Giant}},
 					Then: draw,
 				},
 			},
@@ -1089,8 +1090,7 @@ func TestGeneratedCardText(t *testing.T) {
 								Trigger: TriggerAfterCardPlayed,
 								Effect: Conditional{
 									Cond: ItIs{
-										House: namedHouse(Mars),
-										Type:  Creature,
+										Filter: Filter{House: namedHouse(Mars), Type: Creature},
 									},
 									Then: Sequence{
 										Effects: []Effect{
@@ -1185,7 +1185,7 @@ func TestGeneratedCardText(t *testing.T) {
 				Common,
 				WithPower(7),
 				WithTraits(Beast),
-				WithFightRestriction(Target{Kind: TargetEachCreature}.With(Filter{Stunned: true})),
+				WithFightRestriction(Filter{Stunned: true}),
 			),
 			"House:  Untamed\nType:   Creature\nRarity: Common\nPower:  7\nTraits: Beast\n\nTwig can only fight stunned creatures.",
 		},
@@ -1275,9 +1275,7 @@ func TestRenderCardRules(t *testing.T) {
 				Creature,
 				Common,
 				WithPower(5),
-				WithTakesDamageFor(
-					Target{Kind: TargetEachCreature}.With(Filter{Neighboring: true}),
-				),
+				WithTakesDamageFor(Filter{Neighboring: true}),
 			),
 			"Damage dealt to each neighboring creature is dealt to Ward instead.",
 		},

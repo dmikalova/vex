@@ -22,7 +22,7 @@ var Harmonia = set.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{
-		Cond: card.ItIs{Type: card.Type.Creature},
+		Cond: card.ItIs{Filter: card.Filter{Type: card.Type.Creature}},
 		Then: card.Conditional{
 			Cond: card.Overwhelmed{},
 			Then: card.GainAember{

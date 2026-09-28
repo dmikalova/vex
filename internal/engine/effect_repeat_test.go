@@ -8,9 +8,7 @@ func TestRepeat(t *testing.T) {
 	e := ForEach{
 		Times: CardsInPlay{
 			Player: Controller,
-			Type:   Creature,
-			House:  namedHouse(Mars),
-			Ready:  true,
+			Filter: Filter{Type: Creature, House: namedHouse(Mars), Ready: true},
 		},
 		Do: DealDamage{
 			Target: Target{Kind: TargetChosenCreature},
@@ -100,9 +98,11 @@ func TestLoseAemberPer(t *testing.T) {
 		Amount: 1,
 		Per: CardsInPlay{
 			Player: Controller,
-			Type:   Creature,
-			House:  namedHouse(Mars),
-			Other:  true,
+			Filter: Filter{
+				Type:   Creature,
+				House:  namedHouse(Mars),
+				Except: ExcludeSource,
+			},
 		},
 	}
 	want := "for each other friendly Mars creature, your opponent loses 1 Æmber"

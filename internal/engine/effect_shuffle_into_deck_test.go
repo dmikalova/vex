@@ -5,12 +5,9 @@ import "testing"
 // TestShuffleFromDiscardText covers the three selection modes' printed text.
 func TestShuffleFromDiscardText(t *testing.T) {
 	each := ShuffleIntoDeck{
-		Player: Controller,
-		From:   []Zone{Discard},
-		Selection: Each{
-			House: namedHouse(Untamed),
-			Type:  Creature,
-		},
+		Player:    Controller,
+		From:      []Zone{Discard},
+		Selection: Each{Filter: Filter{House: namedHouse(Untamed), Type: Creature}},
 	}
 	if got := each.Text(); got !=
 		"shuffle each Untamed creature from your discard pile into your deck" {
@@ -18,11 +15,8 @@ func TestShuffleFromDiscardText(t *testing.T) {
 	}
 
 	anyNum := ShuffleIntoDeck{Player: Controller, From: []Zone{Discard},
-		Selection: Chosen{
-			Type:     Creature,
-			Optional: true,
-		},
-		Quantity: AnyNumber{},
+		Selection: Chosen{Filter: Filter{Type: Creature}, Optional: true},
+		Quantity:  AnyNumber{},
 	}
 	if got := anyNum.Text(); got !=
 		"shuffle any number of creatures from your discard pile into your deck" {
@@ -30,8 +24,7 @@ func TestShuffleFromDiscardText(t *testing.T) {
 	}
 	anyHouse := ShuffleIntoDeck{Player: Controller, From: []Zone{Discard},
 		Selection: Chosen{
-			House:    namedHouse(Untamed),
-			Type:     Creature,
+			Filter:   Filter{House: namedHouse(Untamed), Type: Creature},
 			Optional: true,
 		},
 		Quantity: AnyNumber{},
@@ -45,7 +38,7 @@ func TestShuffleFromDiscardText(t *testing.T) {
 		Selection: Chosen{},
 		Quantity: Takes{N: CardsInPlay{
 			Player: Controller,
-			Trait:  Shard,
+			Filter: Filter{Trait: Shard},
 		}},
 	}
 	if got := counted.Text(); got !=
@@ -90,10 +83,7 @@ func TestShuffleFromDiscardValidate(t *testing.T) {
 // TestShuffleFromDiscardEach covers Low Dawn: every Untamed creature leaves the
 // discard for the deck as one grouped line while other cards stay put.
 func TestShuffleFromDiscardEach(t *testing.T) {
-	sel := Each{
-		House: namedHouse(Untamed),
-		Type:  Creature,
-	}
+	sel := Each{Filter: Filter{House: namedHouse(Untamed), Type: Creature}}
 
 	g := NewGame("A", "B", 1)
 	src := g.AddToDiscard(NewCard("src", Untamed, Tactic, Common), 0)
@@ -166,10 +156,7 @@ func TestShuffleFromDiscardEach(t *testing.T) {
 // TestShuffleFromDiscardAnyNumber covers Not Finished with You: the controller
 // shuffles any number of chosen creatures out of their discard pile.
 func TestShuffleFromDiscardAnyNumber(t *testing.T) {
-	sel := Chosen{
-		Type:     Creature,
-		Optional: true,
-	}
+	sel := Chosen{Filter: Filter{Type: Creature}, Optional: true}
 
 	// The default chooser takes every eligible creature, skipping a non-creature.
 	g := NewGame("A", "B", 1)
@@ -200,8 +187,7 @@ func TestShuffleFromDiscardAnyNumber(t *testing.T) {
 
 	// The house filter narrows the eligible creatures.
 	houseSel := Chosen{
-		House:    namedHouse(Untamed),
-		Type:     Creature,
+		Filter:   Filter{House: namedHouse(Untamed), Type: Creature},
 		Optional: true,
 	}
 	g2 := NewGame("A", "B", 1)
@@ -261,7 +247,7 @@ func TestShuffleFromDiscardCount(t *testing.T) {
 		Selection: Chosen{},
 		Quantity: Takes{N: CardsInPlay{
 			Player: Controller,
-			Trait:  Shard,
+			Filter: Filter{Trait: Shard},
 		}},
 	}
 

@@ -22,7 +22,9 @@ var BookOfLeQ = set.New(
 			Effects: []card.Effect{
 				card.RevealTopOfDeck{Amount: 1},
 				card.Conditional{
-					Cond: card.ItIs{House: card.Houses.Except(card.House.Self)},
+					Cond: card.ItIs{
+						Filter: card.Filter{House: card.Houses.Except(card.House.Self)},
+					},
 					Then: card.ChangeActiveHouse{To: card.TheContextualHouse},
 					Else: card.EndTurn{},
 				},

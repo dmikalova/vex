@@ -7,7 +7,7 @@ import (
 func TestCardsDiscarded(t *testing.T) {
 	e := CardsDiscarded{
 		Player: Controller,
-		House:  namedHouse(Untamed),
+		Filter: Filter{House: namedHouse(Untamed)},
 		Amount: 1,
 	}
 	if got := e.CondText(); got != "if you have discarded an Untamed card from your hand this turn" {
@@ -15,7 +15,7 @@ func TestCardsDiscarded(t *testing.T) {
 	}
 	eOpp := CardsDiscarded{
 		Player: Opponent,
-		House:  namedHouse(Mars),
+		Filter: Filter{House: namedHouse(Mars)},
 		Amount: 1,
 	}
 	if got := eOpp.CondText(); got != "if your opponent has discarded a Mars card from their hand this turn" {
@@ -41,13 +41,13 @@ func TestCardsDiscarded(t *testing.T) {
 	}
 	if (CardsDiscarded{
 		Player: Controller,
-		House:  namedHouse(Untamed),
+		Filter: Filter{House: namedHouse(Untamed)},
 	}).validate() == nil {
 		t.Error("validate() should reject a zero Amount")
 	}
 	eAmount := CardsDiscarded{
 		Player: Controller,
-		House:  namedHouse(Untamed),
+		Filter: Filter{House: namedHouse(Untamed)},
 		Amount: 3,
 	}
 	if got := eAmount.CondText(); got != "if you have discarded 3 Untamed cards from your hand this turn" {
@@ -90,7 +90,7 @@ func TestNewCardRejectsZeroAmountUseCondition(t *testing.T) {
 	NewCard("bad", Untamed, Creature, Rare, WithRestrictions(Restrictions{
 		UseCondition: CardsDiscarded{
 			Player: Controller,
-			House:  namedHouse(Untamed),
+			Filter: Filter{House: namedHouse(Untamed)},
 		},
 	}))
 }

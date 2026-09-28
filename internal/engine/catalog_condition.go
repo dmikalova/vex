@@ -42,7 +42,12 @@ func ConditionCatalog() []Catalogued[Condition] {
 			Silent: true,
 		},
 		{
-			Node:  And{Conditions: []Condition{ItIsFriendly{}, ItIsOfTrait{Trait: Dinosaur}}},
+			Node: And{
+				Conditions: []Condition{
+					ItIsFriendly{},
+					ItIs{Filter: Filter{Type: Creature, Trait: Dinosaur}},
+				},
+			},
 			Rules: plumbing("composition: met when every inner condition is met"),
 		},
 		{
@@ -77,7 +82,7 @@ func ConditionCatalog() []Catalogued[Condition] {
 		},
 		{
 			Node: HousesRepresented{
-				Among:  HousesAmong{Player: Controller, Type: Creature},
+				Among:  HousesAmong{Player: Controller, Filter: Filter{Type: Creature}},
 				Is:     AtLeast,
 				Amount: 3,
 			},
@@ -88,7 +93,7 @@ func ConditionCatalog() []Catalogued[Condition] {
 			Rules: bears("Generic Counters"),
 		},
 		{
-			Node:  NamedCardPurged{Name: "Orbital Observation"},
+			Node:  NamedCardPurged{Filter: Filter{Name: "Orbital Observation"}},
 			Rules: bears("Purge"),
 		},
 		{
@@ -111,18 +116,20 @@ func ConditionCatalog() []Catalogued[Condition] {
 		// The discard pile.
 		{
 			Node: CardsInDiscardAtLeast{
-				House:  HouseMatcher{Kind: MatchNamedHouse, House: Untamed},
-				Type:   Creature,
+				Filter: Filter{
+					House: HouseMatcher{Kind: MatchNamedHouse, House: Untamed},
+					Type:  Creature,
+				},
 				Amount: 3,
 			},
 			Rules: bears("Conditional"),
 		},
 		{
-			Node:  DiscardedThisWay{Type: Creature},
+			Node:  DiscardedThisWay{Filter: Filter{Type: Creature}},
 			Rules: bears("Discard"),
 		},
 		{
-			Node:  NamedCardInDiscard{Name: "Subtle Chain"},
+			Node:  NamedCardInDiscard{Filter: Filter{Name: "Subtle Chain"}},
 			Rules: bears("Conditional"),
 		},
 		{
@@ -144,15 +151,21 @@ func ConditionCatalog() []Catalogued[Condition] {
 			Rules: bears("Conditional"),
 		},
 		{
-			Node:  ItIs{House: HouseMatcher{Kind: MatchNamedHouse, House: Mars}, Type: Creature},
+			Node: ItIs{Filter: Filter{
+				Type:  Creature,
+				House: HouseMatcher{Kind: MatchNamedHouse, House: Mars},
+			}},
 			Rules: bears("Belong to House"),
 		},
+		// The same condition narrowed by the filter's other identity axes. One node
+		// answers "what is it?" for every axis, and each row names the term that axis
+		// teaches: a trait is a rules concept of its own, a printed name is not.
 		{
-			Node:  ItIsNamed{Name: "Subtle Chain"},
+			Node:  ItIs{Filter: Filter{Name: "Subtle Chain"}},
 			Rules: bears("Conditional"),
 		},
 		{
-			Node:  ItIsOfTrait{Trait: Dinosaur},
+			Node:  ItIs{Filter: Filter{Type: Creature, Trait: Dinosaur}},
 			Rules: bears("Trait"),
 		},
 		{
@@ -184,7 +197,7 @@ func ConditionCatalog() []Catalogued[Condition] {
 			Rules: bears("Conditional"),
 		},
 		{
-			Node:  CardsInPlay{Player: Controller, Type: Creature},
+			Node:  CardsInPlay{Player: Controller, Filter: Filter{Type: Creature}},
 			Rules: bears("Conditional"),
 		},
 
@@ -198,7 +211,9 @@ func ConditionCatalog() []Catalogued[Condition] {
 			Rules: bears("Flank"),
 		},
 		{
-			Node:  SourceHasNoNeighbor{House: HouseMatcher{Kind: MatchNamedHouse, House: Mars}},
+			Node: SourceHasNoNeighbor{
+				Filter: Filter{House: HouseMatcher{Kind: MatchNamedHouse, House: Mars}},
+			},
 			Rules: bears("Flank"),
 		},
 		{

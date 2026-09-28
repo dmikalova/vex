@@ -18,9 +18,11 @@ var MothershipSupport = set.New("Mothership Support",
 		card.Trigger.Play, card.ForEach{
 			Times: card.CardsInPlay{
 				Player: card.Controller,
-				Type:   card.Type.Creature,
-				House:  card.Houses.Named(card.House.Self),
-				Ready:  true,
+				Filter: card.Filter{
+					Type:  card.Type.Creature,
+					House: card.Houses.Named(card.House.Self),
+					Ready: true,
+				},
 			},
 			Do: card.DealDamage{
 				Target: card.Target.Creature,

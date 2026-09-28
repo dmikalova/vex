@@ -24,8 +24,10 @@ var BlastFromThePast = set.New(
 			card.ArchiveCard{
 				Zone: card.Discard,
 				Selection: card.Chosen{
-					Type:  card.Type.Creature,
-					House: card.Houses.Named(card.House.Saurian),
+					Filter: card.Filter{
+						Type:  card.Type.Creature,
+						House: card.Houses.Named(card.House.Saurian),
+					},
 				},
 				Bind: true,
 			},

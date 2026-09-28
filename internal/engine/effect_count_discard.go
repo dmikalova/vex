@@ -5,18 +5,25 @@ import (
 )
 
 // CardsDiscarded is a Condition met when the specified player has discarded at
-// least Amount cards of the given House from hand this turn. Amount must be at
+// least Amount cards its Filter admits from hand this turn. Amount must be at
 // least 1: a check for "discarded 0 or more cards" is always true, so an unset
 // threshold is rejected at registration rather than silently treated as one.
 type CardsDiscarded struct {
+	// Player names whose discards to count. It picks a turn log rather than
+	// narrowing a card, so it is a set selector and not a filter axis.
 	Player Player
-	House  HouseMatcher
+	// Filter narrows which discarded cards count and supplies the noun the clause
+	// prints. The log holds real cards, so the filter is enforceable — but a
+	// discarded card is in no battleline, so validate rejects an in-play axis.
+	Filter Filter
 	Amount int
 }
 
-// Value counts the matching House cards the player discarded from hand this turn.
+// Value counts the cards the filter admits that the player discarded from hand
+// this turn.
 func (e CardsDiscarded) Value(ctx *EffectContext) int {
-	return countOfHouse(ctx, ctx.Resolver.DiscardedThisTurn(ctx.PlayerFor(e.Player)), e.House)
+	return countMatching(
+		ctx, ctx.Resolver.DiscardedThisTurn(ctx.PlayerFor(e.Player)), e.Filter)
 }
 
 // Met reports whether at least Amount matching cards were discarded.
@@ -28,7 +35,7 @@ func (e CardsDiscarded) validate() error {
 	if e.Amount < 1 {
 		return fmt.Errorf("CardsDiscarded: Amount must be at least 1")
 	}
-	return nil
+	return e.Filter.validateIdentityOnly("CardsDiscarded")
 }
 
 // CondText renders the condition text.
@@ -46,10 +53,10 @@ func (e CardsDiscarded) CondText() string {
 }
 
 // discardPhrase renders the required discards: "an Untamed card" for one, or
-// "3 Untamed cards" for more. With an any-house matcher the house is omitted ("a
+// "3 Untamed cards" for more. With a zero filter the qualifier is omitted ("a
 // card", "3 cards"), so an Earthbind-style "discarded a card" reads naturally.
 func (e CardsDiscarded) discardPhrase() string {
-	noun := e.House.qualifyNoun("card")
+	noun := e.Filter.noun("card")
 	if e.Amount == 1 {
 		return indefinite(noun)
 	}

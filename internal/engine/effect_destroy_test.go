@@ -60,9 +60,7 @@ func TestBatchDestroy(t *testing.T) {
 	}
 	spare := CardsInPlay{
 		Player: Controller,
-		Type:   Creature,
-		House:  namedHouse(Untamed),
-		Ready:  true,
+		Filter: Filter{Type: Creature, House: namedHouse(Untamed), Ready: true},
 	}
 	e := BatchDestroy{Gather: EachPlayerUnless{
 		Spare: spare,
@@ -109,19 +107,13 @@ func TestBatchDestroy(t *testing.T) {
 // Take refinement and a Spare phrased from the controller's perspective, since
 // Spare is re-based onto each player in turn.
 func TestEachPlayerUnlessValidate(t *testing.T) {
-	spare := CardsInPlay{
-		Player: Controller,
-		Type:   Creature,
-	}
+	spare := CardsInPlay{Player: Controller, Filter: Filter{Type: Creature}}
 	if (EachPlayerUnless{Spare: spare}).validate() == nil {
 		t.Error("validate should reject a nil Take")
 	}
 	if (EachPlayerUnless{
-		Spare: CardsInPlay{
-			Player: Opponent,
-			Type:   Creature,
-		},
-		Take: MostPowerfulN(1),
+		Spare: CardsInPlay{Player: Opponent, Filter: Filter{Type: Creature}},
+		Take:  MostPowerfulN(1),
 	}).validate() == nil {
 		t.Error("validate should reject a Spare not phrased as the controller's")
 	}

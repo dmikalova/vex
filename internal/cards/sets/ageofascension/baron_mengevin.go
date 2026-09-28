@@ -22,7 +22,7 @@ var BaronMengevin = set.New(
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithAbility(card.Trigger.AfterDiscardFromHand, card.Conditional{
-		Cond: card.ItIs{House: card.Houses.Named(card.House.Self)},
+		Cond: card.ItIs{Filter: card.Filter{House: card.Houses.Named(card.House.Self)}},
 		Then: card.CaptureAember{
 			Target: card.Target.This,
 			Amount: 1,

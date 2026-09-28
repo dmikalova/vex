@@ -37,7 +37,7 @@ var IgonTheGreen = set.New(
 		card.Trigger.Destroyed, card.Sequence{Effects: []card.Effect{
 			card.PurgeCreature{Target: card.Target.This},
 			card.PutCard{Zones: []card.Zone{card.Discard},
-				Selection:   card.Chosen{Name: IgonTheTerrible.Name},
+				Selection:   card.Chosen{Filter: card.Filter{Name: IgonTheTerrible.Name}},
 				Destination: card.To.Hand,
 			},
 		}}),

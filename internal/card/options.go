@@ -33,7 +33,7 @@ var (
 	// WithFriendlyEntersPlayReady makes friendly cards enter play ready while this card is in play, per the grant (Duskwitch, The Curator, Fandangle).
 	WithFriendlyEntersPlayReady = func(g engine.EntersReadyGrant) Option { return gameplay(engine.WithFriendlyEntersPlayReady(g)) }
 	// WithFightRestriction restricts which creatures this creature may fight.
-	WithFightRestriction = func(t engine.Target) Option { return gameplay(engine.WithFightRestriction(t)) }
+	WithFightRestriction = func(f Filter) Option { return gameplay(engine.WithFightRestriction(f)) }
 	// WithCannotBeUsedTo bars a card from named ways of being used (reap, fight, action).
 	WithCannotBeUsedTo = func(k ...engine.UseKind) Option {
 		return gameplay(engine.WithCannotBeUsedTo(k...))
@@ -45,7 +45,7 @@ var (
 	// WithDestroyedWhen destroys a creature for as long as a board condition holds.
 	WithDestroyedWhen = func(c Condition) Option { return gameplay(engine.WithDestroyedWhen(c)) }
 	// WithTakesDamageFor makes this card take the damage dealt to other creatures.
-	WithTakesDamageFor = func(t engine.Target) Option { return gameplay(engine.WithTakesDamageFor(t)) }
+	WithTakesDamageFor = func(f Filter) Option { return gameplay(engine.WithTakesDamageFor(f)) }
 	// WithAlsoTakesNeighborFightDamage makes this creature take an equal share of the
 	// damage dealt to its neighbors during a fight, on top of the neighbor's own
 	// damage (Drecker).

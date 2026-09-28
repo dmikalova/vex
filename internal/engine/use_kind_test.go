@@ -200,7 +200,7 @@ func TestDestroyedWhen(t *testing.T) {
 	g.AddToBattleline(
 		testCreature("Crocag", 7, WithDestroyedWhen(CardsInPlay{
 			Player: Opponent,
-			Type:   Creature,
+			Filter: Filter{Type: Creature},
 			None:   true,
 		})), 0)
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
@@ -270,7 +270,7 @@ func TestCannotBeUsedToText(t *testing.T) {
 		WithCannotBeUsedTo(ReapUse, FightUse, ActionUse),
 		WithDestroyedWhen(CardsInPlay{
 			Player: Opponent,
-			Type:   Creature,
+			Filter: Filter{Type: Creature},
 			None:   true,
 		}),
 	)

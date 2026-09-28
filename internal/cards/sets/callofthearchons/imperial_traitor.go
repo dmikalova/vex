@@ -25,7 +25,7 @@ var ImperialTraitor = set.New(
 					Zones:  []card.Zone{card.Hand},
 					Player: card.Opponent,
 					Selection: card.Chosen{
-						House:    card.Houses.Named(card.House.Sanctum),
+						Filter:   card.Filter{House: card.Houses.Named(card.House.Sanctum)},
 						Optional: true,
 					},
 				},

@@ -19,7 +19,7 @@ var Regrowth = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.PutCard{Zones: []card.Zone{card.Discard},
-			Selection:   card.Chosen{Type: card.Type.Creature},
+			Selection:   card.Chosen{Filter: card.Filter{Type: card.Type.Creature}},
 			Destination: card.To.Hand,
 		}),
 )

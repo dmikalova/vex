@@ -22,7 +22,7 @@ var Zap = set.New(
 			Amount: 1,
 			Per: card.HousesAmong{
 				Player: card.EachPlayer,
-				Type:   card.Type.Creature,
+				Filter: card.Filter{Type: card.Type.Creature},
 			},
 			Target: card.Target.Creature,
 		}),

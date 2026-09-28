@@ -27,6 +27,6 @@ var AngryMob = set.New(
 				Player: card.Controller,
 				Filter: card.Filter{Name: angryMobName},
 			},
-			Result: card.PutDiscardedIntoHand{Type: card.Type.Creature},
+			Result: card.PutDiscardedIntoHand{Noun: card.Type.Creature},
 		}}),
 )

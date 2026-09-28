@@ -8,7 +8,7 @@ import (
 func TestReturnNamedToHand(t *testing.T) {
 	e := PutCard{
 		Zones:       []Zone{InPlay, Discard},
-		Selection:   Chosen{Name: "Urchin"},
+		Selection:   Chosen{Filter: Filter{Name: "Urchin"}},
 		Destination: ToHand,
 	}
 	if e.Text() != "put an Urchin from play or your discard pile into your hand" {

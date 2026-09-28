@@ -33,15 +33,15 @@ func TestCardsInPlayCountsUpgrades(t *testing.T) {
 	}
 	if n := (CardsInPlay{
 		Player: Controller,
-		Type:   Upgrade,
+		Filter: Filter{Type: Upgrade},
 	}).Value(ctx); n != 2 {
-		t.Errorf("CardsInPlay{Type: Upgrade} = %d, want the 2 attached upgrades", n)
+		t.Errorf("CardsInPlay{Filter: Filter{Type: Upgrade}} = %d, want the 2 attached upgrades", n)
 	}
 	if n := (CardsInPlay{
 		Player: Controller,
-		Type:   Creature,
+		Filter: Filter{Type: Creature},
 	}).Value(ctx); n != 1 {
-		t.Errorf("CardsInPlay{Type: Creature} = %d, want only the creature", n)
+		t.Errorf("CardsInPlay{Filter: Filter{Type: Creature}} = %d, want only the creature", n)
 	}
 }
 

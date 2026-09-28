@@ -295,7 +295,7 @@ func TestArchiveCardUnderResolveMovesToOwnerArchives(t *testing.T) {
 // TestPutUnderFromHandTypeText renders the "tactic card" noun a Tactic filter
 // gives (Infomancer, Memolith graft a Tactic).
 func TestPutUnderFromHandTypeText(t *testing.T) {
-	got := (PutUnderFromHand{Type: Tactic}).Text()
+	got := (PutUnderFromHand{Filter: Filter{Type: Tactic}}).Text()
 	want := "put a tactic card from your hand faceup under {self}"
 	if got != want {
 		t.Errorf("text = %q, want %q", got, want)
@@ -311,7 +311,7 @@ func TestPutUnderFromHandTypeOnlyOffersMatchingType(t *testing.T) {
 	g.AddToHand(NewCard("Creature", Brobnar, Creature, Common, WithPower(2)), 0)
 	tactic := g.AddToHand(NewCard("Tactic", Brobnar, Tactic, Common), 0)
 
-	PutUnderFromHand{Type: Tactic}.Resolve(
+	PutUnderFromHand{Filter: Filter{Type: Tactic}}.Resolve(
 		&EffectContext{
 			Resolver:   g,
 			Controller: 0,
@@ -476,7 +476,7 @@ func TestTriggerGraftedPlayEffectDeclined(t *testing.T) {
 // TestPutUnderFromHandNonTacticTypeText renders the general "<type> card" noun for
 // a non-Tactic type filter.
 func TestPutUnderFromHandNonTacticTypeText(t *testing.T) {
-	got := (PutUnderFromHand{Type: Creature}).Text()
+	got := (PutUnderFromHand{Filter: Filter{Type: Creature}}).Text()
 	want := "put a creature card from your hand faceup under {self}"
 	if got != want {
 		t.Errorf("text = %q, want %q", got, want)

@@ -22,13 +22,15 @@ var EeOnTheFringes = set.New(
 	card.WithTraits(card.Traits.Imp),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(card.Trigger.AfterDiscardFromHand, card.Conditional{
-		Cond: card.ItIs{House: card.Houses.Named(card.House.Self)},
+		Cond: card.ItIs{Filter: card.Filter{House: card.Houses.Named(card.House.Self)}},
 		Then: card.May{
 			Do: card.Then{
 				First: card.PurgeCard{
-					Zones:     []card.Zone{card.Discard},
-					Player:    card.ChosenPlayer,
-					Selection: card.Chosen{House: card.Houses.Named(card.House.Self)},
+					Zones:  []card.Zone{card.Discard},
+					Player: card.ChosenPlayer,
+					Selection: card.Chosen{
+						Filter: card.Filter{House: card.Houses.Named(card.House.Self)},
+					},
 				},
 				Result: card.StealAember{Amount: 1},
 			},

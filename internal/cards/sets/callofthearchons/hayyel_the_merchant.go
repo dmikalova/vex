@@ -20,7 +20,7 @@ var HayyelTheMerchant = set.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Merchant),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{
-		Cond: card.ItIs{Type: card.Type.Artifact},
+		Cond: card.ItIs{Filter: card.Filter{Type: card.Type.Artifact}},
 		Then: card.GainAember{
 			Player: card.Controller,
 			Amount: 1,

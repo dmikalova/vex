@@ -19,10 +19,13 @@ var Arise = set.New(
 		card.Trigger.Play, card.ChooseHouseThen{
 			Then: card.Sequence{
 				Effects: []card.Effect{
-					card.PutCard{Zones: []card.Zone{card.Discard},
+					card.PutCard{
+						Zones: []card.Zone{card.Discard},
 						Selection: card.Each{
-							Type:  card.Type.Creature,
-							House: card.Houses.Chosen,
+							Filter: card.Filter{
+								Type:  card.Type.Creature,
+								House: card.Houses.Chosen,
+							},
 						},
 						Destination: card.To.Hand,
 					},

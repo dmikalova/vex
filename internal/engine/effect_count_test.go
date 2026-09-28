@@ -50,29 +50,28 @@ func TestInPlay(t *testing.T) {
 	}{
 		{"friendly creatures", CardsInPlay{
 			Player: Controller,
-			Type:   Creature,
+			Filter: Filter{Type: Creature},
 		}, 3},
 		{
 			"friendly Mars creatures",
 			CardsInPlay{
 				Player: Controller,
-				Type:   Creature,
-				House:  namedHouse(Mars),
+				Filter: Filter{Type: Creature, House: namedHouse(Mars)},
 			},
 			2,
 		},
 		{"friendly artifacts", CardsInPlay{
 			Player: Controller,
-			Type:   Artifact,
+			Filter: Filter{Type: Artifact},
 		}, 2},
 		{"friendly cards, any type", CardsInPlay{Player: Controller}, 5},
 		{"friendly Shards", CardsInPlay{
 			Player: Controller,
-			Trait:  Shard,
+			Filter: Filter{Trait: Shard},
 		}, 1},
 		{"enemy creatures", CardsInPlay{
 			Player: Opponent,
-			Type:   Creature,
+			Filter: Filter{Type: Creature},
 		}, 1},
 	}
 	for _, tc := range values {
@@ -88,37 +87,34 @@ func TestInPlay(t *testing.T) {
 	}{
 		{CardsInPlay{
 			Player: Controller,
-			Type:   Creature,
+			Filter: Filter{Type: Creature},
 		}, "friendly creature in play"},
 		{
 			CardsInPlay{
 				Player: Controller,
-				Type:   Creature,
-				House:  namedHouse(Mars),
+				Filter: Filter{Type: Creature, House: namedHouse(Mars)},
 			},
 			"friendly Mars creature",
 		},
 		{CardsInPlay{
 			Player: Controller,
-			Trait:  Shard,
+			Filter: Filter{Trait: Shard},
 		}, "friendly Shard"},
 		{CardsInPlay{
 			Player: Controller,
-			Type:   Creature,
-			Trait:  Thief,
+			Filter: Filter{Type: Creature, Trait: Thief},
 		}, "friendly Thief creature"},
 		{CardsInPlay{
 			Player: Controller,
-			Type:   Artifact,
-			Trait:  Shard,
+			Filter: Filter{Type: Artifact, Trait: Shard},
 		}, "friendly Shard artifact"},
 		{CardsInPlay{
 			Player: Opponent,
-			Type:   Creature,
+			Filter: Filter{Type: Creature},
 		}, "enemy creature in play"},
 		{CardsInPlay{
 			Player: Controller,
-			Type:   Artifact,
+			Filter: Filter{Type: Artifact},
 		}, "friendly artifact in play"},
 		{CardsInPlay{Player: Controller}, "friendly card in play"},
 	}
@@ -131,21 +127,20 @@ func TestInPlay(t *testing.T) {
 	// CondText — singular and plural.
 	if got := (CardsInPlay{
 		Player: Controller,
-		Type:   Creature,
+		Filter: Filter{Type: Creature},
 	}).CondText(); got != "if there is a friendly creature in play" {
 		t.Errorf("singular CondText = %q", got)
 	}
 	if got := (CardsInPlay{
 		Player: Controller,
-		Type:   Creature,
+		Filter: Filter{Type: Creature},
 		Amount: 2,
 	}).CondText(); got != "if there are 2 or more friendly creatures in play" {
 		t.Errorf("plural CondText = %q", got)
 	}
 	if got := (CardsInPlay{
 		Player: Controller,
-		Type:   Creature,
-		Other:  true,
+		Filter: Filter{Type: Creature, Except: ExcludeSource},
 	}).CondText(); got != "if there is another friendly creature in play" {
 		t.Errorf("other CondText = %q", got)
 	}
@@ -153,20 +148,20 @@ func TestInPlay(t *testing.T) {
 	// Met — Amount defaults to one; a higher threshold may not be reached.
 	if !(CardsInPlay{
 		Player: Controller,
-		Type:   Creature,
+		Filter: Filter{Type: Creature},
 	}).Met(ctx) {
 		t.Error("default threshold should be met with 3 creatures")
 	}
 	if !(CardsInPlay{
 		Player: Controller,
-		Type:   Creature,
+		Filter: Filter{Type: Creature},
 		Amount: 3,
 	}).Met(ctx) {
 		t.Error("threshold 3 should be met with 3 creatures")
 	}
 	if (CardsInPlay{
 		Player: Controller,
-		Type:   Creature,
+		Filter: Filter{Type: Creature},
 		Amount: 4,
 	}).Met(ctx) {
 		t.Error("threshold 4 should not be met with 3 creatures")
@@ -181,8 +176,7 @@ func TestInPlay(t *testing.T) {
 	}
 	if !(CardsInPlay{
 		Player: Controller,
-		Type:   Creature,
-		Other:  true,
+		Filter: Filter{Type: Creature, Except: ExcludeSource},
 	}).Met(octx) {
 		t.Error("Other should be met while another friendly creature is in play")
 	}
@@ -198,23 +192,16 @@ func TestCardinalCountText(t *testing.T) {
 		{
 			CardsInPlay{
 				Player: Controller,
-				Type:   Creature,
-				House:  namedHouse(Mars),
+				Filter: Filter{Type: Creature, House: namedHouse(Mars)},
 			},
 			"the number of friendly Mars creatures you control",
 		},
 		{
-			CardsInPlay{
-				Player: Opponent,
-				Type:   Creature,
-			},
+			CardsInPlay{Player: Opponent, Filter: Filter{Type: Creature}},
 			"the number of enemy creatures your opponent controls",
 		},
 		{
-			CardsInPlay{
-				Player: EachPlayer,
-				Type:   Creature,
-			},
+			CardsInPlay{Player: EachPlayer, Filter: Filter{Type: Creature}},
 			"the number of creatures in play",
 		},
 		{ForgedKeys{Player: Opponent}, "the number of forged key your opponent has"},
@@ -239,9 +226,11 @@ func TestInPlayMinPower(t *testing.T) {
 	}
 
 	strong := CardsInPlay{
-		Player:   Controller,
-		Type:     Creature,
-		MinPower: 5,
+		Player: Controller,
+		Filter: Filter{
+			Type:  Creature,
+			Power: PowerBound{Kind: BoundAtLeast, Amount: 5},
+		},
 	}
 	if got := strong.Value(ctx); got != 2 {
 		t.Errorf("MinPower 5 Value = %d, want 2", got)
@@ -262,9 +251,8 @@ func TestInPlayWithAember(t *testing.T) {
 	}
 
 	withAember := CardsInPlay{
-		Player:     Controller,
-		Type:       Creature,
-		WithAember: true,
+		Player: Controller,
+		Filter: Filter{Type: Creature, Aember: AemberSome},
 	}
 	if got := withAember.Value(ctx); got != 1 {
 		t.Errorf("WithAember Value = %d, want 1 (only the Æmber-bearer counts)", got)
@@ -287,8 +275,7 @@ func TestInPlayEachPlayer(t *testing.T) {
 	// qualifier in the rendered noun.
 	byHouse := CardsInPlay{
 		Player: EachPlayer,
-		Type:   Creature,
-		House:  namedHouse(Brobnar),
+		Filter: Filter{Type: Creature, House: namedHouse(Brobnar)},
 	}
 	if got := byHouse.CountText(); got != "Brobnar creature in play" {
 		t.Errorf("count text = %q, want %q", got, "Brobnar creature in play")
@@ -299,7 +286,7 @@ func TestInPlayEachPlayer(t *testing.T) {
 
 	if got := (CardsInPlay{
 		Player: EachPlayer,
-		Type:   Creature,
+		Filter: Filter{Type: Creature},
 	}).CountText(); got != "creature in play" {
 		t.Errorf("no-house count text = %q, want %q", got, "creature in play")
 	}
@@ -317,9 +304,7 @@ func TestInPlayReady(t *testing.T) {
 
 	ready := CardsInPlay{
 		Player: Controller,
-		Type:   Creature,
-		House:  namedHouse(Mars),
-		Ready:  true,
+		Filter: Filter{Type: Creature, House: namedHouse(Mars), Ready: true},
 	}
 	if got := ready.CountText(); got != "friendly ready Mars creature" {
 		t.Errorf("count text = %q, want %q", got, "friendly ready Mars creature")
@@ -491,18 +476,12 @@ func TestHousesAmong(t *testing.T) {
 	}{
 		{
 			"friendly creatures, uncapped",
-			HousesAmong{
-				Player: Controller,
-				Type:   Creature,
-			},
+			HousesAmong{Player: Controller, Filter: Filter{Type: Creature}},
 			3, "house represented among friendly creatures",
 		},
 		{
 			"enemy creatures",
-			HousesAmong{
-				Player: Opponent,
-				Type:   Creature,
-			},
+			HousesAmong{Player: Opponent, Filter: Filter{Type: Creature}},
 			2, "house represented among enemy creatures",
 		},
 		{
@@ -514,6 +493,13 @@ func TestHousesAmong(t *testing.T) {
 			"every card in play, both rows",
 			HousesAmong{Player: EachPlayer},
 			6, "house represented among cards in play",
+		},
+		{
+			// A filter that names no creature walks every card in play and rejects the
+			// ones it does not admit, so the artifact houses alone are counted.
+			"friendly artifacts",
+			HousesAmong{Player: Controller, Filter: Filter{Type: Artifact}},
+			1, "house represented among friendly artifacts",
 		},
 	}
 	for _, c := range cases {
@@ -623,7 +609,7 @@ func TestExcessCreaturesNotCountingSelf(t *testing.T) {
 }
 
 func TestNeighborsMatching(t *testing.T) {
-	c := NeighborsMatching{House: HouseMatcher{Kind: MatchContextualHouse}}
+	c := NeighborsMatching{Filter: Filter{House: HouseMatcher{Kind: MatchContextualHouse}}}
 	if got := c.CountText(); got != "neighbor of that card's house" {
 		t.Errorf("count text = %q", got)
 	}
@@ -663,8 +649,7 @@ func TestInPlayByName(t *testing.T) {
 
 	none := CardsInPlay{
 		Player: EachPlayer,
-		Type:   Creature,
-		Name:   "Ancient Bear",
+		Filter: Filter{Type: Creature, Name: "Ancient Bear"},
 		None:   true,
 	}
 	if want := "if there are no Ancient Bears in play"; none.CondText() != want {
@@ -680,8 +665,7 @@ func TestInPlayByName(t *testing.T) {
 	}
 	some := CardsInPlay{
 		Player: EachPlayer,
-		Type:   Creature,
-		Name:   "Ancient Bear",
+		Filter: Filter{Type: Creature, Name: "Ancient Bear"},
 	}
 	if n := some.Value(ctx); n != 1 {
 		t.Errorf("value = %d, want 1 (only the named card counts)", n)
@@ -691,8 +675,7 @@ func TestInPlayByName(t *testing.T) {
 	}
 	two := CardsInPlay{
 		Player: EachPlayer,
-		Type:   Creature,
-		Name:   "Ancient Bear",
+		Filter: Filter{Type: Creature, Name: "Ancient Bear"},
 		Amount: 2,
 	}
 	if want := "if there are 2 or more Ancient Bears in play"; two.CondText() != want {

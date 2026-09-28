@@ -27,8 +27,7 @@ var Desire = set.New(
 		Discount: true,
 		ReducedBy: card.CardsInPlay{
 			Player: card.Controller,
-			Type:   card.Type.Creature,
-			Trait:  card.Traits.Sin,
+			Filter: card.Filter{Type: card.Type.Creature, Trait: card.Traits.Sin},
 		},
 	}),
 )

@@ -29,8 +29,8 @@ var NeutronShark = set.New(
 			},
 		}},
 		Gate: card.While{Cond: card.Not{Cond: card.ItIs{
-			House: card.Houses.Named(card.House.Self),
-			Noun:  card.ItNoun.DiscardedCard,
+			Filter: card.Filter{House: card.Houses.Named(card.House.Self)},
+			Noun:   card.ItNoun.DiscardedCard,
 		}}},
 	}),
 )

@@ -23,6 +23,6 @@ var EyeOfJudgment = set.New(
 		card.Trigger.Action, card.PurgeCard{
 			Zones:     []card.Zone{card.Discard},
 			Player:    card.ChosenPlayer,
-			Selection: card.Chosen{Type: card.Type.Creature},
+			Selection: card.Chosen{Filter: card.Filter{Type: card.Type.Creature}},
 		}),
 )

@@ -22,7 +22,7 @@ var CarloPhantom = set.New(
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive, card.Keyword.Skirmish),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{
-		Cond: card.ItIs{Type: card.Type.Artifact},
+		Cond: card.ItIs{Filter: card.Filter{Type: card.Type.Artifact}},
 		Then: card.StealAember{Amount: 1},
 	}),
 )

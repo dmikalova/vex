@@ -11,7 +11,7 @@ func TestChaosPortalComposition(t *testing.T) {
 	effect := ChooseHouseThen{Then: Sequence{Effects: []Effect{
 		RevealTopOfDeck{Amount: 1},
 		Conditional{
-			Cond: ItIs{House: chosenHouse},
+			Cond: ItIs{Filter: Filter{House: chosenHouse}},
 			Then: PlayRevealedCard{},
 		},
 	}}}
@@ -32,7 +32,7 @@ func TestChaosPortalComposition(t *testing.T) {
 		Effects: []Effect{
 			RevealTopOfDeck{Amount: 1},
 			Conditional{
-				Cond: ItIs{House: chosenHouse},
+				Cond: ItIs{Filter: Filter{House: chosenHouse}},
 				Then: PlayRevealedCard{},
 			},
 		},
@@ -64,7 +64,7 @@ func TestChaosPortalMissesAndGuards(t *testing.T) {
 		Effects: []Effect{
 			RevealTopOfDeck{Amount: 1},
 			Conditional{
-				Cond: ItIs{House: chosenHouse},
+				Cond: ItIs{Filter: Filter{House: chosenHouse}},
 				Then: PlayRevealedCard{},
 			},
 		},
@@ -491,7 +491,7 @@ func TestEvasionSigilComposition(t *testing.T) {
 	e := Sequence{Effects: []Effect{
 		DiscardTop{Amount: 1},
 		Conditional{
-			Cond: ItIs{House: activeHouse},
+			Cond: ItIs{Filter: Filter{House: activeHouse}},
 			Then: CancelFight{},
 		},
 	}}
@@ -522,7 +522,7 @@ func TestEvasionSigilCompositionMiss(t *testing.T) {
 	Sequence{Effects: []Effect{
 		DiscardTop{Amount: 1},
 		Conditional{
-			Cond: ItIs{House: activeHouse},
+			Cond: ItIs{Filter: Filter{House: activeHouse}},
 			Then: CancelFight{},
 		},
 	}}.Resolve(ctx)
@@ -539,7 +539,7 @@ func TestEvasionSigilCompositionMiss(t *testing.T) {
 	Sequence{Effects: []Effect{
 		DiscardTop{Amount: 1},
 		Conditional{
-			Cond: ItIs{House: activeHouse},
+			Cond: ItIs{Filter: Filter{House: activeHouse}},
 			Then: CancelFight{},
 		},
 	}}.Resolve(&EffectContext{
@@ -608,11 +608,11 @@ func TestDiscardUntil(t *testing.T) {
 	if got := (PutDiscardedIntoHand{}).Text(); got != "put the discarded card into your hand" {
 		t.Errorf("tail text = %q", got)
 	}
-	if got := (PutDiscardedIntoHand{Type: Artifact}).Text(); got !=
+	if got := (PutDiscardedIntoHand{Noun: Artifact}).Text(); got !=
 		"put the discarded artifact into your hand" {
 		t.Errorf("artifact text = %q", got)
 	}
-	if got := (PutDiscardedIntoHand{Type: Creature}).Text(); got !=
+	if got := (PutDiscardedIntoHand{Noun: Creature}).Text(); got !=
 		"put the discarded creature into your hand" {
 		t.Errorf("creature tail text = %q", got)
 	}
@@ -688,7 +688,7 @@ func TestDiscardUntil(t *testing.T) {
 
 	// An ExceptTrait dig on the contextual card's controller's deck (Purify) skips
 	// the excluded trait and reanimates the found card under its owner's control.
-	if got := (PutDiscardedIntoPlay{Type: Creature}).Text(); got !=
+	if got := (PutDiscardedIntoPlay{Noun: Creature}).Text(); got !=
 		"put the discarded creature into play under its owner's control" {
 		t.Errorf("into-play tail text = %q", got)
 	}
@@ -708,7 +708,7 @@ func TestDiscardUntil(t *testing.T) {
 				ExceptTrait: Mutant,
 			},
 		},
-		Result: PutDiscardedIntoPlay{Type: Creature},
+		Result: PutDiscardedIntoPlay{Noun: Creature},
 	}.Resolve(ctx4)
 	if !ctx4.HasIt || ctx4.It != clean {
 		t.Errorf("except-trait dig found %v (has=%v), want %d", ctx4.It, ctx4.HasIt, clean)
@@ -1542,13 +1542,10 @@ func TestDiscardTopAndForEachDiscardedHouseFilter(t *testing.T) {
 	}}).Text(); got != "for each card discarded this way, gain 1 Æmber" {
 		t.Errorf("unfiltered text = %q", got)
 	}
-	if got := (ForEachDiscarded{
-		House: namedHouse(Logos),
-		Do: GainAember{
-			Player: Controller,
-			Amount: 1,
-		},
-	}).Text(); got != "for each Logos card discarded this way, gain 1 Æmber" {
+	if got := (ForEachDiscarded{Filter: Filter{House: namedHouse(Logos)}, Do: GainAember{
+		Player: Controller,
+		Amount: 1,
+	}}).Text(); got != "for each Logos card discarded this way, gain 1 Æmber" {
 		t.Errorf("filtered text = %q", got)
 	}
 
@@ -1565,13 +1562,10 @@ func TestDiscardTopAndForEachDiscardedHouseFilter(t *testing.T) {
 			Player: Controller,
 			Amount: 3,
 		},
-		ForEachDiscarded{
-			House: namedHouse(Logos),
-			Do: GainAember{
-				Player: Controller,
-				Amount: 1,
-			},
-		},
+		ForEachDiscarded{Filter: Filter{House: namedHouse(Logos)}, Do: GainAember{
+			Player: Controller,
+			Amount: 1,
+		}},
 	}}.Resolve(ctx)
 
 	if g.Aember(0) != 2 {
@@ -1734,8 +1728,7 @@ func TestPlayTopOfDeckEffect(t *testing.T) {
 // Saurian artifact.
 func TestForEachDiscardedTypeFilter(t *testing.T) {
 	loop := ForEachDiscarded{
-		House: namedHouse(Saurian),
-		Type:  Creature,
+		Filter: Filter{House: namedHouse(Saurian), Type: Creature},
 		Do: PutIntoPlay{
 			Target: Target{Kind: TargetTriggeringCreature},
 			Ready:  true,

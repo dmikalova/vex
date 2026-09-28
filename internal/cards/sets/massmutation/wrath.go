@@ -28,8 +28,7 @@ var Wrath = set.New(
 	card.WithAbility(card.Trigger.Fight, card.ForEach{
 		Times: card.CardsInPlay{
 			Player: card.Controller,
-			Type:   card.Type.Creature,
-			Trait:  card.Traits.Sin,
+			Filter: card.Filter{Type: card.Type.Creature, Trait: card.Traits.Sin},
 		},
 		Do: card.Enrage{Target: card.Target.EnemyCreature},
 	}),

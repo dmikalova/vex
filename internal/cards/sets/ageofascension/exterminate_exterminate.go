@@ -20,8 +20,10 @@ var ExterminateExterminate = set.New(
 			Target: card.Target.EachCreature.With(card.Filter{House: card.Houses.Except(card.House.Self)}).
 				Refine(card.Refine.PowerLessThan(card.CardsInPlay{
 					Player: card.Controller,
-					Type:   card.Type.Creature,
-					House:  card.Houses.Named(card.House.Self),
+					Filter: card.Filter{
+						Type:  card.Type.Creature,
+						House: card.Houses.Named(card.House.Self),
+					},
 				})),
 		}),
 )

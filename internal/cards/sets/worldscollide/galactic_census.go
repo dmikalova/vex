@@ -23,7 +23,7 @@ var GalacticCensus = set.New(
 				Cond: card.HousesRepresented{
 					Among: card.HousesAmong{
 						Player: card.EachPlayer,
-						Type:   card.Type.Creature,
+						Filter: card.Filter{Type: card.Type.Creature},
 					},
 					Is:     card.AtLeast,
 					Amount: 3,
@@ -37,7 +37,7 @@ var GalacticCensus = set.New(
 				Cond: card.HousesRepresented{
 					Among: card.HousesAmong{
 						Player: card.EachPlayer,
-						Type:   card.Type.Creature,
+						Filter: card.Filter{Type: card.Type.Creature},
 					},
 					Is:     card.AtLeast,
 					Amount: 5,
@@ -51,7 +51,7 @@ var GalacticCensus = set.New(
 				Cond: card.HousesRepresented{
 					Among: card.HousesAmong{
 						Player: card.EachPlayer,
-						Type:   card.Type.Creature,
+						Filter: card.Filter{Type: card.Type.Creature},
 					},
 					Is:     card.AtLeast,
 					Amount: 6,

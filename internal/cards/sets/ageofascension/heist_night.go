@@ -22,8 +22,7 @@ var HeistNight = set.New(
 			Amount: 1,
 			Per: card.CardsInPlay{
 				Player: card.Controller,
-				Type:   card.Type.Creature,
-				Trait:  card.Traits.Thief,
+				Filter: card.Filter{Type: card.Type.Creature, Trait: card.Traits.Thief},
 			},
 		}),
 )

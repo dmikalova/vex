@@ -27,7 +27,7 @@ var EvasionSigil = set.New(
 				Effects: []card.Effect{
 					card.DiscardTop{Amount: 1},
 					card.Conditional{
-						Cond: card.ItIs{House: card.Houses.Active},
+						Cond: card.ItIs{Filter: card.Filter{House: card.Houses.Active}},
 						Then: card.CancelFight{},
 					},
 				},

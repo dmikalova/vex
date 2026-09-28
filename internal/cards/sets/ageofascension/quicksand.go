@@ -22,9 +22,11 @@ var Quicksand = set.New(
 		card.BatchDestroy{Gather: card.EachPlayerUnless{
 			Spare: card.CardsInPlay{
 				Player: card.Controller,
-				Type:   card.Type.Creature,
-				House:  card.Houses.Named(card.House.Self),
-				Ready:  true,
+				Filter: card.Filter{
+					Type:  card.Type.Creature,
+					House: card.Houses.Named(card.House.Self),
+					Ready: true,
+				},
 			},
 			Take: card.Refine.MostPowerfulN(1),
 		}}),

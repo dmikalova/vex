@@ -8,13 +8,10 @@ import "testing"
 // belongs to neither player and so takes no possessive.
 func TestShuffleIntoDeckFromZonesText(t *testing.T) {
 	if got := (ShuffleIntoDeck{
-		Player: Controller,
-		From:   songOfSpringZones,
-		Selection: Chosen{
-			Type:     Creature,
-			Optional: true,
-		},
-		Quantity: AnyNumber{},
+		Player:    Controller,
+		From:      songOfSpringZones,
+		Selection: Chosen{Filter: Filter{Type: Creature}, Optional: true},
+		Quantity:  AnyNumber{},
 	}).Text(); got !=
 		"shuffle any number of friendly creatures from your hand, "+
 			"your discard pile, or play into your deck" {
@@ -24,8 +21,7 @@ func TestShuffleIntoDeckFromZonesText(t *testing.T) {
 		Player: Controller,
 		From:   songOfSpringZones,
 		Selection: Chosen{
-			House:    namedHouse(Untamed),
-			Type:     Creature,
+			Filter:   Filter{House: namedHouse(Untamed), Type: Creature},
 			Optional: true,
 		},
 		Quantity: AnyNumber{},
@@ -35,13 +31,10 @@ func TestShuffleIntoDeckFromZonesText(t *testing.T) {
 		t.Errorf("Text = %q", got)
 	}
 	if err := (ShuffleIntoDeck{
-		Player: Controller,
-		From:   songOfSpringZones,
-		Selection: Chosen{
-			Type:     Creature,
-			Optional: true,
-		},
-		Quantity: AnyNumber{},
+		Player:    Controller,
+		From:      songOfSpringZones,
+		Selection: Chosen{Filter: Filter{Type: Creature}, Optional: true},
+		Quantity:  AnyNumber{},
 	}).validate(); err != nil {
 		t.Errorf("validate = %v, want nil", err)
 	}
@@ -72,8 +65,7 @@ func TestShuffleIntoDeckFromZonesResolve(t *testing.T) {
 		Player: Controller,
 		From:   songOfSpringZones,
 		Selection: Chosen{
-			House:    namedHouse(Untamed),
-			Type:     Creature,
+			Filter:   Filter{House: namedHouse(Untamed), Type: Creature},
 			Optional: true,
 		},
 		Quantity: AnyNumber{},
@@ -104,13 +96,10 @@ func TestShuffleIntoDeckFromZonesDeclineImmediately(t *testing.T) {
 		Controller: 0,
 	}
 	ShuffleIntoDeck{
-		Player: Controller,
-		From:   songOfSpringZones,
-		Selection: Chosen{
-			Type:     Creature,
-			Optional: true,
-		},
-		Quantity: AnyNumber{},
+		Player:    Controller,
+		From:      songOfSpringZones,
+		Selection: Chosen{Filter: Filter{Type: Creature}, Optional: true},
+		Quantity:  AnyNumber{},
 	}.Resolve(
 		ctx,
 	)
@@ -155,7 +144,7 @@ func TestShuffleIntoDeckTalliesByOwner(t *testing.T) {
 	ShuffleIntoDeck{
 		Player:    Controller,
 		From:      []Zone{InPlay},
-		Selection: Each{Type: Creature},
+		Selection: Each{Filter: Filter{Type: Creature}},
 	}.Resolve(ctx)
 
 	if !g.State.Deck[0].contains(mine) || !g.State.Deck[1].contains(theirs) {
@@ -233,7 +222,7 @@ func TestShuffleIntoDeckFromPlayEnemySide(t *testing.T) {
 	e := ShuffleIntoDeck{
 		Player:    Opponent,
 		From:      []Zone{InPlay},
-		Selection: Each{Type: Creature},
+		Selection: Each{Filter: Filter{Type: Creature}},
 	}
 	if got := e.Text(); got != "shuffle each enemy creature from play into your opponent's deck" {
 		t.Errorf("Text = %q", got)

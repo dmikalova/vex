@@ -370,6 +370,11 @@ func foldAdjectivesOn(parts []string, base string) (string, bool) {
 // adjectives prefixes the adjectives a conjoining filter contributes to a base
 // noun, in printed order, substituting the printed name and the card type for the
 // noun when the filter names one.
+//
+// An empty base means the filter's own words are the whole noun, which is how a
+// consumer says a trait names a kind of card by itself: the Shards count "each
+// friendly Shard", not "each friendly Shard card" (Shard of Life). A consumer
+// that passes no base must set an axis that supplies one.
 func (f Filter) adjectives(base string) string {
 	noun := base
 	if f.Type != TypeUnset {
@@ -382,7 +387,7 @@ func (f Filter) adjectives(base string) string {
 		noun = f.Name
 	}
 	if f.Trait != traitUnset {
-		noun = f.Trait.String() + " " + noun
+		noun = qualifyNoun(f.Trait.String(), noun)
 	}
 	noun = f.House.qualifyNoun(noun)
 	if f.ExceptTrait != traitUnset {
@@ -480,6 +485,24 @@ func (f Filter) trailingClauses(phrase string) string {
 // instead calls qualifyNoun and clauses around its own quantifier.
 func (f Filter) noun(base string) string {
 	return f.clauses(f.qualifyNoun(base))
+}
+
+// article puts the indefinite article on a phrase this filter rendered, unless
+// the filter names a card outright: a proper name identifies one specific card and
+// so takes no article — "Subtle Chain", never "a Subtle Chain". It is the one
+// article rule every consumer that names a single card follows.
+func (f Filter) article(phrase string) string {
+	if f.Name != "" {
+		return phrase
+	}
+	return indefinite(phrase)
+}
+
+// object renders the filter as a single card with its article — "a Mars
+// creature", "an upgrade", "Subtle Chain" — over the base noun a consumer prints
+// when the filter names no type of its own.
+func (f Filter) object(base string) string {
+	return f.article(f.noun(base))
 }
 
 // readsPlay reports whether the filter sets an axis that only means something for

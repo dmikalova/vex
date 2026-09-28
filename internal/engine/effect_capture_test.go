@@ -202,8 +202,7 @@ func TestCaptureAemberScaled(t *testing.T) {
 		Source: Opponent,
 		Per: CardsInPlay{
 			Player: Controller,
-			Type:   Creature,
-			House:  namedHouse(Mars),
+			Filter: Filter{Type: Creature, House: namedHouse(Mars)},
 		},
 	}
 	e.Resolve(ctx)
@@ -407,8 +406,7 @@ func TestCaptureAemberByEnemy(t *testing.T) {
 		Source: Opponent,
 		Times: CardsInPlay{
 			Player: Controller,
-			Type:   Creature,
-			House:  namedHouse(Mars),
+			Filter: Filter{Type: Creature, House: namedHouse(Mars)},
 		},
 	}
 	want := "for each friendly Mars creature, an enemy creature captures 1 Æmber from their own side"
@@ -444,8 +442,7 @@ func TestCaptureAemberByEnemyNoEnemies(t *testing.T) {
 		Source: Opponent,
 		Times: CardsInPlay{
 			Player: Controller,
-			Type:   Creature,
-			House:  namedHouse(Mars),
+			Filter: Filter{Type: Creature, House: namedHouse(Mars)},
 		},
 	}
 	e.Resolve(ctx)
@@ -473,8 +470,7 @@ func TestCaptureAemberByEnemyDeclined(t *testing.T) {
 		Source: Opponent,
 		Times: CardsInPlay{
 			Player: Controller,
-			Type:   Creature,
-			House:  namedHouse(Mars),
+			Filter: Filter{Type: Creature, House: namedHouse(Mars)},
 		},
 	}
 	e.Resolve(ctx)

@@ -25,7 +25,7 @@ var ShardOfGlory = set.New(
 		card.Trigger.Action, card.ForEach{
 			Times: card.CardsInPlay{
 				Player: card.Controller,
-				Trait:  card.Traits.Shard,
+				Filter: card.Filter{Trait: card.Traits.Shard},
 			},
 			Do: card.Exalt{
 				Target: card.Target.EnemyCreature,

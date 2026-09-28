@@ -171,34 +171,36 @@ func forEachDiscardedThisWay(ctx *EffectContext, fn func(id LocalID)) {
 // ForEachDiscarded resolves Do once for each card a preceding DiscardTop
 // discarded, putting that card in context (ctx.It) so Do can refer to it — Bonkers
 // Killing Machine destroys a creature or artifact of each discarded card's house
-// (Do targets Target.OfContextualHouse). A House filter narrows the iteration to
-// the discarded cards of one house — Fetchdrones acts "for each Logos card
-// discarded this way". A Type filter narrows it to one card type — Saurian Egg
-// reanimates only the Saurian creatures it discarded, not any Saurian artifacts.
+// (Do targets Target.OfContextualHouse). A Filter narrows the iteration to the
+// discarded cards it admits — Fetchdrones acts "for each Logos card discarded this
+// way", and Saurian Egg reanimates only the Saurian creatures it discarded, not any
+// Saurian artifacts.
 type ForEachDiscarded struct {
-	// House, when it filters, restricts the iteration to discarded cards it admits.
-	House HouseMatcher
-	// Type, when set, restricts the iteration to discarded cards of that type.
-	Type CardType
-	Do   Effect
+	// Filter narrows which discarded cards the iteration visits and supplies the
+	// noun the clause repeats. A discarded card is in no battleline, so validate
+	// rejects an in-play axis.
+	Filter Filter
+	Do     Effect
 }
 
-// validate surfaces a configuration error from Do.
-func (e ForEachDiscarded) validate() error { return validateEffect(e.Do) }
+// validate surfaces a configuration error from Do and rejects a filter that reads
+// the board, which a discarded card is not on.
+func (e ForEachDiscarded) validate() error {
+	if err := e.Filter.validateIdentityOnly("ForEachDiscarded"); err != nil {
+		return err
+	}
+	return validateEffect(e.Do)
+}
 
 // Text renders the effect, leading with the iteration clause.
 func (e ForEachDiscarded) Text() string {
-	return "for each " + e.House.qualify(typeNoun(e.Type)) + " discarded this way, " + e.Do.Text()
+	return "for each " + e.Filter.noun("card") + " discarded this way, " + e.Do.Text()
 }
 
-// Resolve runs Do for each discarded card (of the House and Type filters when
-// set), in context as ctx.It.
+// Resolve runs Do for each discarded card the filter admits, in context as ctx.It.
 func (e ForEachDiscarded) Resolve(ctx *EffectContext) {
 	forEachDiscardedThisWay(ctx, func(id LocalID) {
-		if !e.House.matches(ctx, id) {
-			return
-		}
-		if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
+		if !e.Filter.matches(ctx, id) {
 			return
 		}
 		ctx.It, ctx.HasIt = id, true
@@ -817,17 +819,19 @@ func (e DiscardUntil) resolveGate(ctx *EffectContext) bool {
 
 // PutDiscardedIntoHand takes the card in context out of the discard pile and
 // into its owner's hand. It is the tail of a dig through the deck (DiscardUntil)
-// that just discarded the card. Type names what the dig stopped on so the tail
-// reads "put the discarded creature into your hand" rather than a bare "it"; the
-// zero value stays the generic "card".
+// that just discarded the card.
 type PutDiscardedIntoHand struct {
-	// Type names the discarded card the dig stopped on; the zero value is "card".
-	Type CardType
+	// Noun names the word the tail repeats — what the preceding dig stopped on — so
+	// it reads "put the discarded creature into your hand" rather than a bare "it".
+	// It narrows nothing: the card is already chosen and sits in context, so there
+	// is no candidate to point a test at and a Filter here would promise a narrowing
+	// the node cannot perform (ADR 0005). The zero value stays the generic "card".
+	Noun CardType
 }
 
 // Text renders the effect, naming the discarded card the dig stopped on.
 func (e PutDiscardedIntoHand) Text() string {
-	return "put the discarded " + discardedNoun(e.Type) + " into your hand"
+	return "put the discarded " + discardedNoun(e.Noun) + " into your hand"
 }
 
 // discardedNoun names a discarded card by type for the "put the discarded …"
@@ -854,17 +858,19 @@ func (e PutDiscardedIntoHand) Resolve(ctx *EffectContext) {
 // on) into play under its owner's control. It is the tail of a DiscardUntil dig
 // that puts what it found onto the battleline rather than into hand — Purify digs
 // the purged creature's controller's deck for a non-Mutant creature and puts that
-// creature into play under its owner's control. Type names what the dig stopped on
-// so the tail reads "put the discarded creature into play …" rather than a bare
-// "it"; the zero value stays the generic "card".
+// creature into play under its owner's control.
 type PutDiscardedIntoPlay struct {
-	// Type names the discarded card the dig stopped on; the zero value is "card".
-	Type CardType
+	// Noun names the word the tail repeats — what the preceding dig stopped on — so
+	// it reads "put the discarded creature into play …" rather than a bare "it". It
+	// narrows nothing: the card is already chosen and sits in context, so there is
+	// no candidate to point a test at and a Filter here would promise a narrowing
+	// the node cannot perform (ADR 0005). The zero value stays the generic "card".
+	Noun CardType
 }
 
 // Text renders the effect, naming the discarded card the dig stopped on.
 func (e PutDiscardedIntoPlay) Text() string {
-	return "put the discarded " + discardedNoun(e.Type) +
+	return "put the discarded " + discardedNoun(e.Noun) +
 		" into play under its owner's control"
 }
 

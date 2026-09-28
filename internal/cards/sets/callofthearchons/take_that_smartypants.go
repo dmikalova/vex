@@ -20,7 +20,7 @@ var TakeThatSmartypants = set.New(
 	card.WithAbility(card.Trigger.Play, card.Conditional{
 		Cond: card.CardsInPlay{
 			Player: card.Opponent,
-			House:  card.Houses.Named(card.House.Logos),
+			Filter: card.Filter{House: card.Houses.Named(card.House.Logos)},
 			Amount: 3,
 		},
 		Then: card.StealAember{Amount: 2},

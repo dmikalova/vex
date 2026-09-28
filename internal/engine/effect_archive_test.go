@@ -293,7 +293,7 @@ func TestArchiveFromDiscardHouseFilter(t *testing.T) {
 
 	e := ArchiveCard{
 		Zone:      Discard,
-		Selection: Chosen{House: namedHouse(Mars)},
+		Selection: Chosen{Filter: Filter{House: namedHouse(Mars)}},
 	}
 	if e.Text() != "archive a Mars card from your discard pile" {
 		t.Errorf("text = %q", e.Text())
@@ -672,12 +672,9 @@ func TestMayDeclinableArchiveFromPlay(t *testing.T) {
 func TestMayDeclinableArchiveFromHand(t *testing.T) {
 	e := May{
 		Do: ArchiveCard{
-			Zone: Hand,
-			Selection: Chosen{
-				Type:     Creature,
-				Optional: true,
-			},
-			Revealed: true,
+			Zone:      Hand,
+			Selection: Chosen{Filter: Filter{Type: Creature}, Optional: true},
+			Revealed:  true,
 		},
 	}
 	if !e.Do.(declinableEffect).declinable() {
@@ -790,12 +787,9 @@ func TestArchivesDeclinedOnChooseHouse(t *testing.T) {
 // archived anything, and the text reads as the reveal it is.
 func TestArchiveFromHandFiltered(t *testing.T) {
 	e := ArchiveCard{
-		Zone: Hand,
-		Selection: Chosen{
-			Type:  Creature,
-			House: namedHouse(Mars),
-		},
-		Revealed: true,
+		Zone:      Hand,
+		Selection: Chosen{Filter: Filter{Type: Creature, House: namedHouse(Mars)}},
+		Revealed:  true,
 	}
 	want := "reveal a Mars creature from your hand and archive it"
 	if e.Text() != want {
@@ -810,7 +804,7 @@ func TestArchiveFromHandFiltered(t *testing.T) {
 	}
 	if got := (ArchiveCard{
 		Zone:      Hand,
-		Selection: Chosen{Type: Artifact},
+		Selection: Chosen{Filter: Filter{Type: Artifact}},
 	}).Text(); got != "archive an artifact from your hand" {
 		t.Errorf("artifact text = %q", got)
 	}
@@ -854,7 +848,7 @@ func TestArchiveFromHandFiltered(t *testing.T) {
 func TestArchiveFromHandExceptHouse(t *testing.T) {
 	e := ArchiveCard{
 		Zone:      Hand,
-		Selection: Chosen{House: exceptHouse(StarAlliance)},
+		Selection: Chosen{Filter: Filter{House: exceptHouse(StarAlliance)}},
 		Revealed:  true,
 	}
 	want := "reveal a non-Star Alliance card from your hand and archive it"

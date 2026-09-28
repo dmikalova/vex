@@ -28,7 +28,7 @@ var JONCargo = set.New(
 			card.RevealHand{Player: card.Controller},
 			card.ArchiveCard{
 				Zone:      card.Hand,
-				Selection: card.Each{House: card.Houses.Contextual},
+				Selection: card.Each{Filter: card.Filter{House: card.Houses.Contextual}},
 			},
 		}},
 	),

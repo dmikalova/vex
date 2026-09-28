@@ -21,10 +21,10 @@ var HorsemanOfDeath = set.New(
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithAbility(
-		card.Trigger.Play, card.PutCard{Zones: []card.Zone{card.Discard},
+		card.Trigger.Play, card.PutCard{
+			Zones: []card.Zone{card.Discard},
 			Selection: card.Each{
-				Type:  card.Type.Creature,
-				Trait: card.Traits.Horseman,
+				Filter: card.Filter{Type: card.Type.Creature, Trait: card.Traits.Horseman},
 			},
 			Destination: card.To.Hand,
 		}),

@@ -29,7 +29,7 @@ var ShardOfLife = set.New(
 			Quantity: card.Takes{
 				N: card.CardsInPlay{
 					Player: card.Controller,
-					Trait:  card.Traits.Shard,
+					Filter: card.Filter{Trait: card.Traits.Shard},
 				},
 			},
 		}),

@@ -24,9 +24,11 @@ var PhylyxTheDisintegrator = set.New("Phylyx the Disintegrator",
 			Amount: 1,
 			Per: card.CardsInPlay{
 				Player: card.Controller,
-				Type:   card.Type.Creature,
-				House:  card.Houses.Named(card.House.Self),
-				Other:  true,
+				Filter: card.Filter{
+					Type:   card.Type.Creature,
+					House:  card.Houses.Named(card.House.Self),
+					Except: card.Except.Source,
+				},
 			},
 		}),
 )

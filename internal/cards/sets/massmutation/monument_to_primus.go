@@ -29,7 +29,7 @@ var MonumentToPrimus = set.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{
-			Cond: card.NamedCardInDiscard{Name: ConsulPrimus.Name},
+			Cond: card.NamedCardInDiscard{Filter: card.Filter{Name: ConsulPrimus.Name}},
 			Then: card.MoveAember{
 				Amount: 1,
 				From:   card.Target.Creature,

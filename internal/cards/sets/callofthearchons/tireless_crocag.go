@@ -25,7 +25,7 @@ var TirelessCrocag = set.New(
 	card.WithCannotBeUsedTo(card.UseKind.Reap),
 	card.WithDestroyedWhen(card.CardsInPlay{
 		Player: card.Opponent,
-		Type:   card.Type.Creature,
+		Filter: card.Filter{Type: card.Type.Creature},
 		None:   true,
 	}),
 )

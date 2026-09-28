@@ -20,7 +20,7 @@ var Teliga = set.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithAbility(card.Trigger.AfterEnemyCardPlayed, card.Conditional{
-		Cond: card.ItIs{Type: card.Type.Creature},
+		Cond: card.ItIs{Filter: card.Filter{Type: card.Type.Creature}},
 		Then: card.GainAember{
 			Player: card.Controller,
 			Amount: 1,

@@ -288,22 +288,22 @@ func TestSequenceFoldsNounList(t *testing.T) {
 	seq := Sequence{Effects: []Effect{
 		PutCard{
 			Zones:       []Zone{Discard},
-			Selection:   Chosen{Type: Tactic},
+			Selection:   Chosen{Filter: Filter{Type: Tactic}},
 			Destination: ToHand,
 		},
 		PutCard{
 			Zones:       []Zone{Discard},
-			Selection:   Chosen{Type: Artifact},
+			Selection:   Chosen{Filter: Filter{Type: Artifact}},
 			Destination: ToHand,
 		},
 		PutCard{
 			Zones:       []Zone{Discard},
-			Selection:   Chosen{Type: Creature},
+			Selection:   Chosen{Filter: Filter{Type: Creature}},
 			Destination: ToHand,
 		},
 		PutCard{
 			Zones:       []Zone{Discard},
-			Selection:   Chosen{Type: Upgrade},
+			Selection:   Chosen{Filter: Filter{Type: Upgrade}},
 			Destination: ToHand,
 		},
 	}}
@@ -321,7 +321,7 @@ func TestSequenceNounListDeclines(t *testing.T) {
 	single := Sequence{Effects: []Effect{
 		PutCard{
 			Zones:       []Zone{Discard},
-			Selection:   Chosen{Type: Tactic},
+			Selection:   Chosen{Filter: Filter{Type: Tactic}},
 			Destination: ToHand,
 		},
 	}}
@@ -333,12 +333,12 @@ func TestSequenceNounListDeclines(t *testing.T) {
 	tails := Sequence{Effects: []Effect{
 		PutCard{
 			Zones:       []Zone{Discard},
-			Selection:   Chosen{Type: Tactic},
+			Selection:   Chosen{Filter: Filter{Type: Tactic}},
 			Destination: ToHand,
 		},
 		PutCard{
 			Zones:       []Zone{Discard},
-			Selection:   Chosen{Type: Artifact},
+			Selection:   Chosen{Filter: Filter{Type: Artifact}},
 			Destination: ToTopOfDeck,
 		},
 	}}
@@ -357,7 +357,7 @@ func TestSequenceNounListDeclines(t *testing.T) {
 		},
 		PutCard{
 			Zones:       []Zone{Discard},
-			Selection:   Chosen{Type: Artifact},
+			Selection:   Chosen{Filter: Filter{Type: Artifact}},
 			Destination: ToHand,
 		},
 	}}
@@ -525,10 +525,7 @@ func TestSequenceDeclineSkipsLaterSentences(t *testing.T) {
 func housesRung(n int) Conditional {
 	return Conditional{
 		Cond: HousesRepresented{
-			Among: HousesAmong{
-				Player: EachPlayer,
-				Type:   Creature,
-			},
+			Among:  HousesAmong{Player: EachPlayer, Filter: Filter{Type: Creature}},
 			Is:     AtLeast,
 			Amount: n,
 		},
@@ -559,10 +556,7 @@ func TestSequenceLadderDeclines(t *testing.T) {
 	lone := strings.TrimSuffix(full, ".")
 	otherSubject := housesRung(5)
 	otherSubject.Cond = HousesRepresented{
-		Among: HousesAmong{
-			Player: Controller,
-			Type:   Creature,
-		},
+		Among:  HousesAmong{Player: Controller, Filter: Filter{Type: Creature}},
 		Is:     AtLeast,
 		Amount: 5,
 	}

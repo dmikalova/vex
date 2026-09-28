@@ -26,8 +26,8 @@ var Fidgit = set.New(
 			card.DiscardFromOpponent{Sources: []card.Zone{card.Archives, card.Deck}},
 			card.Conditional{
 				Cond: card.ItIs{
-					Type: card.Type.Tactic,
-					Noun: card.ItNoun.ThatCard,
+					Filter: card.Filter{Type: card.Type.Tactic},
+					Noun:   card.ItNoun.ThatCard,
 				},
 				Then: card.PlayItFromOpponentDiscard{},
 			},

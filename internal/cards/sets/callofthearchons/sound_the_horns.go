@@ -23,6 +23,6 @@ var SoundTheHorns = set.New("Sound the Horns",
 					House: card.Houses.Named(card.House.Self),
 				},
 			},
-			Result: card.PutDiscardedIntoHand{Type: card.Type.Creature},
+			Result: card.PutDiscardedIntoHand{Noun: card.Type.Creature},
 		}),
 )

@@ -39,7 +39,7 @@ func TestArtifactSelfDestroysWhenNoCreatures(t *testing.T) {
 		NewCard("Doom Sigil", Shadows, Artifact, Rare,
 			WithDestroyedWhen(CardsInPlay{
 				Player: EachPlayer,
-				Type:   Creature,
+				Filter: Filter{Type: Creature},
 				None:   true,
 			})), 0)
 	creature := g.AddToBattleline(

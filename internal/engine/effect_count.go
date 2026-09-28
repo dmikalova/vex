@@ -170,11 +170,12 @@ func (e HousesInPlay) CountText() string {
 // excepted house (Free Markets); a houseless card counts toward no house.
 type HousesAmong struct {
 	// Player names whose cards to survey: Controller (friendly), Opponent (enemy),
-	// or EachPlayer (both).
+	// or EachPlayer (both). It picks which board to read rather than narrowing a
+	// card, so it is a set selector and not a filter axis.
 	Player Player
-	// Type filters the surveyed cards; the zero value surveys any type, Creature
-	// only creatures.
-	Type CardType
+	// Filter narrows the surveyed cards and supplies the noun the scope names; the
+	// zero value surveys every card in play.
+	Filter Filter
 }
 
 // Value counts the distinct houses on the surveyed cards.
@@ -183,6 +184,9 @@ func (e HousesAmong) Value(ctx *EffectContext) int {
 	n := 0
 	for _, p := range e.players(ctx) {
 		for _, id := range e.set(ctx, p) {
+			if !e.Filter.matches(ctx, id) {
+				continue
+			}
 			if h := ctx.Resolver.House(id); h != HouseNone && !seen[h] {
 				seen[h] = true
 				n++
@@ -200,10 +204,11 @@ func (e HousesAmong) players(ctx *EffectContext) []int {
 	return []int{ctx.PlayerFor(e.Player)}
 }
 
-// set returns a player's in-play ids the type filter surveys: the battleline for
-// creatures, or every card in play (upgrades included) when the type is unset.
+// set returns the player's in-play ids the survey walks: the battleline when the
+// filter names creatures, or every card in play (upgrades included) otherwise.
+// The filter still tests each id, so this only narrows the walk.
 func (e HousesAmong) set(ctx *EffectContext, p int) []LocalID {
-	if e.Type == Creature {
+	if e.Filter.Type == Creature {
 		return ctx.Resolver.Battleline(p)
 	}
 	return resolverCardsInPlay(ctx, p)
@@ -212,10 +217,7 @@ func (e HousesAmong) set(ctx *EffectContext, p int) []LocalID {
 // scope names the surveyed set as a plural noun the text roles share: "friendly
 // creatures", "enemy creatures", "creatures in play", or "cards in play".
 func (e HousesAmong) scope() string {
-	noun := "cards"
-	if e.Type == Creature {
-		noun = "creatures"
-	}
+	noun := plural(2, e.Filter.noun("card"))
 	switch e.Player {
 	case Controller:
 		return "friendly " + noun
@@ -516,20 +518,22 @@ func (c CombinedPowerOfNeighborsWithout) cardinalCountText() string {
 }
 
 // NeighborsMatching counts the battleline neighbors of the creature in context
-// (ctx.It) that House admits — Thorium Plasmate deals 2 damage to a moved creature
-// for each neighbor of that card's house (Houses.Contextual).
+// (ctx.It) that a Filter admits — Thorium Plasmate deals 2 damage to a moved
+// creature for each neighbor of that card's house (Houses.Contextual).
 type NeighborsMatching struct {
-	House HouseMatcher
+	// Filter narrows which neighbors count and qualifies the counted noun; the zero
+	// value counts every neighbor.
+	Filter Filter
 }
 
-// Value counts the context creature's immediate neighbors House admits.
+// Value counts the context creature's immediate neighbors the filter admits.
 func (c NeighborsMatching) Value(ctx *EffectContext) int {
 	if !ctx.HasIt {
 		return 0
 	}
 	n := 0
 	for _, id := range neighbors(ctx, ctx.It) {
-		if c.House.matches(ctx, id) {
+		if c.Filter.matches(ctx, id) {
 			n++
 		}
 	}
@@ -538,5 +542,5 @@ func (c NeighborsMatching) Value(ctx *EffectContext) int {
 
 // CountText renders the singular noun the "for each" clause repeats.
 func (c NeighborsMatching) CountText() string {
-	return c.House.qualify("neighbor")
+	return c.Filter.noun("neighbor")
 }

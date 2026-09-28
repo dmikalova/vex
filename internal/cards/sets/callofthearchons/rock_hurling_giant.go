@@ -20,7 +20,7 @@ var RockHurlingGiant = set.New(
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(card.Trigger.AfterDiscardFromHand, card.Conditional{
-		Cond: card.ItIs{House: card.Houses.Named(card.House.Self)},
+		Cond: card.ItIs{Filter: card.Filter{House: card.Houses.Named(card.House.Self)}},
 		Then: card.May{
 			Do: card.DealDamage{
 				Target: card.Target.Creature,

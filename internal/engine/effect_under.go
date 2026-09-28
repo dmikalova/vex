@@ -44,26 +44,35 @@ func chooseUnderCard(
 
 // PutUnderFromHand has the controller choose a card from their hand and place it
 // under the resolving card, face up or face down. Masterplan and Jargogle place
-// theirs facedown; Graft always places its card faceup. Type restricts the choice
-// to cards of that type; the zero value allows any card, and Tactic is the card
-// a graft-from-hand takes (Infomancer, Memolith). It does nothing with an
-// empty hand.
+// theirs facedown; Graft always places its card faceup. Filter restricts the
+// choice; the zero value allows any card, and a tactic is what a graft-from-hand
+// takes (Infomancer, Memolith). It does nothing with an empty hand.
 type PutUnderFromHand struct {
 	// FaceDown places the chosen card hidden from the opponent, viewable only by
 	// the controller of the resolving card (Peekable).
 	FaceDown bool
-	// Type restricts the choice to cards of that type; the zero value (an unset
-	// CardType) allows any card.
-	Type CardType
+	// Filter narrows which cards in hand may be chosen. A card in hand is in no
+	// battleline, so validate rejects an in-play axis.
+	Filter Filter
 }
 
-// noun renders the kind of card the effect places, e.g. "Tactic" for a
-// Tactic filter, "card" for none.
+// validate rejects a filter that reads the board, which a card in hand is not on.
+func (e PutUnderFromHand) validate() error {
+	return e.Filter.validateIdentityOnly("PutUnderFromHand")
+}
+
+// noun renders the kind of card the effect places, e.g. "tactic card" for a
+// tactic filter and "card" for none. This clause names the type as an adjective
+// on "card" rather than letting it replace the noun ("put a tactic card from your
+// hand", the printed wording), so the type is peeled off and prefixed while every
+// other axis renders as usual.
 func (e PutUnderFromHand) noun() string {
-	if e.Type != TypeUnset {
-		return typeWord(e.Type) + " card"
+	adjective := ""
+	rest := e.Filter
+	if rest.Type != TypeUnset {
+		adjective, rest.Type = typeWord(rest.Type), TypeUnset
 	}
-	return "card"
+	return rest.noun(qualifyNoun(adjective, "card"))
 }
 
 // Text renders the effect, e.g. "put a Tactic card from your hand faceup under
@@ -80,7 +89,7 @@ func (e PutUnderFromHand) Text() string {
 // and place it under the resolving card.
 func (e PutUnderFromHand) Resolve(ctx *EffectContext) {
 	candidates := handCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
-		return e.Type == TypeUnset || ctx.Resolver.TypeOf(id) == e.Type
+		return e.Filter.matches(ctx, id)
 	})
 	if len(candidates) == 0 {
 		return

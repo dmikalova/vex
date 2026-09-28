@@ -25,7 +25,7 @@ var GiantSloth = set.New(
 	card.WithRestrictions(card.Restrictions{
 		UseCondition: card.CardsDiscarded{
 			Player: card.Controller,
-			House:  card.Houses.Named(card.House.Self),
+			Filter: card.Filter{House: card.Houses.Named(card.House.Self)},
 			Amount: 1,
 		},
 	}),

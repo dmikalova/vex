@@ -18,7 +18,7 @@ var Quadracorder = set.New(
 	card.WithStatic(card.StaticModifier{
 		KeyCostChange: card.KeyCostChange(card.Opponent, 1).Per(card.HousesAmong{
 			Player: card.Controller,
-			Type:   card.Type.Creature,
+			Filter: card.Filter{Type: card.Type.Creature},
 		}),
 	}),
 )

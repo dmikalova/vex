@@ -36,8 +36,10 @@ var DarkHarbinger = set.New(
 	card.WithTraits(card.Traits.Mutant, card.Traits.Witch),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{
 		Cond: card.ItIs{
-			House: card.Houses.Named(card.House.Self),
-			Type:  card.Type.Tactic,
+			Filter: card.Filter{
+				House: card.Houses.Named(card.House.Self),
+				Type:  card.Type.Tactic,
+			},
 		},
 		Then: card.Ready{Target: card.Target.This},
 	}),

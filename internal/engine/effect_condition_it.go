@@ -1,49 +1,57 @@
 package engine
 
 // ItIs is met when the card in context (ctx.It — a just-played, revealed, or
-// discarded card) matches a House and/or Type filter, e.g. "if it is a Mars
-// creature" (Brain Stem Antenna reacting to a played card), "if it is an artifact"
-// (Carlo Phantom), or "if it is of the chosen house" (Chaos Portal). The House
-// matcher is the one house-filter vocabulary (ADR 0038): a named house, a
+// discarded card) is a card its Filter admits, e.g. "if it is a Mars creature"
+// (Brain Stem Antenna reacting to a played card), "if it is an artifact" (Carlo
+// Phantom), "if it is a Giant creature" (Stilt-Kin), "if it is Subtle Chain"
+// (Chain Gang), or "if it is of the chosen house" (Chaos Portal).
+//
+// A Filter is a test of one card, which is exactly what this condition is, so the
+// whole "it is a …" family is this one node: a trait, a name, a house and a type
+// are axes of the shared narrowing vocabulary rather than four conditions. The
+// House matcher stays the one house-filter vocabulary (ADR 0038): a named house, a
 // non-<house> ("if it is a non-Star Alliance card" — Book of leQ), or a referenced
-// house (the chosen or active house). Either filter may be left unset to match any.
+// house (the chosen or active house). The zero Filter admits any card.
 type ItIs struct {
-	// House and Type are the filters the card in context must match; either one
-	// left unset (the zero HouseMatcher / TypeUnset) matches any.
-	House HouseMatcher
-	Type  CardType
-	// Other excludes the source card itself, so "it" must be a different card and
-	// the noun reads "another" — Hunting Witch gains only when you play another
-	// creature, never on its own entrance (Harmonia, which says "a creature", omits
-	// it and gains from its own play).
-	Other bool
+	// Filter is what the card in context must be. Its Except axis is what "another"
+	// means here: ExcludeSource bars the source card itself, so Hunting Witch gains
+	// only when you play another creature and never on its own entrance (Harmonia,
+	// which says "a creature", leaves it unset and gains from its own play).
+	Filter Filter
 	// Noun names the card outright when "it" has drifted too far from the trigger
 	// that set it. Unset says "it".
 	Noun ItNoun
 }
 
-// shapeNoun renders the house/type shape the contextual card must match for a
-// prefix-kind matcher, e.g. "Mars creature" or "non-Logos card", prefixed
-// "another" when Other bars the source card itself.
+// shapeNoun renders the shape the contextual card must match for a prefix-kind
+// matcher, e.g. "Mars creature", "non-Logos card", or "Giant creature", prefixed
+// "another" when an exclusion bars the source card itself.
 func (e ItIs) shapeNoun() string {
-	noun := e.House.qualifyNoun(typeNoun(e.Type))
-	if e.Other {
+	noun := e.Filter.qualifyNoun("card")
+	if e.Filter.Except.filters() {
 		return "another " + noun
 	}
 	return noun
+}
+
+// object renders the shape as an article-and-noun phrase — "a Mars creature",
+// "another creature", "Subtle Chain" — under the filter's own article rule, which
+// leaves a proper name bare.
+func (e ItIs) object() string {
+	return e.Filter.article(e.shapeNoun())
 }
 
 // predicate renders what the card in context must be. A referenced house reads as
 // a trailing phrase ("of the chosen house"); every other matcher reads as an
 // article-and-noun ("a Mars creature", "a non-Logos card").
 func (e ItIs) predicate() string {
-	switch e.House.Kind {
+	switch e.Filter.House.Kind {
 	case MatchChosenHouse:
 		return "of the chosen house"
 	case MatchActiveHouse:
 		return "of the active house"
 	default:
-		return indefinite(e.shapeNoun())
+		return e.object()
 	}
 }
 
@@ -59,19 +67,24 @@ func (e ItIs) negatedText() string {
 	return "if " + e.Noun.noun() + " is not " + e.predicate()
 }
 
-// itAdjective offers the house word this clause filters on, so an And collapses
-// "it is friendly and it is a Mars creature" into "a friendly Mars creature". It
-// declines for a clause that names something other than "it", excludes the source
-// card ("another" is not an adjective), or has no prefix house to contribute.
+// itAdjective offers the words this clause filters on before the noun, so an And
+// collapses "it is friendly and it is a Mars creature" into "a friendly Mars
+// creature" and "it is friendly and it is a Cat creature" into "a friendly Cat
+// creature" (Mercy, Malkin Queen). It declines for a clause that names something
+// other than "it", excludes the source card ("another" is not an adjective), or
+// has neither a prefix house nor a trait to contribute.
 func (e ItIs) itAdjective() string {
-	if e.Noun != 0 || e.Other {
+	if e.Noun != 0 || e.Filter.Except.filters() {
 		return ""
 	}
-	adj, _ := e.House.adjective()
+	adj, _ := e.Filter.House.adjective()
+	if e.Filter.Trait != traitUnset {
+		return qualifyNoun(adj, e.Filter.Trait.String())
+	}
 	return adj
 }
 
-func (e ItIs) itNoun() string { return typeNoun(e.Type) }
+func (e ItIs) itNoun() string { return typeNoun(e.Filter.Type) }
 
 // asNamedHouseAlt reports the single named house this clause filters on, together
 // with the rest of its shape (its type, subject, and other flag with the house
@@ -80,53 +93,18 @@ func (e ItIs) itNoun() string { return typeNoun(e.Type) }
 // each house (Ambassador Liu). It returns false unless the clause filters by
 // exactly one named house.
 func (e ItIs) asNamedHouseAlt() (house House, shape ItIs, ok bool) {
-	if e.House.Kind != MatchNamedHouse {
+	if e.Filter.House.Kind != MatchNamedHouse {
 		return HouseNone, ItIs{}, false
 	}
 	shape = e
-	shape.House = HouseMatcher{}
-	return e.House.House, shape, true
+	shape.Filter.House = HouseMatcher{}
+	return e.Filter.House.House, shape, true
 }
 
-// Met reports whether a card is in context and matches the house and type
-// filters. Other additionally bars the source card itself, so a card never counts
-// its own play.
+// Met reports whether a card is in context and the filter admits it. An exclusion
+// additionally bars the source card itself, so a card never counts its own play.
 func (e ItIs) Met(ctx *EffectContext) bool {
-	if !ctx.HasIt {
-		return false
-	}
-	if e.Other && ctx.It == ctx.Source {
-		return false
-	}
-	return e.matches(ctx)
-}
-
-// matches reports whether the card in context fits the house and type filters.
-func (e ItIs) matches(ctx *EffectContext) bool {
-	if !e.House.matches(ctx, ctx.It) {
-		return false
-	}
-	if e.Type != TypeUnset && ctx.Resolver.TypeOf(ctx.It) != e.Type {
-		return false
-	}
-	return true
-}
-
-// ItIsOfTrait is met when the creature in context (ctx.It) has the named trait.
-type ItIsOfTrait struct{ Trait Trait }
-
-// CondText renders the condition, e.g. "if it is a Dinosaur creature".
-func (c ItIsOfTrait) CondText() string {
-	return "if it is a " + c.Trait.String() + " creature"
-}
-
-func (c ItIsOfTrait) itAdjective() string { return c.Trait.String() }
-
-func (ItIsOfTrait) itNoun() string { return "creature" }
-
-// Met reports whether a creature is in context and has the trait.
-func (c ItIsOfTrait) Met(ctx *EffectContext) bool {
-	return ctx.HasIt && ctx.Resolver.HasTrait(ctx.It, c.Trait)
+	return ctx.HasIt && e.Filter.matches(ctx, ctx.It)
 }
 
 // HasAember is met when its Subject has any Æmber on it. The default subject is

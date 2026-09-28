@@ -27,8 +27,10 @@ var SwapWidget = set.New(
 			},
 			Result: card.Sequence{Effects: []card.Effect{
 				card.PutFromHand{
-					Type:           card.Type.Creature,
-					House:          card.Houses.Named(card.House.Self),
+					Filter: card.Filter{
+						Type:  card.Type.Creature,
+						House: card.Houses.Named(card.House.Self),
+					},
 					ExceptSameName: true,
 				},
 				card.Ready{Target: card.Target.Triggering},

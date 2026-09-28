@@ -334,11 +334,18 @@ func playerSet(p engine.Player) bool {
 }
 
 // fightRestrictionGlyphs renders a creature's fight restriction — the creatures it
-// is limited to fighting — as a fight glyph arrowed to that noun. The qualifier
-// that narrows the set (stunned, damaged) stays in the rules text, as with any
-// fine target filter.
-func fightRestrictionGlyphs(fr engine.Target) []glyph {
-	return []glyph{{asset: "glyph-fight"}, arrowTo(targetGlyph(fr))}
+// is limited to fighting — as a fight glyph arrowed to the creature glyph. Every
+// fight restriction is about creatures, so the noun is fixed and the restriction
+// carries no set of its own; the qualifier that narrows it (stunned, flank) stays
+// in the rules text, as with any fine filter.
+func fightRestrictionGlyphs() []glyph {
+	return []glyph{
+		{asset: "glyph-fight"},
+		arrowTo(glyph{
+			asset: "type-creature",
+			decor: decorEach,
+		}),
+	}
 }
 
 // drawModifierGlyphs renders a card's continuous end-of-turn hand-refill change

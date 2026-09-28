@@ -111,43 +111,42 @@ func (c PoolAember) Met(ctx *EffectContext) bool {
 }
 
 // ControlsMoreCreatures is met while the controller has more creatures in play
-// than the opponent. Trait, when set, restricts the comparison to creatures with
-// that trait (Pismire compares Mutant counts). It is the excess-creature Count
-// read as a threshold: "more than the opponent" is an excess of at least one.
+// than the opponent. Filter, when it narrows, restricts the comparison to the
+// creatures it admits (Spare Arm Carmine compares Mutant counts). It is the
+// excess-creature Count read as a threshold: "more than the opponent" is an
+// excess of at least one.
 //
 // It stays separate from Overwhelmed on purpose. Overwhelmed is a pure count of
-// every creature on each side; this condition compares a trait per side. They ask
-// different questions, and a merged node would carry a Player x Trait combination
-// no card uses. The threshold itself is already decomposed onto the shared atoms
-// (CountIs over ExcessCreatures), so the separation is not a missed fold — it is
-// the fold, stopped at the right place.
+// every creature on each side; this condition compares a narrowed set per side.
+// They ask different questions, and a merged node would carry a Player x Filter
+// combination no card uses. The threshold itself is already decomposed onto the
+// shared atoms (CountIs over ExcessCreatures, whose narrowing is the shared
+// Filter), so the separation is not a missed fold — it is the fold, stopped at
+// the right place.
 type ControlsMoreCreatures struct {
-	Trait Trait
+	// Filter narrows which creatures the two sides compare; the zero value counts
+	// every creature.
+	Filter Filter
 }
 
 // excess is the Count this condition is a threshold on — how many more creatures
-// the controller has than the opponent, narrowed to Trait when set. It also
-// supplies the counted noun both wordings repeat.
+// the controller has than the opponent, narrowed by Filter. It also supplies the
+// counted noun both wordings repeat.
 func (c ControlsMoreCreatures) excess() ExcessCreatures {
-	return ExcessCreatures{
-		Player: Controller,
-		Trait:  c.Trait,
-	}
+	return ExcessCreatures{Player: Controller, Filter: c.Filter}
 }
 
 // CondText renders the condition, e.g. "if you control more Mutant creatures than
 // your opponent".
 func (c ControlsMoreCreatures) CondText() string {
-	return "if you control more " + c.excess().filter().noun("card") +
-		"s than your opponent"
+	return "if you control more " + c.excess().noun() + "s than your opponent"
 }
 
 // symmetricCondText renders the board-wide third-person form a
 // ConditionalPlayBar needs, e.g. "has more creatures in play than their
 // opponent" (Quixxle Stone).
 func (c ControlsMoreCreatures) symmetricCondText() string {
-	return "has more " + c.excess().filter().noun("card") +
-		"s in play than their opponent"
+	return "has more " + c.excess().noun() + "s in play than their opponent"
 }
 
 // Met reports whether the controller has more creatures in play than the opponent.
@@ -172,17 +171,14 @@ func (c ControlsNamed) CondText() string {
 
 // Met reports whether the controller has the named card in play.
 func (c ControlsNamed) Met(ctx *EffectContext) bool {
-	return CardsInPlay{
-		Player: Controller,
-		Name:   c.Name,
-	}.Met(ctx)
+	return CardsInPlay{Player: Controller, Filter: Filter{Name: c.Name}}.Met(ctx)
 }
 
 // Overwhelmed reports whether the controller is overwhelmed — their opponent
 // controls more creatures than they do. "Overwhelmed" is the keyword form of that
 // board state; Numquid the Fair repeats its destruction while overwhelmed. It
-// counts every creature, where ControlsMoreCreatures compares a trait per side;
-// see there for why the two are not merged.
+// counts every creature, where ControlsMoreCreatures compares a filtered set per
+// side; see there for why the two are not merged.
 type Overwhelmed struct{}
 
 // CondText renders the condition.
@@ -283,24 +279,32 @@ func (c CounterInPlay) Met(ctx *EffectContext) bool {
 // Green has already been purged (wrap in Not for "has not been purged"). It names
 // the other card by its printed name, not the source.
 type NamedCardPurged struct {
-	// Name is the card name to look for in the purge pile.
-	Name string
+	// Filter names the card to look for. It is a Filter rather than a bare name so
+	// a card asking for "a Mars creature has been purged" has a field rather than a
+	// new node; a filter naming a card prints it outright, without an article. A
+	// purged card is in no battleline, so validate rejects an in-play axis.
+	Filter Filter
+}
+
+// validate rejects a filter that reads the board, which a purged card is not on.
+func (c NamedCardPurged) validate() error {
+	return c.Filter.validateIdentityOnly("NamedCardPurged")
 }
 
 // CondText renders the condition naming the card it looks for.
 func (c NamedCardPurged) CondText() string {
-	return "if " + c.Name + " has been purged"
+	return "if " + c.Filter.object("card") + " has been purged"
 }
 
 // negatedText renders the not-purged clause a Not wrapper prints.
 func (c NamedCardPurged) negatedText() string {
-	return "if " + c.Name + " has not been purged"
+	return "if " + c.Filter.object("card") + " has not been purged"
 }
 
-// Met reports whether a card of the name is in the controller's purge pile.
+// Met reports whether a card the filter admits is in the controller's purge pile.
 func (c NamedCardPurged) Met(ctx *EffectContext) bool {
 	for _, id := range ctx.Resolver.Purge(ctx.Controller) {
-		if (Filter{Name: c.Name}).matches(ctx, id) {
+		if c.Filter.matches(ctx, id) {
 			return true
 		}
 	}

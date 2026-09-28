@@ -21,7 +21,7 @@ var GeneralOrder24 = set.New(
 		card.Trigger.StartOfTurn, card.Conditional{
 			Cond: card.CardsInPlay{
 				Player: card.Controller,
-				Type:   card.Type.Creature,
+				Filter: card.Filter{Type: card.Type.Creature},
 				None:   true,
 			},
 			Then: card.Destroy{Target: card.Target.This},

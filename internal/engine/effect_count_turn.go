@@ -11,26 +11,36 @@ import "fmt"
 // met once Amount have been played (Epic Quest fires after seven), defaulting to
 // one. This replaces a bespoke "played at least N of a house" condition.
 type CardsPlayed struct {
-	// Player names whose plays to count; House filters by the played card's house.
+	// Player names whose plays to count. It picks a turn log rather than narrowing
+	// a card, so it is a set selector and not a filter axis.
 	Player Player
-	House  HouseMatcher
+	// Filter narrows which played cards count and supplies the noun the clause
+	// repeats. The log holds real cards, so the filter is enforceable — but a played
+	// card need not still be in play, so validate rejects an in-play axis.
+	Filter Filter
 	// Amount is the minimum the Condition role requires; zero means at least one.
 	Amount int
 }
 
-// Value counts the player's cards of the house played this turn.
-func (e CardsPlayed) Value(ctx *EffectContext) int {
-	return countOfHouse(ctx, ctx.Resolver.PlayedThisTurn(ctx.PlayerFor(e.Player)), e.House)
+// validate rejects a filter that reads the board, which the turn log does not.
+func (e CardsPlayed) validate() error {
+	return e.Filter.validateIdentityOnly("CardsPlayed")
 }
 
-// countOfHouse counts how many of the ids the matcher admits — the filter a
-// turn-log Count applies to the unfiltered record the engine keeps. An any-house
-// matcher admits every card, so a Count can ask "how many cards" as well as "how
+// Value counts the player's cards the filter admits played this turn.
+func (e CardsPlayed) Value(ctx *EffectContext) int {
+	return countMatching(
+		ctx, ctx.Resolver.PlayedThisTurn(ctx.PlayerFor(e.Player)), e.Filter)
+}
+
+// countMatching counts how many of the ids the filter admits — the narrowing a
+// turn-log Count applies to the unfiltered record the engine keeps. The zero
+// filter admits every card, so a Count can ask "how many cards" as well as "how
 // many Sanctum cards".
-func countOfHouse(ctx *EffectContext, ids []LocalID, house HouseMatcher) int {
+func countMatching(ctx *EffectContext, ids []LocalID, f Filter) int {
 	n := 0
 	for _, id := range ids {
-		if house.matches(ctx, id) {
+		if f.matches(ctx, id) {
 			n++
 		}
 	}
@@ -53,10 +63,10 @@ func (e CardsPlayed) CountText() string {
 	return e.cardNoun() + " you have played this turn"
 }
 
-// cardNoun is the noun the count repeats, house-qualified when the count filters
-// by house and a plain "card" when it counts every card played.
+// cardNoun is the noun the count repeats, qualified by the filter and a plain
+// "card" when the count counts every card played.
 func (e CardsPlayed) cardNoun() string {
-	return e.House.qualifyNoun("card")
+	return e.Filter.noun("card")
 }
 
 // CondText renders the condition, e.g. "if you have played 7 or more Sanctum cards

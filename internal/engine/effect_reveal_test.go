@@ -8,7 +8,7 @@ import (
 func TestReveal(t *testing.T) {
 	if got := (RevealHand{
 		Player: Controller,
-		House:  namedHouse(Mars),
+		Filter: Filter{House: namedHouse(Mars)},
 	}).Text(); got != "reveal any number of Mars cards from your hand" {
 		t.Errorf("house text = %q", got)
 	}
@@ -28,7 +28,7 @@ func TestReveal(t *testing.T) {
 	// Revealing your Mars cards counts and logs both; the Brobnar card is untouched.
 	RevealHand{
 		Player: Controller,
-		House:  namedHouse(Mars),
+		Filter: Filter{House: namedHouse(Mars)},
 	}.Resolve(ctx)
 	if ctx.Produced.Revealed != 2 {
 		t.Errorf("revealed = %d, want 2", ctx.Produced.Revealed)
@@ -68,7 +68,7 @@ func TestReveal(t *testing.T) {
 	before := len(g3.Log)
 	RevealHand{
 		Player: Controller,
-		House:  namedHouse(Mars),
+		Filter: Filter{House: namedHouse(Mars)},
 	}.Resolve(ctx3)
 	if ctx3.Produced.Revealed != 0 {
 		t.Errorf("revealed = %d, want 0", ctx3.Produced.Revealed)
@@ -89,7 +89,7 @@ func TestReveal(t *testing.T) {
 	before4 := len(g4.Log)
 	RevealHand{
 		Player: Controller,
-		House:  namedHouse(Mars),
+		Filter: Filter{House: namedHouse(Mars)},
 	}.Resolve(ctx4)
 	if ctx4.Produced.Revealed != 0 {
 		t.Errorf("declined reveal = %d, want 0", ctx4.Produced.Revealed)

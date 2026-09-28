@@ -751,11 +751,11 @@ func EffectCatalog() []Catalogued[Effect] {
 			Rules: bears("Put a Card into Another Zone"),
 		},
 		{
-			Node:  PutFromHand{Type: Creature},
+			Node:  PutFromHand{Filter: Filter{Type: Creature}},
 			Rules: bears("Put a Card into Another Zone"),
 		},
 		{
-			Node:  PutDiscardedIntoHand{Type: Creature},
+			Node:  PutDiscardedIntoHand{Noun: Creature},
 			Rules: bears("Put a Card into Another Zone"),
 		},
 		{
@@ -772,7 +772,7 @@ func EffectCatalog() []Catalogued[Effect] {
 			Rules: bears("Put a Card into Play"),
 		},
 		{
-			Node:  PutDiscardedIntoPlay{Type: Creature},
+			Node:  PutDiscardedIntoPlay{Noun: Creature},
 			Rules: bears("Put a Card into Play"),
 		},
 		{
@@ -782,7 +782,7 @@ func EffectCatalog() []Catalogued[Effect] {
 
 		// Cards set under another card.
 		{
-			Node:  PutUnderFromHand{Type: Creature},
+			Node:  PutUnderFromHand{Filter: Filter{Type: Creature}},
 			Rules: bears("Put a Card From Hand Under a Card"),
 		},
 		{
@@ -922,8 +922,8 @@ func EffectCatalog() []Catalogued[Effect] {
 		},
 		{
 			Node: ForEachDiscarded{
-				Type: Creature,
-				Do:   GainAember{Player: Controller, Amount: 1},
+				Filter: Filter{Type: Creature},
+				Do:     GainAember{Player: Controller, Amount: 1},
 			},
 			Rules: plumbing("composition: resolves its child once per card discarded this way"),
 		},

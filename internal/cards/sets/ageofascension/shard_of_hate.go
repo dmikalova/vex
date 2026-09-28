@@ -26,7 +26,7 @@ var ShardOfHate = set.New(
 		card.Trigger.Action, card.ForEach{
 			Times: card.CardsInPlay{
 				Player: card.Controller,
-				Trait:  card.Traits.Shard,
+				Filter: card.Filter{Trait: card.Traits.Shard},
 			},
 			Do: card.Stun{Target: card.Target.EnemyCreature},
 		}),

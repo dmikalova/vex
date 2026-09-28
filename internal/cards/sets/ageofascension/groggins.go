@@ -19,7 +19,5 @@ var Groggins = set.New(
 	card.Provenance(card.AoA, "11"),
 	card.WithPower(8),
 	card.WithTraits(card.Traits.Giant),
-	card.WithFightRestriction(
-		card.Target.EachCreature.With(card.Filter{Position: card.Position.OnFlank}),
-	),
+	card.WithFightRestriction(card.Filter{Position: card.Position.OnFlank}),
 )

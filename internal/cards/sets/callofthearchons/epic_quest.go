@@ -28,7 +28,7 @@ var EpicQuest = set.New(
 		card.Trigger.Action, card.Conditional{
 			Cond: card.CardsPlayed{
 				Player: card.Controller,
-				House:  card.Houses.Named(card.House.Self),
+				Filter: card.Filter{House: card.Houses.Named(card.House.Self)},
 				Amount: 7,
 			},
 			Then: card.ForgeKey{FreeOfCost: true},

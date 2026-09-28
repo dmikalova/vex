@@ -472,7 +472,11 @@ Igon the Green purges itself, then fetches its counterpart:
 card.WithAbility(
   card.Trigger.Destroyed, card.Sequence{Effects: []card.Effect{
     card.PurgeCreature{Target: card.Target.This},
-    card.PutCard{Zones: []card.Zone{card.Discard}, Selection: card.Chosen{Name: IgonTheTerrible.Name}, Destination: card.To.Hand},
+    card.PutCard{
+      Zones:       []card.Zone{card.Discard},
+      Selection:   card.Chosen{Filter: card.Filter{Name: IgonTheTerrible.Name}},
+      Destination: card.To.Hand,
+    },
   }}),
 ```
 
@@ -886,16 +890,14 @@ Psionic Officer Lang example above.
 | ----------------------- | ------------------------------------- |
 | `Haunted`               | whether a discard pile has 10+ cards  |
 | `CardsInDiscardAtLeast` | how many matching cards are discarded |
-| `NamedCardInDiscard`    | whether a named card is discarded     |
-| `NamedCardPurged`       | whether a named card is purged        |
+| `NamedCardInDiscard`    | whether a matching card is discarded  |
+| `NamedCardPurged`       | whether a matching card is purged     |
 
 **The card in context ("it"):**
 
 | Condition                    | Asks                                  |
 | ---------------------------- | ------------------------------------- |
-| `ItIs`                       | its house and/or type                 |
-| `ItIsNamed`                  | its printed name                      |
-| `ItIsOfTrait`                | whether it has a trait                |
+| `ItIs`                       | what it is, by any `Filter` axis      |
 | `ItIsFriendly`               | whether you control it                |
 | `ItIsEnemy`                  | whether the opponent controls it      |
 | `ItIsStunned`                | whether it is stunned                 |
@@ -952,7 +954,10 @@ condition. Phalanx Strike deals one damage per friendly creature:
 ```go
 card.DealDamage{
   Amount: 1,
-  Per:    card.CardsInPlay{Player: card.Controller, Type: card.Type.Creature},
+  Per: card.CardsInPlay{
+    Player: card.Controller,
+    Filter: card.Filter{Type: card.Type.Creature},
+  },
   Target: card.Target.Creature,
 }
 ```

@@ -23,14 +23,14 @@ var TrustNoOne = set.New(
 				card.Conditional{
 					Cond: card.CardsInPlay{
 						Player: card.Controller,
-						Type:   card.Type.Creature,
+						Filter: card.Filter{Type: card.Type.Creature},
 						None:   true,
 					},
 					Then: card.StealAember{
 						Amount: 1,
 						Per: card.HousesAmong{
 							Player: card.Opponent,
-							Type:   card.Type.Creature,
+							Filter: card.Filter{Type: card.Type.Creature},
 						},
 					},
 				},

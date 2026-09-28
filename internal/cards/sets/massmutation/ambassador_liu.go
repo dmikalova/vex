@@ -29,15 +29,15 @@ var AmbassadorLiu = set.New(
 			},
 			card.Conditional{
 				Cond: card.Or{Conditions: []card.Condition{
-					card.ItIs{House: card.Houses.Named(card.House.Dis)},
-					card.ItIs{House: card.Houses.Named(card.House.Shadows)},
+					card.ItIs{Filter: card.Filter{House: card.Houses.Named(card.House.Dis)}},
+					card.ItIs{Filter: card.Filter{House: card.Houses.Named(card.House.Shadows)}},
 				}},
 				Then: card.StealAember{Amount: 1},
 			},
 			card.Conditional{
 				Cond: card.Or{Conditions: []card.Condition{
-					card.ItIs{House: card.Houses.Named(card.House.Logos)},
-					card.ItIs{House: card.Houses.Named(card.House.Untamed)},
+					card.ItIs{Filter: card.Filter{House: card.Houses.Named(card.House.Logos)}},
+					card.ItIs{Filter: card.Filter{House: card.Houses.Named(card.House.Untamed)}},
 				}},
 				Then: card.GainAember{
 					Player: card.Controller,
@@ -46,8 +46,8 @@ var AmbassadorLiu = set.New(
 			},
 			card.Conditional{
 				Cond: card.Or{Conditions: []card.Condition{
-					card.ItIs{House: card.Houses.Named(card.House.Sanctum)},
-					card.ItIs{House: card.Houses.Named(card.House.Saurian)},
+					card.ItIs{Filter: card.Filter{House: card.Houses.Named(card.House.Sanctum)}},
+					card.ItIs{Filter: card.Filter{House: card.Houses.Named(card.House.Saurian)}},
 				}},
 				Then: card.CaptureAember{
 					Amount: 3,

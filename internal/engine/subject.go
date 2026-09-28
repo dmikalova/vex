@@ -14,7 +14,7 @@ package engine
 // without a Subject, and there are more than a dozen of them. The prefix is not a
 // missing field: an audit of each found no counterpart question on the other
 // referent — there is no ItIsReady beside SourceReady, no ThisIsStunned beside
-// ItIsStunned, no SourceIsNamed beside ItIsNamed. HasAember is the only question
+// ItIsStunned, no SourceIs beside ItIs. HasAember is the only question
 // the card pool asks of both referents, which is why it alone carries a Subject.
 // Adding the field to the rest now would be speculative generality: the unused
 // branch is unreachable by any card, so it could only be covered by a test

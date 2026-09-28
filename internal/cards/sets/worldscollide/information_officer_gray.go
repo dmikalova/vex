@@ -23,7 +23,7 @@ var InformationOfficerGray = set.New(
 		Do: card.ArchiveCard{
 			Zone: card.Hand,
 			Selection: card.Chosen{
-				House:    card.Houses.Except(card.House.Self),
+				Filter:   card.Filter{House: card.Houses.Except(card.House.Self)},
 				Optional: true,
 			},
 			Revealed: true,

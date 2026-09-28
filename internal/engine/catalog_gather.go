@@ -33,8 +33,11 @@ func GatherCatalog() []Catalogued[Gather] {
 		},
 		{
 			Node: EachPlayerUnless{
-				Spare: CardsInPlay{Player: Controller, Type: Creature, Trait: Dinosaur},
-				Take:  MostPowerful,
+				Spare: CardsInPlay{
+					Player: Controller,
+					Filter: Filter{Type: Creature, Trait: Dinosaur},
+				},
+				Take: MostPowerful,
 			},
 			Rules: bears("Destroy"),
 		},

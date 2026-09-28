@@ -29,7 +29,7 @@ var MonumentToFaust = set.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{
-			Cond: card.NamedCardInDiscard{Name: FaustTheGreat.Name},
+			Cond: card.NamedCardInDiscard{Filter: card.Filter{Name: FaustTheGreat.Name}},
 			Then: card.RaiseKeyCost{
 				Player:   card.Opponent,
 				Amount:   2,

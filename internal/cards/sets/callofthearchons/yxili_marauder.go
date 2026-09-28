@@ -32,9 +32,11 @@ var YxiliMarauder = set.New(
 			Source: card.Opponent,
 			Per: card.CardsInPlay{
 				Player: card.Controller,
-				Type:   card.Type.Creature,
-				House:  card.Houses.Named(card.House.Self),
-				Ready:  true,
+				Filter: card.Filter{
+					Type:  card.Type.Creature,
+					House: card.Houses.Named(card.House.Self),
+					Ready: true,
+				},
 			},
 		}),
 )

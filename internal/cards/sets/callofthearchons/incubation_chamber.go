@@ -23,8 +23,10 @@ var IncubationChamber = set.New(
 		card.Trigger.Action, card.ArchiveCard{
 			Zone: card.Hand,
 			Selection: card.Chosen{
-				Type:  card.Type.Creature,
-				House: card.Houses.Named(card.House.Self),
+				Filter: card.Filter{
+					Type:  card.Type.Creature,
+					House: card.Houses.Named(card.House.Self),
+				},
 			},
 			Revealed: true,
 		}),

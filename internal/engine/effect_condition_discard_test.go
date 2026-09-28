@@ -6,17 +6,13 @@ import "testing"
 // Untamed creatures in the controller's discard pile.
 func TestCardsInDiscardAtLeast(t *testing.T) {
 	if got := (CardsInDiscardAtLeast{
-		House:  namedHouse(Untamed),
-		Type:   Creature,
+		Filter: Filter{House: namedHouse(Untamed), Type: Creature},
 		Amount: 3,
 	}).
 		CondText(); got != "if there are 3 or more Untamed creatures in your discard pile" {
 		t.Errorf("text = %q", got)
 	}
-	if (CardsInDiscardAtLeast{
-		House: namedHouse(Untamed),
-		Type:  Creature,
-	}).validate() == nil {
+	if (CardsInDiscardAtLeast{Filter: Filter{House: namedHouse(Untamed), Type: Creature}}).validate() == nil {
 		t.Error("a zero Amount should be invalid")
 	}
 	if err := (CardsInDiscardAtLeast{Amount: 1}).validate(); err != nil {
@@ -24,8 +20,7 @@ func TestCardsInDiscardAtLeast(t *testing.T) {
 	}
 
 	e := CardsInDiscardAtLeast{
-		House:  namedHouse(Untamed),
-		Type:   Creature,
+		Filter: Filter{House: namedHouse(Untamed), Type: Creature},
 		Amount: 3,
 	}
 
@@ -37,8 +32,7 @@ func TestCardsInDiscardAtLeast(t *testing.T) {
 	g.AddToDiscard(NewCard("ut", Untamed, Tactic, Common), 0)
 	g.AddToDiscard(NewCard("mc", Mars, Creature, Common, WithPower(3)), 0)
 	if (CardsInDiscardAtLeast{
-		House:  namedHouse(Untamed),
-		Type:   Creature,
+		Filter: Filter{House: namedHouse(Untamed), Type: Creature},
 		Amount: 3,
 	}).
 		Met(&EffectContext{
@@ -61,7 +55,7 @@ func TestCardsInDiscardAtLeast(t *testing.T) {
 // TestNamedCardInDiscard covers the Monuments' gate: whether a card of a given
 // name waits in the controller's discard pile.
 func TestNamedCardInDiscard(t *testing.T) {
-	e := NamedCardInDiscard{Name: "Faust the Great"}
+	e := NamedCardInDiscard{Filter: Filter{Name: "Faust the Great"}}
 	if got := e.CondText(); got != "if Faust the Great is in your discard pile" {
 		t.Errorf("text = %q", got)
 	}
@@ -92,10 +86,7 @@ func TestNamedCardInDiscard(t *testing.T) {
 // it renders its clause and reports met only when a card matching House and Type
 // was recorded.
 func TestDiscardedThisWay(t *testing.T) {
-	cond := DiscardedThisWay{
-		House: namedHouse(Saurian),
-		Type:  Creature,
-	}
+	cond := DiscardedThisWay{Filter: Filter{House: namedHouse(Saurian), Type: Creature}}
 	if got := cond.CondText(); got != "if you discard a Saurian creature this way" {
 		t.Errorf("cond text = %q", got)
 	}
@@ -120,7 +111,7 @@ func TestDiscardedThisWay(t *testing.T) {
 	}
 
 	// An unset type filter matches any card of the house.
-	anyType := DiscardedThisWay{House: namedHouse(Saurian)}
+	anyType := DiscardedThisWay{Filter: Filter{House: namedHouse(Saurian)}}
 	ctx.Produced.Discarded = []LocalID{relic}
 	if !anyType.Met(ctx) {
 		t.Error("an unset Type should match the Saurian artifact")

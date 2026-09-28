@@ -33,7 +33,7 @@ var MonumentToLudo = set.New(
 				Bind:   true,
 			},
 			card.Conditional{
-				Cond: card.NamedCardInDiscard{Name: praefectusLudoName},
+				Cond: card.NamedCardInDiscard{Filter: card.Filter{Name: praefectusLudoName}},
 				Then: card.MoveAemberToSupply{
 					Amount: 1,
 					Target: card.Target.TheChosenCreature,

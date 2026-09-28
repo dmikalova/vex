@@ -249,7 +249,7 @@ func (o Or) combinedHouses() (string, bool) {
 		}
 		houses = append(houses, h.String())
 	}
-	noun := strings.Join(houses, " or ") + " " + typeNoun(shape.Type)
+	noun := strings.Join(houses, " or ") + " " + typeNoun(shape.Filter.Type)
 	return "if " + shape.Noun.noun() + " is " + indefinite(noun), true
 }
 

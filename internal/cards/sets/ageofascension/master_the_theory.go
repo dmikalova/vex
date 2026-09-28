@@ -21,13 +21,13 @@ var MasterTheTheory = set.New(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.CardsInPlay{
 				Player: card.Controller,
-				Type:   card.Type.Creature,
+				Filter: card.Filter{Type: card.Type.Creature},
 				None:   true,
 			},
 			Then: card.ForEach{
 				Times: card.CardsInPlay{
 					Player: card.Opponent,
-					Type:   card.Type.Creature,
+					Filter: card.Filter{Type: card.Type.Creature},
 				},
 				Do: card.May{
 					Do: card.ArchiveCard{

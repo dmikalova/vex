@@ -21,7 +21,7 @@ var PhloxemSpike = set.New(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.CardsInPlay{
 				Player: card.Controller,
-				Type:   card.Type.Creature,
+				Filter: card.Filter{Type: card.Type.Creature},
 				None:   true,
 			},
 			Then: card.Destroy{

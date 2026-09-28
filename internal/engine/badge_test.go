@@ -51,10 +51,7 @@ func TestDealDamagePerInstancePreviewsDamageBadge(t *testing.T) {
 
 	DealDamage{
 		Amount: 3,
-		Per: CardsInPlay{
-			Player: Controller,
-			Type:   Creature,
-		},
+		Per:    CardsInPlay{Player: Controller, Filter: Filter{Type: Creature}},
 		Target: Target{Kind: TargetChosenEnemyCreature},
 	}.Resolve(&EffectContext{
 		Resolver:   g,

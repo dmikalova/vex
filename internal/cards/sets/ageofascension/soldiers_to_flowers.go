@@ -22,8 +22,10 @@ var SoldiersToFlowers = set.New(
 			Zones:  []card.Zone{card.Discard},
 			Player: card.EachPlayer,
 			Selection: card.Each{
-				House: card.Houses.Named(card.House.Self),
-				Type:  card.Type.Creature,
+				Filter: card.Filter{
+					House: card.Houses.Named(card.House.Self),
+					Type:  card.Type.Creature,
+				},
 			},
 			GainOwnerAember: true,
 		}),

@@ -23,7 +23,7 @@ var Infomancer = set.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Cyborg),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.Play, card.PutUnderFromHand{Type: card.Type.Tactic}),
+		card.Trigger.Play, card.PutUnderFromHand{Filter: card.Filter{Type: card.Type.Tactic}}),
 	card.WithAbility(
 		card.Trigger.Reap, card.TriggerGraftedPlayEffect{}),
 )

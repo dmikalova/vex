@@ -22,9 +22,8 @@ var FaustTheGreat = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dinosaur),
 	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.CardsInPlay{
-		Player:     card.Controller,
-		Type:       card.Type.Creature,
-		WithAember: true,
+		Player: card.Controller,
+		Filter: card.Filter{Type: card.Type.Creature, Aember: card.Aember.Some},
 	})),
 	card.WithAbility(
 		card.Trigger.Play, card.May{
