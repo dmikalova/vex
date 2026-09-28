@@ -337,7 +337,11 @@ func TestBonkersComposition(t *testing.T) {
 		},
 		ForEachDiscarded{
 			Do: Destroy{
-				Target: Target{Kind: TargetChosenCreatureOrArtifact}.House(contextualHouse),
+				Target: Target{
+					Kind: TargetChosenCreatureOrArtifact,
+				}.With(
+					Filter{House: contextualHouse},
+				),
 			},
 		},
 		Conditional{
@@ -393,7 +397,11 @@ func TestBonkersCompositionSelfDestructs(t *testing.T) {
 		},
 		ForEachDiscarded{
 			Do: Destroy{
-				Target: Target{Kind: TargetChosenCreatureOrArtifact}.House(contextualHouse),
+				Target: Target{
+					Kind: TargetChosenCreatureOrArtifact,
+				}.With(
+					Filter{House: contextualHouse},
+				),
 			},
 		},
 		Conditional{
@@ -422,7 +430,11 @@ func TestForEachDiscardedAndContextualHouse(t *testing.T) {
 	if err := validateEffect(
 		ForEachDiscarded{
 			Do: Destroy{
-				Target: Target{Kind: TargetChosenCreatureOrArtifact}.House(contextualHouse),
+				Target: Target{
+					Kind: TargetChosenCreatureOrArtifact,
+				}.With(
+					Filter{House: contextualHouse},
+				),
 			},
 		},
 	); err != nil {
@@ -430,7 +442,7 @@ func TestForEachDiscardedAndContextualHouse(t *testing.T) {
 	}
 
 	// Text renders the chosen-in-play noun and the contextual-house clause.
-	target := Target{Kind: TargetChosenCreatureOrArtifact}.House(contextualHouse)
+	target := Target{Kind: TargetChosenCreatureOrArtifact}.With(Filter{House: contextualHouse})
 	if got := target.Text(); got != "a creature or artifact of that card's house" {
 		t.Errorf("target text = %q", got)
 	}

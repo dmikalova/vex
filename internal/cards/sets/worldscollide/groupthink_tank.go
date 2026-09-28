@@ -23,6 +23,6 @@ var GroupthinkTank = set.New(
 	card.WithTraits(card.Traits.Robot, card.Traits.Experiment),
 	card.WithAbility(card.Trigger.Action, card.DealDamage{
 		Amount: 4,
-		Target: card.Target.EachCreature.SharesHouseWithNeighbors(1),
+		Target: card.Target.EachCreature.With(card.Filter{SharesHouseWithNeighbors: 1}),
 	}),
 )

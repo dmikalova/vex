@@ -22,7 +22,7 @@ var Archimedes = set.New(
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithConstant(card.ConstantAbility{
-		Target: card.Target.EachCreature.Neighboring(),
+		Target: card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Destroyed,
 			Effect:  card.ArchiveFromPlay{Target: card.Target.This},

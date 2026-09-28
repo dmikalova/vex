@@ -20,7 +20,7 @@ var JohnnyLongfingers = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant, card.Traits.Thief),
 	card.WithConstant(card.ConstantAbility{
-		Target: card.Target.EachFriendlyCreature.WithTrait(card.Traits.Mutant),
+		Target: card.Target.EachFriendlyCreature.With(card.Filter{Trait: card.Traits.Mutant}),
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Destroyed,
 			Effect:  card.StealAember{Amount: 1},

@@ -18,7 +18,9 @@ var AxiomOfGrisk = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Ward{Target: card.Target.Creature},
-			card.Destroy{Target: card.Target.EachCreature.WithoutAember()},
+			card.Destroy{
+				Target: card.Target.EachCreature.With(card.Filter{Aember: card.Aember.None}),
+			},
 			card.GainChains{Amount: 2},
 		}}),
 )

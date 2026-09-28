@@ -21,6 +21,6 @@ var TechivorePulpate = set.New(
 	card.WithTraits(card.Traits.Jelly),
 	card.WithEachPlayerAbility(
 		card.Trigger.AfterChooseHouse,
-		card.Destroy{Target: card.Target.EachArtifact.House(card.Houses.Active)},
+		card.Destroy{Target: card.Target.EachArtifact.With(card.Filter{House: card.Houses.Active})},
 	),
 )

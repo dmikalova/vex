@@ -25,7 +25,7 @@ var OperationsOfficerYshi = set.New(
 	card.WithTraits(card.Traits.Spirit),
 	card.WithKeywords(card.Keyword.Taunt),
 	card.WithConstant(card.ConstantAbility{
-		Target: card.Target.EachCreature.Neighboring(),
+		Target: card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 		Granted: card.FightReap(card.CaptureAember{
 			Amount: 1,
 			Target: card.Target.This,

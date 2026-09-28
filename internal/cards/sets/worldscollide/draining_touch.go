@@ -17,6 +17,6 @@ var DrainingTouch = set.New(
 	card.Provenance(card.WC, "72"),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
-			Target: card.Target.Creature.WithoutAember(),
+			Target: card.Target.Creature.With(card.Filter{Aember: card.Aember.None}),
 		}),
 )

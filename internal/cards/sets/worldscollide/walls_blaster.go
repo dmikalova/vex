@@ -36,11 +36,15 @@ var WallsBlaster = set.New(
 			},
 			card.Then{
 				First: card.AttachSelfTo{
-					Target: card.Target.FriendlyCreature.Named(ChiefEngineerWalls.Name),
+					Target: card.Target.FriendlyCreature.With(
+						card.Filter{Name: ChiefEngineerWalls.Name},
+					),
 				},
 				Result: card.ForEach{
 					Times: card.UpgradesOn{
-						Target: card.Target.AttachedHost.Named(ChiefEngineerWalls.Name),
+						Target: card.Target.AttachedHost.With(
+							card.Filter{Name: ChiefEngineerWalls.Name},
+						),
 					},
 					Do: card.Stun{Target: card.Target.Creature},
 				},

@@ -19,9 +19,9 @@ var RedHotArmor = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.LoseArmor{Target: card.Target.EachEnemyCreature.WithArmor()},
+			card.LoseArmor{Target: card.Target.EachEnemyCreature.With(card.Filter{Armor: true})},
 			card.DealDamage{
-				Target:    card.Target.EachEnemyCreature.WithArmor(),
+				Target:    card.Target.EachEnemyCreature.With(card.Filter{Armor: true}),
 				Amount:    1,
 				PerTarget: card.ArmorLostThisWay,
 			},

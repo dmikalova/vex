@@ -137,7 +137,10 @@ func TestShoulderArmorStatic(t *testing.T) {
 }
 
 func TestArtifactOrFlankCreatureText(t *testing.T) {
-	got := Target{Kind: TargetChosenCreatureOrArtifact}.OnFlank().Text()
+	got := Target{
+		Kind: TargetChosenCreatureOrArtifact,
+	}.With(Filter{Position: PositionOnFlank}).
+		Text()
 	if got != "an artifact or flank creature" {
 		t.Errorf("text = %q", got)
 	}

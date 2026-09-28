@@ -24,7 +24,7 @@ var CodeMonkey = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.ArchiveFromPlay{
-				Target: card.Target.EachCreature.Neighboring(),
+				Target: card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 			},
 			card.Conditional{
 				Cond: card.ArchivedCreaturesShareHouse{},

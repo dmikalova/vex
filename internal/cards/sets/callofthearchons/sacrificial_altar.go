@@ -22,7 +22,7 @@ var SacrificialAltar = set.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Then{
 			First: card.PurgeCreature{
-				Target: card.Target.FriendlyCreature.WithTrait(card.Traits.Human),
+				Target: card.Target.FriendlyCreature.With(card.Filter{Trait: card.Traits.Human}),
 			},
 			Result: card.PlayFrom{
 				From:  card.Discard,

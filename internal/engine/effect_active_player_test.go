@@ -15,7 +15,7 @@ func (r recordController) validate() error            { return nil }
 
 func TestByActivePlayer(t *testing.T) {
 	if got := (ByActivePlayer{
-		Do: Destroy{Target: Target{Kind: TargetChosenArtifact}.House(activeHouse)},
+		Do: Destroy{Target: Target{Kind: TargetChosenArtifact}.With(Filter{House: activeHouse})},
 	}).Text(); got != "that player destroys an artifact of that house" {
 		t.Errorf("text = %q", got)
 	}

@@ -22,7 +22,7 @@ var SergeantZakiel = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.May{
 			Do: card.OnChooseCreature{
-				Target: card.Target.Creature.Neighboring(),
+				Target: card.Target.Creature.With(card.Filter{Neighboring: true}),
 				Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}},
 			},
 		}),

@@ -21,6 +21,8 @@ var KingOfTheCrag = set.New(
 	card.WithTraits(card.Traits.Giant),
 	card.WithConstant(card.ConstantAbility{
 		PowerBonus: -2,
-		Target:     card.Target.EachEnemyCreature.House(card.Houses.Named(card.House.Self)),
+		Target: card.Target.EachEnemyCreature.With(
+			card.Filter{House: card.Houses.Named(card.House.Self)},
+		),
 	}),
 )

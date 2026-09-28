@@ -15,5 +15,10 @@ var HandOfDis = set.New(
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "62"),
-	card.WithAbility(card.Trigger.Play, card.Destroy{Target: card.Target.Creature.NotOnFlank()}),
+	card.WithAbility(
+		card.Trigger.Play,
+		card.Destroy{
+			Target: card.Target.Creature.With(card.Filter{Position: card.Position.NotOnFlank}),
+		},
+	),
 )

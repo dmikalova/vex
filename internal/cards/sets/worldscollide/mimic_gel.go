@@ -21,7 +21,7 @@ var MimicGel = set.New(
 	card.WithTraits(card.Traits.Shapeshifter, card.Traits.Mutant),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseCreatureThen{
-			Target: card.Target.Creature.Other(),
+			Target: card.Target.Creature.With(card.Filter{Except: card.Except.Source}),
 			Then: card.Sequence{
 				Effects: []card.Effect{
 					card.AddPowerCounter{

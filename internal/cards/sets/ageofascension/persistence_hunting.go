@@ -19,6 +19,8 @@ var PersistenceHunting = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{
-			Then: card.Exhaust{Target: card.Target.EachEnemyCreature.House(card.Houses.Chosen)},
+			Then: card.Exhaust{
+				Target: card.Target.EachEnemyCreature.With(card.Filter{House: card.Houses.Chosen}),
+			},
 		}),
 )

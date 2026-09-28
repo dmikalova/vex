@@ -28,7 +28,9 @@ var GeneralOrder24 = set.New(
 			Else: card.ChooseCreatureThen{
 				Target: card.Target.FriendlyCreature,
 				Then: card.Destroy{
-					Target: card.Target.EachCreature.House(card.Houses.Contextual),
+					Target: card.Target.EachCreature.With(
+						card.Filter{House: card.Houses.Contextual},
+					),
 				},
 			},
 		}),

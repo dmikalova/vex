@@ -21,6 +21,6 @@ var Trimble = set.New(
 	card.WithTraits(card.Traits.Mutant),
 	card.WithConstant(card.ConstantAbility{
 		Keywords: card.Keywords(card.Keyword.Skirmish),
-		Target:   card.Target.EachCreature.WithTrait(card.Traits.Mutant),
+		Target:   card.Target.EachCreature.With(card.Filter{Trait: card.Traits.Mutant}),
 	}),
 )

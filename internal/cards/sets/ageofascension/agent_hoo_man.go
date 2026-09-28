@@ -25,10 +25,14 @@ var AgentHooMan = set.New(
 		card.Trigger.Reap, card.Sequence{
 			Effects: []card.Effect{
 				card.Stun{
-					Target: card.Target.FriendlyCreature.House(card.Houses.Except(card.House.Self)),
+					Target: card.Target.FriendlyCreature.With(
+						card.Filter{House: card.Houses.Except(card.House.Self)},
+					),
 				},
 				card.Stun{
-					Target: card.Target.EnemyCreature.House(card.Houses.Except(card.House.Self)),
+					Target: card.Target.EnemyCreature.With(
+						card.Filter{House: card.Houses.Except(card.House.Self)},
+					),
 				},
 			},
 		}),

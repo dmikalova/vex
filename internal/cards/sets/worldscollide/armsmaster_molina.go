@@ -23,7 +23,7 @@ var ArmsmasterMolina = set.New(
 	card.WithTraits(card.Traits.Human),
 	card.WithHazardous(3),
 	card.WithConstant(card.ConstantAbility{
-		Target:         card.Target.EachCreature.Neighboring(),
+		Target:         card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 		HazardousBonus: 3,
 	}),
 )

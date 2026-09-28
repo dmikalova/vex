@@ -32,6 +32,6 @@ var MercyMalkinQueen = set.New(
 		}),
 	card.WithAbility(
 		card.Trigger.Fight, card.ReadyCreatures{
-			Target: card.Target.EachFriendlyCreature.WithTrait(card.Traits.Beast),
+			Target: card.Target.EachFriendlyCreature.With(card.Filter{Trait: card.Traits.Beast}),
 		}),
 )

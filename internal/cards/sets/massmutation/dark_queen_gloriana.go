@@ -23,7 +23,9 @@ var DarkQueenGloriana = set.New(
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromPlay{
-			Target:      card.Target.FriendlyCreature.House(card.Houses.Except(card.House.Self)),
+			Target: card.Target.FriendlyCreature.With(
+				card.Filter{House: card.Houses.Except(card.House.Self)},
+			),
 			Destination: card.To.Hand,
 		}),
 )

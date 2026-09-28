@@ -26,7 +26,7 @@ var SpoilsOfBattle = set.New(
 			},
 			card.CaptureAember{
 				Amount: 1,
-				Target: card.Target.EachCreature.WithAember(),
+				Target: card.Target.EachCreature.With(card.Filter{Aember: card.Aember.Some}),
 				Source: card.ItsOpponent,
 			},
 		}}),

@@ -20,7 +20,9 @@ var OneLastJob = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.PurgeCreature{
-				Target: card.Target.EachFriendlyCreature.House(card.Houses.Named(card.House.Self)),
+				Target: card.Target.EachFriendlyCreature.With(
+					card.Filter{House: card.Houses.Named(card.House.Self)},
+				),
 			},
 			card.StealAember{
 				Amount: 1,

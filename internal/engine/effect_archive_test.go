@@ -527,7 +527,7 @@ func TestArchiveFromPlayEffect(t *testing.T) {
 	}
 
 	e := ArchiveFromPlay{
-		Target: Target{Kind: TargetEachFriendlyCreature}.WithTrait(Knight),
+		Target: Target{Kind: TargetEachFriendlyCreature}.With(Filter{Trait: Knight}),
 	}
 	if e.Text() != "archive each friendly Knight creature from play" {
 		t.Errorf("text = %q", e.Text())
@@ -563,7 +563,7 @@ func TestArchiveFromPlayArchivesBufferAndBuffedTogether(t *testing.T) {
 		NewCard("buffer", Sanctum, Creature, Common, WithPower(4),
 			WithConstantAbility(ConstantAbility{
 				PowerBonus: 2,
-				Target:     Target{Kind: TargetEachCreature}.Neighboring(),
+				Target:     Target{Kind: TargetEachCreature}.With(Filter{Neighboring: true}),
 			})),
 		0,
 	)

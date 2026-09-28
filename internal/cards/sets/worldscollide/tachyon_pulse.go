@@ -20,6 +20,6 @@ var TachyonPulse = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.EachArtifact},
-			card.Exhaust{Target: card.Target.EachCreature.WithUpgrade()},
+			card.Exhaust{Target: card.Target.EachCreature.With(card.Filter{Upgrade: true})},
 		}}),
 )

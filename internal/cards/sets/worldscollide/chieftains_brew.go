@@ -30,7 +30,7 @@ var ChieftainsBrew = set.New(
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Fight,
 			Effect: card.OnChooseCreature{
-				Target: card.Target.Creature.Neighboring(),
+				Target: card.Target.Creature.With(card.Filter{Neighboring: true}),
 				Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}},
 			},
 		}},

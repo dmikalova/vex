@@ -36,9 +36,15 @@ var KhrkharsBlaster = set.New(
 			},
 			card.Then{
 				First: card.AttachSelfTo{
-					Target: card.Target.FriendlyCreature.Named(LieutenantKhrkhar.Name),
+					Target: card.Target.FriendlyCreature.With(
+						card.Filter{Name: LieutenantKhrkhar.Name},
+					),
 				},
-				Result: card.Ward{Target: card.Target.AttachedHost.Named(LieutenantKhrkhar.Name)},
+				Result: card.Ward{
+					Target: card.Target.AttachedHost.With(
+						card.Filter{Name: LieutenantKhrkhar.Name},
+					),
+				},
 			},
 		}}),
 	}),

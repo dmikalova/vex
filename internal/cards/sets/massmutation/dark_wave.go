@@ -20,6 +20,6 @@ var DarkWave = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 2,
-			Target: card.Target.EachCreature.ExceptTrait(card.Traits.Mutant),
+			Target: card.Target.EachCreature.With(card.Filter{ExceptTrait: card.Traits.Mutant}),
 		}),
 )

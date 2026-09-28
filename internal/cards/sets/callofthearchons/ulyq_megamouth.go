@@ -20,7 +20,9 @@ var UlyqMegamouth = set.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),
 	card.WithAbility(card.Trigger.FightReap, card.OnChooseCreature{
-		Target: card.Target.FriendlyCreature.House(card.Houses.Except(card.House.Self)),
-		Verbs:  []card.CreatureVerb{card.UseVerb{}},
+		Target: card.Target.FriendlyCreature.With(
+			card.Filter{House: card.Houses.Except(card.House.Self)},
+		),
+		Verbs: []card.CreatureVerb{card.UseVerb{}},
 	}),
 )

@@ -17,7 +17,9 @@ var TheFlex = set.New(
 	card.Provenance(card.AoA, "31"),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseCreatureThen{
-			Target: card.Target.FriendlyCreature.House(card.Houses.Named(card.House.Self)).Ready(),
+			Target: card.Target.FriendlyCreature.With(
+				card.Filter{House: card.Houses.Named(card.House.Self), Ready: true},
+			),
 			Then: card.Sequence{Effects: []card.Effect{
 				card.Exhaust{Target: card.Target.Triggering},
 				card.GainAember{

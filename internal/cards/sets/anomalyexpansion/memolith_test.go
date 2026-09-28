@@ -32,7 +32,7 @@ func TestMemolith(t *testing.T) {
 		card.WithBonus(card.Bonus.Aember),
 		card.WithAbility(
 			card.Trigger.Play, card.Stun{
-				Target: card.Target.EachCreature.PowerAtMost(3),
+				Target: card.Target.EachCreature.With(card.Filter{Power: card.Power.AtMost(3)}),
 			}),
 	)
 	h := ct.Play(t, ct.Setup{

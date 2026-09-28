@@ -83,7 +83,7 @@ func TestChooseHouseThen(t *testing.T) {
 	}
 
 	e := ChooseHouseThen{
-		Then: Stun{Target: Target{Kind: TargetEachEnemyCreature}.House(chosenHouse)},
+		Then: Stun{Target: Target{Kind: TargetEachEnemyCreature}.With(Filter{House: chosenHouse})},
 	}
 	if e.Text() != "choose a house. Stun each enemy creature of the chosen house" {
 		t.Errorf("text = %q", e.Text())
@@ -141,7 +141,7 @@ func TestChooseHouseThenGuardsAndValidate(t *testing.T) {
 	// An out-of-range house choice resolves nothing.
 	g.SetChooser(0, optionPicker{idx: 99})
 	ChooseHouseThen{
-		Then: Stun{Target: Target{Kind: TargetEachCreature}.House(chosenHouse)},
+		Then: Stun{Target: Target{Kind: TargetEachCreature}.With(Filter{House: chosenHouse})},
 	}.Resolve(
 		ctx,
 	)

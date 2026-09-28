@@ -20,7 +20,7 @@ var Drummernaut = set.New(
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(card.Trigger.PlayFightReap, card.PutFromPlay{
-		Target:      card.Target.OtherFriendlyCreature.WithTrait(card.Traits.Giant),
+		Target:      card.Target.OtherFriendlyCreature.With(card.Filter{Trait: card.Traits.Giant}),
 		Destination: card.To.Hand,
 	}),
 )

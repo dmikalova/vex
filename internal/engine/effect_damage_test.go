@@ -235,7 +235,11 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 		e := DealDamage{
 			Amount: 3,
 			After:  IfDestroyed,
-			Target: Target{Kind: TargetChosenEnemyCreature}.PowerAtMost(2),
+			Target: Target{
+				Kind: TargetChosenEnemyCreature,
+			}.With(
+				Filter{Power: PowerBound{Kind: BoundAtMost, Amount: 2}},
+			),
 			Then: DealDamage{
 				Amount: 2,
 				Target: Target{Kind: TargetFormerNeighbors},
@@ -352,7 +356,11 @@ func TestForEachHouseDealsDamagePerHouse(t *testing.T) {
 	}
 	e := ForEachHouse{Do: DealDamage{
 		Amount: 5,
-		Target: Target{Kind: TargetChosenCreature}.House(HouseMatcher{Kind: MatchEachHouse}),
+		Target: Target{
+			Kind: TargetChosenCreature,
+		}.With(
+			Filter{House: HouseMatcher{Kind: MatchEachHouse}},
+		),
 	}}
 	if got := e.Text(); got != "for each house, deal 5 damage to a creature of that house" {
 		t.Errorf("text = %q", got)

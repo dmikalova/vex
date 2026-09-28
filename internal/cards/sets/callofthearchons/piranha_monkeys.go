@@ -21,6 +21,6 @@ var PiranhaMonkeys = set.New(
 	card.WithTraits(card.Traits.Beast),
 	card.WithAbility(card.Trigger.PlayReap, card.DealDamage{
 		Amount: 2,
-		Target: card.Target.EachCreature.Other(),
+		Target: card.Target.EachCreature.With(card.Filter{Except: card.Except.Source}),
 	}),
 )

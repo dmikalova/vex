@@ -19,7 +19,9 @@ var PhosphorusStars = set.New(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.Stun{
-					Target: card.Target.EachCreature.House(card.Houses.Except(card.House.Self)),
+					Target: card.Target.EachCreature.With(
+						card.Filter{House: card.Houses.Except(card.House.Self)},
+					),
 				},
 				card.GainChains{Amount: 2},
 			},

@@ -21,7 +21,7 @@ var WarGrumpus = set.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
 	card.WithAbility(card.Trigger.FightReap, card.OnChooseCreature{
-		Target: card.Target.Creature.Neighboring().WithTrait(card.Traits.Giant),
+		Target: card.Target.Creature.With(card.Filter{Neighboring: true, Trait: card.Traits.Giant}),
 		Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}},
 	}),
 )

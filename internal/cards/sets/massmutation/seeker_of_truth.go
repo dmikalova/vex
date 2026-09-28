@@ -24,8 +24,8 @@ var SeekerOfTruth = set.New(
 	card.WithAbility(
 		card.Trigger.Fight, card.May{
 			Do: card.OnChooseCreature{
-				Target: card.Target.FriendlyCreature.House(
-					card.Houses.Except(card.House.Self),
+				Target: card.Target.FriendlyCreature.With(
+					card.Filter{House: card.Houses.Except(card.House.Self)},
 				),
 				Verbs: []card.CreatureVerb{card.UseVerb{}},
 			},

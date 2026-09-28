@@ -17,7 +17,9 @@ var KymoorEclipse = set.New(
 	card.Provenance(card.WC, "243"),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromPlay{
-			Target:      card.Target.EachCreature.OnFlank(),
+			Target: card.Target.EachCreature.With(
+				card.Filter{Position: card.Position.OnFlank},
+			),
 			Destination: card.To.DeckShuffled,
 		}),
 )

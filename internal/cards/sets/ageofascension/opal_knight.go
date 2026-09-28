@@ -21,6 +21,6 @@ var OpalKnight = set.New(
 	card.WithTraits(card.Traits.Spirit, card.Traits.Knight),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
-			Target: card.Target.EachCreature.EvenPower(),
+			Target: card.Target.EachCreature.With(card.Filter{Power: card.Power.Even}),
 		}),
 )

@@ -26,7 +26,8 @@ var CrashMuldoon = set.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Use{
 			Max: 1,
-			Target: card.Target.EachFriendlyCreature.Neighboring().
-				House(card.Houses.Except(card.House.Self)),
+			Target: card.Target.EachFriendlyCreature.With(
+				card.Filter{Neighboring: true, House: card.Houses.Except(card.House.Self)},
+			),
 		}),
 )

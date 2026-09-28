@@ -37,7 +37,9 @@ var ChansBlaster = set.New(
 			},
 			card.Then{
 				First: card.AttachSelfTo{
-					Target: card.Target.FriendlyCreature.Named(CommanderChan.Name),
+					Target: card.Target.FriendlyCreature.With(
+						card.Filter{Name: CommanderChan.Name},
+					),
 				},
 				Result: card.Use{
 					Max:    1,

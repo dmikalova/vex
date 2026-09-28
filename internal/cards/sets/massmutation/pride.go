@@ -23,6 +23,8 @@ var Pride = set.New(
 	card.WithTraits(card.Traits.Demon, card.Traits.Sin),
 	card.WithAbility(
 		card.Trigger.Reap,
-		card.Ward{Target: card.Target.EachFriendlyCreature.WithTrait(card.Traits.Sin)},
+		card.Ward{
+			Target: card.Target.EachFriendlyCreature.With(card.Filter{Trait: card.Traits.Sin}),
+		},
 	),
 )

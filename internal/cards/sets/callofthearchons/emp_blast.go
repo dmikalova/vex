@@ -19,10 +19,15 @@ var EMPBlast = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Stun{Target: card.Target.EachCreature.
-				House(card.Houses.Named(card.House.Self)).
-				WithTrait(card.Traits.Robot).
-				MatchingAny()},
+			card.Stun{
+				Target: card.Target.EachCreature.With(
+					card.Filter{
+						House:    card.Houses.Named(card.House.Self),
+						Trait:    card.Traits.Robot,
+						MatchAny: true,
+					},
+				),
+			},
 			card.Destroy{Target: card.Target.EachArtifact},
 		}}),
 )

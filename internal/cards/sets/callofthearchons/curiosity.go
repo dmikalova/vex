@@ -19,6 +19,8 @@ var Curiosity = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.Destroy{Target: card.Target.EachCreature.WithTrait(card.Traits.Scientist)},
+		card.Destroy{
+			Target: card.Target.EachCreature.With(card.Filter{Trait: card.Traits.Scientist}),
+		},
 	),
 )

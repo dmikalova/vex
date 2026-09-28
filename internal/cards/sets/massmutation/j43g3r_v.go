@@ -23,14 +23,18 @@ var J43G3RV = set.Gigantic(
 	card.WithTraits(card.Traits.Robot),
 	card.WithAbility(
 		card.Trigger.Reap, card.Use{
-			Max:    2,
-			Verb:   card.ReapVerb{},
-			Target: card.Target.EachFriendlyCreature.House(card.Houses.Except(card.House.Self)),
+			Max:  2,
+			Verb: card.ReapVerb{},
+			Target: card.Target.EachFriendlyCreature.With(
+				card.Filter{House: card.Houses.Except(card.House.Self)},
+			),
 		}),
 	card.WithAbility(
 		card.Trigger.Fight, card.Use{
-			Max:    2,
-			Verb:   card.FightVerb{},
-			Target: card.Target.EachFriendlyCreature.House(card.Houses.Except(card.House.Self)),
+			Max:  2,
+			Verb: card.FightVerb{},
+			Target: card.Target.EachFriendlyCreature.With(
+				card.Filter{House: card.Houses.Except(card.House.Self)},
+			),
 		}),
 )

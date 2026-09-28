@@ -22,6 +22,6 @@ var Pincerator = set.New(
 	card.WithEachPlayerAbility(
 		card.Trigger.EndOfTurn, card.DealDamage{
 			Amount: 1,
-			Target: card.Target.EachCreature.OnFlank(),
+			Target: card.Target.EachCreature.With(card.Filter{Position: card.Position.OnFlank}),
 		}),
 )

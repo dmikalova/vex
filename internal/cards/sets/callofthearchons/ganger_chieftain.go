@@ -21,7 +21,7 @@ var GangerChieftain = set.New(
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.Play, card.OnChooseCreature{
-			Target: card.Target.Creature.Neighboring(),
+			Target: card.Target.Creature.With(card.Filter{Neighboring: true}),
 			Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}},
 		}),
 )

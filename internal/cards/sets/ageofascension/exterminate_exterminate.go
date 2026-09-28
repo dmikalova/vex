@@ -17,8 +17,7 @@ var ExterminateExterminate = set.New(
 	card.Provenance(card.AoA, "180"),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
-			Target: card.Target.EachCreature.
-				House(card.Houses.Except(card.House.Self)).
+			Target: card.Target.EachCreature.With(card.Filter{House: card.Houses.Except(card.House.Self)}).
 				Refine(card.Refine.PowerLessThan(card.CardsInPlay{
 					Player: card.Controller,
 					Type:   card.Type.Creature,

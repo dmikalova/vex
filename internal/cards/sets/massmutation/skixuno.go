@@ -23,7 +23,9 @@ var Skixuno = set.New(
 	card.WithKeywords(card.Keyword.Omega),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Destroy{Target: card.Target.EachCreature.Other()},
+			card.Destroy{
+				Target: card.Target.EachCreature.With(card.Filter{Except: card.Except.Source}),
+			},
 			card.AddPowerCounter{
 				Target: card.Target.This,
 				Amount: 1,

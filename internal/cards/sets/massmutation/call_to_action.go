@@ -17,6 +17,6 @@ var CallToAction = set.New(
 	card.Provenance(card.MM, "160"),
 	card.WithAbility(
 		card.Trigger.Play, card.Ready{
-			Target: card.Target.EachFriendlyCreature.WithTrait(card.Traits.Knight),
+			Target: card.Target.EachFriendlyCreature.With(card.Filter{Trait: card.Traits.Knight}),
 		}),
 )

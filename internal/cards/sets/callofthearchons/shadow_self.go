@@ -22,5 +22,8 @@ var ShadowSelf = set.New(
 	card.WithTraits(card.Traits.Specter),
 	card.WithAttackDamage(card.AttackDamage{Fixed: true}),
 	card.WithTakesDamageFor(
-		card.Target.EachCreature.Neighboring().ExceptTrait(card.Traits.Specter)),
+		card.Target.EachCreature.With(
+			card.Filter{Neighboring: true, ExceptTrait: card.Traits.Specter},
+		),
+	),
 )

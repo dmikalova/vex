@@ -18,7 +18,9 @@ var SaveThePack = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
-				card.Destroy{Target: card.Target.EachCreature.Damaged()},
+				card.Destroy{
+					Target: card.Target.EachCreature.With(card.Filter{Damage: card.Damage.Some}),
+				},
 				card.GainChains{Amount: 1},
 			},
 		}),

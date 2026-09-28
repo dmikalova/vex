@@ -19,6 +19,6 @@ var WailOfTheDamned = set.New(
 	card.WithEnhance(card.Bonus.Capture),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
-			Target: card.Target.Creature.WithoutBonusIcons(),
+			Target: card.Target.Creature.With(card.Filter{NoBonusIcons: true}),
 		}),
 )

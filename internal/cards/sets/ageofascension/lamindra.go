@@ -23,6 +23,6 @@ var Lamindra = set.New(
 	card.WithKeywords(card.Keyword.Deploy, card.Keyword.Elusive),
 	card.WithConstant(card.ConstantAbility{
 		Keywords: card.Keywords(card.Keyword.Elusive),
-		Target:   card.Target.EachCreature.Neighboring(),
+		Target:   card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 	}),
 )

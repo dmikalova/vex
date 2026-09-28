@@ -22,7 +22,7 @@ var BreakerHill = set.New(
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithConstant(card.ConstantAbility{
-		Target: card.Target.EachCreature.Neighboring(),
+		Target: card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Action,
 			Effect:  card.StealAember{Amount: 1},

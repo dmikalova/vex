@@ -25,7 +25,9 @@ var EssenceScale = set.New(
 			Then: card.Sequence{Effects: []card.Effect{
 				card.Destroy{Target: card.Target.TheChosenCreature},
 				card.OnChooseCreature{
-					Target: card.Target.FriendlyCreature.House(card.Houses.Contextual),
+					Target: card.Target.FriendlyCreature.With(
+						card.Filter{House: card.Houses.Contextual},
+					),
 					Verbs: []card.CreatureVerb{
 						card.ReadyVerb{},
 						card.UseVerb{},

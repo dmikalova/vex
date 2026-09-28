@@ -310,7 +310,7 @@ func TestPutFromPlayGate(t *testing.T) {
 		Controller: 0,
 	}
 	e = PutFromPlay{
-		Target:      Target{Kind: TargetThisCreature}.Damaged(),
+		Target:      Target{Kind: TargetThisCreature}.With(Filter{Damage: DamageSome}),
 		Destination: ToHand,
 	}
 	if e.resolveGate(ctx) {

@@ -22,5 +22,7 @@ var Hystricog = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(
-		card.Trigger.Action, card.Destroy{Target: card.Target.Creature.Damaged()}),
+		card.Trigger.Action,
+		card.Destroy{Target: card.Target.Creature.With(card.Filter{Damage: card.Damage.Some})},
+	),
 )

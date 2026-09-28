@@ -21,6 +21,8 @@ var Halacor = set.New(
 	card.WithTraits(card.Traits.Beast),
 	card.WithConstant(card.ConstantAbility{
 		Keywords: card.Keywords(card.Keyword.Skirmish),
-		Target:   card.Target.EachFriendlyCreature.OnFlank(),
+		Target: card.Target.EachFriendlyCreature.With(
+			card.Filter{Position: card.Position.OnFlank},
+		),
 	}),
 )

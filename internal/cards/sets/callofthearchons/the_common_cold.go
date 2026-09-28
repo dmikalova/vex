@@ -26,7 +26,9 @@ var TheCommonCold = set.New(
 				},
 				card.May{
 					Do: card.Destroy{
-						Target: card.Target.EachCreature.House(card.Houses.Named(card.House.Mars)),
+						Target: card.Target.EachCreature.With(
+							card.Filter{House: card.Houses.Named(card.House.Mars)},
+						),
 					},
 				},
 			},

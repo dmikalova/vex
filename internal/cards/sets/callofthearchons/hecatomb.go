@@ -20,7 +20,9 @@ var Hecatomb = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Destroy{
-				Target: card.Target.EachCreature.House(card.Houses.Named(card.House.Self)),
+				Target: card.Target.EachCreature.With(
+					card.Filter{House: card.Houses.Named(card.House.Self)},
+				),
 			},
 			card.GainAember{
 				Player: card.EachPlayer,

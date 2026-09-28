@@ -17,10 +17,17 @@ func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 				Player: Controller,
 				House:  namedHouse(SelfHouse),
 			},
-			Stun{Target: Target{Kind: TargetEachCreature}.
-				House(namedHouse(SelfHouse)).
-				Refine(Except(MostPowerful))},
-			Exhaust{Target: Target{Kind: TargetEachCreature}.House(exceptHouse(SelfHouse))},
+			Stun{
+				Target: Target{Kind: TargetEachCreature}.With(Filter{House: namedHouse(SelfHouse)}).
+					Refine(Except(MostPowerful)),
+			},
+			Exhaust{
+				Target: Target{
+					Kind: TargetEachCreature,
+				}.With(
+					Filter{House: exceptHouse(SelfHouse)},
+				),
+			},
 		}}),
 		WithPlayPermission(PlayPermission{
 			House:  SelfHouse,
@@ -66,9 +73,13 @@ func TestRehouseMovesEverySelfHouseReference(t *testing.T) {
 				Player: Controller,
 				House:  namedHouse(SelfHouse),
 			},
-			Stun{Target: Target{Kind: TargetEachCreature}.House(namedHouse(SelfHouse))},
+			Stun{
+				Target: Target{Kind: TargetEachCreature}.With(Filter{House: namedHouse(SelfHouse)}),
+			},
 			// A house named outright must survive rehousing untouched.
-			Exhaust{Target: Target{Kind: TargetEachCreature}.House(namedHouse(Brobnar))},
+			Exhaust{
+				Target: Target{Kind: TargetEachCreature}.With(Filter{House: namedHouse(Brobnar)}),
+			},
 		}}),
 		WithPlayPermission(PlayPermission{
 			House:  SelfHouse,

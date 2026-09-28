@@ -36,11 +36,13 @@ var FranesBlaster = set.New(
 			},
 			card.Then{
 				First: card.AttachSelfTo{
-					Target: card.Target.FriendlyCreature.Named(FirstOfficerFrane.Name),
+					Target: card.Target.FriendlyCreature.With(
+						card.Filter{Name: FirstOfficerFrane.Name},
+					),
 				},
 				Result: card.MoveAember{
 					All:  true,
-					From: card.Target.AttachedHost.Named(FirstOfficerFrane.Name),
+					From: card.Target.AttachedHost.With(card.Filter{Name: FirstOfficerFrane.Name}),
 					To:   card.Controller,
 				},
 			},

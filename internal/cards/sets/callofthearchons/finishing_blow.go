@@ -19,7 +19,9 @@ var FinishingBlow = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
-			First:  card.Destroy{Target: card.Target.Creature.Damaged()},
+			First: card.Destroy{
+				Target: card.Target.Creature.With(card.Filter{Damage: card.Damage.Some}),
+			},
 			Result: card.StealAember{Amount: 1},
 		}),
 )

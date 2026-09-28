@@ -23,7 +23,7 @@ var BlastShielding = set.New(
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.UsedSelf,
 			Effect: card.May{Do: card.AttachSelfTo{
-				Target: card.Target.FriendlyCreature.Neighboring(),
+				Target: card.Target.FriendlyCreature.With(card.Filter{Neighboring: true}),
 			}},
 		}},
 	}),

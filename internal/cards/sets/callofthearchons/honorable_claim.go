@@ -20,7 +20,7 @@ var HonorableClaim = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{
 			Amount: 1,
-			Target: card.Target.EachFriendlyCreature.WithTrait(card.Traits.Knight),
+			Target: card.Target.EachFriendlyCreature.With(card.Filter{Trait: card.Traits.Knight}),
 			Source: card.Opponent,
 		}),
 )

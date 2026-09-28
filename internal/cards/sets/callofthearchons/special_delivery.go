@@ -25,7 +25,7 @@ var SpecialDelivery = set.New(
 		card.Trigger.Action, card.DealDamage{
 			Amount: 3,
 			After:  card.IfDestroyed,
-			Target: card.Target.Creature.OnFlank(),
+			Target: card.Target.Creature.With(card.Filter{Position: card.Position.OnFlank}),
 			Then:   card.PurgeCreature{Target: card.Target.Triggering},
 		}),
 )

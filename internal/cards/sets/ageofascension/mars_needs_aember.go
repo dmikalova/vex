@@ -20,8 +20,9 @@ var MarsNeedsAember = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{
 			Amount: 1,
-			Target: card.Target.EachEnemyCreature.Damaged().
-				House(card.Houses.Except(card.House.Self)),
+			Target: card.Target.EachEnemyCreature.With(
+				card.Filter{Damage: card.Damage.Some, House: card.Houses.Except(card.House.Self)},
+			),
 			Source: card.Opponent,
 		}),
 )

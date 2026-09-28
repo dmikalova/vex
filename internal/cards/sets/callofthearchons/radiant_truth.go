@@ -19,6 +19,10 @@ var RadiantTruth = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.Stun{Target: card.Target.EachEnemyCreature.NotOnFlank()},
+		card.Stun{
+			Target: card.Target.EachEnemyCreature.With(
+				card.Filter{Position: card.Position.NotOnFlank},
+			),
+		},
 	),
 )

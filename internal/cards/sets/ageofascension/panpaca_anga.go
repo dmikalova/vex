@@ -20,7 +20,7 @@ var PanpacaAnga = set.New(
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast),
 	card.WithConstant(card.ConstantAbility{
-		Target:     card.Target.EachCreature.ToRightOfSource(),
+		Target:     card.Target.EachCreature.With(card.Filter{Position: card.Position.Right}),
 		PowerBonus: 2,
 	}),
 )

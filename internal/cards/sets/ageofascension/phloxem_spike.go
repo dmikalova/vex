@@ -24,6 +24,10 @@ var PhloxemSpike = set.New(
 				Type:   card.Type.Creature,
 				None:   true,
 			},
-			Then: card.Destroy{Target: card.Target.EachCreature.NotOnFlank()},
+			Then: card.Destroy{
+				Target: card.Target.EachCreature.With(
+					card.Filter{Position: card.Position.NotOnFlank},
+				),
+			},
 		}),
 )

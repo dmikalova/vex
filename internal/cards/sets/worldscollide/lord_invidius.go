@@ -28,7 +28,9 @@ var LordInvidius = set.New(
 			Trigger: card.Trigger.Reap,
 			Effect: card.Sequence{Effects: []card.Effect{
 				card.TakeControl{
-					Target:     card.Target.EnemyCreature.OnFlank(),
+					Target: card.Target.EnemyCreature.With(
+						card.Filter{Position: card.Position.OnFlank},
+					),
 					Duration:   card.Duration.UntilCardLeavesPlay,
 					AndExhaust: true,
 				},

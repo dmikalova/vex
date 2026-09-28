@@ -22,5 +22,9 @@ var Bulleteye = set.New(
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.Reap, card.Destroy{Target: card.Target.Creature.OnFlank()}),
+		card.Trigger.Reap,
+		card.Destroy{
+			Target: card.Target.Creature.With(card.Filter{Position: card.Position.OnFlank}),
+		},
+	),
 )

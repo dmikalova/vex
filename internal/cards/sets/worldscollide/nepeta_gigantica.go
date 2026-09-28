@@ -21,7 +21,7 @@ var NepetaGigantica = set.New(
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.ChooseOne{Options: []card.Effect{
-			card.Stun{Target: card.Target.Creature.PowerAtLeast(5)},
-			card.Stun{Target: card.Target.Creature.WithTrait(card.Traits.Giant)},
+			card.Stun{Target: card.Target.Creature.With(card.Filter{Power: card.Power.AtLeast(5)})},
+			card.Stun{Target: card.Target.Creature.With(card.Filter{Trait: card.Traits.Giant})},
 		}}),
 )

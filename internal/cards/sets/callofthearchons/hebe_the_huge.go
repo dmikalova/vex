@@ -22,6 +22,8 @@ var HebeTheHuge = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 2,
-			Target: card.Target.EachCreature.Other().Undamaged(),
+			Target: card.Target.EachCreature.With(
+				card.Filter{Except: card.Except.Source, Damage: card.Damage.None},
+			),
 		}),
 )

@@ -22,8 +22,9 @@ var JohnSmyth = set.New(
 	card.WithTraits(card.Traits.Agent, card.Traits.Martian),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(card.Trigger.FightReap, card.OnChooseCreature{
-		Target: card.Target.Creature.House(card.Houses.Named(card.House.Self)).
-			ExceptTrait(card.Traits.Agent),
+		Target: card.Target.Creature.With(
+			card.Filter{House: card.Houses.Named(card.House.Self), ExceptTrait: card.Traits.Agent},
+		),
 		Verbs: []card.CreatureVerb{card.ReadyVerb{}},
 	}),
 )

@@ -20,7 +20,7 @@ var Purify = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
 			First: card.PurgeCreature{
-				Target: card.Target.Creature.WithTrait(card.Traits.Mutant),
+				Target: card.Target.Creature.With(card.Filter{Trait: card.Traits.Mutant}),
 			},
 			Result: card.Then{
 				First: card.DiscardUntil{

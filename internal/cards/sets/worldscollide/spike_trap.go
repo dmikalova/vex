@@ -26,7 +26,7 @@ var SpikeTrap = set.New(
 			First: card.Destroy{Target: card.Target.This},
 			Result: card.DealDamage{
 				Amount: 3,
-				Target: card.Target.EachCreature.OnFlank(),
+				Target: card.Target.EachCreature.With(card.Filter{Position: card.Position.OnFlank}),
 			},
 		}),
 )

@@ -20,7 +20,7 @@ var MassAbduction = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.PutChosen{
 			Quantity:    card.UpTo{N: card.Fixed(3)},
-			Target:      card.Target.EachEnemyCreature.Damaged(),
+			Target:      card.Target.EachEnemyCreature.With(card.Filter{Damage: card.Damage.Some}),
 			Destination: card.To.Archives.Yours(),
 		}),
 )

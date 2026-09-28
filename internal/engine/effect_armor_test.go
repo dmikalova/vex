@@ -6,7 +6,7 @@ func TestLoseArmorValidatesItsTarget(t *testing.T) {
 	if err := (LoseArmor{}).validate(); err == nil {
 		t.Error("an untargeted LoseArmor should be rejected")
 	}
-	e := LoseArmor{Target: Target{Kind: TargetEachEnemyCreature}.WithArmor()}
+	e := LoseArmor{Target: Target{Kind: TargetEachEnemyCreature}.With(Filter{Armor: true})}
 	if err := e.validate(); err != nil {
 		t.Errorf("validate = %v, want nil", err)
 	}
@@ -26,7 +26,7 @@ func TestLoseArmorStripsAndTallies(t *testing.T) {
 		Resolver:   g,
 		Controller: 0,
 	}
-	target := Target{Kind: TargetEachEnemyCreature}.WithArmor()
+	target := Target{Kind: TargetEachEnemyCreature}.With(Filter{Armor: true})
 
 	// Only the armored creature is a target at all, so only it is stripped.
 	if got := target.Select(ctx); len(got) != 1 || got[0] != plated {

@@ -35,7 +35,7 @@ var DarkAemberVault = set.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithConstant(card.ConstantAbility{
 		PowerBonus: 2,
-		Target:     card.Target.EachFriendlyCreature.WithTrait(card.Traits.Mutant),
+		Target:     card.Target.EachFriendlyCreature.With(card.Filter{Trait: card.Traits.Mutant}),
 	}),
 	card.WithAbility(
 		card.Trigger.AfterCardPlayed, card.Conditional{

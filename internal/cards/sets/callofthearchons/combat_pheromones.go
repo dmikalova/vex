@@ -26,8 +26,12 @@ var CombatPheromones = set.New(
 			card.Destroy{Target: card.Target.This},
 			card.Use{
 				Max: 2,
-				Target: card.Target.EachFriendlyCardInPlay.House(card.Houses.Named(card.House.Self)).
-					Other(),
+				Target: card.Target.EachFriendlyCardInPlay.With(
+					card.Filter{
+						House:  card.Houses.Named(card.House.Self),
+						Except: card.Except.Source,
+					},
+				),
 			},
 		}}),
 )

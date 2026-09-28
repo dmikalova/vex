@@ -27,8 +27,10 @@ var MadProphetGizelhart = set.New(
 			Then: card.Sequence{
 				Effects: []card.Effect{
 					card.Heal{
-						Fully:  true,
-						Target: card.Target.EachCreature.ExceptTrait(card.Traits.Mutant),
+						Fully: true,
+						Target: card.Target.EachCreature.With(
+							card.Filter{ExceptTrait: card.Traits.Mutant},
+						),
 					},
 					card.GainAember{
 						Player: card.Controller,

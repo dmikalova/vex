@@ -21,7 +21,7 @@ var Mogghunter = set.New(
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.Fight, card.DealDamage{
-			Target: card.Target.Creature.OnFlank(),
+			Target: card.Target.Creature.With(card.Filter{Position: card.Position.OnFlank}),
 			Amount: 2,
 		}),
 )

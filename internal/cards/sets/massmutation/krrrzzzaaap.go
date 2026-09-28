@@ -17,7 +17,9 @@ var Krrrzzzaaap = set.New(
 	card.Provenance(card.MM, "090"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Destroy{Target: card.Target.EachCreature.ExceptTrait(card.Traits.Mutant)},
+			card.Destroy{
+				Target: card.Target.EachCreature.With(card.Filter{ExceptTrait: card.Traits.Mutant}),
+			},
 			card.GainChains{
 				Player: card.Controller,
 				Amount: 1,

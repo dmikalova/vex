@@ -19,7 +19,11 @@ var Begone = set.New(
 	card.Provenance(card.CotA, "212"),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseOne{Options: []card.Effect{
-			card.Destroy{Target: card.Target.EachCreature.House(card.Houses.Named(card.House.Dis))},
+			card.Destroy{
+				Target: card.Target.EachCreature.With(
+					card.Filter{House: card.Houses.Named(card.House.Dis)},
+				),
+			},
 			card.GainAember{
 				Player: card.Controller,
 				Amount: 1,

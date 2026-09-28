@@ -24,6 +24,8 @@ var Brammo = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 2,
-			Target: card.Target.EachEnemyCreature.OnFlank(),
+			Target: card.Target.EachEnemyCreature.With(
+				card.Filter{Position: card.Position.OnFlank},
+			),
 		}),
 )

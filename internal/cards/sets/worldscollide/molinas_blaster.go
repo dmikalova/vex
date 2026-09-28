@@ -36,7 +36,9 @@ var MolinasBlaster = set.New(
 			},
 			card.Then{
 				First: card.AttachSelfTo{
-					Target: card.Target.FriendlyCreature.Named(ArmsmasterMolina.Name),
+					Target: card.Target.FriendlyCreature.With(
+						card.Filter{Name: ArmsmasterMolina.Name},
+					),
 				},
 				Result: card.DealDamage{
 					Amount: 3,

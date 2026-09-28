@@ -19,7 +19,7 @@ var HedonisticIntent = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Exalt{
-			Target: card.Target.EachCreature.OnFlank(),
+			Target: card.Target.EachCreature.With(card.Filter{Position: card.Position.OnFlank}),
 			Amount: 1,
 		}),
 )

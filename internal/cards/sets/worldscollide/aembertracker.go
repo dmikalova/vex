@@ -22,7 +22,7 @@ var Aembertracker = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount:      2,
-			Target:      card.Target.EachEnemyCreature.WithAember(),
+			Target:      card.Target.EachEnemyCreature.With(card.Filter{Aember: card.Aember.Some}),
 			IgnoreArmor: true,
 		}),
 )

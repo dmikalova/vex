@@ -36,7 +36,7 @@ var IngramsBlaster = set.New(
 			},
 			card.Then{
 				First: card.AttachSelfTo{
-					Target: card.Target.FriendlyCreature.Named(MedicIngram.Name),
+					Target: card.Target.FriendlyCreature.With(card.Filter{Name: MedicIngram.Name}),
 				},
 				Result: card.Heal{
 					Fully:  true,

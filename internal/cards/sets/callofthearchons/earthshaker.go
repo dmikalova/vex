@@ -20,5 +20,9 @@ var Earthshaker = set.New(
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
-		card.Trigger.Play, card.Destroy{Target: card.Target.EachCreature.PowerAtMost(3)}),
+		card.Trigger.Play,
+		card.Destroy{
+			Target: card.Target.EachCreature.With(card.Filter{Power: card.Power.AtMost(3)}),
+		},
+	),
 )

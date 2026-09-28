@@ -550,7 +550,7 @@ func TestTakeControlTargeted(t *testing.T) {
 		t.Errorf("host text = %q", got)
 	}
 	tgt := TakeControl{
-		Target:   Target{Kind: TargetChosenEnemyCreature}.OnFlank(),
+		Target:   Target{Kind: TargetChosenEnemyCreature}.With(Filter{Position: PositionOnFlank}),
 		Duration: UntilThisLeavesPlay,
 	}
 	if got := tgt.Text(); got != "take control of an enemy flank creature until "+SelfName+" leaves play" {

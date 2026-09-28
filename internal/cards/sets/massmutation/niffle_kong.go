@@ -54,7 +54,7 @@ var NiffleKong = set.Gigantic(
 	card.WithAbility(
 		card.Trigger.FightReap, card.May{Do: card.Then{
 			First: card.Destroy{
-				Target: card.Target.FriendlyCreature.WithTrait(card.Traits.Niffle),
+				Target: card.Target.FriendlyCreature.With(card.Filter{Trait: card.Traits.Niffle}),
 			},
 			Result: card.Sequence{Effects: []card.Effect{
 				card.DealDamage{
