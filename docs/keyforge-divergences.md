@@ -107,12 +107,13 @@ to another creature`. The two branches collapse into one linear sequence:
   the removal finds no ward. Vex keeps the two atomic effects — `RemoveWard`
   (any creature, warded or not) then `Ward` — instead of a bespoke `MoveWard` node,
   so there is one fewer one-off mechanic to carry.
-- **Bait and Switch** reads `Steal 1 Æmber -> if your opponent has more Æmber
-  than you, repeat this effect`, not KeyForge's `If your opponent has more Æmber
-  than you, steal 1 Æmber. Repeat this effect`. Vex writes a self-repeat one of
-  two ways (wording rule 39): `<do>. If <cond>, repeat this effect` when the loop
-  turns on a fact about the board alone — Numquid the Fair, Neutron Shark,
-  Ransack — and `<do> -> if <cond>, repeat this effect` when the loop also stops
+- **Bait and Switch** reads
+  `Steal 1 Æmber -> if your opponent has more Æmber than you, repeat this effect`,
+  not KeyForge's
+  `If your opponent has more Æmber than you, steal 1 Æmber. Repeat this effect`.
+  Vex writes a self-repeat one of two ways (wording rule 39):
+  `<do>. If <cond>, repeat this effect` when the loop turns on a fact about the
+  board alone — Numquid the Fair, Neutron Shark, Ransack — and `<do> -> if <cond>, repeat this effect` when the loop also stops
   because the effect did nothing. Bait and Switch takes the arrow because its
   loop ends the moment a steal moves no Æmber, so the steal leads and the result
   gate carries the repeat. The first steal is therefore unconditional: with equal

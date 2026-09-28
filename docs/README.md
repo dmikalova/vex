@@ -109,9 +109,23 @@ together and **CONTEXT** for what the words mean.
 ## Contributing
 
 - [testing.md](testing.md) — the testing layers and what to test where.
+- [building.md](building.md) — every mage target, the gate, and the generated
+  configs.
+- [sim-debugging.md](sim-debugging.md) — tracing a simulator invariant
+  violation to its cause.
 - Agent/contributor rules live in the `AGENTS.md` files:
-  [root](../AGENTS.md), [internal/engine](../internal/engine/AGENTS.md),
-  [internal/cards](../internal/cards/AGENTS.md).
+  [root](../AGENTS.md), [docs](AGENTS.md),
+  [internal/engine](../internal/engine/AGENTS.md),
+  [internal/card](../internal/card/AGENTS.md),
+  [internal/cards](../internal/cards/AGENTS.md),
+  [internal/web](../internal/web/AGENTS.md), and
+  [magefiles](../magefiles/AGENTS.md). The detail they point to:
+  - [engine/effect-shapes.md](engine/effect-shapes.md),
+    [engine/side-tables.md](engine/side-tables.md),
+    [engine/stepper.md](engine/stepper.md) — engine seams.
+  - [cards/anomalies.md](cards/anomalies.md) — where an anomaly card lives.
+  - [web/css.md](web/css.md),
+    [web/browser-scenarios.md](web/browser-scenarios.md) — the client.
 
 ## Planning
 
