@@ -199,28 +199,21 @@ type Target struct {
 	houseWithMostCreatures bool
 	// sharesTrait narrows the target to cards sharing at least one trait with the
 	// card in context (ctx.It), rendering "that shares a trait with it".
-	sharesTrait   bool
-	maxPower      int
-	hasMaxPower   bool
-	minPower      int
-	hasMinPower   bool
-	exactPower    int
-	hasExactPower bool
-	// oddPower narrows the target to creatures whose power is odd, and evenPower to
-	// those whose power is even (Onyx Knight, Opal Knight).
-	oddPower  bool
-	evenPower bool
-	damaged   bool
-	undamaged bool
-	stunned   bool
+	sharesTrait bool
+	// power narrows the target to creatures whose power meets a bound — at most,
+	// at least, exactly, odd, or even. The zero value bounds nothing.
+	power PowerBound
+	// damage narrows the target to creatures that have damage on them, or to those
+	// that have none. The zero value narrows nothing.
+	damage  DamagePresence
+	stunned bool
 	// ready narrows the target to creatures that are not exhausted (Swap Widget's
 	// "a ready friendly Mars creature").
-	ready      bool
-	withAember bool
-	// withoutAember narrows the target to creatures that have no Æmber on them,
-	// rendering " with no Æmber on it" (Draining Touch destroys a creature with no
-	// Æmber on it).
-	withoutAember bool
+	ready bool
+	// aember narrows the target to cards that have Æmber on them, or to those that
+	// have none (Draining Touch destroys a creature with no Æmber on it). The zero
+	// value narrows nothing.
+	aember AemberPresence
 	// withoutBonusIcons narrows the target to cards printing no bonus icons,
 	// rendering " with no bonus icons" (Wail of the Damned destroys a creature with
 	// no bonus icons).
@@ -243,26 +236,20 @@ type Target struct {
 	// the filter off.
 	sharesHouseNeighbors int
 	keyword              Keyword
-	onFlank              bool
-	notOnFlank           bool
-	// inCenter narrows the target to the creature in the center of its controller's
-	// battleline (an even-sized line has no center), rendering " in the center of
-	// its controller's battleline" (Beware the Ides).
-	inCenter    bool
+	// position narrows the target to the cards standing in one place in a
+	// battleline — on a flank, off a flank, in the center, or to one side of the
+	// source card. The zero value narrows nothing.
+	position    Position
 	neighboring bool
-	// toRightOfSource narrows the target to the creatures positioned to the right of
-	// the source card in its battleline, and toLeftOfSource to those on its left —
-	// the Panpacas, which buff one direction of their line.
-	toRightOfSource bool
-	toLeftOfSource  bool
 	// withNeighbors expands a single chosen creature to include its battleline
 	// neighbors (Tremor stuns a creature and each of its neighbors).
 	withNeighbors bool
 	// neighborsOf narrows the selection to the battleline neighbors of what it
 	// selects, dropping the selected creature itself.
 	neighborsOf bool
-	// other excludes the source card from the selected set ("other" cards).
-	other bool
+	// exclusion drops one card from the selected set — the source card for the
+	// "other" cards a card names. The zero value drops none.
+	exclusion Exclusion
 	// named narrows the target to cards with this printed name, and replaces the
 	// rendered noun with it: a card that names another card outright says "an
 	// Ancient Bear", not "an Ancient Bear creature".
@@ -352,48 +339,45 @@ func (t Target) SharingTrait() Target {
 // PowerAtMost narrows the target to creatures whose power is maxPower or lower,
 // e.g. Target{Kind: TargetEachCreature}.PowerAtMost(3).
 func (t Target) PowerAtMost(maxPower int) Target {
-	t.maxPower = maxPower
-	t.hasMaxPower = true
+	t.power = PowerBound{Kind: BoundAtMost, Amount: maxPower}
 	return t
 }
 
 // PowerAtLeast narrows the target to creatures whose power is minPower or higher,
 // e.g. Target{Kind: TargetEachCreature}.PowerAtLeast(3).
 func (t Target) PowerAtLeast(minPower int) Target {
-	t.minPower = minPower
-	t.hasMinPower = true
+	t.power = PowerBound{Kind: BoundAtLeast, Amount: minPower}
 	return t
 }
 
 // PowerExactly narrows the target to creatures whose power is exactly power,
 // e.g. Target{Kind: TargetChosenCreature}.PowerExactly(1).
 func (t Target) PowerExactly(power int) Target {
-	t.exactPower = power
-	t.hasExactPower = true
+	t.power = PowerBound{Kind: BoundExactly, Amount: power}
 	return t
 }
 
 // OddPower narrows the target to creatures whose power is odd (Onyx Knight).
 func (t Target) OddPower() Target {
-	t.oddPower = true
+	t.power = PowerBound{Kind: BoundOdd}
 	return t
 }
 
 // EvenPower narrows the target to creatures whose power is even (Opal Knight).
 func (t Target) EvenPower() Target {
-	t.evenPower = true
+	t.power = PowerBound{Kind: BoundEven}
 	return t
 }
 
 // Damaged narrows the target to creatures that currently have damage on them.
 func (t Target) Damaged() Target {
-	t.damaged = true
+	t.damage = DamageSome
 	return t
 }
 
 // Undamaged narrows the target to creatures that currently have no damage on them.
 func (t Target) Undamaged() Target {
-	t.undamaged = true
+	t.damage = DamageNone
 	return t
 }
 
@@ -407,14 +391,14 @@ func (t Target) Named(name string) Target {
 // WithAember narrows the target to creatures that have Æmber on them, rendering
 // " with Æmber on it", e.g. "each creature with Æmber on it".
 func (t Target) WithAember() Target {
-	t.withAember = true
+	t.aember = AemberSome
 	return t
 }
 
 // WithoutAember narrows the target to creatures that have no Æmber on them,
 // rendering " with no Æmber on it", e.g. "a creature with no Æmber on it".
 func (t Target) WithoutAember() Target {
-	t.withoutAember = true
+	t.aember = AemberNone
 	return t
 }
 
@@ -489,35 +473,35 @@ func (t Target) allows(ctx *EffectContext, id LocalID) bool {
 // filter only constrains creatures: on a target that also reaches artifacts
 // ("an artifact or flank creature", Snudge) an artifact passes it untouched.
 func (t Target) OnFlank() Target {
-	t.onFlank = true
+	t.position = PositionOnFlank
 	return t
 }
 
 // NotOnFlank narrows the target to creatures that are not on a flank of their
 // battleline (neither its leftmost nor rightmost creature).
 func (t Target) NotOnFlank() Target {
-	t.notOnFlank = true
+	t.position = PositionNotOnFlank
 	return t
 }
 
 // InCenter narrows the target to the creature in the center of its controller's
 // battleline (an even-sized line has no center, so nothing is selected).
 func (t Target) InCenter() Target {
-	t.inCenter = true
+	t.position = PositionCenter
 	return t
 }
 
 // ToRightOfSource narrows the target to the creatures positioned to the right of
 // the source card in its battleline (Panpaca, Anga).
 func (t Target) ToRightOfSource() Target {
-	t.toRightOfSource = true
+	t.position = PositionRightOfSource
 	return t
 }
 
 // ToLeftOfSource narrows the target to the creatures positioned to the left of
 // the source card in its battleline (Panpaca, Jaga).
 func (t Target) ToLeftOfSource() Target {
-	t.toLeftOfSource = true
+	t.position = PositionLeftOfSource
 	return t
 }
 
@@ -547,7 +531,7 @@ func (t Target) NeighborsOf() Target {
 // Other excludes the source card from the selected set, rendering the "other"
 // qualifier ("each other friendly card").
 func (t Target) Other() Target {
-	t.other = true
+	t.exclusion = ExcludeSource
 	return t
 }
 
@@ -624,24 +608,22 @@ func (t Target) Text() string {
 	if t.exceptTrait != traitUnset {
 		noun = "non-" + t.exceptTrait.String() + " " + noun
 	}
-	if t.onFlank {
+	if adj := t.position.adjective(); adj != "" {
 		// A flank is a battleline position, so on a target that also reaches artifacts
 		// the qualifier binds to the creature half alone — which the printed phrase
 		// says by naming the artifact first (Snudge).
 		if orArtifact {
-			noun = strings.Replace(noun, "creature or artifact", "artifact or flank creature", 1)
+			noun = strings.Replace(
+				noun, "creature or artifact", "artifact or "+adj+" creature", 1)
 		} else {
-			noun = "flank " + noun
+			noun = adj + " " + noun
 		}
 	}
 	if t.neighboring {
 		noun = "neighboring " + noun
 	}
-	if t.damaged {
-		noun = "damaged " + noun
-	}
-	if t.undamaged {
-		noun = "undamaged " + noun
+	if adj := t.damage.adjective(); adj != "" {
+		noun = adj + " " + noun
 	}
 	if t.stunned {
 		noun = "stunned " + noun
@@ -707,11 +689,7 @@ func (t Target) quantifiedPhrase(noun string) string {
 	case TargetEachCardInPlay:
 		phrase = "each card in play"
 	case TargetEachCreature, TargetEachArtifact:
-		if t.other {
-			phrase = "each other " + noun
-		} else {
-			phrase = "each " + noun
-		}
+		phrase = "each " + t.exclusion.qualifyNoun(noun)
 	case TargetEachFriendlyCreature:
 		phrase = "each friendly " + noun
 	case TargetEachFriendlyArtifact:
@@ -719,11 +697,7 @@ func (t Target) quantifiedPhrase(noun string) string {
 	case TargetEachEnemyArtifact:
 		phrase = "each enemy " + noun
 	case TargetEachFriendlyCardInPlay:
-		if t.other {
-			phrase = "each other friendly " + noun
-		} else {
-			phrase = "each friendly " + noun
-		}
+		phrase = "each " + t.exclusion.qualifyNoun("friendly "+noun)
 	case TargetEachEnemyCreature:
 		phrase = "each enemy " + noun
 	case TargetEachOtherFriendlyCreature:
@@ -747,9 +721,9 @@ func (t Target) quantifiedPhrase(noun string) string {
 	case TargetChosenFriendlyArtifact:
 		phrase = "a friendly " + noun
 	case TargetChosenCreature:
-		// Other() drops the source card, which reads as "another creature" — the
+		// An exclusion drops the source card, which reads as "another creature" — the
 		// wording Replicator prints for a creature in play that is not itself.
-		if t.other {
+		if t.exclusion.filters() {
 			phrase = "another " + noun
 		} else {
 			phrase = indefinite(noun)
@@ -763,27 +737,8 @@ func (t Target) quantifiedPhrase(noun string) string {
 // narrowingClauses appends the power, resource, position, house, and refinement
 // clauses that narrow a quantified phrase to the cards that match, in printed order.
 func (t Target) narrowingClauses(phrase string) string {
-	if t.hasMaxPower {
-		phrase += fmt.Sprintf(" with power %d or lower", t.maxPower)
-	}
-	if t.hasMinPower {
-		phrase += fmt.Sprintf(" with power %d or higher", t.minPower)
-	}
-	if t.hasExactPower {
-		phrase += fmt.Sprintf(" with power %d", t.exactPower)
-	}
-	if t.oddPower {
-		phrase += " with odd power"
-	}
-	if t.evenPower {
-		phrase += " with even power"
-	}
-	if t.withAember {
-		phrase += " with \u00c6mber on it"
-	}
-	if t.withoutAember {
-		phrase += " with no \u00c6mber on it"
-	}
+	phrase = t.power.clause(phrase)
+	phrase = t.aember.clause(phrase)
 	if t.withoutBonusIcons {
 		phrase += " with no bonus icons"
 	}
@@ -804,18 +759,7 @@ func (t Target) narrowingClauses(phrase string) string {
 			t.sharesHouseNeighbors,
 		)
 	}
-	if t.notOnFlank {
-		phrase += " that is not on a flank"
-	}
-	if t.inCenter {
-		phrase += " in the center of its controller's battleline"
-	}
-	if t.toRightOfSource {
-		phrase += " to the right of " + SelfName
-	}
-	if t.toLeftOfSource {
-		phrase += " to the left of " + SelfName
-	}
+	phrase = t.position.clause(phrase)
 	phrase = t.house.qualifyPhrase(phrase)
 	if t.houseWithMostCreatures {
 		phrase += " of the house with the most creatures in play"

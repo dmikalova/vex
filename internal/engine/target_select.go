@@ -222,30 +222,20 @@ func (t Target) hasNoFilters() bool {
 		!t.house.filters() &&
 		!t.houseWithMostCreatures &&
 		!t.sharesTrait &&
-		!t.hasMaxPower &&
-		!t.hasMinPower &&
-		!t.hasExactPower &&
-		!t.oddPower &&
-		!t.evenPower &&
-		!t.damaged &&
-		!t.undamaged &&
+		!t.power.filters() &&
+		!t.damage.filters() &&
 		!t.stunned &&
 		!t.ready &&
-		!t.withAember &&
-		!t.withoutAember &&
+		!t.aember.filters() &&
 		!t.withoutBonusIcons &&
 		!t.withCounter.valid() &&
 		!t.withArmor &&
 		!t.withUpgrade &&
 		t.sharesHouseNeighbors == 0 &&
 		t.keyword == keywordUnset &&
-		!t.onFlank &&
-		!t.notOnFlank &&
-		!t.inCenter &&
+		!t.position.filters() &&
 		!t.neighboring &&
-		!t.toRightOfSource &&
-		!t.toLeftOfSource &&
-		!t.other &&
+		!t.exclusion.filters() &&
 		t.named == ""
 }
 
@@ -290,40 +280,23 @@ func (t Target) matchesTraitHouse(ctx *EffectContext, id LocalID) bool {
 }
 
 // matchesPower reports whether a candidate's power passes the target's power
-// filters — a maximum, minimum, exact, odd, or even power requirement.
+// bound — a maximum, minimum, exact, odd, or even power requirement. A target
+// that bounds no power reads no power, so a card without one is never asked.
 func (t Target) matchesPower(ctx *EffectContext, id LocalID) bool {
-	if t.hasMaxPower && ctx.Resolver.Power(id) > t.maxPower {
-		return false
+	if !t.power.filters() {
+		return true
 	}
-	if t.hasMinPower && ctx.Resolver.Power(id) < t.minPower {
-		return false
-	}
-	if t.hasExactPower && ctx.Resolver.Power(id) != t.exactPower {
-		return false
-	}
-	if t.oddPower && ctx.Resolver.Power(id)%2 == 0 {
-		return false
-	}
-	if t.evenPower && ctx.Resolver.Power(id)%2 != 0 {
-		return false
-	}
-	return true
+	return t.power.admits(ctx.Resolver.Power(id))
 }
 
 // matchesState reports whether a candidate passes the target's per-card state
 // filters: damage, Æmber, bonus icons, counters, armor, upgrades, house-sharing
 // neighbors, a keyword, and the stunned/ready flags.
 func (t Target) matchesState(ctx *EffectContext, id LocalID) bool {
-	if t.damaged && ctx.Resolver.Damage(id) == 0 {
+	if t.damage.filters() && !t.damage.admits(ctx.Resolver.Damage(id)) {
 		return false
 	}
-	if t.undamaged && ctx.Resolver.Damage(id) != 0 {
-		return false
-	}
-	if t.withAember && ctx.Resolver.AmberOn(id) == 0 {
-		return false
-	}
-	if t.withoutAember && ctx.Resolver.AmberOn(id) != 0 {
+	if t.aember.filters() && !t.aember.admits(ctx.Resolver.AmberOn(id)) {
 		return false
 	}
 	if t.withoutBonusIcons && ctx.Resolver.HasBonusIcons(id) {
@@ -358,31 +331,20 @@ func (t Target) matchesState(ctx *EffectContext, id LocalID) bool {
 // position filters — on or off a flank, in the center, neighboring the source, or
 // to the source's right or left.
 func (t Target) matchesPosition(ctx *EffectContext, id LocalID) bool {
-	if t.onFlank && ctx.Resolver.IsCreature(id) && !onFlank(ctx, id) {
-		return false
-	}
-	if t.notOnFlank && onFlank(ctx, id) {
-		return false
-	}
-	if t.inCenter && !ctx.Resolver.InCenterOfBattleline(id) {
+	if t.position.filters() && !t.position.admits(ctx, id) {
 		return false
 	}
 	if t.neighboring && !isNeighbor(ctx, ctx.Source, id) {
-		return false
-	}
-	if t.toRightOfSource && !toSideOfSource(ctx, ctx.Source, id, +1) {
-		return false
-	}
-	if t.toLeftOfSource && !toSideOfSource(ctx, ctx.Source, id, -1) {
 		return false
 	}
 	return true
 }
 
 // matchesIdentity reports whether a candidate passes the target's identity filters:
-// "other" excludes the source itself, and a name filter keeps only a named card.
+// an exclusion drops one card the target is defined against, and a name filter
+// keeps only a named card.
 func (t Target) matchesIdentity(ctx *EffectContext, id LocalID) bool {
-	if t.other && id == ctx.Source {
+	if !t.exclusion.admits(ctx, id) {
 		return false
 	}
 	if t.named != "" && ctx.Resolver.Name(id) != t.named {

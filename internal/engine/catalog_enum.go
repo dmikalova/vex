@@ -73,6 +73,11 @@ func Enums() []Enum {
 		comparisonEnum(),
 		counterKindEnum(),
 		targetKindEnum(),
+		powerBoundKindEnum(),
+		damagePresenceEnum(),
+		aemberPresenceEnum(),
+		positionEnum(),
+		exclusionEnum(),
 		useKindEnum(),
 		tollActionEnum(),
 
