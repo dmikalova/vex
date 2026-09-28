@@ -342,13 +342,15 @@ avoiding per-turn allocation on hot paths.
 
 ## Formatting and tooling by the numbers
 
-- **Run everything through `mage`, never raw `go`.** The mage targets wrap the
-  project's conventions (coverage gate, comment/rulebook generation, golines). The
-  local validator is `mage ci:fix && mage ci:check`; `ci:check` must print
-  `ALL GREEN` before work is considered done. `mage ci:fix` formats and applies
-  every autofix; `mage ci:cover` keeps the gated areas (engine, card sets,
-  `cardtest`, `deckgen`) at 100%. See the root
-  [AGENTS.md](../AGENTS.md) for the full target list.
+- **The gate runs through `mage`.** The mage targets wrap the project's
+  conventions (coverage gate, comment generation, golines). The full validator
+  is `mage ci:fix && mage ci:check`; `ci:check` must print `ALL GREEN` before
+  work is considered done. `mage ci:fix` formats and applies every autofix;
+  `mage ci:cover` keeps the gated areas (engine, card sets, `cardtest`,
+  `deckgen`) at 100%. An agent session leaves the full gate to diatom, which
+  runs it when the session ends, and checks its work narrowly in between with
+  `go test`, `go build` or `go vet` on the packages it touched (see the root
+  AGENTS.md). See [building.md](building.md) for the full target list.
 - **Let `golines` own formatting.** Indentation, alignment, and wrapping are not
   matters of taste here — `golines` (via `mage ci:fix`) decides them: it applies
   `gofmt` and additionally shortens code lines over 100 columns. Do not fight it.

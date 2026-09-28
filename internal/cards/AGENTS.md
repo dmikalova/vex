@@ -1,91 +1,99 @@
 # Card authoring guide
 
-This directory holds the card database. Package `cards` (`cards.go`) is the
-aggregator; each set lives in its own subpackage under `sets/`
-(e.g. `sets/callofthearchons/`) and every card is one self-registering file.
-Shared test helpers live in the sibling `cardtest/` package — it is a test
-helper (stdlib `httptest`/`iotest` convention), not a set, so it sits outside
-`sets/`.
-
-The repo's general coding style (composition, naming, KeyForge vernacular,
-comments, safety) lives in [docs/style-guide.md](../../docs/style-guide.md); this
-file covers only the card-authoring specifics on top of it.
+The card database. Package `cards` (`cards.go`) is the aggregator; each set is a
+subpackage under `sets/` (e.g. `sets/callofthearchons/`), and every card is one
+self-registering file. The shared test harness is the sibling `cardtest/`
+package (a test helper, like stdlib `httptest`, so it sits outside `sets/`).
 
 **Before deciding a card needs new engine work, check
-[docs/card-implementation.md](../../docs/card-implementation.md)** — the catalog
-of every effect, target, filter, condition, count, trigger, and card-level option
-the engine already has. Most "gated" cards turn out to compose from something
-already there under a name you had not met.
+[docs/card-implementation.md](../../docs/card-implementation.md)**, the catalog
+of every effect, target, filter, condition, count, trigger, and card-level
+option the engine has. Most "gated" cards compose from something already there
+under a name you had not met. When a card does need a new node or engine
+capability, `internal/engine/AGENTS.md` governs it.
 
-## Rules reference
+## Card research tools
 
-When a rules question isn't settled by the vex implementation itself or by
-the engine's rulebook term registry (the `/rulebook` page), the converted KeyForge
-Master Rulebook
-at [docs/keyforge-master-rulebook.md](../../docs/keyforge-master-rulebook.md) is
-available for reference. Take it with a grain of salt: it is a converted PDF, and
-while much of it matches how vex behaves, some nuances have been intentionally
-simplified — so the implementation and this repo's own docs win where they
-disagree.
+Use these instead of a throwaway grep or JSON script:
+
+- `mage tool:lookup "<name>"` — every source card whose name contains the query,
+  with set code, collector number, house/type/rarity, printed text, and a
+  ready-made `card.Provenance(...)` call.
+- `mage tool:missing -set=<slug>` — the set's source cards not yet tagged by an
+  implemented card. Slugs are the files in `internal/cards/provenance` minus
+  `.json` (e.g. `callofthearchons`); with no `-set` it opens an interactive
+  picker.
+- `mage tool:nextCard -set=<slug>` — the next stub still carrying
+  `//go:build todo`, in collector-number order: build the card it names, drop
+  the tag, run it again (the driver of the `implement-cards` workflow).
+- `mage tool:coverage` — per-source-set count of cards covered by an
+  implemented card's provenance; `-new` counts only the cards a set
+  introduces, not its reprints.
+- `mage tool:stub "<setSlug>"` — scaffold a build-excluded (`//go:build todo`)
+  stub for every unimplemented card in a set, with the printed text and a TODO
+  marker. Stubs do not compile or register, so the database and coverage stay
+  honest; to implement one, remove the build tag and write the real ability. It
+  also (re)generates the set's `0set.go`, cataloging the cards the set reprints
+  so they join its deck-generation pool (ADR 0021). The `stub-cards` and
+  `implement-cards` skills (`.agents/skills/`) are the workflows.
 
 ## File layout
 
-- One card per file, named `snake_case.go` after the card (e.g. `dust_imp.go`,
-  `ammonia_clouds.go`). The matching test is `snake_case_test.go`.
-- **Exception — a cycle of cards built from one shared shape** may live in a
-  single mechanic file that registers the whole family in an `init` loop rather
-  than one exported `var` per card. Mass Mutation's mutant cycle is the model:
+- One card per file, `snake_case.go` after the card (`dust_imp.go`), with its
+  test in `snake_case_test.go`.
+- **Exception — a cycle built from one shared shape** may live in one mechanic
+  file that registers the family in an `init` loop. Mass Mutation's
   [sets/massmutation/mutant_cycle.go](sets/massmutation/mutant_cycle.go) models
-  each house's contribution once and composes all 42 house-hybrid mutants (power
-  and armor sum, keywords and abilities union, trait and house from the suffix),
-  registering each with `set.New(...)`. Its sibling `mutant_cycle_test.go` tests
-  the family and the composition. The `TestNoOrphanedTestFiles` guard in
-  `cards_test`'s `testfiles_test.go` recognizes such a file (it registers cards
-  via `set.New` even without a card `var`). Reach for this only when the cards are
-  genuinely one parameterized shape; a card with its own identity keeps its own
-  file.
-- Author cards through the `card` facade only
-  (`github.com/dmikalova/vex/internal/card`). Use the grouped
-  namespaces — `card.House.X`, `card.Type.X`, `card.Rarity.X`,
-  `card.Keyword.X`, `card.Trigger.X`, `card.Target.X` (and the relative-player
-  values `card.Controller` / `card.Opponent`) —
-  never the raw engine package.
-- Author cards through the set's registrar: each set package declares
-  `var set = card.NewSet(card.<Set>)` in its generated `0set.go`, and every card
-  registers with `set.New(...)`, which stamps the card's home set (deck generation
-  groups it by that set alone and never infers it from provenance, ADR 0003).
-  `set.New(...)` self-registers the card (via `init`); there is no central
-  list to update. Adding a card is just adding a file.
-- Tag each card's origin with `card.Provenance(card.<Set>, <number>)` (e.g.
-  `card.Provenance(card.CotA, 1)`) as the first option — this links it to the
-  original KeyForge card it derives from and drives the `mage tool:coverage`
-  view. Source-set aliases (`card.CotA`, `card.DT`, …) and the catalogs live in
-  `internal/cards/provenance`. Optional and repeatable; omit for wholly original
-  cards.
-- A card is implemented **once**, in the package of the set that introduced it.
-  When a later set reprints it, do not re-implement it — the set's generated
-  `0set.go` claims it by name (`set.Reprint(...)`) so it joins that set's
-  deck-generation pool as a full member (ADR 0021). `0set.go` is generated by
-  `mage tool:stub <slug>` (it declares the set registrar and lists the reprints)
-  from the set's provenance catalog; never edit it by hand.
-- When a card names a specific other card in its text (Bear Flute names Ancient
-  Bear, Troop Call names Niffle Ape), it must **share a cluster** with that card
-  (ADR 0036) so deck generation guarantees the named card is in the deck — an
-  ability that reaches for a card that may not be there is a dead card most games.
-  Declare one shared `card.Cluster` value, give the lead `card.LeadsCluster(...)`,
-  and give each pulled partner `card.InCluster(card.Pulled(cluster, min, mean))`.
-  Always **prompt for the pull rate** (which cards, the per-partner min and mean)
-  before authoring it; do not guess. Bear Flute, for instance, pulls at least two
-  Ancient Bears (`card.Pulled(bearFluteCluster, 2, 2.5)`). If the partner is not
-  implemented yet (a `//go:build todo` stub), gate the card that pulls it behind
-  the same build tag — `NewSet` panics when a cluster member is absent from the set.
+  each house's contribution once and composes all 42 house-hybrid mutants,
+  registering each with `set.New(...)`; `mutant_cycle_test.go` tests the family
+  and the composition, and `TestNoOrphanedTestFiles` recognizes such a file.
+  Use this only for a genuinely parameterized shape; a card with its own
+  identity keeps its own file.
+- Author through the `card` facade only
+  (`github.com/dmikalova/vex/internal/card`), never the engine package, using
+  the grouped namespaces: `card.House.X`, `card.Type.X`, `card.Rarity.X`,
+  `card.Keyword.X`, `card.Trigger.X`, `card.Target.X`, and the relative players
+  `card.Controller` / `card.Opponent`.
+- Register through the set's registrar: each set's generated `0set.go`
+  declares `var set = card.NewSet(card.<Set>)`, and every card registers with
+  `set.New(...)`, which stamps the home set (deck generation groups by it and
+  never infers it from provenance, ADR 0003) and self-registers via `init`.
+  Adding a card is adding a file.
+- Tag origin with `card.Provenance(card.<Set>, <number>)` as the first option
+  (e.g. `card.Provenance(card.CotA, 1)`); it links the original KeyForge card
+  and drives `mage tool:coverage`. Aliases and catalogs live in
+  `internal/cards/provenance`. Optional and repeatable; omit for wholly
+  original cards.
+- A card is implemented **once**, in the set that introduced it. A later set's
+  reprint is claimed by name in that set's generated `0set.go`
+  (`set.Reprint(...)`, ADR 0021). `0set.go` is generated by
+  `mage tool:stub <slug>`; never edit it by hand.
+- A card naming another card in its text (Bear Flute names Ancient Bear) must
+  **share a cluster** with it (ADR 0036) so deck generation puts the named card
+  in the deck. Declare one `card.Cluster` value, give the lead
+  `card.LeadsCluster(...)`, and give each pulled partner
+  `card.InCluster(card.Pulled(cluster, min, mean))`. Always **ask for the pull
+  rate** (which cards, the per-partner min and mean) before authoring it; Bear
+  Flute pulls at least two Ancient Bears
+  (`card.Pulled(bearFluteCluster, 2, 2.5)`). If the partner is still a `//go:build todo` stub, gate the pulling
+  card behind the same tag: `NewSet` panics when a cluster member is absent.
+- Authoring or moving an **anomaly** (a Worlds Collide `A0x` provenance, or the
+  Anomaly Expansion set): read
+  [docs/cards/anomalies.md](../../docs/cards/anomalies.md) first.
+- A source card with **Variant** rarity (the Worlds Collide "Brews", the
+  signature "Blaster" upgrades) is authored as `card.Rarity.Rare` with
+  `// TODO(variant): rarity relabelled from Variant to Rare — handle manually`
+  on the rarity option, and its ability implemented normally. A Variant bucket
+  in deckgen is the maintainer's decision.
 
 ## Doc comments and authoring layout
 
-The doc comment above each card is **generated, not hand-written** — run
-`mage generateComments` (it rewrites every card's comment from its definition,
-the same details the card box shows via `engine.RenderCardText`). Write the
-`set.New(...)` call and let the generator fill in the comment:
+The doc comment above each card is **generated**: write the `set.New(...)` call
+with a placeholder `// <Name>` line and run `mage generateComments` (or
+`mage gen`; both rewrite every card's comment from its definition, the same
+details the card box shows via `engine.RenderCardText`). Run it
+freely whenever a definition changes; it is deterministic and never needs a
+hand-written comment to match it.
 
 ```go
 // Ammonia Clouds
@@ -108,193 +116,98 @@ var AmmoniaClouds = set.New(
 )
 ```
 
-The generated comment (tab-indented so godoc renders the block preformatted;
-`golines`/`gofmt` requires the blank `//` line after the title) is:
+The comment is the name, a colon-aligned block (`House`, `Type`, `Rarity`, then
+`Power`/`Armor` for creatures, `Æmber` for an Æmber bonus, `Traits` when
+present), and after a blank `//` the printed rules text (omitted for vanilla
+cards). Layout of `set.New(...)`:
 
-1. `// <Card Name>` — the card's display name.
-2. A labeled, colon-aligned block: `House`, `Type`, `Rarity`, then `Power` and
-   `Armor` for creatures, `Æmber` when the card has an Æmber bonus, and `Traits`
-   when it has traits.
-3. After a blank `//`, the printed rules text (keywords, upgrade modifier, and
-   ability lines) — omitted entirely for vanilla cards with no rules text.
-
-So authoring a card is just adding the `set.New(...)` file and running
-`mage generateComments`; a placeholder `// <Name>` line above the var is enough
-to seed it. `set.New(...)`:
-
-- The four positional arguments — name, `card.House.X`, `card.Type.X`,
-  `card.Rarity.X` — each on their own line.
+- The four positional arguments (name, house, type, rarity) each on their own
+  line.
 - Each `card.With*` option on its own line, in this order: `WithBonus`,
   `WithPower`, `WithArmor`, `WithTraits`, `WithKeywords`, `WithStatic`,
   `WithAbility`.
 - `card.WithAbility(` breaks onto the next line; the trigger and effect share a
   line (`card.Trigger.Play, card.DealDamage{`).
-- **Every struct literal with two or more fields is written one field per line**,
-  for readability and consistent diffs. This covers effects
-  (`card.DealDamage{Amount: …, Target: …}`), the modifier/value structs passed to
-  the `With*` options (`WithStatic(card.StaticModifier{PowerBonus: …, HazardousBonus: …})`,
-  `WithAttackDamage(card.AttackDamage{Amount: …, FlankOnly: …})`,
-  `WithConstant(card.ConstantAbility{…})`), and nested effects the same
-  way. A struct with a single field stays inline (e.g. `card.GainAember{Amount: 1}`,
-  `card.Stun{Target: card.Target.This}`).
-- A granted / `WithAbilities` entry keeps its trigger and effect on one line
-  (`{Trigger: card.Trigger.Reap, Effect: card.DealDamage{`), mirroring the
-  `WithAbility(trigger, effect)` form; if that effect has two or more fields,
-  break its fields onto their own lines as above.
-- Slice elements that are themselves single-field or empty structs stay inline
-  within the slice (e.g. `Verbs: []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}}`).
-- **A card with several abilities lists them in printed order: ongoing lines
-  first, the `Play`/`Action` line last.** A card prints its always-on or
-  recurring ability (a `WithConstant` line, or a `WithAbility(card.Trigger.StartOfTurn,
-…)`/`EndOfTurn`line) above its`Play:`/`Action:` ability, so author the
-  `With*` calls in that same top-to-bottom order (Wretched Doll: its
-  start-of-turn sweep is written before its `Play` doom-counter). Each ability is
-  its own `WithConstant`/`WithAbility` call; do not fuse two printed lines into one.
-- **One ability that reads as several sentences is one `card.Sequence`,** not
-  several abilities: `card.Sequence{Effects: []card.Effect{…}}` renders each
-  effect as its own sentence under one trigger, joining only what folds or what
-  an enclosing condition scopes. Reach for two `WithAbility` calls only when the
-  card genuinely prints two ability lines.
+- **Every struct literal with two or more fields is one field per line**:
+  effects, the value structs passed to `With*` options (`card.StaticModifier`,
+  `card.AttackDamage`, `card.ConstantAbility`), and nested effects. A
+  single-field struct stays inline (`card.GainAember{Amount: 1}`).
+- A granted / `WithAbilities` entry keeps trigger and effect on one line
+  (`{Trigger: card.Trigger.Reap, Effect: card.DealDamage{`), breaking that
+  effect's fields as above when it has two or more.
+- Slice elements that are single-field or empty structs stay inline
+  (`Verbs: []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}}`).
+- **Several abilities are listed in printed order: ongoing lines first, the
+  `Play`/`Action` line last.** A `WithConstant` or a start/end-of-turn
+  `WithAbility` goes above the `Play:`/`Action:` ability (Wretched Doll's
+  start-of-turn sweep before its `Play` doom counter). Each printed line is its
+  own `WithConstant`/`WithAbility` call; never fuse two.
+- **One ability that reads as several sentences is one `card.Sequence`**
+  (`card.Sequence{Effects: []card.Effect{…}}`), not several abilities. Use two
+  `WithAbility` calls only when the card prints two ability lines.
+- golines aligns the fields but does not add the line breaks: the
+  one-field-per-line layout is the author's.
 
-Run `mage ci:fix` after editing (its golines pass aligns the fields; it does not
-add the line breaks, so the one-field-per-line layout above is the author's
-responsibility).
+## Duplicate implementations and hardcoded houses
 
-## Anomalies preview a future set; they live in AE only until it is built
-
-An **anomaly** is a rare card (Worlds Collide onward) that shipped outside a
-house's normal pool as a **preview of a future set** — the card is really a member
-of that later set, seeded early into Worlds Collide packs. So an anomaly has two
-homes over its life, and which one it lives in depends on whether its real set is
-implemented yet.
-
-**Phase 1 — the home set is not implemented yet: park it in Anomaly Expansion.**
-Author the anomaly as a **housed** (currently Brobnar) `card.Rarity.Special` card
-registered in the **Anomaly Expansion** set (`internal/cards/sets/anomalyexpansion`,
-`card.ReservoirSet(card.AE)`), keeping `card.Provenance(card.WC, "A0x")` so it
-counts toward Worlds Collide's coverage. Two properties make this work and must be
-preserved:
-
-- **The set is a reservoir, so it is never offered for deck generation.** A
-  reservoir set builds no draft pool of its own (`Draftable` is false for every
-  reservoir card), so you cannot generate a deck "from" the Anomaly Expansion and
-  it never seeds an interloper or errant house.
-- **The cards stay housed, so they remain legacy-drawable.** The legacy pool keeps
-  every housed, non-Connected card regardless of the reservoir flag, so legacy and
-  legacy-maverick slots in other sets can still draw an anomaly. Authoring an
-  anomaly as houseless would drop it from the legacy pool — do not do that.
-
-**Phase 2 — the home set is implemented: move the anomaly into it.** Once the set
-the anomaly previews exists, the anomaly is no longer a placeholder — it is a real
-member of that set, so it moves there and is authored with the **home set's own
-stats**, not the Brobnar/Special anomaly shape:
-
-- Create the card in the home set package (`set.New`, so it declares `InSet(<home>)`)
-  with the home printing's real **house, type, rarity, traits, and wording**, and
-  `card.Provenance(<home>, "<num>")` — its home-set collector number, not the `A0x`
-  anomaly ref. Look the home printing up in that set's provenance JSON; do not carry
-  the anomaly's Brobnar/Special stats over.
-- Delete the Anomaly Expansion file and its test, and remove any
-  `set.Reprint("<num>", "<name>")` the home set's `0set.go` claimed for it — it is
-  now a full member, not a reprint. Regenerate with `mage tool:stub <homeSlug>`.
-
-Orb of Wonder is the worked example: it previewed Mass Mutation (Sanctum • Rare •
-`Omni:`), so once Mass Mutation was implemented it left Anomaly Expansion (where it
-had been Brobnar/Special) and became a normal Sanctum Rare Mass Mutation artifact.
-The Shards (Shard of Glory, Shard of Unity) are the exception — they are
-Vex-invented `Connected` cards with no future set to move to, so they stay in
-Anomaly Expansion permanently.
-
-## Variant rarity → author as `card.Rarity.Rare` + a manual-handling TODO
-
-Some source cards carry a **Variant** rarity (the Worlds Collide "Brews" and the
-signature "Blaster" upgrades). The deckgen rarity model has no Variant bucket, and
-adding one is a deliberate deck-generation decision the maintainer owns. Until then,
-**author a Variant card as `card.Rarity.Rare` with a
-`// TODO(variant): rarity relabelled from Variant to Rare — handle manually` line**
-on the rarity option, and implement its ability normally. This unblocks the card's
-mechanics without silently committing to a rarity mapping.
-
-## Mechanically-identical cards → make them differ, never allowlist
-
-`TestNoDuplicateImplementations` fails when two differently named cards compile to
-byte-identical implementations (same type, stats, keywords, and abilities,
-ignoring the name/house/rarity that legitimately differ between a card and its
-reprint). There is **no allowlist** — a collision is never permitted to stand.
-
-Some source cards print the same effect in two different houses (e.g. Subtle
-Chain/Shadows once matched Mind Barb/Dis; Stealth Mode/Star Alliance once matched
-Scrambler Storm/Logos). A plain reprint is wrong (it keeps the original's house)
-and folding into one card drops the second house, so the twin must be a full card
-**in its own house** — but it must **not** be mechanically identical to its
-counterpart. When you hit an identical pair, **stop and ask the maintainer how to
-differentiate the card** (a reworded or redesigned ability that keeps it distinct);
-do not paper over the collision. Implement the agreed change so the two cards
-diverge, and the test passes because they are no longer identical.
-
-A sibling guard, `TestNoCardHardcodesItsOwnHouse` (in `cards_test.go`), parses
-every `card.New` call and fails if an ability names the card's own declared house
-instead of `card.House.Self` — see
-[docs/card-implementation.md](../../docs/card-implementation.md) for when to use
-which.
+- `TestNoDuplicateImplementations` fails when two differently named cards
+  compile to identical implementations (ignoring name, house, and rarity).
+  There is **no allowlist**. A card printed with the same effect in two houses
+  (Subtle Chain/Shadows once matched Mind Barb/Dis) must be a full card in its
+  own house that is **not** mechanically identical to its twin. When you hit an
+  identical pair, **stop and ask the maintainer how to differentiate it**, then
+  implement the agreed change.
+- `TestNoCardHardcodesItsOwnHouse` (`cards_test.go`) fails when an ability names the card's own
+  house instead of `card.House.Self`; see
+  [docs/card-implementation.md](../../docs/card-implementation.md) for which to
+  use.
 
 ## Wording rules
 
-The generated comment is the card's printed text, produced by the effect AST's
-`Text()` methods. That text must obey [docs/card-wording-rules.md](../../docs/card-wording-rules.md)
-— the curated wording conventions (front-load `for each`; `gains` not `gets`;
-`Put` not `Return`; result gates `A -> B`; `Æmber` not `Aember` in player-facing
-text; capital `Damage` only where dealt; self-reference by name; etc.).
+The generated comment is the printed text, rendered by the effect AST's
+`Text()` methods, and it must obey
+[docs/card-wording-rules.md](../../docs/card-wording-rules.md) (front-load
+`for each`; `gains` not `gets`; `Put` not `Return`; result gates `A -> B`;
+`Æmber` not `Aember`; capital `Damage` only where dealt; self-reference by
+name; …).
 
-Two conventions change a card's **structure**, not just its wording, so watch for
-them: `Sacrifice <self>` is authored as `Destroy <self>` (there is one destruction
-verb), and an **`Omni:` ability is authored as `Versatile` plus a `Trigger.Action`
-ability** — `card.WithKeywords(card.Keyword.Versatile)` alongside
-`card.WithAbility(card.Trigger.Action, …)`. The engine has no Omni trigger; see
-rule 12 of [docs/card-wording-rules.md](../../docs/card-wording-rules.md).
+Two conventions change a card's **structure**: `Sacrifice <self>` is authored
+as `Destroy <self>` (one destruction verb), and an **`Omni:` ability is
+`Versatile` plus a `Trigger.Action` ability**
+(`card.WithKeywords(card.Keyword.Versatile)` with
+`card.WithAbility(card.Trigger.Action, …)`); the engine has no Omni trigger
+(rule 12, ADR 0009).
 
-When adding or reviewing a card, read its generated comment against those rules.
-**Call out any line that violates a rule**, and **auto-apply the fix when it is
-obvious** — because the text is generated from the AST, a wording fix means
-changing the effect rendering, not hand-editing the comment (see
-[../engine/AGENTS.md](../engine/AGENTS.md) for how effects render their own text,
-and prefer reshaping a `Target`/`Count`/`Refinement` over adding a new effect):
+When adding or reviewing a card, read its generated comment against the rules.
+**Call out any violating line, and auto-apply the fix when it is obvious**; a
+wording fix changes the rendering, never the comment by hand:
 
-- If a whole family of cards renders wrong (e.g. a `for each` clause appearing at
-  the end instead of the front), fix it once in the effect's `Text()` in
-  `internal/engine/effect_*.go`, then re-run `mage generateComments`.
-- If only one card reads wrong, it usually means the wrong effect/target was
-  chosen — fix the `card.New(...)` definition.
-- If a rule is genuinely ambiguous or the "fix" would change game behavior, don't
-  silently apply it — flag it for the user instead.
+- A whole family renders wrong (a `for each` at the end): fix the effect's
+  `Text()` in `internal/engine/effect_*.go` once, then run
+  `mage generateComments` and the engine `Text()` tests
+  (`internal/engine/effect_*_test.go`).
+- One card reads wrong: usually the wrong effect or target was chosen; fix its
+  definition, preferring a reshaped `Target`/`Count`/`Refinement` over a new
+  effect.
+- The rule is ambiguous or the fix would change game behavior: flag it for the
+  user rather than apply it.
 
-After any wording change, run `mage generateComments` (regenerates every card's
-comment) and the engine tests (the `Text()` assertions live in
-`internal/engine/effect_*_test.go`).
-
-Because the first bullet reaches every card a node renders, **do not trust a
-"these cards are the same shape" grouping without reading each card's printed
-text with `mage tool:lookup` first**. A retired backlog item claimed three cards
-shared one fix and none of them did: one was already a single each-player effect
-and needed no fold, one spells both halves out on the printed card deliberately
-and must not be folded, and only the third was the shape the item described. The
-same trap retired the card-text fan-in sweep — an affix search reported a dozen
-candidates and all but three were either already-folded output or an asymmetric
-rule that must repeat, as Savage Clash spares the most powerful **enemy** and the
-**least** powerful **friendly**.
+A family fix reaches every card the node renders, so **read each card's
+printed text with `mage tool:lookup` before trusting a "these cards share a
+shape" grouping**. Past groupings were mostly wrong: a card already folded, one
+that spells both halves out deliberately, an asymmetric rule that must repeat
+(Savage Clash spares the most powerful **enemy** and the **least** powerful
+**friendly**).
 
 ## Tests
 
-- Every card has its own `snake_case_test.go` in the same set package, built on
-  the `cardtest` harness (`internal/cards/cardtest`, imported as `ct`). A test
-  reads like the game: declare the board with `ct.Play`, act through the players,
-  and assert with `h.Expect`.
-- The card-text doc comment above `func Test<Card>` is generated by
-  `mage generateComments` (it mirrors the card box, the same block the card's own
-  source file carries) — don't hand-write it. Put the behavior description in a
-  `t.Run("...")` subtest name instead, in the Keyteki-style describe/it shape
-  (the `func Test<Card>` is the "describe", each `t.Run` is an "it").
-- Sketch of the shape:
+- Every card has its own `snake_case_test.go` in its set package, built on the
+  `cardtest` harness (imported as `ct`): declare the board with `ct.Play`, act
+  through the players, assert with `h.Expect`.
+- The doc comment above `func Test<Card>` is generated by
+  `mage generateComments`; put the behavior description in `t.Run("...")`
+  subtest names, describe/it style (`func Test<Card>` describes, each `t.Run`
+  is an "it").
 
   ```go
   func TestAmmoniaClouds(t *testing.T) {
@@ -315,50 +228,41 @@ rule that must repeat, as Savage Clash spares the most powerful **enemy** and th
   }
   ```
 
-- The pieces (`h` is the `*ct.Harness` returned by `ct.Play`):
-  - `ct.Play(t, ct.Setup{P1, P2})` builds the game with player 1's house chosen.
-    Each `ct.Side` sets `House`, the zones `InPlay`/`Hand`/`Deck`/`Discard`/
-    `Archives` (via `ct.Cards(...)`), and `Amber`/`Keys`.
-  - `ct.Creature/Artifact/Tactic/Upgrade(...)` build vanilla cards — a "body with
-    no baggage" for isolating a mechanic — with options `ct.OfHouse`, `ct.Power`,
-    `ct.Armor`, `ct.Keywords`, `ct.PowerBonus`, … (default house Brobnar).
-  - `ct.Bind(&handle, def)` names a placed card so you can reference it later;
+- The pieces (`h` is the `*ct.Harness` from `ct.Play`):
+  - `ct.Play(t, ct.Setup{P1, P2})` builds the game with player 1's house
+    chosen. Each `ct.Side` sets `House`, the zones
+    `InPlay`/`Hand`/`Deck`/`Discard`/`Archives` (via `ct.Cards(...)`), and
+    `Amber`/`Keys`.
+  - `ct.Creature/Artifact/Tactic/Upgrade(...)` build vanilla cards for
+    isolating a mechanic, with `ct.OfHouse`, `ct.Power`, `ct.Armor`,
+    `ct.Keywords`, `ct.PowerBonus`, … (default house Brobnar).
+  - `ct.Bind(&handle, def)` names a placed card;
     `ct.Upgraded(host, upgrades...)` attaches upgrades at setup.
-  - Players act by card definition **or** handle: `h.P1.Play/Reap/Fight/UseAction`,
-    `h.P1.EndTurn/ChooseHouse`. A choice among several candidates pauses; answer it
-    with `h.P1.ClickCard(x)` or `h.P1.ClickOption("...")`, and assert the prompt
-    with `h.P1.ExpectPrompt("...").Source("Card")`. A sole candidate auto-resolves.
-  - Assert with `h.Expect(defOrHandle).Damage/Power/Armor/AmberOn/Exhausted/
-Ready/Stunned/At(zone)`(chainable) and`h.P1.ExpectAmber/ExpectKeys`. Reach
-    the raw engine via `h.Game()` for anything the fluent API doesn't cover.
-- Set test packages import `card` (for `card.House.X`) and `ct`
-  (`internal/cards/cardtest`); they use the public engine API and exported card
-  `var`s (no reaching into engine internals).
+  - Players act by definition **or** handle: `h.P1.Play/Reap/Fight/UseAction`,
+    `h.P1.EndTurn/ChooseHouse`. A choice among several candidates pauses;
+    answer with `h.P1.ClickCard(x)` or `h.P1.ClickOption("...")`, and assert
+    the prompt with `h.P1.ExpectPrompt("...").Source("Card")`. A sole
+    candidate auto-resolves.
+  - Assert with `h.Expect(defOrHandle)` chained with
+    `Damage`/`Power`/`Armor`/`AmberOn`/`Exhausted`/`Ready`/`Stunned`/`At(zone)`,
+    and `h.P1.ExpectAmber` / `h.P1.ExpectKeys`. `h.Game()` reaches the raw
+    engine for anything else.
+- Set test packages import `card` and `ct` and use only the public engine API
+  and exported card `var`s.
 - **What a card's tests must cover:**
-  - A **combined or conditional** ability is tested on **both** sides — the
-    positive (the condition holds, every branch fires) and the negative (the
-    condition fails, nothing fires or the other branch fires). A conditional with
-    only its positive tested is under-tested.
-  - A **rote keyword-only** ability (a card whose whole text is stock keywords —
-    e.g. taunt, skirmish, hazardous N) needs **no** test: the keyword is exercised
-    by the engine's own keyword tests, so a per-card test only restates them.
-  - An ability that reads a **numeric value** (a count, an amount, a threshold) is
-    tested at the boundary cases — **0, 1, n-1, n, n+1** — so an off-by-one in the
-    count or the comparison is caught. Test the cases that exist for the card: a
-    threshold of `n` wants both sides of the boundary (n-1, n, n+1), while a plain
-    "deal N per X" wants the empty (0) and one (1) cases.
-- **What the gate enforces automatically.** Three checks in `testfiles_test.go`
-  hold the floor under the prose rules above: `TestEveryCardHasATest` (a card
-  file has a sibling test file), `TestNoOrphanedTestFiles` (the converse), and
-  `TestEveryCardTestAsserts` (every `func Test…` reaches an assertion — an
-  `Expect*` call on the harness or a raw `t.Error`/`t.Errorf`/`t.Fatal`/
-  `t.Fatalf`, following `t.Run` subtests and package-local helpers such as the
-  Master of N cycle's `testMaster`). There is no allowlist for any of them.
-- **Branch coverage is not automated on purpose — do not propose a check for
-  it.** The "test a conditional on both sides" rule above is enforced by review,
-  not by the gate. Every automatable proxy was considered and rejected: subtest
-  count and effect-node shape are fuzzy, and both fail roughly 108 existing
-  tests that do cover both branches inside a single test function. A rule that
-  is wrong a tenth of the time earns an allowlist, and an allowlist is not a
-  ratchet. The real answer is the planned holistic state-exploration harness,
-  which explores the branches itself rather than guessing at them from the AST.
+  - A **combined or conditional** ability on **both** sides: the condition
+    holds (every branch fires) and fails (nothing, or the other branch, fires).
+  - A **rote keyword-only** card (taunt, skirmish, hazardous N) needs **no**
+    test; the engine's keyword tests cover it.
+  - A **numeric** read (count, amount, threshold) at the boundary cases that
+    exist for the card, from **0, 1, n-1, n, n+1**: a threshold `n` wants
+    n-1, n, n+1; a plain "deal N per X" wants 0 and 1.
+- `TestEveryCardHasATest`, `TestNoOrphanedTestFiles`, and
+  `TestEveryCardTestAsserts` in `cards_test`'s `testfiles_test.go` (every `func Test…` reaches an `Expect*` or a raw
+  `t.Error`/`t.Fatal`, through subtests and package-local helpers) hold the
+  floor, with no allowlist.
+- **Branch coverage is not automated on purpose; do not propose a check for
+  it.** The both-sides rule is enforced by review. Every proxy (subtest count,
+  effect-node shape) misfires on ~108 tests that cover both branches in one
+  function, and a rule wrong a tenth of the time earns an allowlist, which is
+  not a ratchet. The answer is the planned state-exploration harness.

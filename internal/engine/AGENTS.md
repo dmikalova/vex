@@ -1,684 +1,442 @@
 # Engine design guide
 
-`internal/engine` is the pure game engine. It imports nothing upward (see the
-dependency layering in the root `AGENTS.md`) and is the one package held to 100%
-test coverage (`mage ci:cover`). This document is the **design ideal** for the
-engine: the patterns it is built from, where each belongs, and the deliberate
-tradeoffs — including the ones that look like smells but are forced by a
-constraint, and how to handle them so the next mechanic still lands cleanly.
-
-Read this alongside [docs/style-guide.md](../../docs/style-guide.md) ("Composition
-and design") and the file-organization rules in the root `AGENTS.md`. This guide is
-the _why_; those are the _what goes where_.
+`internal/engine` is the pure game engine: it imports nothing upward and is held
+to 100% coverage, so a new code path needs an engine test (a card test does not
+count toward the engine gate). This file is the design ideal: the patterns the
+engine is built from, where each belongs, and the deliberate tradeoffs, some of
+which look like smells but are forced by a constraint. The _why_ behind the
+composition rules is the style guide's "Composition and design".
 
 ## Two hard constraints shape everything
 
-Almost every non-obvious choice in the engine traces back to one of these. When
-something looks un-idiomatic, check it against these before "fixing" it. Both are
-recorded as ADRs — read them for the full rationale and the rejected alternatives.
+When something looks un-idiomatic, check it against these and their ADRs before
+"fixing" it.
 
 1. **Flat, pointerless, comparable state** (ADR 0005). `GameState` is a value
-   struct of fixed arrays (`[maxCards]CardCore`, `[2]Zone`) — no pointers, slices,
-   or maps — so `GameState.FastCopy()` is a plain value copy for MCTS cloning. What
-   that forces in day-to-day work:
-   - State cannot hold a closure or `Effect`; "do X later" is flat, enum-tagged
-     data (the lasting registry, ADR 0007), not a stored `func`.
+   struct of fixed arrays (`[maxCards]CardCore`, `[2]Zone`), so
+   `GameState.FastCopy()` is a plain value copy for MCTS cloning and undo is a
+   snapshot. Never introduce a pointer, slice, or map into `GameState` or into
+   a value compared against it.
+   - State holds no closure or `Effect`; "do X later" is flat, enum-tagged data
+     (the lasting registry, ADR 0007).
    - Values compared against state (notably `Target`, `== Target{}` in
      `ConstantAbility`) stay comparable: a wide flag struct, not a `[]filter`;
      paired `x int` + `hasX bool`, not `*int`.
    - Cards are `LocalID uint8` indices into a read-only `catalog` shared across
      clones.
-
 2. **Effects touch the game only through the `Resolver` port** (ADR 0008). An
-   `Effect` holds a `Resolver` via `EffectContext`, never `*Game` or `GameState`;
-   the port is the complete, auditable catalogue of card-facing capability (Ports &
-   Adapters: the effect AST is the domain, `Resolver` the port, `*Game` the
+   `Effect` holds a `Resolver` via `EffectContext`, never `*Game` or
+   `GameState`; the port is the complete, auditable catalogue of card-facing
+   capability (the effect AST is the domain, `Resolver` the port, `*Game` the
    adapter).
 
-## Patterns in use (and where each belongs)
+## File organization
 
-- **Interpreter — the effect AST (`Effect`)** (ADR 0006). Every node has `Text()`
-  (renders English) and `Resolve(ctx)` (carries it out); one value drives both, so
-  printed card text can never desync from behavior. A new mechanic is almost always
-  a new `Effect` node in `effect_<mechanic>.go`, not a new branch in the `Game`
-  runtime. **A brand-new `Effect` node — or a new `card` facade type — is gated
-  behind a full grill-me session (the `grilling` skill) that the human signs off
-  on, whether or not you came through the `implement-cards` skill.** Extending the
-  engine in composable ways needs no ceremony (a new field, `Strategy`, `Target`
-  filter, or `Count` on an existing node is the normal way it grows); but a new
-  node widens the shared vocabulary permanently, and cramming a mechanic into an
-  existing node in a way that is not clean and composable is the same smell. Both
-  must be argued for, not slipped in: stop and present the grill (why it is
-  necessary, the cluster of real cards that need it, the alternatives rejected, and
-  a before/after authoring comparison). If the grill does not clearly land in
-  favour of the new node, extend an existing one instead. When a vocabulary file grows unwieldy (the `Condition` and `Count`
-  families each ran past a thousand lines), split it by category into
-  `<prefix>_*.go` files that keep the family prefix — `effect_condition.go` keeps
-  the framework (the interface, `Comparison`, `Conditional`, `Or`, `CountIs`) and
-  its conditions move to `effect_condition_board.go` / `_source.go` / `_it.go` /
-  `_turn.go`; `effect_count.go` splits the same way (`_board.go` / `_turn.go` /
-  `_produced.go`). A bare concept file splits without the `effect_` prefix but
-  still keeps its own top-level prefix so an `ls` groups the family together:
-  `target.go` → `target_refinement.go` (the `Refinement` strategies) + `target_select.go`
-  (the selection machinery); `resolver.go` → `resolver_game.go` (the `*Game`
-  implementation of the port, kept apart from the interface declarations);
-  `text.go` → `text_helpers.go` (the card-agnostic string helpers, kept apart from
-  the card-shaped renderers).
-- **Composite — `Sequence`, `Conditional`, `ChooseHouseThen`,
-  `Repeat`, …** compose child `Effect`s and recurse `validateEffect` into them.
-  Prefer composing small nodes over one fused node (root `AGENTS.md`: "decompose
-  fused effects"). `Sequence` is the only ordered composite: it breaks its
-  children into their own sentences by default ("A. B."), and derives the
-  exceptions — a run of folding children conjoins into one instruction ("destroy
-  a creature and an artifact"), and a `Conditional` gate keeps its own consequence
-  joined so the gate visibly covers every clause. There is no per-child sentence
-  wrapper and no second list node to choose between; how a card reads follows from
-  its effects, not from which composite the author picked.
-- **Strategy — the `Chooser` family, and the `Refinement` / `Count` / `Condition`
-  trio.** See the next section; this is used heavily and should keep being the
-  first tool reached for when behavior varies along an axis.
-- **Ports & Adapters — `Resolver`** (ADR 0008). See constraint 2 and the
-  segregation section.
-- **Facade — the `internal/card` package** wraps the engine for authoring so card
-  files never import `engine`.
+The filename says which responsibility a file holds:
+
+- `game.go` + `game_*.go` — methods on `*Game`, grouped by area
+  (`game_turn.go`, `game_play.go`, `game_read.go`, `game_abilities.go`,
+  `game_combat.go`, `game_leaves_play.go`, …). A new `Game` method goes in the
+  matching `game_*.go`, unless it is one mechanic's own gate or read.
+- `effect.go` + `effect_*.go` — the effect AST, one file per mechanic. A new
+  effect goes in `effect_<mechanic>.go`. **A mechanic's own gates and reads
+  stay in its file**, even when they are `*Game` methods: Alpha's
+  `barredByAlpha`, Omega's `endStepIfOmega`, Deploy's
+  `deployPosition`/`chooseFlank`/`choosePosition`, copy-stats'
+  `copiedStatsSource` and `CopyStats`, the text box's `grantedTextBoxSources`
+  and `GrantTextBox`. A method that is not part of one mechanic's seam goes in
+  the matching `game_*.go` (`SetActiveHouse` is in `game_turn.go`).
+- `mechanic_*.go` — a self-contained ambient mechanic that is neither an effect
+  node nor a `Game`-method area: a small flat state type plus its reads and
+  gates (`mechanic_tide.go`, `mechanic_toll.go`, `mechanic_counter.go`, …).
+  A mechanic already clustered by a family prefix (`house_*`) stays there, and
+  execution-model plumbing (`suspend.go`, ADR 0040) keeps its own concept file.
+- Everything else is a concept file named for what it defines (`card.go`,
+  `state.go`, `target.go`, `duration.go`, `destination.go`, `resolver.go`,
+  `text.go`): a pure value, enum, or display type with no rules. A new enum or
+  value type gets its **own** `<concept>.go` (destinations are in
+  `destination.go`, not `game_destination.go`; `game_` is only for `Game`
+  methods).
+- When a vocabulary file grows unwieldy, split it by category into files that
+  keep the family prefix, so `ls` groups the family: `effect_condition.go`
+  keeps the framework (the interface, `Comparison`, `Conditional`, `Or`,
+  `CountIs`) and its conditions move to `effect_condition_board.go` /
+  `_source.go` / `_it.go` / `_turn.go`; `effect_count.go` splits into
+  `_board.go` / `_turn.go` / `_produced.go`; `target.go` into
+  `target_refinement.go` + `target_select.go`; `resolver.go` into
+  `resolver_game.go`; `text.go` into `text_helpers.go`.
+- Tests sit beside their source in `<name>_test.go`, named for the **source
+  file that defines the symbols they exercise**, never for the card or
+  scenario that motivated them: a `TakeControl` test goes in
+  `effect_control_test.go`, not `effect_saurian_egg_test.go`. Split a test that
+  spans two mechanics across both mechanics' test files. The one exception is
+  `helpers_test.go`, the shared test infrastructure.
+- The `internal/card` facade mirrors these namespace and type files
+  (`duration.go` → `card/duration.go`, `destination.go` →
+  `card/destination.go`), and the rules in this file govern it too.
+
+## Patterns in use
+
+- **Interpreter — the effect AST (`Effect`)** (ADR 0006). Every node has
+  `Text()` (renders English) and `Resolve(ctx)` (carries it out), so printed
+  text cannot desync from behavior. A new mechanic is almost always a new node
+  in `effect_<mechanic>.go`, not a new branch in the `Game` runtime.
+- **A brand-new `Effect` node or `card` facade type needs a grill-me session
+  (the `grilling` skill) the human signs off on**, whether or not you came
+  through `implement-cards`. A new field, `Strategy`, `Target` filter, or
+  `Count` on an existing node needs no ceremony. A new node widens the shared
+  vocabulary permanently, and cramming a mechanic into an existing node in a
+  way that is not clean and composable is the same smell: stop and present the
+  grill (why it is necessary, the cluster of real cards that need it, the
+  alternatives rejected, a before/after authoring comparison). If the grill
+  does not clearly favour the new node, extend an existing one.
+- **Composite — `Sequence`, `Conditional`, `ChooseHouseThen`, `Repeat`, …**
+  compose child `Effect`s and recurse `validateEffect` into them; compose small
+  nodes over one fused node. `Sequence` is the only ordered composite: its
+  children are separate sentences by default ("A. B."), a run of folding
+  children conjoins ("destroy a creature and an artifact"), and a
+  `Conditional` gate keeps its consequence joined so it visibly covers every
+  clause. There is no per-child sentence wrapper and no second list node.
+- **Strategy** — see below; reach for it first when behavior varies along an
+  axis.
+- **Ports & Adapters — `Resolver`** (ADR 0008); see the roles below.
+- **Facade — `internal/card`** wraps the engine so card files never import
+  `engine`; `card.New(name, …, WithFoo)` is a functional-options builder.
 - **Null Object / invalid-zero** (ADR 0010). `FirstChooser` is the default
-  strategy; `playerUnset` / `targetUnset` / `durationUnset` / `eventUnset`
-  sentinels make an omitted required field an error caught at card-init
-  `validate()` rather than a silent default.
+  strategy; the `playerUnset` / `targetUnset` / `durationUnset` / `eventUnset`
+  sentinels make an omitted required field a card-init `validate()` error, not
+  a silent default.
+- **Visitor** — a whole-tree operation that is not part of a card's identity;
+  see below.
 
-## Strategy: use it, and keep the text with the behavior
+## Strategy: keep the text with the behavior
 
-Strategy is the engine's second backbone after Interpreter. The mature form here
-is a strategy that carries **both** its behavior and its printed-text fragment, so
-it plugs into the AST without desync:
+A strategy carries **both** its behavior and its printed-text fragment, so it
+plugs into the AST without desync. When behavior varies along an axis, model
+the axis as a small strategy that renders its own text, not a new
+`Effect`/`Target` field or a `bool`.
 
-- **`Chooser` (`game.go`) is the decision strategy**, swapped per frontend:
-  `FirstChooser` (bot/tests, deterministic), `suspendChooser` (interactive play:
-  it yields a `Request` instead of computing an answer, which is what the web
-  client answers through), `bridgeChooser` (test harness). The engine never knows _how_ a decision
-  is made. Extend a chooser's capability with an **optional capability
-  interface** discovered by type assertion — `OptionChooser`, `Orderer` — with a
-  graceful fallback when unimplemented. That is the idiomatic-Go form of Strategy
-  (cf. `io.WriterTo`, `http.Flusher`); prefer it over widening the base `Chooser`.
-  Every asking capability takes the same leading pair: a `PromptSource`
-  (`prompt.go`) naming the card whose ability raised the prompt, then the prompt
-  text. The text is already rendered — `renderPrompt` substitutes `SelfName`
-  inside the engine — so the source is **identity, not text**: a client uses it to
-  point at the card, never to rebuild the sentence. Add a new source of prompt
-  context as a field on `PromptSource`, not as another parameter on all 68 chooser
-  implementations. A trigger window (`ReactionChooser`) and a badge
-  (`BadgeChooser`) take no source: a window is not raised by one card (each
-  `OrderableReaction` names its own), and a badge decorates a pick that already
-  carries one.
-- **`Refinement` (`target.go`)** is a set-relative refinement (`refine` + `clause`)
-  such as `MostPowerful` (or `Except(MostPowerful)`). It narrows the ids _and_
-  contributes a phrase, so niche "compare candidates to each other" rules compose
-  onto any `Target` **without a field per rule**. When you are tempted to add
-  another `Target` bool for a whole-set rule, add a `Refinement` instead.
-- **`Count` and `Condition`** are pluggable value/predicate strategies, each with
-  paired text (`CountText` / `CondText`). A number that scales with the board is a
-  `Count`, not a bespoke effect; a branch is a `Condition` fed to `Conditional`.
+- **`Chooser` (`game.go`)** is the decision strategy, swapped per frontend:
+  `FirstChooser` (bot/tests, deterministic), `suspendChooser` (interactive: it
+  yields a `Request` the web client answers), `bridgeChooser` (test harness).
+  Extend it with an **optional capability interface** found by type assertion
+  (`OptionChooser`, `Orderer`) with a graceful fallback, not by widening the
+  base `Chooser`.
+- Every asking capability takes a leading `PromptSource` (`prompt.go`) naming
+  the card that raised the prompt, then the already-rendered prompt text
+  (`renderPrompt` substitutes `SelfName`). The source is **identity, not
+  text**: a client points at the card with it and never rebuilds the sentence.
+  Add new prompt context as a `PromptSource` field, not a parameter on all 68
+  chooser implementations. `ReactionChooser` and `BadgeChooser` take no source:
+  a window is not raised by one card (each `OrderableReaction` names its own),
+  and a badge decorates a pick that already carries one.
+- **`Refinement` (`target.go`)** is a set-relative rule (`refine` + `clause`)
+  such as `MostPowerful` or `Except(MostPowerful)`: it narrows the ids and
+  contributes a phrase. Add a `Refinement`, not another `Target` bool, for a
+  whole-set rule.
+- **`Count` and `Condition`** are value/predicate strategies with paired text
+  (`CountText` / `CondText`). A number that scales with the board is a `Count`;
+  a branch is a `Condition` fed to `Conditional`.
 - **`CreatureVerb`** is a per-creature verb strategy for `OnChooseCreature`.
-- **`RepeatGate` (`effect_repeat.go`)** is the strategy a `Repeat` varies along,
-  and the axis is **why the loop stops**. `While` stops only when its `Condition`
-  fails, so a condition the effect cannot move leaves the Rule of Six (ADR 0043)
-  as the only bound. `WhileYouDo` stops on that _or_ as soon as the effect does
-  nothing; `MayWhileYouDo` stops on either of those or when the controller
-  declines. `ByExalting` never loops — it offers one more resolution, paid by
-  exalting a creature. That split is what the printed text shows: the gates that
-  ask whether the effect happened print rule 5's `->`, and `While` prints two
-  plain sentences. Each gate carries both its loop and its trailing "repeat"
-  clause, so a new repeat shape is a new gate, not a new node.
+- **`RepeatGate` (`effect_repeat.go`)** is the axis `Repeat` varies along:
+  **why the loop stops**. `While` stops only when its `Condition` fails (so the
+  Rule of Six, ADR 0043, may be the only bound); `WhileYouDo` also stops when
+  the effect does nothing; `MayWhileYouDo` also when the controller declines;
+  `ByExalting` never loops, offering one more resolution paid by exalting a
+  creature. Gates that ask whether the effect happened print rule 5's `->`;
+  `While` prints two plain sentences. A new repeat shape is a new gate, not a
+  new node.
+- Changing `Stepper` (`suspend.go`) or how an interactive action ends: read
+  [docs/engine/stepper.md](../../docs/engine/stepper.md) first.
 
-Rule of thumb: when behavior varies along an axis, model the axis as a small
-strategy interface that also renders its own text — not a new `Effect`/`Target`
-field or a `bool`.
+## Reused effect shapes get one shared helper
 
-## The `Stepper` suspends an action, and contains what it breaks on
+When a shape (a field cluster and the logic turning it into a value, phrase, or
+validation error) shows up in a third effect, factor its logic into one helper;
+each effect keeps its own authoring fields. Prefer a shared helper over a
+shared embeddable value type. Before writing or extending an effect's amount,
+`Per`/`Times` scaling, `Produced` tally, zone movement, multi-pick, or
+redistribution, read
+[docs/engine/effect-shapes.md](../../docs/engine/effect-shapes.md): it names the
+helpers already factored (`scaled`, `errAmountOr`, `poolAmount`,
+`crossZoneMover`, `pickCards`, `placeAmong`, …).
 
-`Stepper` (`suspend.go`) is the interactive path of ADR 0040: it runs one action
-on a goroutine with `suspendChooser` installed for both players, `Start` yields
-the first `Request`, and `Advance(cmd)` answers the current one and yields the
-next. `internal/session` drives it; the web client drives the session and holds
-no `Chooser` of its own (ADR 0047).
-
-Two rules about how an action ends, and neither is optional:
-
-- **A panic inside the action does not escape.** The goroutine recovers **before**
-  closing `requests`, never after: a panic that unwound past the close would leave
-  every later `Start`/`Advance` blocked forever on a channel nobody will send to
-  or close, and under wasm it would take the whole program down
-  (`TestStepperContainsAPanickingAction`). The recovered value and the stack taken
-  **at recover time** become a `*PanicError` — the stack has to be captured inside
-  the deferred recover or the panicking frames are already gone.
-- **`Err()` says why the action stopped.** `Start` and `Advance` report only that
-  the action is **done**; the caller then asks `Err()` whether it finished or
-  broke. That is the iterator convention Go already uses for a loop that can fail
-  (`bufio.Scanner`'s `Scan`/`Err`, `sql.Rows`' `Next`/`Err`) — do not widen
-  `Start`/`Advance` to return an error instead.
-
-`Close()` releases an action still parked at a decision, so a `Stepper` abandoned
-mid-action — an undo or a replay that deals a fresh game — leaks neither the
-goroutine nor the `Game` it captured. It is idempotent
-(`TestStepperCloseReleasesGoroutine`).
-
-## Reused effect shapes get one shared helper, not a copy per effect
-
-Effects recur in **shapes** — the same little field cluster and the same logic to
-turn it into a value, a phrase, or a validation error — across unrelated
-mechanics. When a shape shows up in a third effect, factor its logic into one
-helper the effects share; each effect keeps its own authoring fields (so the card
-API stays ergonomic), but not its own copy of the behavior. The shapes factored so
-far:
-
-- **Scale by a `Per` count.** A magnitude that reads "N for each ..." is a base
-  times a `Per Count`. `scaled(base, per, ctx)` (`effect_count.go`) is the value
-  companion to `forEach`'s text — `Draw`, `GainAember`, `DealDamage`,
-  `AddPowerCounter`, `CaptureAember`, and the economy amounts all scale through it.
-  `Per` means the same thing on every effect: multiply one target's amount. The
-  distinct "re-run choosing a fresh target" axis is `Times` (`Repeat.Times`,
-  `CaptureAember.Times`), never an overloaded `Per`.
-- **Amount, or an alternative magnitude.** Many effects offer a fixed `Amount`
-  or one other way to say the same size — a `By` pool share, an `All`/`Fully`
-  whole-quantity flag. `errAmountOr(name, alt, amount, altSet)` (`effect.go`) is
-  the shared "set one, not both" validation, beside the `errUnset*` helpers.
-- **How much Æmber against a pool.** `StealAember`, `LoseAember`, `CaptureAember`
-  (and, minus the share, `GainAember`) express the amount as a fixed base scaled by
-  `Per`, or a `By Loss` share (`Half`, `AllBut(n)`, `AllAember`). The economy
-  helpers in `effect_aember.go` — `poolAmount(base, by, per, ctx, pool)` for the
-  value (uncapped; the caller `min`s against the pool and records the capped
-  figure) and `aemberObject(amount, by, possessive)` for the printed object — carry
-  that. A `bool` like Capture's `All` is `By: AllAember` internally; keep the
-  authoring `bool` only where the printed wording genuinely differs ("captures
-  **all** your opponent's Æmber" has no "from" clause).
-- **Count what the previous effect produced.** A "for each ... this way" magnitude
-  is a `Count` reading a tally the prior effect left on `ctx.Produced` —
-  `CreaturesHealed`, `DamageHealed`, `CardsDestroyed`. A new such tally is a field
-  on `Produced` plus a small `Count`, never a bespoke fused effect. A tally about a
-  card that _leaves play_ during the effect must be measured **just before** the
-  card is removed, so a modifier it carried still counts and a ward that keeps it in
-  play does not: `Destroy.destroy` snapshots each creature's board `Power` before
-  `DestroyEachFrom` and adds it to `Produced.DestroyedPower` only for creatures that
-  actually left, which `PowerDestroyedThisWay` reads (Might Makes Right forges when
-  the creatures it destroyed totalled 25 board power). A `Count` used only by a
-  `CountIs` threshold still implements `CountText` for the `Count` interface even
-  though only its `CountClause` renders.
-- **Move a card between zones.** Archive, Discard, Purge, Shuffle, and Put are one
-  mechanism — a source zone, a selection strategy (chosen / any-number / all /
-  random / top-N, with house/type/name/trait filters), a destination, and the
-  optional `ctx.It`/`ctx.Produced` side effects — with each KeyForge verb a thin
-  authoring struct that fixes the destination and delegates to it (ADR 0031). It
-  is the largest instance of this rule, and the target the Archive/Discard/Purge/
-  Shuffle/Put families fold into as their cards are touched: a new zone-movement
-  effect adds a selection filter or a destination, never a new bespoke type. The
-  mechanism stays unexported — authors write the verb the card prints, not a
-  generic `Move`.
-- **Move a card that could be in several zones to one destination.** A verb that
-  gathers a player's cards across a _set_ of source zones (play, hand, discard,
-  deck) and sends the picked card to one destination — Faygin (`ReturnNamedToHand`:
-  play/discard -> hand), the search tutors (`SearchForName`: deck/discard -> hand),
-  Song of Spring
-  (`ShuffleIntoDeck`: play/hand/discard -> deck) — shares one
-  internal mechanism, `crossZoneMover{Player, Dest, Sources}` (`effect_cross_zone.go`).
-  It gathers with a `keep` predicate (`gather`) and dispatches each picked card
-  through the per-`(origin, Dest)` move that reaches the destination from the zone
-  the card actually sits in (`move`/`originOf`). The **destination is passed
-  explicitly**; a mover never infers it from where the card sat. Each verb stays a
-  thin node keeping its own printed text, filter (`Named` vs creature/house), prompt,
-  reveal, and `All`/gate specifics — only the "which move lands zone X in zone Y"
-  matrix is shared. This is the general shape of the rule below it.
-- **Pick any number of cards one at a time.** "Destroy any number of ...", "purge
-  any number of ...", "keep N ..." all gather the controller's picks from a
-  shrinking pool one prompt at a time. That loop is one helper —
-  `pickCards(ctx, prompt, limit, optional, avail)` (`target_select.go`): `limit <= 0`
-  is unbounded, `optional` makes each prompt declinable, and `avail` is re-read each
-  round so a pool that shifts as cards leave stays current. An effect that spends or
-  keeps a variable number of cards calls it and acts on the returned slice (Obsidian
-  Forge, Destructive Analysis, Unnatural Selection, Tertiate); it does not re-roll
-  the pick-until-decline loop.
-- **Redistribute a resource among a side's creatures.** Equalize (Æmber) and
-  Entropic Manipulator (damage) both drain a resource off a set of creatures into
-  a pool, then hand the pool back one unit at a time onto a chooser-picked creature
-  (falling back to the first). That inner loop is one helper —
-  `placeAmong(ctx, creatures, prompt, pool, place)` (`effect_redistribute.go`). The
-  two effects keep **separate nodes** (`RedistributeCapturedAember`,
-  `RedistributeDamage`), because everything around the shared loop diverges: the
-  drain (Æmber vs damage accessors), the side selection (a `Side` field vs a
-  runtime player prompt), the accept gate (damage only), and the lethal follow-up
-  pass (damage only). Merging them into one `Resource`-switched node would be a
-  branchy blob switching inside `Resolve`, not one mechanic — do **not** collapse
-  the two nodes; share only the loop.
-
-Prefer a shared **helper** over a shared embeddable value type. Now that `Per`
-means one thing everywhere, `{Amount, By, Per}` genuinely is uniform across
-`StealAember`/`LoseAember`/`CaptureAember` (and `{Amount, Per}` in `GainAember`,
-which has no pool to take a share of), so a `Quantity{Amount, By, Per}` would fit.
-It still does not pay off. Go composite literals do not promote embedded fields, and
-the `card` facade aliases these structs (`card.StealAember = engine.StealAember`),
-so a `Quantity` would turn every flat authoring site — `{Amount: 2, Per: X}` — into a
-nested `{Quantity: Quantity{Amount: 2, Per: X}}` across ~120 card call sites plus
-their tests, buying nothing the helpers above do not already carry. Factor the
-logic, keep the fields.
-
-## `Resolver` is segregated into role interfaces — add to the right role
-
-The port and its rationale are ADR 0008. In practice it is composed from focused
-role interfaces, not one flat list:
+## `Resolver` is segregated into role interfaces
 
 `StateReader` (reads) · `EconomyResolver` (Æmber/keys/chains) ·
 `CreatureResolver` (per-card in-play state) · `BoardResolver` (duration-scoped
-rules over creatures collectively) · `CombatResolver` (damage,
-destruction, ability-driven fight/reap/action) · `PlayResolver` (playing a card
-from a zone, putting one into play, the play sequence) · `ZoneResolver` (card
-movement between zones without playing + draw) · `TurnResolver` (turn-scoped
-grants + the lasting registry) · `ChoiceResolver` (ordering + choosing) ·
-`Logger`.
+rules over creatures collectively) · `CombatResolver` (damage, destruction,
+ability-driven fight/reap/action) · `PlayResolver` (playing a card from a zone,
+putting one into play, the play sequence) · `ZoneResolver` (movement between
+zones without playing, plus draw) · `TurnResolver` (turn-scoped grants and the
+lasting registry) · `ChoiceResolver` (ordering and choosing) · `Logger`.
 
-**When adding a mechanic that needs a new engine capability**, add the method to
-the role interface it belongs to (and implement it on `*Game`). Do not append to a
-flat list. If a new method fits no existing role, that is a signal a new role —
-and probably a new area of the game — is emerging: add a small role interface and
-embed it in `Resolver`.
+A new engine capability is a method on the role it belongs to, implemented on
+`*Game`. If it fits no role, a new area is emerging: add a small role interface
+and embed it in `Resolver`.
 
-## Every interface this package declares is classified
+## Every interface and enum this package declares is classified
 
-Declaring a `type X interface` in `internal/engine` fails the build until
-`Interfaces()` in `catalog_interface.go` carries a row for it
-(`TestInterfaceTotality`). A row states one of two things:
+The totality tests (`catalog_test.go`, `catalog_enum_test.go`,
+`catalog_interface_test.go`; ADR 0018) fail the build on anything
+unclassified. `mage tool:census` only reports what the census still owes, so it
+reads while half-filled: per node family (`engine.Families()`) the node types
+no census row covers and the rows naming no type, how the interfaces are
+classified, and the rulebook terms still to write or unclaimed, counting the
+text-bearing value enums (`engine.Enums()`).
 
-- **a catalogued family** — the interface a card definition's meaning varies
-  along, whose implementations print their own fragment of card text. The row
-  names the catalog enumerating them, which must be a `Families()` entry (or
-  `LogEntrySamples` for `LogEntry`). Adding a strategy axis therefore means
-  adding a `catalog_<family>.go` beside it; `Quantity`, `Gather` and `TopAct`
-  each arrived this way.
-- **not a family, with the reason** — a port (`Resolver`'s roles, `Chooser` and
-  its optional capabilities, `Namer`), an optional capability that only reshapes
-  the text of a node already catalogued elsewhere (`negatable`, `combinable`,
-  `framedClause`), or an internal shape two value types share (`cardPile`).
+- A new `type X interface` fails `TestInterfaceTotality` until `Interfaces()`
+  in `catalog_interface.go` has a row for it. The row says either **a
+  catalogued family** (the interface a card's meaning varies along, whose
+  implementations print their own text; the row names its catalog, a
+  `Families()` entry or `LogEntrySamples` for `LogEntry`, so a new strategy axis
+  gets a `catalog_<family>.go`, as `Quantity`, `Gather` and `TopAct` did), or
+  **not a family, with the reason** (a port such as `Resolver`'s roles,
+  `Chooser` and its capabilities, `Namer`; an optional capability that only
+  reshapes a catalogued node's text, such as `negatable`, `combinable`,
+  `framedClause`; an internal shape two value types share, such as
+  `cardPile`). Write the reason so the next reader can judge from the row alone
+  whether it is wrong or has since grown text-printing members. When in doubt,
+  classify it as a family and write the catalog.
+- A new `Keyword`, `Duration`, or `CounterKind` constant fails the build until
+  its enumerating function (`Keywords()`, `Durations()`, `CounterKinds()`)
+  returns it, or the enum's `Excluded` list names it with the reason it is not
+  a real member.
+- **Keep the rules current.** Adding or changing a keyword, trigger, card type,
+  or rule-bearing effect registers or updates its rulebook term in the same
+  change.
 
-Write the reason as a reason, not as a category label: the next reader has to be
-able to judge from the row alone whether the interface was classified wrongly, or
-has since grown members that print card text and so now owes a catalog. When in
-doubt, classify it as a family and write the catalog.
+## New whole-tree operations: a type-switch Visitor, not a new AST method
 
-## New whole-tree operations: a type-switch "Visitor", not a new AST method
-
-`Text()` and `Resolve()` are **intrinsic** to a card's identity, so they live on
-each `Effect` node. An operation that is **not** part of a card's identity — an
-MCTS/AI value estimate, a static analysis like "does this effect ever target the
-opponent", serialization — should **not** become a third method on every node.
-Adding it that way forces touching ~40 types for a concern cards do not care
-about.
-
-Instead, write a standalone function that type-switches over `Effect` in one
-file (the Go-idiomatic Visitor):
-
-```go
-// aiValue estimates the board value of an effect for the search AI. It is an
-// extrinsic operation over the effect AST, kept out of the Effect interface so
-// the card vocabulary stays about identity, not heuristics.
-func aiValue(e Effect) int {
-    switch e := e.(type) {
-    case GainAember:
-        return e.Amount
-    case DealDamage:
-        return e.Amount // ...
-    default:
-        return 0
-    }
-}
-```
-
-`lastingActionOf` in `effect_lasting.go` is already this shape — a centralized
-type switch that maps effects to a flat action. Follow it. The tradeoff (a type
-switch is not exhaustively checked by the compiler) is handled by keeping each
-such operation in **one** file next to a comment listing which effects it covers,
-and by the 100% coverage gate forcing every branch to be exercised.
+`Text()` and `Resolve()` are intrinsic to a card's identity. An operation that
+is not (an MCTS value estimate, a static analysis, serialization) is a
+standalone function that type-switches over `Effect` in one file, never a third
+method on every node. Follow `lastingActionOf` (`effect_lasting.go`). Keep each
+such function in one file, next to a comment listing the effects it covers; the
+coverage gate forces every branch.
 
 ## The lasting registry is the flat-state interpreter
 
 "For the remainder of the turn" behavior (Full Moon, Charge!, Crystal Hive,
-Dimension Door) is a second, deliberately smaller interpreter, because flat state
-cannot store an `Effect` closure — the decision and its rationale are ADR 0007.
-State holds flat `LastingEffect{On Event, Do lastingAction, Controller, Amount}`
-records; `lastingActionOf` maps a composed effect to an enum tag and
-`game_lasting.go` fires/queries them. A **reaction** runs after an event: every
-site that fires the event folds its reactions into that event's trigger window with
-`lastingReactions` (ordered together with the card abilities through the flat
-`ReactionChooser` port, ADR 0013) — even an event with no card ability of its own,
-like an enemy creature destroyed, still gets a window (`afterDestroyedReactions`
-folds `EventEnemyCreatureDestroyed` reactions in). A **replacement** changes an
-event's outcome (`lastingReplacement` + `Instead{Of, With}`).
+Dimension Door) is a smaller interpreter, because flat state cannot hold an
+`Effect` closure (ADR 0007). State holds flat
+`LastingEffect{On Event, Do lastingAction, Controller, Amount}` records;
+`lastingActionOf` maps a composed effect to an enum tag and `game_lasting.go`
+fires and queries them.
 
-To add one: a reaction on an existing event = support its `Do` in `lastingActionOf`
-and `resolveReaction`; a new event = an `Event` value, one `lastingReactions`
-(folded into that event's window) or `lastingReplacement` call at the site, and
-its `clause`/`gerund` text. You never restructure the play/reap hot path. Keep the
-enum dispatch centralized.
+- Never add a bespoke `if g.State.Foo…` block to the play or reap path
+  (`PlayCreature`, `reapWith`); that hardcodes each effect into the hot path and
+  makes effects sharing a timing window unorderable. Everything routes through
+  the registry as a **reaction** or a **replacement**.
+- A card in play granting every creature an ability is a `ConstantAbility`
+  with a `Target` and `Granted` abilities, never a global override in
+  `discardDestroyed` or another leave-play path.
+- A **reaction** runs after an event: every site firing the event folds its
+  reactions into that event's trigger window with `lastingReactions`, ordered
+  with card abilities through the flat `ReactionChooser` port (ADR 0013). An
+  event with no card ability of its own still gets a window
+  (`afterDestroyedReactions` folds `EventEnemyCreatureDestroyed` in). A
+  **replacement** changes an event's outcome (`lastingReplacement` +
+  `Instead{Of, With}`).
+- To add a reaction on an existing event, support its `Do` in `lastingActionOf`
+  and `resolveReaction`. A new event is an `Event` value, one
+  `lastingReactions` or `lastingReplacement` call at the site, and its
+  `clause`/`gerund` text. Never restructure the play/reap hot path; keep the
+  enum dispatch centralized.
+- **Modifying pending damage is a replacement, not a reaction.** "Whenever a
+  creature takes damage, it takes an additional N" (Lethal Distraction) is to be
+  modelled as a replacement on a "damage about to be dealt" event that
+  increases the pending amount, retiring the bespoke `TakesExtraDamage`
+  (ADR 0031; not yet built).
+- **Æmber flow is replaced at either endpoint.** The destination is
+  `EventAemberAddedToPool` (Ether Spider captures Æmber before it lands); the
+  source is `EventAemberTakenFromPool` (Po's Pixies draws a steal or capture
+  from the supply). Both ride the one `Instead{Of, With, Player}` in
+  `CardDefinition.Replaces`, read by a scanner scoped to the watched pool
+  (`aemberCaptorFor`, `AemberTakenFromSupply`). A new redirect is a `Replaces`
+  on the matching event plus a `Replacement` enum member, never a bespoke
+  `CardDefinition` bool. A scanner returns the **card it found**, and every
+  replaced outcome narrates through `replacementLine` (`log_replacement.go`):
+  `<cause> has <actor> <outcome>, instead of <displaced>`.
+- Card-side authoring of lasting effects is in
+  [docs/card-implementation.md](../../docs/card-implementation.md).
 
-**Modifying pending damage is a replacement, not a reaction.** "Whenever a
-creature takes damage, it takes an additional N" (Lethal Distraction) reads as a
-reaction, but a reaction deals the extra as a _second_ hit after the fact. The
-direction is to model it as a replacement on a "damage about to be dealt" event
-that takes the pending amount and increases it, so the extra lands as part of the
-same damage — extending the `Replacement`/`Instead` vocabulary and retiring the
-bespoke `TakesExtraDamage` effect (ADR 0031; not yet built).
+## Side-tables: house constraints, counters, take control
 
-**Æmber flow is replaced on either endpoint — source or destination.** When Æmber
-moves, a continuous `Replaces` on a card can swap either end. The **destination**
-is `EventAemberAddedToPool` — Ether Spider captures Æmber before it lands in a
-pool. The **source** is `EventAemberTakenFromPool` — Po's Pixies draws a steal or
-capture from the common supply instead of the pool. Both ride the one
-`Instead{Of, With, Player}` a card carries in `CardDefinition.Replaces`, read (not
-resolved) by a scanner scoped to the watched pool: `aemberCaptorFor` on the
-destination, `AemberTakenFromSupply` on the source. A new redirect of where taken
-or added Æmber comes from or goes to is a `Replaces` on the matching event plus a
-member on the `Replacement` enum — never a bespoke `CardDefinition` bool. Each
-scanner returns the **card it found**, not just a bool, because every replaced
-outcome is narrated in one voice that names the cause (`replacementLine` in
-`log_replacement.go`): `<cause> has <actor> <outcome>, instead of <displaced>`. A
-new replacement routes its log line through that seam rather than wording its own.
-
-## Forward house choice is one delayed constraint table
-
-Cards that reach forward to a player's **next house choice** — Control the Weak and
-Snag (must a house), Tezmal and Snag's Mirror (cannot a house), Snaglet (a wager on
-the house) — do **not** each grow a paired state slot and resolver method. They all
-arm entries in one flat table, `State.HouseConstraints[player]` /
-`HouseConstraintCount` for this turn and `…Next` for the pending one, the same
-fixed-cap-array-plus-count shape as the lasting registry (ADR 0005; `maxHouseConstraints`).
-`StartTurn` promotes the starting player's `…Next` entries and clears them, the one
-lifecycle all four cards share (ADR 0035).
-
-A `HouseConstraint` is a comparable enum-tagged record (`Kind`: must-house,
-must-creature, cannot-house, or wager). `ChooseHouse` resolves the **whole table at
-choice time** through `allowedHouses`: start from `choosableHouses` (identity houses
-plus the houses of cards the player controls in play in their own right, read now —
-a controlled off-house creature widens the choice), remove every cannot (cannot
-overrides must), and if any must survives, restrict to the surviving musts. A
-must-creature entry stores a `LocalID` and reads that creature's house **now**, so
-Snag respects house changes between the fight and the choice — never freeze a house
-at arm time. Empty allowed set = **no active house** (a valid outcome, chosen
-explicitly as No House). Wagers are scanned by `resolveHouseWagers` at the same
-choice and pay their predictor when the chosen house matches.
-
-Two reads, kept separate on purpose: `AllowedHouses` (the widened choosable-minus-
-cannot set) drives the choice and the client's picker; `PlayerHasHouse` stays
-**identity-only** because `ItIsOffIdentity` (Sneklifter) means "on the identity
-card", and a controlled off-house card must not make a creature count as in-identity.
-A new forward-choice mechanic is a new `Kind` on the table plus its handling in
-`allowedHouses`/`resolveHouseWagers`, not a new state slot.
-
-## Generic counters are a global side-table, not a field per kind
-
-Card-placed markers that only matter to the cards that read them — a doom counter
-(Wretched Doll), and its kin — live in one global side-table on `GameState`
-(`Counters [maxCounterEntries]CounterEntry` + `CounterCount`), not a bespoke
-`int16` field on `CardCore` per kind. `CardCore` is copied whole into every
-snapshot, so a field per kind would add hundreds of bytes to `FastCopy` for
-markers that are almost always absent; the side-table costs nothing when empty.
-The decision, its bound, and the rejected per-card layouts are ADR 0024.
-
-To add a counter: one `CounterKind` value in `counter.go` with its display noun —
-no rulebook term (the one "Generic Counters" entry covers them all), no new state
-field, no per-kind resolver method. Place and read through the generic
-`PlaceCounter{Kind, Target, Amount}` effect, the `CounterInPlay{Kind}` condition,
-the `Target.WithCounter(kind)` filter, and the `PlaceCounter`/`CountersOn`
-resolver methods. A per-card count folds into its entry's `N` (saturating), and a
-card sheds every entry through the one `removeFromPlay` funnel. Do **not** add a
-`FooCounters int16` to `CardCore` for a new marker. Power counters, damage, and
-Æmber-on-card stay bespoke: they are read on the hot path by identity and change a
-creature's power or fate, not markers a card names.
-
-## Take control is a LIFO stack, not one source per card
-
-"Take control" effects stack. Two abilities can seize the same card, and when the
-newer one ends the older one — if still in effect — takes over; only when the last
-ends does the card revert to its owner. Model this as the global control stack on
-`GameState` (`Controls [maxControlEntries]ControlEntry` + `ControlCount`, in
-`game_control.go`), the same flat, sparse, order-by-construction shape as the
-counter side-table. A card's controller is the top entry naming it; `ControlPlus`
-on `CardCore` is only the fast O(1) cache of that top, refreshed on every push and
-pop. The decision and the bug it fixed (a single `ControlSource` reverting straight
-to the owner, and artifacts never reverting) are ADR 0028.
-
-To take control, push one entry through `takeControl(id, controller, source)` — it
-handles creatures and artifacts alike. `source` is the card whose leaving play ends
-the grant; an **UntilCardLeavesPlay** grant names the seized card itself as `source`, so it
-lapses only when the card leaves play. A take first supersedes its own source's
-earlier entry on the card (`supersedeControl` drops the matching `(card, source)`
-pair), so re-taking replaces rather than stacks — this bounds the stack to the
-distinct in-play sources per card, the board rather than the game length. Every
-exit funnels through `removeFromPlay`, which calls `releaseControlHeldBy(id)` to
-revert what the leaving card held and `clearControls(id)` to shed its own entries.
-Do **not** add a second control field to `CardCore` or special-case artifacts; a
-permanent grant is just a self-sourced stack entry.
+Forward house choice (`HouseConstraints`), card-placed generic counters
+(`Counters`), and the take-control stack (`Controls`) are flat side-tables on
+`GameState`, never a field per card or per kind. Before changing one, or adding
+a mechanic that reaches a future house choice, places a marker, or seizes
+control, read [docs/engine/side-tables.md](../../docs/engine/side-tables.md).
 
 ## Power is dynamic: settle destruction after anything that can lower it
 
-A creature's power is computed, not stored — base plus upgrades, power counters,
-temporary bonuses, and the constant abilities in play (`Power` in `game_read.go`).
-So a creature can become destroyable with **no effect touching it**: the card
-buffing it leaves play, its `+power` counter is removed, an enemy blanks its text,
-its owner unforges a key a `Per` count scaled on. `shouldDestroy` names that state
-and `settleDestroyed` is what notices it — but only where it is called.
+Power is computed (`Power` in `game_read.go`: base, upgrades, power counters,
+temporary bonuses, constant abilities in play), so a creature can become
+destroyable with no effect touching it. `shouldDestroy` names that state and
+`settleDestroyed` notices it, but only where it is called.
 
-**Any code path that can lower a creature's power must end by settling
-destruction.** When you add or change a mechanic that touches power — a new
-counter, a constant, a blank, a control swap, a `Per`-scaled bonus, a card leaving
-play — trace every way it can reduce a `Power` result and make sure the path ends
-in `g.settleDestroyed(controller)` (directly, or through `removeFromPlay`, which
-already settles). A missed settle does not fail loudly: it leaves a creature in
-play with damage at or above its power, and the bug only surfaces turns later when
-something else finally settles the board — exactly the kind of "in 2 places" or
-"power above damage" invariant a sim soak trips. This has recurred often enough to
-be a standing check: `AddPowerCounter`, `BlankEnemyText`, `SetAember`, and the
-key-forge paths all settle for this reason; new siblings must too.
-
-**When several cards leave play at once, they leave together.** An effect that
-removes a batch of creatures (archive, destroy, return, shuffle) must not let the
-first removal's settle destroy a later member of the same batch — Epic Quest
-archives "Lion" Bautrem and the neighbor it was buffing simultaneously, so the
-neighbor is archived, not destroyed for the power it just lost and then archived a
-second time into two zones. Hold the `settling` flag across the batch and settle
-once at the end (`destroyBatch`, `putIntoArchivesEach` are the models); never loop
-a per-card leave-play call over a pre-selected list without batching.
-
-**A card is not "destroyed" until it reaches the discard pile.** Resolving a
-creature's `Destroyed:` abilities is a distinct, earlier timing window from the
-creature _being destroyed_: during `destroyTogether` every dying creature stays in
-play while the batch's `Destroyed:` abilities resolve, and only then does each go
-to its discard pile. The **"after ... destroyed"** reactions
-(`emitAfterCreatureDestroyed` for Neffru, `emitAfterEnemyDestroyed` for Pile of
-Skulls) fire only after that move, so a creature killed in the same batch is out
-of play and can neither be chosen by
-those reactions nor react to the deaths beside it — e.g. Pile of Skulls cannot
-capture onto a friendly creature that died in the same combat. Do not fire an
-"after destroyed" reaction (or offer a prompt that could pick a dying creature)
-inside the destruction window; wait until the batch is in the discard.
+- **Every code path that can lower a creature's power ends by settling
+  destruction**: a new counter, constant, blank, control swap, `Per`-scaled
+  bonus, or card leaving play ends in `g.settleDestroyed(controller)`, directly
+  or through `removeFromPlay`. A missed settle fails silently and surfaces turns
+  later as a sim invariant ("in 2 places", "power above damage").
+  `AddPowerCounter`, `BlankEnemyText`, `SetAember`, and the key-forge paths all
+  settle; new siblings must too.
+- **Cards leaving play at once leave together.** A batch removal (archive,
+  destroy, return, shuffle) must not let the first removal's settle destroy a
+  later member: Epic Quest archives "Lion" Bautrem and the neighbor it buffed,
+  so the neighbor is archived, not destroyed and then archived into two zones.
+  Hold the `settling` flag across the batch and settle once at the end
+  (`destroyBatch`, `putIntoArchivesEach`); never loop a per-card leave-play
+  call over a pre-selected list.
+- **A card is not "destroyed" until it reaches the discard pile.** During
+  `destroyTogether` every dying creature stays in play while the batch's
+  `Destroyed:` abilities resolve; only then does each go to discard. The
+  **"after ... destroyed"** reactions (`emitAfterCreatureDestroyed` for Neffru,
+  `emitAfterEnemyDestroyed` for Pile of Skulls) fire after that move, so a
+  creature killed in the same batch can neither be chosen by them nor react
+  (Pile of Skulls cannot capture onto a friendly creature that died in the same
+  combat). Never fire an "after destroyed" reaction, or offer a prompt that
+  could pick a dying creature, inside the destruction window.
 
 ## Event, ability, and effect verbs: emit → trigger → resolve
 
-Three tiers of verb, kept distinct so a method name says which level it works at:
-
-- **`emit<Event>`** announces a game event and fans out to everything listening —
-  `emitReapWindow`, `emitEnters`, `emitActionPlayedBeforeResolve`,
-  `emitLeavesPlay`. Use it at an event site that dispatches to responders (triggered
-  abilities and the lasting registry). The site folds its duration reactions into
-  that event's trigger window with `lastingReactions`.
-- **`trigger…`** resolves a _single card's_ abilities matching a trigger —
-  `triggerAbilities(id, TriggerAfterReap, …)`. The emitters call into it per card.
-- **`resolve…`** carries out one specific effect or ability — `Effect.Resolve`,
-  `resolveReaction`, `resolveUpgradePlay`.
-
-Reserve the domain word _"fire"_ for prose ("a trigger fires", "an ability
-fires"): it is what an ability does in response to an emitted event, never the name
-of a method that does the emitting.
+- **`emit<Event>`** announces an event and fans out to every listener
+  (`emitReapWindow`, `emitEnters`, `emitLeavesPlay`); its site folds duration
+  reactions into the window with `lastingReactions`.
+- **`trigger…`** resolves a _single card's_ abilities matching a trigger
+  (`triggerAbilities(id, TriggerAfterReap, …)`); emitters call it per card.
+- **`resolve…`** carries out one effect or ability (`Effect.Resolve`,
+  `resolveReaction`, `resolveUpgradePlay`).
+- "Fire" is for prose ("a trigger fires"), never a method name.
 
 ## The game log is typed entries, not sentences
 
-The log narrates what **resolved**, not what a card promised (ADR 0011). There is
-no `Logf`: the engine cannot write a sentence into the log at all.
+The log narrates what **resolved**, not what a card promised (ADR 0011). There
+is no `Logf`.
 
-- **A new log line is a new `LogEntry` variant**, a small comparable struct in
-  `log_<family>.go` (`log_aember.go`, `log_zone.go`, `log_play.go`, …) carrying the
-  ids and amounts of the outcome plus a `Text(Namer) string` that words it. Record
-  it with `g.record(entry)` (or `Resolver.Record` from inside an effect). Never
-  format a name into a string at the call site — carry the `LocalID` and let
-  `Text` ask the `Namer`, so the client can link the card and the log stays honest
-  about hidden zones.
-- **Attribution is a `Frame`, not a line.** "Because Bumpsy's Play ability said
-  so" is not narration — it is context. Open a frame around the resolution
-  (`closeFrame := g.openFrame(Frame{Actor, Source, Trigger, Grantor})`, deferred or
-  called at the end) and every entry recorded inside inherits it. A card's printed
-  text is never a log line.
-- **Whole-tree passes over an entry are extrinsic**, the same Visitor rule as
-  effects: `RenderEntry` splits a rendered entry into card-linkable segments from
-  the outside, in `log_render.go`. Do not add a second method to every entry.
-- **A `Text` method reuses the shared phrasing, it does not re-roll it.**
-  `log.go` holds the helpers every entry draws on — `namedCards` for a list of card
-  names, `because(text, on)` to suffix an event clause, `nameMoved` for a card
-  crossing zones — and `text_helpers.go` holds `countNoun`/`plural` for "1 card" vs
-  "3 cards" and `indefinite` for "a"/"an". Never hand-roll a `card(s)` placeholder,
-  a `noun + "s"` plural, or a bare `"a " + noun`. When an entry is another entry
-  plus context, build the base entry and render it: `LastingAemberGained.Text` is
-  `because(AemberGained{…}.Text(n), e.On)`.
-- **Whether a card may be named is decided by its zones, not by the entry.**
-  `Zone.public()` says which zones both players can see (discard pile, the board,
-  the purged pile — not a hand, archives, or a deck), and `nameMoved(n, id, from,
-to)` names a card once either end of the move is public and calls it "a card"
-  otherwise. An entry that narrates a zone change states the two zones and calls
-  `nameMoved`; it never calls `Namer.Name` directly, so no one entry can leak a
-  hand or a deck on its own initiative. A card in a hidden zone becomes nameable
-  only through a `Reveal`, which records its own entry.
-- **Discards resolve one at a time, so each is its own log line.** A "discard N"
-  effect discards its cards individually, never as a batch, and the log reflects
-  that — do not group several discards into one "discards X and Y" line. This is
-  load-bearing for the (not-yet-built) scrap mechanic, which acts on each discard
-  as it happens.
-- Recording is switchable (`SetRecording`), so a search that plays thousands of
-  games pays nothing for narration.
-- **Two ratchets keep the log complete, and both fail the build rather than
-  waiting to be noticed** (ADR 0002 of the narration goal). `fieldNarration`
-  (`state_test.go`) classifies every `GameState` field by dotted path —
-  `Cards.Damage`, `Controls.Controller` — as narrated directly, narrated by its
-  cause, or never; a new field fails
-  `TestEveryStateFieldDeclaresItsNarration` until it is classified.
-  `methodNarration` (`narrationaudit/narration.go`) does the same for every method
-  of the mutating `Resolver` roles, and the `Auditor` in that package enforces it:
-  a method classified as narrating directly that changes `GameState` without
-  appending an entry fails the test that drove it. The audit is installed by the
-  `cardtest` harness (so every card test drives it) and by the seeded sim batch.
-  **Adding a port method therefore means deciding where its line comes from**, and
-  answering "it narrates" binds you to record inside the method body.
+- **A new log line is a new `LogEntry` variant**: a small comparable struct in
+  `log_<family>.go` carrying the outcome's ids and amounts, plus a
+  `Text(Namer) string`. Record it with `g.record(entry)` (or `Resolver.Record`
+  inside an effect), at the site the outcome lands. Carry the `LocalID` and let
+  `Text` ask the `Namer`; never format a name into a string at the call site.
+- **Attribution is a `Frame`, not a line.** Open one around the resolution
+  (`closeFrame := g.openFrame(Frame{Actor, Source, Trigger, Grantor})`) and
+  every entry recorded inside inherits it. A card's printed text is never a
+  log line.
+- Whole-tree passes over an entry are extrinsic (`RenderEntry` in
+  `log_render.go`); never add a second method to every entry.
+- **Reuse the shared phrasing.** `log.go` has `namedCards`, `because(text, on)`,
+  and `nameMoved`; `text_helpers.go` has `countNoun`/`plural` and `indefinite`.
+  Never hand-roll `card(s)`, `noun + "s"`, or `"a " + noun`. An entry that is
+  another entry plus context renders the base:
+  `LastingAemberGained.Text` is `because(AemberGained{…}.Text(n), e.On)`.
+- **Zones decide whether a card may be named.** `Zone.public()` says which
+  zones both players see (discard, the board, purged; not hand, archives, or
+  deck), and `nameMoved(n, id, from, to)` names a card once either end is
+  public, else "a card". A zone-change entry states both zones and calls
+  `nameMoved`, never `Namer.Name`. A hidden card becomes nameable only through a
+  `Reveal`, which records its own entry.
+- **Discards resolve one at a time, one log line each**; never group them into
+  "discards X and Y" (the planned scrap mechanic acts on each discard).
+- Recording is switchable (`SetRecording`), so search pays nothing for it.
+- **Two ratchets fail the build on unnarrated state.** `fieldNarration`
+  (`state_test.go`) classifies every `GameState` field by dotted path
+  (`Cards.Damage`, `Controls.Controller`) as narrated directly, narrated by its cause, or never; a new field fails
+  `TestEveryStateFieldDeclaresItsNarration` until classified.
+  `methodNarration` (`narrationaudit/narration.go`) classifies every method of
+  the mutating `Resolver` roles, and its `Auditor` (installed by `cardtest` and
+  the seeded sim batch) fails a directly-narrating method that changes state
+  without appending an entry. A new port method therefore decides where its
+  line comes from; "it narrates" means recording inside the method body.
+- Rewording a log entry, or changing how a recorded command resolves, makes old
+  saved matches replay wrong: bump `snapshotVersion` in `internal/web` (see
+  `internal/web/AGENTS.md`, "Persistence").
 
 ## Prompts: name the card, and let the player click a target
 
-Every prompt the engine raises reaches a human, so write it as the card's own
-sentence and route it through the channel a UI can render as a board interaction.
+- **The active player makes every choice**, an unbreakable KeyForge rule: the
+  chooser for a placement, target, order, or option is `ActivePlayer`, even
+  when it lands in the opponent's play area (the flank a Treachery creature or
+  a give-to-opponent seize enters on, where a creature put into play under the
+  opponent lands; the rulebook: whenever a creature enters play or changes
+  control, the active player chooses its flank). Never pass a non-active
+  controller as the chooser. A creature entering a battleline funnels through a placement seam —
+  `deployPosition`/`chooseFlank` (play, put into play), `placeGainedOnFlank`
+  (control gains, gifts), `placeSeizedOnFlank` (seize) — each asking the active
+  player, never assuming a flank (ADR 0010). A new placement site uses a seam,
+  never `Battleline[...].add` directly.
+- Ask through `pickCreature`/`pickCard` whenever the answer is a card, so a
+  frontend highlights candidates and takes a click; `ChooseOption` only for
+  non-card options (a house, a key colour, yes/no).
+- Refer to the source card with `SelfName` (`"fully heal "+SelfName`), never a
+  literal name.
+- Phrase the prompt as the card's instruction, lowercase and imperative
+  ("choose a creature to attach {self} to").
+- An optional choice ("may", "up to N") must let the player stop: the prompt is
+  declinable (a frontend shows _Done_), and it is **not** short-circuited when
+  one candidate remains. `pickCreature` auto-takes a sole candidate because it
+  models a mandatory choice; an optional one needs its own path.
 
-- **The active player makes every choice, always** — an unbreakable KeyForge rule.
-  The chooser for a placement, a target, an order, or an option is `ActivePlayer`,
-  even when the choice lands in the opponent's play area: which flank a Treachery
-  creature or a give-to-opponent seize enters the opponent's battleline on, and
-  where a creature put into play under the opponent lands, are all the active
-  player's calls (rulebook: any time a creature enters play or changes control the
-  active player chooses its flank). Never pass a controller that is not the active
-  player as the chooser. A creature moving into a battleline funnels through one of
-  the placement seams — `deployPosition`/`chooseFlank` (play and put-into-play),
-  `placeGainedOnFlank` (control gains and gifts), `placeSeizedOnFlank` (the seize
-  effect) — each of which asks the active player and never silently assumes a flank
-  (ADR 0010). A new placement site routes through a seam rather than calling
-  `Battleline[...].add` itself.
-- **Ask through `pickCreature`/`pickCard`, not `ChooseOption`, whenever the answer
-  is a card.** A card choice is made by clicking the card, so a frontend
-  highlights the candidates and takes a click. A list of card _names_ as buttons is
-  a fallback, not the design; only use `ChooseOption` when the options are not
-  cards (a house, a key colour, "yes"/"no").
-- **Refer to the source card with `SelfName`, never a literal name.** The engine
-  substitutes the asking card's name into the prompt (`renderPrompt`), so
-  `"fully heal "+SelfName` reads as "fully heal Chuff Ape" at runtime and matches
-  the printed text. Hard-coding a name in a prompt is a one-off smell.
-- **Phrase the prompt as the card's instruction**, lowercase and imperative
-  ("choose a creature to attach {self} to"), so the prompt and the printed text
-  are the same sentence.
-- **When the choice is optional ("may", "up to N"), the player must be able to
-  stop**: the prompt is declinable, and a frontend shows a _Done_ button beside
-  the highlighted candidates. An optional choice must therefore **not** be
-  short-circuited when only one candidate remains — that would take the choice
-  away. `pickCreature` auto-takes a sole candidate precisely because it models a
-  _mandatory_ choice; an optional one needs its own path.
+## Deliberate tradeoffs: handle them, don't "fix" them
 
-These are conscious tradeoffs; the "why" is in the linked ADRs. Handle them as
-described; do not "fix" them into a regression of a constraint.
-
-- **Wide `Resolver`** (ADR 0008). Handled by the role-interface segregation above —
-  add to the right role, and let a genuinely new cluster become a new role.
-- **`Target` flag-soup + paired `x` / `hasX` fields** (ADR 0005). `Target` must
-  stay comparable, which rules out a `[]filter` slice and `*int` optionals.
-  Handled by: (a) route per-card filters through the existing builder methods
-  (`WithTrait`, `OfHouse`, `PowerAtMost`, …); (b) route **set-relative** rules
-  through `Refinement` instead of adding another field; (c) only add a new `Target`
-  field when a per-card filter genuinely has no `Refinement` form. If the field count
-  ever truly hurts, the in-constraint move is a single fixed-size comparable filter
+- **Wide `Resolver`** (ADR 0008): add to the right role.
+- **`Target` flag-soup and paired `x`/`hasX`** (ADR 0005): route per-card
+  filters through the builder methods (`WithTrait`, `OfHouse`, `PowerAtMost`,
+  …), set-relative rules through `Refinement`, and add a `Target` field only
+  when a per-card filter has no `Refinement` form. If the field count ever
+  hurts, the in-constraint move is one fixed-size comparable filter
   descriptor, **not** a slice.
-- **Enum-tagged lasting records instead of stored closures** (ADR 0007). Handled by
-  the flat-state-interpreter discipline above.
-- **`panic` in `EffectContext.PlayerFor` on `playerUnset`** (ADR 0010). Acceptable
-  **only** because `NewCard` runs `validate()` at init, so a real card can never
-  reach it — the panic fires at authoring time, not mid-game. Never let a
-  _computed_ `Player` reach `PlayerFor`; reject unset at the boundary.
-- **`Game` as a large type implementing all of `Resolver`.** A single live-match
-  façade, kept in check by the `game_*.go` file split (by area) and the `Resolver`
-  role split (by capability). Add a `Game` method to the matching `game_*.go`; if
-  an area outgrows its file, split the file, don't grow the type's responsibilities
-  silently.
+- **Enum-tagged lasting records instead of stored closures** (ADR 0007).
+- **`panic` in `EffectContext.PlayerFor` on `playerUnset`** (ADR 0010) is
+  acceptable **only** because `validate()` at init keeps real cards from
+  reaching it. Never let a _computed_ `Player` reach `PlayerFor`; reject unset
+  at the boundary.
+- **`Game` implements all of `Resolver`**: kept in check by the `game_*.go`
+  split and the role split. If an area outgrows its file, split the file.
 
 ## Before you add: check the surface that already exists
 
-The `1 keys` bug — a hand-rolled plural, because `countNoun` already existed and
-was not found — is the failure this catalog prevents. A helper, a log phrase, or a
-read you are about to write is usually already here. Each entry names the
-**authority file** (enumerate it; do not trust this list to be complete) and the
-load-bearing names you must not re-invent.
+The `1 keys` bug (a hand-rolled plural where `countNoun` existed) is the failure
+this prevents. Each entry names the **authority file**; enumerate it rather
+than trusting this list.
 
-- **Word a number or a name — `text_helpers.go`.** `countNoun(n, noun)` for
-  "1 key" vs "2 keys" (never `noun+"s"`, never a bare `if n == 1`), `plural(n, noun)`,
-  `indefinite(noun)` for "a"/"an". Enumerate: `grep -n '^func ' internal/engine/text_helpers.go`.
-- **Word a log line — `log.go`.** `namedCards` (a list of card names),
-  `because(text, on)` (suffix an event clause), `nameMoved(n, id, from, to)` (a
-  card crossing zones, silent on hidden ones). Never format a `Namer.Name` into a
-  string at the call site. A new line is a new `LogEntry` variant in the matching
-  `log_<family>.go` — find the family first: `grep -rln 'Namer) string' internal/engine/log_*.go`.
-- **Settle destruction — `game_settle.go` / `game_leaves_play.go`.** Anything that
-  can lower power ends in `settleDestroyed`; any exit funnels `removeFromPlay`. Do
-  not re-derive destruction inline (see "Power is dynamic" above).
+- **Word a number or a name — `text_helpers.go`**: `countNoun(n, noun)` (never
+  `noun+"s"` or `if n == 1`), `plural`, `indefinite`.
+  `grep -n '^func ' internal/engine/text_helpers.go`.
+- **Word a log line — `log.go`**: `namedCards`, `because`, `nameMoved`. Find
+  the entry family first:
+  `grep -rln 'Namer) string' internal/engine/log_*.go`.
+- **Settle destruction — `game_settle.go` / `game_leaves_play.go`**:
+  `settleDestroyed`, `removeFromPlay`; never re-derive destruction inline.
 - **Read legality or a derived stat — `game_read.go`, `game_play.go`,
-  `game_abilities.go`.** `Power(id)`, `CanPlay`/`CanDiscard`/`CanUse`. Add a read to
-  the matching `game_*.go` and its `Resolver` role; enumerate the role before
-  adding a method.
-- **Assert a new outcome narrates — `internal/sim`.** The step-narration invariant
-  fails when a step changes state without recording a `LogEntry`, so a new
-  state-changing outcome needs its log line, not only its mutation.
-
-Then work the decision order below.
+  `game_abilities.go`**: `Power(id)`, `CanPlay`/`CanDiscard`/`CanUse`. Add a
+  read to the matching file and its `Resolver` role, after enumerating the
+  role.
+- **A new state-changing outcome needs its log line**: `internal/sim`'s
+  step-narration invariant fails otherwise.
+- **The facade by usage — `mage tool:nodeUsage`**: every exported name in
+  `internal/card` by category, with card uses (`CARDS`) and other references
+  (`OTHER`). Use it to find the neighbours a new node should match and to audit
+  that a thin node is built from atoms. Low usage is not a defect, and `CARDS`
+  0 with non-zero `OTHER` is not dead code (type surface, registry plumbing, an
+  enum member no card names); only both at zero is unused. Narrow with
+  `-max=<n>` and `-category=<substring>`
+  (`mage tool:nodeUsage -max=1 -category=damage`).
 
 ## Adding a mechanic: the decision order
 
 1. Can an existing `Effect` express it by changing a `Target`, `Count`,
-   `Condition`, or `Refinement`? Prefer that — no new type.
-2. Is it a new _node_? Add an `Effect` (or `Condition`/`Count`/`Refinement`) in the
-   matching `effect_*.go` / `target.go`, with `Text()` + `Resolve()` (+ `validate()`
-   if it has an illegal field combo), and a facade alias in `internal/card`.
-3. Does it need a new engine capability? Add the method to the right `Resolver`
-   role interface and implement it on `*Game` in the matching `game_*.go`.
-4. Is it "for the remainder of the turn"? Route it through the lasting registry,
-   not the play/reap path.
-5. Is it an extrinsic whole-tree operation (AI, analysis)? A type-switch function,
-   not a new interface method.
-6. Does it need to say what happened? A `LogEntry` variant in `log_<family>.go`,
-   recorded at the site the outcome actually lands — never a formatted sentence.
-
-Keep everything green including 100% `internal/engine` coverage
-(`mage ci:fix && mage ci:check`).
+   `Condition`, or `Refinement`? Prefer that; no new type.
+2. Is it a new _node_ (after the grill)? Add an `Effect` (or
+   `Condition`/`Count`/`Refinement`) in the matching `effect_*.go` /
+   `target.go`, with `Text()` + `Resolve()` (+ `validate()` for an illegal
+   field combination), and a facade alias in `internal/card`.
+3. A new engine capability? A method on the right `Resolver` role, implemented
+   on `*Game` in the matching `game_*.go`.
+4. "For the remainder of the turn"? The lasting registry, not the play/reap
+   path.
+5. An extrinsic whole-tree operation? A type-switch function.
+6. Does it say what happened? A `LogEntry` variant in `log_<family>.go`,
+   recorded where the outcome lands.
