@@ -35,21 +35,34 @@ const (
 	BoundOdd
 	// BoundEven admits an even power, whatever Amount says (Opal Knight).
 	BoundEven
+	// BoundLessThanSource admits a power below the source card's own, read live when
+	// the effect resolves (Dreadbone Decimus destroys a creature with lower power
+	// than itself). It takes no Amount, which is what keeps it a bound rather than a
+	// Refinement: a threshold that is a literal number, or no number at all, is a
+	// comparable filter; one whose threshold is a live Count stays a Refinement
+	// (PowerLessThan).
+	BoundLessThanSource
 )
 
 // allPowerBoundKinds returns every real bound kind, so the census enumerates them
 // rather than keeping a list a new kind would fall out of.
 func allPowerBoundKinds() []PowerBoundKind {
-	return []PowerBoundKind{BoundAtMost, BoundAtLeast, BoundExactly, BoundOdd, BoundEven}
+	return []PowerBoundKind{
+		BoundAtMost, BoundAtLeast, BoundExactly, BoundOdd, BoundEven, BoundLessThanSource,
+	}
 }
 
 // filters reports whether the bound narrows its candidates at all.
 func (b PowerBound) filters() bool { return b.Kind != boundUnset }
 
 // admits reports whether a creature of this power passes the bound. The zero
-// value admits every power, pinned by TestZeroPowerBoundAdmitsEveryPower.
-func (b PowerBound) admits(power int) bool {
+// value admits every power, pinned by TestZeroPowerBoundAdmitsEveryPower. The
+// context is read only by the bounds measured against the board rather than
+// against a printed number.
+func (b PowerBound) admits(ctx *EffectContext, power int) bool {
 	switch b.Kind {
+	case BoundLessThanSource:
+		return power < ctx.Resolver.Power(ctx.Source)
 	case BoundAtMost:
 		return power <= b.Amount
 	case BoundAtLeast:
@@ -79,6 +92,8 @@ func (b PowerBound) clause(phrase string) string {
 		return phrase + " with odd power"
 	case BoundEven:
 		return phrase + " with even power"
+	case BoundLessThanSource:
+		return phrase + " with lower power than " + SelfName
 	}
 	return phrase
 }

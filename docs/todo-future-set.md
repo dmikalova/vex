@@ -235,9 +235,10 @@ exists (they would be uncovered).
   "your opponent discards…" / "each player discards…" from the field, the way the
   other player-bearing effects do.
 - **Terminator axis** — the current type/house match stays; add a **hand-size**
-  stop (`until they have N or fewer cards in hand`) for Catch and Release. Keep the
-  house filter **local to this node** (it already is) — do **not** add a `House`
-  axis to `CardFilter`; that overlap was the old blocker and is rejected.
+  stop (`until they have N or fewer cards in hand`) for Catch and Release. The
+  house match is now an axis of the one `Filter` the node carries: `CardFilter`
+  and `Target`'s filter methods merged into `engine.Filter`, which is what removed
+  the overlap that once made a shared house axis the blocker.
 - **The house choice, the hand refill, the creature return, and the chains are
   separate composed effects**, not part of `DiscardUntil`: High Street Churn is
   `MustChooseHouse` (restricted to the opponent's identity houses) → `DiscardUntil`
@@ -291,8 +292,9 @@ Of.Value)`, floored at 0 so it can never feed a negative into`scaled`. The`Of`
   trait filter applied identically to both sides). Thread `NotCountingSelf` through
   the operand that sits on the source's side (Dr. Milli's self-exclusion) —
   `InPlay.Other` already expresses "not counting the source".
-- Keep the `CardFilter` fold `ExcessCreatures` gained in the InPlay/ExcessCreatures
-  refactor: the trait axis routes through `filter().admits`, applied to both sides.
+- Keep the `Filter` fold `ExcessCreatures` gained in the InPlay/ExcessCreatures
+  refactor: the trait axis routes through `filter().matches`, applied to both
+  sides.
 
 ## Winds of Exchange — zone visibility as a computed fact
 

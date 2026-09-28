@@ -226,34 +226,65 @@ card.CaptureAember{
 
 ### Target filters
 
-Chain off any target; they conjoin.
+A narrowing is one `card.Filter`, chained onto a target with `.With(...)`:
 
-| Filter                                                      | Keeps                                  |
-| ----------------------------------------------------------- | -------------------------------------- |
-| `.House(m)`                                                 | cards a `card.Houses` matcher admits   |
-| `.WithTrait(t)` / `.ExceptTrait(t)`                         | by trait                               |
-| `.Named(n)`                                                 | by printed name                        |
-| `.SharingTrait()`                                           | creatures sharing a trait with another |
-| `.PowerAtMost(n)` / `.PowerAtLeast(n)` / `.PowerExactly(n)` | by power                               |
-| `.OddPower()` / `.EvenPower()`                              | by power parity                        |
-| `.Damaged()` / `.Undamaged()`                               | by damage                              |
-| `.WithAember()` / `.WithoutAember()`                        | by Æmber on the card                   |
-| `.WithArmor()` / `.WithUpgrade()` / `.WithCounter(k)`       | by what it carries                     |
-| `.WithoutBonusIcons()`                                      | cards with no bonus icons              |
-| `.Keyword(k)`                                               | creatures with a keyword               |
-| `.Stunned()` / `.Ready()`                                   | by state                               |
-| `.OnFlank()` / `.NotOnFlank()` / `.InCenter()`              | by battleline position                 |
-| `.ToLeftOfSource()` / `.ToRightOfSource()`                  | by side of the source                  |
-| `.Neighboring()` / `.AndNeighbors()` / `.NeighborsOf()`     | by adjacency                           |
-| `.SharesHouseWithNeighbors(n)`                              | by neighboring houses                  |
-| `.OfHouseWithMostCreatures()`                               | the most-represented house             |
-| `.Other()`                                                  | excludes the source                    |
+```go
+card.Target.EachCreature.With(card.Filter{
+  House: card.Houses.Named(card.House.Mars),
+  Power: card.Power.AtMost(3),
+})
+```
+
+The axes conjoin — a card must satisfy all of them — unless `MatchAny: true`
+disjoins them into one "or" phrase ("each Mars or Robot creature", EMP Blast).
+The same `Filter` narrows a `Search` or a `DiscardUntil`; there the in-play axes
+are rejected, because a card in a deck has no power or place in a battleline to
+read. Each axis also has a one-line `Target` builder of the same name
+(`.WithTrait(t)`, `.PowerAtMost(n)`, …), which writes the field and is what older
+cards use.
+
+| Axis                                     | Keeps                                  |
+| ---------------------------------------- | -------------------------------------- |
+| `Type`                                   | by card type                           |
+| `House`                                  | cards a `card.Houses` matcher admits   |
+| `Trait` / `ExceptTrait`                  | by trait                               |
+| `Name`                                   | by printed name                        |
+| `Gigantic`                               | either half of a gigantic creature     |
+| `MatchAny`                               | disjoins the axes instead of conjoining |
+| `SharesTrait`                            | creatures sharing a trait with "it"    |
+| `Power`                                  | a `card.Power` bound                   |
+| `Damage`                                 | a `card.Damage` presence               |
+| `Aember`                                 | a `card.Aember` presence               |
+| `Armor` / `Upgrade` / `Counter`          | by what it carries                     |
+| `NoBonusIcons`                           | cards with no bonus icons              |
+| `Keyword`                                | creatures with a keyword               |
+| `Stunned` / `Ready`                      | by state                               |
+| `Position`                               | a `card.Position` in the battleline    |
+| `Neighboring`                            | the source card's neighbors            |
+| `SharesHouseWithNeighbors`               | by neighboring houses                  |
+| `HouseWithMostCreatures`                 | the most-represented house             |
+| `HouseWithAtLeast`                       | houses with at least n creatures       |
+| `WithoutSharedTrait`                     | creatures sharing no trait with a mate |
+| `Except`                                 | leaves out a `card.Except` card        |
+
+`card.Power` bounds: `AtMost(n)`, `AtLeast(n)`, `Exactly(n)`, `Odd`, `Even`,
+`LessThanSource()`.
+
+Battleline neighbours are a set expansion rather than an axis, so they stay on
+the target: `.AndNeighbors()` keeps each selected creature and adds its
+neighbours, `.NeighborsOf()` replaces the selection with them.
 
 ### Refinements
 
-`.Refine(r)` narrows relative to the whole selected set — so "each enemy creature
-except the most powerful" is
+`.Refine(r)` narrows relative to the whole selected set — a rule that compares
+candidates to each other or prompts across them — so "each enemy creature except
+the most powerful" is
 `card.Target.EachEnemyCreature.Refine(card.Refine.Except(card.Refine.MostPowerful))`.
+A test decidable one candidate at a time is a `Filter` axis instead, however much
+board it reads. A `card.Filter` is itself a `Refinement`, but only inside a union:
+`AnyOf(card.Filter{Trait: ...}, card.Filter{Power: ...})` prints the two as
+separately quantified phrases joined by "and" (Regrettable Meteor). A bare
+`Filter` passed to `.Refine` is rejected when the card is built.
 
 **Power:**
 
@@ -265,7 +296,6 @@ except the most powerful" is
 | `LowestPower`           | every creature tied at the bottom       |
 | `MostPowerfulN(n)`      | the top n creatures                     |
 | `PowerLessThan(count)`  | creatures below a running count         |
-| `PowerLessThanSource()` | creatures weaker than the source        |
 
 **Shape:**
 
@@ -273,8 +303,6 @@ except the most powerful" is
 | -------------------------- | ---------------------------------------- |
 | `KeepPerSide(n)`           | all but n creatures per side             |
 | `PortionPerSide(fraction)` | a fraction of each side                  |
-| `HouseWithAtLeast(n)`      | only houses with at least n creatures    |
-| `WithoutSharedTrait()`     | creatures sharing no trait with another  |
 | `SamePowerAsChosen`        | creatures matching the chosen power      |
 | `SamePowerAsEitherChosen`  | creatures matching either chosen's power |
 
@@ -290,7 +318,7 @@ except the most powerful" is
 
 ### House matchers
 
-A `Target`'s `.House(m)` filter and any effect field named `House` take a
+A `card.Filter`'s `House` axis and any effect field named `House` take a
 `card.Houses.X` matcher.
 
 | Matcher      | Admits                                     |

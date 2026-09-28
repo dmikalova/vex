@@ -202,9 +202,9 @@ type CardDefinition struct {
 	DrawModifier DrawModifier
 
 	// CannotBeDealtDamageBy, while the card is in play, refuses damage dealt to it by
-	// the creatures the matcher names (Ardent Hero refuses Mutant creatures or
-	// creatures with power 5 or higher). The zero value refuses none.
-	CannotBeDealtDamageBy DamageSourceMatcher
+	// the creatures a Filter names (Ardent Hero refuses Mutant creatures or creatures
+	// with power 5 or higher). The zero value refuses none.
+	CannotBeDealtDamageBy Filter
 
 	// AemberCannotBeStolen, while the card is in play, makes its controller's Æmber
 	// impossible for the opponent to steal for as long as the condition holds. An
@@ -902,10 +902,10 @@ func WithTauntReachingNeighborsNeighbors() CardOption {
 }
 
 // WithCannotBeDealtDamageBy makes the card, while in play, refuse damage dealt to
-// it by the creatures the matcher names (Ardent Hero refuses Mutant creatures or
+// it by the creatures a Filter names (Ardent Hero refuses Mutant creatures or
 // creatures with power 5 or higher).
-func WithCannotBeDealtDamageBy(m DamageSourceMatcher) CardOption {
-	return func(c *CardDefinition) { c.CannotBeDealtDamageBy = m }
+func WithCannotBeDealtDamageBy(f Filter) CardOption {
+	return func(c *CardDefinition) { c.CannotBeDealtDamageBy = f }
 }
 
 // WithPower sets a creature's power.

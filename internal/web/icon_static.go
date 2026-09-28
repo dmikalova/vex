@@ -269,7 +269,7 @@ func cardFeatureLines(def *engine.CardDefinition) []glyphLine {
 	if def.DealsNoDamageWhenAttacked {
 		gs = append(gs, glyph{asset: "damage"}, glyph{asset: "glyph-ban"})
 	}
-	if def.CannotBeDealtDamageBy.Active() {
+	if def.CannotBeDealtDamageBy.Narrows() {
 		gs = append(gs, glyph{asset: "shield"}, glyph{asset: "damage"}, glyph{asset: "glyph-ban"})
 	}
 	if a := typeIconName(def.EntersReadyGrant.Type); a != "" {

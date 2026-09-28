@@ -44,7 +44,7 @@ type leadingRefinement interface {
 // verb, and whether the target has one — so an effect can render "choose a
 // creature - destroy …" left to right instead of burying the choice.
 func (t Target) leadIn() (string, bool) {
-	if l, ok := t.refinement.(leadingRefinement); ok {
+	if l, ok := t.Refinement.(leadingRefinement); ok {
 		return l.lead(), true
 	}
 	return "", false
@@ -534,80 +534,6 @@ func (m mostPowerfulN) includes(ctx *EffectContext, ids []LocalID, id LocalID) b
 	return ctx.Resolver.Power(id) >= threshold
 }
 
-// at least n creatures in play, counting that house across both players'
-// battlelines — a house is a house regardless of who controls its creatures. No
-// Safety in Numbers deals its damage to each creature that belongs to a house
-// with 3 or more creatures in play.
-func HouseWithAtLeast(n int) Refinement { return houseWithAtLeast{n: n} }
-
-// houseWithAtLeast implements the HouseWithAtLeast refinement.
-type houseWithAtLeast struct{ n int }
-
-// clause renders "<phrase> that belongs to a house that has N or more creatures
-// in play", e.g. "each creature that belongs to a house that has 3 or more
-// creatures in play".
-func (h houseWithAtLeast) clause(phrase string) string {
-	return fmt.Sprintf(
-		"%s that belongs to a house that has %d or more creatures in play",
-		phrase, h.n,
-	)
-}
-
-// refine keeps only creatures whose house has at least n creatures in play,
-// counting each house across both battlelines so both players' creatures of a
-// house count toward its total.
-func (h houseWithAtLeast) refine(ctx *EffectContext, ids []LocalID) []LocalID {
-	counts := map[House]int{}
-	for player := range 2 {
-		for _, cid := range ctx.Resolver.Battleline(player) {
-			counts[ctx.Resolver.House(cid)]++
-		}
-	}
-	kept := make([]LocalID, 0, len(ids))
-	for _, id := range ids {
-		if counts[ctx.Resolver.House(id)] >= h.n {
-			kept = append(kept, id)
-		}
-	}
-	return kept
-}
-
-// WithoutSharedTrait returns a Refinement that keeps only creatures that share no
-// trait with any other creature in the same controller's battleline — a "loner".
-// A creature with no traits shares no trait, so it is kept. Good of the Many
-// destroys each creature that does not share a trait with another creature in its
-// controller's battleline.
-func WithoutSharedTrait() Refinement { return withoutSharedTrait{} }
-
-// withoutSharedTrait implements the WithoutSharedTrait refinement.
-type withoutSharedTrait struct{}
-
-// clause renders "<phrase> that does not share a trait with another creature in
-// its controller's battleline".
-func (withoutSharedTrait) clause(phrase string) string {
-	return phrase + " that does not share a trait with another creature in its controller's battleline"
-}
-
-// refine keeps a creature only when no other creature its controller controls
-// shares a trait with it, comparing each candidate against its own battleline
-// mates alone (an enemy sharing a trait does not save it).
-func (withoutSharedTrait) refine(ctx *EffectContext, ids []LocalID) []LocalID {
-	kept := make([]LocalID, 0, len(ids))
-	for _, id := range ids {
-		shared := false
-		for _, mate := range ctx.Resolver.Battleline(ctx.Resolver.Controller(id)) {
-			if mate != id && ctx.Resolver.SharesTrait(id, mate) {
-				shared = true
-				break
-			}
-		}
-		if !shared {
-			kept = append(kept, id)
-		}
-	}
-	return kept
-}
-
 // HighestPower is a Refinement that keeps every creature tied for the highest
 // power of a set — a tier, not a single creature, so it makes no choice (contrast
 // MostPowerful, which keeps exactly one). An empty set selects nothing.
@@ -695,67 +621,6 @@ func (lowestPower) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 // board at that moment.
 func PowerLessThan(limit Count) Refinement { return powerLessThan{limit: limit} }
 
-// PowerAtLeast is a Refinement that keeps every creature of a set whose power is
-// minPower or higher. It restates the Target axis of the same name as a refinement
-// so an AnyOf can union power against another axis, which the conjoined axes
-// cannot — Regrettable Meteor destroys the Dinosaurs and the power-6-or-higher
-// creatures as one set.
-func PowerAtLeast(minPower int) Refinement { return powerAtLeast{minPower: minPower} }
-
-// powerAtLeast implements the PowerAtLeast refinement.
-type powerAtLeast struct{ minPower int }
-
-// clause renders "<phrase> with power N or higher", matching the Target axis.
-func (p powerAtLeast) clause(phrase string) string {
-	return fmt.Sprintf("%s with power %d or higher", phrase, p.minPower)
-}
-
-// refine keeps the creatures whose power reaches the minimum.
-func (p powerAtLeast) refine(ctx *EffectContext, ids []LocalID) []LocalID {
-	kept := make([]LocalID, 0, len(ids))
-	for _, id := range ids {
-		if ctx.Resolver.Power(id) >= p.minPower {
-			kept = append(kept, id)
-		}
-	}
-	return kept
-}
-
-// OfTrait is a Refinement that keeps every creature of a set with the trait. It
-// restates the Target axis of the same name as a refinement so an AnyOf can union
-// a trait against another axis (Regrettable Meteor).
-func OfTrait(trait Trait) Refinement { return ofTrait{trait: trait} }
-
-// ofTrait implements the OfTrait refinement.
-type ofTrait struct{ trait Trait }
-
-// clause renders the trait as an adjective on the phrase's noun, "each Dinosaur
-// creature", the way the Target axis renders it.
-func (o ofTrait) clause(phrase string) string {
-	return qualifyLastNoun(phrase, o.trait.String())
-}
-
-// refine keeps the creatures carrying the trait.
-func (o ofTrait) refine(ctx *EffectContext, ids []LocalID) []LocalID {
-	kept := make([]LocalID, 0, len(ids))
-	for _, id := range ids {
-		if ctx.Resolver.HasTrait(id, o.trait) {
-			kept = append(kept, id)
-		}
-	}
-	return kept
-}
-
-// qualifyLastNoun inserts an adjective before the final word of a rendered phrase,
-// so "each creature" becomes "each Dinosaur creature".
-func qualifyLastNoun(phrase, adjective string) string {
-	i := strings.LastIndex(phrase, " ")
-	if i < 0 {
-		return adjective + " " + phrase
-	}
-	return phrase[:i+1] + adjective + " " + phrase[i+1:]
-}
-
 // powerLessThan implements the PowerLessThan refinement.
 type powerLessThan struct{ limit Count }
 
@@ -775,31 +640,6 @@ func (p powerLessThan) clause(phrase string) string {
 // refine keeps the creatures whose power is below the count's value.
 func (p powerLessThan) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	limit := p.limit.Value(ctx)
-	kept := make([]LocalID, 0, len(ids))
-	for _, id := range ids {
-		if ctx.Resolver.Power(id) < limit {
-			kept = append(kept, id)
-		}
-	}
-	return kept
-}
-
-// PowerLessThanSource is a Refinement that keeps every creature whose power is
-// below the source card's own power — Dreadbone Decimus destroys a creature with
-// lower power than itself. The source's power is read when the effect resolves.
-func PowerLessThanSource() Refinement { return powerLessThanSource{} }
-
-// powerLessThanSource implements the PowerLessThanSource refinement.
-type powerLessThanSource struct{}
-
-// clause renders "<phrase> with lower power than <self>".
-func (powerLessThanSource) clause(phrase string) string {
-	return phrase + " with lower power than " + SelfName
-}
-
-// refine keeps the creatures whose power is below the source card's power.
-func (powerLessThanSource) refine(ctx *EffectContext, ids []LocalID) []LocalID {
-	limit := ctx.Resolver.Power(ctx.Source)
 	kept := make([]LocalID, 0, len(ids))
 	for _, id := range ids {
 		if ctx.Resolver.Power(id) < limit {

@@ -252,7 +252,7 @@ type (
 	RemoveCounters = engine.RemoveCounters
 )
 
-// Drawing, moving, and revealing cards between zones.
+// Drawing and moving cards between zones.
 type (
 	// Draw puts the top Amount cards of your deck into your hand.
 	Draw = engine.Draw
@@ -268,15 +268,16 @@ type (
 	// or play as well — to a Destination, with a Selection (Chosen or Each) deciding
 	// which cards.
 	PutCard = engine.PutCard
-	// Filter is a predicate selecting cards by type, trait, and/or name, with Or
-	// alternatives — e.g. an upgrade or a Robot card. It is a Chosen/Each Or element.
-	Filter = engine.CardFilter
 	// PutFromHand puts a chosen card from your hand directly into play.
 	PutFromHand = engine.PutFromHand
 	// PutItIntoHand puts the creature in context ("it") into its owner's hand,
 	// recovering it from the discard pile when it was already destroyed (Nizak, The
 	// Forgotten recovers an enemy destroyed fighting it).
 	PutItIntoHand = engine.PutItIntoHand
+)
+
+// Searching and shuffling your deck.
+type (
 	// Search searches one or more of your own zones — named explicitly in Sources
 	// (e.g. the deck, or the deck and discard pile) — for cards matching a filter:
 	// any card, a named card, a trait, a type, or a house. It reveals what it takes
@@ -303,6 +304,10 @@ type (
 	// SwapDeckAndDiscard exchanges the controller's deck with their discard pile,
 	// then shuffles.
 	SwapDeckAndDiscard = engine.SwapDeckAndDiscard
+)
+
+// Archiving.
+type (
 	// ArchiveCard sets cards aside into the controller's own archives, with a
 	// Selection deciding how each is picked (Chosen, Random, Named, or Top), Zone
 	// the source (Hand, Discard, or Deck), and Amount / Revealed / Per / Or the rest.
@@ -316,6 +321,10 @@ type (
 	ArchiveGrantingUpgrade = engine.ArchiveGrantingUpgrade
 	// DiscardArchives moves all of a player's archived cards into their discard pile.
 	DiscardArchives = engine.DiscardArchives
+)
+
+// Discarding.
+type (
 	// DiscardHand discards a player's whole hand, one card at a time (Player may be
 	// card.EachPlayer). RefillHand redraws it as if the turn had ended. Punctuated
 	// Equilibrium composes both over EachPlayer.
@@ -339,6 +348,14 @@ type (
 	// both, unset for a granted ability's own deck), records each discarded card,
 	// and binds a lone discard as context for a single-card follow-up.
 	DiscardTop = engine.DiscardTop
+	// ForEachDiscarded resolves Do once for each card a preceding discard removed.
+	ForEachDiscarded = engine.ForEachDiscarded
+	// ArchiveDiscardedThisWay archives every card a preceding deck dig discarded.
+	ArchiveDiscardedThisWay = engine.ArchiveDiscardedThisWay
+)
+
+// Resolving bonus icons.
+type (
 	// ResolveBonusIcons resolves the bonus icons printed on the card its Target
 	// names, as if its controller had just played it (Ensign El-Samra reveals a
 	// card in hand, LCdr. Trigon a discarded card, Reclaimed by Nature a purged
@@ -348,22 +365,15 @@ type (
 	// plays this turn resolves each of its bonus icons an additional time (Wild
 	// Bounty).
 	ExtraBonusIconResolution = engine.ExtraBonusIconResolution
-	// ForEachDiscarded resolves Do once for each card a preceding discard removed.
-	ForEachDiscarded = engine.ForEachDiscarded
-	// ArchiveDiscardedThisWay archives every card a preceding deck dig discarded.
-	ArchiveDiscardedThisWay = engine.ArchiveDiscardedThisWay
+)
+
+// Reading the top of a deck and routing what it turns up.
+type (
 	// RevealTopOfDeck reveals the top Amount cards of a deck to both players, binds
 	// the top one in context, and routes them through the ordered Then steps. Set
 	// ChooseWhoseDeck to have the controller pick whose deck (Borr Nit). Revealing
 	// one card with no steps is the inspect-and-play primitive (Chaos Portal).
 	RevealTopOfDeck = engine.RevealTopOfDeck
-	// ChangeActiveHouse changes the active player's active house for the rest of
-	// the turn to the house To names — TheContextualHouse, the card in context
-	// (Book of leQ).
-	ChangeActiveHouse = engine.ChangeActiveHouse
-	// EndTurn ends the active player's turn in place, running the turn out the way
-	// the Omega keyword does (Book of leQ).
-	EndTurn = engine.EndTurn
 	// PlayRevealedCard plays the card a preceding reveal put in context.
 	PlayRevealedCard = engine.PlayRevealedCard
 	// PutRevealedCard moves the card a preceding reveal put in context from its
@@ -394,6 +404,11 @@ type (
 	// MayDiscardLookedAt optionally discards the single card a preceding look read
 	// (Scout Pete); it reads "you may discard that card".
 	MayDiscardLookedAt = engine.MayDiscardLookedAt
+)
+
+// Playing and discarding from another zone, including the opponent's.
+type (
+	// PlayFrom immediately plays a card out of the pile it names
 	// (From), ignoring the active house. Set Except to make House the house that
 	// may not be played.
 	PlayFrom = engine.PlayFrom
@@ -414,6 +429,10 @@ type (
 	// discard) from the opponent's discard pile as your own (Fidgit plays it when it
 	// is a Tactic).
 	PlayItFromOpponentDiscard = engine.PlayItFromOpponentDiscard
+)
+
+// Cards placed under a card (graft).
+type (
 	// PutUnderFromHand puts a card the controller chooses from their hand under
 	// the resolving card, face up or face down.
 	PutUnderFromHand = engine.PutUnderFromHand
@@ -430,11 +449,19 @@ type (
 	PutUnderIntoPlay = engine.PutUnderIntoPlay
 	// ArchiveCardUnder archives the card placed under the resolving card.
 	ArchiveCardUnder = engine.ArchiveCardUnder
+)
+
+// Cancelling an event in progress.
+type (
 	// CancelFight makes the fight in progress not occur (a Before Fight effect).
 	CancelFight = engine.CancelFight
 	// CancelForge makes the opponent's key forge in progress not occur, with no
 	// Æmber spent (Keyforgery). It is the forge counterpart to CancelFight.
 	CancelForge = engine.CancelForge
+)
+
+// Revealing a hand.
+type (
 	// RevealHand shows the cards in a player's hand to both players and records them.
 	RevealHand = engine.RevealHand
 	// RevealChosenFromHand reveals one card the controller chooses from their
@@ -443,6 +470,17 @@ type (
 	// RevealRandomFromHand reveals a random card from your hand and puts it in
 	// context for a following effect (Keyforgery).
 	RevealRandomFromHand = engine.RevealRandomFromHand
+)
+
+// Changing the active house and ending the turn.
+type (
+	// ChangeActiveHouse changes the active player's active house for the rest of
+	// the turn to the house To names — TheContextualHouse, the card in context
+	// (Book of leQ).
+	ChangeActiveHouse = engine.ChangeActiveHouse
+	// EndTurn ends the active player's turn in place, running the turn out the way
+	// the Omega keyword does (Book of leQ).
+	EndTurn = engine.EndTurn
 )
 
 // Using and choosing creatures.
@@ -726,7 +764,13 @@ type (
 	// PurgedCards counts every card in the purge pile across both players.
 	PurgedCards = engine.PurgedCards
 	// TurnCount counts one of the engine's turn-history tallies (Player + Of).
-	TurnCount = engine.TurnCount // ForgedKey gates on whether a player forged a key this turn or their previous one.
+	TurnCount = engine.TurnCount
+)
+
+// Conditions on keys, on what a player has done this turn, and on counters.
+type (
+	// ForgedKey gates on whether a player forged a key this turn or their previous
+	// one.
 	ForgedKey = engine.ForgedKey
 	// HasMoreForgedKeys is met when the named Player has forged more keys than the
 	// other player.
@@ -755,6 +799,10 @@ type (
 	CountersOnThisAtLeast = engine.CountersOnThisAtLeast
 	// NamedCardPurged is met by whether a card of the given name is in your purge pile.
 	NamedCardPurged = engine.NamedCardPurged
+)
+
+// Counts of a board: creatures, zones, houses, and upgrades.
+type (
 	// ExcessCreatures counts how many more creatures one player controls than the other.
 	ExcessCreatures = engine.ExcessCreatures
 	// CardsInZone counts the cards in one of a player's zones (deck, hand,
@@ -769,6 +817,19 @@ type (
 	// HousesRepresented is met when the houses among a chosen set of cards compare to
 	// an amount.
 	HousesRepresented = engine.HousesRepresented
+	// UpgradesOn counts the upgrades attached to the creature its Target names
+	// (Walls' Blaster stuns a creature for each upgrade on Chief Engineer Walls).
+	UpgradesOn = engine.UpgradesOn
+	// CardsInHand counts the cards in a player's hand of a referenced house.
+	CardsInHand = engine.CardsInHand
+	// UnforgedKeys counts the keys a player has still to forge.
+	UnforgedKeys = engine.UnforgedKeys
+	// CopiesInDiscard counts the copies of this card in your discard pile.
+	CopiesInDiscard = engine.CopiesInDiscard
+)
+
+// Counts of what an earlier effect in the same resolution produced ("this way").
+type (
 	// CardsRevealed counts the cards the most recent Reveal showed.
 	CardsRevealed = engine.CardsRevealed
 	// CardsDestroyed counts the cards the most recent destruction removed "this way".
@@ -785,32 +846,14 @@ type (
 	// returned to your own deck "this way" (Timequake draws one card for each). A
 	// card you played but do not own returns to its owner's deck and is not counted.
 	CardsShuffledIntoDeck = engine.CardsShuffledIntoDeck
-	// UpgradesOn counts the upgrades attached to the creature its Target names
-	// (Walls' Blaster stuns a creature for each upgrade on Chief Engineer Walls).
-	UpgradesOn = engine.UpgradesOn
 	// CardsPurged counts the cards the most recent purge removed "this way", both
 	// sides together; its Type names the noun (unset "card", card.Type.Creature
 	// "creature").
 	CardsPurged = engine.CardsPurged
-
 	// ProducedThisWay counts a "... this way" tally an earlier effect in the same
 	// resolution recorded — creatures destroyed or shuffled home, Æmber lost, or
 	// cards returned. Tally names which (card.Tally.*); Player names whose share.
 	ProducedThisWay = engine.ProducedThisWay
-	// AemberInPool counts the Æmber currently in a player's pool.
-	AemberInPool = engine.AemberInPool
-	// AemberOnFriendlyCreatures counts the Æmber sitting on your creatures.
-	AemberOnFriendlyCreatures = engine.AemberOnFriendlyCreatures
-	// NeighborsOfThis counts the battleline neighbors of the source creature (0-2).
-	NeighborsOfThis = engine.NeighborsOfThis
-	// NeighborsMatching counts the neighbors of the context creature (ctx.It)
-	// its house matcher admits (Thorium Plasmate: neighbors of that card's house).
-	NeighborsMatching = engine.NeighborsMatching
-	// CombinedPowerOfNeighborsWithout sums the power of the source's battleline
-	// neighbors that lack a trait — Picaroon's X excludes its Changeling neighbors.
-	CombinedPowerOfNeighborsWithout = engine.CombinedPowerOfNeighborsWithout
-	// CardsInHand counts the cards in a player's hand of a referenced house.
-	CardsInHand = engine.CardsInHand
 	// CreaturesHealed counts the creatures the most recent Heal healed.
 	CreaturesHealed = engine.CreaturesHealed
 	// DamageHealed counts the damage the most recent Heal removed (for DealDamage.AmountFrom).
@@ -819,8 +862,14 @@ type (
 	DamagePrevented = engine.DamagePrevented
 	// AemberStolenThisEvent counts the Æmber taken in the theft that fired an After Æmber Is Stolen From You ability.
 	AemberStolenThisEvent = engine.AemberStolenThisEvent
-	// UnforgedKeys counts the keys a player has still to forge.
-	UnforgedKeys = engine.UnforgedKeys
+)
+
+// Æmber, damage, and power counts.
+type (
+	// AemberInPool counts the Æmber currently in a player's pool.
+	AemberInPool = engine.AemberInPool
+	// AemberOnFriendlyCreatures counts the Æmber sitting on your creatures.
+	AemberOnFriendlyCreatures = engine.AemberOnFriendlyCreatures
 	// AemberOnThis counts the Æmber sitting on the source card.
 	AemberOnThis = engine.AemberOnThis
 	// DamageOnThis counts the damage sitting on the source card.
@@ -830,6 +879,22 @@ type (
 	PowerOfChosen = engine.PowerOfChosen
 	// TraitsOfChosen counts the traits of the creature just chosen.
 	TraitsOfChosen = engine.TraitsOfChosen
+)
+
+// Battleline neighbor counts.
+type (
+	// NeighborsOfThis counts the battleline neighbors of the source creature (0-2).
+	NeighborsOfThis = engine.NeighborsOfThis
+	// NeighborsMatching counts the neighbors of the context creature (ctx.It)
+	// its house matcher admits (Thorium Plasmate: neighbors of that card's house).
+	NeighborsMatching = engine.NeighborsMatching
+	// CombinedPowerOfNeighborsWithout sums the power of the source's battleline
+	// neighbors that lack a trait — Picaroon's X excludes its Changeling neighbors.
+	CombinedPowerOfNeighborsWithout = engine.CombinedPowerOfNeighborsWithout
+)
+
+// Bonus icon counts and the subjects they read.
+type (
 	// BonusIconsOf counts the bonus icons on the cards its Over subject names —
 	// card.TheCardInContext for the one card just discarded or revealed (Mindfire),
 	// card.ThePurgedCards for a whole purged set (Infurnace). Kind narrows the count
@@ -841,8 +906,6 @@ type (
 	// ThePurgedCards is the BonusIconsOf subject naming every card the most recent
 	// purge removed.
 	ThePurgedCards = engine.ThePurgedCards
-	// CopiesInDiscard counts the copies of this card in your discard pile.
-	CopiesInDiscard = engine.CopiesInDiscard
 )
 
 // Lasting "for the remainder of the turn" effects.

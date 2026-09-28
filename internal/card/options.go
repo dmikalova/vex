@@ -62,10 +62,10 @@ var (
 	// base power while its text is not blanked (Picaroon's combined-neighbor power).
 	WithPowerX = func(c engine.Count) Option { return gameplay(engine.WithPowerX(c)) }
 	// WithCannotBeDealtDamageBy makes the card refuse damage dealt to it by the
-	// creatures the matcher names (Ardent Hero refuses Mutant creatures or creatures
+	// creatures a Filter names (Ardent Hero refuses Mutant creatures or creatures
 	// with power 5 or higher).
-	WithCannotBeDealtDamageBy = func(m DamageSource) Option {
-		return gameplay(engine.WithCannotBeDealtDamageBy(m))
+	WithCannotBeDealtDamageBy = func(f Filter) Option {
+		return gameplay(engine.WithCannotBeDealtDamageBy(f))
 	}
 	// WithTriggersFromDiscard keeps a card's triggered abilities live while it sits
 	// in its owner's discard pile, so an "after you choose <house>" ability fires

@@ -544,6 +544,19 @@ func (g *Game) applyRawDamage(t DamageTarget) LocalID {
 	return id
 }
 
+// refusesDamageFrom reports whether id's CannotBeDealtDamageBy passive blocks
+// damage dealt to it by source. The passive is a Filter over the dealing
+// creature, read from the refusing card's own point of view, so its axes are live:
+// a buff into or out of a power bound counts. Damage with no credited source
+// (source 0) is never blocked, since only a named creature can match.
+func (g *Game) refusesDamageFrom(id, source LocalID) bool {
+	f := g.cat.def(id).CannotBeDealtDamageBy
+	if !f.Narrows() || source == 0 {
+		return false
+	}
+	return f.matches(g.constantContext(id), source)
+}
+
 // mitigateDamage runs a creature's defenses over incoming damage and returns what
 // is left for it to be dealt. source credits the creature dealing the damage (0
 // when uncredited), so a card that refuses damage from certain sources — Ardent

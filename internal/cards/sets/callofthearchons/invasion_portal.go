@@ -18,8 +18,10 @@ var InvasionPortal = set.New("Invasion Portal",
 		card.Trigger.Action, card.Then{
 			First: card.DiscardUntil{
 				Player: card.Controller,
-				Filter: card.Filter{Type: card.Type.Creature},
-				House:  card.Houses.Named(card.House.Self),
+				Filter: card.Filter{
+					Type:  card.Type.Creature,
+					House: card.Houses.Named(card.House.Self),
+				},
 			},
 			Result: card.PutDiscardedIntoHand{Type: card.Type.Creature},
 		}),

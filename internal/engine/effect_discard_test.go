@@ -391,8 +391,9 @@ func TestPutFromDiscardTypeOrTrait(t *testing.T) {
 
 	e := PutCard{Zones: []Zone{Discard},
 		Selection: Each{
-			Type: Upgrade,
-			Or:   []CardFilter{{Trait: Robot}},
+			Type:     Upgrade,
+			Trait:    Robot,
+			MatchAny: true,
 		},
 		Destination: ToHand,
 	}
@@ -401,8 +402,9 @@ func TestPutFromDiscardTypeOrTrait(t *testing.T) {
 	}
 	choose := PutCard{Zones: []Zone{Discard},
 		Selection: Chosen{
-			Type: Upgrade,
-			Or:   []CardFilter{{Trait: Robot}},
+			Type:     Upgrade,
+			Trait:    Robot,
+			MatchAny: true,
 		},
 		Destination: ToHand,
 	}
@@ -411,7 +413,7 @@ func TestPutFromDiscardTypeOrTrait(t *testing.T) {
 	}
 	e.Resolve(ctx)
 
-	// The upgrade (matches Type) and the Robot creature (matches OrTrait) return;
+	// The upgrade (matches Type) and the Robot creature (matches Trait) return;
 	// the Human creature matches neither and stays in the discard pile.
 	hand := g.Hand(0)
 	if len(hand) != 2 || !containsID(hand, upgrade) ||
@@ -455,8 +457,9 @@ func TestPutFromDiscardVacuousUnderMay(t *testing.T) {
 	may := May{
 		Do: PutCard{Zones: []Zone{Discard},
 			Selection: Chosen{
-				Type: Upgrade,
-				Or:   []CardFilter{{Trait: Robot}},
+				Type:     Upgrade,
+				Trait:    Robot,
+				MatchAny: true,
 			},
 			Destination: ToHand,
 		},

@@ -138,7 +138,7 @@ func (c ControlsMoreCreatures) excess() ExcessCreatures {
 // CondText renders the condition, e.g. "if you control more Mutant creatures than
 // your opponent".
 func (c ControlsMoreCreatures) CondText() string {
-	return "if you control more " + c.excess().filter().noun() +
+	return "if you control more " + c.excess().filter().noun("card") +
 		"s than your opponent"
 }
 
@@ -146,7 +146,7 @@ func (c ControlsMoreCreatures) CondText() string {
 // ConditionalPlayBar needs, e.g. "has more creatures in play than their
 // opponent" (Quixxle Stone).
 func (c ControlsMoreCreatures) symmetricCondText() string {
-	return "has more " + c.excess().filter().noun() +
+	return "has more " + c.excess().filter().noun("card") +
 		"s in play than their opponent"
 }
 
@@ -300,7 +300,7 @@ func (c NamedCardPurged) negatedText() string {
 // Met reports whether a card of the name is in the controller's purge pile.
 func (c NamedCardPurged) Met(ctx *EffectContext) bool {
 	for _, id := range ctx.Resolver.Purge(ctx.Controller) {
-		if (CardFilter{Name: c.Name}).admits(ctx.Resolver, id) {
+		if (Filter{Name: c.Name}).matches(ctx, id) {
 			return true
 		}
 	}

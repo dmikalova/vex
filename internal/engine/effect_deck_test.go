@@ -546,14 +546,13 @@ func TestEvasionSigilCompositionMiss(t *testing.T) {
 func TestDiscardUntil(t *testing.T) {
 	e := DiscardUntil{
 		Player: Controller,
-		Filter: CardFilter{Type: Creature},
-		House:  namedHouse(Brobnar),
+		Filter: Filter{Type: Creature, House: namedHouse(Brobnar)},
 	}
 	want := "discard cards from the top of your deck until you discard a Brobnar creature or run out of cards"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
 	}
-	if got := (DiscardUntil{Filter: CardFilter{Type: Artifact}}).Text(); got !=
+	if got := (DiscardUntil{Filter: Filter{Type: Artifact}}).Text(); got !=
 		"discard cards from the top of your deck until you discard an artifact or run out of cards" {
 		t.Errorf("artifact text = %q", got)
 	}
@@ -567,25 +566,25 @@ func TestDiscardUntil(t *testing.T) {
 	}
 	if got := (DiscardUntil{
 		Player: ItsController,
-		Filter: CardFilter{Type: Creature},
+		Filter: Filter{Type: Creature},
 	}).Text(); got !=
 		"discard cards from the top of its controller's deck until you discard a creature or run out of cards" {
 		t.Errorf("its-controller text = %q", got)
 	}
 	if got := (DiscardUntil{
-		House:   namedHouse(Brobnar),
+		Filter:  Filter{House: namedHouse(Brobnar)},
 		MayStop: true,
 	}).Text(); got !=
 		"discard cards from the top of your deck until you discard a Brobnar card or choose to stop" {
 		t.Errorf("may-stop text = %q", got)
 	}
-	if got := (DiscardUntil{Filter: CardFilter{Name: "Angry Mob"}}).Text(); got !=
+	if got := (DiscardUntil{Filter: Filter{Name: "Angry Mob"}}).Text(); got !=
 		"discard cards from the top of your deck until you discard an Angry Mob or run out of cards" {
 		t.Errorf("named text = %q", got)
 	}
 	if got := (DiscardUntil{
 		Player: ItsController,
-		Filter: CardFilter{
+		Filter: Filter{
 			Type:        Creature,
 			ExceptTrait: Mutant,
 		},
@@ -637,7 +636,7 @@ func TestDiscardUntil(t *testing.T) {
 	Then{
 		First: DiscardUntil{
 			Player: Controller,
-			Filter: CardFilter{Type: Artifact},
+			Filter: Filter{Type: Artifact},
 		},
 		Result: PutDiscardedIntoHand{},
 	}.Resolve(
@@ -652,7 +651,7 @@ func TestDiscardUntil(t *testing.T) {
 	// Resolved bare, the dig still runs; it just has no tail to gate.
 	DiscardUntil{
 		Player: Controller,
-		Filter: CardFilter{Type: Artifact},
+		Filter: Filter{Type: Artifact},
 	}.Resolve(ctx)
 	PutDiscardedIntoHand{}.Resolve(ctx)
 
@@ -666,7 +665,7 @@ func TestDiscardUntil(t *testing.T) {
 	}
 	DiscardUntil{
 		Player: Controller,
-		Filter: CardFilter{Name: "Angry Mob"},
+		Filter: Filter{Name: "Angry Mob"},
 	}.Resolve(ctx3)
 	if !ctx3.HasIt || ctx3.It != mob {
 		t.Errorf("named dig found %v (has=%v), want %d", ctx3.It, ctx3.HasIt, mob)
@@ -692,7 +691,7 @@ func TestDiscardUntil(t *testing.T) {
 	Then{
 		First: DiscardUntil{
 			Player: ItsController,
-			Filter: CardFilter{
+			Filter: Filter{
 				Type:        Creature,
 				ExceptTrait: Mutant,
 			},
@@ -724,7 +723,7 @@ func TestDiscardUntilMayStop(t *testing.T) {
 
 	if (DiscardUntil{
 		Player:  Controller,
-		House:   namedHouse(Brobnar),
+		Filter:  Filter{House: namedHouse(Brobnar)},
 		MayStop: true,
 	}).resolveGate(
 		ctx,
@@ -749,7 +748,7 @@ func TestDiscardUntilMayStop(t *testing.T) {
 	}
 	if (DiscardUntil{
 		Player:  Controller,
-		House:   namedHouse(Brobnar),
+		Filter:  Filter{House: namedHouse(Brobnar)},
 		MayStop: true,
 	}).resolveGate(
 		ctx2,
@@ -758,7 +757,7 @@ func TestDiscardUntilMayStop(t *testing.T) {
 	}
 	DiscardUntil{
 		Player:  Controller,
-		House:   namedHouse(Brobnar),
+		Filter:  Filter{House: namedHouse(Brobnar)},
 		MayStop: true,
 	}.Resolve(ctx2)
 }

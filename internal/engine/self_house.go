@@ -15,9 +15,11 @@ var (
 )
 
 // selfHouseResolvable is implemented by the value types that keep part of a card
-// definition in unexported fields (Target, KeyCostChange). Reflection can read
-// but never write those, so such a type resolves its own sentinels, delegating
-// back to replacedIn for whatever effect-tree node it holds.
+// definition in unexported fields (KeyCostChange, powerLessThan). Reflection can
+// read but never write those, so such a type resolves its own sentinels,
+// delegating back to replacedIn for whatever effect-tree node it holds. A type
+// that exports its fields needs none of this: Target's Filter and Refinement are
+// exported, so the reflection pass descends into them like any other struct.
 type selfHouseResolvable interface {
 	// houseReplaced returns a copy with each occurrence of house from replaced by to.
 	// It returns any so every implementer shares one signature; each returns its

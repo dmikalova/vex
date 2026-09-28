@@ -24,7 +24,7 @@ var OldBoomy = set.New(
 			card.Then{
 				First: card.DiscardUntil{
 					Player:  card.Controller,
-					House:   card.Houses.Named(card.House.Self),
+					Filter:  card.Filter{House: card.Houses.Named(card.House.Self)},
 					MayStop: true,
 				},
 				Result: card.DealDamage{

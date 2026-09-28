@@ -40,7 +40,7 @@ func (e ExcessCreatures) sideCount(ctx *EffectContext, player int) int {
 	f := e.filter()
 	n := 0
 	for _, id := range ctx.Resolver.Battleline(player) {
-		if f.admits(ctx.Resolver, id) {
+		if f.matches(ctx, id) {
 			n++
 		}
 	}
@@ -51,8 +51,8 @@ func (e ExcessCreatures) sideCount(ctx *EffectContext, player int) int {
 // when set, admitting every creature otherwise. Type is stated even though the
 // scan only walks battlelines, so filter().noun() renders "creature" rather than
 // the generic "card".
-func (e ExcessCreatures) filter() CardFilter {
-	return CardFilter{
+func (e ExcessCreatures) filter() Filter {
+	return Filter{
 		Type:  Creature,
 		Trait: e.Trait,
 	}
@@ -120,7 +120,7 @@ func (e CardsInPlay) Value(ctx *EffectContext) int {
 		if !e.House.matches(ctx, id) {
 			continue
 		}
-		if !f.admits(ctx.Resolver, id) {
+		if !f.matches(ctx, id) {
 			continue
 		}
 		if e.Ready && ctx.Resolver.Exhausted(id) {
@@ -145,8 +145,8 @@ func (e CardsInPlay) Value(ctx *EffectContext) int {
 
 // filter is the identity predicate a counted card must satisfy, conjoining the
 // Type, Trait, and Name filters (Chosen's filter has the same shape).
-func (e CardsInPlay) filter() CardFilter {
-	return CardFilter{
+func (e CardsInPlay) filter() Filter {
+	return Filter{
 		Type:  e.Type,
 		Trait: e.Trait,
 		Name:  e.Name,

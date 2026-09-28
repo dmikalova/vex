@@ -733,16 +733,20 @@ func resolverInPlay(ctx *EffectContext, id LocalID) bool {
 type DiscardUntil struct {
 	// Player names whose deck is dug; every caller sets it explicitly.
 	Player Player
-	// House filters what ends the dig; an unset matcher stops at any house. House
-	// and Filter conjoin, as they do on Search.
-	House HouseMatcher
-	// Filter restricts what ends the dig by name, trait, or type; the zero value
-	// stops at any card (Angry Mob digs for another Angry Mob, Purify for a
+	// Filter restricts what ends the dig by house, name, trait, or type; the zero
+	// value stops at any card (Angry Mob digs for another Angry Mob, Purify for a
 	// non-Mutant creature).
-	Filter CardFilter
+	Filter Filter
 	// MayStop lets the controller stop the dig before a match; the terminator then
 	// reads "or choose to stop" instead of "or run out of cards".
 	MayStop bool
+}
+
+// validate rejects a Filter that narrows on an in-play axis: the dig turns up
+// cards from the top of a deck, which have no power, damage, or place in a
+// battleline to read, so such an axis would silently end no dig.
+func (e DiscardUntil) validate() error {
+	return e.Filter.validateIdentityOnly("DiscardUntil")
 }
 
 // deckPhrase renders whose deck is dug, from the chosen perspective.
@@ -773,15 +777,12 @@ func (e DiscardUntil) noun() string {
 	if e.Filter.Name != "" {
 		return e.Filter.Name
 	}
-	return e.House.qualifyNoun(e.Filter.noun())
+	return e.Filter.noun("card")
 }
 
 // matches reports whether a discarded card is the one the dig was looking for.
 func (e DiscardUntil) matches(ctx *EffectContext, id LocalID) bool {
-	if !e.Filter.admits(ctx.Resolver, id) {
-		return false
-	}
-	return e.House.matches(ctx, id)
+	return e.Filter.matches(ctx, id)
 }
 
 // Resolve digs, recording the run and leaving the found card in context.
