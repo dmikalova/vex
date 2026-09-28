@@ -700,7 +700,7 @@ func TestCardsPurgedCount(t *testing.T) {
 		t.Errorf("creature count text = %q", got)
 	}
 	PurgeCreature{
-		Target: Target{Kind: TargetEachFriendlyCreature}.House(namedHouse(Shadows)),
+		Target: Target{Kind: TargetEachFriendlyCreature}.With(Filter{House: namedHouse(Shadows)}),
 	}.Resolve(ctx)
 
 	if got := (CardsPurged{}).Value(ctx); got != 2 {
@@ -758,7 +758,7 @@ func TestPurgeCreatureFollowsIntoDiscard(t *testing.T) {
 // asked declinably and asks nothing when the source has no neighbor (Buzzle at a
 // flank).
 func TestMayPurgeCreatureDeclinable(t *testing.T) {
-	neighboring := func() Target { return Target{Kind: TargetChosenCreature}.Neighboring() }
+	neighboring := func() Target { return Target{Kind: TargetChosenCreature}.With(Filter{Neighboring: true}) }
 
 	if !(PurgeCreature{Target: neighboring()}).declinable() {
 		t.Fatal("a chosen-target PurgeCreature should be declinable")

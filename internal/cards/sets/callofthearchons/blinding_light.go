@@ -19,6 +19,8 @@ var BlindingLight = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{
-			Then: card.Stun{Target: card.Target.EachCreature.House(card.Houses.Chosen)},
+			Then: card.Stun{
+				Target: card.Target.EachCreature.With(card.Filter{House: card.Houses.Chosen}),
+			},
 		}),
 )

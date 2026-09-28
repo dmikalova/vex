@@ -20,7 +20,7 @@ var HarlandMindlock = set.New(
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(card.Trigger.Play, card.TakeControl{
-		Target:   card.Target.EnemyCreature.OnFlank(),
+		Target:   card.Target.EnemyCreature.With(card.Filter{Position: card.Position.OnFlank}),
 		Duration: card.Duration.UntilThisLeavesPlay,
 	}),
 )

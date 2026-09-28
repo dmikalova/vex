@@ -23,6 +23,6 @@ var NurseSoto = set.New(
 	card.WithKeywords(card.Keyword.Deploy),
 	card.WithAbility(card.Trigger.PlayFightReap, card.Heal{
 		Amount: 3,
-		Target: card.Target.EachCreature.Neighboring(),
+		Target: card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 	}),
 )

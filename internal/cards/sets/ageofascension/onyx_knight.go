@@ -21,6 +21,6 @@ var OnyxKnight = set.New(
 	card.WithTraits(card.Traits.Demon, card.Traits.Knight),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
-			Target: card.Target.EachCreature.OddPower(),
+			Target: card.Target.EachCreature.With(card.Filter{Power: card.Power.Odd}),
 		}),
 )

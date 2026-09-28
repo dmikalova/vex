@@ -278,7 +278,11 @@ func TestArrivalKillsFlankNeighborBeforeAfterPlay(t *testing.T) {
 	neighbor := g.AddToBattleline(
 		testCreature("flank guard", 4,
 			WithConstantAbility(ConstantAbility{
-				Target:     Target{Kind: TargetThisCreature}.OnFlank(),
+				Target: Target{
+					Kind: TargetThisCreature,
+				}.With(
+					Filter{Position: PositionOnFlank},
+				),
 				PowerBonus: 2,
 			})),
 		0,
@@ -320,7 +324,11 @@ func TestTreacheryHandoffSettlesTheNewController(t *testing.T) {
 	guard := g.AddToBattleline(
 		testCreature("flank guard", 4,
 			WithConstantAbility(ConstantAbility{
-				Target:     Target{Kind: TargetThisCreature}.OnFlank(),
+				Target: Target{
+					Kind: TargetThisCreature,
+				}.With(
+					Filter{Position: PositionOnFlank},
+				),
 				PowerBonus: 2,
 			})),
 		0,

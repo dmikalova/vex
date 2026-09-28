@@ -17,6 +17,6 @@ var Oubliette = set.New(
 	card.Provenance(card.CotA, "278"),
 	card.WithAbility(
 		card.Trigger.Play, card.PurgeCreature{
-			Target: card.Target.Creature.PowerAtMost(3),
+			Target: card.Target.Creature.With(card.Filter{Power: card.Power.AtMost(3)}),
 		}),
 )

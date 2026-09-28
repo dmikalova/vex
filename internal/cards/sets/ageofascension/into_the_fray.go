@@ -17,7 +17,9 @@ var IntoTheFray = set.New(
 	card.Provenance(card.AoA, "13"),
 	card.WithAbility(
 		card.Trigger.Play, card.GainAbility{
-			Target: card.Target.FriendlyCreature.House(card.Houses.Named(card.House.Self)),
+			Target: card.Target.FriendlyCreature.With(
+				card.Filter{House: card.Houses.Named(card.House.Self)},
+			),
 			Ability: card.Ability{
 				Trigger: card.Trigger.Fight,
 				Effect:  card.Ready{Target: card.Target.This},

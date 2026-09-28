@@ -21,7 +21,7 @@ var BerserkerSlam = set.New(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 4,
 			After:  card.IfDestroyed,
-			Target: card.Target.Creature.OnFlank(),
+			Target: card.Target.Creature.With(card.Filter{Position: card.Position.OnFlank}),
 			Then: card.LoseAember{
 				Player: card.ItsOwner,
 				Amount: 1,

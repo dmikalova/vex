@@ -21,7 +21,7 @@ var SilentDagger = set.New(
 		Granted: []card.Ability{
 			{Trigger: card.Trigger.Reap, Effect: card.DealDamage{
 				Amount: 4,
-				Target: card.Target.Creature.OnFlank(),
+				Target: card.Target.Creature.With(card.Filter{Position: card.Position.OnFlank}),
 			}},
 		},
 	}),

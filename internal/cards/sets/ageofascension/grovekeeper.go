@@ -21,7 +21,7 @@ var Grovekeeper = set.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithAbility(
 		card.Trigger.EndOfTurn, card.AddPowerCounter{
-			Target: card.Target.EachCreature.Neighboring(),
+			Target: card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 			Amount: 1,
 		}),
 )

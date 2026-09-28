@@ -294,7 +294,9 @@ func (o *optionRecorder) ChooseOption(_ PromptSource, _ string, _ []string) int 
 // "You may destroy each Mars creature" with no Mars creature in play is not a
 // decision, so the question is never asked.
 func TestMayWithNothingToDoIsNotOffered(t *testing.T) {
-	e := May{Do: Destroy{Target: Target{Kind: TargetEachCreature}.House(namedHouse(Mars))}}
+	e := May{
+		Do: Destroy{Target: Target{Kind: TargetEachCreature}.With(Filter{House: namedHouse(Mars)})},
+	}
 
 	g := NewGame("A", "B", 1)
 	ch := &optionRecorder{}

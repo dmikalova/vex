@@ -26,7 +26,9 @@ var DracoPraeco = set.New(
 				Amount: 1,
 			},
 			card.ChooseHouseThen{
-				Then: card.Enrage{Target: card.Target.EachCreature.House(card.Houses.Chosen)},
+				Then: card.Enrage{
+					Target: card.Target.EachCreature.With(card.Filter{House: card.Houses.Chosen}),
+				},
 			},
 		}}}),
 )

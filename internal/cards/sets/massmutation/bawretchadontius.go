@@ -20,7 +20,7 @@ var Bawretchadontius = set.Gigantic(
 	card.WithPower(14),
 	card.WithTraits(card.Traits.Beast),
 	card.WithConstant(card.ConstantAbility{
-		Target: card.Target.EachFriendlyCreature.WithAember(),
+		Target: card.Target.EachFriendlyCreature.With(card.Filter{Aember: card.Aember.Some}),
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Reap,
 			Effect: card.DealDamage{

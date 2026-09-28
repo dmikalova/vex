@@ -237,7 +237,7 @@ func TestConstantCannotBeUsedToRejectsUnsetKind(t *testing.T) {
 	}()
 	NewCard("Bad", Brobnar, Creature, Common, WithPower(1),
 		WithConstantAbility(ConstantAbility{
-			Target:         Target{Kind: TargetEachCreature}.Neighboring(),
+			Target:         Target{Kind: TargetEachCreature}.With(Filter{Neighboring: true}),
 			CannotBeUsedTo: []UseKind{UseKind(0)},
 		}))
 }

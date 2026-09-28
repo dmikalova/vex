@@ -24,7 +24,7 @@ var Bullwark = set.New(
 	card.WithTraits(card.Traits.Mutant, card.Traits.Knight),
 	card.WithAssault(2),
 	card.WithConstant(card.ConstantAbility{
-		Target:       card.Target.EachCreature.Neighboring(),
+		Target:       card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 		AssaultBonus: 2,
 	}),
 )

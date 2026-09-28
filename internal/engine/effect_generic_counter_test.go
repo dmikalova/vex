@@ -129,7 +129,11 @@ func TestCountersShedOnLeavePlay(t *testing.T) {
 		Source:     victim,
 		Controller: 0,
 	}
-	Destroy{Target: Target{Kind: TargetChosenCreature}.WithCounter(CounterDoom)}.Resolve(ctx)
+	Destroy{
+		Target: Target{Kind: TargetChosenCreature}.With(Filter{Counter: CounterDoom}),
+	}.Resolve(
+		ctx,
+	)
 
 	if g.State.CounterCount != 1 {
 		t.Fatalf(
@@ -243,7 +247,7 @@ func TestDestroyWithCounter(t *testing.T) {
 		Controller: 0,
 	}
 
-	target := Target{Kind: TargetEachCreature}.WithCounter(CounterDoom)
+	target := Target{Kind: TargetEachCreature}.With(Filter{Counter: CounterDoom})
 	if got := target.Text(); got != "each creature with a doom counter" {
 		t.Errorf("target text = %q", got)
 	}

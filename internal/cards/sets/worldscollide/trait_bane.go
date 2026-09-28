@@ -67,9 +67,9 @@ func baneForHouses(h1, h2, h3 engine.House) card.Definition {
 		card.WithBonus(card.Bonus.Aember),
 		card.WithAbility(
 			card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-				card.Destroy{Target: card.Target.Creature.WithTrait(traits[0])},
-				card.Destroy{Target: card.Target.Creature.WithTrait(traits[1])},
-				card.Destroy{Target: card.Target.Creature.WithTrait(traits[2])},
+				card.Destroy{Target: card.Target.Creature.With(card.Filter{Trait: traits[0]})},
+				card.Destroy{Target: card.Target.Creature.With(card.Filter{Trait: traits[1]})},
+				card.Destroy{Target: card.Target.Creature.With(card.Filter{Trait: traits[2]})},
 			}}),
 	)
 }

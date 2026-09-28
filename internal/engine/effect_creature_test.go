@@ -244,8 +244,12 @@ func TestOnChooseCreatureExcludeHouse(t *testing.T) {
 	}
 
 	e := OnChooseCreature{
-		Target: Target{Kind: TargetChosenFriendlyCreature}.House(exceptHouse(Sanctum)),
-		Verbs:  []CreatureVerb{ReadyVerb{}},
+		Target: Target{
+			Kind: TargetChosenFriendlyCreature,
+		}.With(
+			Filter{House: exceptHouse(Sanctum)},
+		),
+		Verbs: []CreatureVerb{ReadyVerb{}},
 	}
 	if e.Text() != "ready a friendly non-Sanctum creature" {
 		t.Errorf("text = %q", e.Text())
@@ -364,7 +368,7 @@ func TestOnChooseCreatureNeighbors(t *testing.T) {
 	}
 
 	e := OnChooseCreature{
-		Target: Target{Kind: TargetChosenCreature}.Neighboring(),
+		Target: Target{Kind: TargetChosenCreature}.With(Filter{Neighboring: true}),
 		Verbs:  []CreatureVerb{ReadyVerb{}, FightVerb{}},
 	}
 	if e.Text() != "ready and fight with a neighboring creature" {

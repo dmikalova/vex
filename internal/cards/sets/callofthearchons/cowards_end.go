@@ -18,7 +18,9 @@ var CowardsEnd = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
-				card.Destroy{Target: card.Target.EachCreature.Undamaged()},
+				card.Destroy{
+					Target: card.Target.EachCreature.With(card.Filter{Damage: card.Damage.None}),
+				},
 				card.GainChains{Amount: 3},
 			},
 		}),

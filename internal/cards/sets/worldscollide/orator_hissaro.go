@@ -24,14 +24,14 @@ var OratorHissaro = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Sequence{Effects: []card.Effect{
-				card.Ready{Target: card.Target.EachCreature.Neighboring()},
+				card.Ready{Target: card.Target.EachCreature.With(card.Filter{Neighboring: true})},
 				card.Exalt{
-					Target: card.Target.EachCreature.Neighboring(),
+					Target: card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 					Amount: 1,
 				},
 			}},
 			card.BelongToHouse{
-				Target:   card.Target.EachCreature.Neighboring(),
+				Target:   card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 				House:    card.House.Self,
 				Duration: card.Duration.RemainderOfPlayerTurn,
 				Pronoun:  true,

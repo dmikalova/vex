@@ -21,11 +21,15 @@ var TheyreEverywhere = set.New(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.DealDamage{
 				Amount: 2,
-				Target: card.Target.EachEnemyCreature.OnFlank(),
+				Target: card.Target.EachEnemyCreature.With(
+					card.Filter{Position: card.Position.OnFlank},
+				),
 			},
 			card.DealDamage{
 				Amount: 1,
-				Target: card.Target.EachEnemyCreature.NotOnFlank(),
+				Target: card.Target.EachEnemyCreature.With(
+					card.Filter{Position: card.Position.NotOnFlank},
+				),
 			},
 		}}),
 )

@@ -22,7 +22,7 @@ var PanpacaJaga = set.New(
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Skirmish),
 	card.WithConstant(card.ConstantAbility{
-		Target:   card.Target.EachCreature.ToLeftOfSource(),
+		Target:   card.Target.EachCreature.With(card.Filter{Position: card.Position.Left}),
 		Keywords: card.Keywords(card.Keyword.Skirmish),
 	}),
 )

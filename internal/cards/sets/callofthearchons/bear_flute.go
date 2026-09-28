@@ -30,7 +30,7 @@ var BearFlute = set.New(
 		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.Heal{
 				Fully:  true,
-				Target: card.Target.Creature.Named(AncientBear.Name),
+				Target: card.Target.Creature.With(card.Filter{Name: AncientBear.Name}),
 			},
 			card.Conditional{
 				Cond: card.CardsInPlay{

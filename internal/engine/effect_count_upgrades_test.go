@@ -31,7 +31,9 @@ func TestUpgradesOnCount(t *testing.T) {
 		t.Errorf("Value with no selection = %d, want 0", got)
 	}
 
-	named := UpgradesOn{Target: Target{Kind: TargetAttachedHost}.Named("Chief Engineer Walls")}
+	named := UpgradesOn{
+		Target: Target{Kind: TargetAttachedHost}.With(Filter{Name: "Chief Engineer Walls"}),
+	}
 	if got := named.CountText(); got != "upgrade on Chief Engineer Walls" {
 		t.Errorf("CountText = %q", got)
 	}

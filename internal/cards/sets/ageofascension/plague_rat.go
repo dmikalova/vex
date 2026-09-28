@@ -36,6 +36,6 @@ var PlagueRat = set.New(
 				Type:   card.Type.Creature,
 				Trait:  card.Traits.Rat,
 			},
-			Target: card.Target.EachCreature.ExceptTrait(card.Traits.Rat),
+			Target: card.Target.EachCreature.With(card.Filter{ExceptTrait: card.Traits.Rat}),
 		}),
 )

@@ -146,7 +146,7 @@ var mutantHouses = map[engine.House]mutantHouse{
 		abilities: []card.Ability{{
 			Trigger: card.Trigger.Play,
 			Effect: card.OnChooseCreature{
-				Target: card.Target.Creature.Neighboring(),
+				Target: card.Target.Creature.With(card.Filter{Neighboring: true}),
 				Verbs:  []card.CreatureVerb{card.FightVerb{}},
 			},
 		}},

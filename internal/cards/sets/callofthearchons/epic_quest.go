@@ -22,7 +22,7 @@ var EpicQuest = set.New(
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
 		card.Trigger.Play, card.ArchiveFromPlay{
-			Target: card.Target.EachFriendlyCreature.WithTrait(card.Traits.Knight),
+			Target: card.Target.EachFriendlyCreature.With(card.Filter{Trait: card.Traits.Knight}),
 		}),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{

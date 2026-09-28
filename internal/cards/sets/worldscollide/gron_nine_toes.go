@@ -20,7 +20,7 @@ var GronNineToes = set.New(
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Giant),
 	card.WithConstant(card.ConstantAbility{
-		Target:     card.Target.This.Damaged(),
+		Target:     card.Target.This.With(card.Filter{Damage: card.Damage.Some}),
 		PowerBonus: 4,
 	}),
 )

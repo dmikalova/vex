@@ -33,6 +33,10 @@ var CincinnatusRex = set.New(
 				Target: card.Target.This,
 				Amount: 1,
 			},
-			card.Ready{Target: card.Target.EachFriendlyCardInPlay.Other()},
+			card.Ready{
+				Target: card.Target.EachFriendlyCardInPlay.With(
+					card.Filter{Except: card.Except.Source},
+				),
+			},
 		}}}),
 )

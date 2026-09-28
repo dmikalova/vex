@@ -25,7 +25,9 @@ var SmilingRuth = set.New(
 		card.Trigger.Reap, card.Conditional{
 			Cond: card.ForgedKey{Player: card.Controller},
 			Then: card.TakeControl{
-				Target:   card.Target.EnemyCreature.OnFlank(),
+				Target: card.Target.EnemyCreature.With(
+					card.Filter{Position: card.Position.OnFlank},
+				),
 				Duration: card.Duration.UntilCardLeavesPlay,
 			},
 		}),

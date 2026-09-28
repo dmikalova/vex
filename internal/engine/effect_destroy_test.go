@@ -14,7 +14,13 @@ func TestDestroyEffect(t *testing.T) {
 		Controller: 0,
 	}
 
-	byPower := Destroy{Target: Target{Kind: TargetEachCreature}.PowerAtMost(3)}
+	byPower := Destroy{
+		Target: Target{
+			Kind: TargetEachCreature,
+		}.With(
+			Filter{Power: PowerBound{Kind: BoundAtMost, Amount: 3}},
+		),
+	}
 	if byPower.Text() != "destroy each creature with power 3 or lower" {
 		t.Errorf("power text = %q", byPower.Text())
 	}
@@ -30,7 +36,7 @@ func TestDestroyEffect(t *testing.T) {
 		NewCard("sci", Logos, Creature, Common, WithPower(6), WithTraits(Scientist)),
 		1,
 	)
-	byTrait := Destroy{Target: Target{Kind: TargetEachCreature}.WithTrait(Scientist)}
+	byTrait := Destroy{Target: Target{Kind: TargetEachCreature}.With(Filter{Trait: Scientist})}
 	if byTrait.Text() != "destroy each Scientist creature" {
 		t.Errorf("trait text = %q", byTrait.Text())
 	}

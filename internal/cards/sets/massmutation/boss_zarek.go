@@ -22,7 +22,7 @@ var BossZarek = set.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Mutant, card.Traits.Thief),
 	card.WithConstant(card.ConstantAbility{
-		Target:   card.Target.EachFriendlyCreature.WithAember(),
+		Target:   card.Target.EachFriendlyCreature.With(card.Filter{Aember: card.Aember.Some}),
 		Keywords: card.Keywords(card.Keyword.Elusive),
 	}),
 )

@@ -19,7 +19,7 @@ var Extinction = set.New(
 		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.Creature,
 			Then: card.Sequence{Effects: []card.Effect{
-				card.Destroy{Target: card.Target.EachCreature.SharingTrait()},
+				card.Destroy{Target: card.Target.EachCreature.With(card.Filter{SharesTrait: true})},
 				card.GainChains{Amount: 1},
 			}},
 		}),

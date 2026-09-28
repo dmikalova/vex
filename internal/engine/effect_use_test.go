@@ -3,7 +3,11 @@ package engine
 import "testing"
 
 func TestUseTextAndValidation(t *testing.T) {
-	pool := Target{Kind: TargetEachFriendlyCardInPlay}.House(namedHouse(Mars)).Other()
+	pool := Target{
+		Kind: TargetEachFriendlyCardInPlay,
+	}.With(
+		Filter{House: namedHouse(Mars), Except: ExcludeSource},
+	)
 	if got := (Use{
 		Max:    2,
 		Target: pool,
@@ -81,8 +85,12 @@ func TestUseUsesCreaturesSequentially(t *testing.T) {
 	}
 
 	Use{
-		Max:    2,
-		Target: Target{Kind: TargetEachFriendlyCardInPlay}.House(namedHouse(Mars)).Other(),
+		Max: 2,
+		Target: Target{
+			Kind: TargetEachFriendlyCardInPlay,
+		}.With(
+			Filter{House: namedHouse(Mars), Except: ExcludeSource},
+		),
 	}.Resolve(
 		ctx,
 	)
@@ -114,8 +122,12 @@ func TestUseUsesArtifactAction(t *testing.T) {
 	}
 
 	Use{
-		Max:    1,
-		Target: Target{Kind: TargetEachFriendlyCardInPlay}.House(namedHouse(Mars)).Other(),
+		Max: 1,
+		Target: Target{
+			Kind: TargetEachFriendlyCardInPlay,
+		}.With(
+			Filter{House: namedHouse(Mars), Except: ExcludeSource},
+		),
 	}.Resolve(
 		ctx,
 	)
@@ -141,8 +153,12 @@ func TestUseStopsWhenNoChoice(t *testing.T) {
 	}
 
 	Use{
-		Max:    1,
-		Target: Target{Kind: TargetEachFriendlyCardInPlay}.House(namedHouse(Mars)).Other(),
+		Max: 1,
+		Target: Target{
+			Kind: TargetEachFriendlyCardInPlay,
+		}.With(
+			Filter{House: namedHouse(Mars), Except: ExcludeSource},
+		),
 	}.Resolve(
 		ctx,
 	)
@@ -162,8 +178,12 @@ func TestUseStopsWhenNoneUsable(t *testing.T) {
 	}
 
 	Use{
-		Max:    1,
-		Target: Target{Kind: TargetEachFriendlyCardInPlay}.House(namedHouse(Mars)).Other(),
+		Max: 1,
+		Target: Target{
+			Kind: TargetEachFriendlyCardInPlay,
+		}.With(
+			Filter{House: namedHouse(Mars), Except: ExcludeSource},
+		),
 	}.Resolve(
 		ctx,
 	)
@@ -249,8 +269,12 @@ func TestUseInSequence(t *testing.T) {
 	seq := Sequence{Effects: []Effect{
 		Destroy{Target: Target{Kind: TargetThisCreature}},
 		Use{
-			Max:    2,
-			Target: Target{Kind: TargetEachFriendlyCardInPlay}.House(namedHouse(Mars)).Other(),
+			Max: 2,
+			Target: Target{
+				Kind: TargetEachFriendlyCardInPlay,
+			}.With(
+				Filter{House: namedHouse(Mars), Except: ExcludeSource},
+			),
 		},
 	}}
 	if got := seq.Text(); got != "destroy "+SelfName+". Use 2 other Mars cards, one at a time." {

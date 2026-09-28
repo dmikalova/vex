@@ -22,7 +22,7 @@ var Narp = set.New(
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Giant),
 	card.WithConstant(card.ConstantAbility{
-		Target:         card.Target.EachCreature.Neighboring(),
+		Target:         card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 		CannotBeUsedTo: card.UseKinds(card.UseKind.Reap),
 	}),
 )

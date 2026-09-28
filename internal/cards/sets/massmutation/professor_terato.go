@@ -20,7 +20,7 @@ var ProfessorTerato = set.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant, card.Traits.Scientist),
 	card.WithConstant(card.ConstantAbility{
-		Target: card.Target.EachCreature.WithTrait(card.Traits.Mutant),
+		Target: card.Target.EachCreature.With(card.Filter{Trait: card.Traits.Mutant}),
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Reap,
 			Effect:  card.Draw{Amount: 1},

@@ -23,12 +23,16 @@ var Buzzle = set.New(
 	card.WithKeywords(card.Keyword.Skirmish),
 	card.WithAbility(
 		card.Trigger.Play, card.May{Do: card.Then{
-			First:  card.PurgeCreature{Target: card.Target.Creature.Neighboring()},
+			First: card.PurgeCreature{
+				Target: card.Target.Creature.With(card.Filter{Neighboring: true}),
+			},
 			Result: card.Ready{Target: card.Target.This},
 		}}),
 	card.WithAbility(
 		card.Trigger.Fight, card.May{Do: card.Then{
-			First:  card.PurgeCreature{Target: card.Target.Creature.Neighboring()},
+			First: card.PurgeCreature{
+				Target: card.Target.Creature.With(card.Filter{Neighboring: true}),
+			},
 			Result: card.Ready{Target: card.Target.This},
 		}}),
 )

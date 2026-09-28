@@ -23,7 +23,9 @@ var Bumblebird = set.New(
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(
 		card.Trigger.Play, card.AddPowerCounter{
-			Target: card.Target.EachOtherFriendlyCreature.House(card.Houses.Named(card.House.Self)),
+			Target: card.Target.EachOtherFriendlyCreature.With(
+				card.Filter{House: card.Houses.Named(card.House.Self)},
+			),
 			Amount: 2,
 		}),
 )

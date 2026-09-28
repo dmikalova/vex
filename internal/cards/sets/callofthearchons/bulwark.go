@@ -23,6 +23,6 @@ var Bulwark = set.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithConstant(card.ConstantAbility{
 		ArmorBonus: 2,
-		Target:     card.Target.EachCreature.Neighboring(),
+		Target:     card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 	}),
 )

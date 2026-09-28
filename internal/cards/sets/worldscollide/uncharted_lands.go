@@ -19,7 +19,9 @@ var UnchartedLands = set.New(
 	card.Provenance(card.WC, "342"),
 	card.WithTraits(card.Traits.Location),
 	card.WithConstant(card.ConstantAbility{
-		Target: card.Target.EachCreature.House(card.Houses.Named(card.House.Self)),
+		Target: card.Target.EachCreature.With(
+			card.Filter{House: card.Houses.Named(card.House.Self)},
+		),
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Reap,
 			Effect: card.MoveAember{

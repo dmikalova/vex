@@ -72,7 +72,7 @@ func TestBelongToHouseEndOfTurn(t *testing.T) {
 // a singular one keeps "that creature belongs".
 func TestBelongToHousePronoun(t *testing.T) {
 	plural := BelongToHouse{
-		Target:   Target{Kind: TargetEachCreature}.Neighboring(),
+		Target:   Target{Kind: TargetEachCreature}.With(Filter{Neighboring: true}),
 		House:    Saurian,
 		Duration: RemainderOfPlayerTurn,
 		Pronoun:  true,

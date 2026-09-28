@@ -20,6 +20,6 @@ var BewareTheIdes = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 23,
-			Target: card.Target.Creature.InCenter(),
+			Target: card.Target.Creature.With(card.Filter{Position: card.Position.Center}),
 		}),
 )

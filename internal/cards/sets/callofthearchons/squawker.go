@@ -22,8 +22,16 @@ var Squawker = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseOne{
 			Options: []card.Effect{
-				card.Ready{Target: card.Target.Creature.House(card.Houses.Named(card.House.Self))},
-				card.Stun{Target: card.Target.Creature.House(card.Houses.Except(card.House.Self))},
+				card.Ready{
+					Target: card.Target.Creature.With(
+						card.Filter{House: card.Houses.Named(card.House.Self)},
+					),
+				},
+				card.Stun{
+					Target: card.Target.Creature.With(
+						card.Filter{House: card.Houses.Except(card.House.Self)},
+					),
+				},
 			},
 		}),
 )

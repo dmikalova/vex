@@ -22,7 +22,7 @@ var GizelhartsStandard = set.New(
 	card.WithTraits(card.Traits.Item),
 	card.WithConstant(card.ConstantAbility{
 		ArmorBonus: 1,
-		Target:     card.Target.EachFriendlyCreature.WithAember(),
+		Target:     card.Target.EachFriendlyCreature.With(card.Filter{Aember: card.Aember.Some}),
 	}),
 	card.WithAbility(
 		card.Trigger.Play, card.Exalt{

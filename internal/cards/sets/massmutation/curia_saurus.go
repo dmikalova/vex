@@ -18,7 +18,7 @@ var CuriaSaurus = set.New(
 	card.Provenance(card.MM, "202"),
 	card.WithTraits(card.Traits.Location),
 	card.WithConstant(card.ConstantAbility{
-		Target: card.Target.EachCreature.WithAember(),
+		Target: card.Target.EachCreature.With(card.Filter{Aember: card.Aember.Some}),
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Destroyed,
 			Effect: card.MoveAember{

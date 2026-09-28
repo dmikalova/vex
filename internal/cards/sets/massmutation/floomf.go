@@ -24,6 +24,6 @@ var Floomf = set.New(
 	card.WithAbility(
 		card.Trigger.Fight, card.AddPowerCounter{
 			Amount: 2,
-			Target: card.Target.Creature.WithTrait(card.Traits.Beast),
+			Target: card.Target.Creature.With(card.Filter{Trait: card.Traits.Beast}),
 		}),
 )

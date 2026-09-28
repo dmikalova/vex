@@ -36,7 +36,9 @@ var QincansBlaster = set.New(
 			},
 			card.Then{
 				First: card.AttachSelfTo{
-					Target: card.Target.FriendlyCreature.Named(SciOfficerQincan.Name),
+					Target: card.Target.FriendlyCreature.With(
+						card.Filter{Name: SciOfficerQincan.Name},
+					),
 				},
 				Result: card.ArchiveFromPlay{Target: card.Target.Creature},
 			},

@@ -26,7 +26,9 @@ var BonkersKillingMachine = set.New(
 				},
 				card.ForEachDiscarded{
 					Do: card.Destroy{
-						Target: card.Target.CreatureOrArtifact.House(card.Houses.Contextual),
+						Target: card.Target.CreatureOrArtifact.With(
+							card.Filter{House: card.Houses.Contextual},
+						),
 					},
 				},
 				card.Conditional{

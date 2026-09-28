@@ -22,7 +22,9 @@ var GiantGnawbill = set.New(
 	card.WithEachPlayerAbility(
 		card.Trigger.AfterChooseHouse,
 		card.ByActivePlayer{
-			Do: card.Destroy{Target: card.Target.Artifact.House(card.Houses.Active)},
+			Do: card.Destroy{
+				Target: card.Target.Artifact.With(card.Filter{House: card.Houses.Active}),
+			},
 		},
 	),
 )

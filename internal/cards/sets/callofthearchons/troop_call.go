@@ -38,7 +38,9 @@ var TroopCall = set.New(
 					Destination: card.To.Hand,
 				},
 				card.PutFromPlay{
-					Target:      card.Target.EachFriendlyCreature.WithTrait(card.Traits.Niffle),
+					Target: card.Target.EachFriendlyCreature.With(
+						card.Filter{Trait: card.Traits.Niffle},
+					),
 					Destination: card.To.Hand,
 				},
 			},

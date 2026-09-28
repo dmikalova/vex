@@ -9,7 +9,7 @@ func blasterUpgrade(host string) CardDefinition {
 	return NewCard("Test Blaster", StarAlliance, Upgrade, Rare,
 		WithStatic(StaticModifier{Granted: []Ability{
 			{Trigger: TriggerAfterReap, Effect: AttachSelfTo{
-				Target: Target{Kind: TargetChosenFriendlyCreature}.Named(host),
+				Target: Target{Kind: TargetChosenFriendlyCreature}.With(Filter{Name: host}),
 			}},
 		}}))
 }
@@ -42,8 +42,10 @@ func boundBlasterUpgrade(host string) CardDefinition {
 		WithStatic(StaticModifier{Granted: []Ability{{
 			Trigger: TriggerAfterReap,
 			Effect: Sequence{Effects: []Effect{
-				AttachSelfTo{Target: Target{Kind: TargetChosenFriendlyCreature}.Named(host)},
-				Ward{Target: Target{Kind: TargetAttachedHost}.Named(host)},
+				AttachSelfTo{
+					Target: Target{Kind: TargetChosenFriendlyCreature}.With(Filter{Name: host}),
+				},
+				Ward{Target: Target{Kind: TargetAttachedHost}.With(Filter{Name: host})},
 			}},
 		}}}))
 }
@@ -137,7 +139,7 @@ func TestTargetAttachedHostUnattached(t *testing.T) {
 	if got := (Target{Kind: TargetAttachedHost}).Text(); got != "the attached creature" {
 		t.Errorf("bare AttachedHost text = %q", got)
 	}
-	if got := (Target{Kind: TargetAttachedHost}).Named("Commander Chan").
+	if got := (Target{Kind: TargetAttachedHost}).With(Filter{Name: "Commander Chan"}).
 		Text(); got != "Commander Chan" {
 		t.Errorf("named AttachedHost text = %q, want %q", got, "Commander Chan")
 	}
@@ -145,7 +147,9 @@ func TestTargetAttachedHostUnattached(t *testing.T) {
 
 // TestAttachSelfToText renders the effect and rejects a missing target.
 func TestAttachSelfToText(t *testing.T) {
-	e := AttachSelfTo{Target: Target{Kind: TargetChosenFriendlyCreature}.Named("Commander Chan")}
+	e := AttachSelfTo{
+		Target: Target{Kind: TargetChosenFriendlyCreature}.With(Filter{Name: "Commander Chan"}),
+	}
 	if got := e.Text(); got != "attach "+CardName+" to Commander Chan" {
 		t.Errorf("text = %q", got)
 	}
@@ -160,7 +164,7 @@ func TestAttachSelfToText(t *testing.T) {
 // TestTargetNamedChosenRendersBareName covers the proper-name rendering: a chosen
 // single target narrowed to a name prints the name outright, with no article.
 func TestTargetNamedChosenRendersBareName(t *testing.T) {
-	tgt := Target{Kind: TargetChosenFriendlyCreature}.Named("Lieutenant Khrkhar")
+	tgt := Target{Kind: TargetChosenFriendlyCreature}.With(Filter{Name: "Lieutenant Khrkhar"})
 	if got := tgt.Text(); got != "Lieutenant Khrkhar" {
 		t.Errorf("text = %q, want %q", got, "Lieutenant Khrkhar")
 	}
@@ -207,7 +211,9 @@ func TestAttachSelfToDeclinable(t *testing.T) {
 	}
 
 	// Narrowed to the neighbor by name, the click moves the upgrade there.
-	toOnto := AttachSelfTo{Target: Target{Kind: TargetChosenFriendlyCreature}.Named("onto")}
+	toOnto := AttachSelfTo{
+		Target: Target{Kind: TargetChosenFriendlyCreature}.With(Filter{Name: "onto"}),
+	}
 	if !toOnto.resolveOptional(ctx) {
 		t.Error("clicking the creature should report the upgrade attached")
 	}
@@ -221,7 +227,9 @@ func TestAttachSelfToDeclinable(t *testing.T) {
 	declined.AddToBattleline(testCreature("other", 3), 0)
 	held := declined.Register(NewCard("shield", StarAlliance, Upgrade, Common), 0)
 	declined.AttachUpgrade(stay, held)
-	toOther := AttachSelfTo{Target: Target{Kind: TargetChosenFriendlyCreature}.Named("other")}
+	toOther := AttachSelfTo{
+		Target: Target{Kind: TargetChosenFriendlyCreature}.With(Filter{Name: "other"}),
+	}
 	if toOther.resolveOptional(
 		&EffectContext{
 			Resolver:   declined,

@@ -22,6 +22,6 @@ var Replicator = set.New(
 	card.WithAbility(
 		card.Trigger.Reap, card.TriggerAbility{
 			Trigger: card.Trigger.Reap,
-			Target:  card.Target.Creature.Other(),
+			Target:  card.Target.Creature.With(card.Filter{Except: card.Except.Source}),
 		}),
 )

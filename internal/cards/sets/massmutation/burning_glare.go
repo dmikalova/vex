@@ -26,7 +26,9 @@ var BurningGlare = set.New(
 			Options: []card.Effect{
 				card.Stun{Target: card.Target.EnemyCreature},
 				card.Stun{
-					Target: card.Target.EachEnemyCreature.WithTrait(card.Traits.Mutant),
+					Target: card.Target.EachEnemyCreature.With(
+						card.Filter{Trait: card.Traits.Mutant},
+					),
 				},
 			},
 		}),

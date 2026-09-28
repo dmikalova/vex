@@ -26,7 +26,9 @@ var Spartasaur = set.New(
 		card.Trigger.AfterCreatureDestroyed, card.Conditional{
 			Cond: card.ItIsFriendly{},
 			Then: card.Destroy{
-				Target: card.Target.EachCreature.ExceptTrait(card.Traits.Dinosaur),
+				Target: card.Target.EachCreature.With(
+					card.Filter{ExceptTrait: card.Traits.Dinosaur},
+				),
 			},
 		}),
 	card.WithAbility(

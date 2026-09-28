@@ -22,11 +22,15 @@ var NiffleQueen = set.New(
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Beast, card.Traits.Niffle),
 	card.WithConstant(card.ConstantAbility{
-		Target:     card.Target.EachOtherFriendlyCreature.WithTrait(card.Traits.Beast),
+		Target: card.Target.EachOtherFriendlyCreature.With(
+			card.Filter{Trait: card.Traits.Beast},
+		),
 		PowerBonus: 1,
 	}),
 	card.WithConstant(card.ConstantAbility{
-		Target:     card.Target.EachOtherFriendlyCreature.WithTrait(card.Traits.Niffle),
+		Target: card.Target.EachOtherFriendlyCreature.With(
+			card.Filter{Trait: card.Traits.Niffle},
+		),
 		PowerBonus: 1,
 	}),
 )

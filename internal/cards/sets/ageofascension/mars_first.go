@@ -19,7 +19,9 @@ var MarsFirst = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.OnChooseCreature{
-			Target: card.Target.FriendlyCreature.House(card.Houses.Named(card.House.Self)),
-			Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.UseVerb{}},
+			Target: card.Target.FriendlyCreature.With(
+				card.Filter{House: card.Houses.Named(card.House.Self)},
+			),
+			Verbs: []card.CreatureVerb{card.ReadyVerb{}, card.UseVerb{}},
 		}),
 )

@@ -22,6 +22,6 @@ var HorsemanOfPestilence = set.New(
 	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithAbility(card.Trigger.PlayFightReap, card.DealDamage{
 		Amount: 1,
-		Target: card.Target.EachCreature.ExceptTrait(card.Traits.Horseman),
+		Target: card.Target.EachCreature.With(card.Filter{ExceptTrait: card.Traits.Horseman}),
 	}),
 )

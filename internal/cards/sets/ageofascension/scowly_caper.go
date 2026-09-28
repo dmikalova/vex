@@ -23,6 +23,6 @@ var ScowlyCaper = set.New(
 	card.WithKeywords(card.Keyword.Skirmish, card.Keyword.Treachery, card.Keyword.Versatile),
 	card.WithAbility(
 		card.Trigger.EndOfTurn, card.Destroy{
-			Target: card.Target.Creature.Neighboring(),
+			Target: card.Target.Creature.With(card.Filter{Neighboring: true}),
 		}),
 )

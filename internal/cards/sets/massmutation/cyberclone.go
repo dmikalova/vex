@@ -22,7 +22,9 @@ var CyberClone = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
-				card.PurgeCreature{Target: card.Target.Creature.Other()},
+				card.PurgeCreature{
+					Target: card.Target.Creature.With(card.Filter{Except: card.Except.Source}),
+				},
 				card.CopyPrintedStats{
 					Target: card.Target.This,
 					Source: card.Target.TheSameCreature,

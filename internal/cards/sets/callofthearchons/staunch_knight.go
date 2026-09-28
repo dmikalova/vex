@@ -23,6 +23,6 @@ var StaunchKnight = set.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithConstant(card.ConstantAbility{
 		PowerBonus: 2,
-		Target:     card.Target.This.OnFlank(),
+		Target:     card.Target.This.With(card.Filter{Position: card.Position.OnFlank}),
 	}),
 )

@@ -17,6 +17,6 @@ var TheHarderTheyCome = set.New(
 	card.Provenance(card.CotA, "228"),
 	card.WithAbility(
 		card.Trigger.Play, card.PurgeCreature{
-			Target: card.Target.Creature.PowerAtLeast(5),
+			Target: card.Target.Creature.With(card.Filter{Power: card.Power.AtLeast(5)}),
 		}),
 )

@@ -27,9 +27,15 @@ var Ozmo = set.New(
 		Options: []card.Effect{
 			card.Heal{
 				Amount: 3,
-				Target: card.Target.Creature.House(card.Houses.Named(card.House.Mars)),
+				Target: card.Target.Creature.With(
+					card.Filter{House: card.Houses.Named(card.House.Mars)},
+				),
 			},
-			card.Stun{Target: card.Target.Creature.House(card.Houses.Named(card.House.Mars))},
+			card.Stun{
+				Target: card.Target.Creature.With(
+					card.Filter{House: card.Houses.Named(card.House.Mars)},
+				),
+			},
 		},
 	}),
 )

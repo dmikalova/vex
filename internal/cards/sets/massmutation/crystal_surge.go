@@ -19,7 +19,7 @@ var CrystalSurge = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Exalt{
-			Target: card.Target.EachCreature.WithTrait(card.Traits.Mutant),
+			Target: card.Target.EachCreature.With(card.Filter{Trait: card.Traits.Mutant}),
 			Amount: 1,
 		}),
 )

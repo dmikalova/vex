@@ -26,7 +26,9 @@ var LongfusedMines = set.New(
 			card.Destroy{Target: card.Target.This},
 			card.DealDamage{
 				Amount: 3,
-				Target: card.Target.EachEnemyCreature.NotOnFlank(),
+				Target: card.Target.EachEnemyCreature.With(
+					card.Filter{Position: card.Position.NotOnFlank},
+				),
 			},
 		}}),
 )

@@ -36,7 +36,9 @@ var GarciasBlaster = set.New(
 			},
 			card.Then{
 				First: card.AttachSelfTo{
-					Target: card.Target.FriendlyCreature.Named(SensorChiefGarcia.Name),
+					Target: card.Target.FriendlyCreature.With(
+						card.Filter{Name: SensorChiefGarcia.Name},
+					),
 				},
 				Result: card.StealAember{Amount: 1},
 			},

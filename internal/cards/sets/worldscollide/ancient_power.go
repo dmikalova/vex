@@ -19,6 +19,6 @@ var AncientPower = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Ward{
-			Target: card.Target.EachFriendlyCreature.WithAember(),
+			Target: card.Target.EachFriendlyCreature.With(card.Filter{Aember: card.Aember.Some}),
 		}),
 )

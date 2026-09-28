@@ -23,6 +23,6 @@ var DeepwoodDruid = set.New(
 	card.WithKeywords(card.Keyword.Deploy),
 	card.WithAbility(card.Trigger.PlayReap, card.Heal{
 		Fully:  true,
-		Target: card.Target.Creature.Neighboring(),
+		Target: card.Target.Creature.With(card.Filter{Neighboring: true}),
 	}),
 )

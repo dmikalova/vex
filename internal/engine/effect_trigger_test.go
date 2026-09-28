@@ -5,7 +5,7 @@ import "testing"
 func TestTriggerAbility(t *testing.T) {
 	e := TriggerAbility{
 		Trigger: TriggerAfterReap,
-		Target:  Target{Kind: TargetChosenCreature}.Other(),
+		Target:  Target{Kind: TargetChosenCreature}.With(Filter{Except: ExcludeSource}),
 	}
 	want := "trigger the reap effect of another creature"
 	if got := e.Text(); got != want {
@@ -71,7 +71,7 @@ func TestTriggerAbilityBoundedByRuleOfSix(t *testing.T) {
 		},
 		TriggerAbility{
 			Trigger: TriggerAfterReap,
-			Target:  Target{Kind: TargetChosenCreature}.Other(),
+			Target:  Target{Kind: TargetChosenCreature}.With(Filter{Except: ExcludeSource}),
 		},
 	}}
 	g := started(t)
@@ -101,7 +101,7 @@ func TestTriggerAbilityChargesTheCascadeRoot(t *testing.T) {
 	// fills to six while the other name is never touched — not six each.
 	reachReap := TriggerAbility{
 		Trigger: TriggerAfterReap,
-		Target:  Target{Kind: TargetChosenCreature}.Other(),
+		Target:  Target{Kind: TargetChosenCreature}.With(Filter{Except: ExcludeSource}),
 	}
 	g := started(t)
 	g.AddToBattleline(testCreature("Replicator", 2, WithAbility(TriggerAfterReap, reachReap)), 0)
@@ -129,7 +129,7 @@ func TestTriggerAbilityNoCandidate(t *testing.T) {
 	src := g.Battleline(0)[0]
 	TriggerAbility{
 		Trigger: TriggerAfterReap,
-		Target:  Target{Kind: TargetChosenCreature}.Other(),
+		Target:  Target{Kind: TargetChosenCreature}.With(Filter{Except: ExcludeSource}),
 	}.Resolve(&EffectContext{
 		Resolver:   g,
 		Controller: 0,

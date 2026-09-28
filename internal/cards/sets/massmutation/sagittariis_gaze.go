@@ -21,7 +21,7 @@ var SagittariisGaze = set.New(
 	card.WithEnhance(card.Bonus.Damage),
 	card.WithAbility(
 		card.Trigger.Play, card.Exalt{
-			Target: card.Target.Creature.Damaged(),
+			Target: card.Target.Creature.With(card.Filter{Damage: card.Damage.Some}),
 			Amount: 1,
 		}),
 )

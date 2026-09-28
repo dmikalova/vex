@@ -29,6 +29,6 @@ var CustomVirus = set.New(
 				Player:    card.Controller,
 				Selection: card.Chosen{Type: card.Type.Creature},
 			},
-			card.Destroy{Target: card.Target.EachCreature.SharingTrait()},
+			card.Destroy{Target: card.Target.EachCreature.With(card.Filter{SharesTrait: true})},
 		}}),
 )

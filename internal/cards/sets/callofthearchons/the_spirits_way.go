@@ -17,6 +17,6 @@ var TheSpiritsWay = set.New(
 	card.Provenance(card.CotA, "229"),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
-			Target: card.Target.EachCreature.PowerAtLeast(3),
+			Target: card.Target.EachCreature.With(card.Filter{Power: card.Power.AtLeast(3)}),
 		}),
 )

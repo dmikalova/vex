@@ -25,6 +25,6 @@ var LionBautrem = set.New(
 	card.WithKeywords(card.Keyword.Deploy),
 	card.WithConstant(card.ConstantAbility{
 		PowerBonus: 2,
-		Target:     card.Target.EachCreature.Neighboring(),
+		Target:     card.Target.EachCreature.With(card.Filter{Neighboring: true}),
 	}),
 )

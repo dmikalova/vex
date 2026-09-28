@@ -21,6 +21,6 @@ var Etaromme = set.New(
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
 		card.Trigger.Reap,
-		card.Destroy{Target: card.Target.Creature.OfHouseWithMostCreatures()},
+		card.Destroy{Target: card.Target.Creature.With(card.Filter{HouseWithMostCreatures: true})},
 	),
 )

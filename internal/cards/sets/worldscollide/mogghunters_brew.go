@@ -30,7 +30,7 @@ var MogghuntersBrew = set.New(
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Fight,
 			Effect: card.DealDamage{
-				Target: card.Target.Creature.OnFlank(),
+				Target: card.Target.Creature.With(card.Filter{Position: card.Position.OnFlank}),
 				Amount: 2,
 			},
 		}},

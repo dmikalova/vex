@@ -20,7 +20,7 @@ var GleefulMayhem = set.New(
 	card.WithAbility(card.Trigger.Play, card.ForEachHouse{
 		Do: card.DealDamage{
 			Amount: 5,
-			Target: card.Target.Creature.House(card.Houses.Each),
+			Target: card.Target.Creature.With(card.Filter{House: card.Houses.Each}),
 		},
 	}),
 )

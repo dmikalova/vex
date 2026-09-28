@@ -36,7 +36,9 @@ var KirbysBlaster = set.New(
 			},
 			card.Then{
 				First: card.AttachSelfTo{
-					Target: card.Target.FriendlyCreature.Named(ComOfficerKirby.Name),
+					Target: card.Target.FriendlyCreature.With(
+						card.Filter{Name: ComOfficerKirby.Name},
+					),
 				},
 				Result: card.Draw{Amount: 2},
 			},

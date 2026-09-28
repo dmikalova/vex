@@ -20,7 +20,9 @@ var MatingSeason = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.PutFromPlay{
-				Target:      card.Target.EachCreature.House(card.Houses.Named(card.House.Self)),
+				Target: card.Target.EachCreature.With(
+					card.Filter{House: card.Houses.Named(card.House.Self)},
+				),
 				Destination: card.To.DeckShuffled,
 			},
 			card.GainAember{

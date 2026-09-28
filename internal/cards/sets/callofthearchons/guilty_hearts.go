@@ -19,6 +19,6 @@ var GuiltyHearts = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
-			Target: card.Target.EachCreature.WithAember(),
+			Target: card.Target.EachCreature.With(card.Filter{Aember: card.Aember.Some}),
 		}),
 )

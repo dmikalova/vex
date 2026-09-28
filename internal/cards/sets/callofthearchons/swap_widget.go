@@ -20,8 +20,9 @@ var SwapWidget = set.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Then{
 			First: card.PutFromPlay{
-				Target: card.Target.FriendlyCreature.House(card.Houses.Named(card.House.Self)).
-					Ready(),
+				Target: card.Target.FriendlyCreature.With(
+					card.Filter{House: card.Houses.Named(card.House.Self), Ready: true},
+				),
 				Destination: card.To.Hand,
 			},
 			Result: card.Sequence{Effects: []card.Effect{

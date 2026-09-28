@@ -19,7 +19,9 @@ var HarvestTime = set.New(
 		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.Creature,
 			Then: card.Sequence{Effects: []card.Effect{
-				card.PurgeCreature{Target: card.Target.EachCreature.SharingTrait()},
+				card.PurgeCreature{
+					Target: card.Target.EachCreature.With(card.Filter{SharesTrait: true}),
+				},
 				card.GainAember{
 					Player: card.EachPlayer,
 					Amount: 1,

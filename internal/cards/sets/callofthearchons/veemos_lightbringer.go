@@ -21,6 +21,6 @@ var VeemosLightbringer = set.New(
 	card.WithTraits(card.Traits.Angel, card.Traits.Spirit),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
-			Target: card.Target.EachCreature.Keyword(card.Keyword.Elusive),
+			Target: card.Target.EachCreature.With(card.Filter{Keyword: card.Keyword.Elusive}),
 		}),
 )

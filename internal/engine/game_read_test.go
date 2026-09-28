@@ -131,7 +131,11 @@ func TestConstantAbilityDirectional(t *testing.T) {
 	left := g.AddToBattleline(testCreature("left", 4), 0)
 	anga := g.AddToBattleline(NewCard("Anga", Untamed, Creature, Common,
 		WithPower(5), WithConstantAbility(ConstantAbility{
-			Target:     Target{Kind: TargetEachCreature}.ToRightOfSource(),
+			Target: Target{
+				Kind: TargetEachCreature,
+			}.With(
+				Filter{Position: PositionRightOfSource},
+			),
 			PowerBonus: 2,
 		})), 0)
 	right := g.AddToBattleline(testCreature("right", 4), 0)
@@ -160,7 +164,7 @@ func TestConstantAbilityDirectionalLeft(t *testing.T) {
 	left := g.AddToBattleline(testCreature("left", 4), 0)
 	jaga := g.AddToBattleline(NewCard("Jaga", Untamed, Creature, Common,
 		WithPower(3), WithConstantAbility(ConstantAbility{
-			Target:   Target{Kind: TargetEachCreature}.ToLeftOfSource(),
+			Target:   Target{Kind: TargetEachCreature}.With(Filter{Position: PositionLeftOfSource}),
 			Keywords: []Keyword{Skirmish},
 		})), 0)
 	right := g.AddToBattleline(testCreature("right", 4), 0)
@@ -351,7 +355,7 @@ func TestConstantAbilityWhileDamaged(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	def := NewCard("Gron", Brobnar, Creature, Rare, WithPower(8),
 		WithConstantAbility(ConstantAbility{
-			Target:     Target{Kind: TargetThisCreature}.Damaged(),
+			Target:     Target{Kind: TargetThisCreature}.With(Filter{Damage: DamageSome}),
 			PowerBonus: 4,
 		}))
 
@@ -497,7 +501,7 @@ func TestConstantAbilityNeighboringTarget(t *testing.T) {
 		WithConstantAbility(
 			ConstantAbility{
 				ArmorBonus: 2,
-				Target:     Target{Kind: TargetEachCreature}.Neighboring(),
+				Target:     Target{Kind: TargetEachCreature}.With(Filter{Neighboring: true}),
 			},
 		),
 	)
@@ -524,7 +528,7 @@ func TestCannotBeUsedToFromConstantAbility(t *testing.T) {
 	g := started(t)
 	narp := NewCard("Narp", Brobnar, Creature, Common, WithPower(8),
 		WithConstantAbility(ConstantAbility{
-			Target:         Target{Kind: TargetEachCreature}.Neighboring(),
+			Target:         Target{Kind: TargetEachCreature}.With(Filter{Neighboring: true}),
 			CannotBeUsedTo: []UseKind{ReapUse},
 		}))
 	left := g.AddToBattleline(testCreature("left", 3), 0)
@@ -656,7 +660,7 @@ func TestConstantText(t *testing.T) {
 		WithConstantAbility(
 			ConstantAbility{
 				ArmorBonus: 2,
-				Target:     Target{Kind: TargetEachCreature}.Neighboring(),
+				Target:     Target{Kind: TargetEachCreature}.With(Filter{Neighboring: true}),
 			},
 		),
 	)
@@ -712,7 +716,11 @@ func TestConstantText(t *testing.T) {
 		WithConstantAbility(
 			ConstantAbility{
 				PowerBonus: 2,
-				Target:     Target{Kind: TargetThisCreature}.OnFlank(),
+				Target: Target{
+					Kind: TargetThisCreature,
+				}.With(
+					Filter{Position: PositionOnFlank},
+				),
 			},
 		),
 	)
@@ -756,7 +764,7 @@ func TestConstantHazardousGrant(t *testing.T) {
 		WithHazardous(3),
 		WithConstantAbility(ConstantAbility{
 			HazardousBonus: 3,
-			Target:         Target{Kind: TargetEachCreature}.Neighboring(),
+			Target:         Target{Kind: TargetEachCreature}.With(Filter{Neighboring: true}),
 		}),
 	)
 	if got := constantText(&molina); got != "Each neighboring creature gains hazardous 3." {
@@ -788,7 +796,7 @@ func TestConstantAssaultGrant(t *testing.T) {
 		WithAssault(2),
 		WithConstantAbility(ConstantAbility{
 			AssaultBonus: 2,
-			Target:       Target{Kind: TargetEachCreature}.Neighboring(),
+			Target:       Target{Kind: TargetEachCreature}.With(Filter{Neighboring: true}),
 		}),
 	)
 	if got := constantText(&bullwark); got != "Each neighboring creature gains assault 2." {

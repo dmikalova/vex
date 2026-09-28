@@ -20,7 +20,9 @@ func master(n int, opts ...card.Option) card.Definition {
 			card.WithPower(4),
 			card.WithTraits(card.Traits.Demon),
 			card.WithAbility(card.Trigger.Reap, card.May{
-				Do: card.Destroy{Target: card.Target.Creature.PowerExactly(n)},
+				Do: card.Destroy{
+					Target: card.Target.Creature.With(card.Filter{Power: card.Power.Exactly(n)}),
+				},
 			}),
 			card.RarityWeight(0.2),
 		)...)

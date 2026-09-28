@@ -21,7 +21,7 @@ var QyxxlyxPlagueMaster = set.New(
 	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),
 	card.WithAbility(card.Trigger.FightReap, card.DealDamage{
 		Amount:      3,
-		Target:      card.Target.EachCreature.WithTrait(card.Traits.Human),
+		Target:      card.Target.EachCreature.With(card.Filter{Trait: card.Traits.Human}),
 		IgnoreArmor: true,
 	}),
 )

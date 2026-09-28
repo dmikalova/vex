@@ -20,7 +20,7 @@ var Pandemonium = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{
 			Amount: 1,
-			Target: card.Target.EachCreature.Undamaged(),
+			Target: card.Target.EachCreature.With(card.Filter{Damage: card.Damage.None}),
 			Source: card.ItsOpponent,
 		}),
 )

@@ -77,7 +77,7 @@ func TestCannotBeDealtDamageWholeSide(t *testing.T) {
 	if _, ok := (Target{Kind: TargetThisCreature}).wholeSide(0); ok {
 		t.Error("a single-creature target is not a whole side")
 	}
-	filtered := Target{Kind: TargetEachFriendlyCreature}.WithTrait(Knight)
+	filtered := Target{Kind: TargetEachFriendlyCreature}.With(Filter{Trait: Knight})
 	if _, ok := filtered.wholeSide(0); ok {
 		t.Error("a trait-filtered friendly target is not a whole side")
 	}

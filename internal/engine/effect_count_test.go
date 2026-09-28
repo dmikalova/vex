@@ -1262,7 +1262,11 @@ func TestDestroyTalliesRemovalsPerController(t *testing.T) {
 		Controller: 0,
 	}
 
-	Destroy{Target: Target{Kind: TargetEachCreature}.House(namedHouse(Dis))}.Resolve(ctx)
+	Destroy{
+		Target: Target{Kind: TargetEachCreature}.With(Filter{House: namedHouse(Dis)}),
+	}.Resolve(
+		ctx,
+	)
 
 	if ctx.Produced.Destroyed != [2]int{2, 1} {
 		t.Errorf("Destroyed = %v, want [2 1]", ctx.Produced.Destroyed)
@@ -1282,7 +1286,7 @@ func TestPutFromPlayTalliesRemovalsPerController(t *testing.T) {
 	}
 
 	PutFromPlay{
-		Target:      Target{Kind: TargetEachCreature}.House(namedHouse(Mars)),
+		Target:      Target{Kind: TargetEachCreature}.With(Filter{House: namedHouse(Mars)}),
 		Destination: ToDeckShuffled,
 	}.Resolve(ctx)
 
@@ -1313,7 +1317,7 @@ func TestPutFromPlayMovesTheWholeSelectionTogether(t *testing.T) {
 	}
 
 	PutFromPlay{
-		Target:      Target{Kind: TargetEachCreature}.House(namedHouse(Mars)),
+		Target:      Target{Kind: TargetEachCreature}.With(Filter{House: namedHouse(Mars)}),
 		Destination: ToDeckShuffled,
 	}.Resolve(ctx)
 

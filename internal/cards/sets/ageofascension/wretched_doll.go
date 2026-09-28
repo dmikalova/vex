@@ -26,7 +26,7 @@ var WretchedDoll = set.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.Destroy{
-				Target: card.Target.EachCreature.WithCounter(card.Counter.Doom),
+				Target: card.Target.EachCreature.With(card.Filter{Counter: card.Counter.Doom}),
 			},
 			card.PlaceCounter{Amount: 1,
 				Kind:   card.Counter.Doom,

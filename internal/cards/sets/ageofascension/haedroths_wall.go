@@ -19,6 +19,8 @@ var HaedrothsWall = set.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithConstant(card.ConstantAbility{
 		PowerBonus: 2,
-		Target:     card.Target.EachFriendlyCreature.OnFlank(),
+		Target: card.Target.EachFriendlyCreature.With(
+			card.Filter{Position: card.Position.OnFlank},
+		),
 	}),
 )

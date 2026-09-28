@@ -22,6 +22,6 @@ var RoundTable = set.New(
 	card.WithConstant(card.ConstantAbility{
 		PowerBonus: 1,
 		Keywords:   card.Keywords(card.Keyword.Taunt),
-		Target:     card.Target.EachFriendlyCreature.WithTrait(card.Traits.Knight),
+		Target:     card.Target.EachFriendlyCreature.With(card.Filter{Trait: card.Traits.Knight}),
 	}),
 )
