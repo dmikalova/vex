@@ -9,9 +9,9 @@
 // totality tests, which fail the build when a node has no census row, and
 // `mage tool:census`, which reports the gaps while the census is half-filled.
 //
-// The scan reads the source at three heights, one per shape a catalogued thing
-// takes: Implementations and Builders find a family's members, Constants finds an
-// enum's, and Interfaces finds the families themselves.
+// The scan reads the source at four heights, one per shape a catalogued thing
+// takes: Implementations, Builders and Fields find a family's members, Constants
+// finds an enum's, and Interfaces finds the families themselves.
 package census
 
 import (
@@ -76,6 +76,77 @@ func Builders(dir, recv, result string) (map[string]string, error) {
 			found[fn.Name.Name] = file
 		}
 	})
+}
+
+// Fields returns every exported field of the named struct type declared in dir's
+// non-test Go source, mapped to the file declaring the struct. Unexported fields
+// are left out: a field a card cannot write is not a member of the family a card
+// writes. An embedded field is reported under the type it embeds, which is the
+// name a literal writes it by.
+//
+// It is the second shape half of the scan, for a family whose members are the
+// axes of one comparable value rather than methods. Filter is such a family: a
+// card names its narrowing in a struct literal (ADR 0005), so an added axis is a
+// field, and this is what makes an uncatalogued one a red build.
+func Fields(dir, typeName string) (map[string]string, error) {
+	return scan(dir, func(file string, f *ast.File, found map[string]string) {
+		for _, decl := range f.Decls {
+			gen, ok := decl.(*ast.GenDecl)
+			if !ok || gen.Tok != token.TYPE {
+				continue
+			}
+			for _, spec := range gen.Specs {
+				ts, ok := spec.(*ast.TypeSpec)
+				if !ok || ts.Name.Name != typeName {
+					continue
+				}
+				st, ok := ts.Type.(*ast.StructType)
+				if !ok {
+					continue
+				}
+				for _, name := range structFieldNames(st) {
+					found[name] = file
+				}
+			}
+		}
+	})
+}
+
+// structFieldNames returns the exported field names a struct declares, naming an
+// embedded field by the type it embeds.
+func structFieldNames(st *ast.StructType) []string {
+	var out []string
+	for _, field := range st.Fields.List {
+		if len(field.Names) == 0 {
+			if name := embeddedName(field.Type); name != "" {
+				out = append(out, name)
+			}
+			continue
+		}
+		for _, name := range field.Names {
+			if name.IsExported() {
+				out = append(out, name.Name)
+			}
+		}
+	}
+	return out
+}
+
+// embeddedName returns the exported name an embedded field is written by,
+// unwrapping a pointer and a package qualifier, and none when the embedded type
+// is unexported.
+func embeddedName(expr ast.Expr) string {
+	if star, ok := expr.(*ast.StarExpr); ok {
+		expr = star.X
+	}
+	if sel, ok := expr.(*ast.SelectorExpr); ok {
+		expr = sel.Sel
+	}
+	ident, ok := expr.(*ast.Ident)
+	if !ok || !ident.IsExported() {
+		return ""
+	}
+	return ident.Name
 }
 
 // returnsOnly reports whether a result list is exactly one value of the named

@@ -382,14 +382,18 @@ is no `Logf`.
 ## Deliberate tradeoffs: handle them, don't "fix" them
 
 - **Wide `Resolver`** (ADR 0008): add to the right role.
-- **`Filter` as a wide comparable struct + paired kind/amount values** (ADR 0005):
+- **`Filter` as a wide comparable struct + paired kind/amount values** (ADR 0005).
   `Target` is `Target{Kind, Filter, Refinement, Neighbors}` and must stay
   comparable, which rules out a `[]filter` slice and `*int` optionals. A new
-  per-card axis is a field on `Filter` (`filter.go`) plus its census row,
-  set-relative rules route through `Refinement` instead, and an optional
-  number is a named comparable kind-and-amount value (`PowerBound`), never a
-  `*int`. Do **not** add a new `Target` field for a narrowing: `Target` has
-  four.
+  **per-card** axis is a **field on `Filter`** (`filter.go`) plus its census row
+  in `catalog_filter.go` — the census discovers the family as `Filter`'s
+  exported fields, so an uncatalogued axis is a red build. Route **set-relative**
+  rules — anything needing the whole candidate set — through `Refinement`
+  instead. An optional number is a named comparable kind-and-amount value
+  (`PowerBound`), never a `*int`. Do **not** add a new `Target` field for a
+  narrowing: `Target` has four. The line between the two is in ADR 0005: a
+  filter is decidable one candidate at a time however much board it reads; a
+  refinement needs the whole set.
 - **Enum-tagged lasting records instead of stored closures** (ADR 0007).
 - **`panic` in `EffectContext.PlayerFor` on `playerUnset`** (ADR 0010) is
   acceptable **only** because `validate()` at init keeps real cards from

@@ -122,13 +122,17 @@ func reportCatalogGaps(family engine.Family) error {
 }
 
 // familyLabel names a family by how the scan finds it: the interface method its
-// members declare, or — for a family discovered by shape — the result its builder
-// methods return.
+// members declare, the result its builder methods return, or the struct whose
+// exported fields are its members.
 func familyLabel(family engine.Family) string {
-	if family.Method == "" {
+	switch {
+	case family.Fields:
+		return family.Name + "{}"
+	case family.Method == "":
 		return family.Name + " -> " + family.Returns
+	default:
+		return family.Name + "." + family.Method
 	}
-	return family.Name + "." + family.Method
 }
 
 // familyState renders a family's standing: complete and gated, complete but not
