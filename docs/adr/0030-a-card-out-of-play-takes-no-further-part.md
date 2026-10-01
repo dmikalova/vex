@@ -208,3 +208,43 @@ resolving ability, never its source — **except** a tactic resolving its own
 its owner's discard pile, and a `Leaves Play:` window gathered while its card was
 still on the board. Pinned by `TestLeavesPlayWaitsForTheWholeBatch` and
 `TestPutFromPlayMovesTheWholeSelectionTogether`.
+
+## Refinement: a repeat is a fresh resolution, so the guard applies to it too
+
+The guard above reads "at the instant it **begins** resolving", which leaves the
+question of what counts as a beginning once an ability is already running. A
+repeating ability (`Repeat`) answers it: each pass is a **fresh resolution of the
+same ability**, so RAW §190 stops it the moment the source has left play, while
+RAW §191 keeps the resolution already under way going to its end. The line between
+the two is exactly the node: `Repeat` starts a new resolution and is gated;
+`Sequence`, `ForEach`, `Then` and `Per` are steps _inside_ one resolution and are
+not. Neutron Shark discarding itself finishes the discard it is making and then
+stops; Numquid the Fair destroyed mid-loop finishes the destroy it is making and
+then stops.
+
+This is not a fourth copy of the guard:
+
+- **One predicate, two readers.** The whole condition — in play, or a tactic, or
+  active in its owner's discard pile — is hoisted to `Game.canResolveAgain`.
+  `resolveTriggered` calls it directly, and the `RepeatGate` loops reach it through
+  the `Resolver` port as `CanResolveAgain`, wrapped with the Rule-of-Six check in
+  `canRepeat`. So the tactic and discard-active exceptions cannot drift apart
+  between the trigger windows and the repeat loops.
+- **Checked before the loop spends anything.** Every gate tests `canRepeat` at the
+  top of its pass — before the gate's own condition, before `RecordUsage`, and
+  before any "Repeat this effect?" prompt — so a source that destroyed itself
+  neither burns a usage nor asks its controller about a repeat that cannot happen.
+- **The `fromLeave` exemption stops at the port, on purpose.** `EffectContext`
+  carries no trigger, so the deferred `Leaves Play:` exemption is not plumbed into
+  `canRepeat`: a `Repeat` inside a `Leaves Play:` ability resolves its first pass
+  and then stops. That is what RAW §190 wants anyway — the source has left play —
+  and the ability still starts, which is the part the third refinement exists to
+  protect.
+
+Pinned by `TestRepeatStopsWhenSourceLeavesPlay`,
+`TestRepeatTacticSourceKeepsRepeating`, `TestRepeatSelfDestroyFinishesSequence`,
+`TestRepeatStoppedLoopRecordsNoUsage`, and the ruling subtest
+`TestNeutronShark/stops_once_Neutron_Shark_itself_has_left_play`.
+
+It is **not** a divergence: RAW §§190–191 already say this, and the engine now
+says it in one place instead of none.
