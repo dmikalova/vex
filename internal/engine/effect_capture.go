@@ -22,7 +22,7 @@ type CaptureAember struct {
 	// All captures the whole Source pool instead of a fixed Amount.
 	All bool
 	// By captures a share of the Source pool instead of a fixed Amount
-	// (By: AllBut(5) leaves the pool at exactly five).
+	// (By: AllBut{Keep: 5} leaves the pool at exactly five).
 	By Loss
 	// Target is the creature that captures; the zero value is this creature.
 	Target Target
@@ -257,7 +257,7 @@ func (e CaptureFromAnyPlayer) Resolve(ctx *EffectContext) {
 // reads the share up front, then delegates each unit to CaptureAember so the move,
 // supply-redirect, and log stay identical to every other capture.
 type DistributeCapture struct {
-	// By is the share of the Source pool to capture (By: AllBut(5)).
+	// By is the share of the Source pool to capture (By: AllBut{Keep: 5}).
 	By Loss
 	// All captures the whole Source pool instead of a By share (Sirs Colossus).
 	All bool

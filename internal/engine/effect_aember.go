@@ -189,15 +189,18 @@ func (allAember) object(possessive string) string {
 }
 func (allAember) qualifier() string { return "" }
 
-// AllBut removes everything above keep, leaving a pool of exactly keep; a pool
-// already at or below keep is untouched.
-func AllBut(keep int) Loss { return allBut{keep: keep} }
+// AllBut removes everything above Keep, leaving a pool of exactly Keep; a pool
+// already at or below Keep is untouched.
+//
+// It is an exported struct rather than a constructor over an unexported type so
+// a consumer outside this package can recognise the loss and read the pool it
+// leaves: the icon pass draws the remainder it keeps (TestEveryLossDraws), and a
+// loss it cannot name is one it must draw as unknown.
+type AllBut struct{ Keep int }
 
-type allBut struct{ keep int }
-
-func (a allBut) lose(pool int) int    { return max(0, pool-a.keep) }
-func (a allBut) object(string) string { return fmt.Sprintf("all but %d Æmber", a.keep) }
-func (a allBut) qualifier() string    { return fmt.Sprintf("with %d Æmber or more", a.keep+1) }
+func (a AllBut) lose(pool int) int    { return max(0, pool-a.Keep) }
+func (a AllBut) object(string) string { return fmt.Sprintf("all but %d Æmber", a.Keep) }
+func (a AllBut) qualifier() string    { return fmt.Sprintf("with %d Æmber or more", a.Keep+1) }
 
 // The economy effects that move Æmber against a pool — StealAember, LoseAember,
 // CaptureAember — all express "how much" the same way: a fixed base, optionally
@@ -229,7 +232,7 @@ func aemberObject(amount int, by Loss, possessive string) string {
 // supply. A pool can never go below zero, so a player told to lose more Æmber than
 // they have simply loses all of it. Player may be EachPlayer, so both players lose.
 // The amount lost is a fixed Amount, a By loss of the pool (By: HalfRoundedDown,
-// By: AllBut(5)), or a running count via EqualTo ("lose Æmber equal to <count>",
+// By: AllBut{Keep: 5}), or a running count via EqualTo ("lose Æmber equal to <count>",
 // Power of Fire) — set exactly one.
 type LoseAember struct {
 	// Player is whose pool loses; the amount is either a fixed Amount or a By loss of

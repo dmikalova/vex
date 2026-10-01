@@ -14,7 +14,9 @@ func composeEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	case engine.ForEachHouse:
 		return claim(effectGlyphs(v.Do))
 	case engine.Repeat:
-		return claim(effectGlyphs(v.Do))
+		gs, covered := effectGlyphs(v.Do)
+		gate, gateCovered := repeatGateGlyphs(v.Gate)
+		return append(gs, gate...), covered && gateCovered, true
 	case engine.May:
 		return claim(effectGlyphs(v.Do))
 	case engine.ByActivePlayer:
@@ -73,6 +75,35 @@ func composeEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	default:
 		return nil, false, false
 	}
+}
+
+// repeatGateGlyphs renders the gate a Repeat consults before running its effect
+// again, reporting whether a real mapping covered it. The RepeatGate family is
+// gated (TestEveryRepeatGateDraws, TestIconTotality), so every row here draws.
+//
+// Two of the three are plumbing: a While and a MayWhile only loop, and everything
+// a player reads comes from the effect being repeated and the condition's own
+// glyphs, so they fold into those the way every other plumbing node folds into its
+// children — the condition behind the gate mark that already opens a hypothetical
+// clause, wearing the may mark when the controller chooses each further pass.
+// ByExalting is not plumbing: exalting is a cost it charges to repeat, and a cost
+// is a rule of its own.
+func repeatGateGlyphs(g engine.RepeatGate) ([]glyph, bool) {
+	switch v := g.(type) {
+	case engine.While:
+		return conditionGlyphs(v.Cond)
+	case engine.MayWhile:
+		gs, covered := conditionGlyphs(v.Cond)
+		return markVerb(gs, sigilMay), covered
+	case engine.ByExalting:
+		// The Æmber the repeat costs, exalted onto the creature that pays it, which
+		// the controller may decline — so the may mark rides that creature, as it does
+		// on every other declinable pick (optionalVerb).
+		paid := targetGlyph(v.Creature)
+		paid.sigil = sigilMay
+		return []glyph{{asset: "aember", sigil: sigilExalt}, arrowTo(paid)}, true
+	}
+	return fallbackGlyphs(), false
 }
 
 // conditionalGlyphs draws a gated effect as two punctuated clauses: a gate mark

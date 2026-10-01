@@ -114,3 +114,69 @@ func TestEachPlayerUnlessGatesItsSpareBoard(t *testing.T) {
 		t.Errorf("unless-gatherer = %+v, want the refusal mark closing it", gs)
 	}
 }
+
+// TestEverySpreadDraws holds the Spread family's gate from the other side: every
+// catalogued spread draws a real strip of existing assets, and no two of them
+// draw the same one. The second half is the point of this family — all five
+// spreads pick creatures, and they drew one flattened chosen-creature noun until
+// each was given the shape of its own pick (ADR 0047).
+func TestEverySpreadDraws(t *testing.T) {
+	assertFamilyDraws(t, "Spread")
+	assertFamilyRowsDrawApart(t, "Spread")
+}
+
+// TestNeighborScopesDrawApart pins the mechanic inside CreatureAndNeighbors:
+// splashing every neighbor (Booby Trap) and splashing one neighbor the controller
+// chooses (Mighty Lance) are different rules, so the stack and the chosen outline
+// must tell them apart rather than both drawing "the neighbors".
+func TestNeighborScopesDrawApart(t *testing.T) {
+	seen := map[decor]engine.NeighborScope{}
+	for _, scope := range engine.NeighborScopes() {
+		gs, covered := spreadGlyphs(engine.CreatureAndNeighbors{
+			Amount: 2,
+			Splash: 1,
+			Scope:  scope,
+		})
+		if !covered || len(gs) != 3 {
+			t.Fatalf("scope %v drew %+v (covered=%v), want three glyphs", scope, gs, covered)
+		}
+		if prev, dup := seen[gs[2].decor]; dup {
+			t.Errorf("neighbor scopes %v and %v both draw decor %v", prev, scope, gs[2].decor)
+		}
+		seen[gs[2].decor] = scope
+	}
+}
+
+// TestEveryPerTargetDraws holds the PerTarget family's gate from the other side:
+// every axis an amount can vary along draws a real, distinct strip of existing
+// assets, so "for each Æmber on it" cannot draw what "for each upgrade on it"
+// draws.
+func TestEveryPerTargetDraws(t *testing.T) {
+	assertFamilyDraws(t, "PerTarget")
+	assertFamilyRowsDrawApart(t, "PerTarget")
+}
+
+// TestPerTargetDamageDrawsWhatItMeasures checks the axis reaches the strip of the
+// verb carrying it: Word of Returning deals damage to each enemy creature for
+// each Æmber on that creature, and without the axis drawn its strip said only
+// "damage to each enemy creature" — the same picture a flat sweep draws.
+func TestPerTargetDamageDrawsWhatItMeasures(t *testing.T) {
+	gs, covered := effectGlyphs(engine.DealDamage{
+		Amount:    1,
+		Target:    engine.Target{Kind: engine.TargetEachEnemyCreature},
+		PerTarget: engine.AemberOnIt,
+	})
+	if !covered || len(gs) != 3 {
+		t.Fatalf("per-target damage = %+v (covered=%v), want three glyphs", gs, covered)
+	}
+	if gs[2].asset != "aember" || gs[2].decor&decorChosen == 0 {
+		t.Errorf("per-target damage closes with %+v, want the Æmber it measures", gs[2])
+	}
+	flat, _ := effectGlyphs(engine.DealDamage{
+		Amount: 1,
+		Target: engine.Target{Kind: engine.TargetEachEnemyCreature},
+	})
+	if fmt.Sprintf("%+v", flat) == fmt.Sprintf("%+v", gs) {
+		t.Errorf("a per-target sweep still draws the flat sweep's strip %+v", flat)
+	}
+}

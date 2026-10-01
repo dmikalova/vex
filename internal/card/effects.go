@@ -47,6 +47,9 @@ type (
 	Exalt = engine.Exalt
 	// Loss says how much Æmber a LoseAember removes (Half, AllBut).
 	Loss = engine.Loss
+	// AllBut is the Loss that reduces a pool to Keep, removing everything above it:
+	// card.LoseAember{Player: card.EachPlayer, By: card.AllBut{Keep: 5}}.
+	AllBut = engine.AllBut
 	// MoveAember moves Æmber off a card into a pool or onto another card.
 	MoveAember = engine.MoveAember
 )
@@ -1256,10 +1259,6 @@ var LeftFlank = engine.LeftFlank
 
 // RightFlank — see LeftFlank.
 var RightFlank = engine.RightFlank
-
-// AllBut is the Loss that makes a LoseAember reduce a pool to keep, removing
-// everything above it: card.LoseAember{Player: card.EachPlayer, By: card.AllBut(5)}.
-var AllBut = engine.AllBut
 
 // AllAember is the Loss that makes a LoseAember empty a pool entirely:
 // card.LoseAember{Player: card.Controller, By: card.AllAember}.

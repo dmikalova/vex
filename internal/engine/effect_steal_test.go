@@ -35,7 +35,7 @@ func TestStealAemberBy(t *testing.T) {
 	}
 	g.State.Aember[1] = 10
 
-	e := StealAember{By: AllBut(6)}
+	e := StealAember{By: AllBut{Keep: 6}}
 	if e.Text() != "steal all but 6 Æmber from your opponent" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -45,7 +45,7 @@ func TestStealAemberBy(t *testing.T) {
 	}
 	if err := validateEffect(StealAember{
 		Amount: 1,
-		By:     AllBut(6),
+		By:     AllBut{Keep: 6},
 	}); err == nil {
 		t.Error("want error for both Amount and By")
 	}

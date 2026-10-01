@@ -59,3 +59,59 @@ func TestAemberVerbsTakeTheirOwnSigil(t *testing.T) {
 		})
 	}
 }
+
+// TestEveryLossDraws holds the Loss family's gate from the other side: every share
+// of a pool an economy verb can move draws a real, distinct strip of existing
+// assets, so "lose all your Æmber" cannot draw what "lose half your Æmber" draws.
+func TestEveryLossDraws(t *testing.T) {
+	assertFamilyDraws(t, "Loss")
+	assertFamilyRowsDrawApart(t, "Loss")
+}
+
+// TestLossReachesTheVerbCarryingIt checks the share is drawn beside the verb that
+// moves it: Too Much to Protect steals all but six, and before the share was drawn
+// its strip was the plain steal mark — the same picture as stealing one Æmber.
+func TestLossReachesTheVerbCarryingIt(t *testing.T) {
+	gs, covered := effectGlyphs(engine.StealAember{By: engine.AllBut{Keep: 6}})
+	if !covered {
+		t.Fatal("a steal of a share of the pool should be covered")
+	}
+	if len(gs) != 4 {
+		t.Fatalf("share steal = %+v, want the steal and the share it leaves", gs)
+	}
+	if gs[2].qty != 6 {
+		t.Errorf("share steal = %+v, want the pool of 6 it leaves behind", gs)
+	}
+	if gs[3].asset != "glyph-ban" {
+		t.Errorf("share steal = %+v, want the refusal mark closing the remainder", gs)
+	}
+	plain, _ := effectGlyphs(engine.StealAember{Amount: 1})
+	if len(plain) != 1 {
+		t.Errorf("a plain steal = %+v, want no share drawn at all", plain)
+	}
+}
+
+// TestFractionsDrawTheirDenominator pins how a fractional share is numbered: a
+// half draws a 2 and a third a 3, which is the only thing separating the two in a
+// strip that speaks no words. Which way the share rounds is fine print and stays
+// in the rules text, so the two halves draw alike on purpose.
+func TestFractionsDrawTheirDenominator(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		f    engine.Fraction
+		want int
+	}{
+		{"half rounded down", engine.HalfRoundedDown, 2},
+		{"half rounded up", engine.HalfRoundedUp, 2},
+		{"third rounded down", engine.ThirdRoundedDown, 3},
+		{"third rounded up", engine.ThirdRoundedUp, 3},
+	} {
+		gs, covered := lossGlyphs(tc.f)
+		if !covered || len(gs) != 1 {
+			t.Fatalf("%s drew %+v (covered=%v), want one glyph", tc.name, gs, covered)
+		}
+		if gs[0].qty != tc.want {
+			t.Errorf("%s drew qty %d, want %d", tc.name, gs[0].qty, tc.want)
+		}
+	}
+}

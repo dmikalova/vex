@@ -97,3 +97,61 @@ func TestDurationWrapperDrawsItsWindow(t *testing.T) {
 		t.Errorf("timed = %+v, want the turn marker closing the run", timed)
 	}
 }
+
+// TestEveryRepeatGateDraws holds the RepeatGate family's gate from the other side:
+// every way a Repeat can decide to run again draws a real strip of existing
+// assets. The looping gates are plumbing, so they draw the condition they fold
+// into; only the exalting gate owes a picture of its own, and the distinctness
+// check covers that one row.
+func TestEveryRepeatGateDraws(t *testing.T) {
+	assertFamilyDraws(t, "RepeatGate")
+	assertFamilyRowsDrawApart(t, "RepeatGate")
+}
+
+// TestRepeatDrawsTheGateItLoopsOn checks the gate reaches the strip of the Repeat
+// carrying it. A Repeat drew only the effect it repeats, so a free loop, a loop
+// the controller may take again, and a loop paid for by exalting a creature all
+// drew one picture — the picture of doing the thing once.
+func TestRepeatDrawsTheGateItLoopsOn(t *testing.T) {
+	once, _ := effectGlyphs(engine.Draw{Amount: 1})
+	paid, covered := effectGlyphs(engine.Repeat{
+		Do: engine.Draw{Amount: 1},
+		Gate: engine.ByExalting{
+			Creature: engine.Target{Kind: engine.TargetChosenFriendlyCreature},
+		},
+	})
+	if !covered {
+		t.Fatal("a repeat paid for by exalting should be covered")
+	}
+	if len(paid) != len(once)+2 {
+		t.Fatalf("paid repeat = %+v, want the effect plus the cost it charges", paid)
+	}
+	cost := paid[len(once)]
+	if cost.asset != "aember" || cost.sigil != sigilExalt {
+		t.Errorf("paid repeat charges %+v, want the exalted Æmber", cost)
+	}
+	if payer := paid[len(paid)-1]; payer.sigil != sigilMay {
+		t.Errorf("the creature paying = %+v, want the may mark: the cost is declinable", payer)
+	}
+}
+
+// TestLoopingGatesFoldIntoTheirCondition pins what the census calls these two:
+// plumbing. A While adds the condition it loops on behind the gate mark and
+// nothing else, and a MayWhile adds the may mark to say the controller chooses
+// each further pass — so the two are told apart by that mark rather than by a
+// drawing neither of them owes.
+func TestLoopingGatesFoldIntoTheirCondition(t *testing.T) {
+	cond := engine.Overwhelmed{}
+	free, freeCovered := repeatGateGlyphs(engine.While{Cond: cond})
+	chosen, chosenCovered := repeatGateGlyphs(engine.MayWhile{Cond: cond})
+	if !freeCovered || !chosenCovered {
+		t.Fatal("the looping gates drew no real glyph")
+	}
+	plain, _ := conditionGlyphs(cond)
+	if len(free) != len(plain) || free[0].punct != punctGate {
+		t.Errorf("a while loop = %+v, want the gated condition %+v", free, plain)
+	}
+	if chosen[0].sigil != sigilMay {
+		t.Errorf("a may-while loop = %+v, want the may mark on its condition", chosen)
+	}
+}

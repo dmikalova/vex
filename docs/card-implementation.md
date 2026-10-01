@@ -457,7 +457,7 @@ How much: set exactly one of these on the effect.
 | `EqualTo` | "equal to X", straight from a `Count`      |
 | `By`      | a `LoseAember` portion instead of a number |
 
-`By` takes `card.HalfRoundedDown`, `card.AllBut(5)`, or `card.AllAember`.
+`By` takes `card.HalfRoundedDown`, `card.AllBut{Keep: 5}`, or `card.AllAember`.
 
 ### Damage and combat
 

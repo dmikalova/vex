@@ -8,7 +8,7 @@ import (
 // Stealing Æmber moves it from the opponent's pool into your own. You can only
 // steal as much Æmber as the opponent actually has. How much is stolen is either
 // a fixed Amount — optionally multiplied by a Per count — or a By share of the
-// opponent's pool (By: AllBut(6) leaves them exactly six).
+// opponent's pool (By: AllBut{Keep: 6} leaves them exactly six).
 type StealAember struct {
 	// Amount is the fixed Æmber to steal.
 	Amount int

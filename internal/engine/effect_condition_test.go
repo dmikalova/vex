@@ -2335,7 +2335,7 @@ func TestOrAmountStealValidate(t *testing.T) {
 				Amount: 7,
 			},
 		},
-		By: AllBut(6),
+		By: AllBut{Keep: 6},
 	}).validate(); err == nil {
 		t.Error("Or and By together should not validate")
 	}

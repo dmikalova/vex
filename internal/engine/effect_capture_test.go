@@ -225,7 +225,7 @@ func TestCaptureAemberBy(t *testing.T) {
 	g.State.Aember[1] = 9
 
 	e := CaptureAember{
-		By:     AllBut(5),
+		By:     AllBut{Keep: 5},
 		Target: Target{Kind: TargetThisCreature},
 		Source: Opponent,
 	}
@@ -325,7 +325,7 @@ func TestCaptureAemberValidate(t *testing.T) {
 	}
 	both := CaptureAember{
 		Amount: 1,
-		By:     AllBut(5),
+		By:     AllBut{Keep: 5},
 		Target: this,
 		Source: Opponent,
 	}
@@ -666,7 +666,7 @@ func TestCaptureFromAnyPlayer(t *testing.T) {
 // each time, and the loop stops when no friendly creature remains.
 func TestDistributeCapture(t *testing.T) {
 	e := DistributeCapture{
-		By:     AllBut(5),
+		By:     AllBut{Keep: 5},
 		Source: Opponent,
 	}
 	const want = "capture all but 5 Æmber from your opponent, " +
@@ -677,7 +677,7 @@ func TestDistributeCapture(t *testing.T) {
 	const wantSelf = "capture all but 5 Æmber from you, " +
 		"distributed among any number of friendly creatures"
 	if got := (DistributeCapture{
-		By:     AllBut(5),
+		By:     AllBut{Keep: 5},
 		Source: Controller,
 	}).Text(); got != wantSelf {
 		t.Errorf("self-source text = %q, want %q", got, wantSelf)
@@ -685,11 +685,11 @@ func TestDistributeCapture(t *testing.T) {
 	if err := (DistributeCapture{Source: Opponent}).validate(); err == nil {
 		t.Error("a missing By should be rejected")
 	}
-	if err := (DistributeCapture{By: AllBut(5)}).validate(); err == nil {
+	if err := (DistributeCapture{By: AllBut{Keep: 5}}).validate(); err == nil {
 		t.Error("a missing Source should be rejected")
 	}
 	if err := (DistributeCapture{
-		By:     AllBut(5),
+		By:     AllBut{Keep: 5},
 		All:    true,
 		Source: Opponent,
 	}).validate(); err == nil {

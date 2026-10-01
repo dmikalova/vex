@@ -216,7 +216,7 @@ func TestLoseAemberAllBut(t *testing.T) {
 
 	e := LoseAember{
 		Player: EachPlayer,
-		By:     AllBut(5),
+		By:     AllBut{Keep: 5},
 	}
 	if e.Text() != "each player with 6 Æmber or more loses all but 5 Æmber" {
 		t.Errorf("text = %q", e.Text())

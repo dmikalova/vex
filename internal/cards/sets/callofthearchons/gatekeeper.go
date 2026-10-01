@@ -29,7 +29,7 @@ var Gatekeeper = set.New(
 				Amount: 7,
 			},
 			Then: card.CaptureAember{
-				By:     card.AllBut(5),
+				By:     card.AllBut{Keep: 5},
 				Target: card.Target.This,
 				Source: card.Opponent,
 			},

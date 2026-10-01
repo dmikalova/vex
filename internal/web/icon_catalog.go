@@ -148,11 +148,10 @@ var iconCatalogSkipped = map[string]string{
 // measured against: the fifteen typed accessors the engine exports, in the order
 // engine.Families() lists them.
 //
-// Effect, Condition, Count, BonusIconSubject, Selection and Gather are gated
-// today. The rest are shown by the style gallery and gate nothing until their
-// glyphs are drawn, and the change that draws one flips its gate.
+// Every family is gated today but Refinement and Target, which are shown by the
+// style gallery and gate nothing until their glyphs are drawn.
 //
-// Two families wait on more than drawing, both for the same reason — a value
+// Those two wait on more than drawing, both for the same reason — a value
 // internal/web cannot read. Target's rows are one Target per filter builder, and
 // those filters are unexported fields, so the pass cannot tell which filter a row
 // applied until the replace-target-s-filter-methods goal makes them a comparable
@@ -175,15 +174,15 @@ func iconCatalog() []iconFamily {
 			engine.BonusIconSubjectCatalog(),
 			bonusIconSubjectGlyphs,
 		).gate(),
-		newIconFamily("CreatureVerb", engine.CreatureVerbCatalog(), nil),
+		newIconFamily("CreatureVerb", engine.CreatureVerbCatalog(), creatureVerbGlyphs).gate(),
 		newIconFamily("Selection", engine.SelectionCatalog(), selectionGlyphs).gate(),
-		newIconFamily("Spread", engine.SpreadCatalog(), nil),
-		newIconFamily("TopAct", engine.TopActCatalog(), nil),
-		newIconFamily("PerTarget", engine.PerTargetCatalog(), nil),
-		newIconFamily("Loss", engine.LossCatalog(), nil),
-		newIconFamily("RepeatGate", engine.RepeatGateCatalog(), nil),
+		newIconFamily("Spread", engine.SpreadCatalog(), spreadGlyphs).gate(),
+		newIconFamily("TopAct", engine.TopActCatalog(), topActGlyphs).gate(),
+		newIconFamily("PerTarget", engine.PerTargetCatalog(), perTargetGlyphs).gate(),
+		newIconFamily("Loss", engine.LossCatalog(), lossGlyphs).gate(),
+		newIconFamily("RepeatGate", engine.RepeatGateCatalog(), repeatGateGlyphs).gate(),
 		newIconFamily("Gather", engine.GatherCatalog(), gatherGlyphs).gate(),
-		newIconFamily("Quantity", engine.QuantityCatalog(), nil),
+		newIconFamily("Quantity", engine.QuantityCatalog(), quantityGlyphs).gate(),
 		newIconFamily("Target", engine.TargetFilterCatalog(), nil),
 	}
 }

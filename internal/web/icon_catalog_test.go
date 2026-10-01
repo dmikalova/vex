@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/dmikalova/vex/internal/engine"
@@ -50,6 +51,34 @@ func assertFamilyDraws(t *testing.T, name string) {
 					name, row.name, g.asset, g.asset)
 			}
 		}
+	}
+}
+
+// assertFamilyRowsDrawApart holds one family to the other half of the drawing
+// rule: two rows that teach a player different words must not draw the same
+// picture. A family whose members all flatten into one summary noun passes
+// assertFamilyDraws — every row draws something real — while saying nothing about
+// which member it is, which is how spreadTargetGlyph drew all five spreads as one
+// chosen creature before they were given shapes of their own (ADR 0047).
+//
+// Plumbing rows are skipped: they fold into the node holding them, and two of them
+// folding into nothing is the point rather than a collision.
+func assertFamilyRowsDrawApart(t *testing.T, name string) {
+	t.Helper()
+	seen := map[string]string{}
+	for _, row := range familyRows(t, name) {
+		if !row.bearsTerm() {
+			continue
+		}
+		gs, _ := row.draw()
+		strip := fmt.Sprintf("%+v", gs)
+		if prev, dup := seen[strip]; dup {
+			t.Errorf(
+				"%s rows %s and %s both draw %s; give one a shape of its own (ADR 0047)",
+				name, prev, row.name, strip,
+			)
+		}
+		seen[strip] = row.name
 	}
 }
 

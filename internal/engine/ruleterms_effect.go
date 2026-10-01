@@ -27,7 +27,7 @@ card says so. A "for each" clause multiplies the amount by a running count.`,
 supply. A pool can never go below zero, so a player told to lose more Æmber than
 they have simply loses all of it. Player may be EachPlayer, so both players lose.
 The amount lost is either a fixed Amount or a By loss of the pool (By: HalfRoundedDown,
-By: AllBut(5)) — set one, not both.`,
+By: AllBut{Keep: 5}) — set one, not both.`,
 		},
 		{
 			Section:    SectionEffect,
@@ -282,7 +282,7 @@ into the discard pile rather than surviving underneath it.`,
 			Body: `Stealing Æmber moves it from the opponent's pool into your own. You can only
 steal as much Æmber as the opponent actually has. How much is stolen is either
 a fixed Amount — optionally multiplied by a Per count — or a By share of the
-opponent's pool (By: AllBut(6) leaves them exactly six).`,
+opponent's pool (By: AllBut{Keep: 6} leaves them exactly six).`,
 		},
 		{
 			Section:    SectionEffect,

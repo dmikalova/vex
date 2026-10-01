@@ -21,7 +21,7 @@ var BringLow = set.New(
 	card.WithEnhance(card.Bonus.Capture),
 	card.WithAbility(
 		card.Trigger.Play, card.DistributeCapture{
-			By:     card.AllBut(5),
+			By:     card.AllBut{Keep: 5},
 			Source: card.Opponent,
 		}),
 )

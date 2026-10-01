@@ -224,16 +224,6 @@ func zoneAsset(z engine.Zone) string {
 	return ""
 }
 
-// spreadTargetGlyph is the creature glyph a DealDamage Spread hits. Every spread
-// chooses one or more creatures; the amounts and neighbor split stay in the rules
-// text, so the strip summarises the spread as its chosen-creature noun.
-func spreadTargetGlyph() glyph {
-	return glyph{
-		asset: "type-creature",
-		decor: decorChosen,
-	}
-}
-
 // counterAsset maps a generic counter kind to its icon-strip asset, or "" for a
 // kind with no icon yet — TestCounterIconNamesHaveAssets fails on the "" so every
 // counter ships its own unique SVG.
@@ -333,34 +323,45 @@ func playerDecor(p engine.Player) decor {
 	}
 }
 
-// verbGlyphs renders the verbs a chosen-creature effect applies in order — ready,
-// fight, use, stun, exhaust, gain-keyword — reusing the same glyphs those actions
-// draw on their own. It stays here rather than in a family file because more than
-// one family (creature-state, composition) reads it.
+// verbGlyphs renders the verbs a chosen-creature effect applies, in order. It
+// stays here rather than in a family file because more than one family
+// (creature-state, composition) reads it.
 func verbGlyphs(verbs []engine.CreatureVerb) []glyph {
 	gs := make([]glyph, 0, len(verbs))
 	for _, verb := range verbs {
-		switch vv := verb.(type) {
-		case engine.ReadyVerb:
-			gs = append(gs, glyph{
-				asset: "exhausted",
-				decor: decorFriendly,
-			})
-		case engine.ReapVerb:
-			gs = append(gs, glyph{asset: "glyph-reap"})
-		case engine.FightVerb:
-			gs = append(gs, glyph{asset: "glyph-fight"})
-		case engine.UseVerb:
-			gs = append(gs, glyph{asset: "glyph-action"})
-		case engine.StunVerb:
-			gs = append(gs, glyph{asset: "stun"})
-		case engine.ExhaustVerb:
-			gs = append(gs, glyph{asset: "exhausted"})
-		case engine.GainKeywordVerb:
-			if a := keywordIcon(vv.Keyword); a != "" {
-				gs = append(gs, glyph{asset: a})
-			}
-		}
+		more, _ := creatureVerbGlyphs(verb)
+		gs = append(gs, more...)
 	}
 	return gs
+}
+
+// creatureVerbGlyphs renders one CreatureVerb, reporting whether a real mapping
+// covered it. Each verb reuses the glyph the action draws on its own, so "ready a
+// creature" and the ready step of a turn draw one picture.
+//
+// The CreatureVerb family is gated (TestEveryCreatureVerbDraws, TestIconTotality),
+// so every row here draws. The default arm is what makes an eighth verb fail that
+// gate: without it an unlisted verb contributed no glyph at all, and the strip
+// quietly said the creature was chosen and nothing happened to it.
+func creatureVerbGlyphs(verb engine.CreatureVerb) ([]glyph, bool) {
+	switch v := verb.(type) {
+	case engine.ReadyVerb:
+		return []glyph{{asset: "exhausted", decor: decorFriendly}}, true
+	case engine.ReapVerb:
+		return []glyph{{asset: "glyph-reap"}}, true
+	case engine.FightVerb:
+		return []glyph{{asset: "glyph-fight"}}, true
+	case engine.UseVerb:
+		return []glyph{{asset: "glyph-action"}}, true
+	case engine.StunVerb:
+		return []glyph{{asset: "stun"}}, true
+	case engine.ExhaustVerb:
+		return []glyph{{asset: "exhausted"}}, true
+	case engine.GainKeywordVerb:
+		if a := keywordIcon(v.Keyword); a != "" {
+			return []glyph{{asset: a}}, true
+		}
+		return fallbackGlyphs(), false
+	}
+	return fallbackGlyphs(), false
 }

@@ -22,36 +22,40 @@ func aemberEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 			{asset: "aember", qty: v.Amount, decor: playerDecor(v.Player), sigil: sigilGain},
 		}, true, true
 	case engine.LoseAember:
-		// The amount is only a numeral in the plain fixed case; a By/Per/EqualTo loss
-		// scales by something that lives in the text, as GainAember's does.
+		// The amount is only a numeral in the plain fixed case; a Per/EqualTo loss
+		// scales by something that lives in the text, as GainAember's does, and a By
+		// loss draws the share of the pool it takes.
 		g := glyph{asset: "aember", decor: playerDecor(v.Player), sigil: sigilLose}
 		if v.By == nil && v.Per == nil && v.EqualTo == nil {
 			g.qty = v.Amount
 		}
-		return []glyph{g}, true, true
+		return byShare([]glyph{g}, v.By)
 	case engine.StealAember:
-		return []glyph{
+		return byShare([]glyph{
 			{
 				asset: "aember",
 				qty:   v.Amount,
 				decor: decorEnemy | decorChosen,
 				sigil: sigilSteal,
 			},
-		}, true, true
+		}, v.By)
 	case engine.CaptureAember:
-		return []glyph{{asset: "capture", qty: v.Amount, decor: decorEnemy}}, true, true
+		return byShare(
+			[]glyph{{asset: "capture", qty: v.Amount, decor: decorEnemy}},
+			v.By,
+		)
 	case engine.CaptureFromAnyPlayer:
 		return []glyph{{asset: "capture", qty: v.Amount}}, true, true
 	case engine.DistributeCapture:
 		// The share is spread over as many friendly creatures as the controller
 		// picks, which is what separates it from a single creature's capture.
-		return []glyph{
+		return byShare([]glyph{
 			{asset: "capture", decor: decorEnemy},
 			arrowTo(glyph{
 				asset: "type-creature",
 				decor: decorFriendly | decorEach,
 			}),
-		}, true, true
+		}, v.By)
 	case engine.GiveAember:
 		src := glyph{
 			asset: "aember",
@@ -104,6 +108,69 @@ func aemberEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	default:
 		return nil, false, false
 	}
+}
+
+// byShare closes an economy verb's run with the share of the pool it moves, and
+// claims the effect for the family. A verb with no By moves a plain amount and
+// draws nothing extra, so the share costs a horizontal slot only on the verbs
+// that have one — the same bargain inWindow makes for a duration.
+func byShare(gs []glyph, by engine.Loss) ([]glyph, bool, bool) {
+	if by == nil {
+		return gs, true, true
+	}
+	share, covered := lossGlyphs(by)
+	return append(gs, share...), covered, true
+}
+
+// lossGlyphs renders a Loss as the share of a pool it takes, reporting whether a
+// real mapping covered it. The Loss family is gated (TestEveryLossDraws,
+// TestIconTotality), so every row here draws.
+//
+// A loss is not an effect — it is how much the economy verb holding it moves — so
+// it draws where that verb draws, the way a Count does. All three shares are the
+// Æmber noun under a mark saying how much of the pool goes: the whole pool
+// stacked, the remainder it leaves behind the refusal mark, the fraction's
+// denominator as a numeral.
+func lossGlyphs(l engine.Loss) ([]glyph, bool) {
+	switch v := l.(type) {
+	case engine.Fraction:
+		// A share of the pool rather than a count of it, so the numeral is the
+		// denominator the pool is cut into: half draws a 2, a third a 3. Which way it
+		// rounds stays in the rules text, as every other amount's fine print does.
+		if d := fractionDenominator(v); d > 0 {
+			return []glyph{{asset: "aember", qty: d}}, true
+		}
+		return fallbackGlyphs(), false
+	case engine.AllBut:
+		// Everything above the remainder, so the pool it leaves is drawn behind the
+		// refusal mark — the way every other barred thing is drawn.
+		return []glyph{
+			{asset: "aember", decor: decorEach},
+			{asset: "aember", qty: v.Keep},
+			{asset: "glyph-ban"},
+		}, true
+	}
+	if l == engine.AllAember {
+		// The whole pool, whatever its size, which is the stack every "each of these"
+		// noun wears.
+		return []glyph{{asset: "aember", decor: decorEach}}, true
+	}
+	return fallbackGlyphs(), false
+}
+
+// fractionDenominator is the number of parts a Fraction cuts a quantity into, or
+// 0 for a fraction the strip cannot number. A Fraction is a comparable value with
+// unexported fields built from four package vars, so it is recognised by identity
+// against those four — the rounding is what pairs them, and the strip draws the
+// share rather than the rounding.
+func fractionDenominator(f engine.Fraction) int {
+	switch f {
+	case engine.HalfRoundedDown, engine.HalfRoundedUp:
+		return 2
+	case engine.ThirdRoundedDown, engine.ThirdRoundedUp:
+		return 3
+	}
+	return 0
 }
 
 // moveAemberDest is where moved Æmber lands: onto a chosen card, or into a pool.

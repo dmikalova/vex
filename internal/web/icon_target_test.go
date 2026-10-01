@@ -156,11 +156,22 @@ func glyphKey(gs []glyph) string {
 	return strings.Join(parts, "+")
 }
 
-// TestVerbGlyphsCoverEveryCreatureVerb walks engine.CreatureVerbCatalog() and
-// fails on a verb verbGlyphs renders as nothing. The type switch there has no
-// default arm, so an unlisted verb contributes no glyph at all and the strip
-// quietly says the creature is chosen and nothing happens to it — the census is
-// what makes a new verb reach this test before a card does (ADR 0022).
+// TestEveryCreatureVerbDraws holds the CreatureVerb family's gate from the other
+// side: every verb a chosen-creature effect can apply draws a real, distinct strip
+// of existing assets, so "stun it" cannot draw what "exhaust it" draws.
+//
+// The gate rests on creatureVerbGlyphs having a default arm. Without one an
+// unlisted verb contributed no glyph at all, and the strip quietly said the
+// creature was chosen and nothing happened to it — covered, drawn, and wrong
+// (ADR 0022).
+func TestEveryCreatureVerbDraws(t *testing.T) {
+	assertFamilyDraws(t, "CreatureVerb")
+	assertFamilyRowsDrawApart(t, "CreatureVerb")
+}
+
+// TestVerbGlyphsCoverEveryCreatureVerb checks the run of verbs an effect applies
+// draws one glyph per verb, which is what the family's single-glyph rows mean once
+// several of them are strung together.
 func TestVerbGlyphsCoverEveryCreatureVerb(t *testing.T) {
 	for _, row := range engine.CreatureVerbCatalog() {
 		gs := verbGlyphs([]engine.CreatureVerb{row.Node})
@@ -171,6 +182,20 @@ func TestVerbGlyphsCoverEveryCreatureVerb(t *testing.T) {
 		if !assetExists(t, gs[0].asset) {
 			t.Errorf("creature verb %T: no web/assets/%s.svg", row.Node, gs[0].asset)
 		}
+	}
+}
+
+// TestAnUnlistedCreatureVerbDrawsUnknown pins the default arm itself: a verb the
+// pass does not map draws the unknown glyph, which is what every gate in the pass
+// fails on. It is the one behaviour the catalogued rows cannot show, since all
+// seven of them are mapped.
+func TestAnUnlistedCreatureVerbDrawsUnknown(t *testing.T) {
+	gs, covered := creatureVerbGlyphs(engine.GainKeywordVerb{})
+	if covered {
+		t.Fatalf("an unmapped verb drew %+v as covered, want the unknown glyph", gs)
+	}
+	if len(gs) != 1 || gs[0].asset != "glyph-unknown" {
+		t.Errorf("an unmapped verb drew %+v, want the unknown glyph", gs)
 	}
 }
 

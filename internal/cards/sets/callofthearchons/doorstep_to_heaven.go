@@ -20,6 +20,6 @@ var DoorstepToHeaven = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.LoseAember{
 			Player: card.EachPlayer,
-			By:     card.AllBut(5),
+			By:     card.AllBut{Keep: 5},
 		}),
 )

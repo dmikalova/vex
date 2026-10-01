@@ -31,7 +31,7 @@ func LossCatalog() []Catalogued[Loss] {
 			Rules: bears("Lose Æmber"),
 		},
 		{
-			Node:  AllBut(6),
+			Node:  AllBut{Keep: 6},
 			Rules: bears("Lose Æmber"),
 		},
 		{

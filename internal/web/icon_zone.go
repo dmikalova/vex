@@ -8,6 +8,12 @@ import "github.com/dmikalova/vex/internal/engine"
 // ArchiveCardUnder, PutUnderFromHand, PutUnderIntoPlay) live in the board family
 // instead (icon_board.go): they read as playing/burying a card face-down, the
 // board's own idiom, rather than a plain zone move.
+//
+// The Quantity a movement verb carries is drawn here too, beside the verb holding
+// it, the way a Count is: it says how many cards the verb takes, where the verb's
+// Selection says which. On a verb it is a badge rather than a glyph of its own,
+// because "purge 2 cards" is one picture — the numeral the verb already prints,
+// plus the may mark when the controller may stop short of it.
 
 // zoneEffectGlyphs claims every card-zone-movement effect.
 func zoneEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
@@ -21,7 +27,7 @@ func zoneEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 				arrowTo(glyph{asset: "zone-archives"}),
 			}, true, true
 		}
-		return []glyph{{asset: "zone-archives", qty: engine.FixedCardCount(v.Quantity)}}, true, true
+		return []glyph{quantityOn(glyph{asset: "zone-archives"}, v.Quantity)}, true, true
 	case engine.ArchiveFromPlay:
 		return []glyph{{asset: "zone-archives"}}, true, true
 	case engine.ArchiveSource:
@@ -36,7 +42,7 @@ func zoneEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	case engine.DiscardArchives:
 		return []glyph{{asset: "zone-archives"}, arrowTo(glyph{asset: "zone-discard"})}, true, true
 	case engine.DiscardCard:
-		return []glyph{{asset: "zone-discard"}}, true, true
+		return []glyph{quantityOn(glyph{asset: "zone-discard"}, v.Quantity)}, true, true
 	case engine.DiscardHand:
 		h := glyph{asset: "zone-hand"}
 		if v.Player == engine.EachPlayer {
@@ -72,7 +78,10 @@ func zoneEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 		if _, each := v.Selection.(engine.Each); each {
 			src.decor = decorEach
 		}
-		return []glyph{src, arrowTo(glyph{asset: "zone-purge"})}, true, true
+		return []glyph{
+			quantityOn(src, v.Quantity),
+			arrowTo(glyph{asset: "zone-purge"}),
+		}, true, true
 	case engine.PurgeArchivedCardThen:
 		gs := []glyph{{asset: "zone-purge"}}
 		more, _ := effectGlyphs(v.Then)
@@ -87,7 +96,10 @@ func zoneEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 		if len(v.From) > 1 {
 			src = glyph{asset: "type-creature"}
 		}
-		return []glyph{src, arrowTo(glyph{asset: "zone-deck", sigil: sigilShuffle})}, true, true
+		return []glyph{
+			quantityOn(src, v.Quantity),
+			arrowTo(glyph{asset: "zone-deck", sigil: sigilShuffle}),
+		}, true, true
 	case engine.SwapDeckAndDiscard:
 		return []glyph{
 			{asset: "zone-deck"},
@@ -114,8 +126,7 @@ func zoneEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 			// as chosen and carries the count.
 			src := targetGlyph(v.Target)
 			src.decor |= decorChosen
-			src.qty = engine.FixedCardCount(v.Quantity)
-			return []glyph{src, arrowTo(glyph{asset: a})}, true, true
+			return []glyph{quantityOn(src, v.Quantity), arrowTo(glyph{asset: a})}, true, true
 		}
 		return fallbackGlyphs(), false, true
 	case engine.PutCard:
@@ -132,4 +143,39 @@ func zoneEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	default:
 		return nil, false, false
 	}
+}
+
+// quantityGlyphs renders a Quantity on its own as the cards it takes, reporting
+// whether a real mapping covered it. The Quantity family is gated
+// (TestEveryQuantityDraws, TestIconTotality), so every row here draws.
+//
+// On a verb the same quantity is a badge on the verb's own noun (quantityOn)
+// rather than a card of its own: a quantity says how many, so it has nothing to
+// draw until there is something to count. Standing alone — in the style gallery,
+// and to the gate — it counts the abstract card.
+func quantityGlyphs(q engine.Quantity) ([]glyph, bool) {
+	switch q.(type) {
+	case engine.Takes, engine.UpTo, engine.AnyNumber:
+		return []glyph{quantityOn(glyph{asset: "card-back"}, q)}, true
+	}
+	return fallbackGlyphs(), false
+}
+
+// quantityOn badges a verb's noun with how many cards it takes: the numeral when
+// the number is a constant above one, the stack when there is no ceiling at all,
+// and the may mark when the controller may stop short of the number.
+//
+// A board-scaled number prints no numeral, for the reason a scaled damage amount
+// prints none — "for each friendly Shard" is a clause the strip cannot say, so it
+// stays in the rules text beside it.
+func quantityOn(g glyph, q engine.Quantity) glyph {
+	g.qty = engine.FixedCardCount(q)
+	switch q.(type) {
+	case engine.UpTo:
+		g.sigil = sigilMay
+	case engine.AnyNumber:
+		g.decor |= decorEach
+		g.sigil = sigilMay
+	}
+	return g
 }

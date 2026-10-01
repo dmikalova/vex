@@ -102,8 +102,9 @@ func countGlyphs(c engine.Count) ([]glyph, bool) {
 	case engine.PowerCountersOnThis:
 		return []glyph{{asset: "power-counter-plus", decor: decorThis}}, true
 	case engine.PowerOfChosen:
-		// The Of fraction ("half its power, rounded down") is a Loss, a family with
-		// no glyphs yet, so it stays in the rules text beside the strip.
+		// The Of fraction ("half its power, rounded down") stays in the rules text: a
+		// count draws the noun it totals, and a numeral on the power noun is already
+		// this vocabulary's power threshold (cardsInPlayCountGlyphs).
 		return []glyph{{asset: "power", decor: decorChosen}}, true
 	case engine.TraitsOfChosen:
 		return []glyph{
