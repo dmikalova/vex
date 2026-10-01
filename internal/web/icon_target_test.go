@@ -1,6 +1,8 @@
 package web
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/dmikalova/vex/internal/engine"
@@ -68,6 +70,57 @@ func TestDeckDestZoneCoversEveryDeckDest(t *testing.T) {
 			t.Errorf("deck routing %v: no web/assets/%s.svg", d, name)
 		}
 	}
+}
+
+// TestHouseMatcherGlyphsCoverEveryKind walks engine.HouseMatchKinds() and fails on
+// a kind that draws nothing or draws an asset that is not on disk. Only
+// MatchNamedHouse carried a picture — one of the nine house emblems — so a card
+// freeing the chosen house, the active house, any house, or every house but one
+// drew the verb alone and read as every other such card (ADR 0022).
+func TestHouseMatcherGlyphsCoverEveryKind(t *testing.T) {
+	for _, kind := range engine.HouseMatchKinds() {
+		gs := houseMatcherGlyphs(engine.HouseMatcher{Kind: kind, House: engine.Mars})
+		if len(gs) == 0 {
+			t.Errorf("house match kind %d draws nothing; give it a glyph (ADR 0022)", kind)
+			continue
+		}
+		for _, g := range gs {
+			if g.asset == "" {
+				t.Errorf("house match kind %d draws an empty asset", kind)
+				continue
+			}
+			if !assetExists(t, g.asset) {
+				t.Errorf("house match kind %d: no web/assets/%s.svg", kind, g.asset)
+			}
+		}
+	}
+}
+
+// TestHouseMatcherKindsDrawDistinctly checks that the four matchers carrying no
+// logo do not collapse onto one picture: each draws the abstract house glyph with
+// a mark of its own, so "the chosen house" and "the active house" are not the same
+// strip. The named and except matchers draw their emblem, so they are distinct by
+// construction.
+func TestHouseMatcherKindsDrawDistinctly(t *testing.T) {
+	seen := map[string]engine.HouseMatchKind{}
+	for _, kind := range engine.HouseMatchKinds() {
+		key := glyphKey(houseMatcherGlyphs(engine.HouseMatcher{Kind: kind, House: engine.Mars}))
+		if prev, dup := seen[key]; dup {
+			t.Errorf("house match kinds %d and %d both draw %s; mark one of them apart",
+				prev, kind, key)
+		}
+		seen[key] = kind
+	}
+}
+
+// glyphKey renders a run of glyphs as a comparable string — asset plus decor —
+// so two renderings can be compared for sameness.
+func glyphKey(gs []glyph) string {
+	parts := make([]string, 0, len(gs))
+	for _, g := range gs {
+		parts = append(parts, fmt.Sprintf("%s/%d", g.asset, g.decor))
+	}
+	return strings.Join(parts, "+")
 }
 
 // TestVerbGlyphsCoverEveryCreatureVerb walks engine.CreatureVerbCatalog() and

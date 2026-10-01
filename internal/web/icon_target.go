@@ -121,6 +121,43 @@ func targetGlyph(t engine.Target) glyph {
 	}
 }
 
+// houseMatcherGlyphs renders which houses a matcher admits (ADR 0038). Only
+// MatchNamedHouse has a picture of its own — one of the nine house emblems — so
+// every other kind is drawn as a mark on the one abstract house glyph rather than
+// as a drawing of its own: house-any is a house the matcher does not name, and
+// the kind says which unnamed house it is. The chosen house wears the chosen
+// outline, the loop's house the each stack, the active house is preceded by the
+// turn marker ("this turn's house"), and the contextual house by the card it
+// reads ("that card's house"). MatchExceptHouse draws the emblem it excludes
+// behind the refusal mark, the way every other barred thing is drawn.
+//
+// TestHouseMatcherGlyphsCoverEveryKind walks engine.HouseMatchKinds() and fails on
+// a kind that draws nothing, so an eighth kind cannot ship invisible.
+func houseMatcherGlyphs(m engine.HouseMatcher) []glyph {
+	// A named matcher with no house is rejected by the engine, so the emblem is
+	// only missing when a half-built matcher reaches the gallery; it draws the
+	// abstract house rather than an empty slot.
+	named := houseIconName(m.House)
+	if named == "" {
+		named = "house-any"
+	}
+	switch m.Kind {
+	case engine.MatchNamedHouse:
+		return []glyph{{asset: named}}
+	case engine.MatchExceptHouse:
+		return []glyph{{asset: named}, {asset: "glyph-ban"}}
+	case engine.MatchChosenHouse:
+		return []glyph{{asset: "house-any", decor: decorChosen}}
+	case engine.MatchEachHouse:
+		return []glyph{{asset: "house-any", decor: decorEach}}
+	case engine.MatchActiveHouse:
+		return []glyph{{asset: "phase-turn"}, {asset: "house-any"}}
+	case engine.MatchContextualHouse:
+		return []glyph{{asset: "card-back", decor: decorChosen}, {asset: "house-any"}}
+	}
+	return []glyph{{asset: "house-any"}}
+}
+
 // spreadTargetGlyph is the creature glyph a DealDamage Spread hits. Every spread
 // chooses one or more creatures; the amounts and neighbor split stay in the rules
 // text, so the strip summarises the spread as its chosen-creature noun.

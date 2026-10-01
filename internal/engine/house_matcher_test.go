@@ -1,6 +1,33 @@
 package engine
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/dmikalova/vex/internal/census"
+)
+
+// TestHouseMatchKindsIsComplete binds HouseMatchKinds() to the constants this
+// package declares with the type, the way TestEnumTotality binds the censused
+// enums (ADR 0018). A kind nobody added to the enumerating function would be
+// invisible to the client's icon vocabulary, which walks it to prove every kind
+// draws something.
+func TestHouseMatchKindsIsComplete(t *testing.T) {
+	declared, err := census.Constants(".", "HouseMatchKind")
+	if err != nil {
+		t.Fatalf("scanning for HouseMatchKind constants: %v", err)
+	}
+	enumerated := map[HouseMatchKind]bool{}
+	for _, k := range HouseMatchKinds() {
+		if enumerated[k] {
+			t.Errorf("HouseMatchKinds() returns kind %d twice", k)
+		}
+		enumerated[k] = true
+	}
+	if len(enumerated) != len(declared) {
+		t.Errorf("the source declares %d HouseMatchKind constants, but HouseMatchKinds() "+
+			"returns %d; add the new kind to it", len(declared), len(enumerated))
+	}
+}
 
 // namedHouse, exceptHouse, chosenHouse, activeHouse, and contextualHouse build
 // the HouseMatcher shapes the effect tests name, mirroring the card.Houses facade

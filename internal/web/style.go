@@ -860,6 +860,7 @@ var galleryIcons = []string{
 	"glyph-search",
 	"glyph-swap",
 	"glyph-unknown",
+	"house-any",
 	"house-brobnar",
 	"house-dis",
 	"house-logos",

@@ -51,7 +51,12 @@ func boardEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 		// same play-or-use happen now; the may sigil is the only thing between them.
 		return markVerb(mayPlayOrUseGlyphs(v), sigilMay), true, true
 	case engine.PlayOrUse:
+		// The any-house matcher prints no house word here ("play or use a card"), so
+		// it draws no house glyph either; every narrowing matcher leads the verbs.
 		var gs []glyph
+		if v.House.Kind != engine.MatchAnyHouse {
+			gs = houseMatcherGlyphs(v.House)
+		}
 		if v.Grant == 0 || v.Grant&engine.GrantPlay != 0 {
 			gs = append(gs, glyph{asset: "glyph-play"})
 		}
@@ -126,43 +131,43 @@ func boardEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	}
 }
 
-// mayPlayOrUseGlyphs renders an out-of-house permission grant, narrowing to the
-// verbs and houses its axes select: a fight grant to a fight glyph, an
-// artifacts-any-house grant to an artifact-and-action pair, a named-house grant to
-// play/action, and an exclusion or controlled grant to play (plus action when it
-// also frees use).
+// mayPlayOrUseGlyphs renders an out-of-house permission grant as the houses it
+// frees followed by the verbs it frees — "Mars cards: play", "the chosen house:
+// play, use". The houses lead because that is what the grant is about; before the
+// house matcher had glyphs the strip drew the verbs alone, so a grant naming Mars
+// and one naming the chosen house were the same picture.
+//
+// A trait-scoped grant (Mutagenic Serum's friendly Mutant creatures) names no
+// house, so it draws its verbs alone.
 func mayPlayOrUseGlyphs(e engine.MayPlayOrUse) []glyph {
-	if e.Houses.Controlled {
-		if e.Grant&engine.GrantUse != 0 {
-			return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}
-		}
-		return []glyph{{asset: "glyph-play"}}
+	if e.Trait != 0 {
+		return houseGrantGlyphs(e.Grant)
 	}
-	switch e.Houses.Match.Kind {
-	case engine.MatchExceptHouse:
-		if e.Grant&engine.GrantUse != 0 {
-			return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}
-		}
-		return []glyph{{asset: "glyph-play"}}
-	case engine.MatchAnyHouse:
-		if e.Grant&engine.GrantFight != 0 {
-			return []glyph{{asset: "glyph-fight", decor: decorFriendly | decorEach}}
-		}
-		return []glyph{
-			{asset: "type-artifact", decor: decorFriendly},
-			{asset: "glyph-action"},
-		}
-	default: // MatchNamedHouse, MatchChosenHouse
-		if e.Grant == engine.GrantFight {
-			d := decorEach
-			if e.Houses.Match.House != engine.HouseNone {
-				d |= decorFriendly
-			}
-			return []glyph{{asset: "glyph-fight", decor: d}}
-		}
-		if e.Grant&engine.GrantPlay != 0 {
-			return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}
-		}
-		return []glyph{{asset: "glyph-action", decor: decorFriendly}}
+	return append(houseSelectorGlyphs(e.Houses), houseGrantGlyphs(e.Grant)...)
+}
+
+// houseSelectorGlyphs renders whose cards a grant frees. The controlled selector
+// is the one selection no filter can make — every house the controller has a card
+// in play for — so it draws the abstract house tinted friendly.
+func houseSelectorGlyphs(s engine.HouseSelector) []glyph {
+	if s.Controlled {
+		return []glyph{{asset: "house-any", decor: decorFriendly}}
 	}
+	return houseMatcherGlyphs(s.Match)
+}
+
+// houseGrantGlyphs renders the verbs a grant frees, one glyph per freed verb,
+// reusing the glyphs those actions draw on their own.
+func houseGrantGlyphs(g engine.HouseGrant) []glyph {
+	gs := make([]glyph, 0, 3)
+	if g&engine.GrantPlay != 0 {
+		gs = append(gs, glyph{asset: "glyph-play"})
+	}
+	if g&engine.GrantUse != 0 {
+		gs = append(gs, glyph{asset: "glyph-action"})
+	}
+	if g&engine.GrantFight != 0 {
+		gs = append(gs, glyph{asset: "glyph-fight"})
+	}
+	return gs
 }

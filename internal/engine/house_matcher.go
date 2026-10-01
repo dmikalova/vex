@@ -29,6 +29,23 @@ const (
 	MatchEachHouse
 )
 
+// HouseMatchKinds returns every way a matcher can name its houses, including the
+// permissive zero value. It is the enumerating function the client's icon
+// vocabulary walks to prove it draws each kind (TestHouseMatcherGlyphsCoverEveryKind
+// in internal/web), and TestHouseMatchKindsIsComplete binds it to the constants
+// this file declares, so a new kind cannot ship undrawn.
+func HouseMatchKinds() []HouseMatchKind {
+	return []HouseMatchKind{
+		MatchAnyHouse,
+		MatchNamedHouse,
+		MatchExceptHouse,
+		MatchChosenHouse,
+		MatchActiveHouse,
+		MatchContextualHouse,
+		MatchEachHouse,
+	}
+}
+
 // HouseMatcher is the one way a filter or target names which houses it admits: a
 // flat, comparable value (a kind plus a house) rendered as a noun qualifier that
 // each effect welds into its own phrase (ADR 0038). It carries the per-card house
