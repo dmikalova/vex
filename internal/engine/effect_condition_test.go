@@ -741,6 +741,7 @@ func TestRepeatMayWhileYouDo(t *testing.T) {
 	g.SetChooser(0, optionPicker{idx: 0})       // always "Yes"
 	e.Resolve(&EffectContext{
 		Resolver:   g,
+		Source:     g.AddToHand(NewCard("Spin", Shadows, Tactic, Common), 0),
 		Controller: 0,
 	})
 	// 5/0 -> 4/1 -> 3/2 -> 2/3 (opponent no longer leads): Do once plus 2 repeats.
@@ -754,6 +755,7 @@ func TestRepeatMayWhileYouDo(t *testing.T) {
 	g2.SetChooser(0, optionPicker{idx: 1}) // "No"
 	e.Resolve(&EffectContext{
 		Resolver:   g2,
+		Source:     g2.AddToHand(NewCard("Spin", Shadows, Tactic, Common), 0),
 		Controller: 0,
 	})
 	if g2.Aember(0) != 1 || g2.Aember(1) != 4 {
@@ -796,6 +798,7 @@ func TestRepeatMayWhileYouDoDrivenByChoice(t *testing.T) {
 	allyB := accepted.AddToBattleline(testCreature("AllyB", 3), 0)
 	e.Resolve(&EffectContext{
 		Resolver:   accepted,
+		Source:     accepted.AddToHand(NewCard("Spin", Shadows, Tactic, Common), 0),
 		Controller: 0,
 	})
 	for _, id := range []LocalID{foeA, foeB, allyA, allyB} {
@@ -813,6 +816,7 @@ func TestRepeatMayWhileYouDoDrivenByChoice(t *testing.T) {
 	survivorAlly := declined.AddToBattleline(testCreature("AllyB", 3), 0)
 	e.Resolve(&EffectContext{
 		Resolver:   declined,
+		Source:     declined.AddToHand(NewCard("Spin", Shadows, Tactic, Common), 0),
 		Controller: 0,
 	})
 	if !onAnyLine(declined, survivorFoe) || !onAnyLine(declined, survivorAlly) {

@@ -44,7 +44,9 @@ func (e ForEach) Resolve(ctx *EffectContext) {
 // past the first. The use that fires an ability buys its first resolution free;
 // what is left in the pool bounds the rest. Bait and Switch's "steal 1 Æmber ->
 // repeat this effect" resolves the initial steal plus at most five repeats, so it
-// steals six at most however far ahead the opponent is.
+// steals six at most however far ahead the opponent is. The pool is an upper bound,
+// not the only one: a repeating ability also stops once its source has left play
+// (canRepeat).
 const RuleOfSix = 6
 
 // Repeat resolves Do and repeats it as its Gate allows — automatically while a
@@ -85,6 +87,10 @@ func (e Repeat) Resolve(ctx *EffectContext) { e.Gate.run(ctx, e.Do) }
 // gates cover the shapes in play — While (automatic), WhileYouDo (automatic, and
 // only while the effect keeps happening), MayWhileYouDo (optional), and ByExalting
 // (paid, once).
+//
+// A repeat is a fresh resolution of the ability, so it stops once the source has
+// left play (RAW §190), while the resolution already under way finishes (RAW §191).
+// Every gate bounds its loop with canRepeat for that reason.
 type RepeatGate interface {
 	// run resolves the effect once and then again for as long as the gate allows,
 	// bounded by the Rule of Six.
@@ -93,6 +99,26 @@ type RepeatGate interface {
 	text(do Effect) string
 	// validate reports a misconfigured gate.
 	validate() error
+}
+
+// canRepeat reports whether the ability may resolve one more time: its card name's
+// Rule-of-Six pool still has a usage left, and its source can still resolve an
+// ability at all. Every gate checks it at the top of its loop — before the gate's
+// own condition, before RecordUsage, and before any "Repeat this effect?" prompt —
+// so a source that destroyed itself neither burns a usage nor asks the controller
+// about a repeat that cannot happen. The first resolution is never gated: RAW §191
+// finishes the resolution already under way. Pinned by
+// TestRepeatStopsWhenSourceLeavesPlay, TestRepeatTacticSourceKeepsRepeating,
+// TestRepeatSelfDestroyFinishesSequence and TestRepeatStoppedLoopRecordsNoUsage.
+//
+// The deferred "Leaves Play:" exemption resolveTriggered applies (fromLeave) is not
+// plumbed here: EffectContext carries no trigger, so a Repeat inside a deferred
+// Leaves Play: ability stops after its first pass. That is correct under RAW §190 —
+// its source has left play — the ability still starts, and no implemented card puts
+// a Repeat under TriggerLeavesPlay.
+func canRepeat(ctx *EffectContext) bool {
+	return !ctx.Resolver.AtRuleOfSix(ctx.Source) &&
+		ctx.Resolver.CanResolveAgain(ctx.Source)
 }
 
 // While repeats the effect automatically while Cond holds — Numquid the Fair's
@@ -118,7 +144,7 @@ func (g While) run(ctx *EffectContext, do Effect) {
 	// loop counts one usage against this card name's Rule-of-Six pool, so the loop
 	// runs until the pool is spent.
 	do.Resolve(ctx)
-	for !ctx.Resolver.AtRuleOfSix(ctx.Source) {
+	for canRepeat(ctx) {
 		if !g.Cond.Met(ctx) {
 			return
 		}
@@ -157,7 +183,7 @@ func (g WhileYouDo) run(ctx *EffectContext, do Effect) {
 	if !resolveGateOf(ctx, do) || !g.Cond.Met(ctx) {
 		return
 	}
-	for !ctx.Resolver.AtRuleOfSix(ctx.Source) {
+	for canRepeat(ctx) {
 		ctx.Resolver.RecordUsage(ctx.Source)
 		if !resolveGateOf(ctx, do) || !g.Cond.Met(ctx) {
 			return
@@ -203,7 +229,7 @@ func (g MayWhileYouDo) run(ctx *EffectContext, do Effect) {
 	}
 	d, byChoice := do.(declinableEffect)
 	byChoice = byChoice && d.declinable()
-	for !ctx.Resolver.AtRuleOfSix(ctx.Source) {
+	for canRepeat(ctx) {
 		if !g.Cond.Met(ctx) {
 			return
 		}
@@ -247,6 +273,9 @@ func (g ByExalting) text(do Effect) string {
 
 func (g ByExalting) run(ctx *EffectContext, do Effect) {
 	do.Resolve(ctx)
+	if !canRepeat(ctx) {
+		return
+	}
 	ids := g.exaltChoice(ctx)
 	if len(ids) == 0 {
 		return

@@ -1083,6 +1083,9 @@ func (g *Game) TriggerAbilityOfRooted(actor int, id LocalID, trigger Trigger, ro
 // AtRuleOfSix reports whether id's card name has been used six times this turn.
 func (g *Game) AtRuleOfSix(id LocalID) bool { return g.atRuleOfSix(id) }
 
+// CanResolveAgain reports whether id may still resolve an ability.
+func (g *Game) CanResolveAgain(id LocalID) bool { return g.canResolveAgain(id) }
+
 // RecordUsage counts one usage of id toward its card name's Rule-of-Six pool.
 func (g *Game) RecordUsage(id LocalID) { g.recordUsage(id) }
 

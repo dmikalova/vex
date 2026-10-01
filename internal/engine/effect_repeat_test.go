@@ -155,6 +155,7 @@ func TestRepeatWhile(t *testing.T) {
 	}.Resolve(
 		&EffectContext{
 			Resolver:   g,
+			Source:     g.AddToHand(NewCard("Spin", Shadows, Tactic, Common), 0),
 			Controller: 0,
 		},
 	)
@@ -172,6 +173,7 @@ func TestRepeatWhile(t *testing.T) {
 	}.Resolve(
 		&EffectContext{
 			Resolver:   g2,
+			Source:     g2.AddToHand(NewCard("Spin", Shadows, Tactic, Common), 0),
 			Controller: 0,
 		},
 	)
@@ -230,6 +232,7 @@ func TestRepeatWhileYouDoSteal(t *testing.T) {
 	g.State.Aember[0], g.State.Aember[1] = 0, 5
 	e.Resolve(&EffectContext{
 		Resolver:   g,
+		Source:     g.AddToHand(NewCard("Spin", Shadows, Tactic, Common), 0),
 		Controller: 0,
 	})
 	if g.Aember(0) != 3 || g.Aember(1) != 2 {
@@ -247,6 +250,7 @@ func TestRepeatWhileYouDoSteal(t *testing.T) {
 	)
 	e.Resolve(&EffectContext{
 		Resolver:   g2,
+		Source:     g2.AddToHand(NewCard("Spin", Shadows, Tactic, Common), 0),
 		Controller: 0,
 	})
 	if g2.Aember(0) != 0 || g2.Aember(1) != 5 {
@@ -270,6 +274,7 @@ func TestRepeatWhileYouDoSteal(t *testing.T) {
 		}},
 	}.Resolve(&EffectContext{
 		Resolver:   g3,
+		Source:     g3.AddToHand(NewCard("Spin", Shadows, Tactic, Common), 0),
 		Controller: 0,
 	})
 	if g3.Aember(0) != 1 {
@@ -358,5 +363,176 @@ func TestRepeatValidate(t *testing.T) {
 		Gate: WhileYouDo{Cond: Overwhelmed{}},
 	}).validate(); err != nil {
 		t.Errorf("validate = %v, want nil", err)
+	}
+}
+
+// TestRepeatStopsWhenSourceLeavesPlay covers RAW §190 on the repeat loop: a repeat
+// is a fresh resolution of the ability, so once the source has left play the loop
+// stops even while its condition still holds and its Rule-of-Six pool still has
+// usages left.
+func TestRepeatStopsWhenSourceLeavesPlay(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ally := g.AddToBattleline(testCreature("ally", 3), 0)
+	src := g.AddToBattleline(testCreature("self destructor", 3), 0)
+
+	// The condition is a board fact that only becomes truer as the loop runs, so
+	// the source leaving play is the only thing that can end it.
+	Repeat{
+		Do: Sequence{Effects: []Effect{
+			GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
+			Destroy{Target: Target{Kind: TargetChosenFriendlyCreature}},
+		}},
+		Gate: While{Cond: PoolAember{
+			Player: Controller,
+			Is:     AtLeast,
+			Amount: 1,
+		}},
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
+
+	// Pass one destroys the ally, pass two destroys the source, and there is no
+	// pass three.
+	if g.Aember(0) != 2 {
+		t.Errorf("aember = %d, want 2 (one pass plus one repeat)", g.Aember(0))
+	}
+	if onAnyLine(g, ally) || onAnyLine(g, src) {
+		t.Error("both creatures should have been destroyed")
+	}
+	if g.State.UsagesThisTurn[src] != 1 {
+		t.Errorf(
+			"usages = %d, want 1 (only the repeat that happened)",
+			g.State.UsagesThisTurn[src],
+		)
+	}
+}
+
+// TestRepeatTacticSourceKeepsRepeating covers the tactic exemption: a tactic never
+// enters play, so "the source has left play" never applies to it and its repeat
+// runs to the Rule of Six exactly as before. This is what protects Bait and Switch,
+// Ransack, Bouncing Deathquark, Tribute and Phalanx Strike.
+func TestRepeatTacticSourceKeepsRepeating(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToHand(NewCard("Spin", Shadows, Tactic, Common), 0)
+
+	Repeat{
+		Do: GainAember{
+			Player: Controller,
+			Amount: 1,
+		},
+		Gate: While{Cond: PoolAember{
+			Player: Controller,
+			Is:     AtLeast,
+			Amount: 1,
+		}},
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
+
+	// The first pass is free and each repeat spends one usage, so the loop runs
+	// RuleOfSix+1 times here: no usage has been charged for playing the tactic.
+	if g.Aember(0) != RuleOfSix+1 {
+		t.Errorf(
+			"aember = %d, want %d (the Rule of Six is the only bound)",
+			g.Aember(0),
+			RuleOfSix+1,
+		)
+	}
+	if !g.AtRuleOfSix(src) {
+		t.Error("a tactic's repeat should spend its whole Rule-of-Six pool")
+	}
+}
+
+// TestRepeatSelfDestroyFinishesSequence covers the RAW §191 boundary: the
+// resolution already under way finishes even after the source destroys itself. Only
+// the repeat is stopped, not the rest of the effect.
+func TestRepeatSelfDestroyFinishesSequence(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("self destructor", 3), 0)
+
+	Repeat{
+		Do: Sequence{Effects: []Effect{
+			Destroy{Target: Target{Kind: TargetThisCreature}},
+			GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
+		}},
+		Gate: While{Cond: PoolAember{
+			Player: Controller,
+			Is:     AtLeast,
+			Amount: 0,
+		}},
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
+
+	if onAnyLine(g, src) {
+		t.Error("the source should have destroyed itself")
+	}
+	if g.Aember(0) != 1 {
+		t.Errorf("aember = %d, want 1 (the started resolution finishes)", g.Aember(0))
+	}
+}
+
+// TestRepeatStoppedLoopRecordsNoUsage covers where the guard sits: at the top of
+// the loop, before the gate's condition, before RecordUsage, and before any prompt.
+// A source that destroyed itself on its free first pass neither burns a Rule-of-Six
+// usage nor is asked about a repeat that cannot happen.
+func TestRepeatStoppedLoopRecordsNoUsage(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("self destructor", 3), 0)
+	g.SetChooser(0, panicOnOptionChooser{})
+
+	Repeat{
+		Do: Destroy{Target: Target{Kind: TargetThisCreature}},
+		Gate: MayWhileYouDo{Cond: PoolAember{
+			Player: Controller,
+			Is:     AtLeast,
+			Amount: 0,
+		}},
+	}.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: 0,
+	})
+
+	if g.State.UsagesThisTurn[src] != 0 {
+		t.Errorf(
+			"usages = %d, want 0 (the repeat never happened)",
+			g.State.UsagesThisTurn[src],
+		)
+	}
+
+	// ByExalting is guarded the same way: the exalt is not offered to pay for a
+	// repeat the source can no longer resolve.
+	g2 := NewGame("A", "B", 1)
+	src2 := g2.AddToBattleline(testCreature("self destructor", 3), 0)
+	ally := g2.AddToBattleline(testCreature("ally", 3), 0)
+	g2.SetChooser(0, &exaltRepeater{})
+
+	Repeat{
+		Do:   Destroy{Target: Target{Kind: TargetThisCreature}},
+		Gate: ByExalting{Creature: Target{Kind: TargetChosenFriendlyCreature}},
+	}.Resolve(&EffectContext{
+		Resolver:   g2,
+		Source:     src2,
+		Controller: 0,
+	})
+
+	if g2.State.Cards[ally].Amber != 0 {
+		t.Errorf(
+			"exalted amber = %d, want 0 (no exalt charged for an impossible repeat)",
+			g2.State.Cards[ally].Amber,
+		)
 	}
 }

@@ -160,6 +160,10 @@ type CreatureReader interface {
 	// printed on it, granted by an attached upgrade, or granted by a constant
 	// ability.
 	HasTrigger(id LocalID, trigger Trigger) bool
+	// CanResolveAgain reports whether a card may still resolve an ability: it is in
+	// play, or it is one of the two sources that resolve while not in play — a
+	// tactic, or a card active in its owner's discard pile.
+	CanResolveAgain(id LocalID) bool
 	// ConsideredFlank reports whether a creature is treated as a flank creature for
 	// the remainder of the turn regardless of its battleline position (Spectral
 	// Tunneler).

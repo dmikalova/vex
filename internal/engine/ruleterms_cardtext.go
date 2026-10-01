@@ -252,7 +252,10 @@ a ward absorbs its destroy). When the repeat clause is written with -> it is a
 result gate: the effect also stops repeating as soon as it does nothing (Bait and
 Switch stops the moment a steal moves no Æmber). A repeat is always bounded.
 Every resolution past the first counts against the six uses a card name has each
-turn, so a condition the effect cannot change still ends the loop.`,
+turn, so a condition the effect cannot change still ends the loop. A repeat is a
+fresh resolution of the ability, so it also stops once the card whose ability is
+repeating has left play. The resolution already under way finishes first. A
+tactic never enters play, so this never stops a tactic's repeat.`,
 		},
 		{
 			Section:    SectionCardText,

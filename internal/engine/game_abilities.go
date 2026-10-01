@@ -1073,6 +1073,23 @@ func (g *Game) resolveWindow(ordered []triggeredAbility) {
 	}
 }
 
+// canResolveAgain reports whether src may still start a resolution of one of its
+// abilities (RAW §190, ADR 0030). A card that has left play resolves nothing more:
+// an earlier ability in the same window can take src out of play (Strange Gizmo
+// destroys friendly artifacts as its house is chosen; a forge-key reactor destroys
+// itself), and a repeat is a fresh resolution, so it stops there too.
+//
+// Two sources resolve an ability while not in play. A tactic never enters play, so
+// "source in play" does not apply to it; its Play: still resolves, and a tactic's
+// Repeat keeps looping (TestRepeatTacticSourceKeepsRepeating). A TriggersFromDiscard
+// card resolves its choose-house ability from its owner's discard pile (Relentless
+// Creeper returns itself to hand), so a source that is discard-active is not
+// skipped.
+func (g *Game) canResolveAgain(src LocalID) bool {
+	return g.inPlay(src) || g.cat.def(src).Type == Tactic ||
+		g.activeInDiscard(src)
+}
+
 // resolveTriggered resolves one triggered ability against its own source, grantor,
 // and "it" binding, inside its own Frame, and reports whether it resolved. It is
 // the single per-entry step every trigger window shares — the up-front-ordered
@@ -1080,23 +1097,15 @@ func (g *Game) resolveWindow(ordered []triggeredAbility) {
 // (resolveDestroyedWindow) — so ordering is the only thing that differs between
 // them, and the source guard and Frame are identical everywhere.
 //
-// The source-in-play guard is applied here (RAW §190, ADR 0030): an earlier ability
-// in the same window can take src out of play (Strange Gizmo destroys friendly
-// artifacts as its house is chosen; a forge-key reactor destroys itself), and a
-// card that has left play resolves nothing more, so it is skipped and false
-// returned. A tactic is the one source that resolves its own ability while not in
-// play — it never enters play, so "source in play" does not apply to it; its Play:
-// still resolves. A TriggersFromDiscard card is the other exception: it resolves
-// its choose-house ability from its owner's discard pile (Relentless Creeper
-// returns itself to hand), so a source that is discard-active is not skipped.
-// A deferred "Leaves Play:" window (fromLeave) is the last: it is gathered while
-// its card is still on the board and is meant to fire precisely because that card
+// The source guard is canResolveAgain (RAW §190, ADR 0030): a card that has left
+// play resolves nothing more, so it is skipped and false returned. A deferred
+// "Leaves Play:" window (fromLeave) is exempt from it: it is gathered while its
+// card is still on the board and is meant to fire precisely because that card
 // left, so the guard would always skip it.
 func (g *Game) resolveTriggered(t triggeredAbility) bool {
 	src := t.source
 	actor := int(t.actor)
-	if !t.fromLeave && !g.inPlay(src) && g.cat.def(src).Type != Tactic &&
-		!g.activeInDiscard(src) {
+	if !t.fromLeave && !g.canResolveAgain(src) {
 		return false
 	}
 	closeFrame := g.openFrame(Frame{
