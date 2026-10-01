@@ -131,10 +131,16 @@ func puncts() []punct {
 // does — as unset, never as "0 or more".
 const comparisonNone engine.Comparison = 0
 
-// glyph is one composed icon in the strip. A glyph with an asset renders that SVG
-// (tinted and decorated); a glyph with no asset renders its text as a small chip,
-// which is how a not-yet-drawn mechanic still shows something readable. Qty, when
-// positive, prints a numeral badge on the glyph (the "3" on 3 damage).
+// glyph is one composed icon in the strip. A glyph renders its asset as an SVG,
+// tinted and decorated. Qty, when positive, prints a numeral badge on the glyph
+// (the "3" on 3 damage).
+//
+// There is no text channel: the strip speaks no words (ADR 0022), and the one
+// place it did — targetGlyph's old default arm, which drew a Target's printed
+// phrase as a small chip — is gone now that a trait and a named card each draw a
+// mark of their own (traitGlyph, nameGlyph). A parameter too large to draw, a
+// trait out of 70 or a card name out of the whole pool, is carried by the rules
+// text beside the strip rather than by the strip.
 //
 // comparison qualifies that badge rather than taking a badge of its own: "power 3
 // or more" is the power noun with a 3 and an at-least mark, not a new drawing and
@@ -143,7 +149,6 @@ const comparisonNone engine.Comparison = 0
 // comparisonMark (view_icons.go) owns the mark each member gets.
 type glyph struct {
 	asset      string
-	text       string
 	qty        int
 	decor      decor
 	sigil      sigil

@@ -7,9 +7,39 @@ import "github.com/dmikalova/vex/internal/engine"
 // between, the result-gate arrow, and the enemy/friendly/each/chosen tint an
 // economy glyph carries.
 
+// traitGlyph is the mark an effect draws for a trait it names — the trait tag,
+// with *which* trait left to the rules text beside the strip. engine.Trait has 70
+// members (Agent through Wolf), so one abstract mark is the vocabulary rather than
+// seventy drawings: the strip says this is about a kind of creature, and the text
+// says which kind.
+//
+// It is the trait counterpart of nameGlyph, and the two are drawn apart
+// (TestTraitAndNameMarksAreDistinct).
+func traitGlyph() glyph {
+	return glyph{asset: "glyph-trait"}
+}
+
+// nameGlyph is the mark an effect draws for a card it names by its printed name —
+// the nameplate, with *which* card left to the rules text. The value space is
+// every card in the pool, which is a second card database rather than a
+// vocabulary, so it draws one mark the way traitGlyph does.
+//
+// It is deliberately not the unknown glyph: an unknown says the pass failed to map
+// a mechanic, where this says the mechanic is mapped and its one parameter is
+// unprintable in icons.
+func nameGlyph() glyph {
+	return glyph{asset: "glyph-name"}
+}
+
 // targetGlyph renders a Target as its noun glyph plus the decorations that carry
 // its enemy/friendly/each/chosen shape. Fine filters (power, house, trait) stay
 // in the rules text; the strip summarises the noun.
+//
+// Every kind draws a noun — TestTargetGlyphCoversEveryTargetKind holds that — so
+// the fall-through is reached only by a Target with no kind, a half-built value no
+// card can carry, and it draws the abstract card rather than the target's printed
+// text. The strip speaks no words (ADR 0022), so the text chip the fall-through
+// used to draw was the one place it broke that rule.
 func targetGlyph(t engine.Target) glyph {
 	switch t.Kind {
 	case engine.TargetThisCreature:
@@ -116,9 +146,8 @@ func targetGlyph(t engine.Target) glyph {
 			asset: "card-back",
 			decor: cardInPlayDecor(t.Kind),
 		}
-	default:
-		return glyph{text: t.Text()}
 	}
+	return glyph{asset: "card-back"}
 }
 
 // houseMatcherGlyphs renders which houses a matcher admits (ADR 0038). Only

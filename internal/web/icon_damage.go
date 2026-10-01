@@ -57,6 +57,7 @@ func damageEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 		}, true, true
 	case engine.DamageOthersAfterUsingTrait:
 		return []glyph{
+			traitGlyph(),
 			{asset: "glyph-action"},
 			{asset: "damage", qty: v.Amount},
 			arrowTo(glyph{

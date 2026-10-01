@@ -72,11 +72,11 @@ func iconGlyph(g glyph) app.UI {
 }
 
 // hasQtyBadge reports whether a glyph prints anything in its quantity badge: a
-// count, a text chip, or a bare comparison mark. A parity comparison carries no
-// number at all — "while the opponent's pool is even" has nothing to compare
-// against — so the mark alone is enough to draw the badge.
+// count or a bare comparison mark. A parity comparison carries no number at all —
+// "while the opponent's pool is even" has nothing to compare against — so the
+// mark alone is enough to draw the badge.
 func hasQtyBadge(g glyph) bool {
-	return g.qty != 0 || g.text != "" || g.comparison != comparisonNone
+	return g.qty != 0 || g.comparison != comparisonNone
 }
 
 // qtyBadge renders the numeral chip that precedes a glyph's icon — the "3" in "3
@@ -98,12 +98,13 @@ func qtyBadge(g glyph) app.UI {
 	)
 }
 
-// qtyBody is the badge's number, or its text chip when it has no number.
+// qtyBody is the badge's number, or "" when the badge carries a parity mark
+// alone — "even" and "odd" compare against no number.
 func qtyBody(g glyph) string {
-	if g.qty != 0 {
-		return strconv.Itoa(g.qty)
+	if g.qty == 0 {
+		return ""
 	}
-	return g.text
+	return strconv.Itoa(g.qty)
 }
 
 // comparisonMark is the mark a comparison draws on the quantity badge it

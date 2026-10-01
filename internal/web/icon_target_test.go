@@ -12,25 +12,58 @@ import (
 // noun and decor vocabulary in icon_target.go.
 
 // TestTargetGlyphCoversEveryTargetKind walks engine.TargetKinds() and fails on any
-// kind that falls through targetGlyph's default to a text chip. The strip is pure
-// icons (ADR 0022), so a worded chip is the target-side equivalent of the unknown
-// glyph — and the card-walking totality tests miss it, because a text chip is not
-// the unknown asset. Six context-reference kinds (TargetEachNeighbor,
-// TargetEachUpgradeOnThis, TargetGrantingCard, TargetAttachedHost,
-// TargetTheSameCreature, TargetFormerNeighbors) shipped that way.
+// kind that draws no noun of its own. The strip is pure icons (ADR 0022), so a
+// kind that fell through used to render the target's printed phrase as a worded
+// chip — the target-side equivalent of the unknown glyph, and one the card-walking
+// totality tests missed, because a chip is not the unknown asset. Six
+// context-reference kinds (TargetEachNeighbor, TargetEachUpgradeOnThis,
+// TargetGrantingCard, TargetAttachedHost, TargetTheSameCreature,
+// TargetFormerNeighbors) shipped that way.
+//
+// Every kind drawing a noun is what lets the chip go: the fall-through is now
+// reached only by a kindless Target, which TestKindlessTargetDrawsTheAbstractCard
+// covers.
 func TestTargetGlyphCoversEveryTargetKind(t *testing.T) {
 	for _, kind := range engine.TargetKinds() {
 		g := targetGlyph(engine.Target{Kind: kind})
 		if g.asset == "" {
-			t.Errorf(
-				"target kind %d renders as the text chip %q; give it a glyph (ADR 0022)",
-				kind, g.text,
-			)
+			t.Errorf("target kind %d draws nothing; give it a glyph (ADR 0022)", kind)
 			continue
 		}
 		if !assetExists(t, g.asset) {
 			t.Errorf("target kind %d: no web/assets/%s.svg", kind, g.asset)
 		}
+	}
+}
+
+// TestKindlessTargetDrawsTheAbstractCard pins what targetGlyph's fall-through
+// draws. A Target with no kind is a half-built value no card can carry, so it
+// draws the abstract card rather than words or nothing: an empty asset is dropped
+// silently at render, which would lose the subject of whatever effect held it.
+func TestKindlessTargetDrawsTheAbstractCard(t *testing.T) {
+	if g := targetGlyph(engine.Target{}); g.asset != "card-back" {
+		t.Errorf("kindless target draws %+v, want the card-back glyph", g)
+	}
+}
+
+// TestTraitAndNameMarksAreDrawn pins the two abstract marks this vocabulary draws
+// for a parameter too large to picture: engine.Trait has 70 members and a printed
+// card name can be any card in the pool, so each draws one mark with the specific
+// value left to the rules text beside the strip (ADR 0022). They must be distinct
+// from each other — a trait and a named card are different questions — and neither
+// may borrow the unknown glyph, which says the pass failed to map a mechanic.
+func TestTraitAndNameMarksAreDrawn(t *testing.T) {
+	trait, name := traitGlyph(), nameGlyph()
+	for _, g := range []glyph{trait, name} {
+		if g.asset == "glyph-unknown" {
+			t.Errorf("%+v borrows the unknown glyph; draw it a mark of its own", g)
+		}
+		if !assetExists(t, g.asset) {
+			t.Errorf("no web/assets/%s.svg", g.asset)
+		}
+	}
+	if trait.asset == name.asset {
+		t.Errorf("the trait and name marks both draw %q; mark them apart", trait.asset)
 	}
 }
 

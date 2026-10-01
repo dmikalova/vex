@@ -86,12 +86,16 @@ not for MCTS snapshot performance.
   glyph mapping breaks `mage ci:check`, which is the intended "fail loud" behavior.
   The gate carries **no tolerance allowlist** — there is no map of node types
   permitted to fall back to the unknown glyph. Every effect must map to a real
-  glyph (or, where a mechanic has no icon vocabulary at all, deliberately render
-  nothing while reporting itself covered, as a trait grant does — traits are card
-  text, not strip glyphs). An unmapped node is always a failure to fix, never one
-  to silence. Which nodes may render nothing is no longer a judgement the client
-  makes: the census's `NoTerm` reason decides it — see the Update at the end of
-  this file.
+  glyph. An unmapped node is always a failure to fix, never one to silence. Which
+  nodes may render nothing is no longer a judgement the client makes: the census's
+  `NoTerm` reason decides it — see the Update at the end of this file.
+- A parameter whose value space is too large to picture draws **one abstract mark
+  for the whole space**, never nothing and never the unknown glyph. A trait is one
+  of 70 and a printed card name is any card in the pool, so `traitGlyph` and
+  `nameGlyph` each draw a single mark and the specific trait or card name is left
+  to the rules text beside the strip. Drawing nothing was the earlier answer for
+  traits, and it made a trait grant indistinguishable from an ability that does
+  nothing.
 - Coverage is checked at **both** ends of a line: `TestNoResidualUnknownGlyph`
   scans a card's rendered strip for the unknown sentinel in its trigger-head
   glyph as well as its effect-body glyphs, so a new trigger with no icon mapping

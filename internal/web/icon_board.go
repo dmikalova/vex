@@ -138,10 +138,11 @@ func boardEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 // and one naming the chosen house were the same picture.
 //
 // A trait-scoped grant (Mutagenic Serum's friendly Mutant creatures) names no
-// house, so it draws its verbs alone.
+// house, so the trait mark leads instead of a house emblem; which trait it frees
+// stays in the rules text, the way every other trait is drawn.
 func mayPlayOrUseGlyphs(e engine.MayPlayOrUse) []glyph {
 	if e.Trait != 0 {
-		return houseGrantGlyphs(e.Grant)
+		return append([]glyph{traitGlyph()}, houseGrantGlyphs(e.Grant)...)
 	}
 	return append(houseSelectorGlyphs(e.Houses), houseGrantGlyphs(e.Grant)...)
 }

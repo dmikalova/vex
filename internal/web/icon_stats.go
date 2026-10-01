@@ -100,10 +100,9 @@ func statsEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	case engine.BlankEnemyText:
 		return []glyph{{asset: "type-creature", decor: decorEnemy | decorEach}}, true, true
 	case engine.GainTrait:
-		// A trait has no icon in the strip's vocabulary — traits render as the
-		// card's text, not glyphs. It only ever folds beside a keyword grant that
-		// carries the line's glyph, so it renders nothing yet counts as covered.
-		return nil, true, true
+		// Which trait is granted stays in the rules text — traitGlyph is one mark for
+		// all 70 of them — so the strip says a trait lands on the target.
+		return []glyph{traitGlyph(), arrowTo(targetGlyph(v.Target))}, true, true
 	case engine.BelongToHouse:
 		if a := houseIconName(v.House); a != "" {
 			return []glyph{{asset: a}, arrowTo(targetGlyph(v.Target))}, true, true

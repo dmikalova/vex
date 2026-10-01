@@ -56,13 +56,6 @@ func TestAemberVerbsTakeTheirOwnSigil(t *testing.T) {
 					tc.name, got, tc.asset, tc.sigil, tc.qty,
 				)
 			}
-			if got.text != "" {
-				t.Errorf(
-					"%s writes %q into the text slot; the verb is the sigil's job",
-					tc.name,
-					got.text,
-				)
-			}
 		})
 	}
 }
