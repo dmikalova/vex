@@ -847,6 +847,7 @@ var galleryIcons = []string{
 	"generic-counter-warrant",
 	"glyph-action",
 	"glyph-ban",
+	"glyph-bonus",
 	"glyph-choose",
 	"glyph-destroy",
 	"glyph-destroyed",

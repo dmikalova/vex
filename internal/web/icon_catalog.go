@@ -148,9 +148,9 @@ var iconCatalogSkipped = map[string]string{
 // measured against: the fifteen typed accessors the engine exports, in the order
 // engine.Families() lists them.
 //
-// Only Effect is gated today. The rest are shown by the style gallery and gate
-// nothing until their glyphs are drawn, and the change that draws one flips its
-// gate. Target is the family that waits on more than drawing: its rows are one
+// Effect and Count are gated today. The rest are shown by the style gallery and
+// gate nothing until their glyphs are drawn, and the change that draws one flips
+// its gate. Target is the family that waits on more than drawing: its rows are one
 // Target per filter builder, and those filters are unexported fields, so the
 // pass cannot read which filter a row applied until the
 // replace-target-s-filter-methods goal makes them a comparable exported Filter.
@@ -163,7 +163,7 @@ func iconCatalog() []iconFamily {
 		newIconFamily("Effect", engine.EffectCatalog(), effectGlyphs).gate(),
 		newIconFamily("Refinement", engine.RefinementCatalog(), nil),
 		newIconFamily("Condition", engine.ConditionCatalog(), nil),
-		newIconFamily("Count", engine.CountCatalog(), nil),
+		newIconFamily("Count", engine.CountCatalog(), countGlyphs).gate(),
 		newIconFamily("BonusIconSubject", engine.BonusIconSubjectCatalog(), nil),
 		newIconFamily("CreatureVerb", engine.CreatureVerbCatalog(), nil),
 		newIconFamily("Selection", engine.SelectionCatalog(), nil),

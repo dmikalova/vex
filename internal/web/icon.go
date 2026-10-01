@@ -277,7 +277,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			return gs, covered
 		}
 	}
-	return fallbackGlyphs(e), false
+	return fallbackGlyphs(), false
 }
 
 // claim adapts a two-valued glyph rendering — a recursive effectGlyphs, a
@@ -374,10 +374,14 @@ func composeGlyphs(effects ...engine.Effect) ([]glyph, bool) {
 	return out, covered
 }
 
-// fallbackGlyphs renders an effect the pass does not yet map as the single
-// abstract "unknown" glyph. The strip is pure icons — no words — so an unmapped
-// mechanic shows a placeholder sigil rather than its printed text (ADR 0022).
-func fallbackGlyphs(engine.Effect) []glyph {
+// fallbackGlyphs renders a node the pass does not yet map as the single abstract
+// "unknown" glyph. The strip is pure icons — no words — so an unmapped mechanic
+// shows a placeholder sigil rather than its printed text (ADR 0022).
+//
+// It takes no node: the picture does not depend on what went undrawn, and every
+// family that falls back reaches for the same one — an effect in the glyph family
+// chain, a count in countGlyphs.
+func fallbackGlyphs() []glyph {
 	return []glyph{{asset: "glyph-unknown"}}
 }
 

@@ -187,6 +187,43 @@ func houseMatcherGlyphs(m engine.HouseMatcher) []glyph {
 	return []glyph{{asset: "house-any"}}
 }
 
+// houseChoiceGlyphs renders a referenced house — the house chosen this turn, the
+// active house, or the house of the card in context — by mapping it onto the
+// matcher kind that says the same thing, so the two house vocabularies draw one
+// picture rather than two. AnyHouse names no house at all and so draws nothing.
+func houseChoiceGlyphs(h engine.HouseChoice) []glyph {
+	switch h {
+	case engine.TheChosenHouse:
+		return houseMatcherGlyphs(engine.HouseMatcher{Kind: engine.MatchChosenHouse})
+	case engine.TheActiveHouse:
+		return houseMatcherGlyphs(engine.HouseMatcher{Kind: engine.MatchActiveHouse})
+	case engine.TheContextualHouse:
+		return houseMatcherGlyphs(engine.HouseMatcher{Kind: engine.MatchContextualHouse})
+	}
+	return nil
+}
+
+// zoneAsset is the glyph a zone draws when a card reads it in place — the pile a
+// count measures — where destinationGlyph draws the zone a card is moved to. It
+// is "" for the two zones no count can name (InPlay, which is the board rather
+// than a pile, and the unset zero value), so a caller guards the empty stem
+// rather than drawing an assetless glyph.
+func zoneAsset(z engine.Zone) string {
+	switch z {
+	case engine.Deck:
+		return "zone-deck"
+	case engine.Hand:
+		return "zone-hand"
+	case engine.Archives:
+		return "zone-archives"
+	case engine.Discard:
+		return "zone-discard"
+	case engine.Purged:
+		return "zone-purge"
+	}
+	return ""
+}
+
 // spreadTargetGlyph is the creature glyph a DealDamage Spread hits. Every spread
 // chooses one or more creatures; the amounts and neighbor split stay in the rules
 // text, so the strip summarises the spread as its chosen-creature noun.

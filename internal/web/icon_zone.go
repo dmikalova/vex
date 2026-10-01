@@ -106,7 +106,7 @@ func zoneEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 		if a := destinationGlyph(v.Destination); a != "" {
 			return []glyph{targetGlyph(v.Target), arrowTo(glyph{asset: a})}, true, true
 		}
-		return fallbackGlyphs(e), false, true
+		return fallbackGlyphs(), false, true
 	case engine.PutChosen:
 		if a := destinationGlyph(v.Destination); a != "" {
 			// PutChosen is the bounded-choice counterpart to PutFromPlay: the
@@ -117,12 +117,12 @@ func zoneEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 			src.qty = engine.FixedCardCount(v.Quantity)
 			return []glyph{src, arrowTo(glyph{asset: a})}, true, true
 		}
-		return fallbackGlyphs(e), false, true
+		return fallbackGlyphs(), false, true
 	case engine.PutCard:
 		if a := destinationGlyph(v.Destination); a != "" {
 			return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: a})}, true, true
 		}
-		return fallbackGlyphs(e), false, true
+		return fallbackGlyphs(), false, true
 	case engine.PutFromHand:
 		return []glyph{{asset: "zone-hand"}, arrowTo(glyph{asset: "glyph-play"})}, true, true
 	case engine.PutDiscardedIntoHand:
