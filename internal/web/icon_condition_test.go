@@ -7,6 +7,132 @@ import (
 	"github.com/dmikalova/vex/internal/engine"
 )
 
+// conditionRows returns the Condition family's catalogued rows, so a test reads
+// the census rather than a second list of conditions that could drift from it.
+func conditionRows(t *testing.T) []iconRow {
+	t.Helper()
+	for _, family := range iconCatalog() {
+		if family.name == "Condition" {
+			return family.rows
+		}
+	}
+	t.Fatal("the icon catalog walks no Condition family")
+	return nil
+}
+
+// TestConditionGlyphAssetsExist walks every catalogued condition and checks each
+// glyph it draws names a real asset. A glyph with a missing stem renders as a
+// broken image rather than failing anything, so without this a typo in a noun
+// ships silently.
+func TestConditionGlyphAssetsExist(t *testing.T) {
+	for _, row := range conditionRows(t) {
+		gs, _ := row.draw()
+		for _, g := range gs {
+			if !assetExists(t, g.asset) {
+				t.Errorf("condition %s draws %q, which has no web/assets/%s.svg",
+					row.name, g.asset, g.asset)
+			}
+		}
+	}
+}
+
+// TestAlwaysMetDrawsNothing pins the family's one silent row: an always-met
+// condition adds no clause, so it draws neither a noun nor the gate mark that
+// would open one. Drawing a bare gate would say a card is conditional when it is
+// not — WithAemberCannotBeStolen() sets AlwaysMet to mean "on, unconditionally".
+func TestAlwaysMetDrawsNothing(t *testing.T) {
+	gs, covered := conditionGlyphs(engine.AlwaysMet{})
+	if !covered {
+		t.Error("AlwaysMet should be covered, not drawn as the unknown glyph")
+	}
+	if len(gs) != 0 {
+		t.Errorf("AlwaysMet drew %+v, want nothing", gs)
+	}
+}
+
+// TestTideReadsOneMarkTwoWays pins the one noun this family adds: the tide is a
+// single state seen from the two sides of the table — high for you is low for your
+// opponent — so high and low are one mark wearing the increase/decrease sigil
+// pair, never two unrelated drawings.
+func TestTideReadsOneMarkTwoWays(t *testing.T) {
+	high, highCovered := conditionTestGlyphs(engine.TideIsHigh{})
+	low, lowCovered := conditionTestGlyphs(engine.TideIsLow{})
+	if !highCovered || !lowCovered {
+		t.Fatalf("the tide conditions drew no real glyph")
+	}
+	if len(high) != 1 || len(low) != 1 {
+		t.Fatalf("the tide drew %+v and %+v, want one glyph each", high, low)
+	}
+	if high[0].asset != low[0].asset {
+		t.Errorf(
+			"the tide drew %q high and %q low, want one mark",
+			high[0].asset,
+			low[0].asset,
+		)
+	}
+	if high[0].sigil != sigilGain || low[0].sigil != sigilLose {
+		t.Errorf(
+			"the tide drew sigils %v high and %v low, want the increase/decrease pair",
+			high[0].sigil,
+			low[0].sigil,
+		)
+	}
+}
+
+// TestItConditionsMarkTheCardInContext pins the "It …" family's grammar: each one
+// draws the property's own glyph — the stun mark, the trait tag, the nameplate,
+// the bonus icon — marked as being about the card an effect or trigger just put in
+// context, rather than inventing a drawing per condition.
+func TestItConditionsMarkTheCardInContext(t *testing.T) {
+	cases := map[string]struct {
+		cond  engine.Condition
+		asset string
+	}{
+		"stunned":    {engine.ItIsStunned{}, "stun"},
+		"named":      {engine.ItIsNamed{Name: "Subtle Chain"}, nameGlyph().asset},
+		"bonus icon": {engine.ItHasBonusIcon{}, "glyph-bonus"},
+	}
+	for name, tc := range cases {
+		gs, covered := conditionTestGlyphs(tc.cond)
+		if !covered {
+			t.Errorf("%s drew no real glyph", name)
+			continue
+		}
+		if gs[0].asset != tc.asset {
+			t.Errorf("%s drew %q, want the %q glyph", name, gs[0].asset, tc.asset)
+		}
+		if gs[0].decor&decorChosen == 0 {
+			t.Errorf("%s drew %+v, want it marked as the card in context", name, gs[0])
+		}
+	}
+}
+
+// TestFirstUseAndAnyUseShareOneTally pins how "first" is drawn: it is the same
+// turn tally "you have done it at all" reads, against a different figure, so the
+// two differ only in the comparison on the badge. Drawing "first" as a picture of
+// its own would make the strip spell one tally two ways.
+func TestFirstUseAndAnyUseShareOneTally(t *testing.T) {
+	atAll, _ := conditionTestGlyphs(engine.UsedCreatureToReap{})
+	first, _ := conditionTestGlyphs(engine.FirstReapOfTurn{})
+	if len(atAll) != len(first) {
+		t.Fatalf("the two reap conditions drew %+v and %+v, want one shape", atAll, first)
+	}
+	for i := range atAll {
+		if atAll[i].asset != first[i].asset {
+			t.Fatalf("the two reap conditions drew %+v and %+v, want one shape", atAll, first)
+		}
+	}
+	if atAll[countedNoun(atAll)].comparison != engine.AtLeast {
+		t.Errorf(
+			"a reap this turn wears %+v, want an at-least badge",
+			atAll[countedNoun(atAll)],
+		)
+	}
+	if first[countedNoun(first)].comparison != engine.Exactly {
+		t.Errorf("the first reap wears %+v, want an exactly badge", first[countedNoun(first)])
+	}
+}
+
 // TestConditionOpensWithGateMark pins the condition family's one structural
 // rule: a condition draws the gate mark that opens a hypothetical clause, so the
 // strip says "what follows holds only if this does" rather than running the test

@@ -861,6 +861,7 @@ var galleryIcons = []string{
 	"glyph-return",
 	"glyph-search",
 	"glyph-swap",
+	"glyph-tide",
 	"glyph-trait",
 	"glyph-unknown",
 	"house-any",
