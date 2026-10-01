@@ -326,7 +326,7 @@ func TestRepeatMayWhileYouDoStopsWhenNothingHappens(t *testing.T) {
 		Do: StealAember{Amount: 1},
 		Gate: MayWhileYouDo{Cond: CardsInPlay{
 			Player: Controller,
-			Type:   Creature,
+			Filter: Filter{Type: Creature},
 		}},
 	}.Resolve(&EffectContext{
 		Resolver:   g2,

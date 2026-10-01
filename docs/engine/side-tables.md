@@ -47,8 +47,8 @@ counter on Wretched Doll, and its kin) live in
   noun. No rulebook term (the one "Generic Counters" entry covers them all), no
   state field, no per-kind resolver method.
 - Place and read through `PlaceCounter{Kind, Target, Amount}`, the
-  `CounterInPlay{Kind}` condition, the `Target.WithCounter(kind)` filter, and
-  the `PlaceCounter`/`CountersOn` resolver methods. A per-card count folds into
+  `CounterInPlay{Kind}` condition, the `Filter{Counter: kind}` axis, and the
+  `PlaceCounter`/`CountersOn` resolver methods. A per-card count folds into
   its entry's `N` (saturating); a card sheds every entry through the one
   `removeFromPlay` funnel.
 - Do **not** add a `FooCounters int16` to `CardCore`. Power counters, damage,
