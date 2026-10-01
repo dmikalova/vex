@@ -74,6 +74,25 @@ func TestIconTotality(t *testing.T) {
 	})
 }
 
+// TestDurationGlyphCoversEveryDuration walks engine.Durations() and fails on a
+// window that draws nothing. inWindow appends whatever durationGlyph returns, so
+// an unmapped window would append an assetless glyph — dropped silently at
+// render, which is the card-level counterpart of the unknown glyph the effect
+// level already fails on (ADR 0022). The census guards Durations() complete
+// against the source, so a new constant cannot hide from this test.
+func TestDurationGlyphCoversEveryDuration(t *testing.T) {
+	for _, d := range engine.Durations() {
+		name := durationGlyph(d)
+		if name == "" {
+			t.Errorf("duration %v draws no glyph; give it a marker (ADR 0022)", d)
+			continue
+		}
+		if !assetExists(t, name) {
+			t.Errorf("duration %v: no web/assets/%s.svg", d, name)
+		}
+	}
+}
+
 // familyName is a glyph family's function name, so a disjointness failure names
 // the families that clashed rather than their positions in the chain.
 func familyName(family func(engine.Effect) ([]glyph, bool, bool)) string {

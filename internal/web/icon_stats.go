@@ -57,6 +57,7 @@ func statsEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 		// rare effect and says the shelf life out loud, so it is drawn.
 		return inWindow(
 			[]glyph{{asset: "kw-assault"}, arrowTo(targetGlyph(v.Target))},
+			engine.StartOfPlayerNextTurn,
 		), true, true
 	case engine.GainKeywords:
 		gs := make([]glyph, 0, len(v.Keywords)+1)

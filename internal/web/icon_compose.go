@@ -57,15 +57,19 @@ func composeEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	case engine.Instead:
 		return []glyph{{asset: "glyph-swap"}}, true, true
 	case engine.ForDuration:
-		return claim(windowed(composeGlyphs(v.Effects...)))
+		gs, covered := composeGlyphs(v.Effects...)
+		return claim(windowed(gs, covered, v.Duration))
 	case engine.ForRemainderOfTurn:
-		return claim(windowed(effectGlyphs(v.Do)))
+		gs, covered := effectGlyphs(v.Do)
+		return claim(windowed(gs, covered, engine.RemainderOfPlayerTurn))
 	case engine.ForOpponentNextTurn:
-		return claim(windowed(effectGlyphs(v.Do)))
+		gs, covered := effectGlyphs(v.Do)
+		return claim(windowed(gs, covered, engine.OpponentNextTurn))
 	case engine.NextPlayed:
 		return append([]glyph{{asset: "glyph-play"}}, mustCompose(v.EntersPlay)...), true, true
 	case engine.GainUntilNextTurn:
-		return claim(windowed(composeGlyphs(v.Effects...)))
+		gs, covered := composeGlyphs(v.Effects...)
+		return claim(windowed(gs, covered, engine.StartOfPlayerNextTurn))
 	default:
 		return nil, false, false
 	}

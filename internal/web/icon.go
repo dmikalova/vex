@@ -300,30 +300,50 @@ func markVerb(gs []glyph, s sigil) []glyph {
 	return gs
 }
 
-// inWindow appends the turn marker to an already-composed run, which is how an
+// durationGlyph is the marker a timed effect draws for the window it is bound
+// to, or "" for a window with no marker yet — TestDurationGlyphCoversEveryDuration
+// walks engine.Durations() and fails on the "", so a seventh window cannot ship
+// drawing nothing.
+//
+// A window is drawn as the boundary it lifts at rather than as a picture of its
+// own. The four turn windows share phase-turn, already the trigger glyph for the
+// start and end of a turn; the two leave-play windows share glyph-destroyed,
+// already the trigger glyph for a card leaving play. Which window within a pair —
+// the rest of this turn or the opponent's next turn, this card or the affected
+// one — is not drawn: the marker says when the effect lifts, and six durations
+// would need six pictures to say more.
+func durationGlyph(d engine.Duration) string {
+	switch d {
+	case engine.RemainderOfPlayerTurn, engine.OpponentNextTurn,
+		engine.StartOfPlayerNextTurn, engine.EndOfPlayerNextTurn:
+		return "phase-turn"
+	case engine.UntilThisLeavesPlay, engine.UntilCardLeavesPlay:
+		return "glyph-destroyed"
+	}
+	return ""
+}
+
+// inWindow appends a window's marker to an already-composed run, which is how an
 // effect that lands later or lifts later draws the window it is bound to: the
 // end-of-turn board wipe reads as destroy, each creature, turn marker (ADR 0047).
 //
-// Timing is drawn by composition rather than by a badge axis of its own. phase-turn
-// is already the trigger glyph for the start and end of a turn, so the marker is a
-// word the player has met rather than a new one, and the cost is one horizontal
-// slot on the handful of effects that have a window. Which window it is — the rest
-// of this turn, the opponent's next turn — is not drawn: the marker says "not now",
-// and six durations would need six pictures to say more.
+// Timing is drawn by composition rather than by a badge axis of its own, so it
+// costs one horizontal slot on the handful of effects that have a window and
+// nothing on every other effect. durationGlyph owns which marker a window draws.
 //
 // It is the counterpart of markVerb and punctuate: a run that is already composed,
 // marked as a whole rather than glyph by glyph.
-func inWindow(gs []glyph) []glyph {
-	return append(gs, glyph{asset: "phase-turn"})
+func inWindow(gs []glyph, d engine.Duration) []glyph {
+	return append(gs, glyph{asset: durationGlyph(d)})
 }
 
 // windowed adapts a two-valued glyph rendering — a recursive effectGlyphs, a
 // composeGlyphs over the effects a duration wrapper carries — into the same
-// rendering bound to a turn window, so a wrapper can mark what it wrapped without
+// rendering bound to a window, so a wrapper can mark what it wrapped without
 // unpacking the covered flag first. It is inWindow's counterpart the way claim is
 // a family's.
-func windowed(gs []glyph, covered bool) ([]glyph, bool) {
-	return inWindow(gs), covered
+func windowed(gs []glyph, covered bool, d engine.Duration) ([]glyph, bool) {
+	return inWindow(gs, d), covered
 }
 
 // punctuate stamps a punctuation mark on the head of an already-composed run of

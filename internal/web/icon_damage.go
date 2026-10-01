@@ -86,7 +86,7 @@ func damageEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 				asset: "type-creature",
 				decor: decorEach,
 			}),
-		}), true, true
+		}, engine.RemainderOfPlayerTurn), true, true
 	case engine.PurgeCreature:
 		return []glyph{{asset: "zone-purge"}, arrowTo(targetGlyph(v.Target))}, true, true
 	case engine.PurgeSource:

@@ -9,6 +9,25 @@ import (
 // This file is part of the Iconography pass (ADR 0022): tests for the
 // continuous-rules renderers in icon_static.go.
 
+// TestKeywordIconCoversEveryKeyword walks engine.Keywords() and fails on a
+// keyword with no drawn glyph. keywordIcon returns "" for an unmapped keyword and
+// every caller skips an empty asset, so such a keyword vanishes from the strip
+// rather than drawing the unknown glyph the effect level fails on — the same
+// silent hole, one vocabulary down (ADR 0022). The census guards Keywords()
+// complete against the source, so a new keyword cannot hide from this test.
+func TestKeywordIconCoversEveryKeyword(t *testing.T) {
+	for _, k := range engine.Keywords() {
+		name := keywordIcon(k)
+		if name == "" {
+			t.Errorf("keyword %v has no glyph; draw one (ADR 0022)", k)
+			continue
+		}
+		if !assetExists(t, name) {
+			t.Errorf("keyword %v: no web/assets/%s.svg", k, name)
+		}
+	}
+}
+
 // TestKeywordGlyphsShowsSplashAttack checks the Splash-attack combat keyword draws
 // its own glyph (damage marked as reaching each neighbor) rather than nothing, so a
 // creature whose only mechanic is Splash-attack still draws a strip.

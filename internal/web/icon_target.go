@@ -169,7 +169,14 @@ func destinationGlyph(d engine.Destination) string {
 	return ""
 }
 
-// deckDestZone is the zone glyph a revealed deck card is moved to.
+// deckDestZone is the zone glyph a revealed deck card is moved to, or "" for a
+// routing with no drawn zone yet — TestDeckDestZoneCoversEveryDeckDest fails on
+// the "", which an empty asset would otherwise drop silently at render.
+//
+// IntoBottomOfDeck is a position in the deck the cards came from rather than
+// another zone, so it draws the deck under the line its cards go beneath rather
+// than a second deck: the leftover of a look stays on top, and the routed cards
+// go under it.
 func deckDestZone(d engine.DeckDest) string {
 	switch d {
 	case engine.IntoHand:
@@ -180,6 +187,8 @@ func deckDestZone(d engine.DeckDest) string {
 		return "zone-discard"
 	case engine.IntoPurge:
 		return "zone-purge"
+	case engine.IntoBottomOfDeck:
+		return "zone-deck-bottom"
 	}
 	return ""
 }

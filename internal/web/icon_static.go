@@ -39,8 +39,10 @@ func keywordGlyphs(def *engine.CardDefinition) []glyph {
 	return gs
 }
 
-// keywordIcon is the glyph asset for a printed keyword, or "" for keywords with no
-// drawn glyph yet.
+// keywordIcon is the glyph asset for a printed keyword, or "" for a keyword with
+// no drawn glyph yet. TestKeywordIconCoversEveryKeyword walks engine.Keywords()
+// and fails on the "", because every caller skips an empty asset and the keyword
+// would vanish from the strip rather than draw the unknown glyph (ADR 0022).
 func keywordIcon(k engine.Keyword) string {
 	switch k {
 	case engine.Skirmish:
@@ -59,6 +61,10 @@ func keywordIcon(k engine.Keyword) string {
 		return "kw-omega"
 	case engine.Deploy:
 		return "kw-deploy"
+	case engine.Treachery:
+		return "kw-treachery"
+	case engine.Invulnerable:
+		return "kw-invulnerable"
 	}
 	return ""
 }
