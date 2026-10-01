@@ -162,7 +162,7 @@ func iconCatalog() []iconFamily {
 	return []iconFamily{
 		newIconFamily("Effect", engine.EffectCatalog(), effectGlyphs).gate(),
 		newIconFamily("Refinement", engine.RefinementCatalog(), nil),
-		newIconFamily("Condition", engine.ConditionCatalog(), nil),
+		newIconFamily("Condition", engine.ConditionCatalog(), conditionGlyphs),
 		newIconFamily("Count", engine.CountCatalog(), countGlyphs).gate(),
 		newIconFamily("BonusIconSubject", engine.BonusIconSubjectCatalog(), nil),
 		newIconFamily("CreatureVerb", engine.CreatureVerbCatalog(), nil),

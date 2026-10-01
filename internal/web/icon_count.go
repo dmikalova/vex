@@ -242,15 +242,14 @@ func cardsInPlayCountGlyphs(e engine.CardsInPlay) []glyph {
 // other: the creature noun tinted with the side holding the excess, wearing the
 // relative comparison's ">" on its badge. The comparison is the engine's own, so
 // which side is ahead is said once — by the tint — rather than twice (ADR 0047).
+// It is the same mark the forged-key lead condition wears, so the two borrow one
+// helper (aheadOfOther, icon_condition.go).
 //
 // NotCountingSelf shifts the total by one without changing what is compared, so
 // like the other fine filters it stays in the rules text beside the strip.
 func excessCreaturesGlyphs(e engine.ExcessCreatures) []glyph {
 	noun := creaturesCounted(playerDecor(e.Player))
-	noun.comparison = engine.MoreThanOpponent
-	if e.Player == engine.Opponent {
-		noun.comparison = engine.MoreThanYou
-	}
+	noun.comparison = aheadOfOther(e.Player)
 	gs := []glyph{noun}
 	if e.Trait != 0 {
 		gs = append(gs, traitGlyph())
