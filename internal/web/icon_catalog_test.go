@@ -6,6 +6,53 @@ import (
 	"github.com/dmikalova/vex/internal/engine"
 )
 
+// familyRows returns one named family's catalogued rows, so a family's own test
+// reads the census rather than a second list of nodes that could drift from it.
+func familyRows(t *testing.T, name string) []iconRow {
+	t.Helper()
+	for _, family := range iconCatalog() {
+		if family.name == name {
+			return family.rows
+		}
+	}
+	t.Fatalf("the icon catalog walks no %s family", name)
+	return nil
+}
+
+// assertFamilyDraws holds one family to the two things a drawn family owes, in
+// the family's own terms: every row draws a strip of its own rather than the
+// abstract unknown glyph, and every glyph in that strip names an asset that
+// exists.
+//
+// It says more than TestIconTotality, which reads only the top-level covered flag
+// and only for a rule-bearing row: a plumbing row that falls back, or an unknown
+// buried inside an otherwise-covered strip, passes there and fails here. A missing
+// asset fails nothing at all without it — a glyph with a typo'd stem renders as a
+// broken image — so a family that draws without this check ships its typos.
+//
+// A row drawing nothing is not a failure: a silent plumbing row folds into the
+// node holding it (engine.Fixed, engine.AlwaysMet), which is the whole point of
+// the census's own plumbing classification.
+func assertFamilyDraws(t *testing.T, name string) {
+	t.Helper()
+	for _, row := range familyRows(t, name) {
+		gs, covered := row.draw()
+		if !covered {
+			t.Errorf("%s %s draws no glyph of its own (ADR 0022)", name, row.name)
+			continue
+		}
+		for _, g := range gs {
+			if g.asset == "glyph-unknown" {
+				t.Errorf("%s %s draws the unknown glyph inside its strip", name, row.name)
+			}
+			if !assetExists(t, g.asset) {
+				t.Errorf("%s %s draws %q, which has no web/assets/%s.svg",
+					name, row.name, g.asset, g.asset)
+			}
+		}
+	}
+}
+
 // TestIconCatalogCoversCensus holds the harness to the engine's census in both
 // directions: every family engine.Families() lists is either walked by
 // iconCatalog or named in iconCatalogSkipped with its reason, and every family

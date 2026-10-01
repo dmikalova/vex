@@ -148,12 +148,18 @@ var iconCatalogSkipped = map[string]string{
 // measured against: the fifteen typed accessors the engine exports, in the order
 // engine.Families() lists them.
 //
-// Effect, Condition and Count are gated today. The rest are shown by the style
-// gallery and gate nothing until their glyphs are drawn, and the change that
-// draws one flips its gate. Target is the family that waits on more than drawing:
-// its rows are one Target per filter builder, and those filters are unexported
-// fields, so the pass cannot read which filter a row applied until the
-// replace-target-s-filter-methods goal makes them a comparable exported Filter.
+// Effect, Condition, Count, BonusIconSubject, Selection and Gather are gated
+// today. The rest are shown by the style gallery and gate nothing until their
+// glyphs are drawn, and the change that draws one flips its gate.
+//
+// Two families wait on more than drawing, both for the same reason — a value
+// internal/web cannot read. Target's rows are one Target per filter builder, and
+// those filters are unexported fields, so the pass cannot tell which filter a row
+// applied until the replace-target-s-filter-methods goal makes them a comparable
+// exported Filter. Refinement's rows are values of unexported types built by
+// constructor functions — engine.PowerAtLeast(6) builds an unexported
+// powerAtLeast{minPower: 6} — so the pass can compare a refinement against the
+// exported singletons but cannot recognise a parameterised one at all.
 //
 // A family added to the engine must be added here too — TestIconCatalogCovers-
 // Census fails otherwise — so a sixteenth accessor cannot arrive without an icon
@@ -164,15 +170,19 @@ func iconCatalog() []iconFamily {
 		newIconFamily("Refinement", engine.RefinementCatalog(), nil),
 		newIconFamily("Condition", engine.ConditionCatalog(), conditionGlyphs).gate(),
 		newIconFamily("Count", engine.CountCatalog(), countGlyphs).gate(),
-		newIconFamily("BonusIconSubject", engine.BonusIconSubjectCatalog(), nil),
+		newIconFamily(
+			"BonusIconSubject",
+			engine.BonusIconSubjectCatalog(),
+			bonusIconSubjectGlyphs,
+		).gate(),
 		newIconFamily("CreatureVerb", engine.CreatureVerbCatalog(), nil),
-		newIconFamily("Selection", engine.SelectionCatalog(), nil),
+		newIconFamily("Selection", engine.SelectionCatalog(), selectionGlyphs).gate(),
 		newIconFamily("Spread", engine.SpreadCatalog(), nil),
 		newIconFamily("TopAct", engine.TopActCatalog(), nil),
 		newIconFamily("PerTarget", engine.PerTargetCatalog(), nil),
 		newIconFamily("Loss", engine.LossCatalog(), nil),
 		newIconFamily("RepeatGate", engine.RepeatGateCatalog(), nil),
-		newIconFamily("Gather", engine.GatherCatalog(), nil),
+		newIconFamily("Gather", engine.GatherCatalog(), gatherGlyphs).gate(),
 		newIconFamily("Quantity", engine.QuantityCatalog(), nil),
 		newIconFamily("Target", engine.TargetFilterCatalog(), nil),
 	}

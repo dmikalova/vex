@@ -111,10 +111,11 @@ func countGlyphs(c engine.Count) ([]glyph, bool) {
 			{asset: "type-creature", decor: decorChosen},
 		}, true
 	case engine.BonusIconsOf:
+		over, covered := bonusIconSubjectGlyphs(v.Over)
 		return append(
 			[]glyph{{asset: bonusCountAsset(v.Kind), decor: decorEach}},
-			bonusIconSubjectGlyphs(v.Over)...,
-		), true
+			over...,
+		), covered
 
 	// The battleline around a card.
 	case engine.NeighborsOfThis:
@@ -276,17 +277,25 @@ func bonusCountAsset(kind engine.BonusIcon) string {
 	return "glyph-bonus"
 }
 
-// bonusIconSubjectGlyphs draws the cards a bonus-icon count reads: the single
-// card an effect just put in context, or the whole set its last purge removed.
-// A subject with no drawing yet adds nothing, leaving the count its icon.
-func bonusIconSubjectGlyphs(s engine.BonusIconSubject) []glyph {
+// bonusIconSubjectGlyphs draws the cards a bonus-icon count reads, reporting
+// whether a real mapping covered it: the single card an effect just put in
+// context, or the whole set its last purge removed. The BonusIconSubject family is
+// gated (TestEveryBonusIconSubjectDraws, TestIconTotality), so every row here
+// draws.
+//
+// Which noun a TheCardInContext names the card by — the discarded card, the
+// revealed one — is the wording of the clause rather than a different card, so the
+// strip draws the one card in context and leaves the noun to the rules text.
+func bonusIconSubjectGlyphs(s engine.BonusIconSubject) ([]glyph, bool) {
 	switch s.(type) {
 	case engine.TheCardInContext:
-		return []glyph{{asset: "card-back", decor: decorChosen}}
+		return []glyph{{asset: "card-back", decor: decorChosen}}, true
 	case engine.ThePurgedCards:
-		return []glyph{{asset: "zone-purge"}}
+		// The purge this effect just made, not the pile it added to, so the mark takes
+		// no stack: the stacked purge pile is what the PurgedCards count draws.
+		return []glyph{{asset: "zone-purge"}}, true
 	}
-	return nil
+	return fallbackGlyphs(), false
 }
 
 // destroyedThisWayGlyphs draws a "destroyed this way" tally: the noun that was

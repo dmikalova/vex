@@ -7,33 +7,12 @@ import (
 	"github.com/dmikalova/vex/internal/engine"
 )
 
-// conditionRows returns the Condition family's catalogued rows, so a test reads
-// the census rather than a second list of conditions that could drift from it.
-func conditionRows(t *testing.T) []iconRow {
-	t.Helper()
-	for _, family := range iconCatalog() {
-		if family.name == "Condition" {
-			return family.rows
-		}
-	}
-	t.Fatal("the icon catalog walks no Condition family")
-	return nil
-}
-
-// TestConditionGlyphAssetsExist walks every catalogued condition and checks each
-// glyph it draws names a real asset. A glyph with a missing stem renders as a
-// broken image rather than failing anything, so without this a typo in a noun
-// ships silently.
-func TestConditionGlyphAssetsExist(t *testing.T) {
-	for _, row := range conditionRows(t) {
-		gs, _ := row.draw()
-		for _, g := range gs {
-			if !assetExists(t, g.asset) {
-				t.Errorf("condition %s draws %q, which has no web/assets/%s.svg",
-					row.name, g.asset, g.asset)
-			}
-		}
-	}
+// TestEveryConditionDraws holds the family's gate from the other side: every
+// catalogued condition draws a real strip of existing assets rather than the
+// abstract unknown glyph, so a gated card cannot draw the same strip as an
+// ungated one.
+func TestEveryConditionDraws(t *testing.T) {
+	assertFamilyDraws(t, "Condition")
 }
 
 // TestAlwaysMetDrawsNothing pins the family's one silent row: an always-met

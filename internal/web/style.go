@@ -920,6 +920,7 @@ var galleryIcons = []string{
 	"zone-archives",
 	"zone-deck",
 	"zone-deck-bottom",
+	"zone-deck-top",
 	"zone-discard",
 	"zone-hand",
 	"zone-purge",

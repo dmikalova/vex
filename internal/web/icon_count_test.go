@@ -6,32 +6,14 @@ import (
 	"github.com/dmikalova/vex/internal/engine"
 )
 
-// countRows returns the Count family's catalogued rows, so a test reads the
-// census rather than a second list of counts that could drift from it.
-func countRows(t *testing.T) []iconRow {
-	t.Helper()
-	for _, family := range iconCatalog() {
-		if family.name == "Count" {
-			return family.rows
-		}
-	}
-	t.Fatal("the icon catalog walks no Count family")
-	return nil
-}
-
-// TestCountGlyphAssetsExist walks every catalogued count and checks each glyph it
-// draws names a real asset. A glyph with a missing stem renders as a broken image
-// rather than failing anything, so without this a typo in a noun ships silently.
-func TestCountGlyphAssetsExist(t *testing.T) {
-	for _, row := range countRows(t) {
-		gs, _ := row.draw()
-		for _, g := range gs {
-			if !assetExists(t, g.asset) {
-				t.Errorf("count %s draws %q, which has no web/assets/%s.svg",
-					row.name, g.asset, g.asset)
-			}
-		}
-	}
+// TestEveryCountDraws holds the family's gate from the other side: every
+// catalogued count draws a real strip of existing assets rather than the abstract
+// unknown glyph. TestIconTotality already fails on a rule-bearing row that does
+// not, but it skips the plumbing rows, and this says the same thing in the
+// family's own terms — a count with no drawing says nothing about what it
+// measures.
+func TestEveryCountDraws(t *testing.T) {
+	assertFamilyDraws(t, "Count")
 }
 
 // TestFixedCountFolds pins the one plumbing row of the family: a literal draws
@@ -83,26 +65,6 @@ func TestCountGlyphsTranscription(t *testing.T) {
 	gs, _ = countGlyphs(engine.AemberOnThis{})
 	if len(gs) != 1 || gs[0].asset != "aember" || gs[0].decor&decorThis == 0 {
 		t.Errorf("Æmber on this = %+v, want the Æmber noun marked as this card", gs)
-	}
-}
-
-// TestEveryCountDraws holds the family's gate from the other side: every
-// catalogued count draws a real strip rather than the abstract unknown glyph.
-// TestIconTotality already fails on a rule-bearing row that does not, but it
-// skips the plumbing rows, and this says the same thing in the family's own
-// terms — a count with no drawing says nothing about what it measures.
-func TestEveryCountDraws(t *testing.T) {
-	for _, row := range countRows(t) {
-		gs, covered := row.draw()
-		if !covered {
-			t.Errorf("count %s draws no glyph of its own (ADR 0022)", row.name)
-			continue
-		}
-		for _, g := range gs {
-			if g.asset == "glyph-unknown" {
-				t.Errorf("count %s draws the unknown glyph inside its strip", row.name)
-			}
-		}
 	}
 }
 
@@ -244,5 +206,33 @@ func TestKeyCountsDrawApart(t *testing.T) {
 	}
 	if forged[0].asset == unforged[0].asset {
 		t.Errorf("forged and unforged keys both draw %q", forged[0].asset)
+	}
+}
+
+// TestEveryBonusIconSubjectDraws holds the family's gate from the other side:
+// both subjects a bonus-icon count can read draw a real strip of existing assets,
+// so a count over the card just discarded cannot draw what a count over a whole
+// purge draws.
+func TestEveryBonusIconSubjectDraws(t *testing.T) {
+	assertFamilyDraws(t, "BonusIconSubject")
+}
+
+// TestBonusIconCountDrawsItsSubject checks that the count naming a bonus-icon
+// subject draws the icon it totals and then the cards it reads them from, in that
+// order — the icon is what is counted, the subject is where it is counted.
+func TestBonusIconCountDrawsItsSubject(t *testing.T) {
+	gs, covered := countGlyphs(engine.BonusIconsOf{
+		Kind: engine.BonusAember,
+		Over: engine.ThePurgedCards{},
+	})
+	if !covered || len(gs) != 2 {
+		t.Fatalf("bonus-icon count = %+v (covered=%v), want the icon and its subject",
+			gs, covered)
+	}
+	if gs[0].decor&decorEach == 0 {
+		t.Errorf("the counted icon = %+v, want it stacked", gs[0])
+	}
+	if gs[1].asset != "zone-purge" {
+		t.Errorf("the subject = %q, want the purge the count reads", gs[1].asset)
 	}
 }

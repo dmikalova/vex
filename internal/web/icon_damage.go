@@ -70,13 +70,15 @@ func damageEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	case engine.DestroyChosen:
 		return []glyph{{asset: "glyph-destroy"}, arrowTo(targetGlyph(v.Target))}, true, true
 	case engine.BatchDestroy:
-		return []glyph{
-			{asset: "glyph-destroy"},
-			arrowTo(glyph{
-				asset: "type-creature",
-				decor: decorEach,
-			}),
-		}, true, true
+		// The gatherer says which creatures the one batch takes, and the shapes differ
+		// — two picks from two pools, or every unspared player's battleline — so the
+		// strip draws the gatherer rather than a fixed "each creature" that would be
+		// true of only one of them.
+		gs, covered := gatherGlyphs(v.Gather)
+		return append(
+			[]glyph{{asset: "glyph-destroy"}},
+			punctuate(gs, punctArrow)...,
+		), covered, true
 	case engine.DestroyEachCreatureAtEndOfTurn:
 		// The turn marker is what tells this from BatchDestroy over every creature:
 		// the same wipe, scheduled into the end-of-turn window rather than resolved
@@ -95,6 +97,39 @@ func damageEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 	default:
 		return nil, false, false
 	}
+}
+
+// gatherGlyphs renders a Gather as the creatures the one simultaneous batch
+// takes, reporting whether a real mapping covered it. The Gather family is gated
+// (TestEveryGatherDraws, TestIconTotality), so every row here draws.
+//
+// A gatherer is not an effect — it is the object of the one verb that carries one
+// (BatchDestroy), so it draws where that verb draws, the way a Count does.
+func gatherGlyphs(g engine.Gather) ([]glyph, bool) {
+	switch v := g.(type) {
+	case engine.ChosenFromEach:
+		// One pick per pool, drawn as the pools themselves: "a friendly creature and an
+		// enemy creature" is the two targets side by side, which is what makes this
+		// gatherer different from a wipe.
+		gs := make([]glyph, 0, len(v))
+		for _, t := range v {
+			gs = append(gs, targetGlyph(t))
+		}
+		return gs, true
+	case engine.EachPlayerUnless:
+		// Each player's creatures, behind the board the spare condition reads and the
+		// refusal mark that says a player fielding it is skipped. Which creatures of an
+		// unspared battleline are taken is a Refinement, a family with no glyphs yet,
+		// so it stays in the rules text beside the strip.
+		return append(
+			[]glyph{creaturesCounted(0)},
+			append(
+				punctuate(cardsInPlayConditionGlyphs(v.Spare), punctGate),
+				glyph{asset: "glyph-ban"},
+			)...,
+		), true
+	}
+	return fallbackGlyphs(), false
 }
 
 // damageThenGlyphs renders a "deal N damage to <target>, then <follow-up>" effect
