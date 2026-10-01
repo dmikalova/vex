@@ -48,9 +48,14 @@ type Config struct {
 	lastWalkErr string
 }
 
-// skipDirs are directories never worth walking for source changes.
+// skipDirs are the named directories never worth walking for source changes.
+// Every dot-directory below the walk root is pruned as well, so tool
+// directories (.git, .idea, .vscode, and the agent worktrees under .diatom)
+// neither slow a poll nor report a change made outside the watched tree. No
+// watched source lives in a dot-directory in this repo. See
+// TestNewestModTimeSkipsDotDirectories.
 var skipDirs = map[string]bool{
-	".git": true, "node_modules": true, "tmp": true, ".idea": true, ".vscode": true,
+	"node_modules": true, "tmp": true,
 }
 
 // Serve builds once, starts the server, then watches Root and rebuilds/restarts
@@ -135,12 +140,12 @@ func (cfg *Config) start() *exec.Cmd {
 // exactly like "nothing changed", so it is reported instead of discarded.
 func (cfg *Config) newestModTime() time.Time {
 	var latest time.Time
-	if err := filepath.WalkDir(cfg.Root, func(_ string, d fs.DirEntry, err error) error {
+	if err := filepath.WalkDir(cfg.Root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if d.IsDir() {
-			if skipDirs[d.Name()] {
+			if path != cfg.Root && prunes(d.Name()) {
 				return fs.SkipDir
 			}
 			return nil
@@ -165,6 +170,13 @@ func (cfg *Config) reportWalkError(err error) {
 		cfg.lastWalkErr = msg
 		fmt.Println("hotreload: watching", cfg.Root, "failed:", msg)
 	}
+}
+
+// prunes reports whether a directory name is one the walk does not descend
+// into. The caller exempts the walk root, whose own name may begin with a dot
+// (".", or a dot-directory watched on purpose).
+func prunes(name string) bool {
+	return strings.HasPrefix(name, ".") || skipDirs[name]
 }
 
 // watches reports whether a file name has a watched extension and is not a Go
