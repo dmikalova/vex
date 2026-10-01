@@ -69,4 +69,37 @@ func TestNumquidTheFair(t *testing.T) {
 		}
 		h.Expect(foe).At(ct.Discard)
 	})
+
+	// The same ruling the Neutron Shark test quotes: once the source is no longer
+	// in play, its ability cannot be resolved again, even while the gate's
+	// condition still holds (RAW §190; the pass under way finishes, RAW §191).
+	t.Run("stops once Numquid itself has left play", func(t *testing.T) {
+		var host, foe1, foe2 ct.Card
+		h := ct.Play(t, ct.Setup{
+			P1: ct.Side{
+				House: card.House.Sanctum,
+				Hand:  ct.Cards(NumquidTheFair),
+			},
+			P2: ct.Side{InPlay: ct.Cards(
+				ct.Upgraded(
+					ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),
+					PhoenixHeart,
+				),
+				ct.Bind(&foe1, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),
+				ct.Bind(&foe2, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),
+			)},
+		})
+
+		// Destroying the Phoenix Heart host deals 3 damage to each creature, which
+		// kills Numquid (power 3) mid-loop. P1 controls 0 creatures to P2's 2, so
+		// the overwhelmed gate still holds — but the source is gone, so the two
+		// surviving enemy creatures are safe.
+		h.P1.Play(NumquidTheFair)
+		h.P1.ClickCard(host)
+
+		h.Expect(host).At(ct.Hand)
+		h.Expect(NumquidTheFair).At(ct.Discard)
+		h.Expect(foe1).At(ct.PlayArea).Damage(3)
+		h.Expect(foe2).At(ct.PlayArea).Damage(3)
+	})
 }
