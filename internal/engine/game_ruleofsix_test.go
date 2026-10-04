@@ -35,6 +35,16 @@ func TestRuleOfSixSharedByCardName(t *testing.T) {
 	}
 }
 
+// TestNameUsagesThisTurnUnregisteredID confirms an id outside the catalog counts
+// as unused rather than panicking, since an effect can resolve with no bound
+// source.
+func TestNameUsagesThisTurnUnregisteredID(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	if got := g.nameUsagesThisTurn(99); got != 0 {
+		t.Errorf("nameUsagesThisTurn(99) = %d, want 0", got)
+	}
+}
+
 // TestRuleOfSixBarsPlay confirms a player cannot play a card whose name has
 // already been used six times this turn.
 func TestRuleOfSixBarsPlay(t *testing.T) {
