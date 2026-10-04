@@ -23,9 +23,11 @@ const (
 	ExcludeFocus
 )
 
-// allExclusions returns every real exclusion, so the census enumerates them
-// rather than keeping a list a new value would fall out of.
-func allExclusions() []Exclusion {
+// Exclusions returns every real exclusion, so the census enumerates them rather
+// than keeping a list a new value would fall out of. It is exported for the
+// client's icon vocabulary, which walks it to prove it draws each excluded card
+// (TestFilterExclusionsDraw in internal/web).
+func Exclusions() []Exclusion {
 	return []Exclusion{ExcludeSource, ExcludeIt, ExcludeFocus}
 }
 

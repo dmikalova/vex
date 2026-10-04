@@ -238,12 +238,12 @@ func TestTargetWithAemberAndLeastPowerful(t *testing.T) {
 		Text(); got != "each creature with Æmber on it" {
 		t.Errorf("WithAember text = %q", got)
 	}
-	if ids := (Target{Kind: TargetEachCreature}).Refine(LeastPowerful).
+	if ids := (Target{Kind: TargetEachCreature}).Refine(LeastPowerful{}).
 		Select(ctx); len(ids) != 1 ||
 		ids[0] != weak {
 		t.Errorf("LeastPowerful = %v, want [%d]", ids, weak)
 	}
-	if got := (Target{Kind: TargetEachCreature}).Refine(LeastPowerful).
+	if got := (Target{Kind: TargetEachCreature}).Refine(LeastPowerful{}).
 		Text(); got != "the least powerful creature" {
 		t.Errorf("LeastPowerful text = %q", got)
 	}
@@ -252,7 +252,7 @@ func TestTargetWithAemberAndLeastPowerful(t *testing.T) {
 		Resolver:   NewGame("A", "B", 1),
 		Controller: 0,
 	}
-	if ids := (Target{Kind: TargetEachCreature}).Refine(LeastPowerful).Select(empty); ids != nil {
+	if ids := (Target{Kind: TargetEachCreature}).Refine(LeastPowerful{}).Select(empty); ids != nil {
 		t.Errorf("LeastPowerful empty = %v, want nil", ids)
 	}
 }
@@ -267,14 +267,14 @@ func TestLeastPowerfulTieChoice(t *testing.T) {
 		Resolver:   g,
 		Controller: 0,
 	}
-	ids := (Target{Kind: TargetEachEnemyCreature}).Refine(LeastPowerful).Select(ctx)
+	ids := (Target{Kind: TargetEachEnemyCreature}).Refine(LeastPowerful{}).Select(ctx)
 	if len(ids) != 1 || ids[0] != b {
 		t.Errorf("tie choice = %v, want [%d]; a=%d", ids, b, a)
 	}
 }
 
 func TestAnyOfPowerTiers(t *testing.T) {
-	tiers := AnyOf(LowestPower, HighestPower)
+	tiers := AnyOf{Refinements: []Refinement{LowestPower{}, HighestPower{}}}
 
 	// Text names both extremes.
 	if got := (Target{Kind: TargetEachCreature}).Refine(tiers).
@@ -307,7 +307,13 @@ func TestAnyOfPowerTiers(t *testing.T) {
 		})
 	if len(got) != 3 || !containsID(got, lowA) || !containsID(got, lowB) ||
 		!containsID(got, high) {
-		t.Errorf("AnyOf(LowestPower, HighestPower) = %v, want [%d %d %d]", got, lowA, lowB, high)
+		t.Errorf(
+			"AnyOf{Refinements: []Refinement{LowestPower{}, HighestPower{}}} = %v, want [%d %d %d]",
+			got,
+			lowA,
+			lowB,
+			high,
+		)
 	}
 
 	// When every creature shares one power the whole set is both extremes.
@@ -345,20 +351,20 @@ func TestAnyOfFoldsSharedClauseFrame(t *testing.T) {
 	each := Target{Kind: TargetEachCreature}
 
 	// One member has nothing to share a frame with.
-	if text := each.Refine(AnyOf(LowestPower)).
+	if text := each.Refine(AnyOf{Refinements: []Refinement{LowestPower{}}}).
 		Text(); text != "each creature with the lowest power" {
 		t.Errorf("single member text = %q", text)
 	}
 
 	// A framed refinement still renders its own clause when it stands alone.
-	if text := each.Refine(HighestPower).
+	if text := each.Refine(HighestPower{}).
 		Text(); text != "each creature with the highest power" {
 		t.Errorf("standalone text = %q", text)
 	}
 
 	// Members framed differently each render in full, joined with "and" because
 	// each is already a complete noun phrase.
-	if text := each.Refine(AnyOf(LowestPower, framedRank{word: "high"})).
+	if text := each.Refine(AnyOf{Refinements: []Refinement{LowestPower{}, framedRank{word: "high"}}}).
 		Text(); text != "each creature with the lowest power and each creature of high rank" {
 		t.Errorf("mismatched frame text = %q", text)
 	}
@@ -366,7 +372,7 @@ func TestAnyOfFoldsSharedClauseFrame(t *testing.T) {
 
 func TestMostPowerfulN(t *testing.T) {
 	// Text pluralizes the noun.
-	if got := (Target{Kind: TargetEachCreature}).Refine(MostPowerfulN(3)).
+	if got := (Target{Kind: TargetEachCreature}).Refine(MostPowerfulN{N: 3}).
 		Text(); got != "the 3 most powerful creatures" {
 		t.Errorf("text = %q", got)
 	}
@@ -380,13 +386,13 @@ func TestMostPowerfulN(t *testing.T) {
 	// Fewer creatures than n keeps them all.
 	g0 := NewGame("A", "B", 1)
 	g0.AddToBattleline(testCreature("only", 3), 1)
-	ids := (Target{Kind: TargetEachEnemyCreature}).Refine(MostPowerfulN(3)).
+	ids := (Target{Kind: TargetEachEnemyCreature}).Refine(MostPowerfulN{N: 3}).
 		Select(&EffectContext{
 			Resolver:   g0,
 			Controller: 0,
 		})
 	if len(ids) != 1 {
-		t.Errorf("MostPowerfulN(3) of one creature = %v, want the single creature", ids)
+		t.Errorf("MostPowerfulN{N: 3} of one creature = %v, want the single creature", ids)
 	}
 
 	// A clean cutoff: the tied group exactly fills the last slot.
@@ -395,13 +401,13 @@ func TestMostPowerfulN(t *testing.T) {
 	b := g1.AddToBattleline(testCreature("b", 4), 1)
 	c := g1.AddToBattleline(testCreature("c", 3), 1)
 	g1.AddToBattleline(testCreature("d", 2), 1)
-	got := (Target{Kind: TargetEachEnemyCreature}).Refine(MostPowerfulN(3)).
+	got := (Target{Kind: TargetEachEnemyCreature}).Refine(MostPowerfulN{N: 3}).
 		Select(&EffectContext{
 			Resolver:   g1,
 			Controller: 0,
 		})
 	if len(got) != 3 || !containsID(got, a) || !containsID(got, b) || !containsID(got, c) {
-		t.Errorf("MostPowerfulN(3) = %v, want the top three [%d %d %d]", got, a, b, c)
+		t.Errorf("MostPowerfulN{N: 3} = %v, want the top three [%d %d %d]", got, a, b, c)
 	}
 
 	// A tie at the cutoff: the controller chooses which tied creature to include.
@@ -411,13 +417,13 @@ func TestMostPowerfulN(t *testing.T) {
 	t2 := g2.AddToBattleline(testCreature("t2", 3), 1)
 	g2.AddToBattleline(testCreature("t3", 3), 1)
 	g2.SetChooser(0, idChooser{id: t2})
-	chosen := (Target{Kind: TargetEachEnemyCreature}).Refine(MostPowerfulN(2)).
+	chosen := (Target{Kind: TargetEachEnemyCreature}).Refine(MostPowerfulN{N: 2}).
 		Select(&EffectContext{
 			Resolver:   g2,
 			Controller: 0,
 		})
 	if len(chosen) != 2 || !containsID(chosen, top) || !containsID(chosen, t2) {
-		t.Errorf("MostPowerfulN(2) tie = %v, want [%d %d]; t1=%d", chosen, top, t2, t1)
+		t.Errorf("MostPowerfulN{N: 2} tie = %v, want [%d %d]; t1=%d", chosen, top, t2, t1)
 	}
 
 	// A declined tie choice falls back to the first tied creature.
@@ -427,7 +433,7 @@ func TestMostPowerfulN(t *testing.T) {
 	g3.AddToBattleline(testCreature("lo2", 3), 1)
 	g3.AddToBattleline(testCreature("lo3", 3), 1)
 	g3.SetChooser(0, orderRejectChooser{})
-	fallback := (Target{Kind: TargetEachEnemyCreature}).Refine(MostPowerfulN(2)).
+	fallback := (Target{Kind: TargetEachEnemyCreature}).Refine(MostPowerfulN{N: 2}).
 		Select(&EffectContext{
 			Resolver:   g3,
 			Controller: 0,
@@ -550,10 +556,10 @@ func TestTargetEachUpgradeOnThis(t *testing.T) {
 }
 
 func TestNotMostPowerful(t *testing.T) {
-	if got := (Target{Kind: TargetEachEnemyCreature}.Refine(Except(MostPowerful))).Text(); got != "each enemy creature except the most powerful enemy creature" {
+	if got := (Target{Kind: TargetEachEnemyCreature}.Refine(AllExcept{Inner: MostPowerful})).Text(); got != "each enemy creature except the most powerful enemy creature" {
 		t.Errorf("enemy text = %q", got)
 	}
-	if got := (Target{Kind: TargetEachFriendlyCreature}.Refine(Except(MostPowerful))).Text(); got != "each friendly creature except the most powerful friendly creature" {
+	if got := (Target{Kind: TargetEachFriendlyCreature}.Refine(AllExcept{Inner: MostPowerful})).Text(); got != "each friendly creature except the most powerful friendly creature" {
 		t.Errorf("friendly text = %q", got)
 	}
 
@@ -567,7 +573,10 @@ func TestNotMostPowerful(t *testing.T) {
 		Resolver:   g,
 		Controller: 0,
 	}
-	got := Target{Kind: TargetEachFriendlyCreature}.Refine(Except(MostPowerful)).Select(ctx)
+	got := Target{
+		Kind: TargetEachFriendlyCreature,
+	}.Refine(AllExcept{Inner: MostPowerful}).
+		Select(ctx)
 	if len(got) != 2 || !containsID(got, weak) || !containsID(got, mid) || containsID(got, strong) {
 		t.Errorf("select = %v, want [weak mid] (most powerful spared)", got)
 	}
@@ -579,12 +588,12 @@ func TestNotMostPowerful(t *testing.T) {
 		Resolver:   g2,
 		Controller: 0,
 	}
-	if got := (Target{Kind: TargetEachFriendlyCreature}.Refine(Except(MostPowerful))).Select(
+	if got := (Target{Kind: TargetEachFriendlyCreature}.Refine(AllExcept{Inner: MostPowerful})).Select(
 		ctx2,
 	); got != nil {
 		t.Errorf("lone select = %v, want nil", got)
 	}
-	if got := (Target{Kind: TargetEachEnemyCreature}.Refine(Except(MostPowerful))).Select(
+	if got := (Target{Kind: TargetEachEnemyCreature}.Refine(AllExcept{Inner: MostPowerful})).Select(
 		ctx2,
 	); got != nil {
 		t.Errorf("empty select = %v, want nil", got)
@@ -600,7 +609,10 @@ func TestNotMostPowerful(t *testing.T) {
 		Resolver:   g3,
 		Controller: 0,
 	}
-	got = Target{Kind: TargetEachFriendlyCreature}.Refine(Except(MostPowerful)).Select(ctx3)
+	got = Target{
+		Kind: TargetEachFriendlyCreature,
+	}.Refine(AllExcept{Inner: MostPowerful}).
+		Select(ctx3)
 	if len(got) != 2 || !containsID(got, a) || !containsID(got, small) || containsID(got, b) {
 		t.Errorf("tie select = %v, want [a small] (b kept)", got)
 	}
@@ -614,7 +626,10 @@ func TestNotMostPowerful(t *testing.T) {
 		Resolver:   g4,
 		Controller: 0,
 	}
-	got = Target{Kind: TargetEachFriendlyCreature}.Refine(Except(MostPowerful)).Select(ctx4)
+	got = Target{
+		Kind: TargetEachFriendlyCreature,
+	}.Refine(AllExcept{Inner: MostPowerful}).
+		Select(ctx4)
 	if len(got) != 1 || got[0] != second || containsID(got, first) {
 		t.Errorf("rejected tie select = %v, want [second] (first kept)", got)
 	}
@@ -645,12 +660,12 @@ func TestPowerLessThan(t *testing.T) {
 		Player: Controller,
 		Filter: Filter{Type: Creature, House: namedHouse(Mars)},
 	}
-	got := Target{Kind: TargetEachEnemyCreature}.Refine(PowerLessThan(limit)).Select(ctx)
+	got := Target{Kind: TargetEachEnemyCreature}.Refine(PowerLessThan{Limit: limit}).Select(ctx)
 	if len(got) != 1 || got[0] != weak || containsID(got, equal) || containsID(got, strong) {
 		t.Errorf("PowerLessThan = %v, want [weak]", got)
 	}
 
-	if text := (Target{Kind: TargetEachEnemyCreature}).Refine(PowerLessThan(limit)).
+	if text := (Target{Kind: TargetEachEnemyCreature}).Refine(PowerLessThan{Limit: limit}).
 		Text(); text !=
 		"each enemy creature with power less than the number of friendly Mars creatures you control" {
 		t.Errorf("PowerLessThan text = %q", text)
@@ -661,7 +676,7 @@ func TestPowerLessThan(t *testing.T) {
 		Resolver:   NewGame("A", "B", 1),
 		Controller: 0,
 	}
-	if ids := (Target{Kind: TargetEachEnemyCreature}).Refine(PowerLessThan(limit)).
+	if ids := (Target{Kind: TargetEachEnemyCreature}).Refine(PowerLessThan{Limit: limit}).
 		Select(empty); len(
 		ids,
 	) != 0 {
@@ -675,7 +690,7 @@ func TestPowerLessThan(t *testing.T) {
 		Filter: Filter{Type: Creature, House: namedHouse(SelfHouse)},
 	}
 	resolved := replacedIn(
-		(Target{Kind: TargetEachEnemyCreature}).Refine(PowerLessThan(selfLimit)),
+		(Target{Kind: TargetEachEnemyCreature}).Refine(PowerLessThan{Limit: selfLimit}),
 		SelfHouse,
 		Mars,
 	)
@@ -704,10 +719,10 @@ func TestFilterAsRefinementInAUnion(t *testing.T) {
 	}
 
 	each := Target{Kind: TargetEachEnemyCreature}
-	union := each.Refine(AnyOf(
+	union := each.Refine(AnyOf{Refinements: []Refinement{
 		Filter{Trait: Dinosaur},
 		Filter{Power: PowerBound{Kind: BoundAtLeast, Amount: 6}},
-	))
+	}})
 	got := union.Select(ctx)
 	if len(got) != 3 || !containsID(got, dino) || !containsID(got, big) ||
 		!containsID(got, bigDino) || containsID(got, small) {
@@ -848,7 +863,7 @@ func TestTargetChosenUpgrade(t *testing.T) {
 // and clause wording, an empty board, and keeping the chosen number on each side
 // (Unnatural Selection).
 func TestKeepPerSideRefinement(t *testing.T) {
-	tgt := (Target{Kind: TargetEachCreature}).Refine(KeepPerSide(3))
+	tgt := (Target{Kind: TargetEachCreature}).Refine(KeepPerSide{N: 3})
 
 	// The clause renders the leftover set; the lead renders the pair of choices.
 	if got := tgt.Text(); got != "each other creature" {
@@ -884,14 +899,14 @@ func TestKeepPerSideRefinement(t *testing.T) {
 		Controller: 0,
 	})
 	if len(got) != 2 || !containsID(got, f3) || !containsID(got, e3) {
-		t.Errorf("KeepPerSide(3) leftover = %v, want [%d %d]", got, f3, e3)
+		t.Errorf("KeepPerSide{N: 3} leftover = %v, want [%d %d]", got, f3, e3)
 	}
 }
 
 // TestKeepPerSideRefinementFewerThanKeepCount covers a side no larger than the
 // keep count: every creature is kept with no prompt, so nothing is left over.
 func TestKeepPerSideRefinementFewerThanKeepCount(t *testing.T) {
-	tgt := (Target{Kind: TargetEachCreature}).Refine(KeepPerSide(3))
+	tgt := (Target{Kind: TargetEachCreature}).Refine(KeepPerSide{N: 3})
 
 	// Two friendly and one enemy creature, all at or below the keep count of 3: the
 	// choice is vacuous, so no creature is picked and nothing is left over.
@@ -916,7 +931,7 @@ func TestKeepPerSideRefinementFewerThanKeepCount(t *testing.T) {
 // an empty board, and choosing the fraction of each side, the enemy side first
 // (Tertiate).
 func TestPortionPerSideRefinement(t *testing.T) {
-	tgt := (Target{Kind: TargetEachCreature}).Refine(PortionPerSide(ThirdRoundedUp))
+	tgt := (Target{Kind: TargetEachCreature}).Refine(PortionPerSide{Share: ThirdRoundedUp})
 
 	want := "one third of all enemy creatures and one third of all friendly " +
 		"creatures, rounding up each time"
@@ -955,14 +970,14 @@ func TestPortionPerSideRefinement(t *testing.T) {
 	})
 	if len(got) != 4 || !containsID(got, e0) || !containsID(got, e1) ||
 		!containsID(got, f0) || !containsID(got, f1) {
-		t.Errorf("PortionPerSide(third) = %v, want [%d %d %d %d]", got, e0, e1, f0, f1)
+		t.Errorf("PortionPerSide{Share: third} = %v, want [%d %d %d %d]", got, e0, e1, f0, f1)
 	}
 }
 
 // TestPortionPerSideRefinementRounding covers ceil(1/3)=1 on a lone-creature side
 // with an empty other side.
 func TestPortionPerSideRefinementRounding(t *testing.T) {
-	tgt := (Target{Kind: TargetEachCreature}).Refine(PortionPerSide(ThirdRoundedUp))
+	tgt := (Target{Kind: TargetEachCreature}).Refine(PortionPerSide{Share: ThirdRoundedUp})
 
 	// ceil(1/3)=1 on the friendly side; the enemy side is empty.
 	g := NewGame("A", "B", 1)
@@ -1009,7 +1024,7 @@ func TestTargetGrantingCard(t *testing.T) {
 // two early returns: an id absent from the set is never included, and a set no
 // larger than n includes every member without any power comparison.
 func TestMostPowerfulIncludesEarlyReturns(t *testing.T) {
-	m := mostPowerfulN{n: 1}
+	m := MostPowerfulN{N: 1}
 	ctx := &EffectContext{}
 	if m.includes(ctx, []LocalID{1, 2}, 3) {
 		t.Error("includes: an id absent from the set should be excluded")
@@ -1024,7 +1039,7 @@ func TestMostPowerfulIncludesEarlyReturns(t *testing.T) {
 // back to the refinement's own concrete selection.
 func TestItIsAmongNonMembershipRefinement(t *testing.T) {
 	cond := ItIsAmong{
-		Target: Target{Kind: TargetEachEnemyCreature}.Refine(LeastPowerful),
+		Target: Target{Kind: TargetEachEnemyCreature}.Refine(LeastPowerful{}),
 		Noun:   FoughtCreature,
 	}
 	g := started(t)

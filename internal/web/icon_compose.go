@@ -9,101 +9,99 @@ import "github.com/dmikalova/vex/internal/engine"
 
 // composeEffectGlyphs claims every effect that composes over sub-effects rather
 // than drawing its own glyph.
-func composeEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
+func composeEffectGlyphs(e engine.Effect) ([]glyph, bool) {
 	switch v := e.(type) {
 	case engine.ForEachHouse:
-		return claim(effectGlyphs(v.Do))
+		return effectGlyphs(v.Do), true
 	case engine.Repeat:
-		gs, covered := effectGlyphs(v.Do)
-		gate, gateCovered := repeatGateGlyphs(v.Gate)
-		return append(gs, gate...), covered && gateCovered, true
+		return append(effectGlyphs(v.Do), repeatGateGlyphs(v.Gate)...), true
 	case engine.May:
-		return claim(effectGlyphs(v.Do))
+		return effectGlyphs(v.Do), true
 	case engine.ByActivePlayer:
-		return claim(effectGlyphs(v.Do))
+		return effectGlyphs(v.Do), true
 	case engine.Then:
-		if first, ok := v.First.(engine.Effect); ok {
-			return claim(composeGlyphs(first, v.Result))
+		// A GatingEffect embeds Effect, so the gate draws like any other sub-effect.
+		// A Then with no gate at all is a half-built value no card can carry, and it
+		// draws its Result rather than nothing.
+		if v.First == nil {
+			return effectGlyphs(v.Result), true
 		}
-		gs, _ := effectGlyphs(v.Result)
-		return gs, false, true
+		return composeGlyphs(v.First, v.Result), true
 	case engine.Sequence:
-		return claim(composeGlyphs(v.Effects...))
+		return composeGlyphs(v.Effects...), true
 	case engine.ChooseOne:
-		return append([]glyph{{asset: "glyph-choose"}}, dividedOptions(v.Options)...), true, true
+		return append([]glyph{{asset: "glyph-choose"}}, dividedOptions(v.Options)...), true
 	case engine.Conditional:
-		return claim(conditionalGlyphs(v))
+		return conditionalGlyphs(v), true
 	case engine.ChooseCreatureThen:
-		gs := []glyph{targetGlyph(v.Target)}
-		more, covered := effectGlyphs(v.Then)
-		return append(gs, more...), covered, true
+		return append(targetGlyphs(v.Target), effectGlyphs(v.Then)...), true
 	case engine.ChooseHouseThen:
-		return append([]glyph{{asset: "glyph-choose"}}, mustCompose(v.Then)...), true, true
+		return append([]glyph{{asset: "glyph-choose"}}, composeGlyphs(v.Then)...), true
 	case engine.OnChooseCreature:
-		return append([]glyph{targetGlyph(v.Target)}, verbGlyphs(v.Verbs)...), true, true
+		return append(targetGlyphs(v.Target), verbGlyphs(v.Verbs)...), true
 	case engine.OneAtATime:
-		return append([]glyph{targetGlyph(v.Target)}, verbGlyphs(v.Verbs)...), true, true
+		return append(targetGlyphs(v.Target), verbGlyphs(v.Verbs)...), true
 	case engine.ForEach:
-		return claim(effectGlyphs(v.Do))
+		return effectGlyphs(v.Do), true
 	case engine.ForEachDiscarded:
-		return claim(effectGlyphs(v.Do))
+		return effectGlyphs(v.Do), true
 	case engine.TriggerAbility:
-		return []glyph{
+		return append([]glyph{
 			{asset: triggerIcon(v.Trigger)},
-			arrowTo(targetGlyph(v.Target)),
-		}, true, true
+		}, arrowToTarget(v.Target)...), true
 	case engine.ScheduleOnLeave:
 		return append(
 			[]glyph{{asset: "type-creature", decor: decorThis}},
-			mustCompose(v.Do)...), true, true
+			composeGlyphs(v.Do)...), true
 	case engine.Instead:
-		return []glyph{{asset: "glyph-swap"}}, true, true
+		return []glyph{{asset: "glyph-swap"}}, true
 	case engine.ForDuration:
-		gs, covered := composeGlyphs(v.Effects...)
-		return claim(windowed(gs, covered, v.Duration))
+		return inWindow(composeGlyphs(v.Effects...), v.Duration), true
 	case engine.ForRemainderOfTurn:
-		gs, covered := effectGlyphs(v.Do)
-		return claim(windowed(gs, covered, engine.RemainderOfPlayerTurn))
+		return inWindow(effectGlyphs(v.Do), engine.RemainderOfPlayerTurn), true
 	case engine.ForOpponentNextTurn:
-		gs, covered := effectGlyphs(v.Do)
-		return claim(windowed(gs, covered, engine.OpponentNextTurn))
+		return inWindow(effectGlyphs(v.Do), engine.OpponentNextTurn), true
 	case engine.NextPlayed:
-		return append([]glyph{{asset: "glyph-play"}}, mustCompose(v.EntersPlay)...), true, true
+		return append([]glyph{{asset: "glyph-play"}}, composeGlyphs(v.EntersPlay)...), true
 	case engine.GainUntilNextTurn:
-		gs, covered := composeGlyphs(v.Effects...)
-		return claim(windowed(gs, covered, engine.StartOfPlayerNextTurn))
+		return inWindow(composeGlyphs(v.Effects...), engine.StartOfPlayerNextTurn), true
 	default:
-		return nil, false, false
+		return nil, false
 	}
 }
 
 // repeatGateGlyphs renders the gate a Repeat consults before running its effect
-// again, reporting whether a real mapping covered it. The RepeatGate family is
-// gated (TestEveryRepeatGateDraws, TestIconTotality), so every row here draws.
+// again. The RepeatGate family is gated (TestEveryRepeatGateDraws,
+// TestIconTotality), so every row here draws.
 //
-// Two of the three are plumbing: a While and a MayWhile only loop, and everything
-// a player reads comes from the effect being repeated and the condition's own
-// glyphs, so they fold into those the way every other plumbing node folds into its
-// children — the condition behind the gate mark that already opens a hypothetical
-// clause, wearing the may mark when the controller chooses each further pass.
-// ByExalting is not plumbing: exalting is a cost it charges to repeat, and a cost
-// is a rule of its own.
-func repeatGateGlyphs(g engine.RepeatGate) ([]glyph, bool) {
+// Three of the four are plumbing: a While, a WhileYouDo and a MayWhileYouDo only
+// loop, and everything a player reads comes from the effect being repeated and
+// the condition's own glyphs, so they fold into those the way every other
+// plumbing node folds into its children — the condition behind the gate mark
+// that already opens a hypothetical clause, wearing the may mark when the
+// controller chooses each further pass. While and WhileYouDo draw alike: the
+// result-gate arrow their text wears for "only while the effect keeps happening"
+// is a wording difference, not a second picture. ByExalting is not plumbing:
+// exalting is a cost it charges to repeat, and a cost is a rule of its own.
+func repeatGateGlyphs(g engine.RepeatGate) []glyph {
 	switch v := g.(type) {
 	case engine.While:
 		return conditionGlyphs(v.Cond)
-	case engine.MayWhile:
-		gs, covered := conditionGlyphs(v.Cond)
-		return markVerb(gs, sigilMay), covered
+	case engine.WhileYouDo:
+		return conditionGlyphs(v.Cond)
+	case engine.MayWhileYouDo:
+		return markVerb(conditionGlyphs(v.Cond), sigilMay)
 	case engine.ByExalting:
 		// The Æmber the repeat costs, exalted onto the creature that pays it, which
 		// the controller may decline — so the may mark rides that creature, as it does
 		// on every other declinable pick (optionalVerb).
-		paid := targetGlyph(v.Creature)
-		paid.sigil = sigilMay
-		return []glyph{{asset: "aember", sigil: sigilExalt}, arrowTo(paid)}, true
+		paid := markVerb(targetGlyphs(v.Creature), sigilMay)
+		return append(
+			[]glyph{{asset: "aember", sigil: sigilExalt}},
+			punctuate(paid, punctArrow)...,
+		)
 	}
-	return fallbackGlyphs(), false
+	return unmapped(g)
 }
 
 // conditionalGlyphs draws a gated effect as two punctuated clauses: a gate mark
@@ -115,14 +113,12 @@ func repeatGateGlyphs(g engine.RepeatGate) ([]glyph, bool) {
 // so the gate mark is currently the only sign that what follows is hypothetical.
 // It stays the clause opener once conditions are drawn: the condition's glyphs
 // take the mark, and the consequence follows them.
-func conditionalGlyphs(v engine.Conditional) ([]glyph, bool) {
-	gs, covered := effectGlyphs(v.Then)
-	gs = punctuate(gs, punctGate)
+func conditionalGlyphs(v engine.Conditional) []glyph {
+	gs := punctuate(effectGlyphs(v.Then), punctGate)
 	if v.Else == nil {
-		return gs, covered
+		return gs
 	}
-	alt, altCovered := effectGlyphs(v.Else)
-	return append(gs, punctuate(alt, punctBranch)...), covered && altCovered
+	return append(gs, punctuate(effectGlyphs(v.Else), punctBranch)...)
 }
 
 // dividedOptions renders a choice's options as one run with a divider mark
@@ -131,7 +127,7 @@ func conditionalGlyphs(v engine.Conditional) ([]glyph, bool) {
 func dividedOptions(options []engine.Effect) []glyph {
 	out := make([]glyph, 0, len(options)*2)
 	for i := range options {
-		gs := mustCompose(options[i])
+		gs := composeGlyphs(options[i])
 		if i > 0 {
 			gs = punctuate(gs, punctDivider)
 		}

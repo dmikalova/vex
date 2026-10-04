@@ -24,16 +24,41 @@ func traitGlyph() glyph {
 // every card in the pool, which is a second card database rather than a
 // vocabulary, so it draws one mark the way traitGlyph does.
 //
-// It is deliberately not the unknown glyph: an unknown says the pass failed to map
-// a mechanic, where this says the mechanic is mapped and its one parameter is
-// unprintable in icons.
+// It is deliberately a mark of its own rather than nothing: drawing nothing says
+// the pass failed to map a mechanic, where this says the mechanic is mapped and
+// its one parameter is unprintable in icons.
 func nameGlyph() glyph {
 	return glyph{asset: "glyph-name"}
 }
 
+// targetGlyphs renders a Target as everything it draws: its noun, the filter
+// narrowing that noun per card, then the refinement narrowing the set. It is the
+// funnel every effect reaches a target through, so neither a filter nor a
+// refinement can be drawn on one effect and dropped on another.
+//
+// Both narrow a noun, so both draw after it rather than as clauses of their own:
+// Three Fates reads destroy, each creature, the 3 most powerful
+// (refinementGlyphs), and Gatekeeper reads each enemy creature, power ≤3
+// (filterGlyphs). A target that narrows neither way draws its noun alone.
+func targetGlyphs(t engine.Target) []glyph {
+	gs := filterGlyphs(t.Filter, targetGlyph(t))
+	if t.Refinement == nil {
+		return gs
+	}
+	return append(gs, refinementGlyphs(t.Refinement)...)
+}
+
+// arrowToTarget renders a target behind the flow arrow — "→ each creature" — which
+// is how most effects reach the thing they act on. The mark rides the noun, so a
+// refinement trailing it stays inside the one clause.
+func arrowToTarget(t engine.Target) []glyph {
+	return punctuate(targetGlyphs(t), punctArrow)
+}
+
 // targetGlyph renders a Target as its noun glyph plus the decorations that carry
-// its enemy/friendly/each/chosen shape. Fine filters (power, house, trait) stay
-// in the rules text; the strip summarises the noun.
+// its enemy/friendly/each/chosen shape. It draws the Kind alone: the axes a card
+// narrows by are the Filter's, and targetGlyphs draws them over this noun
+// (icon_filter.go).
 //
 // Every kind draws a noun — TestTargetGlyphCoversEveryTargetKind holds that — so
 // the fall-through is reached only by a Target with no kind, a half-built value no
@@ -329,39 +354,38 @@ func playerDecor(p engine.Player) decor {
 func verbGlyphs(verbs []engine.CreatureVerb) []glyph {
 	gs := make([]glyph, 0, len(verbs))
 	for _, verb := range verbs {
-		more, _ := creatureVerbGlyphs(verb)
-		gs = append(gs, more...)
+		gs = append(gs, creatureVerbGlyphs(verb)...)
 	}
 	return gs
 }
 
-// creatureVerbGlyphs renders one CreatureVerb, reporting whether a real mapping
-// covered it. Each verb reuses the glyph the action draws on its own, so "ready a
-// creature" and the ready step of a turn draw one picture.
+// creatureVerbGlyphs renders one CreatureVerb. Each verb reuses the glyph the
+// action draws on its own, so "ready a creature" and the ready step of a turn
+// draw one picture.
 //
 // The CreatureVerb family is gated (TestEveryCreatureVerbDraws, TestIconTotality),
 // so every row here draws. The default arm is what makes an eighth verb fail that
-// gate: without it an unlisted verb contributed no glyph at all, and the strip
-// quietly said the creature was chosen and nothing happened to it.
-func creatureVerbGlyphs(verb engine.CreatureVerb) ([]glyph, bool) {
+// gate: an unlisted verb draws nothing, and the strip would quietly say the
+// creature was chosen and nothing happened to it.
+func creatureVerbGlyphs(verb engine.CreatureVerb) []glyph {
 	switch v := verb.(type) {
 	case engine.ReadyVerb:
-		return []glyph{{asset: "exhausted", decor: decorFriendly}}, true
+		return []glyph{{asset: "exhausted", decor: decorFriendly}}
 	case engine.ReapVerb:
-		return []glyph{{asset: "glyph-reap"}}, true
+		return []glyph{{asset: "glyph-reap"}}
 	case engine.FightVerb:
-		return []glyph{{asset: "glyph-fight"}}, true
+		return []glyph{{asset: "glyph-fight"}}
 	case engine.UseVerb:
-		return []glyph{{asset: "glyph-action"}}, true
+		return []glyph{{asset: "glyph-action"}}
 	case engine.StunVerb:
-		return []glyph{{asset: "stun"}}, true
+		return []glyph{{asset: "stun"}}
 	case engine.ExhaustVerb:
-		return []glyph{{asset: "exhausted"}}, true
+		return []glyph{{asset: "exhausted"}}
 	case engine.GainKeywordVerb:
 		if a := keywordIcon(v.Keyword); a != "" {
-			return []glyph{{asset: a}}, true
+			return []glyph{{asset: a}}
 		}
-		return fallbackGlyphs(), false
+		return unmapped(v)
 	}
-	return fallbackGlyphs(), false
+	return unmapped(verb)
 }

@@ -38,7 +38,7 @@ func TestExclusionNamesItsCard(t *testing.T) {
 			t.Errorf("exclusion %d admitted the card it excludes (%d)", c.exclusion, c.want)
 		}
 	}
-	for _, exclusion := range allExclusions() {
+	for _, exclusion := range Exclusions() {
 		if !exclusion.filters() {
 			t.Errorf("exclusion %d does not report that it filters", exclusion)
 		}

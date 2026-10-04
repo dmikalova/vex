@@ -6,7 +6,7 @@ import "github.com/dmikalova/vex/internal/engine"
 // an engine.Target value, so a card narrows one per card with a Filter literal —
 // card.Target.EachEnemyCreature.With(card.Filter{Power: card.Power.AtMost(3)}) —
 // and narrows it relative to the whole set with Refine:
-// card.Target.EachEnemyCreature.Refine(card.Refine.Except(card.Refine.MostPowerful)).
+// card.Target.EachEnemyCreature.Refine(card.AllExcept{Inner: card.Refine.MostPowerful}).
 // With, Refine, AndNeighbors and NeighborsOf are the only methods a Target has;
 // every per-card axis is a field of card.Filter.
 var Target = targets{
@@ -145,28 +145,31 @@ type targets struct {
 // MostPowerful); pass one to a target's Refine method.
 type Refinement = engine.Refinement
 
-// Refine groups the Refinement constructors, e.g. card.Refine.MostPowerful. Pass
-// one to a target's Refine method:
-// card.Target.EachCreature.Refine(card.Refine.MostPowerful).
+// Refine groups the Refinements that take no parameter, e.g.
+// card.Refine.MostPowerful. Pass one to a target's Refine method:
+// card.Target.EachCreature.Refine(card.Refine.MostPowerful). A refinement that
+// takes a parameter is a struct literal of its own instead — card.MostPowerfulN{N:
+// 3}, card.KeepPerSide{N: 3} — the way card.Filter is.
 //
 // Power selectors come in two kinds. A tier keeps every creature tied at the
 // extreme and makes no choice: HighestPower / LowestPower. A singular selector
 // keeps exactly one creature and lets the controller break ties: MostPowerful /
 // LeastPowerful. Compose them with the Except (complement) and AnyOf (union)
-// combinators — Except(MostPowerful) spares one creature and takes the rest,
-// AnyOf(LowestPower, HighestPower) takes both extremes at once.
+// combinators — card.AllExcept{Inner: card.Refine.MostPowerful} spares one creature
+// and takes the rest, an AnyOf over LowestPower and HighestPower takes both
+// extremes at once.
 //
 // A card.Filter is a Refinement too, so a union can take a per-card narrowing as
-// one of its members: AnyOf(card.Filter{Trait: ...}, card.Filter{Power: ...})
-// (Regrettable Meteor). A Filter is only ever a refinement inside such a union —
-// on its own it belongs in the target's With.
+// one of its members: card.AnyOf{Refinements: []card.Refinement{card.Filter{Trait:
+// ...}, card.Filter{Power: ...}}} (Regrettable Meteor). A Filter is only ever a
+// refinement inside such a union — on its own it belongs in the target's With.
 var Refine = refinements{
-	HighestPower:            engine.HighestPower,
-	LowestPower:             engine.LowestPower,
+	HighestPower:            engine.HighestPower{},
+	LowestPower:             engine.LowestPower{},
 	MostPowerful:            engine.MostPowerful,
 	SamePowerAsChosen:       engine.SamePowerAsChosen,
 	SamePowerAsEitherChosen: engine.SamePowerAsEitherChosen,
-	LeastPowerful:           engine.LeastPowerful,
+	LeastPowerful:           engine.LeastPowerful{},
 }
 
 type refinements struct {
@@ -181,7 +184,7 @@ type refinements struct {
 	// MostPowerful is a Refinement that keeps the single most powerful creature of
 	// a set, the controller breaking ties, e.g.
 	// card.Target.EachCreature.Refine(card.Refine.MostPowerful) (Soulkeeper). For
-	// the top-N form use MostPowerfulN.
+	// the top-N form use card.MostPowerfulN.
 	MostPowerful Refinement
 	// SamePowerAsChosen is a Refinement that keeps every creature sharing the power
 	// of one the controller chooses, e.g.
@@ -200,47 +203,34 @@ type refinements struct {
 	LeastPowerful Refinement
 }
 
-// Except returns a Refinement that keeps every creature the inner Refinement drops
-// — the complement, e.g. card.Target.EachEnemyCreature.Refine(
-// card.Refine.Except(card.Refine.MostPowerful)) is "each enemy creature except the
-// most powerful" (Champion's Challenge).
-func (refinements) Except(inner Refinement) Refinement { return engine.Except(inner) }
-
-// AnyOf returns a Refinement that keeps every creature any member keeps — the
-// union, e.g. card.Target.EachCreature.Refine(
-// card.Refine.AnyOf(card.Refine.LowestPower, card.Refine.HighestPower))
-// (Standardized Testing).
-func (refinements) AnyOf(
-	refinements ...Refinement,
-) Refinement {
-	return engine.AnyOf(refinements...)
-}
-
-// KeepPerSide returns a Refinement that spares a chosen number of creatures on
-// each battleline and selects every other creature, e.g.
-// card.Target.EachCreature.Refine(card.Refine.KeepPerSide(3)) (Unnatural
-// Selection).
-func (refinements) KeepPerSide(n int) Refinement { return engine.KeepPerSide(n) }
-
-// PortionPerSide returns a Refinement that selects a Fraction of the creatures on
-// each battleline, chosen by the controller, e.g.
-// card.Target.EachCreature.Refine(card.Refine.PortionPerSide(card.ThirdRoundedUp))
-// (Tertiate).
-func (refinements) PortionPerSide(f engine.Fraction) Refinement { return engine.PortionPerSide(f) }
-
-// MostPowerfulN returns a Refinement that keeps the n most powerful creatures of a
-// set, e.g. card.Target.EachCreature.Refine(card.Refine.MostPowerfulN(3)) (Three
-// Fates). When more tie at the cutoff than there are slots, the controller chooses
-// which.
-func (refinements) MostPowerfulN(n int) Refinement { return engine.MostPowerfulN(n) }
-
-// PowerLessThan is a Refinement that keeps every creature of a set whose power is
-// below a running count, e.g.
-// card.Target.EachCreature.With(card.Filter{House: card.Houses.Except(card.House.Self)}).
-// Refine(card.Refine.PowerLessThan(count))
-// (Exterminate! Exterminate!).
-func (refinements) PowerLessThan(
-	limit engine.Count,
-) Refinement {
-	return engine.PowerLessThan(limit)
-}
+// The parameterised Refinements, written as struct literals the way card.Filter
+// is, so what a refinement is built from reads on the card.
+type (
+	// AllExcept keeps every creature its Inner Refinement drops — the complement,
+	// e.g. card.Target.EachEnemyCreature.Refine(
+	// card.AllExcept{Inner: card.Refine.MostPowerful}) is "each enemy creature
+	// except the most powerful" (Champion's Challenge). It is not card.Except,
+	// which is the one card a filter leaves out.
+	AllExcept = engine.AllExcept
+	// AnyOf keeps every creature any of its Refinements keeps — the union, e.g.
+	// card.Target.EachCreature.Refine(card.AnyOf{Refinements: []card.Refinement{
+	// card.Refine.LowestPower, card.Refine.HighestPower}}) (Standardized Testing).
+	AnyOf = engine.AnyOf
+	// KeepPerSide spares N creatures on each battleline, chosen by the controller,
+	// and selects every other creature, e.g.
+	// card.Target.EachCreature.Refine(card.KeepPerSide{N: 3}) (Unnatural Selection).
+	KeepPerSide = engine.KeepPerSide
+	// PortionPerSide selects a Share of the creatures on each battleline, chosen by
+	// the controller, e.g. card.Target.EachCreature.Refine(
+	// card.PortionPerSide{Share: card.ThirdRoundedUp}) (Tertiate).
+	PortionPerSide = engine.PortionPerSide
+	// MostPowerfulN keeps the N most powerful creatures of a set, e.g.
+	// card.Target.EachCreature.Refine(card.MostPowerfulN{N: 3}) (Three Fates). When
+	// more tie at the cutoff than there are slots, the controller chooses which.
+	MostPowerfulN = engine.MostPowerfulN
+	// PowerLessThan keeps every creature of a set whose power is below a running
+	// count, e.g. card.Target.EachCreature.
+	// With(card.Filter{House: card.Houses.Except(card.House.Self)}).
+	// Refine(card.PowerLessThan{Limit: count}) (Exterminate! Exterminate!).
+	PowerLessThan = engine.PowerLessThan
+)

@@ -8,9 +8,8 @@ import (
 )
 
 // TestEveryConditionDraws holds the family's gate from the other side: every
-// catalogued condition draws a real strip of existing assets rather than the
-// abstract unknown glyph, so a gated card cannot draw the same strip as an
-// ungated one.
+// catalogued condition draws a real strip of existing assets rather than nothing,
+// so a gated card cannot draw the same strip as an ungated one.
 func TestEveryConditionDraws(t *testing.T) {
 	assertFamilyDraws(t, "Condition")
 }
@@ -20,10 +19,7 @@ func TestEveryConditionDraws(t *testing.T) {
 // would open one. Drawing a bare gate would say a card is conditional when it is
 // not — WithAemberCannotBeStolen() sets AlwaysMet to mean "on, unconditionally".
 func TestAlwaysMetDrawsNothing(t *testing.T) {
-	gs, covered := conditionGlyphs(engine.AlwaysMet{})
-	if !covered {
-		t.Error("AlwaysMet should be covered, not drawn as the unknown glyph")
-	}
+	gs := conditionGlyphs(engine.AlwaysMet{})
 	if len(gs) != 0 {
 		t.Errorf("AlwaysMet drew %+v, want nothing", gs)
 	}
@@ -34,11 +30,8 @@ func TestAlwaysMetDrawsNothing(t *testing.T) {
 // opponent — so high and low are one mark wearing the increase/decrease sigil
 // pair, never two unrelated drawings.
 func TestTideReadsOneMarkTwoWays(t *testing.T) {
-	high, highCovered := conditionTestGlyphs(engine.TideIsHigh{})
-	low, lowCovered := conditionTestGlyphs(engine.TideIsLow{})
-	if !highCovered || !lowCovered {
-		t.Fatalf("the tide conditions drew no real glyph")
-	}
+	high := conditionTestGlyphs(engine.TideIsHigh{})
+	low := conditionTestGlyphs(engine.TideIsLow{})
 	if len(high) != 1 || len(low) != 1 {
 		t.Fatalf("the tide drew %+v and %+v, want one glyph each", high, low)
 	}
@@ -68,13 +61,12 @@ func TestItConditionsMarkTheCardInContext(t *testing.T) {
 		asset string
 	}{
 		"stunned":    {engine.ItIsStunned{}, "stun"},
-		"named":      {engine.ItIsNamed{Name: "Subtle Chain"}, nameGlyph().asset},
 		"bonus icon": {engine.ItHasBonusIcon{}, "glyph-bonus"},
 	}
 	for name, tc := range cases {
-		gs, covered := conditionTestGlyphs(tc.cond)
-		if !covered {
-			t.Errorf("%s drew no real glyph", name)
+		gs := conditionTestGlyphs(tc.cond)
+		if len(gs) == 0 {
+			t.Errorf("%s drew no glyph", name)
 			continue
 		}
 		if gs[0].asset != tc.asset {
@@ -86,13 +78,31 @@ func TestItConditionsMarkTheCardInContext(t *testing.T) {
 	}
 }
 
+// TestItIsNamedDrawsNameplate pins ItIs's Name axis: naming a card in context
+// draws the same nameplate mark Selection's Named axis draws (pickedCardGlyphs),
+// appended after the card it narrows, because the two ask the same question —
+// "is this card X" — of a card in two different roles.
+func TestItIsNamedDrawsNameplate(t *testing.T) {
+	gs := conditionTestGlyphs(engine.ItIs{Filter: engine.Filter{Name: "Subtle Chain"}})
+	if len(gs) == 0 {
+		t.Fatal("a named ItIs drew no glyph")
+	}
+	if gs[0].decor&decorChosen == 0 {
+		t.Errorf("a named ItIs drew %+v, want its card marked as the card in context", gs[0])
+	}
+	last := gs[len(gs)-1]
+	if last.asset != nameGlyph().asset {
+		t.Errorf("a named ItIs drew %+v, want the nameplate mark last", gs)
+	}
+}
+
 // TestFirstUseAndAnyUseShareOneTally pins how "first" is drawn: it is the same
 // turn tally "you have done it at all" reads, against a different figure, so the
 // two differ only in the comparison on the badge. Drawing "first" as a picture of
 // its own would make the strip spell one tally two ways.
 func TestFirstUseAndAnyUseShareOneTally(t *testing.T) {
-	atAll, _ := conditionTestGlyphs(engine.UsedCreatureToReap{})
-	first, _ := conditionTestGlyphs(engine.FirstReapOfTurn{})
+	atAll := conditionTestGlyphs(engine.UsedCreatureToReap{})
+	first := conditionTestGlyphs(engine.FirstReapOfTurn{})
 	if len(atAll) != len(first) {
 		t.Fatalf("the two reap conditions drew %+v and %+v, want one shape", atAll, first)
 	}
@@ -117,13 +127,13 @@ func TestFirstUseAndAnyUseShareOneTally(t *testing.T) {
 // strip says "what follows holds only if this does" rather than running the test
 // and the consequence together into one sentence (ADR 0047).
 func TestConditionOpensWithGateMark(t *testing.T) {
-	gs, covered := conditionGlyphs(engine.PoolAember{
+	gs := conditionGlyphs(engine.PoolAember{
 		Player: engine.Opponent,
 		Is:     engine.AtLeast,
 		Amount: 6,
 	})
-	if !covered {
-		t.Fatalf("PoolAember drew no real glyph")
+	if len(gs) == 0 {
+		t.Fatalf("PoolAember drew no glyph")
 	}
 	if gs[0].punct != punctGate {
 		t.Errorf("condition opens with punct %v, want the gate mark", gs[0].punct)
@@ -135,8 +145,8 @@ func TestConditionOpensWithGateMark(t *testing.T) {
 // restating it: "if your opponent has 6 or more Æmber" is the Æmber-in-pool count
 // with an enemy tint, wearing "≥6".
 func TestCountedConditionDrawsItsCountWithAThreshold(t *testing.T) {
-	want, _ := countGlyphs(engine.AemberInPool{Player: engine.Opponent})
-	got, _ := conditionGlyphs(engine.PoolAember{
+	want := countGlyphs(engine.AemberInPool{Player: engine.Opponent})
+	got := conditionGlyphs(engine.PoolAember{
 		Player: engine.Opponent,
 		Is:     engine.AtLeast,
 		Amount: 6,
@@ -157,13 +167,15 @@ func TestCountedConditionDrawsItsCountWithAThreshold(t *testing.T) {
 // discard pile" opens with the house emblem, and a "≥3" there would read as three
 // houses rather than three creatures.
 func TestThresholdBadgesTheCountedNoun(t *testing.T) {
-	gs, covered := conditionGlyphs(engine.CardsInDiscardAtLeast{
-		House:  engine.HouseMatcher{Kind: engine.MatchNamedHouse, House: engine.Untamed},
-		Type:   engine.Creature,
+	gs := conditionGlyphs(engine.CardsInDiscardAtLeast{
+		Filter: engine.Filter{
+			House: engine.HouseMatcher{Kind: engine.MatchNamedHouse, House: engine.Untamed},
+			Type:  engine.Creature,
+		},
 		Amount: 3,
 	})
-	if !covered {
-		t.Fatalf("CardsInDiscardAtLeast drew no real glyph")
+	if len(gs) == 0 {
+		t.Fatalf("CardsInDiscardAtLeast drew no glyph")
 	}
 	if gs[0].qty != 0 || gs[0].comparison != comparisonNone {
 		t.Errorf("house emblem %+v wears the threshold; it should narrow, not count", gs[0])
@@ -180,7 +192,7 @@ func TestThresholdBadgesTheCountedNoun(t *testing.T) {
 // pool is even, which compares against no number, so printing the struct's unused
 // Amount would show a figure the rule never reads.
 func TestParityThresholdDrawsNoFigure(t *testing.T) {
-	gs, _ := conditionGlyphs(engine.PoolAember{
+	gs := conditionGlyphs(engine.PoolAember{
 		Player: engine.Opponent,
 		Is:     engine.Even,
 		Amount: 4,
@@ -196,11 +208,8 @@ func TestParityThresholdDrawsNoFigure(t *testing.T) {
 // with the refusal mark the vocabulary already uses for everything barred.
 func TestNotNegatesItsChild(t *testing.T) {
 	child := engine.ForgedKey{Player: engine.Controller}
-	inner, _ := conditionGlyphs(child)
-	gs, covered := conditionGlyphs(engine.Not{Cond: child})
-	if !covered {
-		t.Fatalf("Not drew no real glyph")
-	}
+	inner := conditionGlyphs(child)
+	gs := conditionGlyphs(engine.Not{Cond: child})
 	if len(gs) != len(inner)+1 {
 		t.Fatalf("Not drew %d glyphs, want its child's %d plus a mark", len(gs), len(inner))
 	}
@@ -217,8 +226,8 @@ func TestOrDividesItsChildren(t *testing.T) {
 		engine.ForgedKey{Player: engine.Controller},
 		engine.HasAember{Subject: engine.This},
 	}
-	or, _ := conditionGlyphs(engine.Or{Conditions: conds})
-	and, _ := conditionGlyphs(engine.And{Conditions: conds})
+	or := conditionGlyphs(engine.Or{Conditions: conds})
+	and := conditionGlyphs(engine.And{Conditions: conds})
 	if fmt.Sprintf("%+v", or) == fmt.Sprintf("%+v", and) {
 		t.Fatalf("Or and And drew the same strip %+v", or)
 	}
@@ -236,9 +245,12 @@ func TestOrDividesItsChildren(t *testing.T) {
 // slot it sits: as a count it is "for each friendly creature", as a condition "if
 // you control a friendly creature", and the cards surveyed are the same cards.
 func TestCardsInPlayDrawsOnePictureInBothSlots(t *testing.T) {
-	node := engine.CardsInPlay{Player: engine.Controller, Type: engine.Creature}
-	asCount, _ := countGlyphs(node)
-	asCondition, _ := conditionTestGlyphs(node)
+	node := engine.CardsInPlay{
+		Player: engine.Controller,
+		Filter: engine.Filter{Type: engine.Creature},
+	}
+	asCount := countGlyphs(node)
+	asCondition := conditionTestGlyphs(node)
 	if fmt.Sprintf("%+v", asCount) != fmt.Sprintf("%+v", asCondition) {
 		t.Errorf(
 			"CardsInPlay drew %+v as a count and %+v as a condition, want one picture",
@@ -253,13 +265,13 @@ func TestCardsInPlayDrawsOnePictureInBothSlots(t *testing.T) {
 // reads None as its own word rather than as the Amount 0 case, and a "0 or more"
 // threshold is met by every board.
 func TestCardsInPlayNoneIsBarredRatherThanZero(t *testing.T) {
-	gs, covered := conditionGlyphs(engine.CardsInPlay{
+	gs := conditionGlyphs(engine.CardsInPlay{
 		Player: engine.Controller,
-		Name:   "Ancient Bear",
+		Filter: engine.Filter{Name: "Ancient Bear"},
 		None:   true,
 	})
-	if !covered {
-		t.Fatalf("CardsInPlay drew no real glyph")
+	if len(gs) == 0 {
+		t.Fatalf("CardsInPlay drew no glyph")
 	}
 	if gs[len(gs)-1].asset != "glyph-ban" {
 		t.Errorf("a none-in-play condition drew %+v, want it to close with the refusal mark", gs)

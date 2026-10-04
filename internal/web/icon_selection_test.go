@@ -7,9 +7,8 @@ import (
 )
 
 // TestEverySelectionDraws holds the family's gate from the other side: every
-// catalogued selection draws a real strip of existing assets rather than the
-// abstract unknown glyph, so a verb that takes the top card cannot draw what a
-// verb that takes a chosen one draws.
+// catalogued selection draws a real strip of existing assets, so a verb that takes
+// the top card cannot draw what a verb that takes a chosen one draws.
 func TestEverySelectionDraws(t *testing.T) {
 	assertFamilyDraws(t, "Selection")
 }
@@ -23,14 +22,14 @@ func TestPickedCardDecorSaysHowItWasPicked(t *testing.T) {
 		selection engine.Selection
 		want      decor
 	}{
-		"chosen": {engine.Chosen{Type: engine.Creature}, decorChosen},
-		"each":   {engine.Each{Type: engine.Creature}, decorEach},
+		"chosen": {engine.Chosen{Filter: engine.Filter{Type: engine.Creature}}, decorChosen},
+		"each":   {engine.Each{Filter: engine.Filter{Type: engine.Creature}}, decorEach},
 		"self":   {engine.Self{}, decorThis},
 	}
 	for name, tc := range cases {
-		gs, covered := selectionGlyphs(tc.selection)
-		if !covered || len(gs) != 1 {
-			t.Fatalf("%s drew %+v (covered=%v), want one glyph", name, gs, covered)
+		gs := selectionGlyphs(tc.selection)
+		if len(gs) != 1 {
+			t.Fatalf("%s drew %+v, want one glyph", name, gs)
 		}
 		if gs[0].decor != tc.want {
 			t.Errorf("%s drew decor %v, want %v", name, gs[0].decor, tc.want)
@@ -44,14 +43,16 @@ func TestPickedCardDecorSaysHowItWasPicked(t *testing.T) {
 // "choose an Untamed Beast creature named Flaxia" reads as one phrase rather than
 // as a bare card.
 func TestChosenDrawsItsIdentityFilters(t *testing.T) {
-	gs, covered := selectionGlyphs(engine.Chosen{
-		House: engine.HouseMatcher{Kind: engine.MatchNamedHouse, House: engine.Untamed},
-		Type:  engine.Creature,
-		Trait: engine.Beast,
-		Name:  "Flaxia",
+	gs := selectionGlyphs(engine.Chosen{
+		Filter: engine.Filter{
+			House: engine.HouseMatcher{Kind: engine.MatchNamedHouse, House: engine.Untamed},
+			Type:  engine.Creature,
+			Trait: engine.Beast,
+			Name:  "Flaxia",
+		},
 	})
-	if !covered || len(gs) != 4 {
-		t.Fatalf("filtered pick = %+v (covered=%v), want four glyphs", gs, covered)
+	if len(gs) != 4 {
+		t.Fatalf("filtered pick = %+v, want four glyphs", gs)
 	}
 	want := []string{"house-untamed", "type-creature", "glyph-trait", "glyph-name"}
 	for i, asset := range want {
@@ -65,8 +66,10 @@ func TestChosenDrawsItsIdentityFilters(t *testing.T) {
 // card the controller may decline, not on the head of the run, which a house
 // filter occupies. "You may discard a Dis card" is the card that is optional.
 func TestOptionalPickWearsTheMayVerbOnItsCard(t *testing.T) {
-	gs, _ := selectionGlyphs(engine.Chosen{
-		House:    engine.HouseMatcher{Kind: engine.MatchNamedHouse, House: engine.Dis},
+	gs := selectionGlyphs(engine.Chosen{
+		Filter: engine.Filter{
+			House: engine.HouseMatcher{Kind: engine.MatchNamedHouse, House: engine.Dis},
+		},
 		Optional: true,
 	})
 	if len(gs) != 2 {
@@ -85,11 +88,8 @@ func TestOptionalPickWearsTheMayVerbOnItsCard(t *testing.T) {
 // could collapse into a single "a card from a pile" mark, and collapsing them
 // would make Random Access Archives and a bottom-of-deck pick read alike.
 func TestPositionalPicksDrawOppositeEndsOfThePile(t *testing.T) {
-	top, topCovered := selectionGlyphs(engine.Top{})
-	bottom, bottomCovered := selectionGlyphs(engine.Bottom{})
-	if !topCovered || !bottomCovered {
-		t.Fatal("the positional picks drew no real glyph")
-	}
+	top := selectionGlyphs(engine.Top{})
+	bottom := selectionGlyphs(engine.Bottom{})
 	if len(top) != 1 || len(bottom) != 1 {
 		t.Fatalf("the positional picks drew %+v and %+v, want one glyph each", top, bottom)
 	}

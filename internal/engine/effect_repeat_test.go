@@ -128,7 +128,7 @@ func TestLoseAemberPer(t *testing.T) {
 
 func TestRepeatWhile(t *testing.T) {
 	e := Repeat{
-		Do:   Destroy{Target: Target{Kind: TargetEachEnemyCreature}.Refine(LeastPowerful)},
+		Do:   Destroy{Target: Target{Kind: TargetEachEnemyCreature}.Refine(LeastPowerful{})},
 		Gate: While{Cond: Overwhelmed{}},
 	}
 	want := "destroy the least powerful enemy creature. " +

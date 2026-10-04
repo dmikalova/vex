@@ -51,10 +51,10 @@ type iconRow struct {
 	// node is the catalogued value itself, for a consumer that needs more than the
 	// strip: TestGlyphFamiliesAreDisjoint runs each effect down glyphFamilies.
 	node any
-	// draw renders the node to its strip, reporting whether a real mapping covered
-	// it. It is nil for a family with no renderer yet, which is how a not-yet-drawn
-	// family reads as blank rather than as a wrong picture.
-	draw func() ([]glyph, bool)
+	// draw renders the node to its strip. It is nil for a family with no renderer
+	// yet, which is how a not-yet-drawn family reads as blank rather than as a
+	// wrong picture.
+	draw func() []glyph
 }
 
 // bearsTerm reports whether the census says this node teaches a player a word,
@@ -114,7 +114,7 @@ func censusRows(name string) []engine.FamilyRow {
 func newIconFamily[T any](
 	name string,
 	catalog []engine.Catalogued[T],
-	draw func(T) ([]glyph, bool),
+	draw func(T) []glyph,
 ) iconFamily {
 	census := censusRows(name)
 	rows := make([]iconRow, len(catalog))
@@ -128,7 +128,7 @@ func newIconFamily[T any](
 			row.name, row.text = census[i].Type, census[i].Text()
 		}
 		if draw != nil {
-			row.draw = func() ([]glyph, bool) { return draw(node) }
+			row.draw = func() []glyph { return draw(node) }
 		}
 		rows[i] = row
 	}
@@ -145,20 +145,21 @@ var iconCatalogSkipped = map[string]string{
 }
 
 // iconCatalog returns every catalogued node family the Iconography pass is
-// measured against: the fifteen typed accessors the engine exports, in the order
+// measured against: the sixteen typed accessors the engine exports, in the order
 // engine.Families() lists them.
 //
-// Every family is gated today but Refinement and Target, which are shown by the
-// style gallery and gate nothing until their glyphs are drawn.
+// Every family is gated today but Target, which is shown by the style gallery
+// and gates nothing.
 //
-// Those two wait on more than drawing, both for the same reason — a value
-// internal/web cannot read. Target's rows are one Target per filter builder, and
-// those filters are unexported fields, so the pass cannot tell which filter a row
-// applied until the replace-target-s-filter-methods goal makes them a comparable
-// exported Filter. Refinement's rows are values of unexported types built by
-// constructor functions — engine.PowerAtLeast(6) builds an unexported
-// powerAtLeast{minPower: 6} — so the pass can compare a refinement against the
-// exported singletons but cannot recognise a parameterised one at all.
+// Target's surviving rows are its four builder methods (With, Refine,
+// AndNeighbors, NeighborsOf), every one of which is plumbing that defers to
+// another census — a Filter, a Refinement, a NeighborMode — so Target owes no
+// glyph of its own. Filter is the census carrying the axes a card narrows by
+// (catalog_filter.go), and each of its rows draws over the "each creature" the
+// census renders it on (filterRowGlyphs). A Refinement is drawn by the noun it
+// narrows (targetGlyphs), which the pass can do now that every refinement is an
+// exported type carrying its parameter in an exported field —
+// engine.MostPowerfulN{N: 3}.
 //
 // A family added to the engine must be added here too — TestIconCatalogCovers-
 // Census fails otherwise — so a sixteenth accessor cannot arrive without an icon
@@ -166,7 +167,7 @@ var iconCatalogSkipped = map[string]string{
 func iconCatalog() []iconFamily {
 	return []iconFamily{
 		newIconFamily("Effect", engine.EffectCatalog(), effectGlyphs).gate(),
-		newIconFamily("Refinement", engine.RefinementCatalog(), nil),
+		newIconFamily("Refinement", engine.RefinementCatalog(), refinementGlyphs).gate(),
 		newIconFamily("Condition", engine.ConditionCatalog(), conditionGlyphs).gate(),
 		newIconFamily("Count", engine.CountCatalog(), countGlyphs).gate(),
 		newIconFamily(
@@ -183,7 +184,8 @@ func iconCatalog() []iconFamily {
 		newIconFamily("RepeatGate", engine.RepeatGateCatalog(), repeatGateGlyphs).gate(),
 		newIconFamily("Gather", engine.GatherCatalog(), gatherGlyphs).gate(),
 		newIconFamily("Quantity", engine.QuantityCatalog(), quantityGlyphs).gate(),
-		newIconFamily("Target", engine.TargetFilterCatalog(), nil),
+		newIconFamily("Target", engine.TargetBuilderCatalog(), nil),
+		newIconFamily("Filter", engine.FilterCatalog(), filterRowGlyphs).gate(),
 	}
 }
 

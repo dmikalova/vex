@@ -7,11 +7,10 @@ import (
 )
 
 // TestEveryCountDraws holds the family's gate from the other side: every
-// catalogued count draws a real strip of existing assets rather than the abstract
-// unknown glyph. TestIconTotality already fails on a rule-bearing row that does
-// not, but it skips the plumbing rows, and this says the same thing in the
-// family's own terms — a count with no drawing says nothing about what it
-// measures.
+// catalogued count draws a real strip of existing assets. TestIconTotality already
+// fails on a rule-bearing row that does not, but it skips the plumbing rows, and
+// this says the same thing in the family's own terms — a count with no drawing
+// says nothing about what it measures.
 func TestEveryCountDraws(t *testing.T) {
 	assertFamilyDraws(t, "Count")
 }
@@ -20,10 +19,7 @@ func TestEveryCountDraws(t *testing.T) {
 // nothing, because the effect holding it already prints its own number, and a
 // noun before that number would say the count measured something.
 func TestFixedCountFolds(t *testing.T) {
-	gs, covered := countGlyphs(engine.Fixed(3))
-	if !covered {
-		t.Error("a fixed count should be covered, not drawn as the unknown glyph")
-	}
+	gs := countGlyphs(engine.Fixed(3))
 	if len(gs) != 0 {
 		t.Errorf("a fixed count draws %+v, want nothing", gs)
 	}
@@ -36,12 +32,12 @@ func TestFixedCountFolds(t *testing.T) {
 // comparison mark rather than drawing a glyph of its own (ADR 0047).
 func TestCountGlyphsTranscription(t *testing.T) {
 	// "for each enemy creature in play" → creature[each, enemy].
-	gs, covered := countGlyphs(engine.CardsInPlay{
+	gs := countGlyphs(engine.CardsInPlay{
 		Player: engine.Opponent,
-		Type:   engine.Creature,
+		Filter: engine.Filter{Type: engine.Creature},
 	})
-	if !covered || len(gs) != 1 {
-		t.Fatalf("enemy creatures in play = %+v (covered=%v), want one glyph", gs, covered)
+	if len(gs) != 1 {
+		t.Fatalf("enemy creatures in play = %+v, want one glyph", gs)
 	}
 	if gs[0].asset != "type-creature" ||
 		gs[0].decor&decorEach == 0 || gs[0].decor&decorEnemy == 0 {
@@ -49,10 +45,12 @@ func TestCountGlyphsTranscription(t *testing.T) {
 	}
 
 	// "for each friendly creature with power 5 or higher" → creature[each] ≥5 power.
-	gs, _ = countGlyphs(engine.CardsInPlay{
-		Player:   engine.Controller,
-		Type:     engine.Creature,
-		MinPower: 5,
+	gs = countGlyphs(engine.CardsInPlay{
+		Player: engine.Controller,
+		Filter: engine.Filter{
+			Type:  engine.Creature,
+			Power: engine.PowerBound{Kind: engine.BoundAtLeast, Amount: 5},
+		},
 	})
 	if len(gs) != 2 {
 		t.Fatalf("power-floored count = %+v, want the noun and its threshold", gs)
@@ -62,7 +60,7 @@ func TestCountGlyphsTranscription(t *testing.T) {
 	}
 
 	// "for each Æmber on it" → aember[this], not a bare Æmber glyph.
-	gs, _ = countGlyphs(engine.AemberOnThis{})
+	gs = countGlyphs(engine.AemberOnThis{})
 	if len(gs) != 1 || gs[0].asset != "aember" || gs[0].decor&decorThis == 0 {
 		t.Errorf("Æmber on this = %+v, want the Æmber noun marked as this card", gs)
 	}
@@ -89,9 +87,9 @@ func turnStats() []engine.TurnStat {
 }
 
 // TestTurnStatGlyphsCoverEveryTally walks the turn tallies and fails on one that
-// draws nothing. A TurnCount over an undrawn tally renders the unknown glyph, and
-// only one tally is catalogued, so without this the other ten could go undrawn
-// behind a passing gate.
+// draws nothing. A TurnCount over an undrawn tally draws nothing at all, and only
+// one tally is catalogued, so without this the other ten could go undrawn behind
+// a passing gate.
 func TestTurnStatGlyphsCoverEveryTally(t *testing.T) {
 	for _, stat := range turnStats() {
 		gs := turnStatGlyphs(stat)
@@ -120,11 +118,11 @@ func TestProducedTallyGlyphsCoverEveryTally(t *testing.T) {
 		engine.TallyCardsPurged,
 	}
 	for _, tally := range tallies {
-		gs, covered := producedTallyGlyphs(engine.ProducedThisWay{
+		gs := producedTallyGlyphs(engine.ProducedThisWay{
 			Tally:  tally,
 			Player: engine.Controller,
 		})
-		if !covered {
+		if len(gs) == 0 {
 			t.Errorf("produced tally %d draws no glyph of its own (ADR 0022)", tally)
 			continue
 		}
@@ -141,7 +139,7 @@ func TestProducedTallyGlyphsCoverEveryTally(t *testing.T) {
 // noun's badge and the side holding the excess is carried by the tint, so the
 // strip says which side is ahead once rather than twice (ADR 0047).
 func TestExcessCreaturesDrawsItsComparison(t *testing.T) {
-	enemy, _ := countGlyphs(engine.ExcessCreatures{Player: engine.Opponent})
+	enemy := countGlyphs(engine.ExcessCreatures{Player: engine.Opponent})
 	if len(enemy) != 1 {
 		t.Fatalf("excess creatures = %+v, want one glyph", enemy)
 	}
@@ -151,7 +149,7 @@ func TestExcessCreaturesDrawsItsComparison(t *testing.T) {
 	if comparisonMark(enemy[0].comparison) != ">" {
 		t.Errorf("glyph = %+v, want the more-than mark on its badge", enemy[0])
 	}
-	mine, _ := countGlyphs(engine.ExcessCreatures{Player: engine.Controller})
+	mine := countGlyphs(engine.ExcessCreatures{Player: engine.Controller})
 	if len(mine) != 1 || mine[0].decor&decorEnemy != 0 {
 		t.Errorf("your own excess = %+v, want an untinted creature", mine)
 	}
@@ -162,10 +160,10 @@ func TestExcessCreaturesDrawsItsComparison(t *testing.T) {
 // cards. They draw the same stacked house and differ only in the subject beside
 // it, rather than each inventing a picture of its own.
 func TestHouseCountsShareOneDrawing(t *testing.T) {
-	inPlay, _ := countGlyphs(engine.HousesInPlay{})
-	among, _ := countGlyphs(engine.HousesAmong{
+	inPlay := countGlyphs(engine.HousesInPlay{})
+	among := countGlyphs(engine.HousesAmong{
 		Player: engine.Controller,
-		Type:   engine.Creature,
+		Filter: engine.Filter{Type: engine.Creature},
 	})
 	if len(inPlay) != 2 || len(among) != 2 {
 		t.Fatalf("house counts = %+v and %+v, want a house and its subject", inPlay, among)
@@ -184,8 +182,8 @@ func TestHouseCountsShareOneDrawing(t *testing.T) {
 // resolution. The pile draws as the zone, the tally as the cards it took, so a
 // count of what was purged reads differently from a count of what is purged.
 func TestPurgeCountsDrawApart(t *testing.T) {
-	pile, _ := countGlyphs(engine.PurgedCards{})
-	tally, _ := countGlyphs(engine.CardsPurged{})
+	pile := countGlyphs(engine.PurgedCards{})
+	tally := countGlyphs(engine.CardsPurged{})
 	if len(pile) != 1 || pile[0].asset != "zone-purge" {
 		t.Errorf("the purge pile = %+v, want the zone alone", pile)
 	}
@@ -199,8 +197,8 @@ func TestPurgeCountsDrawApart(t *testing.T) {
 // halves of the same economy, and the strip separates them the way the player bar
 // does — the forge for a key already forged, the bare key for one still unforged.
 func TestKeyCountsDrawApart(t *testing.T) {
-	forged, _ := countGlyphs(engine.ForgedKeys{Player: engine.Controller})
-	unforged, _ := countGlyphs(engine.UnforgedKeys{Player: engine.Controller})
+	forged := countGlyphs(engine.ForgedKeys{Player: engine.Controller})
+	unforged := countGlyphs(engine.UnforgedKeys{Player: engine.Controller})
 	if len(forged) != 1 || len(unforged) != 1 {
 		t.Fatalf("key counts = %+v and %+v, want one glyph each", forged, unforged)
 	}
@@ -221,13 +219,12 @@ func TestEveryBonusIconSubjectDraws(t *testing.T) {
 // subject draws the icon it totals and then the cards it reads them from, in that
 // order — the icon is what is counted, the subject is where it is counted.
 func TestBonusIconCountDrawsItsSubject(t *testing.T) {
-	gs, covered := countGlyphs(engine.BonusIconsOf{
+	gs := countGlyphs(engine.BonusIconsOf{
 		Kind: engine.BonusAember,
 		Over: engine.ThePurgedCards{},
 	})
-	if !covered || len(gs) != 2 {
-		t.Fatalf("bonus-icon count = %+v (covered=%v), want the icon and its subject",
-			gs, covered)
+	if len(gs) != 2 {
+		t.Fatalf("bonus-icon count = %+v, want the icon and its subject", gs)
 	}
 	if gs[0].decor&decorEach == 0 {
 		t.Errorf("the counted icon = %+v, want it stacked", gs[0])

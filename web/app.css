@@ -4319,6 +4319,34 @@ body:has(.sel-cursor--on) .card-tab {
 .doc-h4 {
   color: var(--ink-soft);
 }
+/* the glyph legend beside a rulebook heading: every strip the term's catalogued
+   nodes draw, so the page that teaches the rule teaches its picture. A term with
+   several nodes carries several strips, separated by their own boxes. */
+.doc-legend {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-left: 0.6rem;
+  vertical-align: middle;
+}
+/* the one line of prose that says what the headings' glyphs are */
+.doc-legend-note {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+.doc-legend-strip {
+  /* a strip's text marks (the quantity badge, a verb sigil, a punctuation mark)
+     are coloured from the card's name-banner ink, which no card supplies here */
+  --nm-fg: var(--ink);
+
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 0.3rem;
+  background-color: var(--surface);
+}
 .doc-p {
   line-height: 1.55;
 }

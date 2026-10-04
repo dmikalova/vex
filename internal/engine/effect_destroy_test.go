@@ -64,7 +64,7 @@ func TestBatchDestroy(t *testing.T) {
 	}
 	e := BatchDestroy{Gather: EachPlayerUnless{
 		Spare: spare,
-		Take:  MostPowerfulN(1),
+		Take:  MostPowerfulN{N: 1},
 	}}
 	if err := e.validate(); err != nil {
 		t.Errorf("validate with a Gather = %v", err)
@@ -113,13 +113,13 @@ func TestEachPlayerUnlessValidate(t *testing.T) {
 	}
 	if (EachPlayerUnless{
 		Spare: CardsInPlay{Player: Opponent, Filter: Filter{Type: Creature}},
-		Take:  MostPowerfulN(1),
+		Take:  MostPowerfulN{N: 1},
 	}).validate() == nil {
 		t.Error("validate should reject a Spare not phrased as the controller's")
 	}
 	if err := (EachPlayerUnless{
 		Spare: spare,
-		Take:  MostPowerfulN(1),
+		Take:  MostPowerfulN{N: 1},
 	}).validate(); err != nil {
 		t.Errorf("validate with Take and controller Spare = %v", err)
 	}

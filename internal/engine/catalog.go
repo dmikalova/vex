@@ -177,7 +177,7 @@ func (f Family) Declared(dir string) (map[string]string, error) {
 // it: the type name the source scan matches against, the classification, and the
 // node's own rendered text.
 type FamilyRow struct {
-	// Type is the concrete node type's name, e.g. "mostPowerfulN".
+	// Type is the concrete node type's name, e.g. "MostPowerfulN".
 	Type string
 	// Rules is the row's classification.
 	Rules RulesBearing

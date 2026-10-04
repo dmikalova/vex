@@ -42,7 +42,7 @@ func keywordGlyphs(def *engine.CardDefinition) []glyph {
 // keywordIcon is the glyph asset for a printed keyword, or "" for a keyword with
 // no drawn glyph yet. TestKeywordIconCoversEveryKeyword walks engine.Keywords()
 // and fails on the "", because every caller skips an empty asset and the keyword
-// would vanish from the strip rather than draw the unknown glyph (ADR 0022).
+// would vanish from the strip (ADR 0022).
 func keywordIcon(k engine.Keyword) string {
 	switch k {
 	case engine.Skirmish:
@@ -99,18 +99,13 @@ func constantLines(ca engine.ConstantAbility) []glyphLine {
 				gs = append(gs, glyph{asset: a})
 			}
 		}
-		gs = append(gs, arrowTo(targetGlyph(target)))
-		lines = append(lines, glyphLine{
-			glyphs:  gs,
-			covered: true,
-		})
+		gs = append(gs, arrowToTarget(target)...)
+		lines = append(lines, glyphLine{glyphs: gs})
 	}
 	for _, gr := range ca.Granted {
-		gs, covered := effectGlyphs(gr.Effect)
 		lines = append(lines, glyphLine{
 			triggers: []string{triggerIcon(gr.Trigger)},
-			glyphs:   gs,
-			covered:  covered,
+			glyphs:   effectGlyphs(gr.Effect),
 		})
 	}
 	return lines
@@ -175,17 +170,12 @@ func staticLines(m engine.StaticModifier) []glyphLine {
 		gs = append(gs, glyph{asset: a})
 	}
 	if len(gs) > 0 {
-		lines = append(lines, glyphLine{
-			glyphs:  gs,
-			covered: true,
-		})
+		lines = append(lines, glyphLine{glyphs: gs})
 	}
 	for _, gr := range m.Granted {
-		egs, covered := effectGlyphs(gr.Effect)
 		lines = append(lines, glyphLine{
 			triggers: []string{triggerIcon(gr.Trigger)},
-			glyphs:   egs,
-			covered:  covered,
+			glyphs:   effectGlyphs(gr.Effect),
 		})
 	}
 	return lines
@@ -254,7 +244,7 @@ func restrictionLines(r engine.Restrictions) []glyphLine {
 	if len(gs) == 0 {
 		return nil
 	}
-	return []glyphLine{{glyphs: gs, covered: true}}
+	return []glyphLine{{glyphs: gs}}
 }
 
 // cardFeatureLines renders the card-level continuous rules that live directly on
@@ -293,7 +283,7 @@ func cardFeatureLines(def *engine.CardDefinition) []glyphLine {
 	if len(gs) == 0 {
 		return nil
 	}
-	return []glyphLine{{glyphs: gs, covered: true}}
+	return []glyphLine{{glyphs: gs}}
 }
 
 // keyCostChangeGlyphs renders a card's continuous key-cost change (def.KeyCostChanges)

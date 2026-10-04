@@ -24,40 +24,39 @@ import "github.com/dmikalova/vex/internal/engine"
 // only excludes the card a previous pick already took, so like every other fine
 // filter it stays in the rules text beside the strip.
 
-// selectionGlyphs renders a Selection as the card it picks, reporting whether a
-// real mapping covered it. The Selection family is gated (TestEverySelectionDraws,
-// TestIconTotality), so every row here draws.
-func selectionGlyphs(s engine.Selection) ([]glyph, bool) {
+// selectionGlyphs renders a Selection as the card it picks. The Selection family
+// is gated (TestEverySelectionDraws, TestIconTotality), so every row here draws.
+func selectionGlyphs(s engine.Selection) []glyph {
 	switch v := s.(type) {
 	case engine.Chosen:
-		return pickedCardGlyphs(v.House, cardPick{
-			cardType: v.Type,
-			trait:    v.Trait,
-			name:     v.Name,
+		return pickedCardGlyphs(v.Filter.House, cardPick{
+			cardType: v.Filter.Type,
+			trait:    v.Filter.Trait,
+			name:     v.Filter.Name,
 			how:      decorChosen,
 			verb:     optionalVerb(v.Optional),
-		}), true
+		})
 	case engine.Each:
-		return pickedCardGlyphs(v.House, cardPick{
-			cardType: v.Type,
-			trait:    v.Trait,
-			name:     v.Name,
+		return pickedCardGlyphs(v.Filter.House, cardPick{
+			cardType: v.Filter.Type,
+			trait:    v.Filter.Trait,
+			name:     v.Filter.Name,
 			how:      decorEach,
-		}), true
+		})
 	case engine.Random:
 		// A card at no known position in its pile, which is what the shuffle verb
 		// already says of a card put back into a deck.
-		return []glyph{{asset: "card-back", sigil: sigilShuffle}}, true
+		return []glyph{{asset: "card-back", sigil: sigilShuffle}}
 	case engine.Named:
-		return []glyph{nameGlyph()}, true
+		return []glyph{nameGlyph()}
 	case engine.Self:
-		return []glyph{{asset: "card-back", decor: decorThis}}, true
+		return []glyph{{asset: "card-back", decor: decorThis}}
 	case engine.Top:
-		return []glyph{{asset: "zone-deck-top"}}, true
+		return []glyph{{asset: "zone-deck-top"}}
 	case engine.Bottom:
-		return []glyph{{asset: "zone-deck-bottom"}}, true
+		return []glyph{{asset: "zone-deck-bottom"}}
 	}
-	return fallbackGlyphs(), false
+	return unmapped(s)
 }
 
 // cardPick is how a filtering selection reaches its card: the type it names, the

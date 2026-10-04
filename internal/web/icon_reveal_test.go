@@ -22,10 +22,10 @@ func TestEveryTopActDraws(t *testing.T) {
 // cards go back into the deck" would lose the only thing that separates Eyegor
 // from Borr Nit.
 func TestPutBackOrderedIsNotShuffled(t *testing.T) {
-	ordered, orderedCovered := topActGlyphs(engine.ReorderRest{})
-	shuffled, shuffledCovered := topActGlyphs(engine.Shuffle{})
-	if !orderedCovered || !shuffledCovered {
-		t.Fatal("the two put-back steps drew no real glyph")
+	ordered := topActGlyphs(engine.ReorderRest{})
+	shuffled := topActGlyphs(engine.Shuffle{})
+	if len(ordered) == 0 || len(shuffled) == 0 {
+		t.Fatal("the two put-back steps drew no glyph")
 	}
 	if fmt.Sprintf("%+v", ordered) == fmt.Sprintf("%+v", shuffled) {
 		t.Errorf("both put-back steps draw %+v, want a known position apart from none", ordered)
@@ -40,16 +40,13 @@ func TestPutBackOrderedIsNotShuffled(t *testing.T) {
 // and before the steps were drawn every multi-step reveal drew the same bare
 // "deck, eye" as a plain peek.
 func TestRevealedCardsDrawWhereTheyGo(t *testing.T) {
-	gs, covered := effectGlyphs(engine.RevealTopOfDeck{
+	gs := effectGlyphs(engine.RevealTopOfDeck{
 		Amount: 5,
 		Then: []engine.TopAct{
 			engine.ChooseAndMove{Cards: 1, Dest: engine.IntoPurge},
 			engine.Shuffle{},
 		},
 	})
-	if !covered {
-		t.Fatal("a reveal routing its cards should be covered")
-	}
 	want := []string{"zone-deck", "glyph-look", "card-back", "zone-purge", "zone-deck"}
 	if len(gs) != len(want) {
 		t.Fatalf("routed reveal = %+v, want %d glyphs", gs, len(want))
@@ -70,12 +67,12 @@ func TestRevealedCardsDrawWhereTheyGo(t *testing.T) {
 // falls. Drawing only the matching half would make a partition read as a plain
 // move.
 func TestPartitionDrawsBothSidesOfTheSplit(t *testing.T) {
-	gs, covered := topActGlyphs(engine.PartitionByChosenHouse{
+	gs := topActGlyphs(engine.PartitionByChosenHouse{
 		Matching: engine.IntoArchives,
 		Rest:     engine.IntoDiscard,
 	})
-	if !covered || len(gs) != 3 {
-		t.Fatalf("partition = %+v (covered=%v), want three glyphs", gs, covered)
+	if len(gs) != 3 {
+		t.Fatalf("partition = %+v, want three glyphs", gs)
 	}
 	if gs[0].asset != "house-any" || gs[0].decor&decorChosen == 0 {
 		t.Errorf("partition opens with %+v, want the chosen house", gs[0])

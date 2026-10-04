@@ -77,7 +77,7 @@ func newGlyphRow(row iconRow) glyphRow {
 		out.note = row.rules.NoTerm
 	}
 	if row.draw != nil {
-		out.glyphs, _ = row.draw()
+		out.glyphs = row.draw()
 	}
 	return out
 }
@@ -280,23 +280,20 @@ func glyphCompositions() []glyphComposition {
 	}
 }
 
-// glyphCompositionRows draws the worked examples, ending with the abstract
-// fallback glyph a mechanic gets before it is drawn.
+// glyphCompositionRows draws the worked examples. There is no closing row for a
+// mechanic the pass has not drawn: every rule-bearing node of every gated family
+// draws a real glyph, so there is no such mechanic to show (ADR 0022).
 func glyphCompositionRows() []app.UI {
 	examples := glyphCompositions()
-	rows := make([]app.UI, 0, len(examples)+1)
+	rows := make([]app.UI, 0, len(examples))
 	for _, ex := range examples {
-		gs, _ := effectGlyphs(ex.effect)
 		rows = append(rows, app.Div().Class("style-swatch").Body(
 			iconLine(glyphLine{
 				triggers: ex.triggers,
-				glyphs:   gs,
+				glyphs:   effectGlyphs(ex.effect),
 			}),
 			app.Span().Class("style-mono").Text(ex.label),
 		))
 	}
-	return append(rows, app.Div().Class("style-swatch").Body(
-		iconLine(glyphLine{glyphs: []glyph{{asset: "glyph-unknown"}}}),
-		app.Span().Class("style-mono").Text("a mechanic not yet drawn"),
-	))
+	return rows
 }

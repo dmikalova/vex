@@ -21,15 +21,14 @@ func familyRows(t *testing.T, name string) []iconRow {
 }
 
 // assertFamilyDraws holds one family to the two things a drawn family owes, in
-// the family's own terms: every row draws a strip of its own rather than the
-// abstract unknown glyph, and every glyph in that strip names an asset that
-// exists.
+// the family's own terms: every rule-bearing row draws a strip of its own, and
+// every glyph in that strip names an asset that exists.
 //
-// It says more than TestIconTotality, which reads only the top-level covered flag
-// and only for a rule-bearing row: a plumbing row that falls back, or an unknown
-// buried inside an otherwise-covered strip, passes there and fails here. A missing
-// asset fails nothing at all without it — a glyph with a typo'd stem renders as a
-// broken image — so a family that draws without this check ships its typos.
+// It says more than TestIconTotality, which walks only the rule-bearing rows: a
+// plumbing row that draws a glyph naming no asset passes there and fails here. A
+// missing asset fails nothing at all without it — a glyph with a typo'd stem
+// renders as a broken image — so a family that draws without this check ships its
+// typos.
 //
 // A row drawing nothing is not a failure: a silent plumbing row folds into the
 // node holding it (engine.Fixed, engine.AlwaysMet), which is the whole point of
@@ -37,15 +36,12 @@ func familyRows(t *testing.T, name string) []iconRow {
 func assertFamilyDraws(t *testing.T, name string) {
 	t.Helper()
 	for _, row := range familyRows(t, name) {
-		gs, covered := row.draw()
-		if !covered {
+		gs := row.draw()
+		if row.bearsTerm() && len(gs) == 0 {
 			t.Errorf("%s %s draws no glyph of its own (ADR 0022)", name, row.name)
 			continue
 		}
 		for _, g := range gs {
-			if g.asset == "glyph-unknown" {
-				t.Errorf("%s %s draws the unknown glyph inside its strip", name, row.name)
-			}
 			if !assetExists(t, g.asset) {
 				t.Errorf("%s %s draws %q, which has no web/assets/%s.svg",
 					name, row.name, g.asset, g.asset)
@@ -70,7 +66,7 @@ func assertFamilyRowsDrawApart(t *testing.T, name string) {
 		if !row.bearsTerm() {
 			continue
 		}
-		gs, _ := row.draw()
+		gs := row.draw()
 		strip := fmt.Sprintf("%+v", gs)
 		if prev, dup := seen[strip]; dup {
 			t.Errorf(

@@ -17,10 +17,10 @@ func isActionTrigger(t engine.Trigger) bool {
 	return false
 }
 
-// triggerIcon is the glyph a trigger shows at the head of its line. Every trigger
-// a card uses maps to its own icon; the abstract fallback is a tripwire, not a
-// shipping glyph — TestNoResidualUnknownGlyph fails if any card's strip reaches
-// it, so a new trigger's icon must be added here rather than falling back.
+// triggerIcon is the glyph a trigger shows at the head of its line. Every
+// trigger maps to its own icon — TestTriggerIconCoversEveryTrigger walks
+// engine.Triggers() — so a new trigger's icon is added here rather than left to
+// draw nothing.
 func triggerIcon(t engine.Trigger) string {
 	switch t {
 	case engine.TriggerAfterPlay,
@@ -72,6 +72,6 @@ func triggerIcon(t engine.Trigger) string {
 		engine.TriggerEndOfReadyStep:
 		return "phase-turn"
 	default:
-		return "glyph-unknown"
+		return unmappedAsset(t)
 	}
 }

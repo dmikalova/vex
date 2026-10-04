@@ -24,15 +24,9 @@ func TestCreatureStateDrawsItsOwnArt(t *testing.T) {
 		{"stun", engine.Stun{Target: engine.Target{Kind: engine.TargetChosenCreature}}, "stun"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			gs, covered := effectGlyphs(tc.e)
-			if !covered || len(gs) == 0 || gs[0].asset != tc.asset {
-				t.Errorf(
-					"%s glyphs = %+v (covered=%v), want %q first",
-					tc.name,
-					gs,
-					covered,
-					tc.asset,
-				)
+			gs := effectGlyphs(tc.e)
+			if len(gs) == 0 || gs[0].asset != tc.asset {
+				t.Errorf("%s glyphs = %+v, want %q first", tc.name, gs, tc.asset)
 			}
 		})
 	}
@@ -43,8 +37,8 @@ func TestCreatureStateDrawsItsOwnArt(t *testing.T) {
 // the verb axis, so a player could not tell one from the other (ADR 0047).
 func TestCountersReadAsPlacedOrRemoved(t *testing.T) {
 	target := engine.Target{Kind: engine.TargetChosenCreature}
-	place, _ := effectGlyphs(engine.PlaceCounter{Kind: engine.CounterDoom, Target: target})
-	remove, _ := effectGlyphs(engine.RemoveCounters{Kind: engine.CounterDoom, Target: target})
+	place := effectGlyphs(engine.PlaceCounter{Kind: engine.CounterDoom, Target: target})
+	remove := effectGlyphs(engine.RemoveCounters{Kind: engine.CounterDoom, Target: target})
 	if place[0].asset != remove[0].asset {
 		t.Errorf(
 			"place %q and remove %q should share the counter noun",

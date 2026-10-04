@@ -28,6 +28,6 @@ var Quicksand = set.New(
 					Ready: true,
 				},
 			},
-			Take: card.Refine.MostPowerfulN(1),
+			Take: card.MostPowerfulN{N: 1},
 		}}),
 )

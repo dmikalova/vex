@@ -18,17 +18,14 @@ import (
 // lasts is a thing a player plays around.
 func TestTimedAssaultDrawsItsWindow(t *testing.T) {
 	target := engine.Target{Kind: engine.TargetThisCreature}
-	timed, covered := effectGlyphs(engine.GainAssaultUntilNextTurn{
+	timed := effectGlyphs(engine.GainAssaultUntilNextTurn{
 		Target: target,
 		Amount: engine.Fixed(2),
 	})
-	if !covered {
-		t.Fatal("a timed assault grant should be covered")
-	}
 	if len(timed) == 0 || timed[len(timed)-1].asset != "phase-turn" {
 		t.Fatalf("glyphs = %+v, want the turn marker closing the run", timed)
 	}
-	kept, _ := effectGlyphs(engine.GainAssault{Target: target, Amount: engine.Fixed(2)})
+	kept := effectGlyphs(engine.GainAssault{Target: target, Amount: engine.Fixed(2)})
 	if fmt.Sprintf("%+v", kept) == fmt.Sprintf("%+v", timed) {
 		t.Errorf("the kept and timed assault grants still draw the same strip %+v", kept)
 	}

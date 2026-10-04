@@ -685,6 +685,14 @@ slot — an enemy tint on one edge, a friendly tint, an "each" stack, a "chosen"
 outline. So `3 damage → enemy creature` is a quantity-on-damage, a `→`, and an
 enemy-decorated creature Glyph.
 
+**Glyph legend**:
+The strips drawn beside each heading on the rulebook page (`/rulebook`): the
+Glyphs the nodes that teach that term draw. It is built by pairing the engine's
+node census with the Iconography pass, so it names no glyph of its own and
+cannot drift from what a card renders. A term several nodes name carries every
+distinct strip they draw. The developer-facing listing of the whole census is
+the Style gallery's glyph section; there is no third surface.
+
 **Iconography pass**:
 The Visitor that walks a card's Effect AST (and its Targets, Counts, and
 Conditions) and emits the Glyphs the client renders into the Icon strip. It is

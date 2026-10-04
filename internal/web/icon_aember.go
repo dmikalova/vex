@@ -10,17 +10,17 @@ import "github.com/dmikalova/vex/internal/engine"
 // CancelForge) do not earn a file to themselves.
 
 // aemberEffectGlyphs claims every Æmber-flow and key-forging effect.
-func aemberEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
+func aemberEffectGlyphs(e engine.Effect) ([]glyph, bool) {
 	switch v := e.(type) {
 	case engine.GainAember:
 		if v.Per != nil || v.EqualTo != nil {
 			return []glyph{
 				{asset: "aember", decor: playerDecor(v.Player), sigil: sigilGain},
-			}, true, true
+			}, true
 		}
 		return []glyph{
 			{asset: "aember", qty: v.Amount, decor: playerDecor(v.Player), sigil: sigilGain},
-		}, true, true
+		}, true
 	case engine.LoseAember:
 		// The amount is only a numeral in the plain fixed case; a Per/EqualTo loss
 		// scales by something that lives in the text, as GainAember's does, and a By
@@ -45,7 +45,7 @@ func aemberEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 			v.By,
 		)
 	case engine.CaptureFromAnyPlayer:
-		return []glyph{{asset: "capture", qty: v.Amount}}, true, true
+		return []glyph{{asset: "capture", qty: v.Amount}}, true
 	case engine.DistributeCapture:
 		// The share is spread over as many friendly creatures as the controller
 		// picks, which is what separates it from a single creature's capture.
@@ -64,21 +64,25 @@ func aemberEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 		if !v.All {
 			src.qty = v.Amount
 		}
-		return []glyph{src, arrowTo(glyph{asset: "aember"})}, true, true
+		return []glyph{src, arrowTo(glyph{asset: "aember"})}, true
 	case engine.Exalt:
-		return []glyph{
+		return append([]glyph{
 			{asset: "aember", qty: v.Amount, sigil: sigilExalt},
-			arrowTo(targetGlyph(v.Target)),
-		}, true, true
+		}, arrowToTarget(v.Target)...), true
 	case engine.MoveAember:
-		return []glyph{{asset: "aember"}, arrowTo(moveAemberDest(v.Onto, v.To))}, true, true
+		return append(
+			[]glyph{{asset: "aember"}},
+			punctuate(moveAemberDest(v.Onto, v.To), punctArrow)...,
+		), true
 	case engine.MoveAemberFromPool:
-		return []glyph{{asset: "aember", qty: v.Amount}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append(
+			[]glyph{{asset: "aember", qty: v.Amount}},
+			arrowToTarget(v.Target)...), true
 	case engine.MoveAemberToSupply:
 		return []glyph{
 			{asset: "aember", qty: v.Amount, decor: decorChosen},
 			arrowTo(glyph{asset: "glyph-return"}),
-		}, true, true
+		}, true
 	case engine.PlaceAemberOnThis:
 		return []glyph{
 			{asset: "aember", qty: v.Amount},
@@ -86,27 +90,39 @@ func aemberEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 				asset: "card-back",
 				decor: decorThis,
 			}),
-		}, true, true
+		}, true
 	case engine.RedistributeCapturedAember:
 		decor := decorFriendly
 		if v.Side == engine.Opponent {
 			decor = decorEnemy
 		}
-		return []glyph{{asset: "aember", decor: decor}, {asset: "glyph-swap"}}, true, true
+		return []glyph{{asset: "aember", decor: decor}, {asset: "glyph-swap"}}, true
 	case engine.ForgeKey:
-		return []glyph{{asset: "forge"}}, true, true
+		return []glyph{{asset: "forge"}}, true
 	case engine.UnforgeKey:
-		return []glyph{{asset: "forge"}, {asset: "glyph-ban"}}, true, true
+		// A key already forged is taken back, which is the decrease the lose verb
+		// names; the two refusals below stop a forge that has not happened yet.
+		return []glyph{{
+			asset: "forge",
+			decor: playerDecor(v.Player),
+			sigil: sigilLose,
+		}}, true
 	case engine.RaiseKeyCost:
-		return []glyph{{asset: "forge"}, {asset: "aember", qty: v.Amount}}, true, true
+		return []glyph{{asset: "forge"}, {asset: "aember", qty: v.Amount}}, true
 	case engine.LowerKeyCost:
-		return []glyph{{asset: "forge"}, {asset: "aember", qty: -v.Amount}}, true, true
+		return []glyph{{asset: "forge"}, {asset: "aember", qty: -v.Amount}}, true
 	case engine.SkipForgePhase:
-		return []glyph{{asset: "forge"}, {asset: "glyph-ban"}}, true, true
+		// A whole forge phase skipped on a later turn, where CancelForge below stops
+		// the one key being forged now, so the turn marker is what tells them apart.
+		return []glyph{
+			{asset: "forge", decor: playerDecor(v.Player)},
+			{asset: "glyph-ban"},
+			{asset: "phase-turn"},
+		}, true
 	case engine.CancelForge:
-		return []glyph{{asset: "forge"}, {asset: "glyph-ban"}}, true, true
+		return []glyph{{asset: "forge"}, {asset: "glyph-ban"}}, true
 	default:
-		return nil, false, false
+		return nil, false
 	}
 }
 
@@ -114,33 +130,31 @@ func aemberEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 // claims the effect for the family. A verb with no By moves a plain amount and
 // draws nothing extra, so the share costs a horizontal slot only on the verbs
 // that have one — the same bargain inWindow makes for a duration.
-func byShare(gs []glyph, by engine.Loss) ([]glyph, bool, bool) {
+func byShare(gs []glyph, by engine.Loss) ([]glyph, bool) {
 	if by == nil {
-		return gs, true, true
+		return gs, true
 	}
-	share, covered := lossGlyphs(by)
-	return append(gs, share...), covered, true
+	return append(gs, lossGlyphs(by)...), true
 }
 
-// lossGlyphs renders a Loss as the share of a pool it takes, reporting whether a
-// real mapping covered it. The Loss family is gated (TestEveryLossDraws,
-// TestIconTotality), so every row here draws.
+// lossGlyphs renders a Loss as the share of a pool it takes. The Loss family is
+// gated (TestEveryLossDraws, TestIconTotality), so every row here draws.
 //
 // A loss is not an effect — it is how much the economy verb holding it moves — so
 // it draws where that verb draws, the way a Count does. All three shares are the
 // Æmber noun under a mark saying how much of the pool goes: the whole pool
 // stacked, the remainder it leaves behind the refusal mark, the fraction's
 // denominator as a numeral.
-func lossGlyphs(l engine.Loss) ([]glyph, bool) {
+func lossGlyphs(l engine.Loss) []glyph {
 	switch v := l.(type) {
 	case engine.Fraction:
 		// A share of the pool rather than a count of it, so the numeral is the
 		// denominator the pool is cut into: half draws a 2, a third a 3. Which way it
 		// rounds stays in the rules text, as every other amount's fine print does.
 		if d := fractionDenominator(v); d > 0 {
-			return []glyph{{asset: "aember", qty: d}}, true
+			return []glyph{{asset: "aember", qty: d}}
 		}
-		return fallbackGlyphs(), false
+		return unmapped(v)
 	case engine.AllBut:
 		// Everything above the remainder, so the pool it leaves is drawn behind the
 		// refusal mark — the way every other barred thing is drawn.
@@ -148,14 +162,14 @@ func lossGlyphs(l engine.Loss) ([]glyph, bool) {
 			{asset: "aember", decor: decorEach},
 			{asset: "aember", qty: v.Keep},
 			{asset: "glyph-ban"},
-		}, true
+		}
 	}
 	if l == engine.AllAember {
 		// The whole pool, whatever its size, which is the stack every "each of these"
 		// noun wears.
-		return []glyph{{asset: "aember", decor: decorEach}}, true
+		return []glyph{{asset: "aember", decor: decorEach}}
 	}
-	return fallbackGlyphs(), false
+	return unmapped(l)
 }
 
 // fractionDenominator is the number of parts a Fraction cuts a quantity into, or
@@ -174,12 +188,12 @@ func fractionDenominator(f engine.Fraction) int {
 }
 
 // moveAemberDest is where moved Æmber lands: onto a chosen card, or into a pool.
-func moveAemberDest(onto engine.Target, to engine.Player) glyph {
+func moveAemberDest(onto engine.Target, to engine.Player) []glyph {
 	if onto != (engine.Target{}) {
-		return targetGlyph(onto)
+		return targetGlyphs(onto)
 	}
-	return glyph{
+	return []glyph{{
 		asset: "aember",
 		decor: playerDecor(to),
-	}
+	}}
 }

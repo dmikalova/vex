@@ -233,9 +233,9 @@ would find easiest to build on — not the shortest path to a passing build.
   (`PlayFromOpponent` for playing the top of an opponent's deck or a random
   archived card as your own), or model the varying axis as a shared
   Refinement (Unnatural Selection and Tertiate are `Destroy` over
-  `Target.EachCreature` refined by `KeepPerSide(n)` / `PortionPerSide(f)`), so the
-  next card printing the same mechanic reaches for the existing node instead of
-  cloning it under a new name.
+  `Target.EachCreature` refined by `KeepPerSide{N: n}` /
+  `PortionPerSide{Share: f}`), so the next card printing the same mechanic
+  reaches for the existing node instead of cloning it under a new name.
 - **A phrasing helper belongs in the shared vocabulary, not beside its first
   caller.** `indefinite`, `plural`, `countNoun`, `singularNoun` and friends live
   in `internal/engine/text.go`; the log's equivalents (`namedCards`, `because`,

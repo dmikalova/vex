@@ -24,8 +24,9 @@ import "github.com/dmikalova/vex/internal/engine"
 //   - A condition that tests a property of one card draws that property's own
 //     glyph, decorated with the card it reads (inContext for the card an effect or
 //     trigger just put in context, decorThis for the card the ability is printed
-//     on). ItIsStunned is the stun glyph, ItIsOfTrait the trait mark, ItIsNamed the
-//     nameplate, ItIs a house matcher, OnFlank the battleline mark.
+//     on). ItIsStunned is the stun glyph, ItIs a house matcher wearing the trait
+//     mark or the nameplate for the axis its Filter narrows by, OnFlank the
+//     battleline mark.
 //   - A condition that tests what has happened this turn draws the verb glyph the
 //     action itself draws, closed by the turn marker — which is the turn tally the
 //     Count family already draws, wearing a "≥1" for "you have" and an "=1" for
@@ -50,36 +51,33 @@ import "github.com/dmikalova/vex/internal/engine"
 // the card says.
 
 // conditionGlyphs renders a Condition as the clause it opens: the gate mark, then
-// the test itself. It reports whether a real mapping covered the condition; one
-// with no mapping draws the abstract unknown glyph, which is what the icon gate
-// fails on.
+// the test itself. A condition with no mapping draws nothing, which is what the
+// icon gate fails on.
 //
 // The gate mark lives here rather than on the effect the condition gates, so a
 // condition drawn anywhere — a Conditional, an OrAmount, a constant ability's
 // "while …" — opens its clause the same way.
-func conditionGlyphs(c engine.Condition) ([]glyph, bool) {
-	gs, covered := conditionTestGlyphs(c)
-	return punctuate(gs, punctGate), covered
+func conditionGlyphs(c engine.Condition) []glyph {
+	return punctuate(conditionTestGlyphs(c), punctGate)
 }
 
 // conditionTestGlyphs renders the test a condition makes, without the gate mark
 // that opens the clause. It is the recursion point: a combinator folds into its
 // children through this rather than through conditionGlyphs, so an And of three
 // conditions opens one clause rather than three.
-func conditionTestGlyphs(c engine.Condition) ([]glyph, bool) {
+func conditionTestGlyphs(c engine.Condition) []glyph {
 	switch v := c.(type) {
 	// Combinators, which carry no test of their own.
 	case engine.AlwaysMet:
 		// The census declares it silent: an always-met condition adds no clause, so
 		// it draws neither a noun nor the gate mark that would open one.
-		return nil, true
+		return nil
 	case engine.And:
 		return foldedConditions(v.Conditions, punctNone)
 	case engine.Or:
 		return foldedConditions(v.Conditions, punctDivider)
 	case engine.Not:
-		gs, covered := conditionTestGlyphs(v.Cond)
-		return append(gs, glyph{asset: "glyph-ban"}), covered
+		return append(conditionTestGlyphs(v.Cond), glyph{asset: "glyph-ban"})
 	case engine.CountIs:
 		return countedThreshold(v.Count, v.Is, v.Amount)
 
@@ -89,7 +87,7 @@ func conditionTestGlyphs(c engine.Condition) ([]glyph, bool) {
 	case engine.ControlsMoreCreatures:
 		// The condition is a threshold on the excess count, and the count already
 		// carries the "more than the other side" comparison, so it draws itself.
-		return countGlyphs(engine.ExcessCreatures{Player: engine.Controller, Trait: v.Trait})
+		return countGlyphs(engine.ExcessCreatures{Player: engine.Controller, Filter: v.Filter})
 	case engine.Overwhelmed:
 		return countGlyphs(engine.ExcessCreatures{Player: engine.Opponent})
 	case engine.HousesRepresented:
@@ -103,8 +101,7 @@ func conditionTestGlyphs(c engine.Condition) ([]glyph, bool) {
 			1,
 		)
 	case engine.HasMoreForgedKeys:
-		gs, covered := countGlyphs(engine.ForgedKeys(v))
-		return threshold(gs, aheadOfOther(v.Player), 0), covered
+		return threshold(countGlyphs(engine.ForgedKeys(v)), aheadOfOther(v.Player), 0)
 	case engine.KeyColorForged:
 		return keyColorForgedGlyphs(v)
 	case engine.ControlsNamed:
@@ -112,10 +109,10 @@ func conditionTestGlyphs(c engine.Condition) ([]glyph, bool) {
 		// so it draws that condition's picture rather than a second one of its own.
 		return cardsInPlayConditionGlyphs(engine.CardsInPlay{
 			Player: engine.Controller,
-			Name:   v.Name,
-		}), true
+			Filter: engine.Filter{Name: v.Name},
+		})
 	case engine.NamedCardPurged:
-		return []glyph{nameGlyph(), {asset: "zone-purge"}}, true
+		return []glyph{nameGlyph(), {asset: "zone-purge"}}
 	case engine.ActiveHouseMatchesNoCardsInPlay:
 		// The active house, then every card in play, behind the refusal mark: no card
 		// on either board shares it.
@@ -123,36 +120,36 @@ func conditionTestGlyphs(c engine.Condition) ([]glyph, bool) {
 			houseMatcherGlyphs(engine.HouseMatcher{Kind: engine.MatchActiveHouse}),
 			cardsCounted(0),
 			glyph{asset: "glyph-ban"},
-		), true
+		)
 
 	// The discard pile.
 	case engine.CardsInDiscardAtLeast:
 		gs := append(
-			houseFilterGlyphs(v.House),
-			glyph{asset: countedCardAsset(v.Type), decor: decorEach},
+			houseFilterGlyphs(v.Filter.House),
+			glyph{asset: countedCardAsset(v.Filter.Type), decor: decorEach},
 			glyph{asset: "zone-discard"},
 		)
-		return threshold(gs, engine.AtLeast, v.Amount), true
+		return threshold(gs, engine.AtLeast, v.Amount)
 	case engine.DiscardedThisWay:
 		// The cards this resolution just put in the pile rather than the cards
 		// sitting in it, so the pile takes the flow arrow the discard effects draw.
 		return append(
-			houseFilterGlyphs(v.House),
-			glyph{asset: countedCardAsset(v.Type), decor: decorEach},
+			houseFilterGlyphs(v.Filter.House),
+			glyph{asset: countedCardAsset(v.Filter.Type), decor: decorEach},
 			arrowTo(glyph{asset: "zone-discard"}),
-		), true
+		)
 	case engine.CardsDiscarded:
 		// The cards a player sent to their discard pile this turn. There is no Count
 		// for this tally to borrow, so it draws the shape every turn tally draws: the
 		// cards, what became of them, and the turn marker.
 		gs := thisTurn(append(
-			houseFilterGlyphs(v.House),
+			houseFilterGlyphs(v.Filter.House),
 			cardsCounted(playerDecor(v.Player)),
 			arrowTo(glyph{asset: "zone-discard"}),
 		))
-		return threshold(gs, engine.AtLeast, v.Amount), true
+		return threshold(gs, engine.AtLeast, v.Amount)
 	case engine.NamedCardInDiscard:
-		return []glyph{nameGlyph(), {asset: "zone-discard"}}, true
+		return []glyph{nameGlyph(), {asset: "zone-discard"}}
 	case engine.Haunted:
 		// Haunted is a word for a pile size, so it draws the pile the word counts
 		// rather than a picture of its own: your discard pile wearing a "≥10".
@@ -164,27 +161,31 @@ func conditionTestGlyphs(c engine.Condition) ([]glyph, bool) {
 
 	// The card in context, and the cards in play beside it.
 	case engine.HasAember:
-		return []glyph{{asset: "aember", decor: subjectDecor(v.Subject)}}, true
+		return []glyph{{asset: "aember", decor: subjectDecor(v.Subject)}}
 	case engine.ItIs:
-		// Which houses the card may belong to, then the card itself. Other ("another
-		// creature") only excludes the source card, so like every other fine filter it
-		// stays in the rules text beside the strip.
-		return append(
-			houseFilterGlyphs(v.House),
-			inContext(glyph{asset: countedCardAsset(v.Type)}),
-		), true
+		// Which houses the card may belong to, then the card itself, wearing the
+		// trait or name it must match. Other ("another creature") only excludes the
+		// source card, so like every other fine filter it stays in the rules text
+		// beside the strip.
+		gs := append(
+			houseFilterGlyphs(v.Filter.House),
+			inContext(glyph{asset: countedCardAsset(v.Filter.Type)}),
+		)
+		if v.Filter.Trait != 0 {
+			gs = append(gs, traitGlyph())
+		}
+		if v.Filter.Name != "" {
+			gs = append(gs, nameGlyph())
+		}
+		return gs
 	case engine.ItIsFriendly:
-		return []glyph{inContext(glyph{asset: "type-creature", decor: decorFriendly})}, true
+		return []glyph{inContext(glyph{asset: "type-creature", decor: decorFriendly})}
 	case engine.ItIsEnemy:
-		return []glyph{inContext(glyph{asset: "type-creature", decor: decorEnemy})}, true
-	case engine.ItIsOfTrait:
-		return []glyph{inContext(glyph{asset: "type-creature"}), traitGlyph()}, true
-	case engine.ItIsNamed:
-		return []glyph{inContext(nameGlyph())}, true
+		return []glyph{inContext(glyph{asset: "type-creature", decor: decorEnemy})}
 	case engine.ItIsStunned:
-		return []glyph{inContext(glyph{asset: "stun"})}, true
+		return []glyph{inContext(glyph{asset: "stun"})}
 	case engine.ItHasBonusIcon:
-		return []glyph{inContext(glyph{asset: "glyph-bonus"})}, true
+		return []glyph{inContext(glyph{asset: "glyph-bonus"})}
 	case engine.ItIsOffIdentity:
 		// Your identity is the three houses of your deck, which is the abstract house
 		// stacked and tinted friendly; the card in context belongs to none of them.
@@ -192,7 +193,7 @@ func conditionTestGlyphs(c engine.Condition) ([]glyph, bool) {
 			inContext(glyph{asset: "card-back"}),
 			{asset: "house-any", decor: decorEach | decorFriendly},
 			{asset: "glyph-ban"},
-		}, true
+		}
 	case engine.ItIsNotOfNamedHouse:
 		// The named house draws as the chosen house, which is what the effect that
 		// names one draws (OpponentNamesHouse); the refusal mark is this condition's
@@ -201,28 +202,31 @@ func conditionTestGlyphs(c engine.Condition) ([]glyph, bool) {
 			houseMatcherGlyphs(engine.HouseMatcher{Kind: engine.MatchChosenHouse}),
 			inContext(glyph{asset: "card-back"}),
 			glyph{asset: "glyph-ban"},
-		), true
+		)
 	case engine.ItAttachedToThisOrNeighbor:
 		// The upgrade in context, on the stretch of battleline this card occupies —
 		// the same battleline mark a neighbor count draws, read as "here or beside".
 		return []glyph{
 			inContext(glyph{asset: "type-upgrade"}),
 			{asset: "glyph-flank", decor: decorThis},
-		}, true
+		}
 	case engine.ItIsAmong:
 		// The card in context, then the set it must be one of, drawn as the Target
 		// itself draws. Which refinement narrows the set ("the most powerful") is a
 		// Refinement, a family with no glyphs yet, so it stays in the rules text.
-		return []glyph{inContext(glyph{asset: "type-creature"}), targetGlyph(v.Target)}, true
+		return append(
+			[]glyph{inContext(glyph{asset: "type-creature"})},
+			targetGlyphs(v.Target)...,
+		)
 	case engine.CardsInPlay:
-		return cardsInPlayConditionGlyphs(v), true
+		return cardsInPlayConditionGlyphs(v)
 
 	// The source card: where it stands and how it stands.
 	case engine.OnFlank:
 		// Which flank — either end, the left, the right — is not drawn, for the reason
 		// durationGlyph does not draw which turn a window lifts at: the mark says the
 		// card is on a flank, and saying which end would need a second picture.
-		return []glyph{{asset: "glyph-flank", decor: flankSubjectDecor(v.OfIt)}}, true
+		return []glyph{{asset: "glyph-flank", decor: flankSubjectDecor(v.OfIt)}}
 	case engine.SourceInCenterOfBattleline:
 		// Equal creatures to the left and to the right, which is what a center is. It
 		// is deliberately not the flank mark behind a refusal mark: "not on a flank"
@@ -232,18 +236,18 @@ func conditionTestGlyphs(c engine.Condition) ([]glyph, bool) {
 			creaturesCounted(0),
 			{asset: "glyph-flank", decor: decorThis},
 			creaturesCounted(0),
-		}, true
+		}
 	case engine.SourceHasNoNeighbor:
 		return append(
-			neighborCountGlyphs(decorThis, houseFilterGlyphs(v.House)...),
+			neighborCountGlyphs(decorThis, houseFilterGlyphs(v.Filter.House)...),
 			glyph{asset: "glyph-ban"},
-		), true
+		)
 	case engine.SourceReady:
 		// Ready is drawn as the exhausted mark tinted friendly, which is how the ready
 		// effect draws it; the self marker says it is this card that is ready.
-		return []glyph{{asset: "exhausted", decor: decorFriendly | decorThis}}, true
+		return []glyph{{asset: "exhausted", decor: decorFriendly | decorThis}}
 	case engine.SourceIsFighting:
-		return []glyph{{asset: "glyph-fight", decor: decorThis}}, true
+		return []glyph{{asset: "glyph-fight", decor: decorThis}}
 	case engine.CountersOnThisAtLeast:
 		return countedThreshold(
 			engine.CountersOnThis{Kind: v.Kind},
@@ -253,13 +257,13 @@ func conditionTestGlyphs(c engine.Condition) ([]glyph, bool) {
 
 	// The tide, high and low being two readings of one mark.
 	case engine.TideIsHigh:
-		return tideGlyphs(sigilGain), true
+		return tideGlyphs(sigilGain)
 	case engine.TideIsLow:
-		return tideGlyphs(sigilLose), true
+		return tideGlyphs(sigilLose)
 
 	// The turn so far.
 	case engine.ItIsYourTurn:
-		return []glyph{{asset: "phase-turn", decor: decorFriendly}}, true
+		return []glyph{{asset: "phase-turn", decor: decorFriendly}}
 	case engine.ChoseHouse:
 		return choseHouseGlyphs(v)
 	case engine.CardsPlayed:
@@ -270,12 +274,12 @@ func conditionTestGlyphs(c engine.Condition) ([]glyph, bool) {
 		return threshold(thisTurn([]glyph{
 			inContext(glyph{asset: "type-creature"}),
 			{asset: "glyph-play"},
-		}), engine.Exactly, 1), true
+		}), engine.Exactly, 1)
 	case engine.NoCreaturesPlayedThisTurn:
 		return append(thisTurn([]glyph{
 			creaturesCounted(0),
 			{asset: "glyph-play"},
-		}), glyph{asset: "glyph-ban"}), true
+		}), glyph{asset: "glyph-ban"})
 	case engine.CreatureDestroyedThisTurn:
 		return turnTally(creatureDestroyedStat(v.Player), engine.AtLeast)
 	case engine.UsedCreatureToReap:
@@ -287,17 +291,19 @@ func conditionTestGlyphs(c engine.Condition) ([]glyph, bool) {
 		// creature has reaped, so this reap is the first.
 		return turnTally(engine.CreaturesReapedThisTurn, engine.Exactly)
 	case engine.UsedNoCreatures:
-		gs, _ := countGlyphs(engine.CreaturesUsed{Player: engine.Controller})
-		return append(gs, glyph{asset: "glyph-ban"}), true
+		return append(
+			countGlyphs(engine.CreaturesUsed{Player: engine.Controller}),
+			glyph{asset: "glyph-ban"},
+		)
 	case engine.SourceFirstUseThisTurn:
 		// The uses of this card rather than of any creature, so the self marker
 		// replaces the stacked noun the board-wide tally counts.
 		return threshold(thisTurn([]glyph{
 			{asset: "type-creature", decor: decorThis},
 			{asset: "glyph-action"},
-		}), engine.Exactly, 1), true
+		}), engine.Exactly, 1)
 	case engine.ArchivedCreaturesShareHouse:
-		return archivedShareHouseGlyphs(), true
+		return archivedShareHouseGlyphs()
 	case engine.AemberStolenFromYou:
 		return countedThreshold(
 			engine.TurnCount{Player: engine.Controller, Of: engine.AemberStolenFromLastTurn},
@@ -311,27 +317,24 @@ func conditionTestGlyphs(c engine.Condition) ([]glyph, bool) {
 		return threshold([]glyph{
 			{asset: "aember"},
 			arrowTo(glyph{asset: "card-back", decor: decorChosen}),
-		}, engine.AtLeast, 1), true
+		}, engine.AtLeast, 1)
 	}
-	return fallbackGlyphs(), false
+	return unmapped(c)
 }
 
-// foldedConditions renders a combinator's children one after another, reporting
-// covered only when every child maps to a real glyph. between opens every child
-// after the first: an Or's children are alternatives and take the divider mark,
-// an And's are a run and take none.
-func foldedConditions(conds []engine.Condition, between punct) ([]glyph, bool) {
+// foldedConditions renders a combinator's children one after another. between opens
+// every child after the first: an Or's children are alternatives and take the
+// divider mark, an And's are a run and take none.
+func foldedConditions(conds []engine.Condition, between punct) []glyph {
 	out := make([]glyph, 0, len(conds)*2)
-	covered := true
 	for i, cond := range conds {
-		gs, ok := conditionTestGlyphs(cond)
+		gs := conditionTestGlyphs(cond)
 		if i > 0 {
 			gs = punctuate(gs, between)
 		}
 		out = append(out, gs...)
-		covered = covered && ok
 	}
-	return out, covered
+	return out
 }
 
 // countedThreshold draws a condition that compares a count against a figure: the
@@ -339,9 +342,8 @@ func foldedConditions(conds []engine.Condition, between punct) ([]glyph, bool) {
 // how the condition family reuses the count grammar rather than restating it —
 // "if your opponent has 6 or more Æmber" is the Æmber-in-pool count with an enemy
 // tint and a "≥6", not a second drawing of a pool.
-func countedThreshold(c engine.Count, is engine.Comparison, amount int) ([]glyph, bool) {
-	gs, covered := countGlyphs(c)
-	return threshold(gs, is, amount), covered
+func countedThreshold(c engine.Count, is engine.Comparison, amount int) []glyph {
+	return threshold(countGlyphs(c), is, amount)
 }
 
 // threshold stamps a comparison and its figure on the head of an already-composed
@@ -428,29 +430,28 @@ func forgedKeyStat(previous bool) engine.TurnStat {
 // keyColorForgedGlyphs draws "your red key is forged": the forge the key count
 // already draws, tinted with whose keys are read, then the key of the colour the
 // condition names. A condition naming no colour is a half-built value no card can
-// carry, and it draws the unknown glyph rather than a bare forge.
-func keyColorForgedGlyphs(c engine.KeyColorForged) ([]glyph, bool) {
+// carry, and it draws nothing rather than a bare forge.
+func keyColorForgedGlyphs(c engine.KeyColorForged) []glyph {
 	a := keyColorIconName(c.Color)
 	if a == "" {
-		return fallbackGlyphs(), false
+		return unmapped(c)
 	}
 	return []glyph{
 		{asset: "forge", decor: playerDecor(c.Player)},
 		{asset: a},
-	}, true
+	}
 }
 
 // counterInPlayGlyphs draws "there is a card in play with a doom counter on it":
 // the cards in play, holding the counter the condition looks for, with the "at
-// least one" it asks for on the badge. A kind with no icon draws the unknown
-// glyph, as the matching count does.
-func counterInPlayGlyphs(c engine.CounterInPlay) ([]glyph, bool) {
+// least one" it asks for on the badge. A kind with no icon draws nothing, as the
+// matching count does.
+func counterInPlayGlyphs(c engine.CounterInPlay) []glyph {
 	a := counterAsset(c.Kind)
 	if a == "" {
-		return fallbackGlyphs(), false
+		return unmapped(c)
 	}
-	gs := []glyph{cardsCounted(0), {asset: a}}
-	return threshold(gs, engine.AtLeast, 1), true
+	return threshold([]glyph{cardsCounted(0), {asset: a}}, engine.AtLeast, 1)
 }
 
 // cardsInPlayConditionGlyphs draws the Condition role of the one node that serves
@@ -517,7 +518,7 @@ func tideGlyphs(s sigil) []glyph {
 // tally's own picture from the Count family, wearing the figure the condition
 // compares it against — "≥1" for "you have reaped this turn", "=1" for "this is
 // the first reap this turn".
-func turnTally(of engine.TurnStat, is engine.Comparison) ([]glyph, bool) {
+func turnTally(of engine.TurnStat, is engine.Comparison) []glyph {
 	return countedThreshold(engine.TurnCount{Player: engine.Controller, Of: of}, is, 1)
 }
 
@@ -535,13 +536,13 @@ func creatureDestroyedStat(p engine.Player) engine.TurnStat {
 // choseHouseGlyphs draws "you choose Dis as your active house": the active-house
 // mark the house vocabulary already uses, then the emblem of the house the ability
 // watches for. A condition naming no house is a half-built value no card can
-// carry, and it draws the unknown glyph rather than a bare turn marker.
-func choseHouseGlyphs(c engine.ChoseHouse) ([]glyph, bool) {
+// carry, and it draws nothing rather than a bare turn marker.
+func choseHouseGlyphs(c engine.ChoseHouse) []glyph {
 	a := houseIconName(c.House)
 	if a == "" {
-		return fallbackGlyphs(), false
+		return unmapped(c)
 	}
-	return []glyph{{asset: "phase-turn"}, {asset: a}}, true
+	return []glyph{{asset: "phase-turn"}, {asset: a}}
 }
 
 // archivedShareHouseGlyphs draws "if those creatures share a house": the houses

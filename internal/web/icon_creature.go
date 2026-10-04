@@ -7,61 +7,57 @@ import "github.com/dmikalova/vex/internal/engine"
 // creature's action, repeated fights, and the counters that track them.
 
 // creatureEffectGlyphs claims every creature-state effect.
-func creatureEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
+func creatureEffectGlyphs(e engine.Effect) ([]glyph, bool) {
 	switch v := e.(type) {
 	case engine.Stun:
-		return []glyph{{asset: "stun"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append([]glyph{{asset: "stun"}}, arrowToTarget(v.Target)...), true
 	case engine.Unstun:
-		return []glyph{
+		return append([]glyph{
 			{asset: "stun", decor: decorFriendly},
-			arrowTo(targetGlyph(v.Target)),
-		}, true, true
+		}, arrowToTarget(v.Target)...), true
 	case engine.Enrage:
-		return []glyph{{asset: "enrage"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append([]glyph{{asset: "enrage"}}, arrowToTarget(v.Target)...), true
 	case engine.Ward:
-		return []glyph{{asset: "ward"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append([]glyph{{asset: "ward"}}, arrowToTarget(v.Target)...), true
 	case engine.RemoveWard:
-		return []glyph{
+		return append([]glyph{
 			{asset: "ward"},
 			{asset: "glyph-ban"},
-			arrowTo(targetGlyph(v.Target)),
-		}, true, true
+		}, arrowToTarget(v.Target)...), true
 	case engine.Exhaust:
-		return []glyph{{asset: "exhausted"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append([]glyph{{asset: "exhausted"}}, arrowToTarget(v.Target)...), true
 	case engine.ExhaustCreatures:
-		return []glyph{{asset: "exhausted"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append([]glyph{{asset: "exhausted"}}, arrowToTarget(v.Target)...), true
 	case engine.Ready:
-		return []glyph{
+		return append([]glyph{
 			{asset: "exhausted", decor: decorFriendly},
-			arrowTo(targetGlyph(v.Target)),
-		}, true, true
+		}, arrowToTarget(v.Target)...), true
 	case engine.ReadyCreatures:
-		return []glyph{
+		return append([]glyph{
 			{asset: "exhausted", decor: decorFriendly},
-			arrowTo(targetGlyph(v.Target)),
-		}, true, true
+		}, arrowToTarget(v.Target)...), true
 	case engine.Use:
-		return []glyph{{asset: "glyph-action"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append([]glyph{{asset: "glyph-action"}}, arrowToTarget(v.Target)...), true
 	case engine.RepeatedFight:
-		return []glyph{{asset: "glyph-fight"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append([]glyph{{asset: "glyph-fight"}}, arrowToTarget(v.Target)...), true
 	case engine.CancelFight:
-		return []glyph{{asset: "glyph-fight"}, {asset: "glyph-ban"}}, true, true
+		return []glyph{{asset: "glyph-fight"}, {asset: "glyph-ban"}}, true
 	case engine.PlaceCounter:
-		return []glyph{
+		return append([]glyph{
 			{asset: counterAsset(v.Kind), sigil: sigilGain},
-			arrowTo(targetGlyph(v.Target)),
-		}, true, true
+		}, arrowToTarget(v.Target)...), true
 	case engine.RemoveCounters:
-		return []glyph{
+		return append([]glyph{
 			{asset: counterAsset(v.Kind), sigil: sigilLose},
-			arrowTo(targetGlyph(v.Target)),
-		}, true, true
+		}, arrowToTarget(v.Target)...), true
 	case engine.AddPowerCounter:
 		if v.Per != nil || v.Equal != nil {
-			return []glyph{{asset: "power"}, arrowTo(targetGlyph(v.Target))}, true, true
+			return append([]glyph{{asset: "power"}}, arrowToTarget(v.Target)...), true
 		}
-		return []glyph{{asset: "power", qty: v.Amount}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append(
+			[]glyph{{asset: "power", qty: v.Amount}},
+			arrowToTarget(v.Target)...), true
 	default:
-		return nil, false, false
+		return nil, false
 	}
 }

@@ -15,7 +15,7 @@ func TestDamagePresenceIsTotal(t *testing.T) {
 		DamageSome: {false, true, "damaged"},
 		DamageNone: {true, false, "undamaged"},
 	}
-	for _, presence := range append(allDamagePresences(), damageAny) {
+	for _, presence := range append(DamagePresences(), damageAny) {
 		expected, ok := want[presence]
 		if !ok {
 			t.Fatalf("damage presence %d has no pinned row; add one", presence)

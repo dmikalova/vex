@@ -12,8 +12,7 @@ import (
 // the card's Icon strip. The strip is a thin band — about 1.5 text lines tall —
 // that sits between the stat line and the trait line. Each ability is one line: a
 // trigger label followed by its composed glyphs. A glyph is a reused SVG asset
-// tinted and decorated by its Target's shape, or, for a mechanic not yet drawn, a
-// small text chip so the strip still reads.
+// tinted and decorated by its Target's shape.
 
 // iconStrip renders a card's glyph lines into the .card-icons band. Abilities flow
 // on one line separated by a "|" divider; the inner .card-icons-fit span is scaled
@@ -52,8 +51,7 @@ func iconLine(l glyphLine) app.UI {
 
 // iconGlyph renders a single glyph: its leading punctuation mark when set, then
 // the quantity numeral (before the icon, as the card prints it — "3 damage"), then
-// the asset with its decoration classes. Every glyph is an icon — unmapped
-// mechanics use the abstract glyph, never words.
+// the asset with its decoration classes. Every glyph is an icon, never words.
 func iconGlyph(g glyph) app.UI {
 	return app.Span().Class("card-glyph").Body(
 		app.If(g.punct != punctNone, func() app.UI {

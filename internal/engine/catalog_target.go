@@ -208,7 +208,7 @@ func powerBoundKindEnum() Enum {
 	return newEnum(
 		"PowerBoundKind",
 		[]string{"boundUnset"},
-		len(allPowerBoundKinds()),
+		len(PowerBoundKinds()),
 		[]Catalogued[PowerBoundKind]{
 			{Name: "BoundAtMost", Node: BoundAtMost, Rules: bears("Power Threshold")},
 			{Name: "BoundAtLeast", Node: BoundAtLeast, Rules: bears("Power Threshold")},
@@ -237,7 +237,7 @@ func damagePresenceEnum() Enum {
 	return newEnum(
 		"DamagePresence",
 		[]string{"damageAny"},
-		len(allDamagePresences()),
+		len(DamagePresences()),
 		[]Catalogued[DamagePresence]{
 			{Name: "DamageSome", Node: DamageSome, Rules: bears("Damage")},
 			{Name: "DamageNone", Node: DamageNone, Rules: bears("Damage")},
@@ -255,7 +255,7 @@ func aemberPresenceEnum() Enum {
 	return newEnum(
 		"AemberPresence",
 		[]string{"aemberAny"},
-		len(allAemberPresences()),
+		len(AemberPresences()),
 		[]Catalogued[AemberPresence]{
 			{Name: "AemberSome", Node: AemberSome, Rules: bears("Æmber")},
 			{Name: "AemberNone", Node: AemberNone, Rules: bears("Æmber")},
@@ -273,7 +273,7 @@ func positionEnum() Enum {
 	return newEnum(
 		"Position",
 		[]string{"positionAny"},
-		len(allPositions()),
+		len(Positions()),
 		[]Catalogued[Position]{
 			{Name: "PositionOnFlank", Node: PositionOnFlank, Rules: bears("Flank")},
 			{Name: "PositionNotOnFlank", Node: PositionNotOnFlank, Rules: bears("Flank")},
@@ -332,7 +332,7 @@ func exclusionEnum() Enum {
 	return newEnum(
 		"Exclusion",
 		[]string{"excludeNone"},
-		len(allExclusions()),
+		len(Exclusions()),
 		[]Catalogued[Exclusion]{
 			{Name: "ExcludeSource", Node: ExcludeSource, Rules: bears("Target")},
 			{Name: "ExcludeIt", Node: ExcludeIt, Rules: bears("Target")},

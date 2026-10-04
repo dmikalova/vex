@@ -16,9 +16,11 @@ const (
 	DamageNone
 )
 
-// allDamagePresences returns every real damage presence, so the census
-// enumerates them rather than keeping a list a new value would fall out of.
-func allDamagePresences() []DamagePresence {
+// DamagePresences returns every real damage presence, so the census enumerates
+// them rather than keeping a list a new value would fall out of. It is exported
+// for the client's icon vocabulary, which walks it to prove it draws both
+// (TestFilterPresencesDraw in internal/web).
+func DamagePresences() []DamagePresence {
 	return []DamagePresence{DamageSome, DamageNone}
 }
 

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <title>Gigantic creature</title>
+  <g fill="#b8b5ad">
+    <circle cx="12" cy="7" r="5"/>
+    <path d="M1.5 22c0-5.2 4.7-9 10.5-9s10.5 3.8 10.5 9Z"/>
+  </g>
+  <path d="M12 1.5v21" fill="none" stroke="#5a5a57" stroke-width="1.2" stroke-dasharray="2 2"/>
+</svg>

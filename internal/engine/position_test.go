@@ -18,7 +18,7 @@ func TestPositionTextIsTotal(t *testing.T) {
 		PositionRightOfSource: {"", "each creature to the right of " + SelfName},
 		PositionLeftOfSource:  {"", "each creature to the left of " + SelfName},
 	}
-	for _, position := range append(allPositions(), positionAny) {
+	for _, position := range append(Positions(), positionAny) {
 		expected, ok := want[position]
 		if !ok {
 			t.Fatalf("position %d has no pinned row; add one", position)

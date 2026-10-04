@@ -1105,7 +1105,7 @@ var Yours = engine.ControlYours
 // explicitly. One Fraction serves an Æmber-pool share (card.LoseAember{By:
 // card.HalfRoundedDown}), a creature's power (card.PowerOfChosen{Of:
 // card.HalfRoundedDown}), and a battleline count
-// (card.Target.EachCreature.Refine(card.Refine.PortionPerSide(card.ThirdRoundedUp))).
+// (card.Target.EachCreature.Refine(card.PortionPerSide{Share: card.ThirdRoundedUp})).
 var HalfRoundedDown = engine.HalfRoundedDown
 
 // HalfRoundedUp — see HalfRoundedDown.

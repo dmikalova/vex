@@ -48,8 +48,8 @@ collapse them into one mechanism: the difference is printed text, not logic.
 "does this one card match"; a `Refinement` answers "which of these candidates do
 I keep". Every per-card test is trivially a set rule, so `Filter` implements
 `Refinement`; the reverse is false, because `MostPowerful`, `KeepPerSide`,
-`PortionPerSide` and `SamePowerAsChosen` need the whole candidate set — to
-compare candidates, or to prompt across them — and because `AnyOf` holds a slice
+`PortionPerSide` and `SamePowerAs` need the whole candidate set — to compare
+candidates, or to prompt across them — and because `AnyOf` holds a slice
 and `PowerLessThan` holds a `Count` interface, so a `Filter` holding one would
 stop being comparable.
 

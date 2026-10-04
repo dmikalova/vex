@@ -11,16 +11,15 @@ import (
 func TestAemberEffectGlyphsTranscription(t *testing.T) {
 	// A Per variant of GainAember maps to the Æmber glyph without a numeral: the
 	// count scales by a board quantity that lives in the text, not on the glyph.
-	gs, covered := effectGlyphs(engine.GainAember{
+	gs := effectGlyphs(engine.GainAember{
 		Player: engine.Controller,
 		Amount: 1,
 		Per:    engine.ForgedKeys{Player: engine.Opponent},
 	})
-	if !covered || len(gs) != 1 || gs[0].asset != "aember" || gs[0].qty != 0 {
+	if len(gs) != 1 || gs[0].asset != "aember" || gs[0].qty != 0 {
 		t.Errorf(
-			"GainAember Per glyphs = %+v (covered=%v), want a single æmber glyph with no numeral",
+			"GainAember Per glyphs = %+v, want a single æmber glyph with no numeral",
 			gs,
-			covered,
 		)
 	}
 }
@@ -45,9 +44,9 @@ func TestAemberVerbsTakeTheirOwnSigil(t *testing.T) {
 		{"exalt", engine.Exalt{Amount: 1}, "aember", sigilExalt, 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			gs, covered := effectGlyphs(tc.e)
-			if !covered || len(gs) == 0 {
-				t.Fatalf("%s glyphs = %+v (covered=%v)", tc.name, gs, covered)
+			gs := effectGlyphs(tc.e)
+			if len(gs) == 0 {
+				t.Fatalf("%s drew no glyphs", tc.name)
 			}
 			got := gs[0]
 			if got.asset != tc.asset || got.sigil != tc.sigil || got.qty != tc.qty {
@@ -72,10 +71,7 @@ func TestEveryLossDraws(t *testing.T) {
 // moves it: Too Much to Protect steals all but six, and before the share was drawn
 // its strip was the plain steal mark — the same picture as stealing one Æmber.
 func TestLossReachesTheVerbCarryingIt(t *testing.T) {
-	gs, covered := effectGlyphs(engine.StealAember{By: engine.AllBut{Keep: 6}})
-	if !covered {
-		t.Fatal("a steal of a share of the pool should be covered")
-	}
+	gs := effectGlyphs(engine.StealAember{By: engine.AllBut{Keep: 6}})
 	if len(gs) != 4 {
 		t.Fatalf("share steal = %+v, want the steal and the share it leaves", gs)
 	}
@@ -85,7 +81,7 @@ func TestLossReachesTheVerbCarryingIt(t *testing.T) {
 	if gs[3].asset != "glyph-ban" {
 		t.Errorf("share steal = %+v, want the refusal mark closing the remainder", gs)
 	}
-	plain, _ := effectGlyphs(engine.StealAember{Amount: 1})
+	plain := effectGlyphs(engine.StealAember{Amount: 1})
 	if len(plain) != 1 {
 		t.Errorf("a plain steal = %+v, want no share drawn at all", plain)
 	}
@@ -106,9 +102,9 @@ func TestFractionsDrawTheirDenominator(t *testing.T) {
 		{"third rounded down", engine.ThirdRoundedDown, 3},
 		{"third rounded up", engine.ThirdRoundedUp, 3},
 	} {
-		gs, covered := lossGlyphs(tc.f)
-		if !covered || len(gs) != 1 {
-			t.Fatalf("%s drew %+v (covered=%v), want one glyph", tc.name, gs, covered)
+		gs := lossGlyphs(tc.f)
+		if len(gs) != 1 {
+			t.Fatalf("%s drew %+v, want one glyph", tc.name, gs)
 		}
 		if gs[0].qty != tc.want {
 			t.Errorf("%s drew qty %d, want %d", tc.name, gs[0].qty, tc.want)

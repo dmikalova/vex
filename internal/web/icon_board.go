@@ -11,10 +11,10 @@ import "github.com/dmikalova/vex/internal/engine"
 // file of its own.
 
 // boardEffectGlyphs claims every play, control and battleline-position effect.
-func boardEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
+func boardEffectGlyphs(e engine.Effect) ([]glyph, bool) {
 	switch v := e.(type) {
 	case engine.PlayFrom, engine.PlayTopOfDeck, engine.PutIntoPlay:
-		return []glyph{{asset: "glyph-play"}}, true, true
+		return []glyph{{asset: "glyph-play"}}, true
 	case engine.PlayFromOpponent:
 		zone := "zone-deck"
 		if v.From == engine.Archives {
@@ -23,33 +23,44 @@ func boardEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 		return []glyph{
 			{asset: zone, decor: decorEnemy},
 			arrowTo(glyph{asset: "glyph-play"}),
-		}, true, true
+		}, true
 	case engine.PlayItFromOpponentDiscard:
 		return []glyph{
 			{asset: "zone-discard", decor: decorEnemy},
 			arrowTo(glyph{asset: "glyph-play"}),
-		}, true, true
+		}, true
 	case engine.PlayRevealedCard:
-		return []glyph{{asset: "glyph-play"}}, true, true
+		// The one card the read just put in context, drawn the way every other
+		// card-in-context is (bonusIconSubjectGlyphs), which is what separates it
+		// from the three plain spellings of playing a card above.
+		return []glyph{
+			{asset: "card-back", decor: decorChosen},
+			arrowTo(glyph{asset: "glyph-play"}),
+		}, true
 	case engine.PlayCardUnder:
-		return []glyph{{asset: "card-back"}, arrowTo(glyph{asset: "glyph-play"})}, true, true
+		return []glyph{{asset: "card-back"}, arrowTo(glyph{asset: "glyph-play"})}, true
 	case engine.ArchiveCardUnder:
-		return []glyph{{asset: "card-back"}, arrowTo(glyph{asset: "zone-archives"})}, true, true
+		return []glyph{{asset: "card-back"}, arrowTo(glyph{asset: "zone-archives"})}, true
 	case engine.PutUnderFromHand:
-		return []glyph{{asset: "zone-hand"}, arrowTo(glyph{asset: "card-back"})}, true, true
+		return []glyph{{asset: "zone-hand"}, arrowTo(glyph{asset: "card-back"})}, true
 	case engine.PutUnderIntoPlay:
-		return []glyph{{asset: "card-back"}, arrowTo(glyph{asset: "glyph-play"})}, true, true
+		// Every card under this one rather than the single card PlayCardUnder plays,
+		// so the buried card takes the stack the "each" wording asks for.
+		return []glyph{
+			{asset: "card-back", decor: decorEach},
+			arrowTo(glyph{asset: "glyph-play"}),
+		}, true
 	case engine.PutDiscardedIntoPlay:
-		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "glyph-play"})}, true, true
+		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "glyph-play"})}, true
 	case engine.EachPlayerPutsHandCreaturesIntoPlay:
 		return []glyph{
 			{asset: "zone-hand", decor: decorEach},
 			arrowTo(glyph{asset: "glyph-play"}),
-		}, true, true
+		}, true
 	case engine.MayPlayOrUse:
 		// A standing permission the controller may decline, where PlayOrUse makes the
 		// same play-or-use happen now; the may sigil is the only thing between them.
-		return markVerb(mayPlayOrUseGlyphs(v), sigilMay), true, true
+		return markVerb(mayPlayOrUseGlyphs(v), sigilMay), true
 	case engine.PlayOrUse:
 		// The any-house matcher prints no house word here ("play or use a card"), so
 		// it draws no house glyph either; every narrowing matcher leads the verbs.
@@ -63,71 +74,69 @@ func boardEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 		if v.Grant == 0 || v.Grant&engine.GrantUse != 0 {
 			gs = append(gs, glyph{asset: "glyph-action"})
 		}
-		return gs, true, true
+		return gs, true
 	case engine.CannotPlay:
-		return []glyph{{asset: "glyph-play"}, {asset: "glyph-ban"}}, true, true
+		return []glyph{{asset: "glyph-play"}, {asset: "glyph-ban"}}, true
 	case engine.PlayersCannotPlay:
 		if a := typeIconName(v.Type); a != "" {
-			return []glyph{{asset: a}, {asset: "glyph-play"}, {asset: "glyph-ban"}}, true, true
+			return []glyph{{asset: a}, {asset: "glyph-play"}, {asset: "glyph-ban"}}, true
 		}
-		return []glyph{{asset: "glyph-play"}, {asset: "glyph-ban"}}, true, true
+		return []glyph{{asset: "glyph-play"}, {asset: "glyph-ban"}}, true
 	case engine.AttachSelfTo:
 		return []glyph{
 			{asset: "card-back", decor: decorThis},
 			arrowTo(glyph{asset: "type-creature"}),
-		}, true, true
+		}, true
 	case engine.TakeControl:
 		// The host-creature form (Collar of Subordination) has no Target; it takes
 		// this creature, so render the "this creature" noun rather than a blank.
-		subject := targetGlyph(v.Target)
+		subject := targetGlyphs(v.Target)
 		if v.Target == (engine.Target{}) {
-			subject = glyph{
+			subject = []glyph{{
 				asset: "type-creature",
 				decor: decorThis,
-			}
+			}}
 		}
-		return []glyph{
-			subject,
-			arrowTo(glyph{
-				asset: "type-creature",
-				decor: decorFriendly,
-			}),
-		}, true, true
+		return append(subject, arrowTo(glyph{
+			asset: "type-creature",
+			decor: decorFriendly,
+		})), true
 	case engine.Graft:
-		return []glyph{targetGlyph(v.Target), arrowTo(glyph{asset: "card-back"})}, true, true
+		return append(targetGlyphs(v.Target), arrowTo(glyph{asset: "card-back"})), true
 	case engine.TriggerGraftedPlayEffect:
 		// Only the buried card's "Play:" ability fires; the card itself stays under
 		// its host, which is what separates this from PutUnderIntoPlay (ADR 0047).
 		return []glyph{
 			{asset: "card-back"},
 			arrowTo(glyph{asset: "glyph-play", sigil: sigilGrafted}),
-		}, true, true
+		}, true
 	case engine.Swap:
-		return []glyph{
+		return append([]glyph{
 			{asset: "type-creature", decor: decorThis},
 			{asset: "glyph-swap"},
-			arrowTo(targetGlyph(v.With)),
-		}, true, true
+		}, arrowToTarget(v.With)...), true
 	case engine.SwapChosen:
 		return []glyph{
 			{asset: "type-creature", decor: decorChosen},
 			{asset: "glyph-swap"},
 			{asset: "type-creature", decor: decorChosen},
-		}, true, true
+		}, true
 	case engine.RearrangeBattleline:
+		// A whole battleline reordered, where SwapChosen above exchanges one named
+		// pair, so the stacked creature noun carries the difference rather than a
+		// second drawing of the swap.
 		return []glyph{
-			{asset: "type-creature", decor: decorChosen},
+			{asset: "type-creature", decor: decorEach},
 			{asset: "glyph-swap"},
-			{asset: "type-creature", decor: decorChosen},
-		}, true, true
+		}, true
 	case engine.MoveWithinBattleline:
-		return []glyph{targetGlyph(v.Target), arrowTo(glyph{asset: "glyph-swap"})}, true, true
+		return append(targetGlyphs(v.Target), arrowTo(glyph{asset: "glyph-swap"})), true
 	case engine.MoveToFlank:
-		return []glyph{targetGlyph(v.Target), arrowTo(glyph{asset: "glyph-flank"})}, true, true
+		return append(targetGlyphs(v.Target), arrowTo(glyph{asset: "glyph-flank"})), true
 	case engine.ConsiderFlank:
-		return []glyph{{asset: "glyph-flank"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append([]glyph{{asset: "glyph-flank"}}, arrowToTarget(v.Target)...), true
 	default:
-		return nil, false, false
+		return nil, false
 	}
 }
 

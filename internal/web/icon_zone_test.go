@@ -42,17 +42,17 @@ func TestDeclinableQuantitiesWearTheMayMark(t *testing.T) {
 // to two cards, which is the purge's own pile wearing a 2 and the may mark, not a
 // purge followed by a picture of two cards.
 func TestQuantityBadgesTheVerbsOwnNoun(t *testing.T) {
-	gs, covered := effectGlyphs(engine.ArchiveCard{
+	gs := effectGlyphs(engine.ArchiveCard{
 		Selection: engine.Chosen{},
 		Quantity:  engine.UpTo{N: engine.Fixed(2)},
 	})
-	if !covered || len(gs) != 1 {
-		t.Fatalf("bounded archive = %+v (covered=%v), want one glyph", gs, covered)
+	if len(gs) != 1 {
+		t.Fatalf("bounded archive = %+v, want one glyph", gs)
 	}
 	if gs[0].asset != "zone-archives" || gs[0].qty != 2 || gs[0].sigil != sigilMay {
 		t.Errorf("bounded archive = %+v, want the archives wearing 2 and the may mark", gs[0])
 	}
-	plain, _ := effectGlyphs(engine.ArchiveCard{Selection: engine.Chosen{}})
+	plain := effectGlyphs(engine.ArchiveCard{Selection: engine.Chosen{}})
 	if plain[0].qty != 0 || plain[0].sigil != sigilNone {
 		t.Errorf("a single archive = %+v, want a bare pile with no numeral", plain[0])
 	}

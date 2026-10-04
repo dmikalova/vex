@@ -31,11 +31,11 @@ func RefinementCatalog() []Catalogued[Refinement] {
 	return []Catalogued[Refinement]{
 		// Combinators over other refinements.
 		{
-			Node:  Except(MostPowerful),
+			Node:  AllExcept{Inner: MostPowerful},
 			Rules: plumbing("composition: keeps what its inner refinement drops"),
 		},
 		{
-			Node:  AnyOf(LowestPower, HighestPower),
+			Node:  AnyOf{Refinements: []Refinement{LowestPower{}, HighestPower{}}},
 			Rules: plumbing("composition: keeps what any of its inner refinements keeps"),
 		},
 		{
@@ -51,21 +51,21 @@ func RefinementCatalog() []Catalogued[Refinement] {
 			Rules: bears("Power Tier"),
 		},
 		{
-			Node:  LeastPowerful,
+			Node:  LeastPowerful{},
 			Rules: bears("Power Tier"),
 		},
 		{
-			Node:  HighestPower,
+			Node:  HighestPower{},
 			Rules: bears("Power Tier"),
 		},
 		{
-			Node:  LowestPower,
+			Node:  LowestPower{},
 			Rules: bears("Power Tier"),
 		},
 
 		// Power thresholds: a power compared against a number, a count, or a card.
 		{
-			Node:  PowerLessThan(ForgedKeys{Player: Controller}),
+			Node:  PowerLessThan{Limit: ForgedKeys{Player: Controller}},
 			Rules: bears("Power Threshold"),
 		},
 		{
@@ -75,12 +75,32 @@ func RefinementCatalog() []Catalogued[Refinement] {
 
 		// Per-battleline selections, which act on each side in turn.
 		{
-			Node:  KeepPerSide(3),
+			Node:  KeepPerSide{N: 3},
 			Rules: bears("Per Battleline"),
 		},
 		{
-			Node:  PortionPerSide(ThirdRoundedUp),
+			Node:  PortionPerSide{Share: ThirdRoundedUp},
 			Rules: bears("Per Battleline"),
 		},
 	}
+}
+
+// creatureSideEnum is the CreatureSide census: the battleline one SamePowerAs
+// pick draws its candidates from. Each side names the Target umbrella, because
+// all three print the same "choose …" and differ only in which battleline the
+// choice reaches.
+func creatureSideEnum() Enum {
+	return newEnum(
+		"CreatureSide",
+		nil,
+		len(CreatureSides()),
+		[]Catalogued[CreatureSide]{
+			{Name: "EitherSide", Node: EitherSide, Rules: bears("Target")},
+			{Name: "FriendlySide", Node: FriendlySide, Rules: bears("Target")},
+			{Name: "EnemySide", Node: EnemySide, Rules: bears("Target")},
+		},
+		func(s CreatureSide) string {
+			return SamePowerAs{Sides: []CreatureSide{s}}.lead()
+		},
+	)
 }

@@ -16,9 +16,11 @@ const (
 	AemberNone
 )
 
-// allAemberPresences returns every real Æmber presence, so the census enumerates
-// them rather than keeping a list a new value would fall out of.
-func allAemberPresences() []AemberPresence {
+// AemberPresences returns every real Æmber presence, so the census enumerates
+// them rather than keeping a list a new value would fall out of. It is exported
+// for the client's icon vocabulary, which walks it to prove it draws both
+// (TestFilterPresencesDraw in internal/web).
+func AemberPresences() []AemberPresence {
 	return []AemberPresence{AemberSome, AemberNone}
 }
 

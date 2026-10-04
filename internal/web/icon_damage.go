@@ -14,65 +14,62 @@ import "github.com/dmikalova/vex/internal/engine"
 // icon file that mirrors it.
 
 // damageEffectGlyphs claims every damage-dealing and destruction effect.
-func damageEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
+func damageEffectGlyphs(e engine.Effect) ([]glyph, bool) {
 	switch v := e.(type) {
 	case engine.DealDamage:
 		// A follow-up on the damaged creature draws the two clauses joined, not the
 		// bare damage glyph.
 		if v.Then != nil {
-			return claim(damageThenGlyphs(v.Amount, v.Target, v.Then))
+			return damageThenGlyphs(v.Amount, v.Target, v.Then), true
 		}
 		// A Spread carries its own creature targets rather than filling Target, so it
 		// draws the shape it strikes; the amounts stay in the text.
 		if v.Spread != nil {
-			gs, covered := spreadGlyphs(v.Spread)
-			return append([]glyph{{asset: "damage"}}, punctuate(gs, punctArrow)...), covered, true
+			return append(
+				[]glyph{{asset: "damage"}},
+				punctuate(spreadGlyphs(v.Spread), punctArrow)...,
+			), true
 		}
 		// A per-target amount is read off each creature hit, so the thing it measures
 		// trails the creature it is measured on: "1 damage to each enemy creature for
 		// each Æmber on it".
 		if v.PerTarget != nil {
-			gs, covered := perTargetGlyphs(v.PerTarget)
 			return append(
-				[]glyph{{asset: "damage"}, arrowTo(targetGlyph(v.Target))},
-				gs...,
-			), covered, true
+				append([]glyph{{asset: "damage"}}, arrowToTarget(v.Target)...),
+				perTargetGlyphs(v.PerTarget)...,
+			), true
 		}
 		// The remaining per-count variants scale by a board count; the numeral lives
 		// in the text, so the glyph drops the qty.
 		if v.Per != nil || v.AmountFrom != nil {
-			return []glyph{{asset: "damage"}, arrowTo(targetGlyph(v.Target))}, true, true
+			return append([]glyph{{asset: "damage"}}, arrowToTarget(v.Target)...), true
 		}
-		return []glyph{
+		return append([]glyph{
 			{asset: "damage", qty: v.Amount},
-			arrowTo(targetGlyph(v.Target)),
-		}, true, true
+		}, arrowToTarget(v.Target)...), true
 	case engine.RedistributeDamage:
-		return []glyph{{asset: "damage"}, {asset: "glyph-swap"}}, true, true
+		return []glyph{{asset: "damage"}, {asset: "glyph-swap"}}, true
 	case engine.Heal:
-		return []glyph{
+		return append([]glyph{
 			{asset: "glyph-heal", qty: v.Amount},
-			arrowTo(targetGlyph(v.Target)),
-		}, true, true
+		}, arrowToTarget(v.Target)...), true
 	case engine.LoseArmor:
-		return []glyph{
+		return append([]glyph{
 			{asset: "shield"},
 			{asset: "glyph-ban"},
-			arrowTo(targetGlyph(v.Target)),
-		}, true, true
+		}, arrowToTarget(v.Target)...), true
 	case engine.TakesExtraDamage:
-		return []glyph{targetGlyph(v.Target), arrowTo(glyph{
+		return append(targetGlyphs(v.Target), arrowTo(glyph{
 			asset: "damage",
 			qty:   v.Amount,
-		})}, true, true
+		})), true
 	case engine.CannotBeDealtDamage:
-		return []glyph{{asset: "shield"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append([]glyph{{asset: "shield"}}, arrowToTarget(v.Target)...), true
 	case engine.RedirectFightDamage:
-		return []glyph{
+		return append([]glyph{
 			{asset: "glyph-fight"},
 			{asset: "damage"},
-			arrowTo(targetGlyph(v.Target)),
-		}, true, true
+		}, arrowToTarget(v.Target)...), true
 	case engine.DamageOthersAfterUsingTrait:
 		return []glyph{
 			traitGlyph(),
@@ -82,21 +79,20 @@ func damageEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 				asset: "type-creature",
 				decor: decorEach,
 			}),
-		}, true, true
+		}, true
 	case engine.Destroy:
-		return []glyph{{asset: "glyph-destroy"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append([]glyph{{asset: "glyph-destroy"}}, arrowToTarget(v.Target)...), true
 	case engine.DestroyChosen:
-		return []glyph{{asset: "glyph-destroy"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append([]glyph{{asset: "glyph-destroy"}}, arrowToTarget(v.Target)...), true
 	case engine.BatchDestroy:
 		// The gatherer says which creatures the one batch takes, and the shapes differ
 		// — two picks from two pools, or every unspared player's battleline — so the
 		// strip draws the gatherer rather than a fixed "each creature" that would be
 		// true of only one of them.
-		gs, covered := gatherGlyphs(v.Gather)
 		return append(
 			[]glyph{{asset: "glyph-destroy"}},
-			punctuate(gs, punctArrow)...,
-		), covered, true
+			punctuate(gatherGlyphs(v.Gather), punctArrow)...,
+		), true
 	case engine.DestroyEachCreatureAtEndOfTurn:
 		// The turn marker is what tells this from BatchDestroy over every creature:
 		// the same wipe, scheduled into the end-of-turn window rather than resolved
@@ -107,23 +103,23 @@ func damageEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
 				asset: "type-creature",
 				decor: decorEach,
 			}),
-		}, engine.RemainderOfPlayerTurn), true, true
+		}, engine.RemainderOfPlayerTurn), true
 	case engine.PurgeCreature:
-		return []glyph{{asset: "zone-purge"}, arrowTo(targetGlyph(v.Target))}, true, true
+		return append([]glyph{{asset: "zone-purge"}}, arrowToTarget(v.Target)...), true
 	case engine.PurgeSource:
-		return []glyph{{asset: "zone-purge", decor: decorThis}}, true, true
+		return []glyph{{asset: "zone-purge", decor: decorThis}}, true
 	default:
-		return nil, false, false
+		return nil, false
 	}
 }
 
 // gatherGlyphs renders a Gather as the creatures the one simultaneous batch
-// takes, reporting whether a real mapping covered it. The Gather family is gated
-// (TestEveryGatherDraws, TestIconTotality), so every row here draws.
+// takes. The Gather family is gated (TestEveryGatherDraws, TestIconTotality), so
+// every row here draws.
 //
 // A gatherer is not an effect — it is the object of the one verb that carries one
 // (BatchDestroy), so it draws where that verb draws, the way a Count does.
-func gatherGlyphs(g engine.Gather) ([]glyph, bool) {
+func gatherGlyphs(g engine.Gather) []glyph {
 	switch v := g.(type) {
 	case engine.ChosenFromEach:
 		// One pick per pool, drawn as the pools themselves: "a friendly creature and an
@@ -131,9 +127,9 @@ func gatherGlyphs(g engine.Gather) ([]glyph, bool) {
 		// gatherer different from a wipe.
 		gs := make([]glyph, 0, len(v))
 		for _, t := range v {
-			gs = append(gs, targetGlyph(t))
+			gs = append(gs, targetGlyphs(t)...)
 		}
-		return gs, true
+		return gs
 	case engine.EachPlayerUnless:
 		// Each player's creatures, behind the board the spare condition reads and the
 		// refusal mark that says a player fielding it is skipped. Which creatures of an
@@ -145,21 +141,21 @@ func gatherGlyphs(g engine.Gather) ([]glyph, bool) {
 				punctuate(cardsInPlayConditionGlyphs(v.Spare), punctGate),
 				glyph{asset: "glyph-ban"},
 			)...,
-		), true
+		)
 	}
-	return fallbackGlyphs(), false
+	return unmapped(g)
 }
 
-// spreadGlyphs renders a Spread as the shape one batch of damage strikes,
-// reporting whether a real mapping covered it. The Spread family is gated
-// (TestEverySpreadDraws, TestIconTotality), so every row here draws.
+// spreadGlyphs renders a Spread as the shape one batch of damage strikes. The
+// Spread family is gated (TestEverySpreadDraws, TestIconTotality), so every row
+// here draws.
 //
 // The five spreads all pick creatures, so what tells them apart is the shape of
 // the pick rather than a drawing of its own: a creature and the battleline beside
 // it, two separate picks, a bounded handful, an unbounded one, a flank and the
 // walk inward. The amounts each creature takes stay in the rules text, as a
 // Target's fine filters do — the strip says who is hit, the text says how hard.
-func spreadGlyphs(s engine.Spread) ([]glyph, bool) {
+func spreadGlyphs(s engine.Spread) []glyph {
 	switch v := s.(type) {
 	case engine.CreatureAndNeighbors:
 		// The chosen creature, then the battleline beside it: the neighbors hang off
@@ -168,14 +164,14 @@ func spreadGlyphs(s engine.Spread) ([]glyph, bool) {
 			{asset: "type-creature", decor: decorChosen},
 			{asset: "glyph-flank", decor: decorChosen},
 			{asset: "type-creature", decor: neighborScopeDecor(v.Scope)},
-		}, true
+		}
 	case engine.DifferentCreatures:
 		// Two picks rather than one, which is the whole of what this spread says: the
 		// second creature must be a different one.
 		return []glyph{
 			{asset: "type-creature", decor: decorChosen},
 			{asset: "type-creature", decor: decorChosen},
-		}, true
+		}
 	case engine.UpToCreatures:
 		// A ceiling the controller may stop short of, so the stacked pick carries the
 		// numeral and the may mark — the same pair "up to N cards" draws for a
@@ -185,7 +181,7 @@ func spreadGlyphs(s engine.Spread) ([]glyph, bool) {
 			qty:   v.Creatures,
 			decor: decorChosen | decorEach,
 			sigil: sigilMay,
-		}}, true
+		}}
 	case engine.DivideDamage:
 		// Any number of creatures, so the stacked pick wears the may mark with no
 		// ceiling to print. How the pool is divided among them stays in the text.
@@ -193,16 +189,16 @@ func spreadGlyphs(s engine.Spread) ([]glyph, bool) {
 			asset: "type-creature",
 			decor: decorChosen | decorEach,
 			sigil: sigilMay,
-		}}, true
+		}}
 	case engine.FlankWalk:
 		// The pick is a flank creature and the walk runs inward from it, so the flank
 		// mark leads the creatures the walk steps through.
 		return []glyph{
 			{asset: "glyph-flank", decor: decorChosen},
 			{asset: "type-creature", decor: decorEach},
-		}, true
+		}
 	}
-	return fallbackGlyphs(), false
+	return unmapped(s)
 }
 
 // neighborScopeDecor is how a spread's neighbors are picked: every neighbor is
@@ -219,9 +215,8 @@ func neighborScopeDecor(scope engine.NeighborScope) decor {
 }
 
 // perTargetGlyphs renders a PerTarget as the thing it measures on each creature
-// the effect lands on, reporting whether a real mapping covered it. The PerTarget
-// family is gated (TestEveryPerTargetDraws, TestIconTotality), so every row here
-// draws.
+// the effect lands on. The PerTarget family is gated (TestEveryPerTargetDraws,
+// TestIconTotality), so every row here draws.
 //
 // Each axis measures something sitting on the creature, so it draws that thing
 // under the chosen outline every other glyph reading the card in context wears
@@ -229,28 +224,27 @@ func neighborScopeDecor(scope engine.NeighborScope) decor {
 // creature's, not a drawing of the "for each" clause.
 //
 // The members are singletons of unexported types, so they are recognised by
-// identity rather than by a type switch; an unlisted axis falls through to the
-// unknown glyph, which is what the gate fails on.
-func perTargetGlyphs(p engine.PerTarget) ([]glyph, bool) {
+// identity rather than by a type switch; an unlisted axis draws nothing, which is
+// what the gate fails on.
+func perTargetGlyphs(p engine.PerTarget) []glyph {
 	switch p {
 	case engine.AemberOnIt:
-		return []glyph{{asset: "aember", decor: decorChosen}}, true
+		return []glyph{{asset: "aember", decor: decorChosen}}
 	case engine.DamageOnIt:
-		return []glyph{{asset: "damage", decor: decorChosen}}, true
+		return []glyph{{asset: "damage", decor: decorChosen}}
 	case engine.ArmorLostThisWay:
 		// The armor this very effect stripped, so the shield wears the lose verb: it
 		// is armor that is gone rather than armor the creature still has.
-		return []glyph{{asset: "shield", decor: decorChosen, sigil: sigilLose}}, true
+		return []glyph{{asset: "shield", decor: decorChosen, sigil: sigilLose}}
 	case engine.UpgradesOnIt:
-		return []glyph{{asset: "type-upgrade", decor: decorChosen | decorEach}}, true
+		return []glyph{{asset: "type-upgrade", decor: decorChosen | decorEach}}
 	}
-	return fallbackGlyphs(), false
+	return unmapped(p)
 }
 
 // damageThenGlyphs renders a "deal N damage to <target>, then <follow-up>" effect
 // as the damage glyph arrowed to its target, followed by the follow-up's glyphs.
-func damageThenGlyphs(amount int, target engine.Target, then engine.Effect) ([]glyph, bool) {
-	gs := []glyph{{asset: "damage", qty: amount}, arrowTo(targetGlyph(target))}
-	more, covered := effectGlyphs(then)
-	return append(gs, more...), covered
+func damageThenGlyphs(amount int, target engine.Target, then engine.Effect) []glyph {
+	gs := append([]glyph{{asset: "damage", qty: amount}}, arrowToTarget(target)...)
+	return append(gs, effectGlyphs(then)...)
 }

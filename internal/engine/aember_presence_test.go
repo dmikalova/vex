@@ -15,7 +15,7 @@ func TestAemberPresenceIsTotal(t *testing.T) {
 		AemberSome: {false, true, "each creature with Æmber on it"},
 		AemberNone: {true, false, "each creature with no Æmber on it"},
 	}
-	for _, presence := range append(allAemberPresences(), aemberAny) {
+	for _, presence := range append(AemberPresences(), aemberAny) {
 		expected, ok := want[presence]
 		if !ok {
 			t.Fatalf("Æmber presence %d has no pinned row; add one", presence)

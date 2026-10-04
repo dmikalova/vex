@@ -17,52 +17,61 @@ import "github.com/dmikalova/vex/internal/engine"
 // which cards go there, never a drawing of the step itself.
 
 // revealEffectGlyphs claims every look/reveal/search effect.
-func revealEffectGlyphs(e engine.Effect) ([]glyph, bool, bool) {
+func revealEffectGlyphs(e engine.Effect) ([]glyph, bool) {
 	switch v := e.(type) {
 	case engine.LookAtTopOfDeck:
-		gs, covered := topActsGlyphs(v.Then)
-		return append([]glyph{{asset: "zone-deck"}, {asset: "glyph-look"}}, gs...), covered, true
+		return append(
+			[]glyph{{asset: "zone-deck"}, {asset: "glyph-look"}},
+			topActsGlyphs(v.Then)...,
+		), true
 	case engine.RevealHand:
-		return []glyph{{asset: "zone-hand"}, {asset: "glyph-look", sigil: sigilReveal}}, true, true
+		// Every card in that hand, which is the stack a count already draws on a pile
+		// (CardsInHand); RevealRandomFromHand below reveals one card out of the same
+		// hand, so the stack is what tells the two apart.
+		return []glyph{
+			{asset: "zone-hand", decor: decorEach | playerDecor(v.Player)},
+			{asset: "glyph-look", sigil: sigilReveal},
+		}, true
 	case engine.RevealRandomFromHand:
-		return []glyph{{asset: "zone-hand"}, {asset: "glyph-look", sigil: sigilReveal}}, true, true
+		return []glyph{{asset: "zone-hand"}, {asset: "glyph-look", sigil: sigilReveal}}, true
 	case engine.RevealChosenFromHand:
 		return []glyph{
 			{asset: "zone-hand", decor: decorChosen},
 			{asset: "glyph-look", sigil: sigilReveal},
-		}, true, true
+		}, true
 	case engine.RevealTopOfDeck:
-		gs, covered := topActsGlyphs(v.Then)
 		return append(
 			[]glyph{{asset: "zone-deck"}, {asset: "glyph-look", sigil: sigilReveal}},
-			gs...,
-		), covered, true
+			topActsGlyphs(v.Then)...,
+		), true
 	case engine.PutRevealedCard:
-		return []glyph{{asset: "card-back"}, arrowTo(glyph{asset: deckDestZone(v.To)})}, true, true
+		// The card the read put in context, drawn as every other card-in-context is,
+		// which separates it from the face-down card under a card (ArchiveCardUnder).
+		return []glyph{
+			{asset: "card-back", decor: decorChosen},
+			arrowTo(glyph{asset: deckDestZone(v.To)}),
+		}, true
 	case engine.Search:
-		return []glyph{{asset: "zone-deck"}, {asset: "glyph-search"}}, true, true
+		return []glyph{{asset: "zone-deck"}, {asset: "glyph-search"}}, true
 	default:
-		return nil, false, false
+		return nil, false
 	}
 }
 
 // topActsGlyphs renders the ordered routing steps a deck read sends its cards
-// through, one after another, reporting covered only when every step maps.
-func topActsGlyphs(acts []engine.TopAct) ([]glyph, bool) {
+// through, one after another.
+func topActsGlyphs(acts []engine.TopAct) []glyph {
 	out := make([]glyph, 0, len(acts)*2)
-	covered := true
 	for _, act := range acts {
-		gs, c := topActGlyphs(act)
-		out = append(out, gs...)
-		covered = covered && c
+		out = append(out, topActGlyphs(act)...)
 	}
-	return out, covered
+	return out
 }
 
 // topActGlyphs renders one routing step as the cards it takes and the zone it
-// sends them to, reporting whether a real mapping covered it. The TopAct family
-// is gated (TestEveryTopActDraws, TestIconTotality), so every row here draws.
-func topActGlyphs(act engine.TopAct) ([]glyph, bool) {
+// sends them to. The TopAct family is gated (TestEveryTopActDraws,
+// TestIconTotality), so every row here draws.
+func topActGlyphs(act engine.TopAct) []glyph {
 	switch v := act.(type) {
 	case engine.ChooseAndMove:
 		if a := deckDestZone(v.Dest); a != "" {
@@ -72,9 +81,9 @@ func topActGlyphs(act engine.TopAct) ([]glyph, bool) {
 			if v.Cards > 1 {
 				taken.qty = v.Cards
 			}
-			return []glyph{taken, arrowTo(glyph{asset: a})}, true
+			return []glyph{taken, arrowTo(glyph{asset: a})}
 		}
-		return fallbackGlyphs(), false
+		return unmapped(v)
 	case engine.PartitionByChosenHouse:
 		// The split routes every read card two ways, which is the same shape a
 		// Conditional's two branches take: the cards of the chosen house open the
@@ -82,31 +91,31 @@ func topActGlyphs(act engine.TopAct) ([]glyph, bool) {
 		matching := deckDestZone(v.Matching)
 		rest := deckDestZone(v.Rest)
 		if matching == "" || rest == "" {
-			return fallbackGlyphs(), false
+			return unmapped(v)
 		}
 		return []glyph{
 			{asset: "house-any", decor: decorChosen},
 			arrowTo(glyph{asset: matching}),
 			{asset: rest, punct: punctBranch},
-		}, true
+		}
 	case engine.MayDiscardLookedAt:
 		// The one card the look read, which the controller may discard, so the may
 		// mark rides the card rather than the pile it would go to.
 		return []glyph{
 			{asset: "card-back", sigil: sigilMay},
 			arrowTo(glyph{asset: "zone-discard"}),
-		}, true
+		}
 	case engine.ReorderRest:
 		// Back on top at an order the controller picks — a known position, which is
 		// what tells it from the shuffle that puts them back at no known position.
 		return []glyph{
 			{asset: "card-back", decor: decorEach | decorChosen},
 			arrowTo(glyph{asset: "zone-deck-top"}),
-		}, true
+		}
 	case engine.Shuffle:
 		// The same deck wearing the same shuffle verb the Shuffle effect draws: it is
 		// the one node that is both a step and an effect.
-		return []glyph{{asset: "zone-deck", sigil: sigilShuffle}}, true
+		return []glyph{{asset: "zone-deck", sigil: sigilShuffle}}
 	}
-	return fallbackGlyphs(), false
+	return unmapped(act)
 }

@@ -121,13 +121,13 @@ the engine.
 
 ### The census is the population
 
-The pass is proved total against the fifteen typed catalog accessors —
+The pass is proved total against the sixteen typed catalog accessors —
 `EffectCatalog()`, `ConditionCatalog()`, `CountCatalog()`,
 `RefinementCatalog()`, `SelectionCatalog()`, `SpreadCatalog()`,
 `TopActCatalog()`, `PerTargetCatalog()`, `LossCatalog()`,
 `RepeatGateCatalog()`, `QuantityCatalog()`, `GatherCatalog()`,
 `BonusIconSubjectCatalog()`, `CreatureVerbCatalog()`,
-`TargetFilterCatalog()` — and the text-bearing value enums beside them
+`TargetBuilderCatalog()`, `FilterCatalog()` — and the enums beside them
 (`Enums()`). The typed accessors are read directly rather than through
 `Families()`, because `Family.Rows` erases a node to its type name and the pass
 needs the node itself to draw it.
@@ -158,14 +158,32 @@ what the row owes the strip:
 No allowlist lives in `internal/web`. The reason a node draws nothing is recorded
 in `internal/engine`, beside the reason it teaches no rule, so the two judgements
 cannot drift apart and neither can be made twice. Across `Effect`, `Condition`,
-`Count` and `TargetFilter`, `Silent` never co-occurs with a `Term`, so the rule
+`Count` and `Filter`, `Silent` never co-occurs with a `Term`, so the rule
 needs no exception clause for a rule-bearing node that prints nothing.
 
-### The abstract unknown glyph is not part of the contract
+### The abstract unknown glyph is gone
 
-`fallbackGlyphs` and `glyph-unknown` are scaffolding for the work of drawing the
-families, not a picture a player is meant to see. Once every rule-bearing row
-draws, an unmapped node is a **build failure**, not a glyph.
+`fallbackGlyphs` and `glyph-unknown` were scaffolding for the work of drawing the
+families, not a picture a player was meant to see. Every rule-bearing row of
+every gated family now draws a real, distinct glyph, which proves the fallback
+unreachable, so it is deleted — along with the `covered` flag that was its only
+reason to exist. A family returns its glyphs and whether it claimed the node; a
+`glyphLine` is its triggers and its glyphs.
+
+An unmapped node is now a **build failure**, not a glyph. The split is a
+package-level variable, `unmappedGlyphsPanic`, rather than a build tag, so the
+shipped and the tested binaries run one code path:
+
+- Under test it is set (`icon_test.go`) and an unmapped node panics, so the hole
+  is loud where it can be fixed.
+- In the shipped client it is unset and an unmapped node draws nothing, leaving
+  the mechanic to the rules text beside the strip. The client is a wasm binary
+  where a panic is a blank page, which is a worse answer than a short strip.
+
+`TestEveryCardLineDraws` is what the fallback tripwire became: it renders every
+card's full strip through `cardGlyphs` — the walk that alone reaches the
+continuous rules and the trigger heads — and fails on a line that draws nothing,
+on a trigger head naming no asset, and on a glyph naming no asset.
 
 ### The card walk survives, and this is why
 
@@ -181,14 +199,30 @@ it as redundant would lose two things the census cannot give:
   sequence — which a bare catalogued node, filled only as far as it needs to
   render, never forms.
 
-### The Target filter family is deferred
+### The Filter family is drawn an axis at a time
 
-`TargetFilterCatalog()` is catalogued but not yet drawn. Its axes are unexported
-fields on `engine.Target`, so the pass cannot read the filter a row applies, and
-drawing it would mean re-deriving the filter from its rendered text. It is drawn
-once the `replace-target-s-filter-methods` goal replaces those methods with a
-comparable exported `engine.Filter`; this work waits on that goal rather than
-building a reader for a shape that is about to change.
+`FilterCatalog()` is the census of the axes a card narrows a target by, and each
+axis draws its own glyph. Three of them reshape the noun — a card type, a
+gigantic creature, a card named outright — because that is what they do in the
+printed text, where "each creature" becomes "each artifact"; every other axis
+draws a run after the noun, in the order the text prints its adjectives and
+clauses. `MatchAny` draws no mark at all: it is the filter's "or", so it
+punctuates the axes it disjoins with the divider a `ChooseOne`'s options use.
+
+One axis per glyph rather than one picture per kind of target is what keeps the
+drawing composable. `targetGlyph` draws the `Kind`'s noun alone and
+`filterGlyphs` draws the narrowing over it, so the decomposition of the
+board-scanning `TargetKind` constants into quantifier, side and type axes
+changes which noun is handed in and nothing else.
+
+Drawing it had to wait for the `replace-target-s-filter-methods` goal: the axes
+were unexported fields reached through builder methods, so the pass could not
+read the filter a target applied and would have had to re-derive it from the
+rendered text.
+
+`Target`'s own four rows (`With`, `Refine`, `AndNeighbors`, `NeighborsOf`) are
+plumbing that defers to another census — a `Filter`, a `Refinement`, a
+`NeighborMode` — so `Target` is the one family that draws nothing of its own.
 
 The glyph families and the `decor` / `sigil` axes the drawings are composed from
 are ADR 0047's, unchanged by this update.

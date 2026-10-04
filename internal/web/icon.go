@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/dmikalova/vex/internal/engine"
@@ -12,10 +13,10 @@ import (
 // and Targets. It lives here in the client, not in package engine, because the
 // engine is held at 100% coverage and an in-engine Visitor would force an icon
 // test for every one of the ~150 effect nodes; internal/web is ungated. The
-// totality test (icon_test.go) still walks every card and fails loud on any
-// effect that falls back to the abstract unknown glyph. There is no allowlist to
-// exempt one: an unmapped mechanic is a bug, and the fix is always to draw a
-// glyph, so a new mechanic cannot ship without a glyph decision.
+// totality tests (icon_test.go) walk the engine's node census and every card's
+// full strip, and fail loud on a rule-bearing node that draws nothing. There is
+// no allowlist to exempt one: an unmapped mechanic is a bug, and the fix is
+// always to draw a glyph, so a new mechanic cannot ship without a glyph decision.
 //
 // A glyph carries three axes over its noun asset (ADR 0047). decor is the subject —
 // *who* the glyph is about: an enemy or friendly tint, an "each" stack, a "chosen"
@@ -29,9 +30,10 @@ import (
 // same picture, and punctuation only where a line carries more than one clause.
 //
 // That property is the gate: TestDistinctMechanicsDrawDistinctGlyphs (icon_test.go)
-// walks every ability on every card and fails when two distinct leaf mechanics land
-// on one strip, so reusing another mechanic's picture cannot pass quietly. The four
-// same-mechanic-two-names groups are declared there as synonyms with their reason.
+// renders every rule-bearing row of every gated family of the engine's census, all
+// of them in one pool, and fails when two distinct mechanics land on one strip, so
+// reusing another mechanic's picture cannot pass quietly. The same-mechanic-two-names
+// groups are declared there as synonyms with their reason.
 
 // decor is a set of edge/overlay treatments applied to a noun glyph to carry a
 // Target's shape without spending a horizontal slot: an enemy tint, a friendly
@@ -164,7 +166,6 @@ type glyph struct {
 type glyphLine struct {
 	triggers []string // trigger glyph asset stems, in canonical order
 	glyphs   []glyph
-	covered  bool // false when the effect fell back to the abstract unknown glyph
 }
 
 // cardGlyphs is the Iconography pass: it renders a card's triggered abilities and
@@ -174,41 +175,26 @@ type glyphLine struct {
 func cardGlyphs(def *engine.CardDefinition) []glyphLine {
 	lines := make([]glyphLine, 0, len(def.Abilities)+len(def.ConstantAbilities)+2)
 	if kw := keywordGlyphs(def); len(kw) > 0 {
-		lines = append(lines, glyphLine{
-			glyphs:  kw,
-			covered: true,
-		})
+		lines = append(lines, glyphLine{glyphs: kw})
 	}
 	if def.FightRestriction.Narrows() {
-		lines = append(lines, glyphLine{
-			glyphs:  fightRestrictionGlyphs(),
-			covered: true,
-		})
+		lines = append(lines, glyphLine{glyphs: fightRestrictionGlyphs()})
 	}
 	if def.DrawModifier.Amount != 0 {
-		lines = append(lines, glyphLine{
-			glyphs:  drawModifierGlyphs(def.DrawModifier),
-			covered: true,
-		})
+		lines = append(lines, glyphLine{glyphs: drawModifierGlyphs(def.DrawModifier)})
 	}
 	lines = append(lines, staticLines(def.Static)...)
 	lines = append(lines, restrictionLines(def.Restricts)...)
 	if def.Replaces != (engine.Instead{}) {
-		lines = append(lines, glyphLine{
-			glyphs:  replaceGlyphs(def.Replaces),
-			covered: true,
-		})
+		lines = append(lines, glyphLine{glyphs: replaceGlyphs(def.Replaces)})
 	}
 	if len(def.KeyCostChanges) > 0 {
-		lines = append(lines, glyphLine{
-			glyphs:  keyCostChangeGlyphs(),
-			covered: true,
-		})
+		lines = append(lines, glyphLine{glyphs: keyCostChangeGlyphs()})
 	}
 	lines = append(lines, cardFeatureLines(def)...)
 	for i := 0; i < len(def.Abilities); {
 		ab := def.Abilities[i]
-		gs, covered := effectGlyphs(ab.Effect)
+		gs := effectGlyphs(ab.Effect)
 		triggers := []string{triggerIcon(ab.Trigger)}
 		j := i + 1
 		if isActionTrigger(ab.Trigger) {
@@ -223,7 +209,6 @@ func cardGlyphs(def *engine.CardDefinition) []glyphLine {
 		lines = append(lines, glyphLine{
 			triggers: triggers,
 			glyphs:   gs,
-			covered:  covered,
 		})
 		i = j
 	}
@@ -236,26 +221,19 @@ func cardGlyphs(def *engine.CardDefinition) []glyphLine {
 // glyphFamilies is the dispatch chain the Iconography pass runs an effect down:
 // each family claims the effect types of one mechanic domain, coarsely mirroring
 // the engine's effect_<mechanic>.go split, and the first family to claim an effect
-// wins (ADR 0047). A family returns (glyphs, covered, ok).
-//
-// The third value is load-bearing and must not be collapsed into covered, because
-// covered = false already means something else: it says "this drew the abstract
-// unknown glyph", and four cases return real glyphs with covered = false — a Then
-// whose First is not an Effect, and PutFromPlay / PutChosen / PutCard with a
-// destination that has no glyph. A family therefore cannot signal "not mine" by
-// returning covered = false; ok is how it declines.
+// wins (ADR 0047). A family returns its glyphs and whether it claimed the effect.
 //
 // The compiler cannot see across the chain, so two families claiming the same
-// effect type would silently make the second dead code — drawing a wrong glyph
-// rather than an unknown one. TestGlyphFamiliesAreDisjoint polices that.
+// effect type would silently make the second dead code, drawing a wrong glyph.
+// TestGlyphFamiliesAreDisjoint polices that.
 //
 // The chain is filled in init rather than at its declaration because every family
 // recurses through effectGlyphs, which reads the slice, and Go rejects that as an
 // initialization cycle.
-var glyphFamilies []func(engine.Effect) (gs []glyph, covered, ok bool)
+var glyphFamilies []func(engine.Effect) (gs []glyph, claimed bool)
 
 func init() {
-	glyphFamilies = []func(engine.Effect) (gs []glyph, covered, ok bool){
+	glyphFamilies = []func(engine.Effect) (gs []glyph, claimed bool){
 		aemberEffectGlyphs,
 		damageEffectGlyphs,
 		creatureEffectGlyphs,
@@ -268,31 +246,51 @@ func init() {
 	}
 }
 
-// effectGlyphs renders one effect to its glyphs, reporting whether the effect was
-// covered by a real mapping (false means it fell back to the abstract unknown
-// glyph). It runs the effect down glyphFamilies and takes the first claim.
-func effectGlyphs(e engine.Effect) ([]glyph, bool) {
+// effectGlyphs renders one effect to its glyphs. It runs the effect down
+// glyphFamilies and takes the first claim; an effect no family claims is
+// unmapped, which draws nothing and panics under test.
+func effectGlyphs(e engine.Effect) []glyph {
 	for _, family := range glyphFamilies {
-		if gs, covered, ok := family(e); ok {
-			return gs, covered
+		if gs, claimed := family(e); claimed {
+			return gs
 		}
 	}
-	return fallbackGlyphs(), false
+	return unmapped(e)
 }
 
-// claim adapts a two-valued glyph rendering — a recursive effectGlyphs, a
-// composeGlyphs over sub-effects — into a family's three-valued return, saying
-// the family claimed the effect.
-func claim(gs []glyph, covered bool) ([]glyph, bool, bool) {
-	return gs, covered, true
+// unmappedGlyphsPanic makes an unmapped node panic rather than draw nothing. The
+// client is a wasm binary where a panic is a blank page, so the shipped pass
+// leaves an unmapped node to the rules text beside the strip; under test the same
+// hole must be loud, because a mechanic that draws nothing is exactly what the
+// icon gate exists to catch (ADR 0022). The package's tests set it (icon_test.go).
+//
+// It is a package-level variable rather than a build tag so the shipped binary
+// and the tested binary run the same code.
+var unmappedGlyphsPanic bool
+
+// unmapped is what the pass draws for a node it has no mapping for: nothing, and
+// a panic under test. Every rule-bearing node of every gated family draws a real
+// glyph (TestIconTotality), so reaching this is a hole opened by a node that
+// arrived without a glyph decision.
+func unmapped(node any) []glyph {
+	reportUnmapped(node)
+	return nil
 }
 
-// mustCompose renders sub-effects like composeGlyphs but discards the covered
-// flag: the caller has already prefixed a real glyph, so the line reads even when
-// a nested effect falls back to the abstract glyph.
-func mustCompose(effects ...engine.Effect) []glyph {
-	gs, _ := composeGlyphs(effects...)
-	return gs
+// unmappedAsset is unmapped for a seam that names one asset rather than a run of
+// glyphs — the trigger head of an ability. An empty stem draws nothing, the same
+// outcome an empty run of glyphs has.
+func unmappedAsset(node any) string {
+	reportUnmapped(node)
+	return ""
+}
+
+// reportUnmapped is the panic half of unmapped, shared by both shapes so the hole
+// is reported in one voice.
+func reportUnmapped(node any) {
+	if unmappedGlyphsPanic {
+		panic(fmt.Sprintf("iconography: %T %+v has no glyph; draw one (ADR 0022)", node, node))
+	}
 }
 
 // markVerb stamps a verb sigil on the head of an already-composed run of glyphs,
@@ -342,15 +340,6 @@ func inWindow(gs []glyph, d engine.Duration) []glyph {
 	return append(gs, glyph{asset: durationGlyph(d)})
 }
 
-// windowed adapts a two-valued glyph rendering — a recursive effectGlyphs, a
-// composeGlyphs over the effects a duration wrapper carries — into the same
-// rendering bound to a window, so a wrapper can mark what it wrapped without
-// unpacking the covered flag first. It is inWindow's counterpart the way claim is
-// a family's.
-func windowed(gs []glyph, covered bool, d engine.Duration) ([]glyph, bool) {
-	return inWindow(gs, d), covered
-}
-
 // punctuate stamps a punctuation mark on the head of an already-composed run of
 // glyphs, which is how a family says where a clause begins without threading the
 // mark through the helper that built it. An empty run is left alone.
@@ -361,32 +350,17 @@ func punctuate(gs []glyph, p punct) []glyph {
 	return gs
 }
 
-// composeGlyphs renders a run of sub-effects one after another, reporting covered
-// only when every sub-effect maps to a real glyph.
-func composeGlyphs(effects ...engine.Effect) ([]glyph, bool) {
+// composeGlyphs renders a run of sub-effects one after another.
+func composeGlyphs(effects ...engine.Effect) []glyph {
 	out := make([]glyph, 0, len(effects)*2)
-	covered := true
 	for _, e := range effects {
-		gs, c := effectGlyphs(e)
-		out = append(out, gs...)
-		covered = covered && c
+		out = append(out, effectGlyphs(e)...)
 	}
-	return out, covered
-}
-
-// fallbackGlyphs renders a node the pass does not yet map as the single abstract
-// "unknown" glyph. The strip is pure icons — no words — so an unmapped mechanic
-// shows a placeholder sigil rather than its printed text (ADR 0022).
-//
-// It takes no node: the picture does not depend on what went undrawn, and every
-// family that falls back reaches for the same one — an effect in the glyph family
-// chain, a count in countGlyphs.
-func fallbackGlyphs() []glyph {
-	return []glyph{{asset: "glyph-unknown"}}
+	return out
 }
 
 // effectTypeName is the effect's concrete Go type name (e.g. "engine.DealDamage"),
-// used by the totality test to name an uncovered effect.
+// used by the totality test to name an effect that draws nothing.
 func effectTypeName(e engine.Effect) string {
 	return reflect.TypeOf(e).String()
 }

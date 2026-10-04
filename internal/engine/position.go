@@ -29,9 +29,11 @@ const (
 	PositionLeftOfSource
 )
 
-// allPositions returns every real position, so the census enumerates them rather
-// than keeping a list a new value would fall out of.
-func allPositions() []Position {
+// Positions returns every real position, so the census enumerates them rather
+// than keeping a list a new value would fall out of. It is exported for the
+// client's icon vocabulary, which walks it to prove it draws each place
+// (TestFilterPositionsDraw in internal/web).
+func Positions() []Position {
 	return []Position{
 		PositionOnFlank,
 		PositionNotOnFlank,

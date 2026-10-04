@@ -14,8 +14,8 @@ import (
 // TestTargetGlyphCoversEveryTargetKind walks engine.TargetKinds() and fails on any
 // kind that draws no noun of its own. The strip is pure icons (ADR 0022), so a
 // kind that fell through used to render the target's printed phrase as a worded
-// chip — the target-side equivalent of the unknown glyph, and one the card-walking
-// totality tests missed, because a chip is not the unknown asset. Six
+// chip — a real glyph as far as the card-walking totality tests could tell, so
+// they missed it. Six
 // context-reference kinds (TargetEachNeighbor, TargetEachUpgradeOnThis,
 // TargetGrantingCard, TargetAttachedHost, TargetTheSameCreature,
 // TargetFormerNeighbors) shipped that way.
@@ -50,14 +50,10 @@ func TestKindlessTargetDrawsTheAbstractCard(t *testing.T) {
 // for a parameter too large to picture: engine.Trait has 70 members and a printed
 // card name can be any card in the pool, so each draws one mark with the specific
 // value left to the rules text beside the strip (ADR 0022). They must be distinct
-// from each other — a trait and a named card are different questions — and neither
-// may borrow the unknown glyph, which says the pass failed to map a mechanic.
+// from each other: a trait and a named card are different questions.
 func TestTraitAndNameMarksAreDrawn(t *testing.T) {
 	trait, name := traitGlyph(), nameGlyph()
 	for _, g := range []glyph{trait, name} {
-		if g.asset == "glyph-unknown" {
-			t.Errorf("%+v borrows the unknown glyph; draw it a mark of its own", g)
-		}
 		if !assetExists(t, g.asset) {
 			t.Errorf("no web/assets/%s.svg", g.asset)
 		}
@@ -69,11 +65,11 @@ func TestTraitAndNameMarksAreDrawn(t *testing.T) {
 
 // TestDestinationGlyphCoversEveryDestination walks engine.Destinations() and
 // fails on a destination that draws no zone. destinationGlyph returns "" for an
-// unmapped one and the zone-move effects reading it fall back to the unknown
-// glyph, so the hole only shows once a card names that destination; the census
-// guards Destinations() complete against the source, so this catches it first
+// unmapped one and the zone-move effects reading it report it unmapped, so the
+// hole only shows once a card names that destination; the census guards
+// Destinations() complete against the source, so this catches it first
 // (ADR 0022). The Yours variants redirect the same zone, so they draw the same
-// glyph and are covered by the plain ones.
+// glyph and this walk reaches them through the plain ones.
 func TestDestinationGlyphCoversEveryDestination(t *testing.T) {
 	for _, d := range engine.Destinations() {
 		name := destinationGlyph(d)
@@ -161,9 +157,8 @@ func glyphKey(gs []glyph) string {
 // of existing assets, so "stun it" cannot draw what "exhaust it" draws.
 //
 // The gate rests on creatureVerbGlyphs having a default arm. Without one an
-// unlisted verb contributed no glyph at all, and the strip quietly said the
-// creature was chosen and nothing happened to it — covered, drawn, and wrong
-// (ADR 0022).
+// unlisted verb would fall out of the switch silently, and the strip would say the
+// creature was chosen and nothing happened to it (ADR 0022).
 func TestEveryCreatureVerbDraws(t *testing.T) {
 	assertFamilyDraws(t, "CreatureVerb")
 	assertFamilyRowsDrawApart(t, "CreatureVerb")
@@ -185,17 +180,28 @@ func TestVerbGlyphsCoverEveryCreatureVerb(t *testing.T) {
 	}
 }
 
-// TestAnUnlistedCreatureVerbDrawsUnknown pins the default arm itself: a verb the
-// pass does not map draws the unknown glyph, which is what every gate in the pass
-// fails on. It is the one behaviour the catalogued rows cannot show, since all
-// seven of them are mapped.
-func TestAnUnlistedCreatureVerbDrawsUnknown(t *testing.T) {
-	gs, covered := creatureVerbGlyphs(engine.GainKeywordVerb{})
-	if covered {
-		t.Fatalf("an unmapped verb drew %+v as covered, want the unknown glyph", gs)
-	}
-	if len(gs) != 1 || gs[0].asset != "glyph-unknown" {
-		t.Errorf("an unmapped verb drew %+v, want the unknown glyph", gs)
+// TestAnUnlistedCreatureVerbIsLoudUnderTest pins both halves of the unmapped
+// seam on the one family that can reach it: a GainKeywordVerb naming a keyword
+// with no icon is a node the pass cannot draw, so under test it panics, and with
+// the testing flag off it draws nothing rather than taking the client down — the
+// client is a wasm binary where a panic is a blank page (icon.go).
+//
+// It is the one behaviour the catalogued rows cannot show, since every one of them
+// is mapped.
+func TestAnUnlistedCreatureVerbIsLoudUnderTest(t *testing.T) {
+	verb := engine.GainKeywordVerb{}
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Error("an unmapped verb drew quietly under test, want a panic")
+			}
+		}()
+		creatureVerbGlyphs(verb)
+	}()
+	unmappedGlyphsPanic = false
+	defer func() { unmappedGlyphsPanic = true }()
+	if gs := creatureVerbGlyphs(verb); len(gs) != 0 {
+		t.Errorf("an unmapped verb drew %+v in the shipped pass, want nothing", gs)
 	}
 }
 

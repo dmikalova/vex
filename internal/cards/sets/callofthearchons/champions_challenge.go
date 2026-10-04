@@ -19,12 +19,12 @@ var ChampionsChallenge = set.New(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Destroy{
 				Target: card.Target.EachEnemyCreature.Refine(
-					card.Refine.Except(card.Refine.MostPowerful),
+					card.AllExcept{Inner: card.Refine.MostPowerful},
 				),
 			},
 			card.Destroy{
 				Target: card.Target.EachFriendlyCreature.Refine(
-					card.Refine.Except(card.Refine.MostPowerful),
+					card.AllExcept{Inner: card.Refine.MostPowerful},
 				),
 			},
 			card.OnChooseCreature{

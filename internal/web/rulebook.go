@@ -14,6 +14,10 @@ import (
 // code that enforces it. The engine owns the rules; this page only draws them,
 // rendering each term's Markdown body (see markdown.go) and topping the page with
 // a table of contents.
+//
+// Each heading also carries the glyphs the term's catalogued nodes draw
+// (rulebook_legend.go), so the page that teaches a rule is also the page that
+// teaches its picture.
 
 // NewRulebook returns the root component for the /rulebook page.
 func NewRulebook() app.Composer { return &rulebook{} }
@@ -28,8 +32,9 @@ type rulebook struct {
 // appears without a manual refresh (the same hand-off the game and gallery use).
 func (r *rulebook) OnAppUpdate(ctx app.Context) { ctx.Reload() }
 
-// Render draws the overview, a table of contents, then each rulebook section with
-// its intro and term groups, in the engine's canonical order.
+// Render draws the overview, the glyph note, a table of contents, then each
+// rulebook section with its intro and term groups, in the engine's canonical
+// order.
 func (r *rulebook) Render() app.UI {
 	book := engine.RuleBook()
 	body := []app.UI{docHeader("/rulebook")}
@@ -37,7 +42,7 @@ func (r *rulebook) Render() app.UI {
 		body = append(body, app.Section().Class("doc-section").
 			Body(renderMarkdown(overview)...))
 	}
-	body = append(body, r.toc(book))
+	body = append(body, legendNote(), r.toc(book))
 	for _, sec := range book {
 		body = append(body, r.section(sec))
 	}
@@ -72,9 +77,12 @@ func (r *rulebook) toc(book []engine.RuleSection) app.UI {
 }
 
 // section draws one rulebook section: its heading (an anchor target for the table
-// of contents), its intro, and its groups.
+// of contents, carrying the glyphs of a term that folds into it), its intro, and
+// its groups.
 func (r *rulebook) section(sec engine.RuleSection) app.UI {
-	items := []app.UI{app.H2().Class("doc-h2").ID(docSlug(sec.Title)).Text(sec.Title)}
+	items := []app.UI{
+		app.H2().Class("doc-h2").ID(docSlug(sec.Title)).Body(headingBody(sec.Title)...),
+	}
 	if sec.Intro != "" {
 		items = append(items, renderMarkdown(sec.Intro)...)
 	}
@@ -85,11 +93,13 @@ func (r *rulebook) section(sec engine.RuleSection) app.UI {
 }
 
 // group draws one term group: a heading (an anchor target, suppressed when it
-// repeats the section's own), then each part's subheading and Markdown body.
+// repeats the section's own) carrying the glyphs the term's nodes draw, then each
+// part's subheading and Markdown body.
 func (r *rulebook) group(sectionTitle string, gr engine.RuleGroup) []app.UI {
 	var out []app.UI
 	if !strings.EqualFold(gr.Title, sectionTitle) {
-		out = append(out, app.H3().Class("doc-h3").ID(docSlug(gr.Title)).Text(gr.Title))
+		out = append(out, app.H3().Class("doc-h3").ID(docSlug(gr.Title)).
+			Body(headingBody(gr.Title)...))
 	}
 	for _, p := range gr.Parts {
 		if p.Subtitle != "" {

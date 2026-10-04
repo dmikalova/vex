@@ -20,7 +20,7 @@ var Tertiate = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
 			Target: card.Target.EachCreature.Refine(
-				card.Refine.PortionPerSide(card.ThirdRoundedUp),
+				card.PortionPerSide{Share: card.ThirdRoundedUp},
 			),
 		}),
 )

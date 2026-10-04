@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/dmikalova/vex/internal/engine"
@@ -11,14 +12,11 @@ import (
 // so "if x, destroy a creature, otherwise draw a card" reads as two clauses rather
 // than one run-on sentence of four glyphs (ADR 0047).
 func TestConditionalPunctuatesItsBranches(t *testing.T) {
-	gs, covered := effectGlyphs(engine.Conditional{
+	gs := effectGlyphs(engine.Conditional{
 		Cond: engine.PoolAember{Player: engine.Opponent, Is: engine.AtLeast, Amount: 7},
 		Then: engine.Destroy{Target: engine.Target{Kind: engine.TargetChosenCreature}},
 		Else: engine.Draw{Amount: 1},
 	})
-	if !covered {
-		t.Fatal("a Conditional over two drawn effects should be covered")
-	}
 	if len(gs) != 3 {
 		t.Fatalf("want 3 glyphs (destroy → creature, draw), got %d: %+v", len(gs), gs)
 	}
@@ -37,7 +35,7 @@ func TestConditionalPunctuatesItsBranches(t *testing.T) {
 // opener, not half of a pair: a Conditional with no Else still marks where its
 // consequence begins.
 func TestConditionalWithNoElseStillOpensItsClause(t *testing.T) {
-	gs, _ := effectGlyphs(engine.Conditional{
+	gs := effectGlyphs(engine.Conditional{
 		Cond: engine.PoolAember{Player: engine.Opponent, Is: engine.AtLeast, Amount: 7},
 		Then: engine.Draw{Amount: 1},
 	})
@@ -55,14 +53,11 @@ func TestConditionalWithNoElseStillOpensItsClause(t *testing.T) {
 // divider, so a choice reads as alternatives rather than as a sequence of things
 // that all happen. The choose glyph itself heads the run and takes no mark.
 func TestChooseOneDividesItsOptions(t *testing.T) {
-	gs, covered := effectGlyphs(engine.ChooseOne{Options: []engine.Effect{
+	gs := effectGlyphs(engine.ChooseOne{Options: []engine.Effect{
 		engine.GainAember{Amount: 1},
 		engine.Draw{Amount: 1},
 		engine.Stun{Target: engine.Target{Kind: engine.TargetChosenEnemyCreature}},
 	}})
-	if !covered {
-		t.Fatal("a ChooseOne over drawn options should be covered")
-	}
 	if len(gs) < 4 || gs[0].asset != "glyph-choose" || gs[0].punct != punctNone {
 		t.Fatalf("glyphs = %+v, want an unmarked choose glyph heading the run", gs)
 	}
@@ -82,14 +77,11 @@ func TestChooseOneDividesItsOptions(t *testing.T) {
 // entirely, so a timed effect and an immediate one drew the same picture; the turn
 // marker is now appended to the run (ADR 0047).
 func TestDurationWrapperDrawsItsWindow(t *testing.T) {
-	timed, covered := effectGlyphs(engine.ForDuration{
+	timed := effectGlyphs(engine.ForDuration{
 		Duration: engine.RemainderOfPlayerTurn,
 		Effects:  []engine.Effect{engine.GainAember{Amount: 1}},
 	})
-	if !covered {
-		t.Fatal("a ForDuration over a drawn effect should be covered")
-	}
-	immediate, _ := effectGlyphs(engine.GainAember{Amount: 1})
+	immediate := effectGlyphs(engine.GainAember{Amount: 1})
 	if len(timed) != len(immediate)+1 {
 		t.Fatalf("timed = %+v, immediate = %+v, want one more glyph", timed, immediate)
 	}
@@ -113,16 +105,13 @@ func TestEveryRepeatGateDraws(t *testing.T) {
 // the controller may take again, and a loop paid for by exalting a creature all
 // drew one picture — the picture of doing the thing once.
 func TestRepeatDrawsTheGateItLoopsOn(t *testing.T) {
-	once, _ := effectGlyphs(engine.Draw{Amount: 1})
-	paid, covered := effectGlyphs(engine.Repeat{
+	once := effectGlyphs(engine.Draw{Amount: 1})
+	paid := effectGlyphs(engine.Repeat{
 		Do: engine.Draw{Amount: 1},
 		Gate: engine.ByExalting{
 			Creature: engine.Target{Kind: engine.TargetChosenFriendlyCreature},
 		},
 	})
-	if !covered {
-		t.Fatal("a repeat paid for by exalting should be covered")
-	}
 	if len(paid) != len(once)+2 {
 		t.Fatalf("paid repeat = %+v, want the effect plus the cost it charges", paid)
 	}
@@ -137,21 +126,36 @@ func TestRepeatDrawsTheGateItLoopsOn(t *testing.T) {
 
 // TestLoopingGatesFoldIntoTheirCondition pins what the census calls these two:
 // plumbing. A While adds the condition it loops on behind the gate mark and
-// nothing else, and a MayWhile adds the may mark to say the controller chooses
-// each further pass — so the two are told apart by that mark rather than by a
-// drawing neither of them owes.
+// nothing else, and a MayWhileYouDo adds the may mark to say the controller
+// chooses each further pass — so the two are told apart by that mark rather than
+// by a drawing neither of them owes.
 func TestLoopingGatesFoldIntoTheirCondition(t *testing.T) {
 	cond := engine.Overwhelmed{}
-	free, freeCovered := repeatGateGlyphs(engine.While{Cond: cond})
-	chosen, chosenCovered := repeatGateGlyphs(engine.MayWhile{Cond: cond})
-	if !freeCovered || !chosenCovered {
-		t.Fatal("the looping gates drew no real glyph")
+	free := repeatGateGlyphs(engine.While{Cond: cond})
+	chosen := repeatGateGlyphs(engine.MayWhileYouDo{Cond: cond})
+	if len(free) == 0 || len(chosen) == 0 {
+		t.Fatal("the looping gates drew no glyph")
 	}
-	plain, _ := conditionGlyphs(cond)
+	plain := conditionGlyphs(cond)
 	if len(free) != len(plain) || free[0].punct != punctGate {
 		t.Errorf("a while loop = %+v, want the gated condition %+v", free, plain)
 	}
 	if chosen[0].sigil != sigilMay {
 		t.Errorf("a may-while loop = %+v, want the may mark on its condition", chosen)
+	}
+}
+
+// TestWhileYouDoDrawsLikeWhile pins that the result-gate arrow WhileYouDo's text
+// wears for "only while the effect keeps happening" is a wording difference, not
+// a second picture: it folds into its condition exactly as While does.
+func TestWhileYouDoDrawsLikeWhile(t *testing.T) {
+	cond := engine.Overwhelmed{}
+	free := repeatGateGlyphs(engine.While{Cond: cond})
+	result := repeatGateGlyphs(engine.WhileYouDo{Cond: cond})
+	if len(result) == 0 {
+		t.Fatal("WhileYouDo drew no glyph")
+	}
+	if fmt.Sprintf("%+v", free) != fmt.Sprintf("%+v", result) {
+		t.Errorf("WhileYouDo drew %+v, want the same strip as While %+v", result, free)
 	}
 }

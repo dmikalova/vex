@@ -11,10 +11,10 @@ import (
 
 // TestKeywordIconCoversEveryKeyword walks engine.Keywords() and fails on a
 // keyword with no drawn glyph. keywordIcon returns "" for an unmapped keyword and
-// every caller skips an empty asset, so such a keyword vanishes from the strip
-// rather than drawing the unknown glyph the effect level fails on — the same
-// silent hole, one vocabulary down (ADR 0022). The census guards Keywords()
-// complete against the source, so a new keyword cannot hide from this test.
+// every caller skips an empty asset, so such a keyword vanishes from the strip —
+// the same silent hole the effect level fails on, one vocabulary down (ADR 0022).
+// The census guards Keywords() complete against the source, so a new keyword
+// cannot hide from this test.
 func TestKeywordIconCoversEveryKeyword(t *testing.T) {
 	for _, k := range engine.Keywords() {
 		name := keywordIcon(k)

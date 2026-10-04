@@ -37,46 +37,45 @@ import "github.com/dmikalova/vex/internal/engine"
 // a ProducedThisWay names draws what its dedicated count draws, tinted with whose
 // share it reads.
 
-// countGlyphs renders a Count as the noun it totals, reporting whether a real
-// mapping covered it. A count with no mapping draws the abstract unknown glyph,
-// which is what the icon gate fails on: the Count family is gated
+// countGlyphs renders a Count as the noun it totals. A count with no mapping
+// draws nothing, which is what the icon gate fails on: the Count family is gated
 // (TestEveryCountDraws, TestIconTotality), so every row here draws.
-func countGlyphs(c engine.Count) ([]glyph, bool) {
+func countGlyphs(c engine.Count) []glyph {
 	switch v := c.(type) {
 	case engine.Fixed:
-		return nil, true
+		return nil
 
 	// The Æmber economy.
 	case engine.AemberInPool:
-		return []glyph{{asset: "aember", decor: playerDecor(v.Player)}}, true
+		return []glyph{{asset: "aember", decor: playerDecor(v.Player)}}
 	case engine.AemberOnThis:
-		return []glyph{{asset: "aember", decor: decorThis}}, true
+		return []glyph{{asset: "aember", decor: decorThis}}
 	case engine.AemberOnFriendlyCreatures:
-		return []glyph{{asset: "aember"}, creaturesCounted(decorFriendly)}, true
+		return []glyph{{asset: "aember"}, creaturesCounted(decorFriendly)}
 	case engine.AemberStolenThisEvent:
 		// The theft that fired the trigger took this Æmber from the controller's own
 		// pool, so the noun is untinted; the steal verb is what it just suffered.
-		return []glyph{{asset: "aember", sigil: sigilSteal}}, true
+		return []glyph{{asset: "aember", sigil: sigilSteal}}
 
 	// Keys. A forged key draws the forge, an unforged one the bare key, which is
 	// the same pair the player bar already shows on the board.
 	case engine.ForgedKeys:
-		return []glyph{{asset: "forge", decor: playerDecor(v.Player)}}, true
+		return []glyph{{asset: "forge", decor: playerDecor(v.Player)}}
 	case engine.UnforgedKeys:
-		return []glyph{{asset: "key", decor: playerDecor(v.Player)}}, true
+		return []glyph{{asset: "key", decor: playerDecor(v.Player)}}
 
 	// The board: what is in play, and how the sides compare.
 	case engine.CardsInPlay:
-		return cardsInPlayCountGlyphs(v), true
+		return cardsInPlayCountGlyphs(v)
 	case engine.ExcessCreatures:
-		return excessCreaturesGlyphs(v), true
+		return excessCreaturesGlyphs(v)
 	case engine.ArtifactsInPlay:
-		return []glyph{{asset: "type-artifact", decor: decorEach}}, true
+		return []glyph{{asset: "type-artifact", decor: decorEach}}
 	case engine.UpgradesOn:
-		return []glyph{
-			{asset: "type-upgrade", decor: decorEach},
-			targetGlyph(v.Target),
-		}, true
+		return append(
+			[]glyph{{asset: "type-upgrade", decor: decorEach}},
+			targetGlyphs(v.Target)...,
+		)
 	case engine.HousesInPlay:
 		// Every card in play, both sides, minus one excepted house — the emblem
 		// behind the refusal mark, the way every other barred thing is drawn.
@@ -84,130 +83,129 @@ func countGlyphs(c engine.Count) ([]glyph, bool) {
 		if a := houseIconName(v.Except); a != "" {
 			gs = append(gs, glyph{asset: a}, glyph{asset: "glyph-ban"})
 		}
-		return gs, true
+		return gs
 	case engine.HousesAmong:
 		return housesAmongGlyphs(glyph{
-			asset: countedCardAsset(v.Type),
+			asset: countedCardAsset(v.Filter.Type),
 			decor: decorEach | playerDecor(v.Player),
-		}), true
+		})
 
 	// One card's own measurements.
 	case engine.DamageOnThis:
-		return []glyph{{asset: "damage", decor: decorThis}}, true
+		return []glyph{{asset: "damage", decor: decorThis}}
 	case engine.CountersOnThis:
 		if a := counterAsset(v.Kind); a != "" {
-			return []glyph{{asset: a, decor: decorThis}}, true
+			return []glyph{{asset: a, decor: decorThis}}
 		}
-		return fallbackGlyphs(), false
+		return unmapped(v)
 	case engine.PowerCountersOnThis:
-		return []glyph{{asset: "power-counter-plus", decor: decorThis}}, true
+		return []glyph{{asset: "power-counter-plus", decor: decorThis}}
 	case engine.PowerOfChosen:
 		// The Of fraction ("half its power, rounded down") stays in the rules text: a
 		// count draws the noun it totals, and a numeral on the power noun is already
 		// this vocabulary's power threshold (cardsInPlayCountGlyphs).
-		return []glyph{{asset: "power", decor: decorChosen}}, true
+		return []glyph{{asset: "power", decor: decorChosen}}
 	case engine.TraitsOfChosen:
 		return []glyph{
 			{asset: "glyph-trait", decor: decorEach},
 			{asset: "type-creature", decor: decorChosen},
-		}, true
+		}
 	case engine.BonusIconsOf:
-		over, covered := bonusIconSubjectGlyphs(v.Over)
 		return append(
 			[]glyph{{asset: bonusCountAsset(v.Kind), decor: decorEach}},
-			over...,
-		), covered
+			bonusIconSubjectGlyphs(v.Over)...,
+		)
 
 	// The battleline around a card.
 	case engine.NeighborsOfThis:
-		return neighborCountGlyphs(decorThis), true
+		return neighborCountGlyphs(decorThis)
 	case engine.NeighborsMatching:
 		// The neighbors of the card in context, not of this one, so the battleline
 		// mark wears the chosen outline rather than the self marker.
-		return neighborCountGlyphs(decorChosen, houseFilterGlyphs(v.House)...), true
+		return neighborCountGlyphs(decorChosen, houseFilterGlyphs(v.Filter.House)...)
 	case engine.CombinedPowerOfNeighborsWithout:
 		// A measure of the same set rather than a count of it, so the power noun
 		// leads the neighbors it totals, as it does for the destroyed-power tally.
 		return append(
 			[]glyph{{asset: "power"}},
 			neighborCountGlyphs(decorThis, traitGlyph(), glyph{asset: "glyph-ban"})...,
-		), true
+		)
 
 	// Zones: how many cards a pile holds.
 	case engine.CardsInHand:
 		return append(
 			houseChoiceGlyphs(v.House),
 			glyph{asset: "zone-hand", decor: decorEach | playerDecor(v.Player)},
-		), true
+		)
 	case engine.CardsInZone:
 		if a := zoneAsset(v.Zone); a != "" {
-			return []glyph{{asset: a, decor: decorEach | playerDecor(v.Player)}}, true
+			return []glyph{{asset: a, decor: decorEach | playerDecor(v.Player)}}
 		}
-		return fallbackGlyphs(), false
+		return unmapped(v)
 	case engine.CopiesInDiscard:
 		// A copy of this card by name, so the nameplate wears the self marker: the
 		// pile is searched for one printed name rather than for any card.
 		return []glyph{
 			{asset: "glyph-name", decor: decorEach | decorThis},
 			{asset: "zone-discard"},
-		}, true
+		}
 	case engine.PurgedCards:
 		// Every card in the purge pile, which is the pile itself — the same shape
 		// CardsInZone draws for a pile, where CardsPurged counts one purge's tally.
-		return []glyph{{asset: "zone-purge", decor: decorEach}}, true
+		return []glyph{{asset: "zone-purge", decor: decorEach}}
 
 	// The turn so far.
 	case engine.CardsPlayed:
 		return thisTurn(append(
-			houseFilterGlyphs(v.House),
+			houseFilterGlyphs(v.Filter.House),
 			glyph{asset: "glyph-play", decor: decorEach | playerDecor(v.Player)},
-		)), true
+		))
 	case engine.CreaturesUsed:
 		return thisTurn([]glyph{
 			creaturesCounted(playerDecor(v.Player)),
 			{asset: "glyph-action"},
-		}), true
+		})
 	case engine.TurnCount:
 		if gs := turnStatGlyphs(v.Of); len(gs) > 0 {
-			return thisTurn(tintSubject(gs, v.Player)), true
+			return thisTurn(tintSubject(gs, v.Player))
 		}
-		return fallbackGlyphs(), false
+		return unmapped(v)
 
 	// Tallies an earlier effect in the same resolution left behind.
 	case engine.CardsDestroyed:
-		return destroyedThisWayGlyphs(cardsCounted(0)), true
+		return destroyedThisWayGlyphs(cardsCounted(0))
 	case engine.CreaturesDestroyed:
-		return destroyedThisWayGlyphs(creaturesCounted(0)), true
+		return destroyedThisWayGlyphs(creaturesCounted(0))
 	case engine.PowerDestroyedThisWay:
 		// The power the destruction took off the board rather than its head count,
 		// so the measure leads the same noun the head count draws.
 		return append(
 			[]glyph{{asset: "power"}},
 			destroyedThisWayGlyphs(creaturesCounted(0))...,
-		), true
+		)
 	case engine.CardsShuffledIntoDeck:
-		return shuffledHomeGlyphs(0), true
+		return shuffledHomeGlyphs(0)
 	case engine.ProducedThisWay:
 		return producedTallyGlyphs(v)
 	case engine.CardsPurged:
 		return []glyph{
-			{asset: countedCardAsset(v.Type), decor: decorEach},
+			{asset: countedCardAsset(v.Noun), decor: decorEach},
 			{asset: "zone-purge"},
-		}, true
+		}
 	case engine.CardsRevealed:
 		revealed := cardsCounted(0)
 		revealed.sigil = sigilReveal
-		return []glyph{revealed}, true
+		return []glyph{revealed}
 	case engine.CreaturesHealed:
-		return []glyph{creaturesCounted(0), {asset: "glyph-heal"}}, true
+		return []glyph{creaturesCounted(0), {asset: "glyph-heal"}}
 	case engine.DamageHealed:
-		return []glyph{{asset: "damage"}, {asset: "glyph-heal"}}, true
+		return []glyph{{asset: "damage"}, {asset: "glyph-heal"}}
 	case engine.DamagePrevented:
 		// The damage the armor absorbed, so the damage noun leads the armor that
 		// spent itself stopping it.
-		return []glyph{{asset: "damage"}, {asset: "shield"}}, true
+		return []glyph{{asset: "damage"}, {asset: "shield"}}
 	}
-	return fallbackGlyphs(), false
+	return unmapped(c)
 }
 
 // cardsInPlayCountGlyphs draws the one count that carries filters of its own: the
@@ -220,20 +218,20 @@ func countGlyphs(c engine.Count) ([]glyph, bool) {
 // Count role — "if there are 2 or more friendly creatures in play" — so the
 // Condition family draws them; a count ignores them.
 func cardsInPlayCountGlyphs(e engine.CardsInPlay) []glyph {
-	gs := append(houseFilterGlyphs(e.House), glyph{
-		asset: countedCardAsset(e.Type),
+	gs := append(houseFilterGlyphs(e.Filter.House), glyph{
+		asset: countedCardAsset(e.Filter.Type),
 		decor: decorEach | playerDecor(e.Player),
 	})
-	if e.Trait != 0 {
+	if e.Filter.Trait != 0 {
 		gs = append(gs, traitGlyph())
 	}
-	if e.Name != "" {
+	if e.Filter.Name != "" {
 		gs = append(gs, nameGlyph())
 	}
-	if e.MinPower > 0 {
+	if e.Filter.Power.Kind == engine.BoundAtLeast {
 		gs = append(gs, glyph{
 			asset:      "power",
-			qty:        e.MinPower,
+			qty:        e.Filter.Power.Amount,
 			comparison: engine.AtLeast,
 		})
 	}
@@ -253,7 +251,7 @@ func excessCreaturesGlyphs(e engine.ExcessCreatures) []glyph {
 	noun := creaturesCounted(playerDecor(e.Player))
 	noun.comparison = aheadOfOther(e.Player)
 	gs := []glyph{noun}
-	if e.Trait != 0 {
+	if e.Filter.Trait != 0 {
 		gs = append(gs, traitGlyph())
 	}
 	return gs
@@ -278,25 +276,24 @@ func bonusCountAsset(kind engine.BonusIcon) string {
 	return "glyph-bonus"
 }
 
-// bonusIconSubjectGlyphs draws the cards a bonus-icon count reads, reporting
-// whether a real mapping covered it: the single card an effect just put in
-// context, or the whole set its last purge removed. The BonusIconSubject family is
-// gated (TestEveryBonusIconSubjectDraws, TestIconTotality), so every row here
-// draws.
+// bonusIconSubjectGlyphs draws the cards a bonus-icon count reads: the single
+// card an effect just put in context, or the whole set its last purge removed.
+// The BonusIconSubject family is gated (TestEveryBonusIconSubjectDraws,
+// TestIconTotality), so every row here draws.
 //
 // Which noun a TheCardInContext names the card by — the discarded card, the
 // revealed one — is the wording of the clause rather than a different card, so the
 // strip draws the one card in context and leaves the noun to the rules text.
-func bonusIconSubjectGlyphs(s engine.BonusIconSubject) ([]glyph, bool) {
+func bonusIconSubjectGlyphs(s engine.BonusIconSubject) []glyph {
 	switch s.(type) {
 	case engine.TheCardInContext:
-		return []glyph{{asset: "card-back", decor: decorChosen}}, true
+		return []glyph{{asset: "card-back", decor: decorChosen}}
 	case engine.ThePurgedCards:
 		// The purge this effect just made, not the pile it added to, so the mark takes
 		// no stack: the stacked purge pile is what the PurgedCards count draws.
-		return []glyph{{asset: "zone-purge"}}, true
+		return []glyph{{asset: "zone-purge"}}
 	}
-	return fallbackGlyphs(), false
+	return unmapped(s)
 }
 
 // destroyedThisWayGlyphs draws a "destroyed this way" tally: the noun that was
@@ -315,32 +312,31 @@ func shuffledHomeGlyphs(side decor) []glyph {
 }
 
 // producedTallyGlyphs draws a tally an earlier effect in this resolution left
-// behind, reporting whether the tally has a drawing. Each one draws the picture
-// its dedicated count draws, tinted with whose share is being read, because the
-// two say the same thing about the same event — the tally is the per-player view
-// of it.
-func producedTallyGlyphs(c engine.ProducedThisWay) ([]glyph, bool) {
+// behind. Each one draws the picture its dedicated count draws, tinted with
+// whose share is being read, because the two say the same thing about the same
+// event — the tally is the per-player view of it.
+func producedTallyGlyphs(c engine.ProducedThisWay) []glyph {
 	side := playerDecor(c.Player)
 	switch c.Tally {
 	case engine.TallyCreaturesDestroyed:
-		return destroyedThisWayGlyphs(creaturesCounted(side)), true
+		return destroyedThisWayGlyphs(creaturesCounted(side))
 	case engine.TallyCreaturesShuffledIntoDeck:
-		return shuffledHomeGlyphs(side), true
+		return shuffledHomeGlyphs(side)
 	case engine.TallyAemberLost:
-		return []glyph{{asset: "aember", decor: side, sigil: sigilLose}}, true
+		return []glyph{{asset: "aember", decor: side, sigil: sigilLose}}
 	case engine.TallyCardsReturned:
 		// The whole tally rather than one player's share, so it takes no tint.
-		return []glyph{cardsCounted(0), {asset: "glyph-return"}}, true
+		return []glyph{cardsCounted(0), {asset: "glyph-return"}}
 	case engine.TallyCardsPurged:
-		return []glyph{cardsCounted(side), {asset: "zone-purge"}}, true
+		return []glyph{cardsCounted(side), {asset: "zone-purge"}}
 	}
-	return fallbackGlyphs(), false
+	return unmapped(c)
 }
 
 // turnStatGlyphs draws one of the engine's turn tallies as the noun it counts and
 // the verb that put it there — a creature and the reap mark for "creature that has
 // reaped this turn". It returns no glyphs for a tally with no drawing, which the
-// caller renders as the unknown glyph rather than as a bare turn marker.
+// caller reports as unmapped rather than drawing a bare turn marker.
 //
 // Which turn a tally reads — the current one or the player's previous one — is not
 // drawn, for the reason durationGlyph does not draw which turn a window lifts at:

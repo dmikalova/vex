@@ -13,10 +13,9 @@ import (
 // renderer in view_icons.go.
 
 // TestSigilMarkCoversEverySigil walks sigils() and fails on any verb that renders
-// an empty mark — neither a text mark nor an asset. A blank sigil is the verb-side
-// equivalent of the unknown glyph: it draws a badge with nothing in it, which the
-// card-walking collision test cannot see because two verbs that both draw nothing
-// still differ in the glyph struct. It mirrors TestTargetGlyphCoversEveryTargetKind
+// an empty mark — neither a text mark nor an asset. A blank sigil draws a badge
+// with nothing in it, which the card-walking collision test cannot see because two
+// verbs that both draw nothing still differ in the glyph struct. It mirrors TestTargetGlyphCoversEveryTargetKind
 // on the subject axis (ADR 0047).
 func TestSigilMarkCoversEverySigil(t *testing.T) {
 	for _, s := range sigils() {

@@ -30,7 +30,7 @@ func TestPowerBoundAdmitsIsTotal(t *testing.T) {
 			}
 		}
 	}
-	for _, kind := range allPowerBoundKinds() {
+	for _, kind := range PowerBoundKinds() {
 		if _, ok := want[kind]; !ok {
 			t.Errorf("bound kind %d has no pinned admits row; add one", kind)
 		}
@@ -57,7 +57,7 @@ func TestPowerBoundClauseIsTotal(t *testing.T) {
 		// A source-relative bound names the card rather than a number.
 		BoundLessThanSource: "each creature with lower power than " + SelfName,
 	}
-	for _, kind := range append(allPowerBoundKinds(), boundUnset) {
+	for _, kind := range append(PowerBoundKinds(), boundUnset) {
 		expected, ok := want[kind]
 		if !ok {
 			t.Fatalf("bound kind %d has no pinned clause; add one", kind)

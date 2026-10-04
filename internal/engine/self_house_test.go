@@ -16,7 +16,7 @@ func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 			RevealHand{Player: Controller, Filter: Filter{House: namedHouse(SelfHouse)}},
 			Stun{
 				Target: Target{Kind: TargetEachCreature}.With(Filter{House: namedHouse(SelfHouse)}).
-					Refine(Except(MostPowerful)),
+					Refine(AllExcept{Inner: MostPowerful}),
 			},
 			Exhaust{
 				Target: Target{

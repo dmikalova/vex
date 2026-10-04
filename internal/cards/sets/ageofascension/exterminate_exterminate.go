@@ -18,12 +18,12 @@ var ExterminateExterminate = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
 			Target: card.Target.EachCreature.With(card.Filter{House: card.Houses.Except(card.House.Self)}).
-				Refine(card.Refine.PowerLessThan(card.CardsInPlay{
+				Refine(card.PowerLessThan{Limit: card.CardsInPlay{
 					Player: card.Controller,
 					Filter: card.Filter{
 						Type:  card.Type.Creature,
 						House: card.Houses.Named(card.House.Self),
 					},
-				})),
+				}}),
 		}),
 )

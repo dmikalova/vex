@@ -131,9 +131,9 @@ the axis as a small strategy that renders its own text, not a new
   a window is not raised by one card (each `OrderableReaction` names its own),
   and a badge decorates a pick that already carries one.
 - **`Refinement` (`target.go`)** is a set-relative rule (`refine` + `clause`)
-  such as `MostPowerful` or `Except(MostPowerful)`: it narrows the ids and
-  contributes a phrase. Add a `Refinement`, not another `Target` bool, for a
-  whole-set rule.
+  such as `MostPowerful` or `AllExcept{Inner: MostPowerful}`: it narrows the
+  ids and contributes a phrase. Add a `Refinement`, not another `Target` bool,
+  for a whole-set rule.
 - **`Count` and `Condition`** are value/predicate strategies with paired text
   (`CountText` / `CondText`). A number that scales with the board is a `Count`;
   a branch is a `Condition` fed to `Conditional`.

@@ -44,9 +44,11 @@ const (
 	BoundLessThanSource
 )
 
-// allPowerBoundKinds returns every real bound kind, so the census enumerates them
-// rather than keeping a list a new kind would fall out of.
-func allPowerBoundKinds() []PowerBoundKind {
+// PowerBoundKinds returns every real bound kind, so the census enumerates them
+// rather than keeping a list a new kind would fall out of. It is exported for
+// the client's icon vocabulary, which walks it to prove it draws each comparison
+// (TestFilterPowerBoundsDraw in internal/web).
+func PowerBoundKinds() []PowerBoundKind {
 	return []PowerBoundKind{
 		BoundAtMost, BoundAtLeast, BoundExactly, BoundOdd, BoundEven, BoundLessThanSource,
 	}

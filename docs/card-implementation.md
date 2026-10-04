@@ -334,40 +334,43 @@ Three families deliberately take a bare `CardType` and **not** a `Filter`:
 
 `.Refine(r)` narrows relative to the whole selected set — a rule that compares
 candidates to each other or prompts across them — so "each enemy creature except
-the most powerful" is
-`card.Target.EachEnemyCreature.Refine(card.Refine.Except(card.Refine.MostPowerful))`.
-A test decidable one candidate at a time is a `Filter` axis instead, however much
-board it reads. A `card.Filter` is itself a `Refinement`, but only inside a union:
-`AnyOf(card.Filter{Trait: ...}, card.Filter{Power: ...})` prints the two as
-separately quantified phrases joined by "and" (Regrettable Meteor). A bare
-`Filter` passed to `.Refine` is rejected when the card is built.
+the most powerful" is `card.Target.EachEnemyCreature.Refine(…)` over
+`card.AllExcept{Inner: card.Refine.MostPowerful}`. A test decidable one candidate
+at a time is a `Filter` axis instead, however much board it reads. A `card.Filter`
+is itself a `Refinement`, but only inside a union: a `card.AnyOf` over
+`card.Filter{Trait: …}` and `card.Filter{Power: …}` prints the two as separately
+quantified phrases joined by "and" (Regrettable Meteor). A bare `Filter` passed to
+`.Refine` is rejected when the card is built.
+
+A refinement taking no parameter is a field of `card.Refine`; one taking a
+parameter is a struct literal of its own, the way `card.Filter` is.
 
 **Power:**
 
-| Refinement              | Keeps                                   |
-| ----------------------- | --------------------------------------- |
-| `MostPowerful`          | exactly one, the controller breaks ties |
-| `LeastPowerful`         | exactly one, the controller breaks ties |
-| `HighestPower`          | every creature tied at the top          |
-| `LowestPower`           | every creature tied at the bottom       |
-| `MostPowerfulN(n)`      | the top n creatures                     |
-| `PowerLessThan(count)`  | creatures below a running count         |
+| Refinement                 | Keeps                                   |
+| -------------------------- | --------------------------------------- |
+| `Refine.MostPowerful`      | exactly one, the controller breaks ties |
+| `Refine.LeastPowerful`     | exactly one, the controller breaks ties |
+| `Refine.HighestPower`      | every creature tied at the top          |
+| `Refine.LowestPower`       | every creature tied at the bottom       |
+| `MostPowerfulN{N: n}`      | the top n creatures                     |
+| `PowerLessThan{Limit: c}`  | creatures below a running count          |
 
 **Shape:**
 
-| Refinement                 | Keeps                                    |
-| -------------------------- | ---------------------------------------- |
-| `KeepPerSide(n)`           | all but n creatures per side             |
-| `PortionPerSide(fraction)` | a fraction of each side                  |
-| `SamePowerAsChosen`        | creatures matching the chosen power      |
-| `SamePowerAsEitherChosen`  | creatures matching either chosen's power |
+| Refinement                       | Keeps                                    |
+| -------------------------------- | ---------------------------------------- |
+| `KeepPerSide{N: n}`              | all but n creatures per side             |
+| `PortionPerSide{Share: f}`       | a fraction of each side                  |
+| `Refine.SamePowerAsChosen`       | creatures matching the chosen power      |
+| `Refine.SamePowerAsEitherChosen` | creatures matching either chosen's power |
 
 **Combinators:**
 
-| Refinement    | Keeps                        |
-| ------------- | ---------------------------- |
-| `Except(r)`   | everything `r` would discard |
-| `AnyOf(r...)` | the union of the refinements |
+| Refinement                   | Keeps                        |
+| ---------------------------- | ---------------------------- |
+| `AllExcept{Inner: r}`        | everything `r` would discard |
+| `AnyOf{Refinements: []…{r}}` | the union of the refinements |
 
 > For any "most/least" comparison, ties **pass**. Where an effect must pick one
 > tied candidate, the active player chooses.
