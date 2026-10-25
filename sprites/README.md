@@ -8,7 +8,7 @@ sprites yet; the UI uses the SVG icons in [web/assets](../web/assets).
 
 - [ ] Set up the tablet ([Tablet setup](#tablet-setup)).
 - [ ] Set up Aseprite ([Aseprite setup](#aseprite-setup)).
-- [ ] Choose the palette and save it as `palette/vex.gpl`
+- [x] Choose the palette and save it as `palette/material.gpl`
       ([Palette](#palette)).
 - [ ] Do the learning exercises ([Learning path](#learning-path)).
 - [ ] Draw tier 1 ([Checklist](#checklist)).
@@ -116,11 +116,29 @@ logo again by hand.
 Use one palette for all sprites. A shared palette makes the sprites look like
 one set.
 
-1. Start with [Endesga 32](https://lospec.com/palette-list/endesga-32). If 32
-   colors are too few, use
-   [Resurrect 64](https://lospec.com/palette-list/resurrect-64).
-2. Download the palette as a `.gpl` file.
+The palette is the Material Design colors. The script
+`palette/genpalette.py` generates it. It has no dependencies. The palette has
+the 19 Material ramps. Each ramp has the shades 900 to 50, from dark to light.
+Each chromatic ramp also has the accents A700 to A100. The palette also adds a
+red grey and a green grey. These are Material blue grey with a different hue,
+and they keep the lightness and chroma of each blue grey shade.
+
+The Material ramps do not have the same lightness at each shade. For example,
+yellow 500 is much lighter than blue 500. If you swap one ramp for another,
+check the value structure of the sprite again.
+
+1. Run `python3 sprites/palette/genpalette.py`. The script writes these files
+   to `palette/`:
+   - `material.gpl`: the palette for Aseprite and GIMP.
+   - `material.hex`: the palette for Lospec.
+   - `material.json`: the OKLCH lightness, chroma, and hue of each color.
+   - `material.png`: one pixel for each color.
+   - `material-preview.png`: the swatches at a larger scale. The shades are on
+     the left and the accents are on the right.
+2. To change the order of the ramps, change `RAMP_ORDER` in the script. Then
+   run the script again.
 3. In Aseprite, open the palette options menu and select **Load Palette**.
+   Select `palette/material.gpl`.
 4. Give each house a ramp of 3 to 5 colors from the palette. Start near the
    color that the SVG house icon uses now:
 
@@ -136,7 +154,7 @@ one set.
    | Star Alliance | `#1c2f5c`, `#d9a41f` |
    | Untamed       | `#f2ab2b`            |
 
-5. Save the final palette as `palette/vex.gpl`.
+5. Keep the generated files next to the script.
 
 The UI background is dark (`#1c1c1b`). Test each sprite on that color, not
 only on the checkerboard.
@@ -145,7 +163,8 @@ only on the checkerboard.
 
 ```text
 sprites/
-  palette/vex.gpl
+  palette/genpalette.py           # generates the material.* palette files
+  palette/material.gpl
   icons/<name>.aseprite           # name = the SVG name in web/assets
   houses/<house>.aseprite         # 32 x 32
   houses/<house>-16.aseprite      # 16 x 16

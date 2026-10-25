@@ -1,0 +1,278 @@
+GIMP Palette
+Name: material (Material Design swatches)
+Columns: 14
+#
+183  28  28	red-1
+198  40  40	red-2
+211  47  47	red-3
+229  57  53	red-4
+244  67  54	red-5
+239  83  80	red-6
+229 115 115	red-7
+239 154 154	red-8
+255 205 210	red-9
+255 235 238	red-10
+213   0   0	red-A1
+255  23  68	red-A2
+255  82  82	red-A3
+255 138 128	red-A4
+136  14  79	pink-1
+173  20  87	pink-2
+194  24  91	pink-3
+216  27  96	pink-4
+233  30  99	pink-5
+236  64 122	pink-6
+240  98 146	pink-7
+244 143 177	pink-8
+248 187 208	pink-9
+252 228 236	pink-10
+197  17  98	pink-A1
+245   0  87	pink-A2
+255  64 129	pink-A3
+255 128 171	pink-A4
+ 74  20 140	purple-1
+106  27 154	purple-2
+123  31 162	purple-3
+142  36 170	purple-4
+156  39 176	purple-5
+171  71 188	purple-6
+186 104 200	purple-7
+206 147 216	purple-8
+225 190 231	purple-9
+243 229 245	purple-10
+170   0 255	purple-A1
+213   0 249	purple-A2
+224  64 251	purple-A3
+234 128 252	purple-A4
+ 49  27 146	deep-purple-1
+ 69  39 160	deep-purple-2
+ 81  45 168	deep-purple-3
+ 94  53 177	deep-purple-4
+103  58 183	deep-purple-5
+126  87 194	deep-purple-6
+149 117 205	deep-purple-7
+179 157 219	deep-purple-8
+209 196 233	deep-purple-9
+237 231 246	deep-purple-10
+ 98   0 234	deep-purple-A1
+101  31 255	deep-purple-A2
+124  77 255	deep-purple-A3
+179 136 255	deep-purple-A4
+ 26  35 126	indigo-1
+ 40  53 147	indigo-2
+ 48  63 159	indigo-3
+ 57  73 171	indigo-4
+ 63  81 181	indigo-5
+ 92 107 192	indigo-6
+121 134 203	indigo-7
+159 168 218	indigo-8
+197 202 233	indigo-9
+232 234 246	indigo-10
+ 48  79 254	indigo-A1
+ 61  90 254	indigo-A2
+ 83 109 254	indigo-A3
+140 158 255	indigo-A4
+ 13  71 161	blue-1
+ 21 101 192	blue-2
+ 25 118 210	blue-3
+ 30 136 229	blue-4
+ 33 150 243	blue-5
+ 66 165 245	blue-6
+100 181 246	blue-7
+144 202 249	blue-8
+187 222 251	blue-9
+227 242 253	blue-10
+ 41  98 255	blue-A1
+ 41 121 255	blue-A2
+ 68 138 255	blue-A3
+130 177 255	blue-A4
+  1  87 155	light-blue-1
+  2 119 189	light-blue-2
+  2 136 209	light-blue-3
+  3 155 229	light-blue-4
+  3 169 244	light-blue-5
+ 41 182 246	light-blue-6
+ 79 195 247	light-blue-7
+129 212 250	light-blue-8
+179 229 252	light-blue-9
+225 245 254	light-blue-10
+  0 145 234	light-blue-A1
+  0 176 255	light-blue-A2
+ 64 196 255	light-blue-A3
+128 216 255	light-blue-A4
+  0  96 100	cyan-1
+  0 131 143	cyan-2
+  0 151 167	cyan-3
+  0 172 193	cyan-4
+  0 188 212	cyan-5
+ 38 198 218	cyan-6
+ 77 208 225	cyan-7
+128 222 234	cyan-8
+178 235 242	cyan-9
+224 247 250	cyan-10
+  0 184 212	cyan-A1
+  0 229 255	cyan-A2
+ 24 255 255	cyan-A3
+132 255 255	cyan-A4
+  0  77  64	teal-1
+  0 105  92	teal-2
+  0 121 107	teal-3
+  0 137 123	teal-4
+  0 150 136	teal-5
+ 38 166 154	teal-6
+ 77 182 172	teal-7
+128 203 196	teal-8
+178 223 219	teal-9
+224 242 241	teal-10
+  0 191 165	teal-A1
+ 29 233 182	teal-A2
+100 255 218	teal-A3
+167 255 235	teal-A4
+ 27  94  32	green-1
+ 46 125  50	green-2
+ 56 142  60	green-3
+ 67 160  71	green-4
+ 76 175  80	green-5
+102 187 106	green-6
+129 199 132	green-7
+165 214 167	green-8
+200 230 201	green-9
+232 245 233	green-10
+  0 200  83	green-A1
+  0 230 118	green-A2
+105 240 174	green-A3
+185 246 202	green-A4
+ 51 105  30	light-green-1
+ 85 139  47	light-green-2
+104 159  56	light-green-3
+124 179  66	light-green-4
+139 195  74	light-green-5
+156 204 101	light-green-6
+174 213 129	light-green-7
+197 225 165	light-green-8
+220 237 200	light-green-9
+241 248 233	light-green-10
+100 221  23	light-green-A1
+118 255   3	light-green-A2
+178 255  89	light-green-A3
+204 255 144	light-green-A4
+130 119  23	lime-1
+158 157  36	lime-2
+175 180  43	lime-3
+192 202  51	lime-4
+205 220  57	lime-5
+212 225  87	lime-6
+220 231 117	lime-7
+230 238 156	lime-8
+240 244 195	lime-9
+249 251 231	lime-10
+174 234   0	lime-A1
+198 255   0	lime-A2
+238 255  65	lime-A3
+244 255 129	lime-A4
+245 127  23	yellow-1
+249 168  37	yellow-2
+251 192  45	yellow-3
+253 216  53	yellow-4
+255 235  59	yellow-5
+255 238  88	yellow-6
+255 241 118	yellow-7
+255 245 157	yellow-8
+255 249 196	yellow-9
+255 253 231	yellow-10
+255 214   0	yellow-A1
+255 234   0	yellow-A2
+255 255   0	yellow-A3
+255 255 141	yellow-A4
+255 111   0	amber-1
+255 143   0	amber-2
+255 160   0	amber-3
+255 179   0	amber-4
+255 193   7	amber-5
+255 202  40	amber-6
+255 213  79	amber-7
+255 224 130	amber-8
+255 236 179	amber-9
+255 248 225	amber-10
+255 171   0	amber-A1
+255 196   0	amber-A2
+255 215  64	amber-A3
+255 229 127	amber-A4
+230  81   0	orange-1
+239 108   0	orange-2
+245 124   0	orange-3
+251 140   0	orange-4
+255 152   0	orange-5
+255 167  38	orange-6
+255 183  77	orange-7
+255 204 128	orange-8
+255 224 178	orange-9
+255 243 224	orange-10
+255 109   0	orange-A1
+255 145   0	orange-A2
+255 171  64	orange-A3
+255 209 128	orange-A4
+191  54  12	deep-orange-1
+216  67  21	deep-orange-2
+230  74  25	deep-orange-3
+244  81  30	deep-orange-4
+255  87  34	deep-orange-5
+255 112  67	deep-orange-6
+255 138 101	deep-orange-7
+255 171 145	deep-orange-8
+255 204 188	deep-orange-9
+251 233 231	deep-orange-10
+221  44   0	deep-orange-A1
+255  61   0	deep-orange-A2
+255 110  64	deep-orange-A3
+255 158 128	deep-orange-A4
+ 62  39  35	brown-1
+ 78  52  46	brown-2
+ 93  64  55	brown-3
+109  76  65	brown-4
+121  85  72	brown-5
+141 110  99	brown-6
+161 136 127	brown-7
+188 170 164	brown-8
+215 204 200	brown-9
+239 235 233	brown-10
+ 33  33  33	grey-1
+ 66  66  66	grey-2
+ 97  97  97	grey-3
+117 117 117	grey-4
+158 158 158	grey-5
+189 189 189	grey-6
+224 224 224	grey-7
+238 238 238	grey-8
+245 245 245	grey-9
+250 250 250	grey-10
+ 57  44  44	red-grey-1
+ 81  63  63	red-grey-2
+102  80  79	red-grey-3
+125  98  97	red-grey-4
+142 111 110	red-grey-5
+159 132 132	red-grey-6
+177 154 153	red-grey-7
+199 183 182	red-grey-8
+222 212 211	red-grey-9
+241 237 237	red-grey-10
+ 41  51  43	green-grey-1
+ 59  72  61	green-grey-2
+ 75  91  78	green-grey-3
+ 91 112  95	green-grey-4
+104 127 108	green-grey-5
+126 146 129	green-grey-6
+149 165 152	green-grey-7
+180 191 181	green-grey-8
+209 216 210	green-grey-9
+237 239 237	green-grey-10
+ 38  50  56	blue-grey-1
+ 55  71  79	blue-grey-2
+ 69  90 100	blue-grey-3
+ 84 110 122	blue-grey-4
+ 96 125 139	blue-grey-5
+120 144 156	blue-grey-6
+144 164 174	blue-grey-7
+176 190 197	blue-grey-8
+207 216 220	blue-grey-9
+236 239 241	blue-grey-10
