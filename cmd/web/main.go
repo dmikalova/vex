@@ -68,6 +68,8 @@ func main() {
 		ShortName:       "Vex",
 		Title:           "Vex",
 		Description:     "Vex — a KeyForge-style card game, playable in the browser.",
+		Domain:          siteDomain,
+		Image:           previewImage,
 		BackgroundColor: "#1c1c1b",
 		ThemeColor:      "#1c1c1b",
 		Icon: app.Icon{
@@ -86,6 +88,7 @@ func main() {
 		RawHeaders: []string{
 			bootStyle,
 			appleTouchIcon,
+			twitterCard,
 			boardScript,
 			galleryScript,
 			cardFitScript,
@@ -346,6 +349,16 @@ const webManifest = `{
 // is added to the home screen; go-app's Icon struct has no Apple-touch field, so
 // the link tag is injected into the head directly.
 const appleTouchIcon = `<link rel="apple-touch-icon" href="/web/assets/apple-touch-icon.png">`
+
+// The link preview. go-app writes og:url and og:image from the Handler's Domain
+// and Image. It writes twitter:card only when a page sets one, so the head gets
+// the tag directly. The image sits in web/, not web/assets/, so the service
+// worker does not precache it.
+const (
+	siteDomain   = "vex.mklv.tech"
+	previewImage = "/web/og.jpg"
+	twitterCard  = `<meta name="twitter:card" content="summary_large_image">`
+)
 
 // bootStyle is an inline <head> stylesheet that paints the dark background
 // immediately, before the external app.css link finishes loading. Without it a
