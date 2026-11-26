@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 )
@@ -153,6 +155,37 @@ func TestExpandAndFoldTextStripsKeywordReminders(t *testing.T) {
 		if got != want {
 			t.Errorf("expandAndFoldText(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+// TestWriteCatalogOmitsZeroStats pins the catalog shape. A card without power,
+// armor or Aember has no key for that stat, as in the committed catalogs.
+// encoding/json/v2 omitempty keeps a zero number, so the tags use omitzero.
+func TestWriteCatalogOmitsZeroStats(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "set.json")
+	cards := []catalogCard{
+		{Number: "002", Name: "Brew", House: "brobnar", Type: "action", Rarity: "Common", Amber: 1},
+	}
+	if err := writeCatalog(path, cards); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `[
+  {
+    "number": "002",
+    "name": "Brew",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1
+  }
+]
+`
+	if string(got) != want {
+		t.Errorf("writeCatalog wrote\n%s\nwant\n%s", got, want)
 	}
 }
 

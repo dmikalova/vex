@@ -4,6 +4,7 @@ import (
 	"bytes"
 	jsontext "encoding/json/jsontext"
 	"encoding/json/v2"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -80,19 +81,38 @@ func importSlugs() string {
 	return strings.Join(slugs, ", ")
 }
 
+// importUsage is the import-provenance usage line.
+const importUsage = "usage: cardlookup import-provenance [setSlug|all] [-images=<dir>]"
+
+// parseImportArgs reads the import-provenance arguments: at most one set slug
+// and an optional -images=<dir>, in either order.
+func parseImportArgs(args []string) (slug, imagesDir string, err error) {
+	for _, a := range args {
+		if dir, ok := strings.CutPrefix(a, "-images="); ok {
+			if dir == "" {
+				return "", "", errors.New(importUsage)
+			}
+			imagesDir = dir
+			continue
+		}
+		if strings.HasPrefix(a, "-") || slug != "" {
+			return "", "", errors.New(importUsage)
+		}
+		slug = a
+	}
+	return slug, imagesDir, nil
+}
+
 // importProvenance builds a source catalog (internal/cards/provenance/<slug>.json)
 // by paging the Master Vault decks feed for a set and folding each card it links
 // into the catalog shape. With no slug it opens an interactive picker offering
 // every set plus "All sets"; the slug "all" imports every set in release order.
-// Each set is fetched on its own — there is no combined query.
+// Each set is fetched on its own — there is no combined query. With -images=<dir>
+// it also downloads each kept card's front image under <dir>/<slug>/.
 func importProvenance(args []string) error {
-	var slug string
-	switch len(args) {
-	case 0:
-	case 1:
-		slug = args[0]
-	default:
-		return fmt.Errorf("usage: cardlookup import-provenance [setSlug|all]")
+	slug, imagesDir, err := parseImportArgs(args)
+	if err != nil {
+		return err
 	}
 	if slug == "" {
 		if isInteractive() {
@@ -134,13 +154,34 @@ func importProvenance(args []string) error {
 	// it learned from earlier sets into later ones, instead of every set restarting
 	// at the polite base pace and re-provoking the feed's throttling from scratch.
 	p := newPacer()
+	var images *imageFetcher
+	if imagesDir != "" {
+		images = newImageFetcher(imagesDir)
+	}
+	// A failed image does not stop the run: the catalog is already written, and
+	// a rerun fetches only the missing images. The run still fails at the end
+	// and names every image it could not fetch.
+	var imageErrs []error
 	for _, is := range targets {
-		if err := importOneSet(client, p, is); err != nil {
+		err := importOneSet(client, p, is, images)
+		if _, ok := errors.AsType[*imageFetchError](err); ok {
+			imageErrs = append(imageErrs, fmt.Errorf("importing %s: %w", is.Set.Name, err))
+			continue
+		}
+		if err != nil {
 			return fmt.Errorf("importing %s: %w", is.Set.Name, err)
 		}
 	}
-	return nil
+	return errors.Join(imageErrs...)
 }
+
+// imageFetchError is a set whose catalog was written but some of whose images
+// could not be fetched.
+type imageFetchError struct{ err error }
+
+func (e *imageFetchError) Error() string { return "downloading images: " + e.err.Error() }
+
+func (e *imageFetchError) Unwrap() error { return e.err }
 
 // pacer holds the throttle thresholds the importer learns from the feed. It lives
 // for a whole import run, so during an `all` import each set resumes from the pace
@@ -177,28 +218,44 @@ func (p *pacer) throttled() {
 	}
 }
 
-// importOneSet fetches, transforms, and writes one set's catalog.
-func importOneSet(client *http.Client, p *pacer, is importSet) error {
+// importOneSet fetches, transforms, and writes one set's catalog. When images is
+// not nil it then downloads the set's card images.
+func importOneSet(client *http.Client, p *pacer, is importSet, images *imageFetcher) error {
 	fmt.Printf("%s (expansion %d): fetching…\n", is.Set.Name, is.Expansion)
 	raw, err := fetchSetCards(client, p, is.Set.Slug, is.Expansion)
 	if err != nil {
 		return err
 	}
-	cards := make([]catalogCard, 0, len(raw))
+	kept := make([]keptCard, 0, len(raw))
 	for _, r := range raw {
 		c, err := transformCard(r)
 		if err != nil {
 			return err
 		}
-		cards = append(cards, c)
+		kept = append(kept, keptCard{Card: c, ImageURL: r.FrontImage})
 	}
-	sort.Slice(cards, func(i, j int) bool { return cards[i].Number < cards[j].Number })
+	sort.Slice(kept, func(i, j int) bool { return kept[i].Card.Number < kept[j].Card.Number })
+	cards := make([]catalogCard, len(kept))
+	for i, k := range kept {
+		cards[i] = k.Card
+	}
 
 	path := filepath.Join("internal", "cards", "provenance", is.Set.Slug+".json")
 	if err := writeCatalog(path, cards); err != nil {
 		return err
 	}
 	fmt.Printf("%s: wrote %d cards to %s\n", is.Set.Name, len(cards), path)
+	if images == nil {
+		return nil
+	}
+	counts, err := images.fetchSet(is.Set.Slug, kept)
+	fmt.Printf(
+		"%s: images %d fetched, %d already present, %d with no image URL\n",
+		is.Set.Name, counts.Fetched, counts.Present, counts.NoURL,
+	)
+	if err != nil {
+		return &imageFetchError{err: err}
+	}
 	return nil
 }
 
@@ -233,6 +290,7 @@ type mvCard struct {
 	Expansion  int        `json:"expansion"`
 	IsMaverick bool       `json:"is_maverick"`
 	IsAnomaly  bool       `json:"is_anomaly"`
+	FrontImage string     `json:"front_image"`
 }
 
 // flexString decodes a JSON value that may be either a string or a number into a
@@ -489,9 +547,9 @@ type catalogCard struct {
 	Type    string   `json:"type"`
 	Rarity  string   `json:"rarity"`
 	Traits  []string `json:"traits,omitempty"`
-	Power   int      `json:"power,omitempty"`
-	Armor   int      `json:"armor,omitempty"`
-	Amber   int      `json:"amber,omitempty"`
+	Power   int      `json:"power,omitzero"`
+	Armor   int      `json:"armor,omitzero"`
+	Amber   int      `json:"amber,omitzero"`
 	Text    string   `json:"text,omitempty"`
 }
 

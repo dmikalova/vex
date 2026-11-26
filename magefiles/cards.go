@@ -110,11 +110,17 @@ func (Tool) Review(n *int) error {
 // folds each card into the catalog shape, and writes
 // internal/cards/provenance/<slug>.json. With no set chosen it opens an
 // interactive picker offering every set plus "All sets"; pass -set=<slug> to
-// name one, or -set=all to rebuild every set in release order.
-func (Tool) ImportProvenance(set *string) error {
+// name one, or -set=all to rebuild every set in release order. Pass
+// -images=<dir> to also download each card's front image to
+// <dir>/<slug>/<number>.<ext>. A rerun skips the images already on disk, e.g.
+// `mage tool:importProvenance -set=all -images=tmp/card-images`.
+func (Tool) ImportProvenance(set, images *string) error {
 	args := []string{"run", "./magefiles/cardlookup", "import-provenance"}
 	if set != nil && *set != "" {
 		args = append(args, *set)
+	}
+	if images != nil && *images != "" {
+		args = append(args, "-images="+*images)
 	}
 	return sh.RunV("go", args...)
 }

@@ -38,11 +38,13 @@
 //	                     for review, recording them so they are not picked again
 //	                     until the whole pool has been seen, then cycling.
 //
-//	import-provenance [setSlug|all]
+//	import-provenance [setSlug|all] [-images=<dir>]
 //	                     Rebuild a set's source catalog (…/provenance/<slug>.json)
 //	                     from the Master Vault decks feed, ASCII-folding names and
 //	                     text and expanding the amber/damage markup. With no set it
-//	                     opens a picker offering every set plus "All sets".
+//	                     opens a picker offering every set plus "All sets". With
+//	                     -images it also downloads each card's front image to
+//	                     <dir>/<slug>/<number>.<ext>, skipping files on disk.
 package main
 
 import (
@@ -108,7 +110,7 @@ func usage() error {
 			"coverage [-new] | stub <setSlug> | next-card [setSlug] | " +
 			"node-usage [-max=<n>] [-category=<substring>] | " +
 			"review [-n=<count>] | " +
-			"import-provenance [setSlug|all]>",
+			"import-provenance [setSlug|all] [-images=<dir>]>",
 	)
 }
 

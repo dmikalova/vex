@@ -89,6 +89,12 @@ to see every target.
   [internal/cards/AGENTS.md](../internal/cards/AGENTS.md). `tool:nodeUsage`
   and `tool:census` audit the engine and are described in
   [internal/engine/AGENTS.md](../internal/engine/AGENTS.md).
+- `mage tool:importProvenance -set=<slug>` — rebuild a set's source catalog
+  from the Master Vault decks feed (`-set=all` for every set). Add
+  `-images=<dir>` to also download each card's front image to
+  `<dir>/<slug>/<number>.<ext>`. A rerun skips images already on disk. When
+  two cards in a set share a collector number, each image name gets the card's
+  name slug as a suffix, for example `305-its-coming.png`.
 - `mage tool:gameSize` — report the in-memory `GameState` size (the cost of one
   undo snapshot), the number of implemented cards, and — after building a fresh
   wasm — the shipped web bundle's size raw and compressed (brotli and gzip, the
